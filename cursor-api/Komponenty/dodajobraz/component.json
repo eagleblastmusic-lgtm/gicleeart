@@ -1,0 +1,7 @@
+{
+  "name": "Dodaj obraz",
+  "description": "Tworzenie produktow malarskich w Shopify na podstawie zdjecia (prompt + parser + upload).",
+  "icon": "🖼️",
+  "color": "#1e88e5",
+  "order": 10
+}

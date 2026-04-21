@@ -1,0 +1,8 @@
+{
+  "name": "Finanse",
+  "description": "Wyliczenia i ksiegowosc - skroty do plikow i narzedzi.",
+  "icon": "💰",
+  "color": "#2e7d32",
+  "order": 60,
+  "mode": "inline"
+}

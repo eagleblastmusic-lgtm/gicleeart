@@ -1,0 +1,8 @@
+{
+  "name": "Obrazy",
+  "description": "Szybki dostep do folderow Reprodukcji i Obrazow Klientow.",
+  "icon": "🖼️",
+  "color": "#1565c0",
+  "order": 50,
+  "mode": "inline"
+}

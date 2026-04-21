@@ -1,0 +1,1 @@
+zapoznaj się z plikiem "SHOP_KNOWLEDGE.md" i "THEME_KNOWLEDGE.md" i nic więcej niepisz tylko że się zapoznałeś z treścią

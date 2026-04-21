@@ -1,0 +1,9 @@
+# IDE / narzedzia
+.cursor/
+.cache/
+
+# Pliki-puste czesto powstale przy przypadkowym `> python` / `> shopify` w katalogu glownym
+/python
+/shopify
+
+.DS_Store

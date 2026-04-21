@@ -1,0 +1,404 @@
+{% style %}
+/* ===== FLYOUT MENU ===== */
+.mega-menu__list--flyout {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 220px;
+  position: relative;
+}
+
+.mega-menu__flyout-item {
+  position: relative;
+}
+
+.mega-menu__link--flyout-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mega-menu__flyout-arrow {
+  font-size: 1.2em;
+  opacity: 0.6;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  flex-shrink: 0;
+}
+
+.mega-menu__flyout-item--has-children:hover .mega-menu__flyout-arrow {
+  transform: translateX(3px);
+  opacity: 1;
+  color: #c9a84c;
+}
+
+.mega-menu__flyout-panel {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  min-width: 500px;
+  min-height: 300px;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: var(--color-background, #0a0a0a);
+  border: 1px solid rgba(201, 168, 76, 0.2);
+  box-shadow: 4px 4px 24px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-8px);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+  z-index: 9999;
+  padding: 8px 0;
+}
+.mega-menu__flyout-item--has-children {
+  height: auto !important;
+  overflow: visible !important;
+}
+
+.mega-menu__list--flyout {
+  height: auto !important;
+  overflow: visible !important;
+  align-items: flex-start;
+}
+.mega-menu__grid,
+.mega-menu__inner,
+.mega-menu {
+  overflow: visible !important;
+  height: auto !important;
+}
+.mega-menu.section {
+  overflow: visible !important;
+  height: auto !important;
+}
+
+.section--full-width-margin,
+.section--page-width {
+  overflow: visible !important;
+}
+.menu-list__submenu-inner {
+  overflow: visible !important;
+}
+
+
+.mega-menu,
+.mega-menu__inner,
+.mega-menu__column,
+header-menu,
+.menu-list,
+.menu-list__list-item {
+  overflow: visible !important;
+}
+
+
+
+.mega-menu__list--flyout {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 220px;
+  position: relative;
+  overflow: visible !important;
+}
+
+.mega-menu__flyout-item {
+  position: relative;
+  overflow: visible !important;
+}
+
+
+.mega-menu__flyout-item--has-children:hover .mega-menu__flyout-panel {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+
+.mega-menu__flyout-list {
+  columns: 3;
+  padding: 8px 16px;
+}
+
+.mega-menu__flyout-list li {
+  break-inside: avoid;
+}
+
+.mega-menu__link--child {
+  padding: 6px 8px;
+  font-size: 0.85em;
+  opacity: 0.8;
+  transition: opacity 0.15s ease, color 0.15s ease, padding-left 0.15s ease;
+  display: block;
+}
+
+.mega-menu__link--child:hover {
+  opacity: 1;
+  color: #c9a84c;
+  padding-left: 12px;
+}
+
+.mega-menu__flyout-panel::-webkit-scrollbar { width: 4px; }
+.mega-menu__flyout-panel::-webkit-scrollbar-track { background: transparent; }
+.mega-menu__flyout-panel::-webkit-scrollbar-thumb { background: rgba(201, 168, 76, 0.4); border-radius: 2px; }
+{% endstyle %}
+
+{%- doc -%}
+  Renders mega menu list markup with two-level flyout support.
+{%- enddoc -%}
+
+{% liquid
+  assign open_column_span = false
+  assign column_count = 0
+  assign links_before_wrap = 10
+  assign max_menu_columns = grid_columns_count | default: 6
+  assign max_menu_columns_tablet = grid_columns_count_tablet | default: 4
+
+  assign eager_loading = false
+  if section.index == blank
+    assign eager_loading = true
+  endif
+
+  if menu_content_type == 'collection_images'
+    assign collection_links = parent_link.links | where: 'type', 'collection_link'
+    assign catalog_links = parent_link.links | where: 'type', 'catalog_link'
+    assign collection_list_links = parent_link.links | where: 'type', 'collections_link'
+    if collection_links.size == 0 and catalog_links.size == 0 and collection_list_links.size == 0
+      assign menu_content_type = 'text'
+    endif
+  endif
+
+  if menu_content_type == 'featured_collections'
+    if parent_link.type == 'collection_link'
+      assign collection_handles = parent_link.object.handle | append: ','
+    elsif parent_link.type == 'catalog_link' or parent_link.type == 'collections_link'
+      assign collection_handles = 'all' | append: ','
+    endif
+    assign collection_links = parent_link.links | where: 'type', 'collection_link'
+    for collection_link in collection_links
+      assign collection_handles = collection_handles | append: collection_link.object.handle | append: ','
+    endfor
+  endif
+
+  if menu_content_type == 'featured_products'
+    if parent_link.type == 'collection_link'
+      assign collection_object = parent_link.object
+    elsif parent_link.type == 'catalog_link' or parent_link.type == 'collections_link'
+      assign collection_object = collections.all
+    else
+      assign menu_content_type = 'text'
+    endif
+  endif
+%}
+
+<ul
+  data-menu-list-id="{{ id }}"
+  class="mega-menu__list mega-menu__list--flyout list-unstyled"
+  style="--menu-image-border-radius: {{ image_border_radius }}px;"
+>
+  {% for link in parent_link.links %}
+    {% liquid
+      assign column_span = 1
+      assign column_count = column_count | plus: column_span
+    %}
+    <li class="mega-menu__flyout-item {% if link.links != blank %}mega-menu__flyout-item--has-children{% endif %}">
+      <a
+        href="{{ link.url }}"
+        class="mega-menu__link {% if link.links != blank %}mega-menu__link--parent mega-menu__link--flyout-trigger{% endif %}"
+      >
+        <span class="wrap-text">{{- link.title -}}</span>
+        {% if link.links != blank %}
+          <span class="mega-menu__flyout-arrow">›</span>
+        {% endif %}
+      </a>
+
+      {% if link.links != blank %}
+        <div class="mega-menu__flyout-panel">
+          <ul class="mega-menu__flyout-list list-unstyled">
+            {% for childLink in link.links %}
+              <li>
+                <a href="{{ childLink.url }}" class="mega-menu__link mega-menu__link--child">
+                  <span class="wrap-text">{{- childLink.title -}}</span>
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>
+
+{% liquid
+  assign min_products = 2
+  assign max_products = 3
+  assign min_products_tablet = 1
+  assign max_products_tablet = 3
+  assign min_collections = 1
+
+  if menu_content_type == 'featured_products'
+    assign temp_column_count = column_count | plus: min_products
+    if temp_column_count > max_menu_columns
+      assign max_product_columns = 2
+    else
+      assign max_product_columns = max_menu_columns | minus: column_count | at_most: max_products
+    endif
+    if eager_loading
+      assign max_product_columns = max_product_columns | at_most: collection_object.products_count
+    else
+      assign max_product_columns = 0
+    endif
+    assign max_featured_products = max_product_columns
+    assign max_menu_columns = max_menu_columns | minus: max_product_columns
+    assign temp_column_count = column_count | plus: min_products_tablet
+    if temp_column_count > max_menu_columns_tablet
+      assign max_product_columns_tablet = 1
+    else
+      assign max_product_columns_tablet = max_menu_columns_tablet | minus: column_count | at_most: max_products_tablet
+    endif
+    assign max_product_columns_tablet = max_product_columns_tablet | at_most: max_product_columns
+    assign max_featured_products_tablet = max_product_columns_tablet
+    assign max_menu_columns_tablet = max_menu_columns_tablet | minus: max_product_columns_tablet
+  endif
+
+  if menu_content_type == 'featured_collections'
+    assign min_featured_collection_columns = min_collections | times: 2
+    assign temp_column_count = column_count | plus: min_featured_collection_columns
+    if temp_column_count > max_menu_columns
+      assign max_collection_columns = 2
+    else
+      assign max_collection_columns = max_menu_columns | minus: column_count
+    endif
+    assign max_featured_collections = max_collection_columns | divided_by: 2 | floor
+    assign max_menu_columns = max_menu_columns | minus: max_collection_columns
+    assign max_collection_columns_tablet = 2
+    assign max_featured_collections_tablet = 1
+    assign max_menu_columns_tablet = max_menu_columns_tablet | minus: max_collection_columns_tablet
+  endif
+%}
+
+{% style %}
+  [data-menu-grid-id="{{ id }}"] {
+    {% if menu_content_type == 'collection_images' and parent_link.links.size < 5 %}
+      --menu-columns-desktop: {{ grid_columns_count_collection_images }};
+      --menu-columns-tablet: {{ grid_columns_count_tablet }};
+    {% else %}
+      --menu-columns-desktop: {{ grid_columns_count }};
+      --menu-columns-tablet: {{ grid_columns_count_tablet }};
+    {% endif %}
+  }
+
+  [data-menu-list-id="{{ id }}"] {
+    --menu-columns-desktop: 1;
+    --menu-columns-tablet: 1;
+  }
+{% endstyle %}
+
+{% case menu_content_type %}
+  {% when 'featured_products' %}
+    {%- capture image_sizes -%}
+      {%- render 'util-mega-menu-img-sizes-attr',
+        menu_content_type: 'featured_products',
+        settings: settings,
+        grid_columns: grid_columns_count,
+        grid_columns_tablet: grid_columns_count_tablet
+      -%}
+    {%- endcapture -%}
+    <span
+      class="mega-menu__content"
+      style="--menu-content-columns-desktop: {{ max_product_columns }}; --menu-content-columns-tablet: {{ max_product_columns_tablet }}; --resource-card-corner-radius: {{ image_border_radius }}px;"
+    >
+      <ul class="mega-menu__content-list mega-menu__content-list--products list-unstyled">
+        {% if eager_loading %}
+          {% paginate collection_object.products by max_featured_products %}
+            {% for item in collection_object.products %}
+              <li class="mega-menu__content-list-item {% if forloop.index > max_featured_products_tablet %} mega-menu__content-list-item--hidden-tablet{% endif %}">
+                {% render 'resource-card',
+                  resource: item,
+                  resource_type: 'product',
+                  image_hover: true,
+                  image_aspect_ratio: content_aspect_ratio,
+                  image_sizes: image_sizes
+                %}
+              </li>
+            {% endfor %}
+          {% endpaginate %}
+        {% endif %}
+      </ul>
+    </span>
+  {% when 'featured_collections' %}
+    {% assign collection_handles = collection_handles | split: ',' | uniq %}
+    {%- capture image_sizes -%}
+      {%- render 'util-mega-menu-img-sizes-attr',
+        menu_content_type: 'featured_collections',
+        settings: settings
+      -%}
+    {%- endcapture -%}
+    {% if collection_handles.size == 1 %}
+      {% assign max_featured_collections = 1 %}
+    {% endif %}
+    <span
+      class="mega-menu__content"
+      style="--menu-content-columns-desktop: {{ max_collection_columns }}; --menu-content-columns-tablet: {{ max_collection_columns_tablet }}; --resource-card-corner-radius: {{ image_border_radius }}px;"
+    >
+      <ul
+        class="mega-menu__content-list mega-menu__content-list--collections list-unstyled"
+        style="--menu-content-columns-desktop: {{ max_featured_collections }}; --menu-content-columns-tablet: {{ max_featured_collections_tablet }};"
+      >
+        {% for handle in collection_handles limit: max_featured_collections %}
+          {% if handle == 'all' %}
+            {% assign collection_object = collections.all %}
+          {% else %}
+            {% assign collection_object = collections[handle] %}
+          {% endif %}
+          <li class="mega-menu__content-list-item{% if forloop.index > max_featured_collections_tablet %} mega-menu__content-list-item--hidden-tablet{% endif %}">
+            {% render 'resource-card',
+              resource: collection_object,
+              resource_type: 'collection',
+              style: 'overlay',
+              image_aspect_ratio: content_aspect_ratio,
+              image_sizes: image_sizes
+            %}
+          </li>
+        {% endfor %}
+      </ul>
+    </span>
+<script>
+function initFlyout() {
+  document.querySelectorAll('.mega-menu__flyout-item--has-children').forEach(function(item) {
+    if (item.dataset.flyoutInit) return;
+    item.dataset.flyoutInit = 'true';
+
+    const panel = item.querySelector('.mega-menu__flyout-panel');
+    if (!panel) return;
+
+    item.addEventListener('mouseenter', function() {
+      const rect = item.getBoundingClientRect();
+      panel.style.cssText = 'position: fixed !important; top: ' + rect.bottom + 'px !important; left: ' + rect.left + 'px !important;
+       z-index: 99999 !important; opacity: 1 !important; visibility: visible !important; min-width: 600px !important;
+       height: calc(100vh - ' + (rect.bottom + 20) + 'px) !important; overflow-y: auto !important; background: #0a0a0a !important; 
+       border: 1px solid rgba(201,168,76,0.2) !important; padding: 8px 16px !important;';
+    });
+
+    item.addEventListener('mouseleave', function(e) {
+      if (!panel.contains(e.relatedTarget)) {
+        panel.style.opacity = '0';
+        panel.style.visibility = 'hidden';
+      }
+    });
+
+    panel.addEventListener('mouseleave', function(e) {
+      if (!item.contains(e.relatedTarget)) {
+        panel.style.opacity = '0';
+        panel.style.visibility = 'hidden';
+      }
+    });
+  });
+}
+
+window.addEventListener('load', initFlyout);
+document.addEventListener('shopify:section:load', initFlyout);
+setTimeout(initFlyout, 1000);
+setTimeout(initFlyout, 2000);
+</script>
+
+{% endcase %}
+
+

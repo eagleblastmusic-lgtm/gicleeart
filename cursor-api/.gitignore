@@ -1,0 +1,64 @@
+# Environment Configuration
+.env
+.env.*
+
+# OAuth offline session (access token)
+.shopify_session.json
+
+# Dependency directory
+node_modules
+
+# Test coverage directory
+coverage
+
+# Ignore Apple macOS Desktop Services Store
+.DS_Store
+
+# Logs
+logs
+*.log
+
+# extensions build output
+extensions/*/build
+extensions/*/dist
+
+# lock files
+
+
+
+
+# Ignore shopify files created during app dev
+.shopify/*
+.shopify.lock
+
+# nazwijobraz - trwaly cache wynikow API (TTL 30 dni)
+.cache/
+
+# blog - runtime data (topics.json trzymamy lokalnie, articles_cache + preview.html to artefakty)
+Komponenty/blog/data/articles_cache.json
+Komponenty/blog/data/preview.html
+
+# zadania - signals_cache to snapshot Shopify (moze byc duzy, nie trzymamy w repo)
+Komponenty/zadania/data/signals_cache.json
+
+# PyInstaller (python -m PyInstaller giclee_app.spec)
+/build/
+/dist/
+
+# Auto-backup zipow - nie chcemy ich w repo (sa duze i regenerowalne)
+/backups/
+
+# Logi komponentow (stdout/stderr przekierowany przez launcher)
+/logs/
+
+# FX cache (regeneruje sie z NBP)
+Komponenty/_shared/data/fx_cache.json
+
+# Stan synchronizacji zamowien z Shopify
+Komponenty/produkcja/dane/sync_state.json
+
+# socialmedia/cykl - lokalne dane runtime
+Komponenty/socialmedia/data/cykl/meta_credentials.json   # tokeny Meta API - SEKRET
+Komponenty/socialmedia/data/cykl/meta_state.json         # log publikacji (duzy)
+Komponenty/socialmedia/data/cykl/Obrazy/                 # zdjecia lokalne - duze pliki
+# queue.json + generation_state.json + config.json - commitujemy (to plan cyklu)

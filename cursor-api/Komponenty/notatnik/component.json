@@ -1,0 +1,7 @@
+{
+  "name": "Notatnik",
+  "description": "Osobiste notatki i instrukcje (Shopify CLI, szablony, GicleeApp, workflow).",
+  "icon": "📝",
+  "color": "#8e44ad",
+  "order": 40
+}

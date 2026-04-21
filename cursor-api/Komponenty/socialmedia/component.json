@@ -1,0 +1,8 @@
+{
+  "name": "Social Media",
+  "description": "Generator postow na IG/FB/TikTok/Pinterest + planer publikacji (PL + EN).",
+  "icon": "📱",
+  "color": "#e91e63",
+  "order": 61,
+  "mode": "inline"
+}

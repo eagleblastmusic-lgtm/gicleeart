@@ -1,0 +1,7 @@
+{
+  "name": "Pobierz obraz",
+  "description": "Pobieranie pelnych obrazow IIIF (np. National Gallery) przez kafelki z paskiem postepu.",
+  "icon": "⬇️",
+  "color": "#fb8c00",
+  "order": 30
+}

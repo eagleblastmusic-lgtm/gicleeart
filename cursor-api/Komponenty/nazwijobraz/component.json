@@ -1,0 +1,7 @@
+{
+  "name": "Nazwij obraz",
+  "description": "Automatyczna zmiana nazw plikow obrazow na 'Autor - Tytul' (Lens, Wikipedia, Wikidata, Commons).",
+  "icon": "✏️",
+  "color": "#43a047",
+  "order": 20
+}

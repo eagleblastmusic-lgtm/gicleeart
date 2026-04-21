@@ -1,0 +1,8 @@
+{
+  "name": "Blog",
+  "description": "Generowanie i publikacja postow na bloga Shopify (7 jezykow) - tematy, tresc, podglad obecnych postow.",
+  "icon": "📝",
+  "color": "#6d4c41",
+  "order": 60,
+  "mode": "inline"
+}

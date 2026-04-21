@@ -1,0 +1,27 @@
+{
+  "name": "cursor-api",
+  "version": "1.2.0",
+  "license": "UNLICENSED",
+  "scripts": {
+    "shopify": "shopify",
+    "build": "shopify app build",
+    "dev": "shopify app dev",
+    "info": "shopify app info",
+    "generate": "shopify app generate",
+    "deploy": "shopify app deploy",
+    "oauth": "node oauth-server.mjs"
+  },
+  "dependencies": {
+    "@shopify/shopify-api": "^13.0.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  },
+  "trustedDependencies": [
+    "@shopify/plugin-cloudflare"
+  ],
+  "author": "Skarabeusz",
+  "private": true,
+  "workspaces": [
+    "extensions/*"
+  ]
+}

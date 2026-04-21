@@ -1,0 +1,8 @@
+{
+  "name": "Planer",
+  "description": "Inteligentny edytor zadan - data, priorytety, kolory, kolejnosc.",
+  "icon": "🗓️",
+  "color": "#5e35b1",
+  "order": 80,
+  "mode": "inline"
+}

@@ -1,0 +1,1845 @@
+<!doctype html>
+<html
+  {% if request.design_mode %}
+    class="shopify-design-mode"
+  {% endif %}
+  lang="{{ request.locale.iso_code }}"
+>
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=Cormorant+Garamond:wght@300&display=swap" rel="stylesheet">
+
+
+
+    
+<style>
+  body { overflow-x: hidden; }
+</style>
+
+
+    {%- if settings.favicon != blank -%}
+      <link
+        rel="icon"
+        type="image/png"
+        href="{{ settings.favicon | image_url: width: 32, height: 32 }}"
+      >
+    {%- endif -%}
+
+    {% comment %} This a way to wait for main content to load when navigating to a new page so that the view transitions can work consistently {% endcomment %}
+    {% if settings.transition_to_main_product or settings.page_transition_enabled %}
+      <link
+        rel="expect"
+        href="#MainContent"
+        blocking="render"
+        id="view-transition-render-blocker"
+      >
+    {% endif %}
+
+    {%- render 'meta-tags' -%}
+    {%- render 'stylesheets' -%}
+    {%- render 'fonts' -%}
+    {%- render 'scripts' -%}
+    {%- render 'theme-styles-variables' -%}
+    {%- render 'color-schemes' -%}
+
+    {% if request.design_mode %}
+      {%- render 'theme-editor' -%}
+    {% endif %}
+
+    {{ content_for_header }}
+
+<style>
+  body { overflow-x: hidden; }
+  .mega-menu__flyout-item--has-children.is-active > a {
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: rgba(255,255,255,1) !important;
+}
+/* ===== GALLERY DROPDOWN ===== */
+#giclee-catalog-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  z-index: 2147483647;
+  background: #0c0b09;
+  border-bottom: 1px solid rgba(201,168,76,0.2);
+  box-shadow: 0 60px 120px rgba(0,0,0,0.95);
+  display: grid;
+  grid-template-columns: 1fr 560px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: opacity 0.4s ease, transform 0.4s ease, visibility 0.4s;
+  max-height: 82vh;
+  overflow: hidden;
+  font-family: 'Inter', sans-serif;
+}
+
+#giclee-catalog-panel.is-open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+#giclee-artists-list {
+  padding: 36px 48px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201,168,76,0.25) transparent;
+  border-right: 1px solid rgba(201,168,76,0.1);
+  column-count: 3;
+  column-gap: 32px;
+  clip-path: inset(0 0 0 0);
+  will-change: clip-path;
+}
+
+#giclee-artists-list a {
+  display: block;
+  break-inside: avoid;
+  color: rgba(230,225,215,0.75);
+  text-decoration: none;
+  font-size: 12.5px;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  padding: 3px 0;
+  line-height: 1.4;
+  transition: color 0.2s ease, padding-left 0.25s ease, letter-spacing 0.25s ease;
+  white-space: nowrap;
+  cursor: pointer;
+}
+#giclee-catalog-panel.is-open.staggering #giclee-artists-list a {
+  opacity: 0;
+  transform: translateY(10px);
+}
+#giclee-catalog-panel.is-open.staggering #giclee-artists-list a.is-in {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#giclee-artists-list a:hover,
+#giclee-artists-list a.is-active {
+  color: rgba(201,168,76,1);
+  padding-left: 10px;
+  letter-spacing: 0.08em;
+}
+
+#giclee-artists-list > div:first-child {
+  font-size: 9px;
+  letter-spacing: 0.45em;
+  text-transform: uppercase;
+  color: rgba(201,168,76,0.5);
+  font-weight: 500;
+  padding-bottom: 20px;
+  column-span: all;
+  font-family: 'Inter', sans-serif;
+}
+
+#giclee-artist-preview {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  position: relative;
+  overflow: hidden;
+  min-height: 440px;
+  background: #080706;
+}
+
+/* KLUCZOWE: transition tylko przez CSS, bez inline styles */
+#giclee-preview-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  filter: brightness(0.5) saturate(0.75);
+  transition: opacity 0.6s ease;
+}
+
+#giclee-preview-img.is-visible {
+  opacity: 1;
+}
+
+#giclee-preview-info {
+  position: relative;
+  z-index: 2;
+  padding: 36px;
+  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 60%, transparent 100%);
+}
+
+#giclee-preview-line {
+  width: 28px;
+  height: 1px;
+  background: rgba(201,168,76,0.6);
+  margin-bottom: 14px;
+}
+
+#giclee-preview-name {
+  font-size: 20px;
+  font-weight: 300;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.95);
+  margin: 0 0 8px 0;
+  font-family: 'Inter', sans-serif;
+}
+
+#giclee-preview-count {
+  font-size: 9px;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: rgba(201,168,76,0.75);
+  font-family: 'Inter', sans-serif;
+}
+
+</style>
+
+
+{{ 'custom.css' | asset_url | stylesheet_tag }}
+
+
+  </head>
+
+  <body class="page-width-{{ settings.page_width }} card-hover-effect-{{ settings.card_hover_effect }}">
+
+  <div id="page-transition">
+    <div class="pt-panel pt-left" style="transform:scaleX(1);transition:none"></div>
+    <div class="pt-seam" style="opacity:1;transition:none"></div>
+    <div class="pt-panel pt-right" style="transform:scaleX(1);transition:none"></div>
+  </div>
+
+  {% unless request.page_type == 'index' %}<style>#splash-screen{display:none!important}</style>{% endunless %}
+  <div id="splash-screen">
+    <div class="splash-content">
+      <p class="splash-title">Giclée Art</p>
+      <div class="splash-line"></div>
+      <p class="splash-sub">Witamy w świecie sztuki</p>
+    </div>
+  </div>
+
+  <style>
+    #page-transition {
+      position: fixed;
+      inset: 0;
+      z-index: 99998;
+      pointer-events: none;
+      display: flex;
+    }
+    #page-transition.active {
+      pointer-events: all;
+    }
+    .pt-panel {
+      position: fixed;
+      top: 0;
+      width: 51%;
+      height: 100%;
+      background: #080808;
+      will-change: transform;
+      transform: scaleX(0);
+    }
+    .pt-left  { left: 0;  transform-origin: left center; }
+    .pt-right { right: 0; transform-origin: right center; }
+    .pt-seam {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1px;
+      height: 100%;
+      background: linear-gradient(to bottom, transparent 10%, #c9a84c 40%, #c9a84c 60%, transparent 90%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 1;
+    }
+    #page-transition.pt-init .pt-panel {
+      transform: scaleX(1);
+      transition: none !important;
+    }
+    #page-transition.pt-init .pt-seam {
+      opacity: 1;
+      transition: none !important;
+    }
+    #page-transition.closing .pt-panel {
+      transform: scaleX(1);
+      transition: transform 0.9s cubic-bezier(0.76, 0, 0.24, 1);
+    }
+    #page-transition.closing .pt-seam {
+      opacity: 1;
+      transition-delay: 0.75s;
+    }
+    #page-transition.opening .pt-panel {
+      transform: scaleX(0);
+      transition: transform 1.6s cubic-bezier(0.45, 0, 0.15, 1);
+    }
+    #page-transition.opening .pt-seam {
+      opacity: 0;
+      transition-delay: 0s;
+    }
+    {% if template.suffix == 'faq' %}
+    /* ===== FAQ ANIMATIONS ===== */
+    accordion-custom {
+      --animation-speed-slow: 700ms;
+      --animation-easing: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    @keyframes faqItemIn {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    accordion-custom {
+      opacity: 0;
+      animation: faqItemIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    accordion-custom:nth-child(1)  { animation-delay: 0.8s; }
+    accordion-custom:nth-child(2)  { animation-delay: 0.95s; }
+    accordion-custom:nth-child(3)  { animation-delay: 1.1s; }
+    accordion-custom:nth-child(4)  { animation-delay: 1.25s; }
+    accordion-custom:nth-child(5)  { animation-delay: 1.4s; }
+    accordion-custom:nth-child(6)  { animation-delay: 1.55s; }
+    accordion-custom:nth-child(7)  { animation-delay: 1.7s; }
+    accordion-custom:nth-child(8)  { animation-delay: 1.85s; }
+    accordion-custom:nth-child(n+9){ animation-delay: 2.0s; }
+
+    /* Płynne rozwijanie i zwijanie — nadpisuje wbudowane transition: none przy :not(:focus-within) */
+    accordion-custom details .details-content,
+    accordion-custom details::details-content,
+    accordion-custom details:not(:focus-within) .details-content,
+    accordion-custom details:not(:focus-within)::details-content {
+      transition:
+        block-size 0.75s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+        padding-block 0.75s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    /* Złota kreska po lewej przy otwartym */
+    accordion-custom details {
+      border-left: 1px solid transparent;
+      padding-left: 0;
+      transition: border-color 0.5s ease, padding-left 0.5s ease;
+    }
+    accordion-custom details[open] {
+      border-left: 1px solid rgba(201, 168, 76, 0.4);
+      padding-left: 16px;
+    }
+
+    /* Summary */
+    accordion-custom details summary {
+      transition: color 0.3s ease, letter-spacing 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    accordion-custom details[open] summary {
+      letter-spacing: 0.025em;
+    }
+    {% endif %}
+
+    /* ===== CONTACT TEXTAREA TRANSITION ===== */
+    .contact-form__input--textarea {
+      transition: background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease !important;
+    }
+
+    /* ===== FAQ GOLDEN BAR SCROLLBAR FIX ===== */
+    accordion-custom details {
+      position: relative;
+    }
+    accordion-custom details[open] {
+      border-left: 1px solid rgba(201, 168, 76, 0.4);
+      padding-left: 16px;
+    }
+
+    {% if request.page_type == 'page' %}
+    /* ===== CONTACT FORM STAGGER ANIMATION ===== */
+    @keyframes fieldReveal {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .contact-form__form-row,
+    .contact-form__form > .contact-form__input,
+    .contact-form__form > .contact-form__input--textarea,
+    .contact-form__form > *:last-child {
+      opacity: 0;
+      animation: fieldReveal 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .contact-form__form-row                             { animation-delay: 0.8s; }
+    .contact-form__form > .contact-form__input          { animation-delay: 0.98s; }
+    .contact-form__form > .contact-form__input--textarea { animation-delay: 1.16s; }
+    .contact-form__form > *:last-child                  { animation-delay: 1.34s; }
+    {% endif %}
+
+    #page-transition:not(.closing):not(.pt-init) .pt-seam {
+      opacity: 0 !important;
+      transition: none !important;
+    }
+    body.is-navigating [class*="dropdown"],
+    body.is-navigating [class*="submenu"],
+    body.is-navigating [class*="mega-menu"],
+    body.is-navigating [class*="popover"],
+    body.is-navigating [class*="nav-"] [class*="child"],
+    body.is-navigating details[open] > :not(summary),
+    body.is-navigating .header__submenu,
+    body.is-navigating [data-open="true"] {
+      display: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+    }
+    #giclee-catalog-panel {
+      clip-path: inset(0 0 100% 0) !important;
+      transform: none !important;
+      transition: clip-path 0.85s cubic-bezier(0.25, 0.46, 0.45, 0.94), visibility 0.85s !important;
+    }
+    #giclee-catalog-panel.is-open {
+      clip-path: inset(0 0 0% 0) !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+    #giclee-catalog-panel.is-open.is-closing {
+      clip-path: inset(0 0 100% 0) !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      transition: clip-path 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) !important;
+    }
+    #giclee-catalog-panel.is-closing #giclee-artist-preview {
+      opacity: 0.88;
+      transform: translateY(-6px);
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+    #giclee-catalog-panel.is-closing #giclee-artists-list {
+      opacity: 1;
+      /* Close animation handled by JS height tween to avoid instant cut. */
+    }
+    @keyframes catalogColIn {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    #giclee-catalog-panel.is-open #giclee-artists-list {
+      animation: none;
+      opacity: 1;
+      clip-path: inset(0 0 0 0);
+    }
+    #giclee-catalog-panel.is-open #giclee-artist-preview {
+      animation: catalogColIn 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both;
+    }
+    @keyframes linkStagger {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    body.is-navigating #giclee-catalog-panel {
+      clip-path: none !important;
+      transform: translateY(-200vh) !important;
+      transition: transform 0.9s cubic-bezier(0.76, 0, 0.24, 1) !important;
+      pointer-events: none !important;
+    }
+    #page-transition.fade-to-splash {
+      opacity: 0;
+      transition: opacity 1.4s ease;
+      pointer-events: none;
+    }
+    /* Force consistent collection tiles layout between local and live */
+    main[data-template*="list-collections"] .resource-list--grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+    @media screen and (min-width: 750px) {
+      main[data-template*="list-collections"] .resource-list--grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+      }
+    }
+    {% if template.suffix == 'fotografia-obraz' %}
+    #pm-hero {
+      --pm-lift: 0px !important;
+      transform: none !important;
+      will-change: auto !important;
+      transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1) !important;
+    }
+    #pm-hero-ui {
+      transform: none !important;
+      will-change: auto !important;
+      transition: none !important;
+    }
+    html body #pm-hero.loaded .pm-cta {
+      opacity: 1 !important;
+      pointer-events: auto !important;
+      visibility: visible !important;
+      animation: pmCtaReveal 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both !important;
+    }
+
+    #shopify-section-template--29328540959068__custom_liquid_XCVirJ {
+      position: relative;
+      z-index: 60;
+      isolation: isolate;
+      transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: transform;
+    }
+    body.pm-app-drawer-open #shopify-section-template--29328540959068__custom_liquid_XCVirJ {
+      transform: translateX(-100vw);
+    }
+
+    .shopify-section:has(#giclee-shell) {
+      display: block !important;
+      position: fixed !important;
+      top: 0;
+      right: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 100;
+      transform: translateX(100%);
+      transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+      pointer-events: none;
+      margin: 0 !important;
+      padding: 0 !important;
+      isolation: isolate;
+    }
+    .shopify-section:has(#giclee-shell) .section--page-width,
+    .shopify-section:has(#giclee-shell) .spacing-style,
+    .shopify-section:has(#giclee-shell) .section {
+      max-width: none !important;
+      width: 100vw !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    body.pm-app-drawer-open .shopify-section:has(#giclee-shell) {
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+    #giclee-shell {
+      width: 100vw !important;
+      height: 100vh !important;
+      margin-left: calc(-50vw + 50%) !important;
+      position: relative !important;
+      overflow: hidden !important;
+      background: #000 !important;
+    }
+    #giclee-tool {
+      width: 100% !important;
+      height: 100% !important;
+      border: 0 !important;
+      display: block !important;
+      background: #000 !important;
+    }
+    /* Ukryj pasek przewijania strony, gdy aplikacja jest otwarta */
+    html:has(body.pm-app-drawer-open),
+    body.pm-app-drawer-open {
+      overflow: hidden !important;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    body.pm-app-drawer-open::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+    html:has(body.pm-app-drawer-open)::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+
+    #pm-cta {
+      position: fixed !important;
+      right: 16px !important;
+      top: 50% !important;
+      transform: translateY(-50%) !important;
+      z-index: 120 !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+      display: inline-flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      gap: 14px !important;
+      text-align: center !important;
+    }
+    #pm-cta .pm-cta-label {
+      order: 2;
+      margin-top: 4px !important;
+    }
+    #pm-cta .pm-cta-chevrons {
+      order: 1;
+      flex-direction: row !important;
+      gap: 4px;
+      margin-top: 0 !important;
+    }
+    #pm-cta .pm-cta-chevrons svg {
+      transform: rotate(-90deg);
+    }
+    #pm-cta .pm-cta-chevrons svg:nth-child(1) {
+      animation: pmChevronRight 1.8s ease-in-out infinite 0s !important;
+    }
+    #pm-cta .pm-cta-chevrons svg:nth-child(2) {
+      animation: pmChevronRight 1.8s ease-in-out infinite 0.18s !important;
+    }
+    #pm-cta .pm-cta-chevrons svg:nth-child(3) {
+      animation: pmChevronRight 1.8s ease-in-out infinite 0.36s !important;
+    }
+    @keyframes pmChevronRight {
+      0%, 100% { transform: rotate(-90deg) translateX(0); }
+      50%      { transform: rotate(-90deg) translateX(6px); }
+    }
+    @keyframes pmChevronHorizontalForced {
+      0%, 100% { transform: rotate(-90deg) translateX(0); }
+      50%      { transform: rotate(-90deg) translateX(6px); }
+    }
+    @keyframes pmChevron {
+      0%, 100% { transform: rotate(-90deg) translateX(0); }
+      50%      { transform: rotate(-90deg) translateX(6px); }
+    }
+    #pm-lab-invite {
+      position: absolute;
+      left: clamp(20px, 4vw, 52px);
+      top: 50%;
+      transform: translateY(-50%) translateX(-18px);
+      max-width: min(32ch, 37vw);
+      z-index: 25;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      color: rgba(255, 255, 255, 0.9);
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: clamp(20px, 1.55vw, 28px);
+      line-height: 1.3;
+      letter-spacing: 0.01em;
+      text-wrap: balance;
+      text-shadow: 0 8px 26px rgba(0, 0, 0, 0.55);
+      padding-left: clamp(18px, 2vw, 26px);
+      border-left: none;
+      transition: opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+                  visibility 0.85s;
+    }
+    #pm-lab-invite::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      border-radius: 1px;
+      background: linear-gradient(
+        180deg,
+        rgba(201, 168, 76, 0.2) 0%,
+        rgba(201, 168, 76, 0.95) 50%,
+        rgba(201, 168, 76, 0.25) 100%
+      );
+      box-shadow: 0 0 14px rgba(201, 168, 76, 0.22);
+      animation: pmInviteLineShimmer 3.8s ease-in-out infinite;
+    }
+    html body #pm-hero.loaded #pm-lab-invite {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(-50%) translateX(0);
+      animation:
+        pmInviteReveal 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both,
+        pmInviteAmbient 7s ease-in-out infinite 1.15s;
+    }
+    #pm-lab-invite strong {
+      display: block;
+      margin-bottom: 10px;
+      font-size: clamp(12px, 0.8vw, 14px);
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(201, 168, 76, 0.92);
+      font-family: Inter, Arial, sans-serif;
+      animation: pmInviteGoldPulse 5s ease-in-out infinite 0.4s;
+    }
+    @keyframes pmInviteReveal {
+      from { opacity: 0; transform: translateY(-50%) translateX(-18px); filter: blur(2px); }
+      to   { opacity: 1; transform: translateY(-50%) translateX(0); filter: blur(0); }
+    }
+    @keyframes pmInviteAmbient {
+      0%, 100% {
+        opacity: 1;
+        text-shadow: 0 8px 26px rgba(0, 0, 0, 0.55);
+        transform: translateY(-50%) translateX(0);
+      }
+      50% {
+        opacity: 0.94;
+        text-shadow: 0 12px 34px rgba(0, 0, 0, 0.62);
+        transform: translateY(calc(-50% - 3px)) translateX(0);
+      }
+    }
+    @keyframes pmInviteAmbientMobile {
+      0%, 100% {
+        opacity: 1;
+        text-shadow: 0 8px 26px rgba(0, 0, 0, 0.55);
+        transform: translateX(-50%) translateY(0);
+      }
+      50% {
+        opacity: 0.93;
+        text-shadow: 0 12px 34px rgba(0, 0, 0, 0.62);
+        transform: translateX(-50%) translateY(-4px);
+      }
+    }
+    @keyframes pmInviteLineShimmer {
+      0%, 100% { opacity: 0.65; box-shadow: 0 0 10px rgba(201, 168, 76, 0.18); }
+      50% { opacity: 1; box-shadow: 0 0 22px rgba(201, 168, 76, 0.42); }
+    }
+    @keyframes pmInviteGoldPulse {
+      0%, 100% { color: rgba(201, 168, 76, 0.82); letter-spacing: 0.22em; }
+      50% { color: rgba(230, 207, 146, 0.98); letter-spacing: 0.24em; }
+    }
+    @keyframes pmCtaReveal {
+      from { opacity: 0; transform: translateY(-50%) translateX(14px); }
+      to   { opacity: 1; transform: translateY(-50%) translateX(0); }
+    }
+    @media screen and (max-width: 980px) {
+      #pm-lab-invite::before {
+        display: none;
+      }
+      #pm-lab-invite {
+        top: auto;
+        bottom: clamp(84px, 10vh, 132px);
+        left: 50%;
+        max-width: min(92vw, 36ch);
+        text-align: center;
+        border-left: 0;
+        padding-left: 0;
+        transform: translateX(-50%) translateY(12px);
+      }
+      #pm-hero.loaded #pm-lab-invite {
+        transform: translateX(-50%) translateY(0);
+        animation:
+          pmInviteRevealMobile 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both,
+          pmInviteAmbientMobile 7s ease-in-out infinite 1.15s;
+      }
+    }
+    @keyframes pmInviteRevealMobile {
+      from { opacity: 0; transform: translateX(-50%) translateY(12px); filter: blur(2px); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0); filter: blur(0); }
+    }
+    #pm-back-to-preview {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 140;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.28);
+      background: rgba(0,0,0,0.72);
+      color: rgba(255,255,255,0.92);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    body.pm-app-drawer-open #pm-back-to-preview {
+      display: inline-flex;
+    }
+    {% endif %}
+    {% if template.suffix == 'giclee-frame' %}
+    #MainContent .divider {
+      position: relative;
+      margin-bottom: 32px;
+    }
+    #MainContent .divider .divider__line {
+      position: relative;
+    }
+    #MainContent .divider .divider__line::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 32px;
+      border-bottom: var(--divider-border-thickness) solid var(--color-border);
+      border-right: var(--divider-border-thickness) solid var(--color-border);
+      border-radius: calc(var(--style-border-radius-sm) * var(--divider-border-rounded));
+      pointer-events: none;
+    }
+    {% endif %}
+    #splash-screen {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      will-change: opacity;
+      opacity: 1;
+      transition: opacity 1.3s ease;
+    }
+    #splash-screen.hide {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .splash-content {
+      text-align: center;
+      animation: splashFadeIn 1.1s ease forwards;
+      will-change: opacity, transform;
+    }
+    .splash-title {
+      color: #fff;
+      font-size: clamp(2.2rem, 6vw, 5.5rem);
+      font-family: 'Bodoni Moda', Georgia, serif;
+      font-weight: 400;
+      font-style: normal;
+      font-variation-settings: 'opsz' 96;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      transform: scaleX(1.15);
+      display: inline-block;
+      margin: 0 0 0.45rem;
+      -webkit-font-smoothing: antialiased;
+      -webkit-text-stroke: 0.3px rgba(255,255,255,0.5);
+    }
+    .splash-line {
+      width: 220px;
+      height: 1px;
+      background: linear-gradient(to right, transparent, #c9a84c, transparent);
+      margin: 0.4rem auto 0.55rem;
+      transform: scaleX(0);
+      transform-origin: center;
+      will-change: transform;
+      animation: splashLine 0.9s ease forwards;
+      animation-delay: 0.9s;
+    }
+    @keyframes splashLine {
+      from { transform: scaleX(0); }
+      to   { transform: scaleX(1); }
+    }
+    .splash-sub {
+      color: #bbb;
+      font-size: clamp(0.75rem, 2vw, 1.1rem);
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-weight: 300;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      margin: 0;
+    }
+    @keyframes splashFadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+    {% render 'skip-to-content-link', href: '#MainContent', text: 'accessibility.skip_to_text' %}
+    <div id="header-group">
+      {% sections 'header-group' %}
+    </div>
+
+    <script>
+      // Inline header height and menu style calculations to prevent layout shift
+      // Note: Updates in calculateHeaderGroupHeight(), updateTransparentHeaderOffset() and setHeaderMenuStyle() utilities.js should be kept in sync with this function
+      (function setHeaderHeighCustomProperties() {
+        /*
+         * Header calculation functions for maintaining CSS variables
+         * Mimic calculateHeaderGroupHeight() in utilities.js
+         */
+        const header = document.querySelector('header-component');
+        const headerGroup = document.querySelector('#header-group');
+        const hasHeaderSection = headerGroup?.querySelector('.header-section');
+
+        if (!header || !headerGroup) return;
+
+        const headerTopRow = header.querySelector('.header__row--top');
+        const headerHeight = header.offsetHeight;
+
+        // Calculate the total height of the header group
+        let headerGroupHeight = 0;
+        const children = headerGroup.children;
+        for (let i = 0; i < children.length; i++) {
+          const element = children[i];
+          if (element === header || !(element instanceof HTMLElement)) continue;
+          headerGroupHeight += element.offsetHeight;
+        }
+
+        // Check for transparent header special case
+        if (header.hasAttribute('transparent') && header.parentElement?.nextElementSibling) {
+          headerGroupHeight += headerHeight;
+        }
+
+        // Set CSS variables
+        document.body.style.setProperty('--header-height', `${headerHeight}px`);
+        document.body.style.setProperty('--header-group-height', `${headerGroupHeight}px`);
+
+        if (headerTopRow) {
+          window.requestAnimationFrame(function () {
+            document.body.style.setProperty('--top-row-height', `${headerTopRow.offsetHeight}px`);
+          });
+        }
+
+        /**
+         * Updates CSS custom properties for transparent header offset calculation
+         * Mimic updateTransparentHeaderOffset() in utilities.js
+         */
+
+        if (!hasHeaderSection || !header?.hasAttribute('transparent')) {
+          document.body.style.setProperty('--transparent-header-offset-boolean', '0');
+          return;
+        }
+
+        const hasImmediateSection = hasHeaderSection.nextElementSibling?.classList.contains('shopify-section');
+
+        const shouldApplyOffset = !hasImmediateSection ? '1' : '0';
+        document.body.style.setProperty('--transparent-header-offset-boolean', shouldApplyOffset);
+      })();
+
+      (function setHeaderMenuStyle() {
+        const headerComponent = document.querySelector('#header-component');
+        if (headerComponent) {
+          const isTouchDevice = 'ontouchstart' in window && navigator.maxTouchPoints > 0;
+          const overflowList = headerComponent?.querySelector('overflow-list');
+          const hasReachedMinimum = overflowList && overflowList.hasAttribute('minimum-reached');
+          headerComponent.dataset.menuStyle = isTouchDevice || hasReachedMinimum ? 'drawer' : 'menu';
+        }
+      })();
+    </script>
+
+    <main
+      id="MainContent"
+      class="content-for-layout"
+      role="main"
+      data-page-transition-enabled="{{ settings.page_transition_enabled }}"
+      data-product-transition="{{ settings.transition_to_main_product }}"
+      data-template="{{ template }}"
+    >
+      {{ content_for_layout }}
+    </main>
+
+    {% unless template.suffix == 'fotografia-obraz' %}
+    <footer>
+      {% sections 'footer-group' %}
+    </footer>
+    {% endunless %}
+
+    {% render 'search-modal' %}
+
+    {% if settings.quick_add or settings.mobile_quick_add %}
+      {% render 'quick-add-modal' %}
+    {% endif %}
+
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.animation = 'draw-line 1.2s ease-out forwards';
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  document.querySelectorAll('.divider__line').forEach(el => {
+    el.style.flexBasis = '0%';
+    observer.observe(el);
+  });
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const accordionSection = document.querySelectorAll('.accordion');
+
+    accordionSection.forEach(function (section) {
+      const details = section.querySelectorAll('details');
+
+      details.forEach(function (detail) {
+        detail.addEventListener('toggle', function () {
+          if (detail.open) {
+            details.forEach(function (other) {
+              if (other !== detail && other.open) {
+                other.removeAttribute('open');
+              }
+            });
+          }
+        });
+      });
+    });
+  });
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const cards = document.querySelectorAll('.product-grid .product-media');
+  cards.forEach(function(card, index) {
+    card.style.animationDelay = (0.05 + index * 0.1) + 's';
+  });
+});
+</script>
+
+<script>
+const imageCache = {};
+let currentPreviewSrc = null;
+
+function fetchArtistPreview(handle, callback) {
+  if (imageCache[handle]) {
+    callback(imageCache[handle]);
+    return;
+  }
+  fetch('/collections/' + handle + '/products.json?limit=1')
+    .then(r => r.json())
+    .then(data => {
+      const src = data.products?.[0]?.images?.[0]?.src || null;
+      imageCache[handle] = { img: src };
+      callback({ img: src });
+    })
+    .catch(() => callback({ img: null }));
+}
+
+function setPreviewImage(src) {
+  const img = document.getElementById('giclee-preview-img');
+  if (!src) {
+    img.classList.remove('is-visible');
+    currentPreviewSrc = null;
+    return;
+  }
+
+  if (currentPreviewSrc === src && img.hasAttribute('src') && img.complete && img.naturalWidth > 0) {
+    img.classList.add('is-visible');
+    return;
+  }
+
+  currentPreviewSrc = src;
+  img.classList.remove('is-visible');
+  img.removeAttribute('src');
+
+  const loader = new Image();
+  loader.onload = function() {
+    if (currentPreviewSrc !== src) return;
+    img.src = src;
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        if (currentPreviewSrc === src) {
+          img.classList.add('is-visible');
+        }
+      });
+    });
+  };
+  loader.src = src;
+}
+
+function initGalleryCatalog() {
+  const katalogItem = Array.from(document.querySelectorAll('.menu-list__list-item')).find(function(li) {
+    const a = li.querySelector('a');
+    return a && a.textContent.trim() === 'Katalog';
+  });
+
+  if (!katalogItem || katalogItem.dataset.galleryInit) return;
+  katalogItem.dataset.galleryInit = 'true';
+
+  // Usuń stary panel jeśli istnieje (zabezpieczenie przed duplikatem)
+  const existingPanel = document.getElementById('giclee-catalog-panel');
+  if (existingPanel) existingPanel.remove();
+
+  katalogItem.removeAttribute('on:pointerenter');
+  katalogItem.removeAttribute('on:pointerleave');
+  katalogItem.removeAttribute('on:focus');
+  katalogItem.removeAttribute('on:blur');
+
+  new MutationObserver(function() {
+    katalogItem.removeAttribute('on:pointerenter');
+    katalogItem.removeAttribute('on:pointerleave');
+  }).observe(katalogItem, { attributes: true, attributeFilter: ['on:pointerenter', 'on:pointerleave'] });
+
+  var nativeSub = katalogItem.querySelector('.menu-list__submenu');
+  if (nativeSub) {
+    nativeSub.style.setProperty('display', 'none', 'important');
+    nativeSub.style.setProperty('visibility', 'hidden', 'important');
+    nativeSub.style.setProperty('opacity', '0', 'important');
+    nativeSub.style.setProperty('pointer-events', 'none', 'important');
+    nativeSub.style.setProperty('height', '0', 'important');
+    nativeSub.style.setProperty('max-height', '0', 'important');
+    nativeSub.style.setProperty('box-shadow', 'none', 'important');
+    new MutationObserver(function() {
+      nativeSub.style.setProperty('display', 'none', 'important');
+      nativeSub.style.setProperty('visibility', 'hidden', 'important');
+      nativeSub.style.setProperty('opacity', '0', 'important');
+      nativeSub.style.setProperty('height', '0', 'important');
+      nativeSub.style.setProperty('max-height', '0', 'important');
+      nativeSub.style.setProperty('box-shadow', 'none', 'important');
+    }).observe(nativeSub, { attributes: true, attributeFilter: ['style', 'class'] });
+  }
+
+  const megaMenuInner = katalogItem.querySelector('.mega-menu__grid');
+  if (!megaMenuInner) return;
+
+  const panel = document.createElement('div');
+  panel.id = 'giclee-catalog-panel';
+  panel._catalogInlineStagger = true;
+  panel._linkTimers = [];
+
+  const listCol = document.createElement('div');
+  listCol.id = 'giclee-artists-list';
+
+  const previewCol = document.createElement('div');
+  previewCol.id = 'giclee-artist-preview';
+  previewCol.innerHTML = `
+    <img id="giclee-preview-img" alt="">
+    <div id="giclee-preview-info">
+      <div id="giclee-preview-line"></div>
+      <div id="giclee-preview-name"></div>
+      <div id="giclee-preview-count"></div>
+    </div>
+  `;
+
+  const artistLinks = megaMenuInner.querySelectorAll('.mega-menu__link--child, .mega-menu__flyout-panel a');
+  artistLinks.forEach(function(origLink) {
+    const a = document.createElement('a');
+    a.href = origLink.href;
+    a.textContent = origLink.textContent.trim();
+    const handle = origLink.href.split('/collections/')[1]?.split('?')[0];
+
+    a.addEventListener('mouseenter', function() {
+      listCol.querySelectorAll('a').forEach(l => l.classList.remove('is-active'));
+      a.classList.add('is-active');
+      if (handle) {
+        document.getElementById('giclee-preview-name').textContent = a.textContent;
+        document.getElementById('giclee-preview-count').textContent = 'Zobacz kolekcję';
+        fetchArtistPreview(handle, function(data) {
+          setPreviewImage(data.img);
+        });
+      }
+    });
+
+    listCol.appendChild(a);
+  });
+
+  const artistsLink = megaMenuInner.querySelector('.mega-menu__link--parent');
+  if (artistsLink) {
+    const header = document.createElement('div');
+    header.style.cssText = 'font-size:9px;letter-spacing:0.45em;text-transform:uppercase;color:rgba(201,168,76,0.5);font-weight:500;padding:0 0 20px 0;column-span:all;font-family:Inter,sans-serif;';
+    header.textContent = 'Artyści';
+    listCol.prepend(header);
+  }
+
+  panel.appendChild(listCol);
+  panel.appendChild(previewCol);
+  document.body.appendChild(panel);
+
+  function positionPanel() {
+    const headerEl = document.querySelector('#header-component, .header-section, header');
+    const rect = headerEl.getBoundingClientRect();
+    // Small overlap removes hover gap between menu item and panel.
+    panel.style.top = (rect.bottom - 14) + 'px';
+  }
+
+  let hideTimer;
+  let hideFinalizeTimer;
+  let listCloseTimer;
+
+  function resetPanelLinks() {
+    if (panel._linkTimers && panel._linkTimers.length) {
+      panel._linkTimers.forEach(function(t) { clearTimeout(t); });
+      panel._linkTimers = [];
+    }
+    listCol.querySelectorAll('a').forEach(function(link) {
+      link.classList.remove('is-in');
+      link.style.transition = '';
+      link.style.opacity = '';
+      link.style.transform = '';
+      link.style.visibility = '';
+      link.style.willChange = '';
+    });
+  }
+
+  function closePanelLinks() {
+    var links = Array.from(listCol.querySelectorAll('a'));
+    if (panel._linkTimers && panel._linkTimers.length) {
+      panel._linkTimers.forEach(function(t) { clearTimeout(t); });
+      panel._linkTimers = [];
+    }
+    links.forEach(function(link) {
+      // Freeze current reveal state; do not force unrevealed links to appear on close.
+      var revealed = link.classList.contains('is-in');
+      link.style.visibility = revealed ? 'visible' : 'hidden';
+      link.style.transition = 'none';
+      link.style.opacity = revealed ? '1' : '0';
+      link.style.transform = revealed ? 'translateY(0)' : 'translateY(10px)';
+    });
+  }
+
+  function freezePanelLinksForNavigation() {
+    var links = Array.from(listCol.querySelectorAll('a'));
+    if (panel._linkTimers && panel._linkTimers.length) {
+      panel._linkTimers.forEach(function(t) { clearTimeout(t); });
+      panel._linkTimers = [];
+    }
+    links.forEach(function(link) {
+      var cs = window.getComputedStyle(link);
+      link.style.transition = 'none';
+      link.style.visibility = cs.visibility;
+      link.style.opacity = cs.opacity;
+      link.style.transform = cs.transform === 'none' ? 'translateY(0)' : cs.transform;
+    });
+  }
+
+  function staggerPanelLinks() {
+    var links = listCol.querySelectorAll('a');
+    resetPanelLinks();
+    links.forEach(function(link) {
+      link.classList.remove('is-in');
+      link.style.transition = 'none';
+      link.style.opacity = '0';
+      link.style.transform = 'translateY(10px)';
+      link.style.visibility = 'hidden';
+      link.style.willChange = 'opacity, transform';
+    });
+
+    requestAnimationFrame(function() {
+      var openRevealDelay = 120;
+      var maxCascadeMs = Math.min(2200, Math.max(1300, Math.max(0, links.length - 1) * 24));
+      var minIntervalMs = 20;
+      var maxIntervalMs = 92;
+      var intervalCurve = 1.75; // stronger slow-down near the end
+      var intervals = [];
+      var totalIntervals = 0;
+      for (var k = 0; k < Math.max(0, links.length - 1); k++) {
+        var q = (links.length - 2) > 0 ? (k / (links.length - 2)) : 1;
+        var rawInterval = minIntervalMs + (maxIntervalMs - minIntervalMs) * Math.pow(q, intervalCurve);
+        intervals.push(rawInterval);
+        totalIntervals += rawInterval;
+      }
+      var intervalScale = totalIntervals > 0 ? (maxCascadeMs / totalIntervals) : 1;
+      var cumulativeDelay = 0;
+
+      links.forEach(function(link, i) {
+        if (i > 0) cumulativeDelay += intervals[i - 1] * intervalScale;
+        var timer = setTimeout(function() {
+          link.style.visibility = 'visible';
+          link.offsetHeight;
+          link.style.transition = 'opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)';
+          link.style.opacity = '1';
+          link.style.transform = 'translateY(0)';
+          link.classList.add('is-in');
+        }, openRevealDelay + Math.round(cumulativeDelay));
+        panel._linkTimers.push(timer);
+      });
+    });
+  }
+
+  function showPanel() {
+    clearTimeout(hideTimer);
+    clearTimeout(hideFinalizeTimer);
+    clearTimeout(listCloseTimer);
+    panel._navLock = false;
+    var alreadyOpen = panel.classList.contains('is-open') && !panel.classList.contains('is-closing');
+    panel.classList.remove('is-closing');
+    listCol.style.clipPath = 'inset(0 0 0 0)';
+    listCol.style.opacity = '';
+    listCol.style.transform = '';
+    listCol.style.overflow = '';
+    listCol.style.overflowY = 'auto';
+    listCol.style.transition = '';
+    positionPanel();
+    panel.classList.add('is-open');
+    if (!alreadyOpen) {
+      staggerPanelLinks();
+    }
+    const katalogLink = katalogItem.querySelector('a.menu-list__link');
+    if (katalogLink) katalogLink.style.cssText = 'visibility:visible!important;opacity:1!important;';
+    listCol.querySelectorAll('a').forEach(function(link) {
+      const h = link.href.split('/collections/')[1]?.split('?')[0];
+      if (h && !imageCache[h]) fetchArtistPreview(h, function() {});
+    });
+  }
+
+  function hidePanel() {
+    if (panel._navLock) return;
+    hideTimer = setTimeout(function() {
+      if (panel._navLock) return;
+      panel.classList.add('is-closing');
+      closePanelLinks();
+
+      listCol.style.transition = 'none';
+      listCol.style.clipPath = 'inset(0 0 0 0)';
+      listCol.style.opacity = '1';
+      listCol.style.transform = 'translateY(0)';
+      listCol.style.overflow = 'hidden';
+      listCol.style.overflowY = 'hidden';
+
+      requestAnimationFrame(function() {
+        listCol.style.transition = 'clip-path 0.5s cubic-bezier(0.22, 0.61, 0.36, 1)';
+        listCol.style.clipPath = 'inset(0 0 100% 0)';
+      });
+
+      listCloseTimer = setTimeout(function() {
+        panel.classList.remove('is-open', 'is-closing');
+        resetPanelLinks();
+        listCol.style.clipPath = '';
+        listCol.style.opacity = '';
+        listCol.style.transform = '';
+        listCol.style.overflow = '';
+        listCol.style.overflowY = 'auto';
+        listCol.style.transition = '';
+        const katalogLink = katalogItem.querySelector('a.menu-list__link');
+        if (katalogLink) katalogLink.style.cssText = '';
+        currentPreviewSrc = null;
+        const img = document.getElementById('giclee-preview-img');
+        img.removeAttribute('src');
+        img.classList.remove('is-visible');
+      }, 500);
+    }, 180);
+  }
+
+  katalogItem.addEventListener('mouseenter', showPanel);
+  katalogItem.addEventListener('mouseleave', hidePanel);
+  panel.addEventListener('mouseenter', function() {
+    clearTimeout(hideTimer);
+    clearTimeout(hideFinalizeTimer);
+    clearTimeout(listCloseTimer);
+    panel.classList.remove('is-closing');
+    listCol.style.clipPath = 'inset(0 0 0 0)';
+    listCol.style.opacity = '';
+    listCol.style.transform = '';
+    listCol.style.overflow = '';
+    listCol.style.overflowY = 'auto';
+    listCol.style.transition = '';
+    const katalogLink = katalogItem.querySelector('a.menu-list__link');
+    if (katalogLink) katalogLink.style.cssText = 'visibility:visible!important;opacity:1!important;';
+  });
+  panel.addEventListener('mouseleave', hidePanel);
+
+  // Ensure catalog panel joins page-transition close animation on navigation,
+  // even if it is still opening or partially revealed.
+  window.addEventListener('giclee:navigation-start', function(e) {
+    clearTimeout(hideTimer);
+    clearTimeout(hideFinalizeTimer);
+    clearTimeout(listCloseTimer);
+    var navHref = (e && e.detail && e.detail.href) ? e.detail.href : '';
+    var normalizedHref = '';
+    try {
+      normalizedHref = new URL(navHref, window.location.origin).pathname.toLowerCase();
+    } catch (err) {
+      normalizedHref = String(navHref || '').split('?')[0].split('#')[0].toLowerCase();
+    }
+    // Treat only the catalog landing page as "catalog nav",
+    // not every collection detail URL like /collections/<handle>.
+    var isCatalogNav = normalizedHref === '/collections' || normalizedHref === '/pages/katalog';
+
+    // For catalog navigation while stagger is still running, keep current reveal/timers.
+    // This prevents the list from disappearing before the curtain transition.
+    if (isCatalogNav) {
+      panel._navLock = true;
+      clearTimeout(hideTimer);
+      clearTimeout(hideFinalizeTimer);
+      clearTimeout(listCloseTimer);
+      if (panel._linkTimers && panel._linkTimers.length) {
+        panel._linkTimers.forEach(function(t) { clearTimeout(t); });
+        panel._linkTimers = [];
+      }
+      panel.classList.remove('staggering');
+      panel.classList.remove('is-closing');
+      panel.classList.add('is-open');
+      freezePanelLinksForNavigation();
+      return;
+    }
+
+    panel._navLock = false;
+
+    if (panel._linkTimers && panel._linkTimers.length) {
+      panel._linkTimers.forEach(function(t) { clearTimeout(t); });
+      panel._linkTimers = [];
+    }
+    panel.classList.remove('staggering', 'is-closing');
+
+    // Freeze exactly current visual state; do not expand to full panel.
+    var panelCS = window.getComputedStyle(panel);
+    var listCS = window.getComputedStyle(listCol);
+    panel.style.setProperty('clip-path', panelCS.clipPath === 'none' ? 'inset(0 0 0 0)' : panelCS.clipPath, 'important');
+    panel.style.setProperty('opacity', panelCS.opacity, 'important');
+    listCol.style.clipPath = listCS.clipPath === 'none' ? 'inset(0 0 0 0)' : listCS.clipPath;
+    listCol.style.transition = 'none';
+
+    // Freeze exactly current visual state without forcing full list.
+    freezePanelLinksForNavigation();
+  });
+}
+
+let attempts = 0;
+const interval = setInterval(function() {
+  initGalleryCatalog();
+  attempts++;
+  if (attempts > 20) clearInterval(interval);
+}, 500);
+
+
+</script>
+
+
+
+
+
+
+
+
+
+<script>
+  (function() {
+    // Tylko na stronie głównej
+    if (window.location.pathname !== '/') return;
+
+    var mobileImages = [
+      'https://cdn.shopify.com/s/files/1/1011/0517/2828/files/001_In_a_Dutch_Golden_Age_style_a_still_life_K6d_qCVk.png?v=1775607884',
+      'https://cdn.shopify.com/s/files/1/1011/0517/2828/files/001_In_a_Dutch_Golden_Age_style_a_still_life_K6d_qCVk.png?v=1775607884',
+      'https://cdn.shopify.com/s/files/1/1011/0517/2828/files/001_In_a_Dutch_Golden_Age_style_a_still_life_K6d_qCVk.png?v=1775607884',
+      'https://cdn.shopify.com/s/files/1/1011/0517/2828/files/001_In_a_Dutch_Golden_Age_style_a_still_life_K6d_qCVk.png?v=1775607884'
+    ];
+
+     // Zatrzymaj autoodtwarzanie na mobile
+    if (window.innerWidth <= 767) {
+      var observer = new MutationObserver(function() {
+        var slideshow = document.querySelector('slideshow-component');
+        if (slideshow) {
+          slideshow.removeAttribute('autoplay');
+          observer.disconnect();
+        }
+      });
+      observer.observe(document.documentElement, { childList: true, subtree: true });
+    }
+
+    function removeMobileImages() {
+      document.querySelectorAll('.mobile-slide-image').forEach(function(img) {
+        img.remove();
+      });
+    }
+
+    function injectMobileImages() {
+      if (window.innerWidth > 767) {
+        removeMobileImages();
+        return;
+      }
+
+      var slides = document.querySelectorAll('slideshow-slide');
+      slides.forEach(function(slide, i) {
+        if (mobileImages[i] && !slide.querySelector('.mobile-slide-image')) {
+          var img = document.createElement('img');
+          img.src = mobileImages[i];
+          img.className = 'mobile-slide-image';
+          img.alt = '';
+          img.setAttribute('aria-hidden', 'true');
+          slide.insertBefore(img, slide.firstChild);
+        }
+      });
+    }
+
+    // Dodaj szewrony na mobile
+    if (window.innerWidth <= 767) {
+      document.addEventListener('DOMContentLoaded', function() {
+        var slideshow = document.querySelector('slideshow-component');
+        if (!slideshow) return;
+
+        var prev = document.createElement('button');
+        var next = document.createElement('button');
+
+        prev.className = 'mobile-chevron mobile-chevron--prev';
+        next.className = 'mobile-chevron mobile-chevron--next';
+
+        prev.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>';
+        next.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>';
+
+        var currentSlide = 0;
+        var totalSlides = slideshow.querySelectorAll('slideshow-slide').length;
+
+        prev.addEventListener('click', function() {
+          currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+          var dot = slideshow.querySelector('[on\\:click="/select/' + currentSlide + '"]');
+          if (dot) dot.click();
+        });
+
+        next.addEventListener('click', function() {
+          currentSlide = (currentSlide + 1) % totalSlides;
+          var dot = slideshow.querySelector('[on\\:click="/select/' + currentSlide + '"]');
+          if (dot) dot.click();
+        });
+
+        slideshow.appendChild(prev);
+        slideshow.appendChild(next);
+      });
+    }
+
+    var attempts = 0;
+    var timer = setInterval(function() {
+      injectMobileImages();
+      attempts++;
+      if (attempts > 20) clearInterval(timer);
+    }, 300);
+
+    window.addEventListener('resize', injectMobileImages);
+  })();
+</script>
+
+
+
+
+
+
+
+  <script>
+
+    (function() {
+      // Scroll-triggered animations for homepage, giclee-frame, filozofia-marki
+      var scrollPages = ['index', 'page'];
+      var scrollSuffixes = ['giclee-frame', 'filozofia-marki', ''];
+      var pageType = {{ request.page_type | json }};
+      var pageSuffix = {{ template.suffix | default: '' | json }};
+      var isScrollPage = pageType === 'index' ||
+        (pageType === 'page' && (pageSuffix === 'giclee-frame' || pageSuffix === 'filozofia-marki'));
+
+      if (isScrollPage) {
+        var style = document.createElement('style');
+        style.textContent = '.scroll-reveal{opacity:0;transform:translateY(28px);transition:opacity 0.75s cubic-bezier(0.16,1,0.3,1),transform 0.75s cubic-bezier(0.16,1,0.3,1)}.scroll-reveal.is-visible{opacity:1;transform:none}';
+        document.head.appendChild(style);
+
+        document.addEventListener('DOMContentLoaded', function() {
+          var targets = document.querySelectorAll('.shopify-section > *, [class*="section"] > *, img, video, .rte > *');
+          var delayed = ['section', 'div', 'article'];
+          function shouldSkipReveal(el) {
+            if (!el) return true;
+            if (el.tagName === 'HR') return true;
+            if (el.classList.contains('divider')) return true;
+            if (el.classList.contains('divider__line')) return true;
+            if (el.classList.contains('section-divider')) return true;
+            if ((el.className || '').indexOf('divider') !== -1) return true;
+            if ((el.className || '').indexOf('separator') !== -1) return true;
+            if (el.querySelector && el.querySelector('.divider, .divider__line, hr')) return true;
+            return false;
+          }
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+              }
+            });
+          }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+          document.querySelectorAll('.shopify-section').forEach(function(section, i) {
+            if (section.closest('footer')) return;
+            var children = Array.from(section.children);
+            children.forEach(function(el, j) {
+              if (shouldSkipReveal(el)) return;
+              el.classList.add('scroll-reveal');
+              el.style.transitionDelay = (j * 0.1) + 's';
+              observer.observe(el);
+            });
+          });
+        });
+      }
+    })();
+
+    (function() {
+      document.addEventListener('DOMContentLoaded', function() {
+        var allDetails = Array.from(document.querySelectorAll('accordion-custom details'));
+
+        allDetails.forEach(function(details) {
+          var summary = details.querySelector('summary');
+          if (!summary) return;
+
+          // For direct close (user clicks open accordion):
+          // Keep :focus-within true during close so component's transition runs
+          summary.addEventListener('mousedown', function(e) {
+            if (details.open) {
+              e.preventDefault();
+              summary.focus({ preventScroll: true });
+            }
+          });
+
+          // For mutual close (component closes this when another opens):
+          // Force focus to this summary so :focus-within stays true during transition
+          summary.addEventListener('click', function() {
+            if (!details.open) return;
+            // We opened another - focus on all currently open ones briefly
+            allDetails.forEach(function(d) {
+              if (d !== details && d.open) {
+                var s = d.querySelector('summary');
+                if (s) {
+                  s.focus({ preventScroll: true });
+                  setTimeout(function() { s.blur(); }, 800);
+                }
+              }
+            });
+          });
+        });
+      });
+    })();
+
+    (function() {
+      function initCatalogPanel(panel) {
+        if (panel._catalogInit) return;
+        if (panel._catalogInlineStagger) return;
+        panel._catalogInit = true;
+        var wasOpen = panel.classList.contains('is-open');
+
+        function runLinkStagger() {
+          var links = panel.querySelectorAll('#giclee-artists-list a');
+          panel.classList.add('staggering');
+          if (panel._linkTimers && panel._linkTimers.length) {
+            panel._linkTimers.forEach(function(t) { clearTimeout(t); });
+          }
+          panel._linkTimers = [];
+          links.forEach(function(link) {
+            link.classList.remove('is-in');
+            link.style.willChange = 'opacity, transform';
+            link.style.transition = 'none';
+            link.style.opacity = '0';
+            link.style.transform = 'translateY(10px)';
+            link.style.visibility = 'hidden';
+          });
+          requestAnimationFrame(function() {
+            var openRevealDelay = 100;
+            // Keep cascade readable even for long artist lists.
+            var maxCascadeMs = Math.min(2200, Math.max(1300, Math.max(0, links.length - 1) * 24));
+            var minIntervalMs = 22;
+            var maxIntervalMs = 68;
+            var intervalCurve = 1.35; // smaller intervals at start, larger near the end
+            var intervals = [];
+            var totalIntervals = 0;
+            for (var k = 0; k < Math.max(0, links.length - 1); k++) {
+              var q = (links.length - 2) > 0 ? (k / (links.length - 2)) : 1;
+              var rawInterval = minIntervalMs + (maxIntervalMs - minIntervalMs) * Math.pow(q, intervalCurve);
+              intervals.push(rawInterval);
+              totalIntervals += rawInterval;
+            }
+            var intervalScale = totalIntervals > 0 ? (maxCascadeMs / totalIntervals) : 1;
+            var cumulativeDelay = 0;
+            links.forEach(function(link, i) {
+              if (i > 0) {
+                cumulativeDelay += intervals[i - 1] * intervalScale;
+              }
+              var easedDelay = Math.round(cumulativeDelay);
+              var timer = setTimeout(function() {
+                link.style.visibility = 'visible';
+                link.offsetHeight; // force style flush before transition
+                link.style.transition = 'opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)';
+                link.style.opacity = '1';
+                link.style.transform = 'translateY(0)';
+                link.classList.add('is-in');
+                if (i === links.length - 1) {
+                  panel.classList.remove('staggering');
+                }
+              }, openRevealDelay + easedDelay);
+              panel._linkTimers.push(timer);
+            });
+          });
+        }
+
+        function resetLinkStagger() {
+          var links = panel.querySelectorAll('#giclee-artists-list a');
+          panel.classList.remove('staggering');
+          if (panel._linkTimers && panel._linkTimers.length) {
+            panel._linkTimers.forEach(function(t) { clearTimeout(t); });
+            panel._linkTimers = [];
+          }
+          links.forEach(function(link) {
+            link.classList.remove('is-in');
+            link.style.willChange = '';
+            link.style.transition = '';
+            link.style.opacity = '';
+            link.style.transform = '';
+            link.style.visibility = '';
+          });
+        }
+
+        // --- Close on mouseleave ---
+        panel.addEventListener('mouseleave', function(e) {
+          clearTimeout(panel._closeTimer);
+          panel._closeTimer = setTimeout(function() {
+            panel.classList.remove('is-open');
+          }, 180);
+        });
+        panel.addEventListener('mouseenter', function() {
+          clearTimeout(panel._closeTimer);
+        });
+
+        // --- Stagger links on open ---
+        panel.addEventListener('giclee:catalog-open', runLinkStagger);
+        panel.addEventListener('giclee:catalog-close', resetLinkStagger);
+        var observer = new MutationObserver(function(mutations) {
+          mutations.forEach(function(m) {
+            if (m.attributeName === 'class') {
+              if (panel._skipNextObserver) {
+                panel._skipNextObserver = false;
+                return;
+              }
+              var isOpenNow = panel.classList.contains('is-open');
+              if (isOpenNow === wasOpen) return;
+              wasOpen = isOpenNow;
+              if (isOpenNow) {
+                runLinkStagger();
+              } else {
+                resetLinkStagger();
+              }
+            }
+          });
+        });
+        observer.observe(panel, { attributes: true });
+      }
+
+      // Try on DOMContentLoaded, then poll in case it's dynamically created
+      function tryInit() {
+        var panel = document.getElementById('giclee-catalog-panel');
+        if (panel) { initCatalogPanel(panel); return; }
+        setTimeout(tryInit, 300);
+      }
+      document.addEventListener('DOMContentLoaded', tryInit);
+    })();
+  </script>
+
+  <script>
+    (function() {
+      var overlay = document.getElementById('page-transition');
+
+      var isHomepage = {{ request.page_type | json }} === 'index';
+      var isNavigating = false;
+      var isOpen = false;
+
+      // Snap panels to closed instantly (no animation)
+      overlay.classList.add('active', 'pt-init');
+      overlay.querySelectorAll('.pt-panel, .pt-seam').forEach(function(el) {
+        el.style.transform = '';
+        el.style.transition = '';
+        el.style.opacity = '';
+      });
+
+      window.addEventListener('load', function() {
+        if (isHomepage) {
+          // Elegant fade out before splash screen appears
+          setTimeout(function() {
+            overlay.classList.add('fade-to-splash');
+            setTimeout(function() {
+              overlay.classList.remove('active', 'pt-init', 'fade-to-splash');
+              isOpen = true;
+            }, 1500);
+          }, 200);
+          return;
+        }
+        // Wait 2 frames to ensure pt-init is rendered, then animate open
+        requestAnimationFrame(function() {
+          requestAnimationFrame(function() {
+            overlay.classList.remove('pt-init', 'closing');
+            overlay.classList.add('opening');
+            setTimeout(function() {
+              overlay.classList.remove('active', 'opening');
+              isOpen = true;
+            }, 1700);
+          });
+        });
+      });
+
+      // Close curtains on link click, navigate after full close
+      document.addEventListener('click', function(e) {
+        if (isNavigating || !isOpen) return;
+        var link = e.target.closest('a');
+        if (!link) return;
+        var href = link.getAttribute('href');
+        if (!href || href.startsWith('#') || href.startsWith('javascript') || link.target === '_blank') return;
+        if (link.hostname && link.hostname !== window.location.hostname) return;
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('giclee:navigation-start', { detail: { href: href } }));
+        isNavigating = true;
+        document.body.classList.add('is-navigating');
+        overlay.classList.remove('opening');
+        overlay.classList.add('active', 'closing');
+        setTimeout(function() {
+          window.location.href = href;
+        }, 950);
+      });
+    })();
+  </script>
+
+  <script>
+    (function() {
+      var isHomepage = {{ request.page_type | json }} === 'index';
+      var splash = document.getElementById('splash-screen');
+      var overlay = document.getElementById('page-transition');
+
+      if (!isHomepage) {
+        splash.style.display = 'none';
+        return;
+      }
+
+      function hideSplash() {
+        splash.classList.add('hide');
+        setTimeout(function() { splash.style.display = 'none'; }, 850);
+      }
+
+      // Splash animation finishes at 1800ms (line: 0.9s delay + 0.9s = 1.8s)
+      // Small hold then fade
+      setTimeout(hideSplash, 2200);
+    })();
+  </script>
+  {% if template.suffix == 'fotografia-obraz' %}
+  <script>
+    (function() {
+      var cta = document.getElementById('pm-cta');
+      if (!cta) return;
+      var hero = document.getElementById('pm-hero');
+      var root = document.body;
+      var backButton = document.getElementById('pm-back-to-preview');
+      var invite = document.getElementById('pm-lab-invite');
+      if (!backButton) {
+        backButton = document.createElement('button');
+        backButton.type = 'button';
+        backButton.id = 'pm-back-to-preview';
+        backButton.textContent = '\u2190 Powrot';
+        root.appendChild(backButton);
+      }
+      if (hero && !invite) {
+        invite = document.createElement('div');
+        invite.id = 'pm-lab-invite';
+        invite.innerHTML = '<strong>Podoba sie?</strong>Zapraszam do Laboratorium, gdzie wybierzesz format, przyciecie i dowiesz sie, jaka jakosc uzyskasz z tego zdjecia.';
+        hero.appendChild(invite);
+      }
+
+      cta.setAttribute('href', '#');
+      var chevronsWrap = cta.querySelector('.pm-cta-chevrons');
+      if (chevronsWrap) {
+        chevronsWrap.style.flexDirection = 'row';
+        chevronsWrap.style.gap = '4px';
+        chevronsWrap.style.marginTop = '0';
+      }
+      var chevrons = cta.querySelectorAll('.pm-cta-chevrons svg');
+      var delays = ['0s', '0.18s', '0.36s'];
+      chevrons.forEach(function(svg, idx) {
+        svg.style.transform = 'rotate(-90deg)';
+        svg.style.animationName = 'pmChevronHorizontalForced';
+        svg.style.animationDuration = '1.8s';
+        svg.style.animationTimingFunction = 'ease-in-out';
+        svg.style.animationIterationCount = 'infinite';
+        svg.style.animationDelay = delays[idx] || '0s';
+      });
+      document.addEventListener('click', function(e) {
+        var trigger = e.target && e.target.closest ? e.target.closest('#pm-cta') : null;
+        if (!trigger) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+        root.classList.toggle('pm-app-drawer-open');
+      }, true);
+
+      backButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+        root.classList.remove('pm-app-drawer-open');
+      }, true);
+    })();
+  </script>
+  <script>
+    (function() {
+      var nativeScrollTo = window.scrollTo.bind(window);
+      window.scrollTo = function(arg1, arg2) {
+        var top = null;
+        var behavior = '';
+        if (typeof arg1 === 'object' && arg1) {
+          if (typeof arg1.top === 'number') top = arg1.top;
+          behavior = String(arg1.behavior || '');
+        } else if (typeof arg1 === 'number') {
+          top = arg1;
+        }
+
+        var current = window.pageYOffset || window.scrollY || 0;
+        var delta = (typeof top === 'number') ? Math.abs(top - current) : Infinity;
+
+        // Disable short magnetic smooth snaps on this template.
+        if (behavior === 'smooth' && delta <= 260) return;
+        return nativeScrollTo(arg1, arg2);
+      };
+    })();
+  </script>
+  {% endif %}
+
+</body>
+</html>

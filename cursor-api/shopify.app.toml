@@ -1,0 +1,26 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "2e8c14d2c5f3d410c29a2ff64466de12"
+name = "Cursor API"
+# Musi mieć ten sam host co redirect OAuth (127.0.0.1), inaczej: "redirect_uri and application url must have matching hosts"
+application_url = "http://127.0.0.1:3000"
+embedded = false
+
+[build]
+automatically_update_urls_on_dev = true
+
+[webhooks]
+api_version = "2026-04"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+# Po zmianie scopes uruchom ponownie OAuth: cd cursor-api && npm run oauth
+scopes = "read_products,write_products,read_publications,write_publications,read_translations,write_translations,read_markets,write_markets,read_content,write_content,read_orders,read_files,write_files"
+optional_scopes = [ ]
+use_legacy_install_flow = false
+
+[auth]
+redirect_urls = [
+  "http://127.0.0.1:3000/auth/callback",
+  "http://localhost:3000/auth/callback"
+]

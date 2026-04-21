@@ -1,0 +1,90 @@
+{
+  "_comment": "Konfiguracja rynkow sklepu. Kazdy rynek ma osobny Shopify Catalog z markup % nad cena PL. To jest LOKALNE zrodlo prawdy dla aplikacji - GUI cennika czyta i zapisuje tu. Pole 'shopify_market_gid' moze byc puste; jesli wypelnione i wlasciciel zmieni 'markup_percent' z aplikacji, mozemy pushowac do Shopify Markets API. Dodawanie nowego rynku: dopisz wpis i opisz w SHOP_KNOWLEDGE.md sekcja 'Rynki i cennik'.",
+  "base_market": "pl",
+  "markets": [
+    {
+      "code": "pl",
+      "name_pl": "Polska",
+      "locale": "pl",
+      "currency": "PLN",
+      "url_prefix": "gicleeart.eu/pl-pl",
+      "markup_percent": 0.0,
+      "is_base": true,
+      "name_en": "Poland",
+      "shopify_market_gid": "gid://shopify/Market/108513493340",
+      "shopify_price_list_gid": ""
+    },
+    {
+      "code": "es",
+      "name_pl": "Hiszpania",
+      "locale": "es",
+      "currency": "EUR",
+      "url_prefix": "gicleeart.eu/es-es",
+      "markup_percent": 5.0,
+      "is_base": false,
+      "name_en": "Spain",
+      "shopify_market_gid": "gid://shopify/Market/109327515996",
+      "shopify_price_list_gid": "gid://shopify/PriceList/34996781404"
+    },
+    {
+      "code": "it",
+      "name_pl": "Wlochy",
+      "locale": "it",
+      "currency": "EUR",
+      "url_prefix": "gicleeart.eu/it-it",
+      "markup_percent": 5.0,
+      "is_base": false,
+      "name_en": "Italy",
+      "shopify_market_gid": "gid://shopify/Market/109327483228",
+      "shopify_price_list_gid": "gid://shopify/PriceList/34996846940"
+    },
+    {
+      "code": "eu",
+      "name_pl": "Europa (UE)",
+      "locale": "en",
+      "currency": "EUR",
+      "url_prefix": "gicleeart.eu/en-eu",
+      "markup_percent": 8.0,
+      "is_base": false,
+      "name_en": "European Union",
+      "shopify_market_gid": "gid://shopify/Market/109327319388",
+      "shopify_price_list_gid": "gid://shopify/PriceList/34996879708"
+    },
+    {
+      "code": "fr",
+      "name_pl": "Francja",
+      "locale": "fr",
+      "currency": "EUR",
+      "url_prefix": "gicleeart.eu/fr-fr",
+      "markup_percent": 10.0,
+      "is_base": false,
+      "name_en": "France",
+      "shopify_market_gid": "gid://shopify/Market/109326532956",
+      "shopify_price_list_gid": "gid://shopify/PriceList/34996715868"
+    },
+    {
+      "code": "de",
+      "name_pl": "Niemcy",
+      "locale": "de",
+      "currency": "EUR",
+      "url_prefix": "gicleeart.eu/de-de",
+      "markup_percent": 15.0,
+      "is_base": false,
+      "name_en": "Germany",
+      "shopify_market_gid": "gid://shopify/Market/109326795100",
+      "shopify_price_list_gid": "gid://shopify/PriceList/34996748636"
+    },
+    {
+      "code": "nl",
+      "name_pl": "Holandia",
+      "locale": "nl",
+      "currency": "EUR",
+      "url_prefix": "gicleeart.eu/nl-nl",
+      "markup_percent": 15.0,
+      "is_base": false,
+      "name_en": "Netherlands",
+      "shopify_market_gid": "gid://shopify/Market/109327417692",
+      "shopify_price_list_gid": "gid://shopify/PriceList/34996814172"
+    }
+  ]
+}

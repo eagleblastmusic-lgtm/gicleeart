@@ -1,0 +1,46 @@
+/* Mobile slideshow images */
+@media (max-width: 767px) {
+  slideshow-slide {
+    position: relative;
+  }
+  .mobile-slide-image {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 3;
+    pointer-events: none;
+  }
+  slideshow-slide .mobile-slide-image ~ * {
+    position: relative;
+    z-index: 2;
+  }
+  slideshow-controls {
+    z-index: 4 !important;
+  }
+}
+/* Mobile chevrons */
+@media (max-width: 767px) {
+  .mobile-chevron {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+    background: rgba(0,0,0,0.3);
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    padding: 8px;
+  }
+  .mobile-chevron--prev { left: 12px; }
+  .mobile-chevron--next { right: 12px; }
+  .mobile-chevron svg { width: 20px; height: 20px; }
+}

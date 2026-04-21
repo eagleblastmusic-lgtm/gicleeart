@@ -1,0 +1,8 @@
+{
+  "name": "Produkcja",
+  "description": "Status zamowien: wydruk, ramka (z 3-dniowym utwardzaniem), zlozenie, pakowanie, wysylka.",
+  "icon": "🏭",
+  "color": "#c62828",
+  "order": 90,
+  "mode": "inline"
+}

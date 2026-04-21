@@ -1,0 +1,9 @@
+{
+  "name": "Giclee Art Sklep",
+  "description": "Otwiera gicleeart.eu w domyslnej przegladarce.",
+  "icon": "🛒",
+  "color": "#c62828",
+  "order": 70,
+  "mode": "url",
+  "url": "https://gicleeart.eu"
+}

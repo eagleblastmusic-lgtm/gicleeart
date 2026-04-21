@@ -1,0 +1,3 @@
+# Opcjonalne narzedzia do budowy .exe (GicleeApp)
+# pip install -r requirements-build.txt
+pyinstaller>=6.0

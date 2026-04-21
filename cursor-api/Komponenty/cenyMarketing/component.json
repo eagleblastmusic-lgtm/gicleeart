@@ -1,0 +1,8 @@
+{
+  "name": "Ceny w marketingu",
+  "description": "Pelna analiza pricing-u: kalkulator P&L, LTV/CAC, kalendarz promocji, edytowalne koszty produkcji.",
+  "icon": "📈",
+  "color": "#1976d2",
+  "order": 65,
+  "mode": "inline"
+}

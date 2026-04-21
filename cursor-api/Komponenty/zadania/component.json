@@ -1,0 +1,8 @@
+{
+  "name": "Zadania",
+  "description": "Planer marketingowy - sygnaly z Shopify + kalendarz swiat + LLM = zadania na tydzien/miesiac.",
+  "icon": "📆",
+  "color": "#00897b",
+  "order": 62,
+  "mode": "inline"
+}
