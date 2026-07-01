@@ -1,0 +1,68 @@
+{%- comment -%}
+  Wyświetlanie tytułu kolekcji autora: cząstki nazwiska przy imieniu wracają do nazwiska.
+  „Gogh, Vincent van" → „Van Gogh, Vincent"
+  Parametr: name (string)
+{%- endcomment -%}
+{%- assign raw = name | default: '' | strip -%}
+{%- assign formatted = raw -%}
+
+{%- if raw != blank and raw contains ', ' -%}
+  {%- assign name_parts = raw | split: ', ' -%}
+  {%- assign surname = name_parts[0] | strip -%}
+  {%- assign given = name_parts[1] | strip -%}
+  {%- assign suffix = '' -%}
+
+  {%- if name_parts.size > 2 -%}
+    {%- assign suffix = name_parts | slice: 2, name_parts.size | join: ', ' -%}
+    {%- assign suffix = ', ' | append: suffix -%}
+  {%- endif -%}
+
+  {%- assign given_words = given | split: ' ' -%}
+  {%- assign last_given = given_words.last | downcase -%}
+  {%- assign particle_list = 'van,von,de,da,del,della,di,du,ten,ter,den,der,af,av,la,le' | split: ',' -%}
+  {%- assign is_particle = false -%}
+
+  {%- for particle in particle_list -%}
+    {%- if last_given == particle -%}
+      {%- assign is_particle = true -%}
+      {%- break -%}
+    {%- endif -%}
+  {%- endfor -%}
+
+  {%- if is_particle and given_words.size > 1 -%}
+    {%- assign particle_word = given_words.last -%}
+    {%- assign given_trimmed = '' -%}
+    {%- for word in given_words -%}
+      {%- unless forloop.last -%}
+        {%- if given_trimmed != blank -%}
+          {%- assign given_trimmed = given_trimmed | append: ' ' -%}
+        {%- endif -%}
+        {%- assign given_trimmed = given_trimmed | append: word -%}
+      {%- endunless -%}
+    {%- endfor -%}
+    {%- assign given = given_trimmed -%}
+    {%- assign surname = particle_word | append: ' ' | append: surname -%}
+  {%- endif -%}
+
+  {%- assign surname_out = '' -%}
+  {%- assign surname_words = surname | split: ' ' -%}
+  {%- for word in surname_words -%}
+    {%- if surname_out != blank -%}
+      {%- assign surname_out = surname_out | append: ' ' -%}
+    {%- endif -%}
+    {%- assign surname_out = surname_out | append: word | capitalize -%}
+  {%- endfor -%}
+
+  {%- assign given_out = '' -%}
+  {%- assign given_name_words = given | split: ' ' -%}
+  {%- for word in given_name_words -%}
+    {%- if given_out != blank -%}
+      {%- assign given_out = given_out | append: ' ' -%}
+    {%- endif -%}
+    {%- assign given_out = given_out | append: word | capitalize -%}
+  {%- endfor -%}
+
+  {%- assign formatted = surname_out | append: ', ' | append: given_out | append: suffix -%}
+{%- endif -%}
+
+{{- formatted -}}

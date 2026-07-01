@@ -1,0 +1,7 @@
+{
+  "name": "Zmien ceny",
+  "description": "Masowa aktualizacja cen wariantow we wszystkich produktach typu Obraz + markup per rynek (Rynki).",
+  "icon": "💰",
+  "color": "#f57c00",
+  "order": 13
+}

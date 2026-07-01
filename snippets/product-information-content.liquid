@@ -35,6 +35,11 @@
 {% enddoc %}
 
 {% liquid
+  assign hide_product_details = false
+  if template.suffix == 'szablon-wlasna-fotografia'
+    assign hide_product_details = true
+  endif
+
   # Determine render order based on media position
   if settings.desktop_media_position == 'left'
     assign render_order = 'media,product-details'
@@ -67,6 +72,10 @@
     endif
   endif
 
+  if hide_product_details
+    assign product_grid_class = product_grid_class | append: ' product-information--no-details'
+  endif
+
   # Determine content width
   case settings.content_width
     when 'content-center-aligned'
@@ -86,6 +95,40 @@
     {% assign product_href = '#ProductInformation-' | append: section_id %}
     {% render 'skip-to-content-link', href: product_href, text: 'accessibility.skip_to_product_info' %}
   {% endif %}
+
+  {%- liquid
+    assign giclee_pdp_template = false
+    if template.suffix == 'nowy-szblon-produktu' or template.suffix == 'szablon-produktu-v2' or template.suffix == 'szablon-wlasna-fotografia'
+      assign giclee_pdp_template = true
+    endif
+  -%}
+
+  {%- comment -%}
+    Giclee PDP (nowy-szblon-produktu, szablon-wlasna-fotografia): opis + panel SZCZEGOLY
+    renderujemy NAD sekcja galeria+warianty. Pozostale szablony — opis pod siatka (jak dotad).
+  {%- endcomment -%}
+  {%- assign description_first = false -%}
+  {%- if giclee_pdp_template -%}
+    {%- assign description_first = true -%}
+  {%- endif -%}
+
+  {%- capture product_description_below -%}
+    <div class="product-description-below{% if template.suffix == 'szablon-wlasna-fotografia' %} product-description-below--wlasna-no-details{% endif %}">
+      {{ product.description }}
+    </div>
+    {%- if description_first -%}
+      <div class="product-description-trailing-separator" role="presentation" aria-hidden="true"></div>
+    {%- endif -%}
+  {%- endcapture -%}
+
+  {% if description_first %}{{ product_description_below }}{% endif %}
+
+  {%- if template.suffix == 'szablon-wlasna-fotografia' -%}
+    <div class="product-wlasna-fotografia-mockup">
+      {% render 'giclee-photo-mockup' %}
+    </div>
+  {%- endif -%}
+
   <div
     class="{{ product_grid_class }}"
     data-product-grid-content
@@ -103,18 +146,34 @@
     {% for block in render_order_array %}
       {% if block == 'media' and product_has_media %}
         {{ media }}
-      {% elsif block == 'product-details' %}
+      {% elsif block == 'product-details' and hide_product_details == false %}
         {{ product_details }}
       {% endif %}
     {% endfor %}
   </div>
 
-<div class="product-description-below">
-  {{ product.description }}
-</div>
+  {%- if description_first -%}
+    <div class="product-description-trailing-separator" role="presentation" aria-hidden="true"></div>
+    {%- if template.suffix == 'szablon-produktu-v2' -%}
+      <div class="giclee-before-after-target" data-giclee-before-after-target></div>
+      <script>
+        (function () {
+          var target = document.querySelector('[data-giclee-before-after-target]');
+          var source = document.querySelector('.giclee-before-after-source');
+          if (!target || !source || target.dataset.gicleeBeforeAfterMounted === 'true') return;
+          target.dataset.gicleeBeforeAfterMounted = 'true';
+          while (source.firstChild) target.appendChild(source.firstChild);
+          source.remove();
+        })();
+      </script>
+    {%- endif -%}
+    {% render 'giclee-product-process' %}
+    <div class="product-description-trailing-separator" role="presentation" aria-hidden="true"></div>
+    {% render 'giclee-product-trust' %}
+    <div class="product-description-trailing-separator" role="presentation" aria-hidden="true"></div>
+  {%- endif -%}
 
-
-
+  {% unless description_first %}{{ product_description_below }}{% endunless %}
 
   {{ additional_blocks }}
 </div>
@@ -320,5 +379,15 @@
   /* If the header is sticky, make product details content stick underneath the header */
   body:has(#header-group #header-component[data-sticky-state='active']) .product-details.sticky-content--desktop {
     --sticky-header-offset: var(--header-height);
+  }
+
+  .product-information__grid.product-information--no-details {
+    grid-template-columns: 1fr !important;
+  }
+
+  .product-information--no-details .product-information__media {
+    grid-column: 1 / -1;
+    padding-inline: 0;
+    order: 0;
   }
 {% endstylesheet %}

@@ -1,0 +1,21 @@
+{
+  "v": 1,
+  "orientation": "portrait",
+  "sourceWidthPx": 4000,
+  "sourceHeightPx": 6000,
+  "displayWidthPx": 800,
+  "displayHeightPx": 1200,
+  "cropSource": {
+    "x": 400,
+    "y": 600,
+    "width": 3200,
+    "height": 4267
+  },
+  "cropSourceDisplay": {
+    "x": 80,
+    "y": 120,
+    "width": 640,
+    "height": 853.4
+  },
+  "frameConfig": null
+}

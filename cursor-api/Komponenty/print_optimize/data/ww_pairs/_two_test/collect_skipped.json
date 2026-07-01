@@ -1,0 +1,9 @@
+{
+  "skipped": [],
+  "failed": [
+    {
+      "file": "552453096_25002058659419949_5682138110394563453_n.jpg",
+      "reason": "Nie udalo sie otworzyc panelu uploadu Whitewall: Locator.wait_for: Timeout 35000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-test=\\\"drop-zone-file-upload-button\\\"]\") to be visible\n"
+    }
+  ]
+}

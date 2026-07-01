@@ -2,12 +2,9 @@
 
 Hierarchia ekranow (nawigacja w ramach jednego frame'u w launcherze):
 
-    Blog (main)
-    +-- Generator tresci   (Toplevel dialog)
-    +-- Generator tematow  (Toplevel dialog)
-    +-- Posty na Blogu (sub-view)
-        +-- Propozycje tematow  (sub-view z lista + PPM)
-        +-- Obecne posty        (sub-view z auto-fetch)
+    Blog (main) — 5 kafelkow:
+      Generator tresci (Toplevel), Import z HTML (Toplevel), Generator tematow (Toplevel),
+      Propozycje tematow (lista + PPM), Posty na blogu -> obecne posty (auto-fetch)
 
 `on_back` z launchera wraca do glownego menu (siatki kafelkow launchera).
 Wewnetrzna nawigacja zarzadzana jest przez `BlogView` (stos ekranow).
@@ -23,6 +20,7 @@ from typing import Any
 
 from .generator_tematow import open_topics_generator
 from .generator_tresci import open_content_generator
+from .import_html import open_html_import
 from .obecne_posty import build_articles_screen
 from .propozycje_tematow import build_topics_screen
 
@@ -40,7 +38,7 @@ _TILE_PAD = 12
 
 
 class BlogView:
-    """Zarzadza widokami Blog - main screen + dwa sub-screeny."""
+    """Zarzadza widokami Blog — glowna siatka + dwa pelnoekranowe podwidoki."""
 
     def __init__(self, parent: tk.Widget, on_back: Callable[[], None]) -> None:
         self.parent = parent
@@ -54,27 +52,23 @@ class BlogView:
 
     # ---------- ekrany ----------
     def show_main(self) -> None:
-        """Glowny ekran: 3 kafelki."""
+        """Glowny ekran: 5 kafelkow."""
         self._swap_screen(self._build_main())
-
-    def show_posts(self) -> None:
-        """Ekran 'Posty na Blogu' - 2 sub-kafelki."""
-        self._swap_screen(self._build_posts())
 
     def show_topics_list(self) -> None:
         """Lista propozycji tematow."""
         screen = build_topics_screen(
             self.frame,
-            on_back=self.show_posts,
+            on_back=self.show_main,
             on_generate_content=self._open_content_generator_with_topic,
         )
         self._swap_screen(screen)
 
     def show_articles_list(self) -> None:
-        """Lista obecnych postow z bloga (auto-refresh)."""
+        """Lista obecnych postow z bloga (auto-refresh) — z kafelka Posty na blogu."""
         screen = build_articles_screen(
             self.frame,
-            on_back=self.show_posts,
+            on_back=self.show_main,
         )
         self._swap_screen(screen)
 
@@ -91,6 +85,9 @@ class BlogView:
     def _notify_topics_saved(self, _count: int) -> None:
         # Jesli aktualnie mamy otwarta liste propozycji - odswiez ja.
         pass  # lista sama sie odswieza przy zaladowaniu ekranu
+
+    def _open_html_import(self) -> None:
+        open_html_import(self.frame.winfo_toplevel())
 
     # ---------- build: main ----------
     def _build_main(self) -> tk.Widget:
@@ -118,6 +115,13 @@ class BlogView:
                 command=self._open_content_generator,
             ),
             _Tile(
+                label="Import z HTML",
+                icon="📂",
+                color="#00897b",
+                description="Wczytaj plik HTML z podgladu AI i opublikuj post na Shopify (7 jezykow).",
+                command=self._open_html_import,
+            ),
+            _Tile(
                 label="Generator tematow",
                 icon="💡",
                 color="#fb8c00",
@@ -125,50 +129,17 @@ class BlogView:
                 command=self._open_topics_generator,
             ),
             _Tile(
-                label="Posty na Blogu",
-                icon="📚",
-                color="#6d4c41",
-                description="Propozycje tematow (lista) + obecne opublikowane posty (auto-refresh).",
-                command=self.show_posts,
-            ),
-        ]
-        for i, spec in enumerate(tiles):
-            r, c = divmod(i, _TILES_PER_ROW)
-            tile = _build_tile(body, spec)
-            tile.grid(row=r, column=c, padx=_TILE_PAD, pady=_TILE_PAD, sticky="")
-
-        return outer
-
-    # ---------- build: posts ----------
-    def _build_posts(self) -> tk.Widget:
-        outer = tk.Frame(self.frame, bg=_BG)
-
-        _build_toolbar(
-            outer,
-            title="Posty na Blogu",
-            subtitle="Propozycje do napisania + obecne opublikowane posty",
-            on_back=self.show_main,
-            back_label="< Blog",
-        )
-
-        body = tk.Frame(outer, bg=_BG)
-        body.pack(fill="both", expand=True, padx=14, pady=10)
-        for i in range(_TILES_PER_ROW):
-            body.columnconfigure(i, weight=1, uniform="blog-posts")
-
-        tiles = [
-            _Tile(
                 label="Propozycje tematow",
                 icon="📝",
                 color="#fb8c00",
-                description="Zapisane propozycje (z generatora tematow) - PPM na temacie: Kopiuj, Usun, Generuj tresc.",
+                description="Zapisane propozycje (z generatora tematow) — PPM: kopiuj, usun, generuj tresc.",
                 command=self.show_topics_list,
             ),
             _Tile(
-                label="Obecne posty",
-                icon="🌐",
+                label="Posty na blogu",
+                icon="📚",
                 color="#43a047",
-                description="Auto-fetch z Shopify - lista opublikowanych postow; dwuklik otwiera w przegladarce.",
+                description="Obecne opublikowane posty — auto-fetch z Shopify, dwuklik otwiera w przegladarce.",
                 command=self.show_articles_list,
             ),
         ]

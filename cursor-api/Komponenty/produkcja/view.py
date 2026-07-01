@@ -3,7 +3,7 @@
 Funkcjonalnosci:
 - Lista zamowien (lewa kolumna) z sortowaniem kolumn i filtrem tekstowym.
 - Detal zamowienia (prawa kolumna) z polami:
-    klient, wariant ramki (Dab/Sosna S/L/XL), ilosc, tytul obrazu, data.
+    klient, ramka: drewno / rozmiar / kolor (jak w Shopify), ilosc, tytul obrazu, data.
 - Kroki produkcji:
     Wydruk:    Przyjete -> Po korekcji kolorystycznej -> Wydrukowany
     Ramka:     Drewno dostepne -> Ramka wycieta -> Wyszlifowana -> Pomalowana
@@ -26,6 +26,9 @@ from __future__ import annotations
 
 import csv
 import json
+import re
+import threading
+import webbrowser
 import tkinter as tk
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -40,22 +43,38 @@ except ImportError:  # pragma: no cover
     def show_toast(parent: tk.Misc, text: str, **_kw) -> None:  # type: ignore[override]
         print(f"[toast] {text}")
 
+from Komponenty._shared.window_geometry import position_toplevel_screen_center
+from Komponenty.produkcja.frame_variant import (
+    combobox_values_with_current,
+    load_frame_field_options,
+    migrate_order_frame_fields,
+    sync_combined_from_parts,
+)
+from Komponenty.produkcja.passepartout import PASSEPARTOUT_DEFAULT, PASSEPARTOUT_VALUES
+
 
 _COMPONENT_DIR = Path(__file__).resolve().parent
 _DATA_DIR = _COMPONENT_DIR / "dane"
 _ORDERS_FILE = _DATA_DIR / "zamowienia.json"
 
-_FRAME_VARIANTS = [
-    "Dab S", "Dab L", "Dab XL",
-    "Sosna S", "Sosna L", "Sosna XL",
-]
-
+# Podpowiedzi listy (jak w sklepie — drewno / rozmiar / kolor osobno)
 # Utwardzanie farby - 72 godziny (dokladne liczenie do sekundy).
 _PAINT_CURE_HOURS = 72
 _PAINT_CURE_SECONDS = _PAINT_CURE_HOURS * 3600
 
 # Alert opoznienia - zamowienie starsze niz tyle dni a jeszcze nie wyslane.
 _OVERDUE_THRESHOLD_DAYS = 14
+_URL_RE = re.compile(
+    r"(https?://[^\s<>\"()\[\]]+|www\.[^\s<>\"()\[\]]+)",
+    re.IGNORECASE,
+)
+
+
+def _normalize_note_url(raw: str) -> str:
+    raw = raw.rstrip(".,);:]\"'»")
+    if raw.lower().startswith("www."):
+        return "https://" + raw
+    return raw
 
 
 @dataclass
@@ -115,6 +134,7 @@ def _load_db() -> dict[str, Any]:
         raw = o.get("data_pomalowania")
         if raw and isinstance(raw, str) and len(raw) == 10 and raw[4] == "-" and "T" not in raw:
             o["data_pomalowania"] = raw + "T00:00:00"
+        migrate_order_frame_fields(o)
     return data
 
 
@@ -137,19 +157,27 @@ def _new_order_template(order_id: str) -> dict[str, Any]:
         "shopify_order_id": 0,
         "shopify_line_item_id": 0,
         "client": "",
-        "ramka_wariant": _FRAME_VARIANTS[0],
+        "ramka_drewno": "Dąb",
+        "ramka_rozmiar": "",
+        "ramka_kolor": "",
+        "passepartout_kolor": "",
+        "ramka_wariant": "Dąb",
         "ilosc": 1,
         "tytul_obrazu": "",
         "data_zamowienia": today,
         "wydruk_step": 0,
         "ramka_step": 0,
         "data_pomalowania": None,  # ISO8601 z czasem, np. "2026-04-18T12:34:56"
+        "pomin_schniecie": False,  # True = pomin 72h utwardzania (recznie)
         "zlozone": False,
         "spakowane": False,
         "wyslane": False,
         "data_wyslania": None,
         "adres_wysylki": "",
         "tracking_number": "",
+        "shopify_variant_id": 0,
+        "shopify_product_id": 0,
+        "shopify_image_url": "",
         "notatka": "",
         # Rentownosc (do wypelnienia recznie - wszystko PLN):
         "cena_sprzedazy": 0.0,
@@ -214,6 +242,8 @@ def _ramka_status(o: dict) -> tuple[str, str]:
             f"Ramka pomalowana - utwardzanie ({_format_countdown(remaining)})",
             "Czekam na utwardzenie",
         )
+    if o.get("pomin_schniecie"):
+        return ("Ramka gotowa (pomineto schniecie)", "Mozna skladac elementy")
     return ("Ramka utwardzona, gotowa do zlozenia", "Mozna skladac elementy")
 
 
@@ -234,7 +264,8 @@ def _cure_end(o: dict) -> datetime | None:
     return start + timedelta(hours=_PAINT_CURE_HOURS)
 
 
-def _cure_remaining_seconds(o: dict) -> int:
+def _cure_remaining_seconds_raw(o: dict) -> int:
+    """Pozostaly czas 72h bez uwzglednienia pominięcia (do widocznosci przycisku)."""
     end = _cure_end(o)
     if end is None:
         return 0
@@ -242,8 +273,16 @@ def _cure_remaining_seconds(o: dict) -> int:
     return max(0, int(delta.total_seconds()))
 
 
+def _cure_remaining_seconds(o: dict) -> int:
+    if o.get("pomin_schniecie"):
+        return 0
+    return _cure_remaining_seconds_raw(o)
+
+
 def _cure_progress_fraction(o: dict) -> float:
     """0.0 (start) -> 1.0 (utwardzone)."""
+    if o.get("pomin_schniecie"):
+        return 1.0
     start = _cure_start(o)
     if start is None:
         return 0.0
@@ -353,6 +392,44 @@ def _base_status_color(o: dict) -> str:
     return "#5d4037"
 
 
+def _apply_link_tags(text_widget: tk.Text) -> None:
+    """Podswietla i podpina klikalne URL-e w widgetcie Text."""
+    content = text_widget.get("1.0", "end-1c")
+    for tag in text_widget.tag_names():
+        if tag.startswith("url_"):
+            text_widget.tag_delete(tag)
+    text_widget.tag_configure("url_base", foreground="#1565c0", underline=True)
+
+    def _leave(_e: tk.Event | None = None) -> None:
+        text_widget.configure(cursor="xterm")
+
+    def _enter(_e: tk.Event | None = None) -> None:
+        text_widget.configure(cursor="hand2")
+
+    def _make_release_handler(open_url: str):
+        def _on_release(_evt: tk.Event | None) -> str:
+            try:
+                webbrowser.open(open_url)
+            except OSError:
+                pass
+            return "break"
+
+        return _on_release
+
+    for idx, match in enumerate(_URL_RE.finditer(content)):
+        tag = f"url_{idx}"
+        raw = match.group(1)
+        href = _normalize_note_url(raw)
+        start = f"1.0+{match.start()}c"
+        end = f"1.0+{match.end()}c"
+        text_widget.tag_add(tag, start, end)
+        text_widget.tag_configure(tag, foreground="#1565c0", underline=True)
+        text_widget.tag_bind(tag, "<Enter>", lambda _e: _enter())
+        text_widget.tag_bind(tag, "<Leave>", lambda _e: _leave())
+        # ButtonRelease-1: na Windows domyślne Button-1 w Text często „zjada” klik zanim dotrze do tagu
+        text_widget.tag_bind(tag, "<ButtonRelease-1>", _make_release_handler(href))
+
+
 # ============================================================================
 
 
@@ -363,8 +440,12 @@ class ProdukcjaView(ttk.Frame):
         self.db: dict[str, Any] = _load_db()
         self.filter_mode = tk.StringVar(value="aktywne")
         self.search_text = tk.StringVar(value="")
+        self.filter_drewno = tk.StringVar(value="")
+        self.filter_rozmiar = tk.StringVar(value="")
+        self.filter_kolor = tk.StringVar(value="")
         self.selected_id: str | None = None
         self._field_vars: dict[str, tk.Variable] = {}
+        self._detail_photo_ref: Any = None
 
         # Sortowanie Treeview
         self._sort_col: str | None = None
@@ -373,6 +454,10 @@ class ProdukcjaView(ttk.Frame):
         # Cache do live countdown: referencje do widgetow countdown-a w detalu
         self._countdown_widgets: list[tuple[tk.Widget, str]] = []  # (widget, role)
         self._countdown_progressbar: ttk.Progressbar | None = None
+        # Ostatni znany remaining (sek.) — pelny re-render detalu tylko przy przejsciu >0 -> 0
+        self._cure_prev_remaining: int | None = None
+        # Ostatnio ustawione (tekst, kolor, pasek) — unikaj configure co 1s bez zmian (miganie na Windows)
+        self._last_countdown_ui: tuple[str, str, int] | None = None
 
         self._build()
         self._refresh_list()
@@ -394,6 +479,12 @@ class ProdukcjaView(ttk.Frame):
         ttk.Button(
             toolbar, text="Otworz folder danych", command=self._open_data_folder
         ).pack(side="right", padx=6)
+        ttk.Button(toolbar, text="Etykiety HTML...", command=self._export_labels_html).pack(
+            side="right", padx=6
+        )
+        ttk.Button(toolbar, text="Statystyki...", command=self._show_stats).pack(
+            side="right", padx=6
+        )
         ttk.Button(toolbar, text="⬇ Eksport CSV", command=self._export_csv).pack(
             side="right", padx=6
         )
@@ -404,6 +495,14 @@ class ProdukcjaView(ttk.Frame):
         ttk.Button(
             toolbar, text="↓ Pobierz z Shopify",
             command=self._sync_from_shopify,
+        ).pack(side="right", padx=6)
+        ttk.Button(
+            toolbar, text="📏 Szablony paczek",
+            command=self._open_package_templates_editor,
+        ).pack(side="right", padx=6)
+        ttk.Button(
+            toolbar, text="📋 Dzis do zrobienia",
+            command=self._open_today_board,
         ).pack(side="right", padx=6)
         ttk.Button(toolbar, text="+ Nowe zamowienie", command=self._new_order).pack(
             side="right", padx=6
@@ -455,21 +554,47 @@ class ProdukcjaView(ttk.Frame):
             command=lambda: self.search_text.set(""),
         ).pack(side="left")
 
+        filt_row3 = ttk.Frame(left)
+        filt_row3.pack(fill="x", pady=(0, 4))
+        ttk.Label(filt_row3, text="Drewno:").pack(side="left")
+        ttk.Entry(filt_row3, textvariable=self.filter_drewno, width=12).pack(
+            side="left", padx=(4, 10)
+        )
+        ttk.Label(filt_row3, text="Rozmiar:").pack(side="left")
+        ttk.Entry(filt_row3, textvariable=self.filter_rozmiar, width=12).pack(
+            side="left", padx=(4, 10)
+        )
+        ttk.Label(filt_row3, text="Kolor:").pack(side="left")
+        ttk.Entry(filt_row3, textvariable=self.filter_kolor, width=12).pack(
+            side="left", padx=(4, 10)
+        )
+        ttk.Button(
+            filt_row3,
+            text="Wyczysc filtry kolumn",
+            command=self._clear_column_filters,
+        ).pack(side="left", padx=(4, 0))
+        for var in (self.filter_drewno, self.filter_rozmiar, self.filter_kolor):
+            var.trace_add("write", lambda *_: self._refresh_list())
+
         # Treeview
-        cols = ("id", "client", "wariant", "progress", "status")
+        cols = ("id", "client", "drewno", "rozmiar", "kolor", "progress", "status")
         self.tree = ttk.Treeview(
             left, columns=cols, show="headings", selectmode="browse", height=18
         )
         self.tree.heading("id", text="ID", command=lambda: self._sort_by("id"))
         self.tree.heading("client", text="Klient / tytul", command=lambda: self._sort_by("client"))
-        self.tree.heading("wariant", text="Ramka", command=lambda: self._sort_by("wariant"))
+        self.tree.heading("drewno", text="Drewno", command=lambda: self._sort_by("drewno"))
+        self.tree.heading("rozmiar", text="Rozmiar", command=lambda: self._sort_by("rozmiar"))
+        self.tree.heading("kolor", text="Kolor", command=lambda: self._sort_by("kolor"))
         self.tree.heading("progress", text="Postep", command=lambda: self._sort_by("progress"))
         self.tree.heading("status", text="Status", command=lambda: self._sort_by("status"))
         self.tree.column("id", width=90, stretch=False)
-        self.tree.column("client", width=180)
-        self.tree.column("wariant", width=80, stretch=False)
-        self.tree.column("progress", width=80, stretch=False, anchor="center")
-        self.tree.column("status", width=260)
+        self.tree.column("client", width=160)
+        self.tree.column("drewno", width=72, stretch=False)
+        self.tree.column("rozmiar", width=72, stretch=False)
+        self.tree.column("kolor", width=88, stretch=False)
+        self.tree.column("progress", width=72, stretch=False, anchor="center")
+        self.tree.column("status", width=200)
         self.tree.pack(fill="both", expand=True)
         self.tree.bind("<<TreeviewSelect>>", lambda _e: self._on_row_selected())
 
@@ -502,13 +627,9 @@ class ProdukcjaView(ttk.Frame):
             lambda e: canvas.itemconfigure(self._detail_window, width=e.width),
         )
 
-        def _wheel(e: tk.Event) -> None:
-            if not e.delta:
-                return
-            canvas.yview_scroll(int(-1 * (e.delta / 120)), "units")
+        from Komponenty._shared.tk_scroll import bind_mousewheel_to_canvas
 
-        canvas.bind("<Enter>", lambda _e: canvas.bind_all("<MouseWheel>", _wheel))
-        canvas.bind("<Leave>", lambda _e: canvas.unbind_all("<MouseWheel>"))
+        bind_mousewheel_to_canvas(canvas, self.detail_holder)
 
         self._render_empty_detail()
 
@@ -531,10 +652,23 @@ class ProdukcjaView(ttk.Frame):
                     str(o.get("tytul_obrazu", "")),
                     str(o.get("shopify_order_no", "")),
                     str(o.get("ramka_wariant", "")),
+                    str(o.get("ramka_drewno", "")),
+                    str(o.get("ramka_rozmiar", "")),
+                    str(o.get("ramka_kolor", "")),
+                    str(o.get("passepartout_kolor", "")),
                     str(o.get("notatka", "")),
                 ]).lower()
                 if ft not in haystack:
                     continue
+            fd = (self.filter_drewno.get() or "").lower().strip()
+            if fd and fd not in str(o.get("ramka_drewno") or "").lower():
+                continue
+            fr = (self.filter_rozmiar.get() or "").lower().strip()
+            if fr and fr not in str(o.get("ramka_rozmiar") or "").lower():
+                continue
+            fk = (self.filter_kolor.get() or "").lower().strip()
+            if fk and fk not in str(o.get("ramka_kolor") or "").lower():
+                continue
             out.append(o)
 
         if self._sort_col:
@@ -549,8 +683,12 @@ class ProdukcjaView(ttk.Frame):
         if col == "client":
             return (str(o.get("client") or "").lower(),
                     str(o.get("tytul_obrazu") or "").lower())
-        if col == "wariant":
-            return str(o.get("ramka_wariant") or "")
+        if col == "drewno":
+            return str(o.get("ramka_drewno") or "").lower()
+        if col == "rozmiar":
+            return str(o.get("ramka_rozmiar") or "").lower()
+        if col == "kolor":
+            return str(o.get("ramka_kolor") or "").lower()
         if col == "progress":
             done, total = _progress_steps(o)
             return (done / total) if total else 0
@@ -593,15 +731,30 @@ class ProdukcjaView(ttk.Frame):
             self.tree.insert(
                 "", "end",
                 iid=o["id"],
-                values=(o["id"], cl_text, o.get("ramka_wariant", ""), progress_str, status),
+                values=(
+                    o["id"],
+                    cl_text,
+                    o.get("ramka_drewno", ""),
+                    o.get("ramka_rozmiar", ""),
+                    o.get("ramka_kolor", ""),
+                    progress_str,
+                    status,
+                ),
                 tags=tuple(tags),
             )
         total_cnt = len(items)
         self.count_var.set(f"{total_cnt} zamowien")
 
         # Naglowki z ikonka sortowania
-        for c, base in (("id", "ID"), ("client", "Klient / tytul"),
-                       ("wariant", "Ramka"), ("progress", "Postep"), ("status", "Status")):
+        for c, base in (
+            ("id", "ID"),
+            ("client", "Klient / tytul"),
+            ("drewno", "Drewno"),
+            ("rozmiar", "Rozmiar"),
+            ("kolor", "Kolor"),
+            ("progress", "Postep"),
+            ("status", "Status"),
+        ):
             arrow = ""
             if self._sort_col == c:
                 arrow = "  ▼" if self._sort_desc else "  ▲"
@@ -634,7 +787,15 @@ class ProdukcjaView(ttk.Frame):
             progress_str = "■" * done + "□" * (total - done)
             self.tree.item(
                 iid,
-                values=(o["id"], cl_text, o.get("ramka_wariant", ""), progress_str, status),
+                values=(
+                    o["id"],
+                    cl_text,
+                    o.get("ramka_drewno", ""),
+                    o.get("ramka_rozmiar", ""),
+                    o.get("ramka_kolor", ""),
+                    progress_str,
+                    status,
+                ),
             )
 
     def _on_row_selected(self) -> None:
@@ -649,15 +810,198 @@ class ProdukcjaView(ttk.Frame):
 
     # ----------------- Order CRUD -----------------
     def _new_order(self) -> None:
+        """Otwiera dialog do recznego dodania zamowienia (z wypelnieniem pol)."""
+        self._open_new_order_dialog()
+
+    def _create_order_from_fields(
+        self,
+        *,
+        client: str = "",
+        tytul_obrazu: str = "",
+        ramka_drewno: str = "",
+        ramka_rozmiar: str = "",
+        ramka_kolor: str = "",
+        passepartout_kolor: str = "",
+        ilosc: int = 1,
+        data_zamowienia: str | None = None,
+        shopify_order_no: str = "",
+        notatka: str = "",
+    ) -> str:
+        """Tworzy rekord zamowienia z podanymi polami; zwraca nowe `id`."""
         next_id_n = int(self.db.get("next_id") or 1)
         order_id = f"ORD-{next_id_n:04d}"
         self.db["next_id"] = next_id_n + 1
         order = _new_order_template(order_id)
+        order["client"] = (client or "").strip()
+        order["tytul_obrazu"] = (tytul_obrazu or "").strip()
+        if (ramka_drewno or "").strip():
+            order["ramka_drewno"] = ramka_drewno.strip()
+        order["ramka_rozmiar"] = (ramka_rozmiar or "").strip()
+        order["ramka_kolor"] = (ramka_kolor or "").strip()
+        order["passepartout_kolor"] = (passepartout_kolor or "").strip()
+        try:
+            order["ilosc"] = max(1, int(ilosc))
+        except (TypeError, ValueError):
+            order["ilosc"] = 1
+        if (data_zamowienia or "").strip():
+            order["data_zamowienia"] = data_zamowienia.strip()
+        order["shopify_order_no"] = (shopify_order_no or "").strip()
+        order["notatka"] = notatka or ""
+        sync_combined_from_parts(order)
         self.db.setdefault("orders", []).append(order)
         _save_db(self.db)
-        self.selected_id = order_id
-        self._refresh_list()
-        show_toast(self.winfo_toplevel(), f"Utworzono {order_id}", duration_ms=1500)
+        return order_id
+
+    def _open_new_order_dialog(self) -> None:
+        dlg = tk.Toplevel(self.winfo_toplevel())
+        dlg.title("Nowe zamowienie")
+        dlg.transient(self.winfo_toplevel())
+        dlg.grab_set()
+        position_toplevel_screen_center(dlg, 580, 560)
+        dlg.minsize(520, 480)
+
+        ttk.Label(
+            dlg, text="Nowe zamowienie",
+            font=("Segoe UI", 13, "bold"),
+        ).pack(anchor="w", padx=12, pady=(10, 2))
+        ttk.Label(
+            dlg,
+            text="Wypelnij dane lub zostaw puste — mozna uzupelnic pozniej w szczegolach.",
+            foreground="#666",
+        ).pack(anchor="w", padx=12, pady=(0, 8))
+
+        body = ttk.Frame(dlg, padding=(12, 4))
+        body.pack(fill="both", expand=True)
+        body.columnconfigure(1, weight=1)
+
+        fo = load_frame_field_options()
+
+        def _lbl(txt: str) -> str:
+            t = (txt or "").strip()
+            return t if t.endswith(":") else f"{t}:"
+
+        # Klient
+        ttk.Label(body, text="Klient:").grid(row=0, column=0, sticky="w", pady=3)
+        client_var = tk.StringVar()
+        client_entry = ttk.Entry(body, textvariable=client_var)
+        client_entry.grid(row=0, column=1, sticky="ew", padx=(6, 0), pady=3)
+
+        # Tytul
+        ttk.Label(body, text="Tytul obrazu:").grid(row=1, column=0, sticky="w", pady=3)
+        title_var = tk.StringVar()
+        ttk.Entry(body, textvariable=title_var).grid(
+            row=1, column=1, sticky="ew", padx=(6, 0), pady=3,
+        )
+
+        # Drewno
+        ttk.Label(body, text=_lbl(fo.label_drewno)).grid(row=2, column=0, sticky="w", pady=3)
+        drewno_default = fo.drewno_values[0] if fo.drewno_values else "Dąb"
+        drewno_var = tk.StringVar(value=drewno_default)
+        ttk.Combobox(
+            body, textvariable=drewno_var,
+            values=list(fo.drewno_values),
+            state="readonly",
+        ).grid(row=2, column=1, sticky="ew", padx=(6, 0), pady=3)
+
+        # Rozmiar
+        ttk.Label(body, text=_lbl(fo.label_rozmiar)).grid(row=3, column=0, sticky="w", pady=3)
+        roz_var = tk.StringVar()
+        ttk.Combobox(
+            body, textvariable=roz_var,
+            values=list(fo.rozmiar_values),
+            state="readonly",
+        ).grid(row=3, column=1, sticky="ew", padx=(6, 0), pady=3)
+
+        # Kolor
+        ttk.Label(body, text=_lbl(fo.label_kolor)).grid(row=4, column=0, sticky="w", pady=3)
+        kol_var = tk.StringVar()
+        ttk.Combobox(
+            body, textvariable=kol_var,
+            values=list(fo.kolor_values),
+            state="readonly",
+        ).grid(row=4, column=1, sticky="ew", padx=(6, 0), pady=3)
+
+        # Passepartout
+        ttk.Label(body, text="Passepartout:").grid(row=5, column=0, sticky="w", pady=3)
+        pp_var = tk.StringVar(value=PASSEPARTOUT_DEFAULT)
+        ttk.Combobox(
+            body, textvariable=pp_var,
+            values=list(PASSEPARTOUT_VALUES),
+            state="readonly",
+        ).grid(row=5, column=1, sticky="ew", padx=(6, 0), pady=3)
+
+        # Ilosc
+        ttk.Label(body, text="Ilosc sztuk:").grid(row=6, column=0, sticky="w", pady=3)
+        qty_var = tk.IntVar(value=1)
+        ttk.Spinbox(body, from_=1, to=99, textvariable=qty_var, width=6).grid(
+            row=6, column=1, sticky="w", padx=(6, 0), pady=3,
+        )
+
+        # Data
+        ttk.Label(body, text="Data zamowienia:").grid(row=7, column=0, sticky="w", pady=3)
+        date_var = tk.StringVar(value=date.today().isoformat())
+        ttk.Entry(body, textvariable=date_var, width=14).grid(
+            row=7, column=1, sticky="w", padx=(6, 0), pady=3,
+        )
+
+        # Shopify
+        ttk.Label(body, text="Nr Shopify (opc.):").grid(row=8, column=0, sticky="w", pady=3)
+        shopify_var = tk.StringVar()
+        ttk.Entry(body, textvariable=shopify_var).grid(
+            row=8, column=1, sticky="ew", padx=(6, 0), pady=3,
+        )
+
+        # Notatka
+        ttk.Label(body, text="Notatka:").grid(row=9, column=0, sticky="nw", pady=(3, 3))
+        notatka_text = tk.Text(body, height=4, wrap="word", font=("Segoe UI", 9))
+        notatka_text.grid(row=9, column=1, sticky="nsew", padx=(6, 0), pady=3)
+        body.rowconfigure(9, weight=1)
+
+        def _new_order_note_links(_e: tk.Event | None = None) -> None:
+            _apply_link_tags(notatka_text)
+
+        notatka_text.bind("<FocusOut>", _new_order_note_links)
+        notatka_text.bind("<KeyRelease>", _new_order_note_links)
+
+        # Buttons
+        btns = ttk.Frame(dlg, padding=(12, 8))
+        btns.pack(fill="x", side="bottom")
+
+        def _on_create() -> None:
+            try:
+                qty = int(qty_var.get())
+            except (tk.TclError, ValueError):
+                qty = 1
+            order_id = self._create_order_from_fields(
+                client=client_var.get(),
+                tytul_obrazu=title_var.get(),
+                ramka_drewno=drewno_var.get(),
+                ramka_rozmiar=roz_var.get(),
+                ramka_kolor=kol_var.get(),
+                passepartout_kolor=pp_var.get(),
+                ilosc=qty,
+                data_zamowienia=date_var.get(),
+                shopify_order_no=shopify_var.get(),
+                notatka=notatka_text.get("1.0", "end-1c"),
+            )
+            self.selected_id = order_id
+            dlg.destroy()
+            self._refresh_list()
+            show_toast(
+                self.winfo_toplevel(),
+                f"Utworzono {order_id}",
+                duration_ms=1500,
+            )
+
+        ttk.Button(btns, text="Anuluj", command=dlg.destroy).pack(side="right")
+        ttk.Button(
+            btns, text="Utworz zamowienie",
+            command=_on_create,
+        ).pack(side="right", padx=(0, 8))
+
+        dlg.bind("<Escape>", lambda _e: dlg.destroy())
+        dlg.bind("<Return>", lambda _e: _on_create())
+        client_entry.focus_set()
 
     def _delete_order(self, order_id: str) -> None:
         if not messagebox.askyesno(
@@ -686,8 +1030,6 @@ class ProdukcjaView(ttk.Frame):
 
     # ----------------- Shopify sync -----------------
     def _sync_from_shopify(self) -> None:
-        import threading
-
         def _worker() -> None:
             try:
                 from . import orders_sync
@@ -764,7 +1106,9 @@ class ProdukcjaView(ttk.Frame):
                 writer = csv.writer(f, delimiter=";")
                 writer.writerow([
                     "id", "shopify_order_no", "client", "tytul_obrazu",
-                    "ramka_wariant", "ilosc", "data_zamowienia", "status",
+                    "ramka_drewno", "ramka_rozmiar", "ramka_kolor", "passepartout_kolor",
+                    "ramka_wariant",
+                    "ilosc", "data_zamowienia", "status",
                     "wydruk_step", "ramka_step", "data_pomalowania",
                     "zlozone", "spakowane", "wyslane", "data_wyslania",
                     "adres_wysylki", "notatka",
@@ -774,7 +1118,12 @@ class ProdukcjaView(ttk.Frame):
                     writer.writerow([
                         o.get("id", ""), o.get("shopify_order_no", ""),
                         o.get("client", ""), o.get("tytul_obrazu", ""),
-                        o.get("ramka_wariant", ""), o.get("ilosc", 1),
+                        o.get("ramka_drewno", ""),
+                        o.get("ramka_rozmiar", ""),
+                        o.get("ramka_kolor", ""),
+                        o.get("passepartout_kolor", ""),
+                        o.get("ramka_wariant", ""),
+                        o.get("ilosc", 1),
                         o.get("data_zamowienia", ""), status,
                         o.get("wydruk_step", 0), o.get("ramka_step", 0),
                         o.get("data_pomalowania", ""),
@@ -790,6 +1139,183 @@ class ProdukcjaView(ttk.Frame):
             return
         show_toast(self.winfo_toplevel(), f"Zapisano {len(items)} zamowien")
 
+    def _clear_column_filters(self) -> None:
+        self.filter_drewno.set("")
+        self.filter_rozmiar.set("")
+        self.filter_kolor.set("")
+
+    def _show_stats(self) -> None:
+        from Komponenty.produkcja.stats import compute_stats
+
+        s = compute_stats(self.db.get("orders", []))
+        msg = (
+            f"Wszystkich rekordow: {s['total']}\n"
+            f"Aktywnych (nie wyslane): {s['active']}\n"
+            f"Zakonczonych (wyslane): {s['done']}\n"
+            f"Opoznionych (>{_OVERDUE_THRESHOLD_DAYS} dni): {s['overdue']}\n"
+            f"Wyslanych w ostatnich 7 dniach: {s['shipped_last_7_days']}\n"
+            f"Sredni wiek aktywnych (dni): {s['avg_age_active_days']}\n"
+            f"Aktywne — szac. z wydrukiem w toku: {s['active_need_print']}\n"
+            f"Aktywne — po wydruku / przed pakowaniem: {s['active_past_print_not_packed']}"
+        )
+        messagebox.showinfo("Statystyki produkcji", msg, parent=self.winfo_toplevel())
+
+    def _export_labels_html(self) -> None:
+        items = self._orders_filtered()
+        if not items:
+            messagebox.showinfo(
+                "Produkcja",
+                "Brak zamowien do eksportu (wg filtrow).",
+                parent=self.winfo_toplevel(),
+            )
+            return
+        path = filedialog.asksaveasfilename(
+            title="Zapisz etykiety HTML",
+            defaultextension=".html",
+            filetypes=[("HTML", "*.html"), ("Wszystkie", "*.*")],
+            initialfile="etykiety_produkcja.html",
+            parent=self.winfo_toplevel(),
+        )
+        if not path:
+            return
+        from Komponenty.produkcja.label_html import write_workshop_labels_html
+
+        try:
+            write_workshop_labels_html(
+                Path(path),
+                items,
+                title=f"Etykiety warsztatowe ({len(items)} szt.)",
+            )
+        except OSError as e:
+            messagebox.showerror("Produkcja", f"Blad zapisu:\n{e}", parent=self.winfo_toplevel())
+            return
+        show_toast(self.winfo_toplevel(), f"Zapisano HTML ({len(items)} etykiet)", duration_ms=2000)
+        try:
+            webbrowser.open(Path(path).resolve().as_uri())
+        except Exception:
+            pass
+
+    def _build_shopify_preview_row(self, o: dict) -> None:
+        wrap = ttk.LabelFrame(self.detail_holder, text="Sklep Shopify")
+        wrap.pack(fill="x", padx=6, pady=(0, 8))
+        row = ttk.Frame(wrap)
+        row.pack(fill="x", padx=8, pady=6)
+        vid = int(o.get("shopify_variant_id") or 0)
+        if vid:
+            ttk.Button(
+                row,
+                text="Pobierz / odswiez miniaturę wariantu",
+                command=lambda: self._fetch_shopify_thumbnail_refetch(str(o.get("id") or "")),
+            ).pack(side="left")
+        else:
+            ttk.Label(
+                row,
+                text="(Brak shopify_variant_id — miniatura tylko dla pozycji z importu)",
+                foreground="#888",
+            ).pack(side="left")
+        img_box = ttk.Frame(wrap)
+        img_box.pack(side="right", padx=(8, 8), pady=(0, 6))
+        img_url = (o.get("shopify_image_url") or "").strip()
+        if img_url:
+            threading.Thread(
+                target=lambda u=img_url, box=img_box: self._load_thumbnail_thread(u, box),
+                daemon=True,
+            ).start()
+        elif not vid:
+            ttk.Label(img_box, text="—", foreground="#ccc").pack()
+
+    def _load_thumbnail_thread(self, url: str, parent: ttk.Frame) -> None:
+        def fail(msg: str) -> None:
+            def _() -> None:
+                try:
+                    if not parent.winfo_exists():
+                        return
+                except tk.TclError:
+                    return
+                for w in parent.winfo_children():
+                    w.destroy()
+                ttk.Label(parent, text=msg, foreground="#888", wraplength=260).pack()
+
+            self.after(0, _)
+
+        try:
+            from io import BytesIO
+            import urllib.error
+            import urllib.request
+
+            from PIL import Image, ImageTk
+
+            req = urllib.request.Request(url, headers={"User-Agent": "GicleeApp-Produkcja/1.0"})
+            with urllib.request.urlopen(req, timeout=25) as resp:
+                raw = resp.read()
+            im = Image.open(BytesIO(raw)).convert("RGB")
+            im.thumbnail((240, 240))
+
+            def ok() -> None:
+                try:
+                    if not parent.winfo_exists():
+                        return
+                except tk.TclError:
+                    return
+                for w in parent.winfo_children():
+                    w.destroy()
+                photo = ImageTk.PhotoImage(im)
+                self._detail_photo_ref = photo
+                tk.Label(parent, image=photo).pack()
+
+            self.after(0, ok)
+        except (OSError, urllib.error.URLError, ImportError, ValueError) as e:
+            fail(f"Miniatura: {e}")
+
+    def _fetch_shopify_thumbnail_refetch(self, order_local_id: str) -> None:
+        o = next((x for x in self.db.get("orders", []) if x.get("id") == order_local_id), None)
+        if not o:
+            return
+        vid = int(o.get("shopify_variant_id") or 0)
+        if not vid:
+            messagebox.showinfo(
+                "Produkcja",
+                "Brak shopify_variant_id (tylko import z Shopify).",
+                parent=self.winfo_toplevel(),
+            )
+            return
+
+        def worker() -> None:
+            try:
+                from Komponenty.dodajobraz import shopify_client as sc
+
+                shop, token = sc.load_session()
+                url = sc.get_variant_featured_image_url(
+                    shop,
+                    token,
+                    variant_id=vid,
+                    product_id=int(o.get("shopify_product_id") or 0) or None,
+                )
+
+                def done() -> None:
+                    if url:
+                        o["shopify_image_url"] = str(url).strip()
+                        self._persist()
+                        self._render_detail()
+                        self._refresh_list_keep_selection()
+                    else:
+                        messagebox.showinfo(
+                            "Produkcja",
+                            "Brak adresu obrazu dla tego wariantu w Shopify.",
+                            parent=self.winfo_toplevel(),
+                        )
+
+                self.after(0, done)
+            except Exception as e:
+                self.after(
+                    0,
+                    lambda: messagebox.showerror(
+                        "Produkcja", str(e), parent=self.winfo_toplevel()
+                    ),
+                )
+
+        threading.Thread(target=worker, daemon=True).start()
+
     # ----------------- Detail rendering -----------------
     def _clear_detail(self) -> None:
         for child in self.detail_holder.winfo_children():
@@ -797,6 +1323,9 @@ class ProdukcjaView(ttk.Frame):
         self._field_vars.clear()
         self._countdown_widgets = []
         self._countdown_progressbar = None
+        self._detail_photo_ref = None
+        self._cure_prev_remaining = None
+        self._last_countdown_ui = None
 
     def _render_empty_detail(self) -> None:
         self._clear_detail()
@@ -831,12 +1360,37 @@ class ProdukcjaView(ttk.Frame):
                 bg=color, fg="#ffeb3b",
                 font=("Segoe UI", 9, "italic"), padx=8,
             ).pack(side="left")
+        try:
+            from Komponenty.dodajobraz import shopify_client as sc
+            from Komponenty.produkcja.shopify_links import admin_order_url
+
+            shop_dom, _tok = sc.load_session()
+            oid_sh = int(o.get("shopify_order_id") or 0)
+            if oid_sh:
+                aurl = admin_order_url(shop_dom, oid_sh)
+                if aurl:
+
+                    def _open_ad(u: str = aurl) -> None:
+                        webbrowser.open(u)
+
+                    tk.Button(
+                        banner,
+                        text="Shopify Admin",
+                        command=_open_ad,
+                        relief="flat", bg="#e3f2fd", fg="#0d47a1",
+                        cursor="hand2", takefocus=False,
+                    ).pack(side="right", padx=4, pady=4)
+        except Exception:
+            pass
+
         tk.Button(
             banner, text="Usun zamowienie",
             command=lambda oid=o["id"]: self._delete_order(oid),
             relief="flat", bg="#ffebee", fg="#b00020",
             cursor="hand2", takefocus=False,
         ).pack(side="right", padx=8, pady=4)
+
+        self._build_shopify_preview_row(o)
 
         # Ogolny progress
         done, total = _progress_steps(o)
@@ -886,19 +1440,77 @@ class ProdukcjaView(ttk.Frame):
             "write", lambda *_a: self._set_field("tytul_obrazu", title_var.get())
         )
 
-        ttk.Label(grid, text="Wariant ramki:").grid(row=1, column=0, sticky="w", pady=2)
-        var_var = tk.StringVar(value=o.get("ramka_wariant", _FRAME_VARIANTS[0]))
-        cb = ttk.Combobox(
-            grid, textvariable=var_var,
-            values=_FRAME_VARIANTS, state="readonly", width=14,
-        )
-        cb.grid(row=1, column=1, sticky="w", padx=(4, 12), pady=2)
-        cb.bind("<<ComboboxSelected>>", lambda _e: self._set_field("ramka_wariant", var_var.get()))
+        fo = load_frame_field_options()
 
-        ttk.Label(grid, text="Ilosc sztuk:").grid(row=1, column=2, sticky="w", pady=2)
+        def _lbl(txt: str) -> str:
+            t = (txt or "").strip()
+            return t if t.endswith(":") else f"{t}:"
+
+        ttk.Label(grid, text=_lbl(fo.label_drewno)).grid(row=1, column=0, sticky="w", pady=2)
+        drewno_var = tk.StringVar(value=o.get("ramka_drewno", "") or "")
+        d_vals = combobox_values_with_current(fo.drewno_values, drewno_var.get())
+        cb_d = ttk.Combobox(
+            grid,
+            textvariable=drewno_var,
+            values=d_vals,
+            width=18,
+            state="readonly",
+        )
+        cb_d.grid(row=1, column=1, sticky="w", padx=(4, 12), pady=2)
+        drewno_var.trace_add(
+            "write",
+            lambda *_a: self._set_field("ramka_drewno", drewno_var.get()),
+        )
+
+        ttk.Label(grid, text=_lbl(fo.label_rozmiar)).grid(row=1, column=2, sticky="w", pady=2)
+        roz_var = tk.StringVar(value=o.get("ramka_rozmiar", "") or "")
+        r_vals = combobox_values_with_current(fo.rozmiar_values, roz_var.get())
+        cb_r = ttk.Combobox(
+            grid,
+            textvariable=roz_var,
+            values=r_vals,
+            width=12,
+            state="readonly",
+        )
+        cb_r.grid(row=1, column=3, sticky="w", pady=2)
+        roz_var.trace_add(
+            "write", lambda *_a: self._set_field("ramka_rozmiar", roz_var.get())
+        )
+
+        ttk.Label(grid, text=_lbl(fo.label_kolor)).grid(row=2, column=0, sticky="w", pady=2)
+        kol_var = tk.StringVar(value=o.get("ramka_kolor", "") or "")
+        k_vals = combobox_values_with_current(fo.kolor_values, kol_var.get())
+        cb_k = ttk.Combobox(
+            grid,
+            textvariable=kol_var,
+            values=k_vals,
+            width=28,
+            state="readonly",
+        )
+        cb_k.grid(row=2, column=1, columnspan=3, sticky="ew", padx=(4, 0), pady=2)
+        kol_var.trace_add(
+            "write", lambda *_a: self._set_field("ramka_kolor", kol_var.get())
+        )
+
+        ttk.Label(grid, text="Passepartout:").grid(row=3, column=0, sticky="w", pady=2)
+        pp_var = tk.StringVar(value=o.get("passepartout_kolor", "") or "")
+        pp_vals = combobox_values_with_current(PASSEPARTOUT_VALUES, pp_var.get())
+        cb_pp = ttk.Combobox(
+            grid,
+            textvariable=pp_var,
+            values=pp_vals,
+            width=18,
+            state="readonly",
+        )
+        cb_pp.grid(row=3, column=1, sticky="w", padx=(4, 12), pady=2)
+        pp_var.trace_add(
+            "write", lambda *_a: self._set_field("passepartout_kolor", pp_var.get())
+        )
+
+        ttk.Label(grid, text="Ilosc sztuk:").grid(row=3, column=2, sticky="w", pady=2)
         qty_var = tk.IntVar(value=int(o.get("ilosc") or 1))
         spin = ttk.Spinbox(grid, from_=1, to=99, textvariable=qty_var, width=6)
-        spin.grid(row=1, column=3, sticky="w", pady=2)
+        spin.grid(row=3, column=3, sticky="w", pady=2)
 
         def _on_qty(*_a) -> None:
             try:
@@ -909,32 +1521,34 @@ class ProdukcjaView(ttk.Frame):
 
         qty_var.trace_add("write", _on_qty)
 
-        ttk.Label(grid, text="Data zamowienia:").grid(row=2, column=0, sticky="w", pady=2)
+        ttk.Label(grid, text="Data zamowienia:").grid(row=4, column=0, sticky="w", pady=2)
         date_var = tk.StringVar(value=o.get("data_zamowienia") or date.today().isoformat())
         ttk.Entry(grid, textvariable=date_var, width=14).grid(
-            row=2, column=1, sticky="w", padx=(4, 12), pady=2
+            row=4, column=1, sticky="w", padx=(4, 12), pady=2
         )
         date_var.trace_add(
             "write", lambda *_a: self._set_field("data_zamowienia", date_var.get())
         )
 
         ttk.Label(grid, text="Nr Shopify (opc.):").grid(
-            row=2, column=2, sticky="w", pady=2
+            row=4, column=2, sticky="w", pady=2
         )
         sho_var = tk.StringVar(value=o.get("shopify_order_no", ""))
         ttk.Entry(grid, textvariable=sho_var).grid(
-            row=2, column=3, sticky="ew", pady=2
+            row=4, column=3, sticky="ew", pady=2
         )
         sho_var.trace_add(
             "write", lambda *_a: self._set_field("shopify_order_no", sho_var.get())
         )
 
-        ttk.Label(grid, text="Notatka:").grid(row=3, column=0, sticky="nw", pady=(4, 2))
+        ttk.Label(grid, text="Notatka:").grid(row=5, column=0, sticky="nw", pady=(4, 2))
         notatka = tk.Text(grid, height=2, wrap="word", font=("Segoe UI", 9))
-        notatka.grid(row=3, column=1, columnspan=3, sticky="ew", pady=(4, 2))
+        notatka.grid(row=5, column=1, columnspan=3, sticky="ew", pady=(4, 2))
         notatka.insert("1.0", o.get("notatka", ""))
+        _apply_link_tags(notatka)
 
         def _on_notatka_change(_e: tk.Event) -> None:
+            _apply_link_tags(notatka)
             self._set_field("notatka", notatka.get("1.0", "end-1c"))
 
         notatka.bind("<FocusOut>", _on_notatka_change)
@@ -1002,7 +1616,9 @@ class ProdukcjaView(ttk.Frame):
             countdown_box.pack(fill="x", padx=8, pady=(10, 6))
 
             remaining = _cure_remaining_seconds(o)
-            if remaining > 0:
+            if o.get("pomin_schniecie"):
+                txt = "⏩ Pominięto schnięcie — gotowe do złożenia"
+            elif remaining > 0:
                 txt = f"⏳ Utwardzanie: {_format_countdown(remaining)}"
             else:
                 txt = "✅ Utwardzone - gotowe do zlozenia"
@@ -1038,6 +1654,36 @@ class ProdukcjaView(ttk.Frame):
             self._countdown_widgets.append((label, "label"))
             self._countdown_widgets.append((countdown_box, "bg"))
 
+            raw_left = _cure_remaining_seconds_raw(o)
+            if raw_left > 0 and not o.get("pomin_schniecie"):
+                skip_fr = ttk.Frame(sec)
+                skip_fr.pack(fill="x", padx=8, pady=(0, 6))
+                ttk.Button(
+                    skip_fr,
+                    text="Pomiń schnięcie",
+                    command=self._confirm_skip_cure,
+                ).pack(side="left")
+
+    def _confirm_skip_cure(self) -> None:
+        o = self._current_order()
+        if not o or int(o.get("ramka_step") or 0) < 4:
+            return
+        if o.get("pomin_schniecie"):
+            return
+        if _cure_remaining_seconds_raw(o) <= 0:
+            return
+        if not messagebox.askyesno(
+            "Pomin schniecie",
+            "Pominac 72-godzinne utwardzanie farby (schniecie)?\n\n"
+            "Uzyj tylko gdy ramka moze byc zlozona wczesniej (np. pilny termin).",
+            parent=self.winfo_toplevel(),
+        ):
+            return
+        o["pomin_schniecie"] = True
+        self._persist()
+        self._render_detail()
+        self._refresh_list_keep_selection()
+
     def _set_ramka_step(self, target: int, checked: bool) -> None:
         o = self._current_order()
         if not o:
@@ -1050,8 +1696,10 @@ class ProdukcjaView(ttk.Frame):
         if new_painted and not prev_painted:
             # Timestamp z sekunda precyzja - kluczowe dla live countdown
             o["data_pomalowania"] = datetime.now().isoformat(timespec="seconds")
+            o["pomin_schniecie"] = False
         elif not new_painted and prev_painted:
             o["data_pomalowania"] = None
+            o["pomin_schniecie"] = False
         if new_step != cur or (new_painted and not prev_painted):
             o["ramka_step"] = new_step
             self._persist()
@@ -1168,7 +1816,7 @@ class ProdukcjaView(ttk.Frame):
         dlg.title(f"Wyslij {o['id']}")
         dlg.transient(self.winfo_toplevel())
         dlg.grab_set()
-        dlg.geometry("520x340")
+        position_toplevel_screen_center(dlg, 520, 340)
 
         ttk.Label(
             dlg, text=f"Wysylka zamowienia {o['id']}",
@@ -1179,7 +1827,9 @@ class ProdukcjaView(ttk.Frame):
             text=(
                 f"Klient: {o.get('client') or '(brak)'}\n"
                 f"Tytul:  {o.get('tytul_obrazu') or '(brak)'}\n"
-                f"Ramka:  {o.get('ramka_wariant', '')}  x {o.get('ilosc', 1)}"
+                f"Ramka:  {o.get('ramka_drewno', '')} / {o.get('ramka_rozmiar', '')} / {o.get('ramka_kolor', '')}\n"
+                f"Passepartout: {o.get('passepartout_kolor') or '(brak)'}\n"
+                f"   (lacznie: {o.get('ramka_wariant', '')})  x {o.get('ilosc', 1)}"
             ),
             justify="left", foreground="#444",
         ).pack(anchor="w", padx=12)
@@ -1203,6 +1853,12 @@ class ProdukcjaView(ttk.Frame):
             dlg.destroy()
             self._render_detail()
             self._refresh_list()
+            if not str(o.get("tracking_number") or "").strip():
+                messagebox.showwarning(
+                    "Numer trackingu",
+                    "Zamowienie wyslane — wpisz numer trackingu w szczegolach zamowienia.",
+                    parent=self.winfo_toplevel(),
+                )
             show_toast(
                 self.winfo_toplevel(),
                 f"{o['id']} - oznaczone jako wyslane",
@@ -1222,6 +1878,8 @@ class ProdukcjaView(ttk.Frame):
         if o.get(name) == value:
             return
         o[name] = value
+        if name in ("ramka_drewno", "ramka_rozmiar", "ramka_kolor"):
+            sync_combined_from_parts(o)
         self._persist()
         self._refresh_list_keep_selection()
 
@@ -1245,6 +1903,16 @@ class ProdukcjaView(ttk.Frame):
             else:
                 o["data_wyslania"] = None
         self._persist()
+        if name == "wyslane" and value and not str(o.get("tracking_number") or "").strip():
+            self.after(
+                80,
+                lambda: messagebox.showwarning(
+                    "Numer trackingu",
+                    "Zamowienie oznaczone jako wyslane, ale pole „Nr trackingu” jest puste.\n"
+                    "Uzupelnij je ponizej, jesli paczka ma juz numer przesylki.",
+                    parent=self.winfo_toplevel(),
+                ),
+            )
         self._render_detail()
         self._refresh_list()
 
@@ -1255,34 +1923,48 @@ class ProdukcjaView(ttk.Frame):
             o = self._current_order()
             if o and int(o.get("ramka_step") or 0) >= 4:
                 remaining = _cure_remaining_seconds(o)
+                prev = self._cure_prev_remaining
                 color = _cure_color(o)
-                new_text = (
-                    f"⏳ Utwardzanie: {_format_countdown(remaining)}"
-                    if remaining > 0 else
-                    "✅ Utwardzone - gotowe do zlozenia"
-                )
-                for widget, role in self._countdown_widgets:
-                    try:
-                        if role == "label":
-                            widget.configure(text=new_text, bg=color)
-                        elif role == "bg":
-                            widget.configure(bg=color)
-                        elif role == "info":
-                            widget.configure(bg=color)
-                    except tk.TclError:
-                        pass
-                if self._countdown_progressbar is not None:
-                    try:
-                        self._countdown_progressbar.configure(
-                            value=round(_cure_progress_fraction(o) * 100)
-                        )
-                    except tk.TclError:
-                        pass
-                # Jezeli wlasnie minela granica 24h - odswiezamy liste (kolor alertu)
-                if remaining == 0 and self._countdown_progressbar is not None:
-                    # Osignieto 0 - re-render caly detal, zeby pokazac ze ramka gotowa
+                if o.get("pomin_schniecie"):
+                    new_text = "⏩ Pominięto schnięcie — gotowe do złożenia"
+                elif remaining > 0:
+                    new_text = f"⏳ Utwardzanie: {_format_countdown(remaining)}"
+                else:
+                    new_text = "✅ Utwardzone - gotowe do zlozenia"
+                pb_val = round(_cure_progress_fraction(o) * 100)
+
+                # Pelny re-render TYLKO raz, gdy utwardzanie wlasnie sie skonczylo (bylo >0, jest 0).
+                # Poprzednio wywolanie przy kazdym remaining==0 co 1s powodowalo migotanie calego panelu.
+                if (
+                    prev is not None
+                    and prev > 0
+                    and remaining == 0
+                    and self._countdown_progressbar is not None
+                ):
                     self._render_detail()
                     self._refresh_list_keep_selection()
+                else:
+                    self._cure_prev_remaining = remaining
+                    snap = (new_text, color, pb_val)
+                    if snap == self._last_countdown_ui:
+                        pass
+                    else:
+                        self._last_countdown_ui = snap
+                        for widget, role in self._countdown_widgets:
+                            try:
+                                if role == "label":
+                                    widget.configure(text=new_text, bg=color)
+                                elif role == "bg":
+                                    widget.configure(bg=color)
+                                elif role == "info":
+                                    widget.configure(bg=color)
+                            except tk.TclError:
+                                pass
+                        if self._countdown_progressbar is not None:
+                            try:
+                                self._countdown_progressbar.configure(value=pb_val)
+                            except tk.TclError:
+                                pass
         finally:
             try:
                 self.after(1000, self._tick_countdown)
@@ -1393,7 +2075,7 @@ class ProdukcjaView(ttk.Frame):
 
         dlg = tk.Toplevel(self.winfo_toplevel())
         dlg.title(f"Przygotuj przesylke - {carrier_name}")
-        dlg.geometry("640x560")
+        position_toplevel_screen_center(dlg, 640, 560)
         dlg.transient(self.winfo_toplevel())
         dlg.grab_set()
 
@@ -1472,6 +2154,37 @@ class ProdukcjaView(ttk.Frame):
             f"Archiwa sa w Komponenty/produkcja/dane/archive_YYYY.json.",
             parent=self.winfo_toplevel(),
         )
+
+    # ----------------- Nowe dialogi (today board / package templates) -----------------
+    def _open_today_board(self) -> None:
+        try:
+            from Komponenty.produkcja import dialogs
+        except ImportError as e:
+            messagebox.showerror("Produkcja", f"Brak modulu dialogow: {e}", parent=self.winfo_toplevel())
+            return
+
+        def _pick(order_id: str) -> None:
+            if self.tree.exists(order_id):
+                self.selected_id = order_id
+                self.tree.selection_set(order_id)
+                self.tree.see(order_id)
+                self._render_detail()
+
+        dialogs.open_today_board(
+            self.winfo_toplevel(),
+            orders=list(self.db.get("orders", []) or []),
+            ramka_ready=_ramka_ready,
+            wydruk_ready=_wydruk_ready,
+            on_select_order=_pick,
+        )
+
+    def _open_package_templates_editor(self) -> None:
+        try:
+            from Komponenty.produkcja import dialogs
+        except ImportError as e:
+            messagebox.showerror("Produkcja", f"Brak modulu dialogow: {e}", parent=self.winfo_toplevel())
+            return
+        dialogs.open_package_templates_editor(self.winfo_toplevel())
 
     # ----------------- Misc -----------------
     def _open_data_folder(self) -> None:

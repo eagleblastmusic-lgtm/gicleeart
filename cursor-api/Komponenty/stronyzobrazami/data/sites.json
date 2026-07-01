@@ -1,0 +1,364 @@
+{
+  "version": 1,
+  "categories": [
+    "Muzeum",
+    "Galeria",
+    "Katalog",
+    "Aukcja",
+    "Inne"
+  ],
+  "sites": [
+    {
+      "id": "69908126430c",
+      "title": "Rijksmuseum, Amsterdam",
+      "url": "https://www.rijksmuseum.nl/nl/collectie",
+      "category": "Muzeum",
+      "notes": "",
+      "sort_key": 0
+    },
+    {
+      "id": "2cd2f1d03989",
+      "title": "The Metropolitan Museum of Art / The MetMetmuseum",
+      "url": "https://www.metmuseum.org/art/collection",
+      "category": "Muzeum",
+      "notes": "",
+      "sort_key": 1
+    },
+    {
+      "id": "3ba35b0096e1",
+      "title": "Art Institute of Chicago",
+      "url": "https://www.artic.edu/collection",
+      "category": "Muzeum",
+      "notes": "",
+      "sort_key": 2
+    },
+    {
+      "id": "cceb8fe58d41",
+      "title": "National Gallery of Art, Washington",
+      "url": "https://www.nga.gov/artworks",
+      "category": "Muzeum",
+      "notes": "",
+      "sort_key": 3
+    },
+    {
+      "id": "e840731aaeb4",
+      "title": "Getty / J. Paul Getty Museum",
+      "url": "https://www.getty.edu/art/collection/",
+      "category": "Muzeum",
+      "notes": "",
+      "sort_key": 4
+    },
+    {
+      "id": "249e2cf5fd81",
+      "title": "Cleveland Museum of Art",
+      "url": "https://www.clevelandart.org/art/collection/search",
+      "category": "Muzeum",
+      "notes": "",
+      "sort_key": 5
+    },
+    {
+      "id": "8f0801f9a866",
+      "title": "Smithsonian Open Access",
+      "url": "https://www.si.edu/collections",
+      "category": "Muzeum",
+      "notes": "",
+      "sort_key": 6
+    },
+    {
+      "id": "111101cb3ebd",
+      "title": "Yale Center for British Art",
+      "url": "https://collections.britishart.yale.edu/",
+      "category": "Muzeum",
+      "notes": "",
+      "sort_key": 7
+    },
+    {
+      "id": "d11dd5427f9d",
+      "title": "Walters Art Museum",
+      "url": "https://thewalters.org/",
+      "category": "Muzeum",
+      "notes": "",
+      "sort_key": 8
+    },
+    {
+      "id": "4150e977bf58",
+      "title": "SMK — Statens Museum for Kunst, Dania",
+      "url": "https://open.smk.dk/",
+      "category": "Muzeum",
+      "notes": "",
+      "sort_key": 9
+    },
+    {
+      "id": "9adc83cfea74",
+      "title": "Belvedere, Wiedeń",
+      "url": "https://www.belvedere.at/en",
+      "category": "Muzeum",
+      "notes": "",
+      "sort_key": 10
+    },
+    {
+      "id": "8c9b4064887f",
+      "title": "Minneapolis Institute of Art / Mia",
+      "url": "https://collections.artsmia.org/search/",
+      "category": "Muzeum",
+      "notes": "",
+      "sort_key": 11
+    },
+    {
+      "id": "c9ae20cc625a",
+      "title": "Minneapolis Institute of Art / Mia",
+      "url": "https://collections.artsmia.org/search/rights_type:%22Public%20Domain%22",
+      "category": "Muzeum",
+      "notes": "",
+      "sort_key": 12
+    },
+    {
+      "id": "bbf744a49dc5",
+      "title": "Indianapolis Museum of Art / Newfields",
+      "url": "https://collections.discovernewfields.org/?_gl=1*1h1l7xs*_gcl_au*MTcwNDg4NzQxNC4xNzgxOTA4MDM0",
+      "category": "Muzeum",
+      "notes": "",
+      "sort_key": 13
+    },
+    {
+      "id": "a1b2c3d4e001",
+      "title": "Paris Musées",
+      "url": "https://www.parismuseescollections.paris.fr/",
+      "category": "Muzeum",
+      "notes": "CC0 / Public Domain — sprawdz prawa per dzielo; API wymaga PARIS_MUSEES_API_TOKEN",
+      "sort_key": 14
+    },
+    {
+      "id": "a1b2c3d4e002",
+      "title": "Finnish National Gallery",
+      "url": "https://www.kansallisgalleria.fi/en/search",
+      "category": "Muzeum",
+      "notes": "CC0 / Public Domain — API wymaga FNG_API_KEY",
+      "sort_key": 15
+    },
+    {
+      "id": "a1b2c3d4e003",
+      "title": "Nationalmuseum, Stockholm",
+      "url": "https://collection.nationalmuseum.se/eMuseumPlus",
+      "category": "Muzeum",
+      "notes": "Public Domain — sprawdz prawa per dzielo",
+      "sort_key": 16
+    },
+    {
+      "id": "a1b2c3d4e004",
+      "title": "Mauritshuis",
+      "url": "https://www.mauritshuis.nl/en/our-collection/artworks/",
+      "category": "Muzeum",
+      "notes": "Public Domain / rights-free dla wielu dziel",
+      "sort_key": 17
+    },
+    {
+      "id": "a1b2c3d4e005",
+      "title": "Dallas Museum of Art",
+      "url": "https://dma.org/art/collection",
+      "category": "Muzeum",
+      "notes": "Public Domain / Open Access",
+      "sort_key": 18
+    },
+    {
+      "id": "a1b2c3d4e006",
+      "title": "Los Angeles County Museum of Art / LACMA",
+      "url": "https://collections.lacma.org/",
+      "category": "Muzeum",
+      "notes": "Public Domain — wybrane dziela w wysokiej rozdzielczosci",
+      "sort_key": 19
+    },
+    {
+      "id": "a1b2c3d4e007",
+      "title": "Princeton University Art Museum",
+      "url": "https://artmuseum.princeton.edu/collections",
+      "category": "Muzeum",
+      "notes": "Public Domain / Open Access",
+      "sort_key": 20
+    },
+    {
+      "id": "a1b2c3d4e008",
+      "title": "Clark Art Institute",
+      "url": "https://www.clarkart.edu/artpiece",
+      "category": "Muzeum",
+      "notes": "Public Domain / Open Access",
+      "sort_key": 21
+    },
+    {
+      "id": "a1b2c3d4e009",
+      "title": "Barnes Foundation",
+      "url": "https://collection.barnesfoundation.org/",
+      "category": "Muzeum",
+      "notes": "Public Domain / Open Access",
+      "sort_key": 22
+    },
+    {
+      "id": "a1b2c3d4e010",
+      "title": "Saint Louis Art Museum",
+      "url": "https://www.slam.org/collection/",
+      "category": "Muzeum",
+      "notes": "Public Domain / Open Access",
+      "sort_key": 23
+    },
+    {
+      "id": "a1b2c3d4e011",
+      "title": "Städel Museum",
+      "url": "https://sammlung.staedelmuseum.de/en",
+      "category": "Muzeum",
+      "notes": "Public Domain — czesc plikow CC BY-SA",
+      "sort_key": 24
+    },
+    {
+      "id": "a1b2c3d4e012",
+      "title": "Museum für Kunst und Gewerbe Hamburg / MK&G",
+      "url": "https://www.mkg-hamburg.de/en/collection",
+      "category": "Muzeum",
+      "notes": "Public Domain — wybrane dziela",
+      "sort_key": 25
+    },
+    {
+      "id": "a1b2c3d4e013",
+      "title": "Kunstmuseum Basel",
+      "url": "https://download.kunstmuseumbasel.ch/",
+      "category": "Muzeum",
+      "notes": "Public Domain — darmowe pobrania wybranych dziel",
+      "sort_key": 26
+    },
+    {
+      "id": "a1b2c3d4e014",
+      "title": "Albertina",
+      "url": "https://sammlungenonline.albertina.at/",
+      "category": "Muzeum",
+      "notes": "Public Domain — wybrane dziela; IIIF w wyszukiwarce",
+      "sort_key": 27
+    },
+    {
+      "id": "a1b2c3d4e015",
+      "title": "National Palace Museum",
+      "url": "https://digitalarchive.npm.gov.tw/",
+      "category": "Muzeum",
+      "notes": "Open Data — sprawdz prawa per dzielo",
+      "sort_key": 28
+    },
+    {
+      "id": "a1b2c3d4e016",
+      "title": "Muzeum Narodowe w Krakowie / MNK",
+      "url": "https://zbiory.mnk.pl/",
+      "category": "Muzeum",
+      "notes": "CC0 / Public Domain — wybrane dziela",
+      "sort_key": 29
+    },
+    {
+      "id": "a1b2c3d4e017",
+      "title": "Yale University Art Gallery",
+      "url": "https://artgallery.yale.edu/collections",
+      "category": "Muzeum",
+      "notes": "Public Domain / Open Access — wybrane dziela",
+      "sort_key": 30
+    },
+    {
+      "id": "a1b2c3d4e018",
+      "title": "Philadelphia Museum of Art",
+      "url": "https://philamuseum.org/collection",
+      "category": "Muzeum",
+      "notes": "Public Domain — pobieralne obrazy wybranych dziel",
+      "sort_key": 31
+    },
+    {
+      "id": "a1b2c3d4e019",
+      "title": "RISD Museum",
+      "url": "https://risdmuseum.org/art-design/collection",
+      "category": "Muzeum",
+      "notes": "Public Domain — API kolekcji (risdmuseum.org/api/v1/collection)",
+      "sort_key": 32
+    },
+    {
+      "id": "a1b2c3d4e020",
+      "title": "Detroit Institute of Arts",
+      "url": "https://dia.org/collection",
+      "category": "Muzeum",
+      "notes": "Public Domain / Open Access — czesc kolekcji online",
+      "sort_key": 33
+    },
+    {
+      "id": "a1b2c3d4e021",
+      "title": "Birmingham Museum of Art",
+      "url": "https://www.artsbma.org/collection/",
+      "category": "Muzeum",
+      "notes": "Public Domain — kolekcja online (Alabama, USA)",
+      "sort_key": 34
+    },
+    {
+      "id": "a1b2c3d4e022",
+      "title": "Birmingham Museums Trust",
+      "url": "https://www.birminghammuseums.org.uk/collections",
+      "category": "Muzeum",
+      "notes": "CC0 — Asset Bank (scraping search + metadane; dams.birminghammuseums.org.uk)",
+      "sort_key": 35
+    },
+    {
+      "id": "a1b2c3d4e023",
+      "title": "Royal Albert Memorial Museum & Art Gallery / RAMM",
+      "url": "https://rammuseum.org.uk/collections/",
+      "category": "Muzeum",
+      "notes": "Public Domain — kolekcja online (Exeter, UK)",
+      "sort_key": 36
+    },
+    {
+      "id": "a1b2c3d4e024",
+      "title": "NYPL Digital Collections",
+      "url": "https://digitalcollections.nypl.org/",
+      "category": "Muzeum",
+      "notes": "Public Domain — wymaga NYPL_API_TOKEN (api.repo.nypl.org)",
+      "sort_key": 37
+    },
+    {
+      "id": "a1b2c3d4e025",
+      "title": "Library of Congress",
+      "url": "https://www.loc.gov/collections/",
+      "category": "Muzeum",
+      "notes": "Public Domain — API JSON bez klucza",
+      "sort_key": 38
+    },
+    {
+      "id": "a1b2c3d4e026",
+      "title": "Wellcome Collection",
+      "url": "https://wellcomecollection.org/collection",
+      "category": "Muzeum",
+      "notes": "Public Domain Mark — Catalogue API v2",
+      "sort_key": 39
+    },
+    {
+      "id": "a1b2c3d4e027",
+      "title": "Museum of New Zealand Te Papa Tongarewa",
+      "url": "https://collections.tepapa.govt.nz/",
+      "category": "Muzeum",
+      "notes": "Open collections — REST search API",
+      "sort_key": 40
+    },
+    {
+      "id": "a1b2c3d4e028",
+      "title": "Cooper Hewitt Smithsonian Design Museum",
+      "url": "https://collection.cooperhewitt.org/",
+      "category": "Muzeum",
+      "notes": "CC0 — wymaga COOPER_HEWITT_ACCESS_TOKEN",
+      "sort_key": 41
+    },
+    {
+      "id": "a1b2c3d4e029",
+      "title": "Europeana",
+      "url": "https://www.europeana.eu/",
+      "category": "Katalog",
+      "notes": "Open reuse — wymaga EUROPEANA_API_KEY (pro.europeana.eu)",
+      "sort_key": 42
+    },
+    {
+      "id": "a1b2c3d4e030",
+      "title": "Public Domain Image Archive",
+      "url": "https://pdimagearchive.org/",
+      "category": "Katalog",
+      "notes": "The Public Domain Review — 11k+ obrazow CC0 (pdimagearchive.org)",
+      "sort_key": 43
+    }
+  ]
+}

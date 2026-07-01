@@ -70,6 +70,11 @@ try:
 except ImportError:
     _HAS_PIL_FOR_PREVIEW = False
 
+from Komponenty._shared.window_geometry import (
+    position_toplevel_screen_center,
+    position_toplevel_screen_center_from_reqsize,
+)
+
 
 APP_TITLE = "nazwijobraz"
 
@@ -102,7 +107,7 @@ class App:
     def __init__(self, root: tk.Misc) -> None:
         self.root = root
         self.root.title(APP_TITLE)
-        self.root.geometry("1100x780")
+        position_toplevel_screen_center(self.root, 1100, 780)
         self.root.minsize(900, 560)
 
         self.queue_items: list[dict[str, Any]] = []
@@ -1167,24 +1172,37 @@ class App:
         except ValueError:
             return None
 
-    def _edit_artist_dialog(self) -> None:
-        idx = self._selected_index()
-        if idx is None:
-            messagebox.showinfo(APP_TITLE, "Najpierw zaznacz wiersz.")
-            return
-        item = self.queue_items[idx]
-        from tkinter import simpledialog
-        new_val = simpledialog.askstring(
-            APP_TITLE, f"Autor dla pliku:\n{item['path'].name}",
-            initialvalue=item.get("artist", ""),
-        )
-        if new_val is None:
-            return
-        item["artist"] = normalize_artist(new_val)
-        if item["artist"]:
+    def _apply_artist_to_item(self, item: dict[str, Any], artist: str) -> None:
+        item["artist"] = artist
+        if artist:
             item["error"] = ""
             if item.get("title"):
                 item["status"] = "gotowe"
+
+    def _edit_artist_dialog(self) -> None:
+        items = self._items_from_tree_selection()
+        if not items:
+            messagebox.showinfo(APP_TITLE, "Najpierw zaznacz wiersz.")
+            return
+        from tkinter import simpledialog
+
+        if len(items) == 1:
+            prompt = f"Autor dla pliku:\n{items[0]['path'].name}"
+        else:
+            preview = "\n".join(f"  • {it['path'].name}" for it in items[:8])
+            if len(items) > 8:
+                preview += f"\n  ... i {len(items) - 8} kolejnych"
+            prompt = f"Autor dla {len(items)} plikow:\n{preview}"
+
+        unique_artists = {(it.get("artist") or "").strip() for it in items}
+        initial = next(iter(unique_artists)) if len(unique_artists) == 1 else ""
+
+        new_val = simpledialog.askstring(APP_TITLE, prompt, initialvalue=initial)
+        if new_val is None:
+            return
+        artist = normalize_artist(new_val)
+        for item in items:
+            self._apply_artist_to_item(item, artist)
         self._refresh_tree()
         self._refresh_counts_and_status()
 
@@ -1415,7 +1433,7 @@ class App:
         win = tk.Toplevel(self.root)
         win.title(f"Podglad: {path.name}")
         try:
-            win.geometry("820x640")
+            position_toplevel_screen_center(win, 820, 640)
         except tk.TclError:
             pass
         lbl = tk.Label(win, text="Wczytuje...", bg="#222", fg="#bbb")
@@ -1454,7 +1472,7 @@ class App:
         win = tk.Toplevel(self.root)
         win.title(f"Zrodla: {item['path'].name}")
         try:
-            win.geometry("760x560")
+            position_toplevel_screen_center(win, 760, 560)
         except tk.TclError:
             pass
 
@@ -2988,10 +3006,7 @@ class App:
                    command=lambda: _close(reset_flag=False)).pack(side="right", padx=(0, 6))
 
         try:
-            win.update_idletasks()
-            x = self.root.winfo_rootx() + (self.root.winfo_width() - win.winfo_reqwidth()) // 2
-            y = self.root.winfo_rooty() + 80
-            win.geometry(f"+{x}+{y}")
+            position_toplevel_screen_center_from_reqsize(win)
         except tk.TclError:
             pass
         entry.focus_set()

@@ -19,6 +19,15 @@ from pathlib import Path
 from typing import Any
 
 from Komponenty.dodajobraz import shopify_client as sc
+from Komponenty.produkcja.frame_variant import (
+    combined_label,
+    legacy_compact_label,
+    parse_shopify_variant_title,
+)
+from Komponenty.produkcja.passepartout import parse_passepartout_from_line
+
+# Alias dla testow / kompatybilnosci wstecznej
+_detect_frame_variant = legacy_compact_label
 
 _COMPONENT_DIR = Path(__file__).resolve().parent
 _DATA_DIR = _COMPONENT_DIR / "dane"
@@ -28,16 +37,6 @@ _SYNC_STATE_FILE = _DATA_DIR / "sync_state.json"
 # Heurystyka: rozpoznajemy ze product_type z Shopify to obraz wg
 # nazwy/tagow. Mozna rozszerzyc w przyszlosci.
 _IS_PAINTING_RE = re.compile(r"(obraz|painting|canvas|reprodukcja)", re.IGNORECASE)
-
-# Rozpoznawanie rozmiaru ramki w variant_title Shopify (np. "Dab / L", "Sosna XL")
-_FRAME_PATTERNS = [
-    (re.compile(r"\bd[aą]b\b.*\bxl\b", re.IGNORECASE), "Dab XL"),
-    (re.compile(r"\bd[aą]b\b.*\bl\b", re.IGNORECASE), "Dab L"),
-    (re.compile(r"\bd[aą]b\b.*\bs\b", re.IGNORECASE), "Dab S"),
-    (re.compile(r"\bsosn[aę]\b.*\bxl\b", re.IGNORECASE), "Sosna XL"),
-    (re.compile(r"\bsosn[aę]\b.*\bl\b", re.IGNORECASE), "Sosna L"),
-    (re.compile(r"\bsosn[aę]\b.*\bs\b", re.IGNORECASE), "Sosna S"),
-]
 
 
 def _ensure_dir() -> None:
@@ -80,16 +79,6 @@ def _save_sync_state(state: dict[str, Any]) -> None:
     )
 
 
-def _detect_frame_variant(variant_title: str, *, fallback: str = "Dab S") -> str:
-    v = (variant_title or "").strip()
-    if not v:
-        return fallback
-    for pattern, label in _FRAME_PATTERNS:
-        if pattern.search(v):
-            return label
-    return fallback
-
-
 def _format_address(addr: dict | None) -> str:
     if not addr:
         return ""
@@ -126,12 +115,21 @@ def _is_painting_line(item: dict) -> bool:
 
 
 def _build_order_from_line(
-    order: dict, line: dict, *, next_id: int,
+    order: dict,
+    line: dict,
+    *,
+    next_id: int,
+    shop: str = "",
+    token: str = "",
 ) -> dict[str, Any]:
     order_no = str(order.get("name") or "")  # np. '#1042'
     order_id = f"ORD-{next_id:04d}"
     variant_title = str(line.get("variant_title") or "")
-    frame = _detect_frame_variant(variant_title)
+    d_opt, r_opt, k_opt = parse_shopify_variant_title(variant_title)
+    pp_opt = parse_passepartout_from_line(line)
+    rw = combined_label(d_opt, r_opt, k_opt)
+    if not rw.strip():
+        rw = legacy_compact_label(variant_title)
     created_iso = str(order.get("created_at") or "")[:10] or date.today().isoformat()
 
     title = str(line.get("title") or "")
@@ -143,19 +141,42 @@ def _build_order_from_line(
     else:
         painting_title = title
 
+    variant_id = int(line.get("variant_id") or 0)
+    product_id = int(line.get("product_id") or 0)
+    image_url = ""
+    if shop and token and variant_id:
+        try:
+            u = sc.get_variant_featured_image_url(
+                shop,
+                token,
+                variant_id=variant_id,
+                product_id=product_id or None,
+            )
+            image_url = (u or "").strip()
+        except sc.ShopifyError:
+            image_url = ""
+
     return {
         "id": order_id,
         "shopify_order_no": order_no,
         "shopify_order_id": int(order.get("id") or 0),
         "shopify_line_item_id": int(line.get("id") or 0),
+        "shopify_variant_id": variant_id,
+        "shopify_product_id": product_id,
+        "shopify_image_url": image_url,
         "client": _customer_name(order),
-        "ramka_wariant": frame,
+        "ramka_drewno": d_opt,
+        "ramka_rozmiar": r_opt,
+        "ramka_kolor": k_opt,
+        "passepartout_kolor": pp_opt,
+        "ramka_wariant": rw,
         "ilosc": int(line.get("quantity") or 1),
         "tytul_obrazu": painting_title,
         "data_zamowienia": created_iso,
         "wydruk_step": 0,
         "ramka_step": 0,
         "data_pomalowania": None,
+        "pomin_schniecie": False,
         "zlozone": False,
         "spakowane": False,
         "wyslane": False,
@@ -232,7 +253,9 @@ def sync_orders(
             if _is_duplicate(db["orders"], oid, lid):
                 continue
             next_id = int(db.get("next_id") or 1)
-            new_order = _build_order_from_line(order, line, next_id=next_id)
+            new_order = _build_order_from_line(
+                order, line, next_id=next_id, shop=shop, token=token,
+            )
             db["next_id"] = next_id + 1
             db["orders"].append(new_order)
             added.append(new_order)

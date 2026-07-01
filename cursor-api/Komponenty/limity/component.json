@@ -1,0 +1,8 @@
+{
+  "name": "Limity",
+  "description": "Zużycie i limity: Cloudflare R2, Resend, SerpAPI i inne usługi.",
+  "icon": "📊",
+  "color": "#1565c0",
+  "order": 68,
+  "mode": "inline"
+}

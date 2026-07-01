@@ -14,9 +14,82 @@
 
     
 <style>
+  html {
+    scrollbar-gutter: stable;
+  }
+  @supports not (scrollbar-gutter: stable) {
+    html { overflow-y: scroll; }
+  }
   body { overflow-x: hidden; }
 </style>
 
+    {%- if request.page_type == 'index' -%}
+    <link
+      rel="preload"
+      as="image"
+      href="{{ 'MALE_ORG.webp' | asset_url }}"
+      media="(max-width: 767px)"
+    >
+    {%- endif -%}
+    {%- if request.page_type == 'index' and request.design_mode == false -%}
+    <style>
+      html.splash-pending,
+      html.splash-reveal {
+        overflow-y: hidden;
+        background: #000;
+      }
+      html.splash-pending body,
+      html.splash-reveal body {
+        overflow-y: hidden;
+        background: #000;
+      }
+      html.splash-pending #splash-screen {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        background: #000;
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+      }
+      html.splash-pending body > :not(#page-transition):not(#splash-screen),
+      html.splash-pending #header-group,
+      html.splash-pending #MainContent,
+      html.splash-pending body > footer {
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+      }
+      html.splash-reveal body > :not(#page-transition):not(#splash-screen) {
+        opacity: 0 !important;
+        visibility: visible !important;
+        pointer-events: none !important;
+        transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      }
+      html.splash-reveal.splash-reveal-active body > :not(#page-transition):not(#splash-screen) {
+        opacity: 1 !important;
+        pointer-events: auto !important;
+      }
+      html.splash-reveal slideshow-component,
+      html.splash-reveal slideshow-component * {
+        transition: none !important;
+        animation: none !important;
+      }
+      html.splash-pending #page-transition,
+      html.splash-reveal #page-transition {
+        display: none !important;
+      }
+      html.splash-pending #MainContent,
+      html.splash-reveal #MainContent {
+        overflow: hidden;
+        max-height: 100vh;
+      }
+    </style>
+    <script>document.documentElement.classList.add('splash-pending');</script>
+    {%- endif -%}
 
     {%- if settings.favicon != blank -%}
       <link
@@ -35,6 +108,25 @@
         id="view-transition-render-blocker"
       >
     {% endif %}
+    <script>
+      try {
+        if (sessionStorage.getItem('giclee-curtain-nav') === '1') {
+          document.documentElement.classList.add('curtain-pending');
+          document.getElementById('view-transition-render-blocker')?.remove();
+        }
+      } catch (e) {}
+    </script>
+    <style>
+      html.curtain-pending body > :not(#page-transition) {
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+      }
+      html.curtain-pending #page-transition {
+        z-index: 2147483647 !important;
+        pointer-events: none;
+      }
+    </style>
 
     {%- render 'meta-tags' -%}
     {%- render 'stylesheets' -%}
@@ -89,15 +181,28 @@
   scrollbar-width: thin;
   scrollbar-color: rgba(201,168,76,0.25) transparent;
   border-right: 1px solid rgba(201,168,76,0.1);
-  column-count: 3;
-  column-gap: 32px;
+  display: flex;
+  flex-direction: column;
   clip-path: inset(0 0 0 0);
   will-change: clip-path;
 }
 
+.giclee-artists-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px;
+  flex: 1;
+  align-items: start;
+}
+
+.giclee-artists-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
 #giclee-artists-list a {
   display: block;
-  break-inside: avoid;
   color: rgba(230,225,215,0.75);
   text-decoration: none;
   font-size: 12.5px;
@@ -126,15 +231,15 @@
   letter-spacing: 0.08em;
 }
 
-#giclee-artists-list > div:first-child {
+#giclee-artists-list .giclee-artists-list-header {
   font-size: 9px;
   letter-spacing: 0.45em;
   text-transform: uppercase;
   color: rgba(201,168,76,0.5);
   font-weight: 500;
   padding-bottom: 20px;
-  column-span: all;
   font-family: 'Inter', sans-serif;
+  flex-shrink: 0;
 }
 
 #giclee-artist-preview {
@@ -200,23 +305,50 @@
 
 {{ 'custom.css' | asset_url | stylesheet_tag }}
 
+{%- if request.page_type == 'product' and product != blank and template.suffix != 'szablon-wlasna-fotografia' -%}
+  <script>
+    window.__GICLEE_PDP_PRODUCT__ = {
+      "id": {{ product.id | json }},
+      "optionNames": [
+        {%- for option_name in product.options -%}
+          {{ option_name | json }}{%- unless forloop.last -%},{%- endunless -%}
+        {%- endfor -%}
+      ],
+      "variants": [
+        {%- for variant in product.variants -%}
+          {
+            "id": {{ variant.id | json }},
+            "available": {{ variant.available | json }},
+            "price": {{ variant.price | json }},
+            "compare_at_price": {{ variant.compare_at_price | json }},
+            "options": {{ variant.options | json }}
+          }{%- unless forloop.last -%},{%- endunless -%}
+        {%- endfor -%}
+      ]
+    };
+  </script>
+  <script src="{{ 'giclee-pdp-variant-sync.js' | asset_url }}&giclee_v=pdp-layout-20260623-2306" defer></script>
+{%- endif -%}
+
 
   </head>
 
   <body class="page-width-{{ settings.page_width }} card-hover-effect-{{ settings.card_hover_effect }}">
 
+  {% render 'giclee-i18n-js' %}
+
   <div id="page-transition">
-    <div class="pt-panel pt-left" style="transform:scaleX(1);transition:none"></div>
+    <div class="pt-panel pt-left" style="transform:translateX(0);transition:none"></div>
     <div class="pt-seam" style="opacity:1;transition:none"></div>
-    <div class="pt-panel pt-right" style="transform:scaleX(1);transition:none"></div>
+    <div class="pt-panel pt-right" style="transform:translateX(0);transition:none"></div>
   </div>
 
   {% unless request.page_type == 'index' %}<style>#splash-screen{display:none!important}</style>{% endunless %}
-  <div id="splash-screen">
+  <div id="splash-screen" style="position:fixed;inset:0;background:#000;z-index:99999;display:flex;align-items:center;justify-content:center;opacity:1;visibility:visible;">
     <div class="splash-content">
       <p class="splash-title">Giclée Art</p>
       <div class="splash-line"></div>
-      <p class="splash-sub">Witamy w świecie sztuki</p>
+      <p class="splash-sub">{{ 'giclee.ui.splash_subtitle' | t }}</p>
     </div>
   </div>
 
@@ -228,20 +360,41 @@
       pointer-events: none;
       display: flex;
     }
+    #page-transition.active,
+    #page-transition.pt-init,
+    #page-transition.closing,
+    #page-transition.opening {
+      z-index: 2147483647;
+    }
     #page-transition.active {
+      pointer-events: all;
+    }
+    #page-transition.opening {
+      pointer-events: none;
+    }
+    #page-transition.closing,
+    #page-transition.pt-init {
       pointer-events: all;
     }
     .pt-panel {
       position: fixed;
       top: 0;
-      width: 51%;
+      width: 50%;
       height: 100%;
       background: #080808;
       will-change: transform;
-      transform: scaleX(0);
+      --pt-open-duration: 1.25s;
+      --pt-close-duration: 0.72s;
+      transition: transform var(--pt-open-duration) cubic-bezier(0.45, 0, 0.15, 1);
     }
-    .pt-left  { left: 0;  transform-origin: left center; }
-    .pt-right { right: 0; transform-origin: right center; }
+    .pt-left {
+      left: 0;
+      transform: translateX(-100%);
+    }
+    .pt-right {
+      right: 0;
+      transform: translateX(100%);
+    }
     .pt-seam {
       position: fixed;
       top: 0;
@@ -253,83 +406,293 @@
       opacity: 0;
       transition: opacity 0.3s ease;
       z-index: 1;
+      pointer-events: none;
     }
-    #page-transition.pt-init .pt-panel {
-      transform: scaleX(1);
-      transition: none !important;
+    #page-transition.pt-init .pt-left,
+    #page-transition.closing .pt-left {
+      transform: translateX(0);
+    }
+    #page-transition.pt-init .pt-right,
+    #page-transition.closing .pt-right {
+      transform: translateX(0);
+    }
+    #page-transition.pt-init .pt-panel,
+    #page-transition.closing .pt-panel {
+      transition: transform var(--pt-close-duration, 0.72s) cubic-bezier(0.76, 0, 0.24, 1);
     }
     #page-transition.pt-init .pt-seam {
       opacity: 1;
       transition: none !important;
     }
-    #page-transition.closing .pt-panel {
-      transform: scaleX(1);
-      transition: transform 0.9s cubic-bezier(0.76, 0, 0.24, 1);
-    }
     #page-transition.closing .pt-seam {
       opacity: 1;
-      transition-delay: 0.75s;
+      transition: opacity 0.25s ease;
+      transition-delay: 0.45s;
+    }
+    #page-transition.opening .pt-left {
+      transform: translateX(-100%);
+    }
+    #page-transition.opening .pt-right {
+      transform: translateX(100%);
     }
     #page-transition.opening .pt-panel {
-      transform: scaleX(0);
-      transition: transform 1.6s cubic-bezier(0.45, 0, 0.15, 1);
+      transition: transform var(--pt-open-duration, 1.25s) cubic-bezier(0.45, 0, 0.15, 1);
     }
     #page-transition.opening .pt-seam {
       opacity: 0;
       transition-delay: 0s;
     }
+    #giclee-catalog-panel {
+      clip-path: inset(0 0 100% 0) !important;
+      transform: none !important;
+      transition: clip-path 0.85s cubic-bezier(0.25, 0.46, 0.45, 0.94), visibility 0.85s !important;
+    }
+    #giclee-catalog-panel.is-open {
+      clip-path: inset(0 0 0% 0) !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+    #giclee-catalog-panel.is-open.is-closing {
+      clip-path: inset(0 0 100% 0) !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      transition: clip-path 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) !important;
+    }
+    body.is-navigating #giclee-catalog-panel.is-open.is-nav-lifting {
+      z-index: 2147483647 !important;
+      clip-path: inset(0 0 0% 0) !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: none !important;
+      overflow: hidden !important;
+      transition: none !important;
+    }
+    body.curtain-content-hide #giclee-artist-preview,
+    body.curtain-content-hide #giclee-preview-img {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      transition: none !important;
+    }
+    body.curtain-content-hide .product-grid__item,
+    body.curtain-content-hide .product-grid__item .card-gallery,
+    body.curtain-content-hide .product-grid__item .card-gallery img,
+    body.curtain-content-hide .product-grid__item product-card {
+      visibility: hidden !important;
+      opacity: 0 !important;
+      transform: none !important;
+      z-index: auto !important;
+      transition: none !important;
+    }
+    body.is-navigating [data-view-transition-type],
+    body.is-navigating [data-view-transition-triggered] {
+      view-transition-name: none !important;
+    }
     {% if template.suffix == 'faq' %}
-    /* ===== FAQ ANIMATIONS ===== */
+    /* =====================================================================
+       FAQ — PREMIUM ACCORDION (tylko UI/UX, treść bez zmian)
+       Zakres: wyłącznie strona FAQ (template.suffix == 'faq').
+       Wyższa specyficzność + !important nadpisuje globalne .accordion z base.css
+       jedynie na tej stronie — inne akordeony (np. produkt) bez zmian.
+       ===================================================================== */
     accordion-custom {
-      --animation-speed-slow: 700ms;
+      /* szybsze, płynne rozwijanie (komponent czyta tę zmienną) */
+      --animation-speed-slow: 320ms;
       --animation-easing: cubic-bezier(0.4, 0, 0.2, 1);
     }
+
+    /* Wejście kart (stagger zsynchronizowany z kurtyną przejścia) */
     @keyframes faqItemIn {
-      from { opacity: 0; transform: translateY(18px); }
+      from { opacity: 0; transform: translateY(16px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    accordion-custom {
+    .accordion accordion-custom {
+      display: block;
       opacity: 0;
-      animation: faqItemIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation: faqItemIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
-    accordion-custom:nth-child(1)  { animation-delay: 0.8s; }
-    accordion-custom:nth-child(2)  { animation-delay: 0.95s; }
-    accordion-custom:nth-child(3)  { animation-delay: 1.1s; }
-    accordion-custom:nth-child(4)  { animation-delay: 1.25s; }
-    accordion-custom:nth-child(5)  { animation-delay: 1.4s; }
-    accordion-custom:nth-child(6)  { animation-delay: 1.55s; }
-    accordion-custom:nth-child(7)  { animation-delay: 1.7s; }
-    accordion-custom:nth-child(8)  { animation-delay: 1.85s; }
-    accordion-custom:nth-child(n+9){ animation-delay: 2.0s; }
+    .accordion accordion-custom:nth-child(1)  { animation-delay: 0.80s; }
+    .accordion accordion-custom:nth-child(2)  { animation-delay: 0.95s; }
+    .accordion accordion-custom:nth-child(3)  { animation-delay: 1.10s; }
+    .accordion accordion-custom:nth-child(4)  { animation-delay: 1.25s; }
+    .accordion accordion-custom:nth-child(5)  { animation-delay: 1.40s; }
+    .accordion accordion-custom:nth-child(6)  { animation-delay: 1.55s; }
+    .accordion accordion-custom:nth-child(7)  { animation-delay: 1.70s; }
+    .accordion accordion-custom:nth-child(8)  { animation-delay: 1.85s; }
+    .accordion accordion-custom:nth-child(n+9){ animation-delay: 2.00s; }
 
-    /* Płynne rozwijanie i zwijanie — nadpisuje wbudowane transition: none przy :not(:focus-within) */
-    accordion-custom details .details-content,
-    accordion-custom details::details-content,
-    accordion-custom details:not(:focus-within) .details-content,
-    accordion-custom details:not(:focus-within)::details-content {
+    /* Odstęp między kartami (stała szerokość kontenera bez zmian) */
+    .accordion accordion-custom + accordion-custom { margin-block-start: 14px; }
+
+    /* Karta — glassmorphism + miękki cień (na details, by radius clipował treść) */
+    .accordion accordion-custom details {
+      position: relative;
+      margin: 0 !important;
+      padding-left: 0 !important;
+      border: 1px solid rgba(255, 255, 255, 0.08) !important;
+      border-radius: 16px !important;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012)) !important;
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      box-shadow:
+        0 1px 1px rgba(0, 0, 0, 0.18),
+        0 10px 30px -20px rgba(0, 0, 0, 0.65) !important;
+      overflow: hidden;
       transition:
-        block-size 0.75s cubic-bezier(0.4, 0, 0.2, 1),
-        opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-        padding-block 0.75s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        border-color 0.3s ease,
+        box-shadow 0.3s ease,
+        background 0.3s ease,
+        transform 0.3s ease;
     }
 
-    /* Złota kreska po lewej przy otwartym */
-    accordion-custom details {
-      border-left: 1px solid transparent;
-      padding-left: 0;
-      transition: border-color 0.5s ease, padding-left 0.5s ease;
-    }
-    accordion-custom details[open] {
-      border-left: 1px solid rgba(201, 168, 76, 0.4);
-      padding-left: 16px;
+    /* Subtelna złota linia u góry karty */
+    .accordion accordion-custom details::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(198, 169, 107, 0.5), transparent);
+      opacity: 0;
+      transition: opacity 0.35s ease;
+      pointer-events: none;
+      z-index: 1;
     }
 
-    /* Summary */
-    accordion-custom details summary {
-      transition: color 0.3s ease, letter-spacing 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    /* Hover — delikatne podświetlenie + lekkie uniesienie */
+    @media (hover: hover) {
+      .accordion accordion-custom details:hover {
+        border-color: rgba(198, 169, 107, 0.45) !important;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)) !important;
+        box-shadow:
+          0 1px 1px rgba(0, 0, 0, 0.2),
+          0 18px 40px -22px rgba(0, 0, 0, 0.75) !important;
+        transform: translateY(-1px);
+      }
+      .accordion accordion-custom details:hover::before { opacity: 0.7; }
     }
-    accordion-custom details[open] summary {
-      letter-spacing: 0.025em;
+
+    /* Otwarta (aktywna) — złota ramka + glow */
+    .accordion accordion-custom details[open] {
+      border-color: rgba(198, 169, 107, 0.6) !important;
+      background: linear-gradient(180deg, rgba(198, 169, 107, 0.06), rgba(198, 169, 107, 0.015)) !important;
+      box-shadow:
+        0 1px 1px rgba(0, 0, 0, 0.2),
+        0 20px 46px -22px rgba(0, 0, 0, 0.8),
+        0 0 0 1px rgba(198, 169, 107, 0.12),
+        0 0 30px -6px rgba(198, 169, 107, 0.18) !important;
+    }
+    .accordion accordion-custom details[open]::before { opacity: 1; }
+
+    /* Pytanie (summary) — większy obszar dotyku, wyrazista hierarchia */
+    .accordion accordion-custom details summary.details__header {
+      align-items: center;
+      gap: 18px;
+      padding: 22px 24px !important;
+      min-height: 64px;
+      color: #fff;
+      font-weight: 600;
+      letter-spacing: 0.005em;
+      border-radius: 16px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: color 0.25s ease, letter-spacing 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .accordion accordion-custom details[open] summary.details__header {
+      letter-spacing: 0.02em;
+    }
+    .accordion accordion-custom details summary.details__header:focus-visible {
+      outline: 2px solid rgba(198, 169, 107, 0.85);
+      outline-offset: 3px;
+    }
+
+    /* Ikona — okrągły badge, strzałka obraca się przy otwieraniu */
+    .accordion accordion-custom details summary.details__header .svg-wrapper.icon-caret {
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      margin-inline-start: auto;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.03);
+      color: #c6a96b;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+    .accordion accordion-custom details summary.details__header .svg-wrapper.icon-caret svg {
+      width: 14px;
+      height: 14px;
+      fill: none !important;
+      stroke: currentColor;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @media (hover: hover) {
+      .accordion accordion-custom details:hover summary .svg-wrapper.icon-caret {
+        border-color: rgba(198, 169, 107, 0.5);
+        background: rgba(198, 169, 107, 0.08);
+      }
+    }
+    .accordion accordion-custom details[open] summary .svg-wrapper.icon-caret {
+      border-color: rgba(198, 169, 107, 0.6);
+      background: rgba(198, 169, 107, 0.12);
+    }
+
+    /* Odpowiedź — spokojniejsza, czytelna; płynne height + opacity + slide */
+    .accordion accordion-custom details .details-content {
+      padding: 0 24px !important;
+      color: rgba(255, 255, 255, 0.62);
+      line-height: 1.75;
+      transform: translateY(-4px);
+    }
+    .accordion accordion-custom details .details-content :is(p, li) {
+      color: rgba(255, 255, 255, 0.62);
+    }
+    .accordion accordion-custom details[open] .details-content {
+      padding: 2px 24px 24px 24px !important;
+      transform: translateY(0);
+    }
+
+    /* Płynne rozwijanie/zwijanie — nadpisuje wbudowane transition:none (poza focus) */
+    .accordion accordion-custom details .details-content,
+    .accordion accordion-custom details::details-content,
+    .accordion accordion-custom details:not(:focus-within) .details-content,
+    .accordion accordion-custom details:not(:focus-within)::details-content {
+      transition:
+        content-visibility 0.32s allow-discrete,
+        block-size 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+        padding-block 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.32s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    /* Responsywność */
+    @media (max-width: 749px) {
+      .accordion accordion-custom + accordion-custom { margin-block-start: 12px; }
+      .accordion accordion-custom details summary.details__header {
+        padding: 18px 18px !important;
+        min-height: 60px;
+        gap: 12px;
+      }
+      .accordion accordion-custom details summary.details__header .svg-wrapper.icon-caret {
+        width: 30px;
+        height: 30px;
+      }
+      .accordion accordion-custom details .details-content { padding: 0 18px !important; }
+      .accordion accordion-custom details[open] .details-content { padding: 2px 18px 20px 18px !important; }
+    }
+    @media (min-width: 1200px) {
+      .accordion accordion-custom + accordion-custom { margin-block-start: 16px; }
+      .accordion accordion-custom details summary.details__header { padding: 24px 28px !important; }
+      .accordion accordion-custom details .details-content { padding: 0 28px !important; }
+      .accordion accordion-custom details[open] .details-content { padding: 4px 28px 28px 28px !important; }
+    }
+
+    /* Mniej ruchu = mniej animacji */
+    @media (prefers-reduced-motion: reduce) {
+      .accordion accordion-custom { animation: none; opacity: 1; }
+      .accordion accordion-custom details,
+      .accordion accordion-custom details .details-content,
+      .accordion accordion-custom details summary .svg-wrapper.icon-caret { transition: none !important; }
+      .accordion accordion-custom details .details-content { transform: none; }
     }
     {% endif %}
 
@@ -382,22 +745,6 @@
       opacity: 0 !important;
       visibility: hidden !important;
     }
-    #giclee-catalog-panel {
-      clip-path: inset(0 0 100% 0) !important;
-      transform: none !important;
-      transition: clip-path 0.85s cubic-bezier(0.25, 0.46, 0.45, 0.94), visibility 0.85s !important;
-    }
-    #giclee-catalog-panel.is-open {
-      clip-path: inset(0 0 0% 0) !important;
-      opacity: 1 !important;
-      visibility: visible !important;
-    }
-    #giclee-catalog-panel.is-open.is-closing {
-      clip-path: inset(0 0 100% 0) !important;
-      opacity: 1 !important;
-      visibility: visible !important;
-      transition: clip-path 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) !important;
-    }
     #giclee-catalog-panel.is-closing #giclee-artist-preview {
       opacity: 0.88;
       transform: translateY(-6px);
@@ -405,7 +752,6 @@
     }
     #giclee-catalog-panel.is-closing #giclee-artists-list {
       opacity: 1;
-      /* Close animation handled by JS height tween to avoid instant cut. */
     }
     @keyframes catalogColIn {
       from { opacity: 0; transform: translateY(14px); }
@@ -423,12 +769,6 @@
       from { opacity: 0; transform: translateY(10px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    body.is-navigating #giclee-catalog-panel {
-      clip-path: none !important;
-      transform: translateY(-200vh) !important;
-      transition: transform 0.9s cubic-bezier(0.76, 0, 0.24, 1) !important;
-      pointer-events: none !important;
-    }
     #page-transition.fade-to-splash {
       opacity: 0;
       transition: opacity 1.4s ease;
@@ -443,7 +783,7 @@
         grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
       }
     }
-    {% if template.suffix == 'fotografia-obraz' %}
+    {% if template.suffix == 'fotografia-obraz' or template.suffix == 'szablon-wlasna-fotografia' %}
     #pm-hero {
       --pm-lift: 0px !important;
       transform: none !important;
@@ -451,17 +791,40 @@
       transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1) !important;
     }
     #pm-hero-ui {
-      transform: none !important;
-      will-change: auto !important;
-      transition: none !important;
+      will-change: transform;
     }
     html body #pm-hero.loaded .pm-cta {
-      opacity: 1 !important;
-      pointer-events: auto !important;
-      visibility: visible !important;
-      animation: pmCtaReveal 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both !important;
+      display: none !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      visibility: hidden !important;
+      animation: none !important;
     }
 
+    .shopify-section:has(#pm-hero),
+    .shopify-section:has(.product-wlasna-fotografia-mockup) {
+      position: relative;
+      z-index: 60;
+      isolation: isolate;
+      transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: transform;
+    }
+    @media screen and (max-width: 749px) {
+      .shopify-section:has(#pm-hero),
+      .shopify-section:has(.product-wlasna-fotografia-mockup) {
+        z-index: 4;
+      }
+      .menu-drawer,
+      .menu-drawer__backdrop {
+        z-index: 70;
+      }
+    }
+    body.pm-app-drawer-open .shopify-section:has(#pm-hero),
+    body.pm-app-drawer-open .shopify-section:has(.product-wlasna-fotografia-mockup) {
+      transform: translateX(-100vw);
+    }
+
+    {% if template.suffix == 'fotografia-obraz' %}
     #shopify-section-template--29328540959068__custom_liquid_XCVirJ {
       position: relative;
       z-index: 60;
@@ -472,6 +835,7 @@
     body.pm-app-drawer-open #shopify-section-template--29328540959068__custom_liquid_XCVirJ {
       transform: translateX(-100vw);
     }
+    {% endif %}
 
     .shopify-section:has(#giclee-shell) {
       display: block !important;
@@ -534,15 +898,15 @@
     }
 
     #pm-cta {
+      display: none !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+      opacity: 0 !important;
       position: fixed !important;
       right: 16px !important;
       top: 50% !important;
       transform: translateY(-50%) !important;
       z-index: 120 !important;
-      opacity: 0 !important;
-      visibility: hidden !important;
-      pointer-events: none !important;
-      display: inline-flex !important;
       flex-direction: column !important;
       align-items: center !important;
       gap: 14px !important;
@@ -582,130 +946,7 @@
       0%, 100% { transform: rotate(-90deg) translateX(0); }
       50%      { transform: rotate(-90deg) translateX(6px); }
     }
-    #pm-lab-invite {
-      position: absolute;
-      left: clamp(20px, 4vw, 52px);
-      top: 50%;
-      transform: translateY(-50%) translateX(-18px);
-      max-width: min(32ch, 37vw);
-      z-index: 25;
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      color: rgba(255, 255, 255, 0.9);
-      font-family: "Cormorant Garamond", Georgia, serif;
-      font-size: clamp(20px, 1.55vw, 28px);
-      line-height: 1.3;
-      letter-spacing: 0.01em;
-      text-wrap: balance;
-      text-shadow: 0 8px 26px rgba(0, 0, 0, 0.55);
-      padding-left: clamp(18px, 2vw, 26px);
-      border-left: none;
-      transition: opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1),
-                  transform 0.85s cubic-bezier(0.22, 1, 0.36, 1),
-                  visibility 0.85s;
-    }
-    #pm-lab-invite::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 2px;
-      border-radius: 1px;
-      background: linear-gradient(
-        180deg,
-        rgba(201, 168, 76, 0.2) 0%,
-        rgba(201, 168, 76, 0.95) 50%,
-        rgba(201, 168, 76, 0.25) 100%
-      );
-      box-shadow: 0 0 14px rgba(201, 168, 76, 0.22);
-      animation: pmInviteLineShimmer 3.8s ease-in-out infinite;
-    }
-    html body #pm-hero.loaded #pm-lab-invite {
-      opacity: 1;
-      visibility: visible;
-      transform: translateY(-50%) translateX(0);
-      animation:
-        pmInviteReveal 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both,
-        pmInviteAmbient 7s ease-in-out infinite 1.15s;
-    }
-    #pm-lab-invite strong {
-      display: block;
-      margin-bottom: 10px;
-      font-size: clamp(12px, 0.8vw, 14px);
-      font-weight: 600;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: rgba(201, 168, 76, 0.92);
-      font-family: Inter, Arial, sans-serif;
-      animation: pmInviteGoldPulse 5s ease-in-out infinite 0.4s;
-    }
-    @keyframes pmInviteReveal {
-      from { opacity: 0; transform: translateY(-50%) translateX(-18px); filter: blur(2px); }
-      to   { opacity: 1; transform: translateY(-50%) translateX(0); filter: blur(0); }
-    }
-    @keyframes pmInviteAmbient {
-      0%, 100% {
-        opacity: 1;
-        text-shadow: 0 8px 26px rgba(0, 0, 0, 0.55);
-        transform: translateY(-50%) translateX(0);
-      }
-      50% {
-        opacity: 0.94;
-        text-shadow: 0 12px 34px rgba(0, 0, 0, 0.62);
-        transform: translateY(calc(-50% - 3px)) translateX(0);
-      }
-    }
-    @keyframes pmInviteAmbientMobile {
-      0%, 100% {
-        opacity: 1;
-        text-shadow: 0 8px 26px rgba(0, 0, 0, 0.55);
-        transform: translateX(-50%) translateY(0);
-      }
-      50% {
-        opacity: 0.93;
-        text-shadow: 0 12px 34px rgba(0, 0, 0, 0.62);
-        transform: translateX(-50%) translateY(-4px);
-      }
-    }
-    @keyframes pmInviteLineShimmer {
-      0%, 100% { opacity: 0.65; box-shadow: 0 0 10px rgba(201, 168, 76, 0.18); }
-      50% { opacity: 1; box-shadow: 0 0 22px rgba(201, 168, 76, 0.42); }
-    }
-    @keyframes pmInviteGoldPulse {
-      0%, 100% { color: rgba(201, 168, 76, 0.82); letter-spacing: 0.22em; }
-      50% { color: rgba(230, 207, 146, 0.98); letter-spacing: 0.24em; }
-    }
-    @keyframes pmCtaReveal {
-      from { opacity: 0; transform: translateY(-50%) translateX(14px); }
-      to   { opacity: 1; transform: translateY(-50%) translateX(0); }
-    }
-    @media screen and (max-width: 980px) {
-      #pm-lab-invite::before {
-        display: none;
-      }
-      #pm-lab-invite {
-        top: auto;
-        bottom: clamp(84px, 10vh, 132px);
-        left: 50%;
-        max-width: min(92vw, 36ch);
-        text-align: center;
-        border-left: 0;
-        padding-left: 0;
-        transform: translateX(-50%) translateY(12px);
-      }
-      #pm-hero.loaded #pm-lab-invite {
-        transform: translateX(-50%) translateY(0);
-        animation:
-          pmInviteRevealMobile 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both,
-          pmInviteAmbientMobile 7s ease-in-out infinite 1.15s;
-      }
-    }
-    @keyframes pmInviteRevealMobile {
-      from { opacity: 0; transform: translateX(-50%) translateY(12px); filter: blur(2px); }
-      to   { opacity: 1; transform: translateX(-50%) translateY(0); filter: blur(0); }
-    }
+
     #pm-back-to-preview {
       position: fixed;
       top: 16px;
@@ -729,6 +970,566 @@
     }
     body.pm-app-drawer-open #pm-back-to-preview {
       display: inline-flex;
+    }
+    #pm-left-rail {
+      position: absolute;
+      left: clamp(20px, 4vw, 52px);
+      top: 50%;
+      transform: translateY(-50%) translateX(-18px);
+      max-width: min(44ch, 46vw);
+      z-index: 25;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: clamp(20px, 3vh, 32px);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+                  visibility 0.85s;
+    }
+    html body #pm-hero.loaded #pm-left-rail {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: translateY(-50%) translateX(0);
+      animation: pmRailReveal 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+    }
+    #pm-lab-invite {
+      position: relative;
+      left: auto;
+      top: auto;
+      transform: none;
+      max-width: min(32ch, 37vw);
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      color: rgba(255, 255, 255, 0.9);
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: clamp(20px, 1.55vw, 28px);
+      line-height: 1.3;
+      letter-spacing: 0.01em;
+      text-wrap: balance;
+      text-shadow: 0 8px 26px rgba(0, 0, 0, 0.55);
+      padding-left: clamp(18px, 2vw, 26px);
+      border-left: none;
+    }
+    #pm-lab-invite::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      border-radius: 1px;
+      background: linear-gradient(
+        180deg,
+        rgba(201, 168, 76, 0.2) 0%,
+        rgba(201, 168, 76, 0.95) 50%,
+        rgba(201, 168, 76, 0.25) 100%
+      );
+      box-shadow: 0 0 14px rgba(201, 168, 76, 0.22);
+      animation: pmInviteLineShimmer 3.8s ease-in-out infinite;
+    }
+    #pm-lab-invite strong {
+      display: block;
+      margin-bottom: 10px;
+      font-size: clamp(12px, 0.8vw, 14px);
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(201, 168, 76, 0.92);
+      font-family: Inter, Arial, sans-serif;
+      animation: pmInviteGoldPulse 5s ease-in-out infinite 0.4s;
+    }
+    #pm-config {
+      width: 100%;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.12s,
+                  transform 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.12s;
+    }
+    html body #pm-hero.loaded #pm-config {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .pm-config-trigger {
+      -webkit-appearance: none;
+      appearance: none;
+      margin: 0;
+      padding: 6px 22px 6px 6px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 999px;
+      background: rgba(18, 18, 18, 0.58);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.34);
+      -webkit-backdrop-filter: blur(12px) saturate(130%);
+      backdrop-filter: blur(12px) saturate(130%);
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      color: rgba(255, 255, 255, 0.96);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: clamp(0.82rem, 0.95vw, 0.95rem);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      line-height: 1.32;
+      text-align: left;
+      cursor: pointer;
+      transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease,
+        transform 0.12s ease;
+    }
+    .pm-config-trigger:hover {
+      background: rgba(28, 28, 28, 0.62);
+      border-color: rgba(201, 168, 76, 0.45);
+      color: #fff;
+    }
+    .pm-config-trigger:active {
+      transform: scale(0.98);
+    }
+    .pm-config-trigger:focus-visible {
+      outline: 2px solid rgba(255, 255, 255, 0.75);
+      outline-offset: 2px;
+    }
+    .pm-config-trigger__icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.92);
+      transition: background-color 0.18s ease, color 0.18s ease;
+    }
+    .pm-config-trigger:hover .pm-config-trigger__icon {
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+    }
+    .pm-config-trigger__icon svg {
+      width: 26px;
+      height: 26px;
+      display: block;
+    }
+    .pm-config-trigger__label {
+      max-width: 24ch;
+    }
+    .pm-config.is-open .pm-config-trigger {
+      border-color: rgba(201, 168, 76, 0.55);
+    }
+    .pm-config-options {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(18, 18, 18, 0.58);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.34);
+      -webkit-backdrop-filter: blur(12px) saturate(130%);
+      backdrop-filter: blur(12px) saturate(130%);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      pointer-events: none;
+      transform: translateY(-6px);
+      transition: max-height 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+                  opacity 0.35s ease,
+                  transform 0.35s ease,
+                  margin 0.35s ease;
+    }
+    .pm-config.is-open .pm-config-options {
+      max-height: 480px;
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+    .pm-config-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+    .pm-config-row--labeled {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+    }
+    .pm-config-row__label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.72);
+    }
+    .pm-config-row__opts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .pm-opt--pp {
+      width: auto;
+      min-width: 4.5rem;
+      height: 40px;
+      padding: 0 14px;
+      border-radius: 10px;
+    }
+    .pm-opt {
+      -webkit-appearance: none;
+      appearance: none;
+      margin: 0;
+      width: 48px;
+      height: 48px;
+      padding: 0;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      background: rgba(255, 255, 255, 0.04);
+      color: rgba(255, 255, 255, 0.9);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 0.76rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      line-height: 1;
+      cursor: pointer;
+      transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease,
+        transform 0.12s ease, box-shadow 0.18s ease;
+    }
+    .pm-opt:hover {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.42);
+      color: #fff;
+    }
+    .pm-opt:active {
+      transform: scale(0.92);
+    }
+    .pm-opt:focus-visible {
+      outline: 2px solid rgba(255, 255, 255, 0.75);
+      outline-offset: 2px;
+    }
+    .pm-opt.is-selected {
+      border-color: rgba(201, 168, 76, 0.88);
+      box-shadow: 0 0 0 1px rgba(201, 168, 76, 0.35), 0 0 16px rgba(201, 168, 76, 0.22);
+      color: #fff;
+    }
+    .pm-opt--wood {
+      width: auto;
+      min-width: 62px;
+      padding: 0 14px;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      text-transform: lowercase;
+    }
+    .pm-opt--swatch {
+      background: var(--pm-swatch, #1a1a1a);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+      transition: border-color 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease,
+        filter 0.2s ease;
+    }
+    .pm-opt--swatch:hover,
+    .pm-opt--swatch:focus-visible {
+      background: var(--pm-swatch, #1a1a1a);
+      filter: brightness(1.14) saturate(1.45);
+      border-color: rgba(255, 255, 255, 0.5);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22),
+        0 0 14px color-mix(in srgb, var(--pm-swatch) 50%, transparent);
+    }
+    .pm-opt--swatch.is-selected {
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+        0 0 0 1px rgba(201, 168, 76, 0.35), 0 0 16px rgba(201, 168, 76, 0.22);
+    }
+    .pm-opt--swatch.is-selected:hover,
+    .pm-opt--swatch.is-selected:focus-visible {
+      filter: brightness(1.1) saturate(1.3);
+      border-color: rgba(201, 168, 76, 0.95);
+    }
+    .pm-config-row[data-row="color"] .pm-opt--swatch.is-unavailable {
+      display: none;
+    }
+    .pm-opt--size {
+      font-size: 0.82rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .pm-quality-panel {
+      margin-top: 0;
+      padding: 0 16px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(12, 12, 12, 0.62);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 10px 28px rgba(0, 0, 0, 0.28);
+      -webkit-backdrop-filter: blur(10px) saturate(120%);
+      backdrop-filter: blur(10px) saturate(120%);
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      pointer-events: none;
+      transition: max-height 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+                  opacity 0.35s ease,
+                  margin 0.35s ease,
+                  padding 0.35s ease;
+    }
+    .pm-config.is-open .pm-quality-panel {
+      max-height: 280px;
+      opacity: 1;
+      margin-top: 14px;
+      padding: 14px 16px 16px;
+      pointer-events: auto;
+    }
+    .pm-quality-panel__head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .pm-quality-panel__eyebrow {
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(201, 168, 76, 0.82);
+    }
+    .pm-quality-panel__format {
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      color: rgba(255, 255, 255, 0.52);
+      white-space: nowrap;
+    }
+    .pm-quality-panel__verdict {
+      font-family: "Cormorant Garamond", "Times New Roman", Georgia, serif;
+      font-size: 1.28rem;
+      font-weight: 500;
+      line-height: 1.2;
+      color: rgba(255, 255, 255, 0.94);
+      margin-bottom: 4px;
+    }
+    .pm-quality-panel__meta {
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: rgba(255, 255, 255, 0.58);
+      margin-bottom: 6px;
+      min-height: 1em;
+    }
+    .pm-quality-panel__file {
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      color: rgba(255, 255, 255, 0.46);
+      margin-bottom: 10px;
+      min-height: 0;
+    }
+    .pm-quality-panel__bar {
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    .pm-quality-panel__bar-fill {
+      display: block;
+      height: 100%;
+      width: 0;
+      border-radius: inherit;
+      background: rgba(255, 255, 255, 0.35);
+      transition: width 0.14s linear, background-color 0.2s ease;
+    }
+    .pm-quality-panel__bar-fill--blue {
+      background: linear-gradient(90deg, rgba(72, 132, 210, 0.88), rgba(118, 178, 245, 0.96));
+      box-shadow: 0 0 14px rgba(88, 152, 228, 0.38);
+    }
+    .pm-quality-panel__bar-fill--green {
+      background: linear-gradient(90deg, rgba(88, 196, 118, 0.9), rgba(134, 228, 156, 0.98));
+      box-shadow: 0 0 14px rgba(96, 200, 128, 0.4);
+    }
+    .pm-quality-panel__bar-fill--green-soft {
+      background: linear-gradient(90deg, rgba(72, 148, 102, 0.82), rgba(108, 178, 128, 0.92));
+      box-shadow: 0 0 10px rgba(82, 158, 108, 0.28);
+    }
+    .pm-quality-panel__bar-fill--amber {
+      background: linear-gradient(90deg, rgba(201, 168, 76, 0.75), rgba(230, 207, 146, 0.92));
+      box-shadow: 0 0 12px rgba(201, 168, 76, 0.28);
+    }
+    .pm-quality-panel__bar-fill--red {
+      background: linear-gradient(90deg, rgba(180, 72, 72, 0.82), rgba(210, 96, 96, 0.92));
+      box-shadow: 0 0 12px rgba(180, 72, 72, 0.28);
+    }
+    .pm-quality-panel__note {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 0.72rem;
+      line-height: 1.45;
+      color: rgba(255, 255, 255, 0.52);
+    }
+    .pm-quality-panel--blue .pm-quality-panel__verdict {
+      color: rgba(164, 208, 255, 0.98);
+    }
+    .pm-quality-panel--green .pm-quality-panel__verdict {
+      color: rgba(158, 236, 178, 0.98);
+    }
+    .pm-quality-panel--green-soft .pm-quality-panel__verdict {
+      color: rgba(132, 198, 158, 0.96);
+    }
+    .pm-quality-panel--amber .pm-quality-panel__verdict {
+      color: rgba(230, 207, 146, 0.98);
+    }
+    .pm-quality-panel--red .pm-quality-panel__verdict {
+      color: rgba(230, 160, 160, 0.98);
+    }
+    .pm-quality-panel--empty .pm-quality-panel__verdict {
+      font-size: 1.02rem;
+      color: rgba(255, 255, 255, 0.78);
+    }
+    .pm-quality-panel--empty .pm-quality-panel__bar {
+      opacity: 0.35;
+    }
+    @keyframes pmRailReveal {
+      from { opacity: 0; transform: translateY(-50%) translateX(-18px); filter: blur(2px); }
+      to   { opacity: 1; transform: translateY(-50%) translateX(0); filter: blur(0); }
+    }
+    @keyframes pmRailAmbient {
+      0%, 100% {
+        transform: translateY(-50%) translateX(0);
+      }
+      50% {
+        transform: translateY(calc(-50% - 3px)) translateX(0);
+      }
+    }
+    @keyframes pmInviteAmbientMobile {
+      0%, 100% {
+        text-shadow: 0 8px 26px rgba(0, 0, 0, 0.55);
+        transform: translateX(-50%) translateY(0);
+      }
+      50% {
+        text-shadow: 0 12px 34px rgba(0, 0, 0, 0.62);
+        transform: translateX(-50%) translateY(-4px);
+      }
+    }
+    @keyframes pmInviteLineShimmer {
+      0%, 100% { opacity: 0.65; box-shadow: 0 0 10px rgba(201, 168, 76, 0.18); }
+      50% { opacity: 1; box-shadow: 0 0 22px rgba(201, 168, 76, 0.42); }
+    }
+    @keyframes pmInviteGoldPulse {
+      0%, 100% { color: rgba(201, 168, 76, 0.82); letter-spacing: 0.22em; }
+      50% { color: rgba(230, 207, 146, 0.98); letter-spacing: 0.24em; }
+    }
+    @keyframes pmCtaReveal {
+      from { opacity: 0; transform: translateY(-50%) translateX(14px); }
+      to   { opacity: 1; transform: translateY(-50%) translateX(0); }
+    }
+    @media screen and (max-width: 980px) {
+      #pm-left-rail {
+        left: 50%;
+        top: auto;
+        bottom: clamp(72px, 9vh, 124px);
+        transform: translateX(-50%) translateY(12px);
+        align-items: center;
+        max-width: min(94vw, 38ch);
+        gap: clamp(16px, 2.5vh, 24px);
+      }
+      html body #pm-hero.loaded #pm-left-rail {
+        transform: translateX(-50%) translateY(0);
+        animation: pmRailRevealMobile 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+      }
+      #pm-lab-invite::before {
+        display: none;
+      }
+      #pm-lab-invite {
+        max-width: min(92vw, 36ch);
+        text-align: center;
+        padding-left: 0;
+      }
+      #pm-config {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+      }
+      .pm-config-row {
+        justify-content: center;
+      }
+      .pm-config-trigger__label {
+        max-width: 26ch;
+        font-size: 0.9rem;
+        text-align: left;
+      }
+    }
+    @keyframes pmRailRevealMobile {
+      from { opacity: 0; transform: translateX(-50%) translateY(12px); filter: blur(2px); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0); filter: blur(0); }
+    }
+    @media screen and (min-width: 1024px) and (max-width: 1400px) {
+      #pm-left-rail {
+        left: clamp(12px, 2vw, 32px);
+        max-width: min(32ch, 26vw);
+        gap: clamp(12px, 2vh, 20px);
+      }
+      #pm-lab-invite {
+        font-size: clamp(16px, 1.3vw, 22px);
+        max-width: min(26ch, 28vw);
+        padding-left: clamp(12px, 1.4vw, 18px);
+      }
+      .pm-config-trigger {
+        padding: 5px 14px 5px 5px;
+        gap: 8px;
+        font-size: 0.76rem;
+      }
+      .pm-config-trigger__icon {
+        width: 40px;
+        height: 40px;
+      }
+      .pm-config-trigger__icon svg {
+        width: 20px;
+        height: 20px;
+      }
+      .pm-config-trigger__label {
+        max-width: 20ch;
+      }
+      .pm-config-options {
+        padding: 10px 12px;
+        gap: 8px;
+        border-radius: 20px;
+      }
+      .pm-config-row {
+        gap: 7px;
+      }
+      .pm-opt {
+        width: 40px;
+        height: 40px;
+        font-size: 0.68rem;
+      }
+      .pm-opt--wood {
+        min-width: 54px;
+        padding: 0 11px;
+        font-size: 0.68rem;
+      }
+      .pm-opt--size {
+        font-size: 0.74rem;
+      }
+      .pm-config.is-open .pm-quality-panel {
+        max-height: 260px;
+        padding: 10px 12px 12px;
+      }
+      .pm-quality-panel__verdict {
+        font-size: 1.12rem;
+      }
+      .pm-quality-panel__meta,
+      .pm-quality-panel__file {
+        font-size: 0.66rem;
+      }
+      .pm-quality-panel__note {
+        font-size: 0.68rem;
+        line-height: 1.4;
+      }
     }
     {% endif %}
     {% if template.suffix == 'giclee-frame' %}
@@ -759,18 +1560,20 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      will-change: opacity;
       opacity: 1;
-      transition: opacity 1.3s ease;
+      visibility: visible;
+      pointer-events: auto;
+      transition: opacity 1.4s ease, visibility 0s linear 0s;
     }
     #splash-screen.hide {
       opacity: 0;
       pointer-events: none;
+      visibility: hidden;
+      transition: opacity 1.4s ease, visibility 0s linear 1.4s;
     }
     .splash-content {
       text-align: center;
       animation: splashFadeIn 1.1s ease forwards;
-      will-change: opacity, transform;
     }
     .splash-title {
       color: #fff;
@@ -962,50 +1765,312 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
 const imageCache = {};
 let currentPreviewSrc = null;
+let activePreviewHandle = null;
+
+// Ukryci artysci w panelu Katalog i menu mobilnym (handle kolekcji Shopify).
+// Kolekcje nadal dzialaja pod bezposrednim URL; znika tylko pozycja w nawigacji.
+// Aktualizuj te tablice na prosbe (np. "ukryj X", "odkryj Y").
+const HIDDEN_CATALOG_ARTISTS = new Set([
+  'francois-boucher', // Boucher, François
+  'william-bradford', // Bradford, William
+  'paul-fisher', // Fisher, Paul
+  'jean-auguste-ingres', // Ingres, Jean-Auguste
+  'peder-severin-kryer', // Krøyer, Peder Severin
+  'edmund-blair-leighton', // Leighton, Edmund Blair
+  'charles-sillem-lidderdale', // Lidderdale, Charles Sillem
+  'giordano-luca', // Luca, Giordano
+  'anders-andersen-lundby', // Lundby, Anders Andersen
+  'johan-thomas-lundbye', // Lundbye, Johan Thomas
+  'anton-melbye', // Melbye, Anton
+  'jean-francois-millet', // Millet, Jean-François
+  'claude-monet', // Monet, Claude
+  'thomas-moran', // Moran, Thomas
+  'bartolome-esteban-murillo', // Murillo, Bartolomé Esteban
+  'harmenszoon-van-rijn-rembrandt', // Rembrandt, Harmenszoon van Rijn
+  'guido-reni', // Reni, Guido
+  'aguste-renoir', // Renoir, Aguste
+  'willem-roelofs', // Roelofs, Willem
+  'dante-gabriel-rossetti', // Rossetti, Dante Gabriel
+  'rafael-santi', // Santi, Rafael
+  'alfred-sisley', // Sisley, Alfred
+  'tycjan-tiziano-vecellio', // Tycjan (Tiziano Vecellio)
+  'claude-joseph-vernet', // Vernet, Claude Joseph
+]);
+
+function shopifyUrlRoot() {
+  var root = (window.Shopify && window.Shopify.routes && window.Shopify.routes.root) || '/';
+  if (root.length && root.charAt(root.length - 1) !== '/') root += '/';
+  return root;
+}
+
+function getCollectionHandleFromHref(href) {
+  if (!href) return null;
+  try {
+    const path = new URL(href, window.location.origin).pathname;
+    const match = path.match(/\/collections\/([^/]+)/i);
+    return match ? match[1].toLowerCase() : null;
+  } catch (err) {
+    const parts = String(href).split('/collections/');
+    if (!parts[1]) return null;
+    return parts[1].split('?')[0].split('#')[0].split('/')[0].toLowerCase();
+  }
+}
+
+function collectionProductsJsonUrl(handle) {
+  return shopifyUrlRoot() + 'collections/' + encodeURIComponent(handle) + '/products.json?limit=1';
+}
+
+function isCatalogArtistHidden(handle) {
+  return !!handle && HIDDEN_CATALOG_ARTISTS.has(String(handle).toLowerCase());
+}
+
+function applyHiddenCatalogArtistsToNavigation() {
+  document.querySelectorAll('.menu-drawer a[href*="/collections/"]').forEach(function(link) {
+    const handle = getCollectionHandleFromHref(link.getAttribute('href'));
+    if (!isCatalogArtistHidden(handle)) return;
+    const item = link.closest('.menu-drawer__list-item');
+    if (item) {
+      item.style.display = 'none';
+      item.setAttribute('aria-hidden', 'true');
+    } else {
+      link.style.display = 'none';
+      link.setAttribute('aria-hidden', 'true');
+    }
+  });
+}
+
+const CATALOG_LIST_COLUMNS = 3;
+
+var CATALOG_SURNAME_PARTICLES = {
+  van: 1, von: 1, de: 1, da: 1, del: 1, della: 1, di: 1, du: 1,
+  ten: 1, ter: 1, den: 1, der: 1, af: 1, av: 1, la: 1, le: 1
+};
+
+function titleCaseWords(text) {
+  return String(text || '').split(/\s+/).filter(Boolean).map(function(w) {
+    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  }).join(' ');
+}
+
+function normalizeCatalogArtistTitle(raw) {
+  var title = String(raw || '').trim();
+  if (title.indexOf(', ') === -1) return { surname: title, given: '' };
+  var comma = title.indexOf(', ');
+  var surname = title.slice(0, comma).trim();
+  var given = title.slice(comma + 2).trim();
+  var givenWords = given.split(/\s+/).filter(Boolean);
+  if (givenWords.length > 1) {
+    var last = givenWords[givenWords.length - 1].toLowerCase().replace(/\.$/, '');
+    if (CATALOG_SURNAME_PARTICLES[last]) {
+      var particle = givenWords[givenWords.length - 1];
+      given = givenWords.slice(0, -1).join(' ');
+      surname = (particle + ' ' + surname).trim();
+    }
+  }
+  return { surname: titleCaseWords(surname), given: titleCaseWords(given) };
+}
+
+function formatCatalogArtistName(raw) {
+  var parts = normalizeCatalogArtistTitle(raw);
+  return parts.given ? parts.surname + ', ' + parts.given : parts.surname;
+}
+
+function catalogArtistSortKey(raw) {
+  var parts = normalizeCatalogArtistTitle(raw);
+  return (parts.surname + '\0' + parts.given).toLowerCase();
+}
+
+function resortMegaMenuArtistLists(root) {
+  if (!root) return;
+  root.querySelectorAll('.mega-menu__flyout-list').forEach(function(list) {
+    var items = Array.prototype.slice.call(list.querySelectorAll(':scope > li'));
+    if (items.length < 2) return;
+    items.sort(function(a, b) {
+      var ta = (a.querySelector('a') && a.querySelector('a').textContent || '').trim();
+      var tb = (b.querySelector('a') && b.querySelector('a').textContent || '').trim();
+      return catalogArtistSortKey(ta).localeCompare(catalogArtistSortKey(tb));
+    });
+    items.forEach(function(li) {
+      var link = li.querySelector('a');
+      if (link) link.textContent = formatCatalogArtistName(link.textContent.trim());
+      list.appendChild(li);
+    });
+  });
+}
+
+function attachCatalogArtistLink(listCol, linkEl, handle) {
+  linkEl.addEventListener('mouseenter', function() {
+    listCol.querySelectorAll('a').forEach(function(l) { l.classList.remove('is-active'); });
+    linkEl.classList.add('is-active');
+    if (handle) {
+      activePreviewHandle = handle;
+      document.getElementById('giclee-preview-name').textContent = linkEl.textContent;
+      document.getElementById('giclee-preview-count').textContent = (window.__gicleeI18n && window.__gicleeI18n.catalog_view_collection) || 'Zobacz kolekcję';
+      fetchArtistPreview(handle, function(data) {
+        if (activePreviewHandle !== handle) return;
+        setPreviewImage(data.img);
+      });
+    }
+  });
+}
+
+function populateCatalogArtistList(listCol, artistLinks, showHeader) {
+  const visible = [];
+  artistLinks.forEach(function(origLink) {
+    const handle = getCollectionHandleFromHref(origLink.href);
+    if (isCatalogArtistHidden(handle)) return;
+    const rawText = origLink.textContent.trim();
+    visible.push({
+      href: origLink.href,
+      text: formatCatalogArtistName(rawText),
+      handle: handle
+    });
+  });
+
+  visible.sort(function(a, b) {
+    return catalogArtistSortKey(a.text).localeCompare(catalogArtistSortKey(b.text));
+  });
+
+  if (showHeader) {
+    const header = document.createElement('div');
+    header.className = 'giclee-artists-list-header';
+    header.textContent = (window.__gicleeI18n && window.__gicleeI18n.catalog_artists) || 'Artyści';
+    listCol.appendChild(header);
+  }
+
+  const grid = document.createElement('div');
+  grid.className = 'giclee-artists-columns';
+  const totalSlots = artistLinks.length;
+  const targetRowsPerCol = Math.max(1, Math.ceil(totalSlots / CATALOG_LIST_COLUMNS));
+  const perCol = visible.length
+    ? Math.ceil(visible.length / CATALOG_LIST_COLUMNS)
+    : 0;
+
+  for (var c = 0; c < CATALOG_LIST_COLUMNS; c++) {
+    const colEl = document.createElement('div');
+    colEl.className = 'giclee-artists-col';
+    const chunk = visible.slice(c * perCol, (c + 1) * perCol);
+    chunk.forEach(function(item) {
+      const a = document.createElement('a');
+      a.href = item.href;
+      a.textContent = item.text;
+      attachCatalogArtistLink(listCol, a, item.handle);
+      colEl.appendChild(a);
+    });
+    grid.appendChild(colEl);
+  }
+  listCol.appendChild(grid);
+
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      const sample = listCol.querySelector('a');
+      if (!sample) return;
+      const linkH = sample.offsetHeight || 23;
+      const colMinH = targetRowsPerCol * linkH;
+      grid.style.minHeight = colMinH + 'px';
+      listCol.querySelectorAll('.giclee-artists-col').forEach(function(col) {
+        col.style.minHeight = colMinH + 'px';
+        const links = col.querySelectorAll('a');
+        const n = links.length;
+        if (n <= 1) return;
+        const extra = colMinH - n * linkH;
+        if (extra > 0) {
+          col.style.gap = (extra / (n - 1)) + 'px';
+        }
+      });
+    });
+  });
+}
 
 function fetchArtistPreview(handle, callback) {
   if (imageCache[handle]) {
     callback(imageCache[handle]);
     return;
   }
-  fetch('/collections/' + handle + '/products.json?limit=1')
+  fetch(collectionProductsJsonUrl(handle))
     .then(r => r.json())
     .then(data => {
-      const src = data.products?.[0]?.images?.[0]?.src || null;
+      const imgs = data.products?.[0]?.images || [];
+      const previewImg = imgs.find(function(im) {
+        return (im.alt || '').toLowerCase().indexOf('(preview)') !== -1;
+      });
+      const pick = previewImg || imgs[0];
+      let src = pick?.src || null;
+      if (src && src.indexOf('width=') === -1) {
+        src += (src.indexOf('?') === -1 ? '?' : '&') + 'width=720';
+      }
       imageCache[handle] = { img: src };
       callback({ img: src });
     })
     .catch(() => callback({ img: null }));
 }
 
+function hideCatalogPreview() {
+  activePreviewHandle = null;
+  currentPreviewSrc = null;
+  const img = document.getElementById('giclee-preview-img');
+  const previewCol = document.getElementById('giclee-artist-preview');
+  if (img) {
+    img.classList.remove('is-visible');
+    img.style.transition = 'none';
+    img.style.opacity = '0';
+    img.style.visibility = 'hidden';
+  }
+  if (previewCol) {
+    previewCol.style.transition = 'none';
+    previewCol.style.opacity = '0';
+    previewCol.style.visibility = 'hidden';
+  }
+}
+
 function setPreviewImage(src) {
   const img = document.getElementById('giclee-preview-img');
+  const previewCol = document.getElementById('giclee-artist-preview');
+  if (document.body.classList.contains('is-navigating')) return;
+  const panel = document.getElementById('giclee-catalog-panel');
+  if (panel && (panel.classList.contains('is-closing') || panel._navLock)) return;
   if (!src) {
     img.classList.remove('is-visible');
-    currentPreviewSrc = null;
     return;
   }
 
   if (currentPreviewSrc === src && img.hasAttribute('src') && img.complete && img.naturalWidth > 0) {
+    if (previewCol) {
+      previewCol.style.opacity = '';
+      previewCol.style.visibility = '';
+    }
+    img.style.opacity = '';
+    img.style.visibility = '';
     img.classList.add('is-visible');
     return;
   }
 
   currentPreviewSrc = src;
-  img.classList.remove('is-visible');
-  img.removeAttribute('src');
 
   const loader = new Image();
   loader.onload = function() {
     if (currentPreviewSrc !== src) return;
+    if (document.body.classList.contains('is-navigating')) return;
+    if (panel && (panel.classList.contains('is-closing') || panel._navLock)) return;
     img.src = src;
+    if (previewCol) {
+      previewCol.style.opacity = '';
+      previewCol.style.visibility = '';
+    }
+    img.style.opacity = '';
+    img.style.visibility = '';
     requestAnimationFrame(function() {
       requestAnimationFrame(function() {
-        if (currentPreviewSrc === src) {
+        if (currentPreviewSrc === src && !document.body.classList.contains('is-navigating')) {
           img.classList.add('is-visible');
         }
       });
     });
+  };
+  loader.onerror = function() {
+    if (currentPreviewSrc === src) {
+      currentPreviewSrc = img.getAttribute('src');
+    }
   };
   loader.src = src;
 }
@@ -1013,7 +2078,7 @@ function setPreviewImage(src) {
 function initGalleryCatalog() {
   const katalogItem = Array.from(document.querySelectorAll('.menu-list__list-item')).find(function(li) {
     const a = li.querySelector('a');
-    return a && a.textContent.trim() === 'Katalog';
+    return a && a.dataset.gicleeMenu === 'catalog';
   });
 
   if (!katalogItem || katalogItem.dataset.galleryInit) return;
@@ -1074,35 +2139,10 @@ function initGalleryCatalog() {
     </div>
   `;
 
-  const artistLinks = megaMenuInner.querySelectorAll('.mega-menu__link--child, .mega-menu__flyout-panel a');
-  artistLinks.forEach(function(origLink) {
-    const a = document.createElement('a');
-    a.href = origLink.href;
-    a.textContent = origLink.textContent.trim();
-    const handle = origLink.href.split('/collections/')[1]?.split('?')[0];
-
-    a.addEventListener('mouseenter', function() {
-      listCol.querySelectorAll('a').forEach(l => l.classList.remove('is-active'));
-      a.classList.add('is-active');
-      if (handle) {
-        document.getElementById('giclee-preview-name').textContent = a.textContent;
-        document.getElementById('giclee-preview-count').textContent = 'Zobacz kolekcję';
-        fetchArtistPreview(handle, function(data) {
-          setPreviewImage(data.img);
-        });
-      }
-    });
-
-    listCol.appendChild(a);
-  });
-
   const artistsLink = megaMenuInner.querySelector('.mega-menu__link--parent');
-  if (artistsLink) {
-    const header = document.createElement('div');
-    header.style.cssText = 'font-size:9px;letter-spacing:0.45em;text-transform:uppercase;color:rgba(201,168,76,0.5);font-weight:500;padding:0 0 20px 0;column-span:all;font-family:Inter,sans-serif;';
-    header.textContent = 'Artyści';
-    listCol.prepend(header);
-  }
+  resortMegaMenuArtistLists(megaMenuInner);
+  const artistLinks = megaMenuInner.querySelectorAll('.mega-menu__link--child, .mega-menu__flyout-panel a');
+  populateCatalogArtistList(listCol, artistLinks, !!artistsLink);
 
   panel.appendChild(listCol);
   panel.appendChild(previewCol);
@@ -1165,6 +2205,51 @@ function initGalleryCatalog() {
     });
   }
 
+  function freezePanelForNavigation() {
+    panel._navLock = true;
+    clearTimeout(hideTimer);
+    clearTimeout(hideFinalizeTimer);
+    clearTimeout(listCloseTimer);
+    if (panel._linkTimers && panel._linkTimers.length) {
+      panel._linkTimers.forEach(function(t) { clearTimeout(t); });
+      panel._linkTimers = [];
+    }
+    panel.classList.remove('staggering', 'is-closing');
+    panel.classList.add('is-open', 'is-nav-lifting');
+
+    panel.style.removeProperty('--giclee-lift-y');
+    panel.style.setProperty('clip-path', 'inset(0 0 0 0)', 'important');
+    panel.style.setProperty('opacity', '1', 'important');
+    panel.style.setProperty('visibility', 'visible', 'important');
+    panel.style.setProperty('transition', 'none', 'important');
+    panel.style.setProperty('transform', 'translateY(0)', 'important');
+
+    var listCS = window.getComputedStyle(listCol);
+    listCol.style.clipPath = listCS.clipPath === 'none' ? 'inset(0 0 0 0)' : listCS.clipPath;
+    listCol.style.transition = 'none';
+    freezePanelLinksForNavigation();
+
+    /* 3 klatki: zamrożenie → włączenie transition → cel (bez skoku) */
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        if (!panel.classList.contains('is-nav-lifting')) return;
+        var rect = panel.getBoundingClientRect();
+        var liftTo = -(rect.bottom + 168);
+        panel.style.setProperty(
+          'transition',
+          'transform var(--pt-close-duration, 0.72s) cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+          'important'
+        );
+        panel.style.setProperty('transform', 'translateY(0)', 'important');
+        void panel.offsetHeight;
+        requestAnimationFrame(function() {
+          if (!panel.classList.contains('is-nav-lifting')) return;
+          panel.style.setProperty('transform', 'translateY(' + liftTo + 'px)', 'important');
+        });
+      });
+    });
+  }
+
   function staggerPanelLinks() {
     var links = listCol.querySelectorAll('a');
     resetPanelLinks();
@@ -1209,19 +2294,70 @@ function initGalleryCatalog() {
     });
   }
 
+  function beginPanelClose(finalize) {
+    panel.classList.add('is-closing');
+    closePanelLinks();
+
+    listCol.style.transition = 'none';
+    listCol.style.clipPath = 'inset(0 0 0 0)';
+    listCol.style.opacity = '1';
+    listCol.style.transform = 'translateY(0)';
+    listCol.style.overflow = 'hidden';
+    listCol.style.overflowY = 'hidden';
+
+    requestAnimationFrame(function() {
+      listCol.style.transition = 'clip-path 0.5s cubic-bezier(0.22, 0.61, 0.36, 1)';
+      listCol.style.clipPath = 'inset(0 0 100% 0)';
+    });
+
+    if (!finalize) return;
+
+    listCloseTimer = setTimeout(function() {
+      panel.classList.remove('is-open', 'is-closing');
+      resetPanelLinks();
+      listCol.style.clipPath = '';
+      listCol.style.opacity = '';
+      listCol.style.transform = '';
+      listCol.style.overflow = '';
+      listCol.style.overflowY = 'auto';
+      listCol.style.transition = '';
+      const katalogLink = katalogItem.querySelector('a.menu-list__link');
+      if (katalogLink) katalogLink.style.cssText = '';
+      hideCatalogPreview();
+    }, 500);
+  }
+
   function showPanel() {
     clearTimeout(hideTimer);
     clearTimeout(hideFinalizeTimer);
     clearTimeout(listCloseTimer);
     panel._navLock = false;
     var alreadyOpen = panel.classList.contains('is-open') && !panel.classList.contains('is-closing');
-    panel.classList.remove('is-closing');
+    panel.classList.remove('is-closing', 'is-nav-lifting');
+    panel.style.removeProperty('clip-path');
+    panel.style.removeProperty('opacity');
+    panel.style.removeProperty('visibility');
+    panel.style.removeProperty('transform');
+    panel.style.removeProperty('transition');
+    panel.style.removeProperty('--giclee-lift-y');
     listCol.style.clipPath = 'inset(0 0 0 0)';
     listCol.style.opacity = '';
     listCol.style.transform = '';
     listCol.style.overflow = '';
     listCol.style.overflowY = 'auto';
     listCol.style.transition = '';
+    var previewCol = document.getElementById('giclee-artist-preview');
+    var previewImg = document.getElementById('giclee-preview-img');
+    if (previewCol) {
+      previewCol.style.opacity = '';
+      previewCol.style.visibility = '';
+      previewCol.style.transition = '';
+    }
+    if (previewImg) {
+      previewImg.style.opacity = '';
+      previewImg.style.visibility = '';
+      previewImg.style.transition = '';
+    }
     positionPanel();
     panel.classList.add('is-open');
     if (!alreadyOpen) {
@@ -1230,7 +2366,7 @@ function initGalleryCatalog() {
     const katalogLink = katalogItem.querySelector('a.menu-list__link');
     if (katalogLink) katalogLink.style.cssText = 'visibility:visible!important;opacity:1!important;';
     listCol.querySelectorAll('a').forEach(function(link) {
-      const h = link.href.split('/collections/')[1]?.split('?')[0];
+      const h = getCollectionHandleFromHref(link.getAttribute('href'));
       if (h && !imageCache[h]) fetchArtistPreview(h, function() {});
     });
   }
@@ -1239,38 +2375,17 @@ function initGalleryCatalog() {
     if (panel._navLock) return;
     hideTimer = setTimeout(function() {
       if (panel._navLock) return;
-      panel.classList.add('is-closing');
-      closePanelLinks();
-
-      listCol.style.transition = 'none';
-      listCol.style.clipPath = 'inset(0 0 0 0)';
-      listCol.style.opacity = '1';
-      listCol.style.transform = 'translateY(0)';
-      listCol.style.overflow = 'hidden';
-      listCol.style.overflowY = 'hidden';
-
-      requestAnimationFrame(function() {
-        listCol.style.transition = 'clip-path 0.5s cubic-bezier(0.22, 0.61, 0.36, 1)';
-        listCol.style.clipPath = 'inset(0 0 100% 0)';
-      });
-
-      listCloseTimer = setTimeout(function() {
-        panel.classList.remove('is-open', 'is-closing');
-        resetPanelLinks();
-        listCol.style.clipPath = '';
-        listCol.style.opacity = '';
-        listCol.style.transform = '';
-        listCol.style.overflow = '';
-        listCol.style.overflowY = 'auto';
-        listCol.style.transition = '';
-        const katalogLink = katalogItem.querySelector('a.menu-list__link');
-        if (katalogLink) katalogLink.style.cssText = '';
-        currentPreviewSrc = null;
-        const img = document.getElementById('giclee-preview-img');
-        img.removeAttribute('src');
-        img.classList.remove('is-visible');
-      }, 500);
+      beginPanelClose(true);
     }, 180);
+  }
+
+  const katalogLink = katalogItem.querySelector('a.menu-list__link');
+  if (katalogLink) {
+    katalogLink.setAttribute('href', '#');
+    katalogLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      showPanel();
+    });
   }
 
   katalogItem.addEventListener('mouseenter', showPanel);
@@ -1291,64 +2406,21 @@ function initGalleryCatalog() {
   });
   panel.addEventListener('mouseleave', hidePanel);
 
-  // Ensure catalog panel joins page-transition close animation on navigation,
-  // even if it is still opening or partially revealed.
-  window.addEventListener('giclee:navigation-start', function(e) {
-    clearTimeout(hideTimer);
-    clearTimeout(hideFinalizeTimer);
-    clearTimeout(listCloseTimer);
-    var navHref = (e && e.detail && e.detail.href) ? e.detail.href : '';
-    var normalizedHref = '';
-    try {
-      normalizedHref = new URL(navHref, window.location.origin).pathname.toLowerCase();
-    } catch (err) {
-      normalizedHref = String(navHref || '').split('?')[0].split('#')[0].toLowerCase();
-    }
-    // Treat only the catalog landing page as "catalog nav",
-    // not every collection detail URL like /collections/<handle>.
-    var isCatalogNav = normalizedHref === '/collections' || normalizedHref === '/pages/katalog';
-
-    // For catalog navigation while stagger is still running, keep current reveal/timers.
-    // This prevents the list from disappearing before the curtain transition.
-    if (isCatalogNav) {
-      panel._navLock = true;
-      clearTimeout(hideTimer);
-      clearTimeout(hideFinalizeTimer);
-      clearTimeout(listCloseTimer);
-      if (panel._linkTimers && panel._linkTimers.length) {
-        panel._linkTimers.forEach(function(t) { clearTimeout(t); });
-        panel._linkTimers = [];
-      }
-      panel.classList.remove('staggering');
-      panel.classList.remove('is-closing');
-      panel.classList.add('is-open');
-      freezePanelLinksForNavigation();
+  // Zamroź katalog przy nawigacji (klik autora, kolekcji itd.) — kotara przykrywa panel.
+  window.addEventListener('giclee:navigation-start', function() {
+    if (!panel.classList.contains('is-open') && !panel.classList.contains('is-closing')) {
+      panel._navLock = false;
       return;
     }
-
-    panel._navLock = false;
-
-    if (panel._linkTimers && panel._linkTimers.length) {
-      panel._linkTimers.forEach(function(t) { clearTimeout(t); });
-      panel._linkTimers = [];
-    }
-    panel.classList.remove('staggering', 'is-closing');
-
-    // Freeze exactly current visual state; do not expand to full panel.
-    var panelCS = window.getComputedStyle(panel);
-    var listCS = window.getComputedStyle(listCol);
-    panel.style.setProperty('clip-path', panelCS.clipPath === 'none' ? 'inset(0 0 0 0)' : panelCS.clipPath, 'important');
-    panel.style.setProperty('opacity', panelCS.opacity, 'important');
-    listCol.style.clipPath = listCS.clipPath === 'none' ? 'inset(0 0 0 0)' : listCS.clipPath;
-    listCol.style.transition = 'none';
-
-    // Freeze exactly current visual state without forcing full list.
-    freezePanelLinksForNavigation();
+    freezePanelForNavigation();
   });
+
+  window.addEventListener('giclee:curtain-closed', hideCatalogPreview);
 }
 
 let attempts = 0;
 const interval = setInterval(function() {
+  applyHiddenCatalogArtistsToNavigation();
   initGalleryCatalog();
   attempts++;
   if (attempts > 20) clearInterval(interval);
@@ -1371,10 +2443,7 @@ const interval = setInterval(function() {
     if (window.location.pathname !== '/') return;
 
     var mobileImages = [
-      'https://cdn.shopify.com/s/files/1/1011/0517/2828/files/001_In_a_Dutch_Golden_Age_style_a_still_life_K6d_qCVk.png?v=1775607884',
-      'https://cdn.shopify.com/s/files/1/1011/0517/2828/files/001_In_a_Dutch_Golden_Age_style_a_still_life_K6d_qCVk.png?v=1775607884',
-      'https://cdn.shopify.com/s/files/1/1011/0517/2828/files/001_In_a_Dutch_Golden_Age_style_a_still_life_K6d_qCVk.png?v=1775607884',
-      'https://cdn.shopify.com/s/files/1/1011/0517/2828/files/001_In_a_Dutch_Golden_Age_style_a_still_life_K6d_qCVk.png?v=1775607884'
+      {{ 'MALE_ORG.webp' | asset_url | json }}
     ];
 
      // Zatrzymaj autoodtwarzanie na mobile
@@ -1395,22 +2464,41 @@ const interval = setInterval(function() {
       });
     }
 
+    function markMobileSlideReady(img) {
+      img.classList.add('is-ready');
+    }
+
     function injectMobileImages() {
       if (window.innerWidth > 767) {
         removeMobileImages();
         return;
       }
 
+      var slideshow = document.querySelector('slideshow-component');
+      if (slideshow) slideshow.classList.add('giclee-home-slideshow');
+
       var slides = document.querySelectorAll('slideshow-slide');
       slides.forEach(function(slide, i) {
-        if (mobileImages[i] && !slide.querySelector('.mobile-slide-image')) {
-          var img = document.createElement('img');
-          img.src = mobileImages[i];
-          img.className = 'mobile-slide-image';
-          img.alt = '';
-          img.setAttribute('aria-hidden', 'true');
-          slide.insertBefore(img, slide.firstChild);
+        if (!mobileImages[i]) return;
+        var existing = slide.querySelector('.mobile-slide-image');
+        if (existing) {
+          if (existing.src !== mobileImages[i]) existing.src = mobileImages[i];
+          if (existing.complete) markMobileSlideReady(existing);
+          return;
         }
+        var img = document.createElement('img');
+        img.src = mobileImages[i];
+        img.className = 'mobile-slide-image';
+        img.alt = '';
+        img.loading = 'eager';
+        img.decoding = 'sync';
+        img.setAttribute('fetchpriority', 'high');
+        img.setAttribute('aria-hidden', 'true');
+        img.addEventListener('load', function() {
+          markMobileSlideReady(img);
+        });
+        if (img.complete) markMobileSlideReady(img);
+        slide.insertBefore(img, slide.firstChild);
       });
     }
 
@@ -1449,6 +2537,11 @@ const interval = setInterval(function() {
       });
     }
 
+    injectMobileImages();
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', injectMobileImages);
+    }
+
     var attempts = 0;
     var timer = setInterval(function() {
       injectMobileImages();
@@ -1457,6 +2550,7 @@ const interval = setInterval(function() {
     }, 300);
 
     window.addEventListener('resize', injectMobileImages);
+    window.addEventListener('giclee:splash-done', injectMobileImages);
   })();
 </script>
 
@@ -1482,9 +2576,20 @@ const interval = setInterval(function() {
         style.textContent = '.scroll-reveal{opacity:0;transform:translateY(28px);transition:opacity 0.75s cubic-bezier(0.16,1,0.3,1),transform 0.75s cubic-bezier(0.16,1,0.3,1)}.scroll-reveal.is-visible{opacity:1;transform:none}';
         document.head.appendChild(style);
 
-        document.addEventListener('DOMContentLoaded', function() {
-          var targets = document.querySelectorAll('.shopify-section > *, [class*="section"] > *, img, video, .rte > *');
-          var delayed = ['section', 'div', 'article'];
+        if (pageType === 'index' && {{ request.design_mode | json }}) {
+          function bootHomeIntro() {
+            document.documentElement.classList.add('giclee-home-intro-run');
+          }
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootHomeIntro);
+          } else {
+            bootHomeIntro();
+          }
+        }
+
+        function initScrollReveal() {
+          if (window.__gicleeScrollRevealInited) return;
+          window.__gicleeScrollRevealInited = true;
           function shouldSkipReveal(el) {
             if (!el) return true;
             if (el.tagName === 'HR') return true;
@@ -1505,17 +2610,41 @@ const interval = setInterval(function() {
             });
           }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
 
+          var skipAboveFold = pageType === 'index' && !{{ request.design_mode | json }};
+          function isInViewport(el) {
+            var rect = el.getBoundingClientRect();
+            return rect.bottom > 0 && rect.top < window.innerHeight;
+          }
           document.querySelectorAll('.shopify-section').forEach(function(section, i) {
             if (section.closest('footer')) return;
+            if (section.id && section.id.indexOf('section_ThWw4Q') !== -1) return;
+            if (skipAboveFold && i < 2) return;
             var children = Array.from(section.children);
             children.forEach(function(el, j) {
               if (shouldSkipReveal(el)) return;
+              if (el.closest('[id*="section_ThWw4Q"]')) return;
               el.classList.add('scroll-reveal');
               el.style.transitionDelay = (j * 0.1) + 's';
+              if (isInViewport(el)) {
+                void el.offsetHeight;
+                requestAnimationFrame(function() {
+                  requestAnimationFrame(function() {
+                    el.classList.add('is-visible');
+                  });
+                });
+                return;
+              }
               observer.observe(el);
             });
           });
-        });
+        }
+
+        var deferForSplash = pageType === 'index' && !{{ request.design_mode | json }};
+        if (deferForSplash) {
+          window.gicleeInitScrollReveal = initScrollReveal;
+        } else {
+          document.addEventListener('DOMContentLoaded', initScrollReveal);
+        }
       }
     })();
 
@@ -1680,45 +2809,92 @@ const interval = setInterval(function() {
   <script>
     (function() {
       var overlay = document.getElementById('page-transition');
-
       var isHomepage = {{ request.page_type | json }} === 'index';
       var isNavigating = false;
       var isOpen = false;
 
-      // Snap panels to closed instantly (no animation)
-      overlay.classList.add('active', 'pt-init');
       overlay.querySelectorAll('.pt-panel, .pt-seam').forEach(function(el) {
         el.style.transform = '';
         el.style.transition = '';
         el.style.opacity = '';
       });
 
-      window.addEventListener('load', function() {
-        if (isHomepage) {
-          // Elegant fade out before splash screen appears
-          setTimeout(function() {
-            overlay.classList.add('fade-to-splash');
-            setTimeout(function() {
-              overlay.classList.remove('active', 'pt-init', 'fade-to-splash');
-              isOpen = true;
-            }, 1500);
-          }, 200);
-          return;
-        }
-        // Wait 2 frames to ensure pt-init is rendered, then animate open
-        requestAnimationFrame(function() {
-          requestAnimationFrame(function() {
-            overlay.classList.remove('pt-init', 'closing');
-            overlay.classList.add('opening');
-            setTimeout(function() {
-              overlay.classList.remove('active', 'opening');
-              isOpen = true;
-            }, 1700);
-          });
+      if (isHomepage) {
+        overlay.classList.remove('active', 'pt-init', 'opening', 'closing', 'fade-to-splash');
+        overlay.hidden = true;
+        isOpen = true;
+        document.documentElement.classList.remove('curtain-pending');
+        try { sessionStorage.removeItem('giclee-curtain-nav'); } catch (err) {}
+      } else {
+        overlay.classList.add('active', 'pt-init');
+      }
+
+      var PT_OPEN_MS = 1280;
+      var PT_CLOSE_MS = 760;
+
+      function prepareCurtainNavigation() {
+        try {
+          sessionStorage.setItem('giclee-curtain-nav', '1');
+        } catch (err) {}
+        document.querySelectorAll('[data-view-transition-type], [data-view-transition-triggered]').forEach(function(el) {
+          el.removeAttribute('data-view-transition-type');
+          el.removeAttribute('data-view-transition-triggered');
         });
+        try {
+          sessionStorage.removeItem('custom-transition-type');
+        } catch (err) {}
+      }
+
+      window.addEventListener('pageswap', function(event) {
+        if (sessionStorage.getItem('giclee-curtain-nav') !== '1') return;
+        var vt = event.viewTransition;
+        if (vt && typeof vt.skipTransition === 'function') {
+          vt.skipTransition();
+        }
       });
 
-      // Close curtains on link click, navigate after full close
+      window.addEventListener('pagereveal', function(event) {
+        if (sessionStorage.getItem('giclee-curtain-nav') !== '1') return;
+        var vt = event.viewTransition;
+        if (vt && typeof vt.skipTransition === 'function') {
+          vt.skipTransition();
+        }
+      });
+
+      window.addEventListener('pageshow', function(e) {
+        if (e.persisted) {
+          try { sessionStorage.removeItem('giclee-curtain-nav'); } catch (err) {}
+          isOpen = true;
+          isNavigating = false;
+          overlay.hidden = isHomepage;
+          overlay.classList.remove('active', 'pt-init', 'opening', 'closing');
+          document.documentElement.classList.remove('curtain-pending');
+          document.body.classList.remove('is-navigating', 'curtain-content-hide');
+        }
+      });
+
+      function finishOpening() {
+        overlay.classList.remove('active', 'opening');
+        document.documentElement.classList.remove('curtain-pending');
+        isOpen = true;
+        try { sessionStorage.removeItem('giclee-curtain-nav'); } catch (err) {}
+      }
+
+      function runOpening() {
+        if (isHomepage) return;
+        overlay.hidden = false;
+        requestAnimationFrame(function() {
+          document.documentElement.classList.remove('curtain-pending');
+          overlay.classList.remove('pt-init', 'closing');
+          overlay.classList.add('active', 'opening');
+          setTimeout(finishOpening, PT_OPEN_MS);
+        });
+      }
+
+      if (!isHomepage) {
+        runOpening();
+      }
+
       document.addEventListener('click', function(e) {
         if (isNavigating || !isOpen) return;
         var link = e.target.closest('a');
@@ -1727,14 +2903,32 @@ const interval = setInterval(function() {
         if (!href || href.startsWith('#') || href.startsWith('javascript') || link.target === '_blank') return;
         if (link.hostname && link.hostname !== window.location.hostname) return;
         e.preventDefault();
+        prepareCurtainNavigation();
+        document.body.classList.add('is-navigating');
         window.dispatchEvent(new CustomEvent('giclee:navigation-start', { detail: { href: href } }));
         isNavigating = true;
-        document.body.classList.add('is-navigating');
-        overlay.classList.remove('opening');
+        if (overlay.hidden) overlay.hidden = false;
+        /* Panels must start from open state (edges) before closing animation runs. */
+        overlay.classList.remove('opening', 'pt-init', 'closing');
+        void overlay.offsetHeight;
         overlay.classList.add('active', 'closing');
-        setTimeout(function() {
-          window.location.href = href;
-        }, 950);
+        var navigated = false;
+        function go() {
+          if (navigated) return;
+          navigated = true;
+          document.body.classList.add('curtain-content-hide');
+          window.dispatchEvent(new CustomEvent('giclee:curtain-closed'));
+          requestAnimationFrame(function() {
+            window.location.href = href;
+          });
+        }
+        overlay.addEventListener('transitionend', function(e) {
+          if (!overlay.classList.contains('closing')) return;
+          if (!e.target.classList || !e.target.classList.contains('pt-panel')) return;
+          if (e.propertyName !== 'transform') return;
+          go();
+        });
+        setTimeout(go, PT_CLOSE_MS);
       });
     })();
   </script>
@@ -1742,48 +2936,973 @@ const interval = setInterval(function() {
   <script>
     (function() {
       var isHomepage = {{ request.page_type | json }} === 'index';
+      var isDesignMode = {{ request.design_mode | json }};
       var splash = document.getElementById('splash-screen');
-      var overlay = document.getElementById('page-transition');
 
-      if (!isHomepage) {
-        splash.style.display = 'none';
+      if (!isHomepage || isDesignMode) {
+        if (splash) splash.style.display = 'none';
+        document.documentElement.classList.remove('splash-pending');
         return;
       }
 
-      function hideSplash() {
-        splash.classList.add('hide');
-        setTimeout(function() { splash.style.display = 'none'; }, 850);
+      function pauseSlideshow() {
+        var slideshow = document.querySelector('slideshow-component');
+        if (!slideshow) return;
+        slideshow.removeAttribute('autoplay');
+        if (typeof slideshow.pause === 'function') slideshow.pause();
       }
+
+      function revealSite() {
+        var root = document.documentElement;
+        var done = false;
+
+        function finishReveal() {
+          if (done) return;
+          done = true;
+          root.classList.remove('splash-reveal', 'splash-reveal-active');
+          root.style.background = '';
+          document.body.style.background = '';
+          document.body.style.paddingRight = '';
+          if (window.gicleeInitScrollReveal) window.gicleeInitScrollReveal();
+          window.dispatchEvent(new CustomEvent('giclee:splash-done'));
+        }
+
+        pauseSlideshow();
+        root.classList.remove('splash-pending');
+        root.classList.add('splash-reveal');
+        void root.offsetHeight;
+        requestAnimationFrame(function() {
+          requestAnimationFrame(function() {
+            root.classList.add('splash-reveal-active', 'giclee-home-intro-run');
+            setTimeout(finishReveal, 1300);
+          });
+        });
+      }
+
+      function hideSplash() {
+        var root = document.documentElement;
+        var done = false;
+
+        function afterSplashFade() {
+          if (done) return;
+          done = true;
+          splash.style.display = 'none';
+          splash.classList.remove('hide');
+          revealSite();
+        }
+
+        splash.classList.add('hide');
+        splash.addEventListener('transitionend', function(e) {
+          if (e.target !== splash || e.propertyName !== 'opacity') return;
+          afterSplashFade();
+        }, { once: true });
+        setTimeout(afterSplashFade, 1500);
+      }
+
+      function compensateScrollbar() {
+        var sb = window.innerWidth - document.documentElement.clientWidth;
+        document.body.style.paddingRight = sb > 0 ? sb + 'px' : '';
+      }
+
+      compensateScrollbar();
+      pauseSlideshow();
+
+      window.addEventListener('pageshow', function(e) {
+        if (!e.persisted) return;
+        var root = document.documentElement;
+        root.classList.remove('giclee-home-intro-run');
+        void root.offsetHeight;
+        root.classList.add('giclee-home-intro-run');
+      });
 
       // Splash animation finishes at 1800ms (line: 0.9s delay + 0.9s = 1.8s)
       // Small hold then fade
       setTimeout(hideSplash, 2200);
     })();
   </script>
-  {% if template.suffix == 'fotografia-obraz' %}
+  {% if template.suffix == 'fotografia-obraz' or template.suffix == 'szablon-wlasna-fotografia' %}
+  {%- liquid
+    assign pm_cart_product = product
+    if pm_cart_product == blank
+      assign pm_cart_product = all_products['twoje-zdjecie-jako-wydruk-giclee-na-papierze-fine-art-w-drewnianej-ramie']
+    endif
+  -%}
+  {%- if pm_cart_product -%}
+  <script type="application/json" id="pm-cart-product-data">
+    {
+      "id": {{ pm_cart_product.id | json }},
+      "optionNames": [
+        {%- for option in pm_cart_product.options -%}
+          {{ option.name | json }}{%- unless forloop.last -%},{%- endunless -%}
+        {%- endfor -%}
+      ],
+      "variants": [
+        {%- for variant in pm_cart_product.variants -%}
+          {
+            "id": {{ variant.id | json }},
+            "available": {{ variant.available | json }},
+            "price": {{ variant.price | json }},
+            "compare_at_price": {{ variant.compare_at_price | json }},
+            "options": {{ variant.options | json }}
+          }{%- unless forloop.last -%},{%- endunless -%}
+        {%- endfor -%}
+      ]
+    }
+  </script>
+  {%- endif -%}
+  <script src="{{ 'giclee-print-analysis.js' | asset_url }}"></script>
   <script>
     (function() {
-      var cta = document.getElementById('pm-cta');
-      if (!cta) return;
       var hero = document.getElementById('pm-hero');
+      if (!hero) return;
+
+      var pmCartProduct = null;
+      try {
+        var pmCartDataEl = document.getElementById('pm-cart-product-data');
+        if (pmCartDataEl) pmCartProduct = JSON.parse(pmCartDataEl.textContent);
+      } catch (err) {
+        console.warn('pm-cart-product-data parse failed', err);
+      }
+
+      function gicleeT(key, fallback) {
+        var bag = window.__gicleeI18n || {};
+        return bag[key] || fallback;
+      }
+
+      var pmSizeToVariant = { M: 'M', S: 'M', L: 'L', XL: 'XL' };
+
+      function pmNormalize(value) {
+        return String(value || '').normalize('NFC').trim().toLowerCase();
+      }
+
+      function pmResolveVariant(config) {
+        if (!pmCartProduct || !pmCartProduct.variants) return null;
+        var color = config.color;
+        var wood = config.wood;
+        var size = pmSizeToVariant[config.size] || config.size;
+        var names = pmCartProduct.optionNames || ['Kolor', 'Rozmiar', 'Rodzaj drewna'];
+
+        for (var i = 0; i < pmCartProduct.variants.length; i++) {
+          var variant = pmCartProduct.variants[i];
+          if (variant.available === false) continue;
+          var opts = variant.options || [];
+          var matched = { color: false, size: false, wood: false };
+
+          for (var j = 0; j < opts.length; j++) {
+            var optName = pmNormalize(names[j] || '');
+            var optVal = pmNormalize(opts[j]);
+            if (optName.indexOf('passe') >= 0) continue;
+            if (optName.indexOf('kolor') >= 0) {
+              if (optVal === pmNormalize(color)) matched.color = true;
+            } else if (optName.indexOf('rozmiar') >= 0) {
+              if (optVal === pmNormalize(size)) matched.size = true;
+            } else if (optName.indexOf('drewn') >= 0) {
+              if (optVal === pmNormalize(wood)) matched.wood = true;
+            }
+          }
+
+          if (!matched.color && opts[0] && pmNormalize(opts[0]) === pmNormalize(color)) matched.color = true;
+          if (!matched.size && opts[1] && pmNormalize(opts[1]) === pmNormalize(size)) matched.size = true;
+          if (!matched.wood && opts[2] && pmNormalize(opts[2]) === pmNormalize(wood)) matched.wood = true;
+
+          if (matched.color && matched.size && matched.wood) return variant;
+        }
+
+        return null;
+      }
+
+      function pmGetCartSectionIds() {
+        var ids = [];
+        document.querySelectorAll('cart-items-component[data-section-id]').forEach(function(el) {
+          if (el.dataset.sectionId) ids.push(el.dataset.sectionId);
+        });
+        return ids;
+      }
+
+      function pmDispatchCartUpdate(cart, variantId, sections) {
+        document.dispatchEvent(new CustomEvent('cart:update', {
+          bubbles: true,
+          detail: {
+            resource: cart,
+            sourceId: 'pm-config-add-to-cart',
+            data: {
+              source: 'pm-configurator',
+              itemCount: 1,
+              variantId: String(variantId),
+              productId: pmCartProduct ? String(pmCartProduct.id) : '',
+              sections: sections || {}
+            }
+          }
+        }));
+      }
+
+      function pmHideConfiguratorUi() {
+        document.body.classList.remove('pm-app-drawer-open');
+        var configEl = document.getElementById('pm-config');
+        if (configEl) {
+          configEl.classList.remove('is-open');
+          var toggle = configEl.querySelector('.pm-config-trigger');
+          if (toggle) toggle.setAttribute('aria-expanded', 'false');
+          var options = configEl.querySelector('.pm-config-options');
+          if (options) options.hidden = true;
+        }
+        syncPmSideShopVisibility();
+      }
+
+      function pmScrollPageToTop() {
+        pmHideConfiguratorUi();
+        document.body.style.top = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.paddingRight = '';
+
+        var scrollTargets = [document.documentElement, document.body, document.scrollingElement];
+        scrollTargets.forEach(function(el) {
+          if (!el) return;
+          el.scrollTop = 0;
+          el.scrollLeft = 0;
+        });
+        window.scrollTo(0, 0);
+      }
+
+      function pmOpenCartDrawer() {
+        var drawer = document.querySelector('cart-drawer-component');
+        if (drawer) {
+          if (typeof drawer.open === 'function') {
+            drawer.open();
+            return;
+          }
+          if (typeof drawer.showDialog === 'function') {
+            drawer.showDialog();
+            return;
+          }
+        }
+        var trigger = document.querySelector('[data-testid="cart-drawer-trigger"]');
+        if (trigger) trigger.click();
+      }
+
+      function pmPageScrollY() {
+        return window.pageYOffset
+          || document.documentElement.scrollTop
+          || document.body.scrollTop
+          || 0;
+      }
+
+      function pmWaitThenOpenCart() {
+        var started = Date.now();
+        var minDelayMs = 520;
+        var maxWaitMs = 1500;
+
+        pmScrollPageToTop();
+        if (pmPageScrollY() > 2) {
+          window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+        }
+
+        function finish() {
+          pmScrollPageToTop();
+          pmOpenCartDrawer();
+        }
+
+        function maybeFinish() {
+          var atTop = pmPageScrollY() <= 2;
+          var elapsed = Date.now() - started;
+          if (atTop && elapsed >= minDelayMs) {
+            finish();
+            return true;
+          }
+          if (elapsed >= maxWaitMs) {
+            finish();
+            return true;
+          }
+          return false;
+        }
+
+        function onScrollEnd() {
+          if (maybeFinish()) {
+            document.removeEventListener('scrollend', onScrollEnd, true);
+            clearInterval(pollTimer);
+            clearTimeout(maxTimer);
+          }
+        }
+
+        document.addEventListener('scrollend', onScrollEnd, true);
+        var pollTimer = setInterval(function() {
+          if (maybeFinish()) {
+            document.removeEventListener('scrollend', onScrollEnd, true);
+            clearInterval(pollTimer);
+            clearTimeout(maxTimer);
+          }
+        }, 40);
+        var maxTimer = setTimeout(function() {
+          document.removeEventListener('scrollend', onScrollEnd, true);
+          clearInterval(pollTimer);
+          finish();
+        }, maxWaitMs);
+      }
+
+      function pmPauseMockupAutoScroll(ms) {
+        if (typeof window.pmPauseMockupAutoScroll === 'function') {
+          window.pmPauseMockupAutoScroll(ms || 6000);
+          return;
+        }
+        var heroEl = document.getElementById('pm-hero');
+        if (heroEl) {
+          heroEl.dispatchEvent(new CustomEvent('pm-pause-mockup-scroll', {
+            bubbles: true,
+            detail: { ms: ms || 6000 }
+          }));
+        }
+      }
+
+      function pmShowCartUiImmediately() {
+        pmHideConfiguratorUi();
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
+
+        if (typeof window.pmScrollPageToTopForCart === 'function') {
+          window.pmScrollPageToTopForCart().then(function() {
+            pmOpenCartDrawer();
+          });
+          return;
+        }
+
+        pmPauseMockupAutoScroll(4000);
+        pmWaitThenOpenCart();
+      }
+
+      function pmAddConfiguredToCart(config, buttonEl) {
+        if (!pmCartProduct) {
+          if (buttonEl) {
+            var noDataPrev = buttonEl.textContent;
+            buttonEl.textContent = gicleeT('mockup_no_product', 'Brak danych produktu');
+            setTimeout(function() { buttonEl.textContent = noDataPrev; }, 2200);
+          }
+          return Promise.reject(new Error('Product data missing'));
+        }
+
+        if (typeof window.pmHasMockupImage === 'function' && !window.pmHasMockupImage()) {
+          if (buttonEl) {
+            var noImgPrev = buttonEl.textContent;
+            buttonEl.textContent = gicleeT('mockup_upload_first', 'Najpierw wgraj zdjęcie');
+            setTimeout(function() { buttonEl.textContent = noImgPrev; }, 2200);
+          }
+          return Promise.reject(new Error('No mockup image'));
+        }
+
+        var variant = pmResolveVariant(config);
+        if (!variant) {
+          if (buttonEl) {
+            var prev = buttonEl.textContent;
+            buttonEl.textContent = gicleeT('mockup_variant_unavailable', 'Wariant niedostępny');
+            setTimeout(function() { buttonEl.textContent = prev; }, 2200);
+          }
+          return Promise.reject(new Error('Variant unavailable'));
+        }
+
+        if (buttonEl) {
+          buttonEl.disabled = true;
+          buttonEl.dataset.prevLabel = buttonEl.textContent.trim() || gicleeT('add_to_cart', 'Dodaj do koszyka');
+          buttonEl.textContent = gicleeT('adding_to_cart', 'Dodawanie…');
+        }
+
+        pmPauseMockupAutoScroll(8000);
+
+        var uploadPromise = Promise.resolve(null);
+        if (typeof window.pmPrepareOrderUpload === 'function') {
+          uploadPromise = window.pmPrepareOrderUpload(config).catch(function(err) {
+            if (buttonEl) {
+              buttonEl.textContent = (err && err.message) ? String(err.message).slice(0, 48) : gicleeT('mockup_upload_error', 'Błąd uploadu');
+              setTimeout(function() {
+                buttonEl.disabled = false;
+                buttonEl.textContent = buttonEl.dataset.prevLabel || gicleeT('add_to_cart', 'Dodaj do koszyka');
+              }, 2600);
+            }
+            throw err;
+          });
+        }
+
+        return uploadPromise.then(function(uploadResult) {
+          var formData = new FormData();
+          formData.append('id', String(variant.id));
+          formData.append('quantity', '1');
+          if (uploadResult && uploadResult.uploadId) {
+            formData.append('properties[_Upload ID]', String(uploadResult.uploadId));
+          }
+          var passepartout = (config && config.passepartout) || 'Białe';
+          if (window.GICLEE_PASSEPARTOUT && typeof window.GICLEE_PASSEPARTOUT.normalize === 'function') {
+            passepartout = window.GICLEE_PASSEPARTOUT.normalize(passepartout);
+          }
+          formData.append('properties[Passepartout]', passepartout);
+          var sectionIds = pmGetCartSectionIds();
+          if (sectionIds.length) {
+            formData.append('sections', sectionIds.join(','));
+            formData.append('sections_url', window.location.pathname);
+          }
+
+          var cartAddUrl = (window.Theme && Theme.routes && Theme.routes.cart_add_url) || '/cart/add.js';
+
+          return fetch(cartAddUrl, {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+          })
+            .then(function(response) {
+              return response.json().then(function(data) {
+                if (!response.ok || data.status) {
+                  throw new Error(data.description || data.message || 'Cart add failed');
+                }
+                return data;
+              });
+            })
+            .then(function(data) {
+              return fetch('/cart.js', { headers: { Accept: 'application/json' } })
+                .then(function(r) { return r.json(); })
+                .then(function(cart) {
+                  pmDispatchCartUpdate(cart, variant.id, data.sections);
+                  pmShowCartUiImmediately();
+                  if (buttonEl) {
+                    buttonEl.disabled = false;
+                    buttonEl.textContent = buttonEl.dataset.prevLabel || gicleeT('add_to_cart', 'Dodaj do koszyka');
+                  }
+                });
+            });
+        }).catch(function(err) {
+          if (err && err.message === 'No mockup image') return;
+          if (err && err.message === 'Variant unavailable') return;
+          if (err && err.message === 'Product data missing') return;
+          console.error('pmAddConfiguredToCart', err);
+          if (buttonEl && buttonEl.disabled) {
+            buttonEl.textContent = gicleeT('mockup_try_again', 'Spróbuj ponownie');
+            setTimeout(function() {
+              buttonEl.disabled = false;
+              buttonEl.textContent = buttonEl.dataset.prevLabel || 'Dodaj do koszyka';
+            }, 2200);
+          }
+        });
+      }
+
+      var cta = document.getElementById('pm-cta');
       var root = document.body;
       var backButton = document.getElementById('pm-back-to-preview');
-      var invite = document.getElementById('pm-lab-invite');
-      if (!backButton) {
+      if (cta && !backButton) {
         backButton = document.createElement('button');
         backButton.type = 'button';
         backButton.id = 'pm-back-to-preview';
-        backButton.textContent = '\u2190 Powrot';
+        backButton.textContent = '\u2190 ' + gicleeT('mockup_back', 'Powrót');
         root.appendChild(backButton);
       }
-      if (hero && !invite) {
-        invite = document.createElement('div');
-        invite.id = 'pm-lab-invite';
-        invite.innerHTML = '<strong>Podoba sie?</strong>Zapraszam do Laboratorium, gdzie wybierzesz format, przyciecie i dowiesz sie, jaka jakosc uzyskasz z tego zdjecia.';
-        hero.appendChild(invite);
+      function pmNotifySideShopLayout() {
+        hero.dispatchEvent(new CustomEvent('pm-side-shop-update', { bubbles: true }));
       }
 
+      function syncPmSideShopCartPlacement(shopEl, configEl, mobileToolbar, loaded, open) {
+        var cartSection = shopEl.querySelector('.pm-side-cart');
+        if (!cartSection) {
+          var addBtn = document.getElementById('pm-config-add-to-cart');
+          if (addBtn) cartSection = addBtn.closest('.pm-side-cart');
+        }
+        if (!cartSection) return;
+
+        if (mobileToolbar && loaded && open && configEl) {
+          if (cartSection.parentElement !== configEl) {
+            configEl.appendChild(cartSection);
+          }
+        } else if (cartSection.parentElement !== shopEl) {
+          shopEl.appendChild(cartSection);
+        }
+      }
+
+      function syncPmSideShopVisibility() {
+        var configEl = document.getElementById('pm-config');
+        var shopEl = document.getElementById('pm-side-shop');
+        if (!shopEl || !configEl) return;
+        var loaded = hero.classList.contains('loaded');
+        var open = loaded && configEl.classList.contains('is-open');
+        var mobileToolbar =
+          window.matchMedia &&
+          window.matchMedia('(max-width: 980px)').matches;
+        shopEl.hidden = !loaded;
+        shopEl.classList.toggle('pm-side-shop--mobile-toolbar', mobileToolbar && loaded);
+        shopEl.classList.toggle('pm-side-shop--cart-open', open);
+        var showShop = open || (mobileToolbar && loaded);
+        shopEl.classList.toggle('is-visible', showShop);
+        shopEl.setAttribute('aria-hidden', showShop ? 'false' : 'true');
+        syncPmSideShopCartPlacement(shopEl, configEl, mobileToolbar, loaded, open);
+        if (open) {
+          requestAnimationFrame(function() {
+            pmNotifySideShopLayout();
+          });
+        } else {
+          pmNotifySideShopLayout();
+        }
+      }
+
+      function ensurePmSideShop(heroEl) {
+        var stage = heroEl.querySelector('.pm-stage');
+        if (!stage) return null;
+
+        var shopEl = document.getElementById('pm-side-shop');
+        var hintEl = stage.querySelector('.pm-hint');
+        if (!shopEl) {
+          shopEl = document.createElement('div');
+          shopEl.id = 'pm-side-shop';
+          shopEl.className = 'pm-side-shop';
+          shopEl.hidden = true;
+          shopEl.setAttribute('aria-hidden', 'true');
+          shopEl.innerHTML = [
+            '<section class="pm-side-price" aria-label="Cena">',
+            '  <div class="pm-config-price" id="pm-config-price" aria-live="polite">',
+            '    <span class="pm-config-price__eyebrow">Cena</span>',
+            '    <span class="pm-config-price__value" id="pm-config-price-value">—</span>',
+            '  </div>',
+            '</section>',
+            '<section class="pm-side-cart" aria-label="Dodaj do koszyka">',
+            '  <button type="button" class="pm-config-add-to-cart" id="pm-config-add-to-cart">Dodaj do koszyka</button>',
+            '</section>'
+          ].join('');
+          if (hintEl) stage.insertBefore(shopEl, hintEl);
+          else stage.appendChild(shopEl);
+        } else if (hintEl && shopEl.nextElementSibling !== hintEl && shopEl !== hintEl.previousElementSibling) {
+          stage.insertBefore(shopEl, hintEl);
+        }
+
+        var priceSection = shopEl.querySelector('.pm-side-price');
+        var cartSection = shopEl.querySelector('.pm-side-cart');
+        var priceWrap = document.getElementById('pm-config-price');
+        var addBtn = document.getElementById('pm-config-add-to-cart');
+
+        if (priceWrap && priceSection && priceWrap.parentElement !== priceSection) {
+          priceSection.appendChild(priceWrap);
+        }
+        if (addBtn && cartSection && addBtn.parentElement !== cartSection) {
+          if (addBtn.querySelector('.pm-config-add-to-cart__text')) {
+            var labelEl = addBtn.querySelector('.pm-config-add-to-cart__text');
+            addBtn.textContent = labelEl
+              ? (labelEl.textContent || 'Dodaj do koszyka').trim()
+              : 'Dodaj do koszyka';
+          }
+          cartSection.appendChild(addBtn);
+        }
+
+        syncPmSideShopVisibility();
+        return document.getElementById('pm-config-price-value');
+      }
+
+      function buildPmLeftRail() {
+        if (!hero) return;
+        var rail = document.getElementById('pm-left-rail');
+        if (!rail) {
+          rail = document.createElement('div');
+          rail.id = 'pm-left-rail';
+          hero.appendChild(rail);
+        }
+        var inviteEl = document.getElementById('pm-lab-invite');
+        if (!inviteEl) {
+          inviteEl = document.createElement('div');
+          inviteEl.id = 'pm-lab-invite';
+          inviteEl.innerHTML = gicleeT('mockup_invite_html', '<strong>Podoba się?</strong>Skonfiguruj i dodaj do koszyka. Twój plik wraz z kadrowaniem zostanie przesłany automatycznie po opłaceniu zamówienia.');
+          rail.appendChild(inviteEl);
+        } else if (inviteEl.parentElement !== rail) {
+          rail.appendChild(inviteEl);
+        }
+        var configEl = document.getElementById('pm-config');
+        if (!configEl) {
+          configEl = document.createElement('div');
+          configEl.id = 'pm-config';
+          configEl.className = 'pm-config';
+          configEl.innerHTML = [
+            '<button type="button" class="pm-config-trigger" id="pm-config-toggle" aria-expanded="false" aria-controls="pm-config-options">',
+            '  <span class="pm-config-trigger__icon" aria-hidden="true">',
+            '    <svg viewBox="0 0 24 24" fill="none"><path d="M6 6h14l-1.4 8.2H7.4L5 4H3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.2" cy="19.2" r="1.35" fill="currentColor"/><circle cx="17.2" cy="19.2" r="1.35" fill="currentColor"/></svg>',
+            '  </span>',
+            '  <span class="pm-config-trigger__label">Skonfiguruj i dodaj do koszyka</span>',
+            '</button>',
+            '<div class="pm-config-options" id="pm-config-options" hidden>',
+            '  <div class="pm-config-row" data-row="wood" role="group" aria-label="Rodzaj drewna">',
+            '    <button type="button" class="pm-opt pm-opt--wood is-selected" data-value="dab" aria-pressed="true">dąb</button>',
+            '    <button type="button" class="pm-opt pm-opt--wood" data-value="sosna" aria-pressed="false">sosna</button>',
+            '  </div>',
+            '  <div class="pm-config-row" data-row="color" role="group" aria-label="Kolor ramy">',
+            '    <button type="button" class="pm-opt pm-opt--swatch is-selected" data-value="czarny" style="--pm-swatch:#121212" aria-label="Czarny" aria-pressed="true"></button>',
+            '    <button type="button" class="pm-opt pm-opt--swatch" data-value="jasny-braz" style="--pm-swatch:#9a7040" aria-label="Jasny brąz" aria-pressed="false"></button>',
+            '    <button type="button" class="pm-opt pm-opt--swatch" data-value="braz" style="--pm-swatch:#8b5a38" aria-label="Brąz" aria-pressed="false"></button>',
+            '    <button type="button" class="pm-opt pm-opt--swatch" data-value="ciemny-braz" style="--pm-swatch:#4a3222" aria-label="Ciemny brąz" aria-pressed="false"></button>',
+            '  </div>',
+            '  <div class="pm-config-row" data-row="size" role="group" aria-label="Rozmiar">',
+            '    <button type="button" class="pm-opt pm-opt--size is-selected" data-value="M" aria-pressed="true">M</button>',
+            '    <button type="button" class="pm-opt pm-opt--size" data-value="L" aria-pressed="false">L</button>',
+            '    <button type="button" class="pm-opt pm-opt--size" data-value="XL" aria-pressed="false">XL</button>',
+            '  </div>',
+            '  <div class="pm-config-row pm-config-row--labeled" data-row="passepartout" role="group" aria-label="Passepartout">',
+            '    <span class="pm-config-row__label">Passepartout</span>',
+            '    <span class="pm-config-row__opts">',
+            '      <button type="button" class="pm-opt pm-opt--pp is-selected" data-value="bialy" aria-pressed="true">Białe</button>',
+            '      <button type="button" class="pm-opt pm-opt--pp" data-value="czarny" aria-pressed="false">Czarne</button>',
+            '    </span>',
+            '  </div>',
+            '</div>',
+            '<div class="pm-quality-panel pm-quality-panel--empty" id="pm-quality-panel" aria-live="polite">',
+            '  <div class="pm-quality-panel__head">',
+            '    <span class="pm-quality-panel__eyebrow">Jakość wydruku</span>',
+            '    <span class="pm-quality-panel__format"></span>',
+            '  </div>',
+            '  <div class="pm-quality-panel__verdict">Jakość wydruku</div>',
+            '  <div class="pm-quality-panel__meta"></div>',
+            '  <div class="pm-quality-panel__file"></div>',
+            '  <div class="pm-quality-panel__bar" role="presentation"><span class="pm-quality-panel__bar-fill"></span></div>',
+            '  <p class="pm-quality-panel__note">Wgraj zdjęcie, aby zobaczyć ocenę jakości wydruku.</p>',
+            '</div>'
+          ].join('');
+          rail.appendChild(configEl);
+          initPmConfigurator(configEl, hero);
+        } else if (configEl.dataset.pmConfigInit !== '1') {
+          initPmConfigurator(configEl, hero);
+        }
+        ensurePmQualityPanel(hero);
+        ensurePmSideShop(hero);
+      }
+
+      function ensurePmQualityPanel(heroEl) {
+        var configEl = document.getElementById('pm-config');
+        if (!configEl || configEl.dataset.pmQualityInit === '1') return;
+        if (!document.getElementById('pm-quality-panel')) {
+          var panel = document.createElement('div');
+          panel.id = 'pm-quality-panel';
+          panel.className = 'pm-quality-panel pm-quality-panel--empty';
+          panel.setAttribute('aria-live', 'polite');
+          panel.innerHTML = [
+            '<div class="pm-quality-panel__head">',
+            '  <span class="pm-quality-panel__eyebrow">Jakość wydruku</span>',
+            '  <span class="pm-quality-panel__format"></span>',
+            '</div>',
+            '<div class="pm-quality-panel__verdict">Jakość wydruku</div>',
+            '<div class="pm-quality-panel__meta"></div>',
+            '<div class="pm-quality-panel__file"></div>',
+            '<div class="pm-quality-panel__bar" role="presentation"><span class="pm-quality-panel__bar-fill"></span></div>',
+            '<p class="pm-quality-panel__note">Wgraj zdjęcie, aby zobaczyć ocenę jakości wydruku.</p>'
+          ].join('');
+          configEl.appendChild(panel);
+        }
+        initPmQualityPanel(configEl, heroEl);
+      }
+
+      function initPmQualityPanel(root, heroEl) {
+        if (root.dataset.pmQualityInit === '1') return;
+        root.dataset.pmQualityInit = '1';
+
+        var panel = root.querySelector('#pm-quality-panel');
+        if (!panel) return;
+
+        var verdictEl = panel.querySelector('.pm-quality-panel__verdict');
+        var metaEl = panel.querySelector('.pm-quality-panel__meta');
+        var fileEl = panel.querySelector('.pm-quality-panel__file');
+        if (!fileEl && metaEl) {
+          fileEl = document.createElement('div');
+          fileEl.className = 'pm-quality-panel__file';
+          metaEl.insertAdjacentElement('afterend', fileEl);
+        }
+        var barFill = panel.querySelector('.pm-quality-panel__bar-fill');
+        var noteEl = panel.querySelector('.pm-quality-panel__note');
+        var formatEl = panel.querySelector('.pm-quality-panel__format');
+
+        var imageData = null;
+        var viewCrop = null;
+        var currentSize = (window.pmFrameConfig && window.pmFrameConfig.size) || 'M';
+        var orientation = 'portrait';
+        var qualityRaf = 0;
+
+        function formatFileInfo(data) {
+          if (!data) return '';
+          var w = data.decodeWidthPx || data.widthPx;
+          var h = data.decodeHeightPx || data.heightPx;
+          if (!w || !h) return '';
+          var mp = (w * h) / 1e6;
+          var parts = [w + '×' + h + ' px', mp.toFixed(1) + ' MP'];
+          if (data.fileBytes > 0) parts.push(Math.round(data.fileBytes / 1024) + ' KB');
+          return parts.join(' · ');
+        }
+
+        function setPlaceholder(msg) {
+          panel.className = 'pm-quality-panel pm-quality-panel--empty';
+          if (verdictEl) verdictEl.textContent = gicleeT('mockup_quality_title', 'Jakość wydruku');
+          if (metaEl) metaEl.textContent = '';
+          if (fileEl) fileEl.textContent = '';
+          if (noteEl) noteEl.textContent = msg;
+          if (formatEl) formatEl.textContent = '';
+          if (barFill) barFill.style.width = '0%';
+        }
+
+        function renderQualityNow() {
+          var analysis = window.GicleePrintAnalysis;
+          if (!analysis) {
+            setPlaceholder(gicleeT('mockup_quality_loading', 'Ładowanie analizy…'));
+            return;
+          }
+          if (!imageData || !imageData.widthPx || !imageData.heightPx) {
+            setPlaceholder(gicleeT('mockup_quality_upload', 'Wgraj zdjęcie, aby zobaczyć ocenę jakości wydruku.'));
+            return;
+          }
+
+          var image = { widthPx: imageData.widthPx, heightPx: imageData.heightPx };
+          var fileResult = analysis.analyseForShopifySize(image, currentSize, orientation);
+          if (!fileResult) {
+            setPlaceholder(gicleeT('mockup_quality_select_size', 'Wybierz rozmiar, aby zobaczyć analizę.'));
+            return;
+          }
+
+          var displayResult = fileResult;
+          var useCropPpi =
+            viewCrop &&
+            viewCrop.zoom > 1.01 &&
+            viewCrop.visibleWidthPx > 0 &&
+            viewCrop.visibleHeightPx > 0;
+          if (useCropPpi) {
+            var cropResult = analysis.analyseForShopifySize(
+              image,
+              currentSize,
+              orientation,
+              {
+                widthPx: viewCrop.visibleWidthPx,
+                heightPx: viewCrop.visibleHeightPx
+              }
+            );
+            if (cropResult) displayResult = cropResult;
+          }
+
+          var active = displayResult;
+          panel.className = 'pm-quality-panel pm-quality-panel--' + (active.verdict.tone || 'gray');
+          if (verdictEl) verdictEl.textContent = active.verdict.label;
+          if (metaEl) {
+            metaEl.textContent = Math.round(active.limitingPpi) + ' PPI · cel ' + analysis.TARGET_DPI + ' DPI';
+            if (useCropPpi && Math.abs(active.limitingPpi - fileResult.limitingPpi) >= 1) {
+              metaEl.textContent += ' · plik ' + Math.round(fileResult.limitingPpi) + ' PPI';
+            }
+          }
+          if (fileEl) fileEl.textContent = formatFileInfo(imageData);
+          if (noteEl) noteEl.textContent = active.verdict.note;
+          if (formatEl) formatEl.textContent = fileResult.name + ' · ' + currentSize;
+          if (barFill) {
+            barFill.style.width = Math.min(100, active.quality) + '%';
+            barFill.className = 'pm-quality-panel__bar-fill pm-quality-panel__bar-fill--' +
+              analysis.barColorForPpi(active.limitingPpi);
+          }
+        }
+
+        function renderQuality() {
+          if (qualityRaf) return;
+          qualityRaf = requestAnimationFrame(function() {
+            qualityRaf = 0;
+            renderQualityNow();
+          });
+        }
+
+        heroEl.addEventListener('pm-image-loaded', function(e) {
+          if (e.detail) {
+            imageData = e.detail;
+            if (e.detail.orientation) orientation = e.detail.orientation;
+          }
+          renderQuality();
+        });
+
+        heroEl.addEventListener('pm-frame-change', function(e) {
+          if (e.detail && e.detail.orientation) {
+            orientation = e.detail.orientation;
+            renderQuality();
+          }
+        });
+
+        heroEl.addEventListener('pm-config-change', function(e) {
+          if (e.detail && e.detail.size) {
+            currentSize = e.detail.size;
+            renderQuality();
+          }
+        });
+
+        heroEl.addEventListener('pm-view-change', function(e) {
+          if (!e.detail) return;
+          viewCrop = e.detail;
+          if (e.detail.orientation) orientation = e.detail.orientation;
+          renderQuality();
+        });
+
+        renderQuality();
+      }
+
+      function initPmConfigurator(root, heroEl) {
+        if (root.dataset.pmConfigInit === '1') return;
+        root.dataset.pmConfigInit = '1';
+
+        var toggle = root.querySelector('.pm-config-trigger');
+        var options = root.querySelector('.pm-config-options');
+        if (!toggle || !options) return;
+        var mockupAddBtn = document.getElementById('pm-mockup-add-to-cart');
+        if (mockupAddBtn) mockupAddBtn.remove();
+        ensurePmSideShop(heroEl);
+
+        if (heroEl.dataset.pmCartClickInit !== '1') {
+          heroEl.dataset.pmCartClickInit = '1';
+          heroEl.addEventListener('click', function(e) {
+            var addBtn = e.target.closest('#pm-config-add-to-cart');
+            if (!addBtn || addBtn.disabled) return;
+            e.preventDefault();
+            e.stopPropagation();
+            pmPauseMockupAutoScroll(4000);
+            publishConfig();
+            heroEl.dispatchEvent(new CustomEvent('pm-config-add-to-cart', {
+              bubbles: true,
+              detail: window.pmFrameConfig
+            }));
+            pmAddConfiguredToCart(window.pmFrameConfig, addBtn);
+          });
+        }
+
+        var colorLabels = {
+          'czarny': 'Czarny',
+          'jasny-braz': 'Jasny Brąz',
+          'braz': 'Brąz',
+          'ciemny-braz': 'Ciemny Brąz'
+        };
+        var state = { wood: 'dab', color: 'czarny', size: 'M', passepartout: 'bialy' };
+        var passepartoutLabels = { bialy: 'Białe', czarny: 'Czarne' };
+        var colorRow = root.querySelector('.pm-config-row[data-row="color"]');
+        var sizeRow = root.querySelector('.pm-config-row[data-row="size"]');
+        var priceValueEl = document.getElementById('pm-config-price-value');
+
+        function pmFormatMoney(cents) {
+          if (cents == null || !isFinite(cents)) return '';
+          return (cents / 100).toLocaleString('pl-PL', {
+            style: 'currency',
+            currency: 'PLN',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+          });
+        }
+
+        function syncConfigPrice() {
+          if (!priceValueEl) return;
+          var cfg = {
+            wood: state.wood === 'dab' ? 'Dąb' : 'Sosna',
+            color: colorLabels[state.color] || 'Czarny',
+            size: state.size
+          };
+          var variant = pmResolveVariant(cfg);
+          priceValueEl.classList.remove('is-unavailable');
+          if (!variant) {
+            priceValueEl.textContent = gicleeT('mockup_unavailable', 'Niedostępny');
+            priceValueEl.classList.add('is-unavailable');
+            return;
+          }
+          var priceHtml = pmFormatMoney(variant.price);
+          if (
+            variant.compare_at_price &&
+            variant.compare_at_price > variant.price
+          ) {
+            priceHtml +=
+              '<span class="pm-config-price__compare">' +
+              pmFormatMoney(variant.compare_at_price) +
+              '</span>';
+          }
+          priceValueEl.innerHTML = priceHtml;
+        }
+
+        function syncDefaultSizeUi() {
+          if (!sizeRow) return;
+          sizeRow.querySelectorAll('.pm-opt').forEach(function(btn) {
+            var isDefaultSize = btn.getAttribute('data-value') === 'M';
+            btn.classList.toggle('is-selected', isDefaultSize);
+            btn.setAttribute('aria-pressed', isDefaultSize ? 'true' : 'false');
+          });
+        }
+
+        function publishConfig() {
+          window.pmFrameConfig = {
+            wood: state.wood === 'dab' ? 'Dąb' : 'Sosna',
+            color: colorLabels[state.color] || 'Czarny',
+            size: state.size,
+            passepartout: passepartoutLabels[state.passepartout] || 'Białe'
+          };
+          heroEl.dispatchEvent(new CustomEvent('pm-config-change', {
+            bubbles: true,
+            detail: window.pmFrameConfig
+          }));
+          syncConfigPrice();
+        }
+
+        function syncColorOptionsForWood() {
+          if (!colorRow) return;
+          var pineOnly = state.wood === 'sosna';
+          var swatches = colorRow.querySelectorAll('.pm-opt--swatch');
+          swatches.forEach(function(btn) {
+            var val = btn.getAttribute('data-value');
+            var unavailable = pineOnly && val !== 'czarny';
+            btn.classList.toggle('is-unavailable', unavailable);
+            btn.disabled = unavailable;
+            if (unavailable) {
+              btn.classList.remove('is-selected');
+              btn.setAttribute('aria-pressed', 'false');
+            }
+          });
+          if (pineOnly) {
+            var black = colorRow.querySelector('[data-value="czarny"]');
+            if (black) {
+              swatches.forEach(function(btn) {
+                if (btn !== black) {
+                  btn.classList.remove('is-selected');
+                  btn.setAttribute('aria-pressed', 'false');
+                }
+              });
+              black.classList.add('is-selected');
+              black.setAttribute('aria-pressed', 'true');
+              state.color = 'czarny';
+            }
+          }
+        }
+
+        toggle.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          var open = root.classList.toggle('is-open');
+          toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+          options.hidden = !open;
+          syncPmSideShopVisibility();
+        });
+
+        root.querySelectorAll('.pm-opt').forEach(function(btn) {
+          btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (btn.disabled || btn.classList.contains('is-unavailable')) return;
+            var row = btn.closest('.pm-config-row');
+            if (!row) return;
+            row.querySelectorAll('.pm-opt').forEach(function(peer) {
+              peer.classList.remove('is-selected');
+              peer.setAttribute('aria-pressed', 'false');
+            });
+            btn.classList.add('is-selected');
+            btn.setAttribute('aria-pressed', 'true');
+            var key = row.getAttribute('data-row');
+            if (key) state[key] = btn.getAttribute('data-value') || state[key];
+            if (key === 'wood') syncColorOptionsForWood();
+            publishConfig();
+          });
+        });
+
+        syncDefaultSizeUi();
+        syncColorOptionsForWood();
+        publishConfig();
+        pmNotifySideShopLayout();
+      }
+
+      buildPmLeftRail();
+      hero.addEventListener('pm-image-loaded', syncPmSideShopVisibility);
+      window.addEventListener('resize', syncPmSideShopVisibility);
+
+      if (!cta) return;
+
       cta.setAttribute('href', '#');
+
       var chevronsWrap = cta.querySelector('.pm-cta-chevrons');
       if (chevronsWrap) {
         chevronsWrap.style.flexDirection = 'row';
@@ -1817,29 +3936,55 @@ const interval = setInterval(function() {
       }, true);
     })();
   </script>
+  {% endif %}
   <script>
     (function() {
-      var nativeScrollTo = window.scrollTo.bind(window);
-      window.scrollTo = function(arg1, arg2) {
-        var top = null;
-        var behavior = '';
-        if (typeof arg1 === 'object' && arg1) {
-          if (typeof arg1.top === 'number') top = arg1.top;
-          behavior = String(arg1.behavior || '');
-        } else if (typeof arg1 === 'number') {
-          top = arg1;
-        }
+      var handle = 'twoje-zdjecie-jako-wydruk-giclee-na-papierze-fine-art-w-drewnianej-ramie';
+      var productPath = '/products/' + handle;
+      function fixWlasnaFotografiaLinks() {
+        document.querySelectorAll('a[href*="/pages/fotografia-obraz"]').forEach(function(a) {
+          a.setAttribute('href', productPath);
+        });
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', fixWlasnaFotografiaLinks);
+      } else {
+        fixWlasnaFotografiaLinks();
+      }
+    })();
+  </script>
+  {% render 'giclee-site-notice' %}
+  {% if template.suffix == 'faq' %}
+  <script>
+    /* FAQ a11y — progresywne ulepszenie tylko na stronie FAQ (treść bez zmian) */
+    (function () {
+      function enhanceFaqA11y() {
+        var items = document.querySelectorAll('.accordion accordion-custom');
+        items.forEach(function (item, i) {
+          var details = item.querySelector('details');
+          if (!details) return;
+          var summary = details.querySelector('summary');
+          var content = details.querySelector('.details-content');
+          if (!summary) return;
 
-        var current = window.pageYOffset || window.scrollY || 0;
-        var delta = (typeof top === 'number') ? Math.abs(top - current) : Infinity;
+          if (content) {
+            if (!content.id) content.id = 'faq-answer-' + (i + 1);
+            summary.setAttribute('aria-controls', content.id);
+          }
+          summary.setAttribute('aria-expanded', details.open ? 'true' : 'false');
 
-        // Disable short magnetic smooth snaps on this template.
-        if (behavior === 'smooth' && delta <= 260) return;
-        return nativeScrollTo(arg1, arg2);
-      };
+          details.addEventListener('toggle', function () {
+            summary.setAttribute('aria-expanded', details.open ? 'true' : 'false');
+          });
+        });
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', enhanceFaqA11y);
+      } else {
+        enhanceFaqA11y();
+      }
     })();
   </script>
   {% endif %}
-
 </body>
 </html>

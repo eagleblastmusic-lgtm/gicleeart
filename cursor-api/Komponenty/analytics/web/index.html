@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pl" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache" />
+  <title>Analiza ruchu — GicleeArt</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/web/style.css?v=4" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+  <script src="/web/app.js?v=12" defer></script>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar__brand">
+        <span class="topbar__logo">◆</span>
+        <div>
+          <strong>Analiza ruchu</strong>
+          <span class="topbar__sub">GicleeArt · Shopify</span>
+        </div>
+      </div>
+      <div class="topbar__actions">
+        <div class="filters" id="global-filters">
+          <select id="preset" aria-label="Zakres dat">
+            <option value="today">Dziś</option>
+            <option value="yesterday">Wczoraj</option>
+            <option value="7d" selected>7 dni</option>
+            <option value="30d">30 dni</option>
+            <option value="month">Ten miesiąc</option>
+            <option value="prev_month">Poprzedni miesiąc</option>
+          </select>
+          <select id="country-filter" aria-label="Kraj">
+            <option value="">Wszystkie kraje</option>
+          </select>
+          <select id="device-filter" aria-label="Urządzenie">
+            <option value="">Wszystkie urządzenia</option>
+            <option value="mobile">Mobile</option>
+            <option value="desktop">Desktop</option>
+            <option value="tablet">Tablet</option>
+          </select>
+          <select id="source-filter" aria-label="Źródło">
+            <option value="">Wszystkie źródła</option>
+            <option value="direct">Direct</option>
+            <option value="organic_search">Organic</option>
+            <option value="paid">Paid</option>
+            <option value="social">Social</option>
+            <option value="email">Email</option>
+            <option value="referral">Referral</option>
+          </select>
+          <button type="button" class="btn btn--ghost" id="btn-pull">Sync z chmury</button>
+          <button type="button" class="btn btn--ghost" id="btn-sync">Sync Shopify</button>
+          <button type="button" class="btn btn--ghost" id="btn-test">Test event</button>
+          <button type="button" class="btn btn--ghost" id="btn-export">Eksport CSV</button>
+          <button type="button" class="btn btn--ghost" id="btn-report">Raport tygodnia</button>
+          <label class="exclude-toggle exclude-toggle--my-ip" title="Wyklucz swój publiczny IP z KPI (działa we wszystkich przeglądarkach i incognito)">
+            <input type="checkbox" id="toggle-my-ip" />
+            <span class="exclude-toggle__track" aria-hidden="true"></span>
+            <span class="exclude-toggle__label" id="toggle-my-ip-label">Wyklucz moje IP</span>
+          </label>
+          <label class="exclude-toggle" title="Filtruj własny ruch (IP / Visitor ID) z KPI na wszystkich zakładkach">
+            <input type="checkbox" id="toggle-exclusions" checked />
+            <span class="exclude-toggle__track" aria-hidden="true"></span>
+            <span class="exclude-toggle__label">Wykluczenia</span>
+          </label>
+        </div>
+        <div class="theme-toggle" role="group">
+          <button type="button" data-theme="light">Jasny</button>
+          <button type="button" data-theme="dark">Ciemny</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="status-bar" id="status-bar" aria-live="polite">
+      <span id="status-pixel">Pixel: …</span>
+      <span id="status-sync">Sync: …</span>
+      <span id="status-counts">Chmura / lokalnie: …</span>
+      <span id="status-exclusions">Wykluczenia: …</span>
+    </div>
+
+    <nav class="tabs" id="tabs">
+      <button type="button" class="tabs__btn is-active" data-tab="summary">Podsumowanie</button>
+      <button type="button" class="tabs__btn" data-tab="countries">Kraje</button>
+      <button type="button" class="tabs__btn" data-tab="funnel">Lejek</button>
+      <button type="button" class="tabs__btn" data-tab="products">Produkty</button>
+      <button type="button" class="tabs__btn" data-tab="sources">Źródła</button>
+      <button type="button" class="tabs__btn" data-tab="paths">Ścieżki</button>
+      <button type="button" class="tabs__btn" data-tab="frames">Konfigurator ram</button>
+      <button type="button" class="tabs__btn" data-tab="realtime">Realtime</button>
+      <button type="button" class="tabs__btn" data-tab="insights">Insighty</button>
+      <button type="button" class="tabs__btn" data-tab="setup">Konfiguracja</button>
+    </nav>
+
+    <div id="empty-state" class="empty-state hidden">
+      <div class="empty-state__card">
+        <h2>Brak danych analitycznych</h2>
+        <p>Aby rozpocząć zbieranie ruchu, dodaj Custom Pixel w Shopify Customer Events.</p>
+        <ol>
+          <li>Ustaw <code>ANALYTICS_COLLECT_SECRET</code> w pliku <code>.env</code></li>
+          <li>Uruchom serwer analityki z GicleeApp</li>
+          <li>Wklej kod pixela w Shopify Admin → Pixeli klienta</li>
+          <li>Kliknij „Wyślij event testowy”</li>
+        </ol>
+        <button type="button" class="btn btn--primary" id="empty-test">Wyślij event testowy</button>
+        <button type="button" class="btn btn--ghost" data-tab-jump="setup">Instrukcja pixela</button>
+      </div>
+    </div>
+
+    <main class="main" id="main-content">
+      <section class="panel is-active" data-panel="summary">
+        <div class="kpi-grid" id="kpi-grid"></div>
+        <div class="charts-row">
+          <div class="chart-card"><h3>Ruch w czasie</h3><p class="chart-hint">Linie: sesje · <strong>unikalni/dzień</strong> · odsłony (najedź na wykres)</p><canvas id="chart-traffic"></canvas></div>
+          <div class="chart-card"><h3>Przychód w czasie</h3><canvas id="chart-revenue"></canvas></div>
+        </div>
+        <div class="chart-card chart-card--wide"><h3>Konwersja w czasie</h3><canvas id="chart-conversion"></canvas></div>
+      </section>
+
+      <section class="panel" data-panel="countries">
+        <div class="split-stats" id="pl-vs-foreign"></div>
+        <div class="charts-row">
+          <div class="chart-card"><h3>Top kraje — sesje</h3><canvas id="chart-countries"></canvas></div>
+          <div class="chart-card"><h3>Przychód według kraju</h3><canvas id="chart-country-revenue"></canvas></div>
+        </div>
+        <div class="table-wrap"><table class="data-table" id="table-countries"><thead></thead><tbody></tbody></table></div>
+      </section>
+
+      <section class="panel" data-panel="funnel">
+        <div class="funnel" id="funnel-viz"></div>
+        <canvas id="chart-funnel" height="120"></canvas>
+      </section>
+
+      <section class="panel" data-panel="products">
+        <div class="table-wrap"><table class="data-table" id="table-products"><thead></thead><tbody></tbody></table></div>
+      </section>
+
+      <section class="panel" data-panel="sources">
+        <div class="charts-row">
+          <div class="chart-card"><h3>Źródła ruchu</h3><canvas id="chart-sources"></canvas></div>
+          <div class="chart-card"><h3>Kampanie UTM</h3><div id="utm-list" class="utm-list"></div></div>
+        </div>
+        <div class="table-wrap"><table class="data-table" id="table-sources"><thead></thead><tbody></tbody></table></div>
+      </section>
+
+      <section class="panel" data-panel="paths">
+        <p class="panel-intro">Lista wizyt po sync z chmury. Kliknij wiersz → timeline (landing → produkty → koszyk). Jeśli pusto: <strong>Sync z chmury</strong>, potem odśwież (Ctrl+F5).</p>
+        <div class="table-wrap"><table class="data-table" id="table-sessions"><thead></thead><tbody></tbody></table></div>
+        <div class="timeline-card hidden" id="session-timeline"><h3>Timeline sesji</h3><ul id="timeline-events"></ul></div>
+      </section>
+
+      <section class="panel" data-panel="frames">
+        <p class="panel-intro">Lejek konfiguratora GicleeApp — rozmiar → kolor → cena → CTA (eventy <code>giclee_app:*</code>).</p>
+        <div class="funnel" id="frame-funnel-viz"></div>
+        <div class="table-wrap"><table class="data-table" id="table-frames"><thead></thead><tbody></tbody></table></div>
+      </section>
+
+      <section class="panel" data-panel="realtime">
+        <div class="kpi-grid kpi-grid--compact" id="realtime-kpi"></div>
+        <div class="charts-row">
+          <div class="chart-card"><h3>Aktywne strony</h3><ul id="rt-pages" class="rt-list"></ul></div>
+          <div class="chart-card"><h3>Oglądane produkty</h3><ul id="rt-products" class="rt-list"></ul></div>
+        </div>
+        <div class="chart-card"><h3>Ostatnie eventy</h3><ul id="rt-events" class="rt-list"></ul></div>
+      </section>
+
+      <section class="panel" data-panel="insights">
+        <div id="insights-list" class="insights-list"></div>
+      </section>
+
+      <section class="panel" data-panel="setup">
+        <div class="setup-grid">
+          <div class="setup-card">
+            <h3>Status połączenia</h3>
+            <dl id="setup-status"></dl>
+          </div>
+          <div class="setup-card setup-card--wide">
+            <h3>Adres dla pixela Shopify</h3>
+            <p class="setup-highlight">W pixelu użyj tego URL (Worker w chmurze — <strong>nie</strong> 127.0.0.1):</p>
+            <pre id="setup-collect-url" class="code-block code-block--url">Ładowanie…</pre>
+          </div>
+          <div class="setup-card setup-card--wide">
+            <h3>Kod Custom Pixel</h3>
+            <p>Wklej w Shopify Admin → Ustawienia → Dane klienta → Pixeli klienta → Dodaj niestandardowy.</p>
+            <pre id="pixel-code" class="code-block">Ładowanie…</pre>
+            <button type="button" class="btn btn--ghost" id="btn-copy-pixel">Kopiuj kod pixela</button>
+          </div>
+          <div class="setup-card">
+            <h3>Pomiń mój ruch</h3>
+            <p class="panel-intro">Wyklucz testy z KPI. <strong>IP</strong> = publiczny adres (ten sam co przy testach sklepu z domu), nie <code>192.168…</code>. <strong>Visitor ID</strong> = pewniejsze (z pixela).</p>
+            <label>Visitor ID <input type="text" id="exclude-visitor" placeholder="z pixela / devtools" /></label>
+            <label>IP publiczne
+              <span class="ip-row">
+                <input type="text" id="exclude-ip" placeholder="np. 85.123.45.67" />
+                <button type="button" class="btn btn--ghost" id="btn-detect-ip">Pobierz moje IP</button>
+              </span>
+            </label>
+            <button type="button" class="btn btn--ghost" id="btn-exclude">Dodaj wykluczenie</button>
+            <p id="exclude-status" class="exclude-status" aria-live="polite"></p>
+            <p id="exclude-impact" class="exclude-impact" aria-live="polite"></p>
+            <div id="exclude-list" class="exclude-list" role="list"></div>
+            <div class="exclude-recent">
+              <h4>Ostatni visitorzy w bazie</h4>
+              <p class="panel-intro">Stare eventy nie mają zapisanego IP — wybierz swój <strong>Visitor</strong> z listy (najczęściej ten z największą liczbą eventów, jeśli to Ty testowałeś sklep).</p>
+              <div id="recent-visitors" class="recent-visitors"></div>
+            </div>
+          </div>
+          <div class="setup-card setup-card--wide">
+            <h3>Generator linków UTM</h3>
+            <p class="panel-intro">1) Wybierz szablon lub wpisz parametry · 2) Uzupełnij ścieżkę produktu (np. <code>/products/obraz-canaletto</code>) · 3) <strong>Kopiuj link</strong> · 4) Wklej w Instagram/bio/mail — wtedy w <em>Źródła</em> zobaczysz kampanię zamiast „direct”.</p>
+            <div class="utm-form">
+              <label>Szablon
+                <select id="utm-template"></select>
+              </label>
+              <label>Ścieżka <input type="text" id="utm-path" value="/products/" /></label>
+              <label>utm_source <input type="text" id="utm-source" value="instagram" /></label>
+              <label>utm_medium <input type="text" id="utm-medium" value="social" /></label>
+              <label>utm_campaign <input type="text" id="utm-campaign" value="launch" /></label>
+            </div>
+            <pre id="utm-preview" class="code-block code-block--url">…</pre>
+            <button type="button" class="btn btn--ghost" id="btn-copy-utm">Kopiuj link</button>
+          </div>
+          <div class="setup-card">
+            <h3>Retencja D1 (chmura)</h3>
+            <p>Archiwizuj eventy starsze niż 90 dni w Cloudflare D1.</p>
+            <button type="button" class="btn btn--ghost" id="btn-purge-d1">Wyczyść stare eventy (&gt;90 dni)</button>
+            <p class="setup-note">Osobny Worker analityki — dopiero przy &gt;~10k eventów/dzień (na Free limit requestów jest wspólny).</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span id="footer-status">Ładowanie…</span>
+      <span>Wskaźnik jakości ruchu: <strong id="quality-score">—</strong>/100</span>
+    </footer>
+  </div>
+  <div class="skeleton-overlay hidden" id="loading"><div class="spinner"></div></div>
+</body>
+</html>

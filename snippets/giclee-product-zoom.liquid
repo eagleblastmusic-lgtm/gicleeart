@@ -1,0 +1,19 @@
+{%- comment -%}
+  Hero zoom HD (kafelki R2) — metafield custom.zoom_manifest (JSON).
+  Tylko szablon product.nowy-szblon-produktu (warunek w product-information.liquid).
+{%- endcomment -%}
+{%- assign zoom_mf = product.metafields.custom.zoom_manifest -%}
+{%- if zoom_mf != blank -%}
+  <div
+    class="giclee-product-zoom"
+    data-giclee-zoom
+    data-giclee-zoom-manifest='{{ zoom_mf.value | json }}'
+  >
+    <div class="giclee-product-zoom__viewer giclee-zoom-viewer" id="giclee-zoom-{{ product.id }}"></div>
+  </div>
+  <script
+    src="https://cdn.jsdelivr.net/npm/openseadragon@4.1.0/build/openseadragon/openseadragon.min.js"
+    defer
+  ></script>
+  <script src="{{ 'giclee-product-zoom.js' | asset_url }}?v=zoom-top-visible-20260605" defer></script>
+{%- endif -%}

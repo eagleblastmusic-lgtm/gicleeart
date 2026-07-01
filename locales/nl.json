@@ -134,6 +134,19 @@
     "product_total": "Totaal product",
     "cart_estimated_total": "Geschat totaal",
     "seller_note": "Speciale instructies",
+    "invoice_request_title": "Factuur",
+    "invoice_request_checkbox": "Ik heb een factuur nodig",
+    "invoice_request_hint": "Voor particulieren gebruiken we het factuuradres uit de checkout. Voor bedrijven vul je hieronder de gegevens in.",
+    "invoice_type_legend": "Type ontvanger",
+    "invoice_type_private": "Particulier",
+    "invoice_type_company": "Bedrijf",
+    "invoice_company_name": "Bedrijfsnaam",
+    "invoice_tax_id_nip": "BTW / NIP",
+    "invoice_tax_id_de": "BTW-nummer",
+    "invoice_tax_id_fr": "BTW-nummer",
+    "invoice_tax_id_uk": "BTW-nummer",
+    "invoice_tax_id_generic": "BTW-nummer / belasting-ID",
+    "invoice_error_company": "Vul bedrijfsnaam en BTW-nummer in om door te gaan.",
     "cart_subtotal": "Subtotaal",
     "discounts": "Kortingen",
     "discount": "Korting",
@@ -341,6 +354,255 @@
       "in_cart": "in winkelwagen",
       "default_title": "Standaardtitel",
       "sticky_add_to_cart": "Balk voor snel toevoegen aan winkelwagen"
+    }
+  },
+  "password": {
+    "countdown": {
+      "heading": "Herstructurering van de site-architectuur. We zijn binnenkort terug.",
+      "days": "dagen",
+      "hours": "uur",
+      "minutes": "min.",
+      "seconds": "sec.",
+      "expired": "Welkom!"
+    },
+    "maintenance": {
+      "message": "Herstructurering van de site-architectuur. We zijn binnenkort terug."
+    },
+    "newsletter_intro": "Schrijf je in voor de nieuwsbrief en hoor als eerste van onze lancering."
+  },
+  "giclee": {
+    "blocks": {
+      "text_4crMR9": {
+        "text": "<h2>Nieuws</h2>"
+      },
+      "text_PDh9dG": {
+        "text": "<p>Wilt u meer weten over kunst, lijstproductie, drukwerk en fine art in de breedste zin? Ik nodig u uit om verder te lezen!</p>"
+      },
+      "text_FNbyeV": {
+        "text": "<h2>Werken</h2>"
+      },
+      "text_6zXDqe": {
+        "text": "<p>Giclée Art is een atelier gespecialiseerd in Fine Art-afdrukken en complete inlijsting van werken volgens museumstandaard.</p><p>Wij combineren de precisie van pigmentdruk met handwerk en creëren afgewerkte stukken die kunnen functioneren als volwaardige kunstwerken — niet slechts reproducties.</p><p>Elk element van de realisatie — van papier, via passe-partout, tot lijsten van massief hout — wordt gekozen met het oog op duurzaamheid, esthetiek en verzamelwaarde.</p>"
+      },
+      "text_FwqCDk": {
+        "text": "<p>Dit is een eigen atelier waar ik Fine Art-afdrukken van verzamelaarskwaliteit maak en zorg voor hun complete, galeriewaardige inlijsting.<br/><br/>Elk project realiseer ik persoonlijk — van zorgvuldige beeldcorrectie, via precieze pigmentdruk, tot de keuze van archiefmaterialen en handgemaakte inlijsting.<br/><br/>Ik werk volgens museumstandaarden, met zuurvrije dragers en duurzame technieken die langdurige stabiliteit en onveranderlijkheid van de afdrukken garanderen.<br/><br/>Mijn doel is werken te creëren met echte waarde — esthetisch, materieel en verzamelbaar.</p>"
+      },
+      "text_EgnMm8": {
+        "text": "<h2>Giclée Art </h2><p></p><p>Dit is een eigen atelier waar ik Fine Art-afdrukken van verzamelaarskwaliteit maak en zorg voor hun complete, galeriewaardige inlijsting.<br/><br/>Elk project realiseer ik persoonlijk — van zorgvuldige beeldcorrectie, via precieze pigmentdruk, tot de keuze van archiefmaterialen en handgemaakte inlijsting.<br/><br/>Ik werk volgens museumstandaarden, met zuurvrije dragers en duurzame technieken die langdurige stabiliteit en onveranderlijkheid van de afdrukken garanderen.<br/><br/>Mijn doel is werken te creëren met echte waarde — esthetisch, materieel en verzamelbaar.</p>"
+      },
+      "text_ywirTH": {
+        "text": "<h2>Restauratie van werken</h2>"
+      },
+      "text_EpbDYf": {
+        "text": "<p><br/>Een belangrijk onderdeel van mijn werk is de digitale restauratie van beschadigde of gedegradeerde schilderijen, zowel bekende klassiekers als vergeten werken.<br/><br/>Dit proces omvat de precieze reconstructie van details, het verwijderen van schade en het herstel van de oorspronkelijke tonale en kleurlijke balans — met volledig respect voor het karakter van het origineel.</p><p>Ik behandel elk beeld individueel en vermijd het kunstmatige effect van «overmatige correctie». Mijn doel is de oorspronkelijke visuele waarde te herstellen, niet te herinterpreteren.</p><p>Gerestaureerde beelden kunnen vervolgens worden geproduceerd als archiefwaardige Fine Art-afdrukken en ingelijst volgens galeriestandaard.</p><p>Schilderijrestauraties zijn voorzien van de signatuur van de auteurscollectie:<br/><br/><strong>© Giclée Art — Restoration Edition 2026</strong><br/><br/><br/><br/></p>"
+      },
+      "text_9XdqrW": {
+        "text": "<p>Vóór het afdrukken pas ik eigen kleurcorrectie toe, afgestemd op het karakter van het werk en het gekozen medium.</p><p>Ik vertrouw niet uitsluitend op standaardprofielen — elk beeld analyseer ik individueel, met aandacht voor de juiste tonaliteit, diepte en kleurconsistentie in de context van de uiteindelijke afdruk.</p><p>Bijzondere aandacht besteed ik aan tonale overgangen, detail in lichten en schaduwen, en de natuurlijke weergave van kleuren op artistiek papier.</p><p>Het doel is niet alleen technische correctheid, maar het bereiken van een effect dat de intentie van de auteur weerspiegelt en de volledige visuele kwaliteit in fysieke vorm behoudt.</p>"
+      },
+      "button_UgW9Kt": {
+        "label": "Alles bekijken"
+      },
+      "text_qLVbAJ": {
+        "text": "<h2>Potentieel dat niet altijd zichtbaar is<br/></h2>"
+      },
+      "text_FhBhaC": {
+        "text": "<p>Sommige foto's kunnen, ondanks een goede compositie, mislukt lijken — door onjuiste kleur, licht of tonaliteit.</p><p>Met precieze correctie herstel ik hun juiste verhoudingen en esthetiek, en breng ik de kwaliteit naar boven die oorspronkelijk in hen verborgen was.</p>"
+      },
+      "text_rmKL7r": {
+        "text": "<h3>Zie het verschil</h3>"
+      },
+      "text_zLzkLW": {
+        "text": "<p><br/>De eerste auteurscollectie ter wereld van digitaal gerestaureerde schilderijen.<br/><br/></p>"
+      },
+      "text_nPizan": {
+        "text": "<h5>Bent u fotograaf of sessiefotograaf en wilt u samenwerken met Giclée Art? Ik nodig u uit om contact op te nemen.</h5><h5>Als onderdeel van de samenwerking ontvangt u:</h5><h5><br/>– kortingen voor uw klanten op Giclée Art-producten<br/>– presentatie van uw geselecteerde werken op de Giclée Art-website met link naar uw sociale media<br/>– promotie van uw werk op de sociale media van Giclée Art</h5><h5>De samenwerking is partnerschapsgericht — wij combineren de esthetiek van fotografie met premium artistieke druk.</h5>"
+      },
+      "text_HJGb9e": {
+        "text": "<h2>Veelgestelde vragen</h2>"
+      },
+      "text_dQBDL3": {
+        "text": "<h2>Veelgestelde vragen</h2>"
+      },
+      "accordion_row_mUQFCU": {
+        "heading": "Wat is de verwerkingstijd van een bestelling?"
+      },
+      "text_Q8RMTC": {
+        "text": "<p>De verwerkingstijd van een bestelling is 3 tot 7 dagen. Dit hangt samen met de levertijd van hout en materialen die nodig zijn voor de productie. Ik probeer altijd minimale houtvoorraden aan te houden, maar vóór de afwerking — die impregnering omvat — is hout gevoelig voor kromtrekken. Daarom realiseer ik producten van begin tot eind met vers geleverde materialen.<br/><br/>Het productieproces bestaat uit vele fasen, van het zagen van het hout tot het aanbrengen van verschillende afwerkingslagen die moeten drogen. Reken op: dag 1 — zagen en gronden, dag 2 — oliën en printen, nog 3 dagen voor het initiële drogen en uitharden van de oliewas, evenals het drogen van het papier na het aanbrengen van beschermende spray</p>"
+      },
+      "accordion_row_gq7xgd": {
+        "heading": "Wat is de verzendtijd?"
+      },
+      "text_dbKFYM": {
+        "text": "<p>Zodra het product is voltooid, wordt het beeld onmiddellijk ingepakt en verzonden, ongeacht het tijdstip, via een pakketkluis. Na verzending ontvangt u een e-mail met verdere informatie. Zendingen komen doorgaans binnen 1–2 werkdagen aan</p>"
+      },
+      "accordion_row_fxrNFP": {
+        "heading": "Is telefonisch contact mogelijk?"
+      },
+      "text_KT9gtp": {
+        "text": "<p>Helaas niet. Ik run het bedrijf alleen en kan overdag tijdens het werk geen telefoontjes aannemen. Neem alstublieft contact op via e-mail. Meestal antwoord ik 's avonds of 's nachts.</p>"
+      },
+      "accordion_row_VwgmXW": {
+        "heading": "Waar worden uw producten geproduceerd?"
+      },
+      "text_kCYhHF": {
+        "text": "<p>Mijn atelier bevindt zich in Puck, woiwodschap Pommeren, maar persoonlijke afhaling is niet mogelijk</p>"
+      },
+      "accordion_row_7nCpLH": {
+        "heading": "Hoeveel kost de verzending?"
+      },
+      "text_BnRprG": {
+        "text": "<p>Verzending is volledig gratis</p>"
+      },
+      "text_kdAGGw": {
+        "text_part1": "<p>Giclée Art is gebaseerd op het idee dat een kunstwerk niet eindigt bij het digitale bestand.<br/><br/>Het is pas voltooid wanneer het zijn definitieve vorm krijgt — coherent, archiefwaardig en klaar voor tentoonstelling.<br/><br/>In het werken met visueel materiaal opereer ik in twee parallelle gebieden.<br/><br/>Het eerste zijn schilderijen — vaak oud, vergeeld, vergeten of die herwerking vereisen in de vorm van reproducties. In dit proces behandel ik ze als culturele materie die tot leven kan worden gebracht door tonale en kleurcorrectie, precieze Fine Art-druk en bewuste inlijsting. Zo herwinnen ze hun aanwezigheid, diepte en mogelijkheid om te functioneren in de hedendaagse ruimte.<br/><br/>Het tweede gebied is fotografie die mij wordt toevertrouwd voor realisatie. In dit geval reconstrueer ik het verleden niet, maar sluit ik het creatieve proces af door het beeld zijn finale, materiële vorm te geven.<br/><br/",
+        "text_part2": ">Pas in de vorm van afdruk en inlijsting krijgt het beeld schaal, structuur en een relatie met licht die het als object laten bestaan — niet slechts als digitaal record.<br/><br/>Ik geloof dat fotografie en beeld pas echt «leven» wanneer ze het scherm verlaten en naar de fysieke wereld worden overgebracht.<br/><br/>Daarom behandel ik elk project als een overgangsproces<br/><br/>Van potentieel beeld — naar aanwezig beeld.<br/><br/>Van bestand — naar object.<br/><br/>Van informatie — naar materie.</p>"
+      },
+      "text_9ftdzW": {
+        "text_part1": "<p>Giclée Art is gebaseerd op het idee dat een kunstwerk niet eindigt bij het beeld.<br/><br/>Het is pas voltooid wanneer het zijn definitieve vorm krijgt — coherent, archiefwaardig en klaar voor tentoonstelling.<br/><br/><br/>In het werken met visueel materiaal opereer ik in twee parallelle gebieden.<br/><br/>Het eerste zijn schilderijen — vaak oud, vergeeld, vergeten of die herwerking vereisen in de vorm van reproducties. In dit proces behandel ik ze als culturele materie die tot leven kan worden gebracht door precieze Fine Art-druk en bewuste inlijsting. Zo herwinnen ze hun aanwezigheid, diepte en mogelijkheid om te functioneren in de hedendaagse ruimte.<br/><br/>Het tweede gebied is fotografie — zowel autonoom als mij toevertrouwd voor realisatie. In dit geval reconstrueer ik het verleden niet, maar sluit ik het creatieve proces af door het beeld zijn finale, materiële vorm te geven.<br/><br/",
+        "text_part2": ">Pas in de vorm van afdruk en inlijsting krijgen ze schaal, structuur en een relatie met licht die hen als object laten bestaan — niet slechts als digitaal record.<br/><br/>Ik geloof dat fotografie en beeld pas echt «leven» wanneer ze het scherm verlaten en naar de fysieke wereld worden overgebracht.<br/><br/>Pas in de vorm van afdruk en inlijsting krijgen ze schaal, structuur en een relatie met licht die hen als object laten bestaan — niet slechts als digitaal record.<br/><br/>Daarom behandel ik elk project als een overgangsproces<br/><br/>Van potentieel beeld — naar aanwezig beeld.<br/><br/>Van bestand — naar object.<br/><br/>Van informatie — naar materie.</p>"
+      },
+      "text_8JmYGT": {
+        "text": "<h2>Nieuw binnen</h2>"
+      },
+      "text_DNFLhc": {
+        "text": "<p>Met zorg gemaakt en onvoorwaardelijk geliefd bij onze klanten.</p>"
+      },
+      "text_nWcG7K": {
+        "text": "<h2><strong>Maak van fotografie een tijdloos beeld</strong></h2>"
+      },
+      "text_tJcVyA": {
+        "text": "<p>Uw foto verdient meer dan een scherm. Wij transformeren het in een elegante fine art-afdruk die eruitziet als een werk gemaakt voor een galerie.</p>"
+      },
+      "button_gzAGaV": {
+        "label": "Kies een foto"
+      },
+      "text_GifUG3": {
+        "text": "<p><strong>Giclée Frame™</strong> is een eigen inlijstingssysteem dat ik heb gecreëerd als integraal onderdeel van elke realisatie uit mijn atelier.</p><p>Het is geen standaard lijst — het is een doordachte vorm van presentatie, ontworpen om het karakter van het beeld te benadrukken en het zijn definitieve, galeriewaardige dimensie te geven.</p><p>Elk element van de inlijsting wordt handgemaakt, met massief hout en zuurvrije materialen die voldoen aan archiefstandaarden. De lijstconstructie en montagemethode zijn ontwikkeld om zowel esthetiek als langdurige stabiliteit van het werk te waarborgen.</p>"
+      },
+      "jumbo_text_NBbG7x": {
+        "text": "materialen"
+      },
+      "text_79rJDi": {
+        "text": "<p>Voor Giclée Frame™ gebruik ik uitsluitend zorgvuldig geselecteerde materialen:</p><p><strong>— massief hout met natuurlijke structuur<br/>— zuurvrij passe-partout van galeriekwaliteit<br/>— archiefwaardige, chemisch neutrale componenten</strong></p><p>Daardoor benadrukt de inlijsting niet alleen de esthetische kwaliteiten van het werk, maar beschermt het ook tegen degradatie in de loop der tijd.</p>"
+      },
+      "jumbo_text_Xz3A7b": {
+        "text": "HOUTAFWERKING"
+      },
+      "text_xktcAN": {
+        "text": "<p>Lijsten worden afgewerkt met natuurlijke oliewassen van Rubio Monocoat, die het houtoppervlak beschermen en tegelijk de structuur en het karakter benadrukken.</p><p>Bij zwarte afwerking breng ik bovendien een Precolor-laag aan die de kleur verdiept en een gelijkmatige, verzadigde tinting garandeert.</p><p>Het toegepaste systeem creëert geen kunstmatige laag — het hout behoudt zijn natuurlijkheid en de structuur blijft zichtbaar en voelbaar.</p><p>De gebruikte oliën zijn gebaseerd op natuurlijke ingrediënten, waaronder lijnolie, en kenmerken zich door nul VOS-gehalte (vluchtige organische stoffen). De oplosmiddelvrije formule zorgt voor zeer lage emissies en veilig gebruik. Dit wordt bevestigd door internationale certificeringen zoals GREENGUARD Gold</p><p>Het resultaat is een afwerking die zowel vriendelijk is voor het milieu als voor de ruimte waarin het werk wordt tentoongesteld — duurzaam, natuurlijk en jarenlang zijn karakter behoudend.</p>"
+      },
+      "text_e9qjY6": {
+        "text_part1": "<p>Het passe-partout dat in mijn atelier wordt gebruikt, is gemaakt van hoogwaardig, drielaags archiefkarton, ontworpen voor professionele inlijsting van kunstwerken.<br/><br/>De bovenste laag bestaat uit zuurvrij, in de massa gekleurd papier <strong>Fabriano Elle Erre (Bianco)</strong> — een materiaal met hoge weerstand tegen veroudering en licht, dat voldoet aan de ISO 9706 «Long Life»-norm.<br/><br/>De kern is gemaakt van zuurvrij, niet vergeling karton met neutrale pH, met een alkalische reserve die het werk extra beschermt tegen degradatie in de loop der tijd. Het geheel wordt aangevuld met een onderlaag van hoogwaardig papier die de constructie stabiliseert.<br/><br/>De elementen worden verbonden met niet-toxische watergedragen lijmen, vrij van oplosmiddelen, wat volledige veiligheid voor het ingelijste werk garandeert.</p>",
+        "text_part2": "<p>Elk passe-partout wordt in een hoek van 45° gesneden, waardoor het karakteristieke «venster» ontstaat dat subtiele diepte introduceert en de relatie tussen beeld en inlijsting benadrukt.</p><p>In combinatie met een Fine Art-afdruk vormt het een integraal onderdeel van het inlijstingssysteem en geeft het het werk ruimte, structuur en galeriekarakter.</p>"
+      },
+      "text_xyy4fN": {
+        "text_part1": "<p>In het drukproces gebruik ik uitsluitend professionele Fine Art-papieren die de basis vormen van de kwaliteit en duurzaamheid van het uiteindelijke werk.</p><p>De primaire media zijn Hahnemühle Photo Rag 308 en Epson Fine Art Velvet — papieren met uitzonderlijke structuur, ontworpen voor kunstreproductie op het hoogste niveau.</p><p>Hun oppervlak wordt gekenmerkt door een subtiele, natuurlijke textuur die de afdruk diepte en een karakter geeft dat dicht bij traditionele artistieke technieken ligt. De matte afwerking elimineert lichtreflecties en maakt volledige focus op het beeld en zijn tonaliteit mogelijk.</p><p>De gebruikte dragers zijn volledig zuurvrij en archiefwaardig, wat hoge weerstand tegen veroudering en kleurstabiliteit op lange termijn garandeert. Daardoor behoudt het werk zijn visuele kwaliteit gedurende decennia, zonder verlies van detail en kleurdiepte.</p>",
+        "text_part2": "<p>Elke afdruk wordt geproduceerd met pigmenttechnologie, die in combinatie met Fine Art-papier een uitzonderlijk tonale bereik, detailprecisie en een edel, galeriewaardig karakter mogelijk maakt.</p><p>Het resultaat is een beeld dat niet slechts een reproductie is, maar een volwaardig artistiek object — bereid voor professionele tentoonstelling en archiefopslag.</p>"
+      },
+      "jumbo_text_bX7tqP": {
+        "text": "VERHOUDINGEN EN DE GOUDEN SNIJD"
+      },
+      "text_KxVYV6": {
+        "text_part1": "<p>In het Giclée Frame™-systeem zijn de inlijstingsverhoudingen niet toevallig — ze vormen een bewust ontwikkelde relatie tussen beeld, passe-partout en lijst.</p><p>Een kernprincipe is het gebruik van visuele harmonie gebaseerd op de gouden snede, die al eeuwenlang in kunst, architectuur en klassieke esthetiek wordt gebruikt als patroon van natuurlijke balans.</p><p>De gouden snede (φ – «phi») is een wiskundige verhouding waarbij de verhouding van het geheel tot het grotere deel gelijk is aan de verhouding van het grotere tot het kleinere deel. De waarde is ongeveer <strong>1,618</strong>. In de praktijk betekent dit een verhouding die natuurlijk en intuïtief als harmonieus en stabiel wordt ervaren door het menselijk oog, ongeacht bewustzijn van de wiskundige structuur.</p><p>De verhouding van het papieroppervlak tot de passe-partoutbreedte en de relatie met de lijst wordt aangepast aan de productgrootte in 3 formaten: M, L en XL.</p>",
+        "text_part2": "<p>Het doel van dit proces is niet decoratie, maar het bereiken van visuele balans waarin het beeld «ademt» in de inlijstingsruimte en een natuurlijk focuspunt voor het oog krijgt. Ik verzet me bewust tegen de hedendaagse galerietrend die zegt: hoe groter het passe-partout, hoe beter</p><p>Daardoor heeft elke realisatie zijn eigen interne logica van verhoudingen — niet uit een sjabloon, maar uit harmonieprincipes die de perceptie van het beeld ordenen.</p><p>Het resultaat is een compositie waarin alle elementen in evenwicht samenleven en een samenhangend, evenwichtig visueel object vormen.</p>"
+      },
+      "jumbo_text_txPMEr": {
+        "text": "Productafmetingen"
+      },
+      "text_d3aDXd": {
+        "text": "<p>Elke realisatie verlaat het atelier als een volledig afgewerkt werk — klaar voor onmiddellijke tentoonstelling.</p><p>Het vereist geen extra inlijsting of ingreep. Alle elementen zijn ontworpen en uitgevoerd als een samenhangend geheel.</p>"
+      },
+      "text_aDtPRn": {
+        "text": "<h3>Samenwerking voor fotografen<br/></h3>"
+      },
+      "text_DxzKPb": {
+        "text": "<p>Giclée Art is een ruimte voor makers die werken op emotie, esthetiek en kwaliteit zonder compromissen.<br/><br/>Als u fotosessies maakt en wilt dat uw werken verder leven in de vorm van museumwaardige druk — nodig ik u uit tot samenwerking.</p>"
+      },
+      "text_Bn4r9Y": {
+        "text": "<h2>Een betere ervaring voor uw klanten<br/></h2>"
+      },
+      "text_XJGn6y": {
+        "text": "<p>Door met mij samen te werken, kunt u uw klanten een speciale korting bieden op Giclée Art-producten.<br/><br/>Zo krijgen uw sessies extra waarde — klanten ontvangen niet alleen foto's, maar een kant-en-klare, luxueuze vorm van hun presentatie.<br/></p>"
+      },
+      "text_6yVLKh": {
+        "text": "<h3>Uw werk in de ruimte van Giclée Art<br/></h3>"
+      },
+      "text_axjktk": {
+        "text": "<p>Geselecteerde realisaties publiceer ik op de Giclée Art-website met onderschrift en link naar uw sociale media.<br/><br/>Het is niet alleen exposure — het is presentatie van uw werk in de context van een premium merk dat de visuele waarde verhoogt.</p>"
+      },
+      "text_tQHMCe": {
+        "text": "<h3>Wederzijdse promotie en merkgroei<br/></h3>"
+      },
+      "text_wTM8Wz": {
+        "text": "<p>Wij bouwen een relatie op gebaseerd op kwaliteit, esthetiek en gezamenlijke groei — geen eenmalige samenwerking, maar een langetermijnpartnerschap.<br/></p>"
+      },
+      "text_xykEfp": {
+        "text": "<h3>Samenwerking voor fotografen</h3>"
+      },
+      "text_LJAG43": {
+        "text": "<p>Giclée Art is een ruimte voor makers die werken op emotie, esthetiek en kwaliteit zonder compromissen.<br/><br/>Als u fotosessies maakt en wilt dat uw werken verder leven in de vorm van museumwaardige druk — nodig ik u uit tot samenwerking.</p>"
+      },
+      "text_MeaHNN": {
+        "text": "<p>Giclée Art is een ruimte voor makers die werken op emotie, esthetiek en kwaliteit zonder compromissen.<br/><br/>Als u fotosessies maakt en wilt dat uw werken verder leven in de vorm van museumwaardige druk — nodig ik u uit tot samenwerking.</p>"
+      },
+      "text-2": {
+        "text": "<p>Meld u aan voor de nieuwsbrief om als eerste op de hoogte te zijn van onze lancering</p>"
+      },
+      "text_cbcgyb": {
+        "text": "<h3>Misschien vindt u dit ook leuk</h3>"
+      }
+    },
+    "sections": {
+      "giclee_artist_collection_showcase_7djLQQ": {
+        "heading": "Geselecteerde werken",
+        "cta_label": "Bekijk de volledige collectie"
+      }
+    },
+    "ui": {
+      "splash_subtitle": "Welkom in de wereld van kunst",
+      "catalog_artists": "Kunstenaars",
+      "catalog_view_collection": "Collectie bekijken",
+      "showcase_eyebrow_default": "Collectie van de kunstenaar",
+      "showcase_heading_default": "Geselecteerde werken",
+      "showcase_lead_default": "Een gecureerde selectie fine art-reproducties — gepresenteerd als in een galerie, niet in een winkel.",
+      "showcase_cta_default": "Bekijk de volledige collectie",
+      "showcase_prev_artist": "Vorige kunstenaar",
+      "showcase_next_artist": "Volgende kunstenaar",
+      "showcase_prev_work": "Vorig werk",
+      "showcase_gallery": "Werkgalerij",
+      "showcase_no_works": "Geen werken beschikbaar",
+      "showcase_gallery_position": "Werkgalerij, positie {{ current }} van {{ total }}",
+      "showcase_go_to_work": "Ga naar werk {{ index }}",
+      "pdp_preview_show": "Afbeelding bekijken",
+      "pdp_preview_hide": "Voorbeeld verbergen",
+      "mockup_back_preview": "Terug naar voorbeeld",
+      "mockup_upload_first": "Upload eerst een foto",
+      "mockup_variant_unavailable": "Variant niet beschikbaar",
+      "mockup_upload_error": "Uploadfout",
+      "mockup_try_again": "Opnieuw proberen",
+      "mockup_no_product": "Geen productgegevens",
+      "mockup_invite_html": "<strong>Bevalt het?</strong>Configureer en voeg toe aan winkelwagen. Uw bestand met bijsnijding wordt automatisch verzonden na betaling.",
+      "mockup_quality_title": "Afdrukkwaliteit",
+      "mockup_quality_upload": "Upload een foto om de afdrukkwaliteitsbeoordeling te zien.",
+      "mockup_quality_loading": "Analyse laden…",
+      "mockup_quality_select_size": "Selecteer een formaat om de analyse te zien.",
+      "mockup_wood_oak": "eiken",
+      "mockup_wood_pine": "Grenen",
+      "mockup_color_light_brown": "Lichtbruin",
+      "mockup_color_brown": "Bruin",
+      "mockup_color_dark_brown": "Donkerbruin",
+      "mockup_unavailable": "Niet beschikbaar",
+      "print_upload_prompt": "Upload een afbeelding om de analyse te zien.",
+      "print_quality_highest": "Hoogste kwaliteit",
+      "print_quality_highest_note": "Maximale scherpte, Fine Art, premium afdruk. Best bekeken vanaf 20–30 cm",
+      "print_quality_very_good": "Zeer goede kwaliteit",
+      "print_quality_very_good_note": "Vrijwel geen verschil met 300 PPI bij normale kijkafstand van 30–50 cm",
+      "print_quality_good": "Goede kwaliteit",
+      "print_quality_good_note": "Nog steeds een goede afdruk, maar met minder detailreserve; aanbevolen kijkafstand 50–80 cm",
+      "print_quality_average": "Gemiddelde kwaliteit",
+      "print_quality_average_note": "Tentoonstellingseffect, iets zachter, acceptabel vanaf 80–120 cm",
+      "print_quality_low_note": "Te weinig PPI voor dichtbij bekijken; ziet er alleen goed uit vanaf 120 cm en verder",
+      "print_quality_critical_note": "Kritiek lage resolutie — zichtbare pixelatie en gebrek aan detail zelfs van veraf; niet geschikt voor dit formaat"
     }
   }
 }

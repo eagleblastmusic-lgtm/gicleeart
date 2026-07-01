@@ -4373,6 +4373,47 @@ product-recommendations:has([data-has-recommendations='false']) {
   column-gap: 2em;
 }
 
+/* Własna fotografia: ukryj treść SZCZEGÓŁY, zostaw pustą kolumnę po prawej */
+.product-description-below--wlasna-no-details table tbody tr:first-child td > div:nth-child(2) {
+  display: none;
+}
+
+.product-description-below--wlasna-no-details table tbody tr:last-child > td:last-child {
+  visibility: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Separator pod opisem (jak linia pod autorem/datami w body_html) */
+.product-description-trailing-separator {
+  width: 100%;
+  height: 0;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  margin: 0;
+  padding: 0;
+}
+
+.product-description-below + .product-description-trailing-separator {
+  margin-top: -0.5em;
+  margin-bottom: 0.5em;
+}
+
+.product-information__grid + .product-description-trailing-separator {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.giclee-trust + .product-description-trailing-separator {
+  margin-top: 0.25em;
+  margin-bottom: 0.5em;
+}
+
+.giclee-process + .product-description-trailing-separator {
+  margin-top: 0.25em;
+  margin-bottom: 0.5em;
+}
+
 @media screen and (max-width: 749px) {
   .product-description-below {
     column-count: 1;
@@ -4471,6 +4512,105 @@ product-recommendations:has([data-has-recommendations='false']) {
 .product-description-below > div > div {
   min-width: 0;
   flex-shrink: 1;
+}
+
+/* ============================================================
+ * Opis produktu — elegancka, "redakcyjna" typografia jak na blogu:
+ * Cormorant Garamond + inicjal (drop-cap) na pierwszym akapicie.
+ * Struktura body_html (z aplikacji): table > tbody >
+ *   tr:first-child  -> tytul / autor / daty / hr
+ *   tr:last-child   -> [opis 55%] [linia 1px] [SZCZEGOLY 45%]
+ * ============================================================ */
+
+/* Tytul obrazu nad opisem -> Bodoni Moda */
+.product-description-below table tbody tr:first-child td > div:first-child {
+  font-family: 'Bodoni Moda', Georgia, serif !important;
+  font-weight: 500 !important;
+  font-size: 1.7rem !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0.01em;
+  margin-bottom: 10px !important;
+}
+
+/* Proza opisu (lewa kolumna) -> Cormorant Garamond, wieksza i przewiewna */
+.product-description-below table tbody tr:last-child > td:first-child {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.22rem;
+  line-height: 1.8;
+  letter-spacing: 0.008em;
+  color: rgb(var(--color-foreground-rgb, 255, 255, 255) / 0.88);
+}
+
+/* Inicjal (drop-cap) na pierwszej literze opisu */
+.product-description-below table tbody tr:last-child > td:first-child::first-letter {
+  float: left;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 300;
+  font-size: 3.7em;
+  line-height: 0.66;
+  margin: 0.06em 0.12em 0 0;
+  color: rgb(var(--color-foreground-rgb, 255, 255, 255) / 1);
+}
+
+@media screen and (max-width: 749px) {
+  .product-description-below table tbody tr:last-child > td:first-child {
+    font-size: 1.12rem;
+    line-height: 1.75;
+  }
+  .product-description-below table tbody tr:first-child td > div:first-child {
+    font-size: 1.45rem !important;
+  }
+}
+
+/* --- Panel "SZCZEGOLY" (prawa kolumna opisu) — elegancka karta danych --- */
+.product-description-below table tbody tr:last-child > td:last-child {
+  font-size: 1.02rem;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  color: rgb(var(--color-foreground-rgb, 255, 255, 255) / 0.92);
+}
+
+/* Naglowek "SZCZEGOLY" -> Bodoni + zlota linia akcentu */
+.product-description-below table tbody tr:last-child > td:last-child > strong:first-child {
+  display: block;
+  position: relative;
+  font-family: 'Bodoni Moda', Georgia, serif;
+  font-weight: 500;
+  font-size: 0.86rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: rgb(var(--color-foreground-rgb, 255, 255, 255) / 0.78);
+  margin: 0 0 18px;
+  padding-bottom: 12px;
+}
+
+.product-description-below table tbody tr:last-child > td:last-child > strong:first-child::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 56px;
+  height: 1px;
+  background: linear-gradient(to right, rgba(201, 168, 76, 0.95), rgba(201, 168, 76, 0));
+}
+
+/* Uklad sterujemy blokami (etykieta nad wartoscia), nie <br> — wiec je chowamy */
+.product-description-below table tbody tr:last-child > td:last-child br {
+  display: none;
+}
+
+/* Etykiety pol (Tytul:, Autor: ...) -> mala kapitalikowa nadlinijka nad wartoscia */
+.product-description-below table tbody tr:last-child > td:last-child strong:not(:first-child) {
+  display: block;
+  margin-top: 1.05em;
+  margin-bottom: 0.1em;
+  font-weight: 600;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1.3;
+  color: rgb(var(--color-foreground-rgb, 255, 255, 255) / 0.46);
 }
 
 /* kurwa mac */

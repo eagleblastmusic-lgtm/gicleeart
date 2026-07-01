@@ -23,7 +23,7 @@
       "@theme/section-hydration": "{{ 'section-hydration.js' | asset_url }}",
       "@theme/money-formatting": "{{ 'money-formatting.js' | asset_url }}",
       "@theme/utilities": "{{ 'utilities.js' | asset_url }}",
-      "@theme/variant-picker": "{{ 'variant-picker.js' | asset_url }}",
+      "@theme/variant-picker": "{{ 'variant-picker.js' | asset_url }}&giclee_v=no-passepartout-option-20260623-2306",
       "@theme/media-gallery": "{{ 'media-gallery.js' | asset_url }}",
       "@theme/quick-add": "{{ 'quick-add.js' | asset_url }}",
       "@theme/paginated-list-aspect-ratio": "{{ 'paginated-list-aspect-ratio.js' | asset_url }}",
@@ -138,8 +138,13 @@
   fetchpriority="low"
 ></script>
 <script
-  src="{{ 'variant-picker.js' | asset_url }}"
+  src="{{ 'variant-picker.js' | asset_url }}&giclee_v=no-passepartout-option-20260623-2306"
   type="module"
+  fetchpriority="low"
+></script>
+<script
+  src="{{ 'giclee-pdp-emergency-fix.js' | asset_url }}&giclee_v=emergency-pdp-20260623-2308"
+  defer
   fetchpriority="low"
 ></script>
 <script

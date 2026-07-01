@@ -1,0 +1,52 @@
+{
+  "templates": [
+    {
+      "key": "DAB M",
+      "length_cm": 60,
+      "width_cm": 45,
+      "height_cm": 10,
+      "weight_kg": 3.0,
+      "updated_at": "2026-04-22T18:03:40"
+    },
+    {
+      "key": "DAB L",
+      "length_cm": 85,
+      "width_cm": 65,
+      "height_cm": 10,
+      "weight_kg": 5.0,
+      "updated_at": "2026-04-22T18:03:40"
+    },
+    {
+      "key": "DAB XL",
+      "length_cm": 105,
+      "width_cm": 85,
+      "height_cm": 12,
+      "weight_kg": 7.0,
+      "updated_at": "2026-04-22T18:03:40"
+    },
+    {
+      "key": "SOSNA M",
+      "length_cm": 60,
+      "width_cm": 45,
+      "height_cm": 10,
+      "weight_kg": 2.5,
+      "updated_at": "2026-04-22T18:03:40"
+    },
+    {
+      "key": "SOSNA L",
+      "length_cm": 85,
+      "width_cm": 65,
+      "height_cm": 10,
+      "weight_kg": 4.0,
+      "updated_at": "2026-04-22T18:03:40"
+    },
+    {
+      "key": "SOSNA XL",
+      "length_cm": 105,
+      "width_cm": 85,
+      "height_cm": 12,
+      "weight_kg": 6.0,
+      "updated_at": "2026-04-22T18:03:40"
+    }
+  ]
+}

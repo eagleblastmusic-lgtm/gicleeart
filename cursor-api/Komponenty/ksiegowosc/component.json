@@ -1,0 +1,9 @@
+{
+  "name": "Księgowość",
+  "description": "Działalność nierejestrowana i JDG — narzędzia księgowe.",
+  "icon": "🧾",
+  "color": "#ef6c00",
+  "order": 58,
+  "mode": "inline",
+  "hidden": true
+}

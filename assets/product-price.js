@@ -32,6 +32,73 @@ class ProductPrice extends Component {
   }
 
   /**
+   * @param {number} cents
+   * @returns {string}
+   */
+  #formatVariantMoney(cents) {
+    if (cents == null || !Number.isFinite(cents)) return '';
+    if (typeof Shopify !== 'undefined' && typeof Shopify.formatMoney === 'function') {
+      return Shopify.formatMoney(cents);
+    }
+    return (cents / 100).toLocaleString('pl-PL', {
+      style: 'currency',
+      currency: 'PLN',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    });
+  }
+
+  /**
+   * @param {import('@theme/events').VariantUpdateEvent['detail']['resource']} variant
+   */
+  #updatePriceFromVariant(variant) {
+    const { priceContainer } = this.refs;
+    if (!priceContainer || variant?.price == null) return;
+
+    const formatted = this.#formatVariantMoney(variant.price);
+    const hasCompare = variant.compare_at_price && variant.compare_at_price > variant.price;
+    const regularWrap = priceContainer.querySelector('.price__regular');
+    const saleWrap = priceContainer.querySelector('.price__sale');
+
+    if (hasCompare) {
+      regularWrap?.classList.add('price__hidden');
+      saleWrap?.classList.remove('price__hidden');
+      const salePrice = priceContainer.querySelector('.price-item--sale.price');
+      const comparePrice = priceContainer.querySelector('.compare-at-price');
+      if (salePrice) salePrice.textContent = formatted;
+      if (comparePrice) comparePrice.textContent = this.#formatVariantMoney(variant.compare_at_price);
+    } else {
+      regularWrap?.classList.remove('price__hidden');
+      saleWrap?.classList.add('price__hidden');
+      const regular = priceContainer.querySelector('.price__regular .price');
+      if (regular) regular.textContent = formatted;
+    }
+  }
+
+  /**
+   * @param {Document} html
+   * @returns {Element | null}
+   */
+  #findNewProductPrice(html) {
+    const blockId = this.dataset.blockId;
+    if (blockId) {
+      const byBlock = html.querySelector(`product-price[data-block-id="${blockId}"]`);
+      if (byBlock) return byBlock;
+    }
+
+    const productId = this.dataset.productId;
+    if (productId) {
+      const matches = html.querySelectorAll(`product-price[data-product-id="${productId}"]`);
+      if (matches.length === 1) return matches[0];
+      for (const candidate of matches) {
+        if (candidate.getAttribute('data-block-id') === blockId) return candidate;
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * Updates the price and volume pricing note.
    * @param {VariantUpdateEvent} event - The variant update event.
    */
@@ -43,31 +110,27 @@ class ProductPrice extends Component {
     }
 
     const { priceContainer, volumePricingNote } = this.refs;
-    // Find the new product-price element in the updated HTML
-    const newProductPrice = event.detail.data.html.querySelector(
-      `product-price[data-block-id="${this.dataset.blockId}"]`
-    );
-    if (!newProductPrice) return;
+    const newProductPrice = this.#findNewProductPrice(event.detail.data.html);
 
-    // Update price container
-    const newPrice = newProductPrice.querySelector('[ref="priceContainer"]');
-    if (newPrice && priceContainer) {
-      priceContainer.replaceWith(newPrice);
+    if (newProductPrice) {
+      const newPrice = newProductPrice.querySelector('[ref="priceContainer"]');
+      if (newPrice && priceContainer) {
+        priceContainer.replaceWith(newPrice);
+      }
+
+      const newNote = newProductPrice.querySelector('[ref="volumePricingNote"]');
+
+      if (!newNote) {
+        volumePricingNote?.remove();
+      } else if (!volumePricingNote) {
+        newPrice?.insertAdjacentElement('afterend', /** @type {Element} */ (newNote.cloneNode(true)));
+      } else {
+        volumePricingNote.replaceWith(newNote);
+      }
+    } else if (event.detail.resource) {
+      this.#updatePriceFromVariant(event.detail.resource);
     }
 
-    // Update volume pricing note
-    const newNote = newProductPrice.querySelector('[ref="volumePricingNote"]');
-
-    if (!newNote) {
-      volumePricingNote?.remove();
-    } else if (!volumePricingNote) {
-      // Use newPrice since priceContainer was just replaced and now points to the detached element
-      newPrice?.insertAdjacentElement('afterend', /** @type {Element} */ (newNote.cloneNode(true)));
-    } else {
-      volumePricingNote.replaceWith(newNote);
-    }
-
-    // Update installments (SPI banner) variant ID to trigger payment terms re-render
     const input_selector = `#product-form-installment-${this.dataset.blockId} input[name="id"]`;
     const installmentsInput = /** @type {HTMLInputElement|null} */ (this.querySelector(input_selector));
     if (installmentsInput) {

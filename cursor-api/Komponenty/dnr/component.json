@@ -1,0 +1,26 @@
+{
+
+  "name": "Działalność nierejestrowana",
+
+  "description": "Ewidencja sprzedaży i kosztów (limit DNR).",
+
+  "icon": "📋",
+
+  "color": "#5c6bc0",
+
+  "order": 55,
+
+  "mode": "inline",
+
+  "inline_width": 1040,
+
+  "inline_height": 900,
+
+  "inline_min_width": 980,
+
+  "inline_min_height": 860,
+
+  "hidden": true
+
+}
+

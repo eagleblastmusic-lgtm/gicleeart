@@ -1,0 +1,179 @@
+/* Dekoracyjna warstwa tekstowa — metadane dzieła + cytat kolekcji.
+   Nie modyfikuje layoutu karuzeli (position: absolute, pointer-events: none). */
+
+.giclee-showcase-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.giclee-showcase-overlay__meta {
+  position: absolute;
+  left: clamp(48px, 14vw, 15%);
+  bottom: clamp(20px, 8vh, 9%);
+  max-width: min(16rem, 36vw);
+  text-align: center;
+  opacity: 0.82;
+}
+
+.giclee-showcase-overlay__meta-line {
+  margin: 0;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(0.62rem, 0.95vw, 0.74rem);
+  font-weight: 500;
+  line-height: 1.55;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(232, 224, 208, 0.78);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
+}
+
+.giclee-showcase-overlay__meta-line + .giclee-showcase-overlay__meta-line {
+  margin-top: 0.14rem;
+}
+
+.giclee-showcase-overlay__meta-line:empty,
+.giclee-showcase-overlay__meta-line[hidden] {
+  display: none;
+}
+
+/* Animacja zmiany autora — fade off przy nowym tle (Karuzela2), fade on po podmianie galerii (JS) */
+
+.giclee-showcase-overlay__meta,
+.carousel-quote {
+  filter: blur(0);
+  transition:
+    opacity 1.05s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 1.05s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, filter;
+  backface-visibility: hidden;
+}
+
+.is-gacs-overlay-hide-armed .giclee-showcase-overlay__meta,
+.is-gacs-overlay-hide-armed .carousel-quote {
+  opacity: 0 !important;
+  filter: blur(5px);
+  transition:
+    opacity 0.68s cubic-bezier(0.45, 0, 0.55, 1),
+    filter 0.68s cubic-bezier(0.45, 0, 0.55, 1) !important;
+  pointer-events: none;
+}
+
+.is-gacs-overlay-reveal-armed .giclee-showcase-overlay__meta,
+.is-gacs-overlay-reveal-armed .carousel-quote {
+  opacity: 0 !important;
+  filter: blur(4px);
+  transition: none !important;
+  pointer-events: none;
+}
+
+/* ── Prawy blok: cytat (premium editorial) ── */
+
+.carousel-quote {
+  position: absolute;
+  right: 4.5%;
+  bottom: 8%;
+  width: 310px;
+  max-width: 310px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  pointer-events: none;
+  z-index: 3;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+.carousel-quote__mark {
+  display: block;
+  width: 21px;
+  height: 14px;
+  color: rgba(184, 145, 70, 0.9);
+  margin-bottom: 14px;
+  opacity: 0.95;
+}
+
+.carousel-quote__mark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.carousel-quote__text {
+  margin: 0;
+  font-family: var(--font-display, "Cormorant Garamond", "Times New Roman", serif);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.75;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(218, 202, 170, 0.78);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.32);
+  white-space: pre-line;
+  max-width: 310px;
+}
+
+.carousel-quote__author {
+  display: block;
+  margin-top: 18px;
+  font-family: var(--font-display, "Cormorant Garamond", "Times New Roman", serif);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(188, 148, 72, 0.96);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.28);
+}
+
+.carousel-quote__author:empty,
+.carousel-quote__author[hidden] {
+  display: none;
+}
+
+@media screen and (max-width: 989px) {
+  .giclee-showcase-overlay__meta {
+    left: clamp(36px, 12vw, 14%);
+    max-width: min(15rem, 34vw);
+  }
+
+  .giclee-showcase-overlay__meta,
+  .carousel-quote {
+    bottom: clamp(16px, 6vh, 7%);
+  }
+
+  .carousel-quote {
+    right: 2.5%;
+    bottom: 7%;
+    width: min(290px, 38vw);
+    max-width: 290px;
+  }
+
+  .carousel-quote__text {
+    max-width: 290px;
+  }
+}
+
+@media screen and (max-width: 749px) {
+  .giclee-showcase-overlay {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giclee-showcase-overlay__meta,
+  .carousel-quote {
+    transition: none !important;
+  }
+
+  .is-gacs-overlay-hide-armed .giclee-showcase-overlay__meta,
+  .is-gacs-overlay-hide-armed .carousel-quote,
+  .is-gacs-overlay-reveal-armed .giclee-showcase-overlay__meta,
+  .is-gacs-overlay-reveal-armed .carousel-quote {
+    opacity: 1 !important;
+    filter: blur(0) !important;
+  }
+}

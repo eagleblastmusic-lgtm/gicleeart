@@ -29,6 +29,9 @@
     {% if product.id == product_resource.id %}
       data-template-product-match="true"
     {% endif %}
+    {% unless template.suffix == 'szablon-wlasna-fotografia' %}
+      data-giclee-variant-sync="true"
+    {% endunless %}
     {{ block.shopify_attributes }}
     {% if request.visual_preview_mode %}
       data-shopify-visual-preview
@@ -222,6 +225,10 @@
       </script>
     </form>
   </variant-picker>
+
+  {%- unless product_resource.has_only_default_variant -%}
+    {% render 'giclee-passepartout-picker', section: section %}
+  {%- endunless -%}
 {% endunless %}
 
 {% stylesheet %}

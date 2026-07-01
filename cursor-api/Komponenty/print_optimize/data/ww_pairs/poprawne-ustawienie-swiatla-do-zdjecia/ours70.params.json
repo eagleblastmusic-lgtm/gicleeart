@@ -1,0 +1,11 @@
+{
+  "scene": "portrait_outdoor",
+  "exposure": 0.05,
+  "contrast": 1.02,
+  "saturation": 0.98,
+  "shadow_lift": 0.1,
+  "highlight_recovery": 0.05,
+  "temperature_shift": -0.03,
+  "tint_shift": 0.0,
+  "confidence": 0.9
+}

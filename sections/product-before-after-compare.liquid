@@ -1,0 +1,174 @@
+{%- liquid
+  assign ba_product = product
+  if ba_product == blank
+    assign ba_product = closest.product
+  endif
+
+  assign image_before = blank
+  assign image_before_mf = ba_product.metafields.custom.before_retouch_url
+  assign image_before_url = image_before_mf.value | default: image_before_mf | default: ''
+  if image_before_url == blank and section.settings.image_before != blank
+    assign image_before = section.settings.image_before
+  endif
+
+  assign image_after = blank
+  if ba_product != blank
+    for media in ba_product.media
+      if media.media_type != 'image'
+        continue
+      endif
+      assign alt_l = media.alt | downcase
+      assign src_probe = media | image_url: width: 120
+      assign fn = src_probe | split: '/' | last | split: '?' | first | downcase
+      if alt_l contains '(preview)' or fn contains '(preview)'
+        continue
+      endif
+      if alt_l contains 'mockup' or fn contains 'mockup'
+        continue
+      endif
+      if alt_l contains 'full' or fn contains '-full' or fn contains '_full' or fn contains '.full'
+        assign image_after = media
+        break
+      endif
+    endfor
+
+    if image_after == blank
+      for media in ba_product.media
+        if media.media_type != 'image'
+          continue
+        endif
+        assign alt_l = media.alt | downcase
+        assign src_probe = media | image_url: width: 120
+        assign fn = src_probe | split: '/' | last | split: '?' | first | downcase
+        if alt_l contains '(preview)' or fn contains '(preview)'
+          continue
+        endif
+        if alt_l contains 'mockup' or fn contains 'mockup'
+          continue
+        endif
+        assign image_after = media
+        break
+      endfor
+    endif
+  endif
+
+  if image_after == blank and section.settings.image_after != blank
+    assign image_after = section.settings.image_after
+  endif
+
+  assign show_section = false
+  assign has_before = false
+  if image_before != blank or image_before_url != blank
+    assign has_before = true
+  endif
+  if has_before and image_after != blank
+    assign show_section = true
+  endif
+-%}
+
+{%- unless show_section -%}
+  {%- comment -%} Brak grafiki «przed» (metafield) i «po» (Full) — sekcja niewidoczna {%- endcomment -%}
+{%- else -%}
+  {%- unless template.suffix == 'szablon-produktu-v2' -%}
+    <link
+      rel="stylesheet"
+      href="{{ 'giclee-product-before-after-compare.css' | asset_url }}?v=20260627"
+    >
+    <script src="{{ 'giclee-product-before-after-compare.js' | asset_url }}?v=20260627" defer></script>
+  {%- endunless -%}
+  {%- if template.suffix == 'szablon-produktu-v2' -%}
+    {%- comment -%}
+      PDP v2: markup trafia do ukrytego źródła (sekcja pierwsza w order JSON),
+      a product-information-content przenosi go nad proces produkcji.
+    {%- endcomment -%}
+    <div id="giclee-ba-source-{{ section.id }}" class="giclee-before-after-source" hidden>
+      {% render 'giclee-product-before-after-compare',
+        eyebrow: section.settings.eyebrow,
+        heading: section.settings.heading,
+        description: section.settings.description,
+        label_before: section.settings.label_before,
+        label_after: section.settings.label_after,
+        image_before: image_before,
+        image_before_url: image_before_url,
+        image_after: image_after,
+        section_id: section.id
+      %}
+    </div>
+  {%- else -%}
+    <div class="giclee-before-after-section">
+      {% render 'giclee-product-before-after-compare',
+        eyebrow: section.settings.eyebrow,
+        heading: section.settings.heading,
+        description: section.settings.description,
+        label_before: section.settings.label_before,
+        label_after: section.settings.label_after,
+        image_before: image_before,
+        image_before_url: image_before_url,
+        image_after: image_after,
+        section_id: section.id
+      %}
+    </div>
+  {%- endif -%}
+{%- endunless -%}
+
+{% schema %}
+{
+  "name": "Porównanie przed/po",
+  "tag": "div",
+  "class": "giclee-before-after-shopify-section",
+  "enabled_on": {
+    "templates": ["product"]
+  },
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Grafikę «przed» ustawiasz w GicleeApp → Przed/Po (metafield produktu). «Po» = obraz Full z galerii. Poniższe pola to teksty sekcji; obrazy z edytora są opcjonalnym fallbackiem."
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Nagłówek (uppercase)",
+      "default": "CYFROWA KOREKTA"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Tytuł",
+      "default": "Przed i po obróbce"
+    },
+    {
+      "type": "textarea",
+      "id": "description",
+      "label": "Opis",
+      "default": "Zobacz różnicę między surowym skanem archiwalnym a obrazem po cyfrowej korekcie kolorystycznej i retuszu."
+    },
+    {
+      "type": "image_picker",
+      "id": "image_before",
+      "label": "Fallback — obraz przed (opcjonalnie)"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_after",
+      "label": "Fallback — obraz po (opcjonalnie)"
+    },
+    {
+      "type": "text",
+      "id": "label_before",
+      "label": "Etykieta — przed",
+      "default": "Przed obróbką"
+    },
+    {
+      "type": "text",
+      "id": "label_after",
+      "label": "Etykieta — po",
+      "default": "Po obróbce"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Porównanie przed/po"
+    }
+  ]
+}
+{% endschema %}

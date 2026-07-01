@@ -28,6 +28,8 @@ import tkinter as tk
 import webbrowser
 from tkinter import ttk
 
+from Komponenty._shared.window_geometry import position_toplevel_screen_center
+
 # Globalna lista otwartych okien zeby nie zostaly garbage-collected
 _open_windows: list[tk.Toplevel] = []
 
@@ -36,7 +38,7 @@ def show_help(parent: tk.Misc, *, title: str, text: str) -> tk.Toplevel:
     """Pokazuje dialog Instrukcja w osobnym oknie. Zwraca utworzony Toplevel."""
     win = tk.Toplevel(parent)
     win.title(title)
-    win.geometry("780x640")
+    position_toplevel_screen_center(win, 780, 640)
     win.minsize(560, 420)
 
     try:
@@ -93,22 +95,6 @@ def show_help(parent: tk.Misc, *, title: str, text: str) -> tk.Toplevel:
         win.destroy()
 
     win.protocol("WM_DELETE_WINDOW", _on_close)
-
-    # Wycentruj wzgledem rodzica
-    try:
-        win.update_idletasks()
-        parent_root = parent.winfo_toplevel()
-        px = parent_root.winfo_rootx()
-        py = parent_root.winfo_rooty()
-        pw = parent_root.winfo_width()
-        ph = parent_root.winfo_height()
-        ww = win.winfo_width()
-        wh = win.winfo_height()
-        x = px + max(0, (pw - ww) // 2)
-        y = py + max(0, (ph - wh) // 2)
-        win.geometry(f"+{x}+{y}")
-    except tk.TclError:
-        pass
 
     return win
 

@@ -3,7 +3,7 @@
 Flow:
 1. Uzytkownik wybiera:
    - **Platformy (multi-select checkboxami)** - IG Feed, IG Stories, IG Reels, FB, TikTok, Pinterest.
-   - Jezyk (PL/EN).
+   - Jezyk (PL / EN / oba = PL+EN w jednym JSON).
    - Wpisuje temat, opcjonalnie link i dodatkowy kontekst.
    - Tryb: pojedynczy post albo seria N postow.
      UWAGA: Tryb SERIES dziala tylko przy 1 platformie (inaczej eksplozja kombinacji).
@@ -25,8 +25,9 @@ from tkinter import filedialog, messagebox, ttk
 from typing import Any
 
 from Komponenty._shared.toast import show_toast
+from Komponenty._shared.window_geometry import position_toplevel_screen_center
 
-from . import platforms, prompts, storage
+from . import platforms, presets, prompts, storage
 
 
 def open_content_generator(
@@ -52,7 +53,7 @@ def open_content_generator(
 
     dlg = tk.Toplevel(parent)
     dlg.title("Social Media - Generator tresci")
-    dlg.geometry("1100x880")
+    position_toplevel_screen_center(dlg, 1100, 880)
     dlg.minsize(900, 720)
     try:
         dlg.transient(parent.winfo_toplevel())
@@ -63,6 +64,121 @@ def open_content_generator(
 
     root = ttk.Frame(dlg, padding=(10, 8))
     root.pack(fill="both", expand=True)
+
+    # ---------- Sekcja 0: presety ----------
+    preset_frame = ttk.LabelFrame(root, text="0. Ulubione presety (temat + platformy + ton)", padding=8)
+    preset_frame.pack(fill="x", pady=(0, 6))
+
+    preset_row = ttk.Frame(preset_frame)
+    preset_row.pack(fill="x")
+
+    preset_var = tk.StringVar(value="")
+    preset_cb = ttk.Combobox(preset_row, textvariable=preset_var, state="readonly", width=36)
+    preset_cb.pack(side="left", padx=(0, 6))
+
+    def _preset_label(p: presets.Preset) -> str:
+        plats = ", ".join(p.platforms) if p.platforms else "?"
+        mode_tag = f" · seria x{p.series_count}" if p.mode == "series" else ""
+        return f"{p.name}  [{plats}]{mode_tag}"
+
+    def _refresh_preset_list(select_id: str | None = None) -> None:
+        items = presets.load_presets()
+        preset_cb["values"] = [""] + [_preset_label(p) for p in items]
+        # mapa label -> id
+        preset_cb._items_map = {_preset_label(p): p.id for p in items}  # type: ignore[attr-defined]
+        if select_id:
+            for label, pid in preset_cb._items_map.items():  # type: ignore[attr-defined]
+                if pid == select_id:
+                    preset_var.set(label)
+                    return
+        preset_var.set("")
+
+    def _apply_preset(_e: object = None) -> None:
+        label = preset_var.get().strip()
+        if not label:
+            return
+        pid = getattr(preset_cb, "_items_map", {}).get(label)
+        if not pid:
+            return
+        p = presets.get_preset(pid)
+        if not p:
+            return
+        topic_var.set(p.topic or topic_var.get())
+        link_var.set(p.link or "")
+        lang_var.set(p.language or "pl")
+        mode_var.set(p.mode or "single")
+        series_count_var.set(int(p.series_count or 5))
+        for code, var in plat_vars.items():
+            var.set(code in (p.platforms or []))
+        hint_text.delete("1.0", "end")
+        if p.tone:
+            hint_text.insert("1.0", p.tone)
+        show_toast(dlg, f"Wczytano preset: {p.name}", duration_ms=1200)
+
+    preset_cb.bind("<<ComboboxSelected>>", _apply_preset)
+
+    def _save_current_as_preset() -> None:
+        from tkinter import simpledialog as _sd
+        name = _sd.askstring(
+            "Nazwa presetu",
+            "Podaj nazwe presetu (pod jaka bedzie widoczny):",
+            parent=dlg,
+        )
+        if not name:
+            return
+        selected = [c for c, v in plat_vars.items() if v.get()]
+        p = presets.Preset.new(
+            name=name,
+            platforms=selected,
+            language=lang_var.get().strip() or "pl",
+            tone=hint_text.get("1.0", "end-1c"),
+            topic=topic_var.get().strip(),
+            link=link_var.get().strip(),
+            mode=mode_var.get(),
+            series_count=int(series_count_var.get() or 5),
+        )
+        presets.add_preset(p)
+        _refresh_preset_list(select_id=p.id)
+        show_toast(dlg, f"Zapisano preset: {p.name}", duration_ms=1400)
+
+    def _update_current_preset() -> None:
+        label = preset_var.get().strip()
+        pid = getattr(preset_cb, "_items_map", {}).get(label)
+        if not pid:
+            messagebox.showinfo(
+                "Brak presetu",
+                "Najpierw wybierz preset z listy, zeby go zaktualizowac.",
+                parent=dlg,
+            )
+            return
+        selected = [c for c, v in plat_vars.items() if v.get()]
+        presets.update_preset(
+            pid,
+            platforms=selected,
+            language=lang_var.get().strip() or "pl",
+            tone=hint_text.get("1.0", "end-1c"),
+            topic=topic_var.get().strip(),
+            link=link_var.get().strip(),
+            mode=mode_var.get(),
+            series_count=int(series_count_var.get() or 5),
+        )
+        _refresh_preset_list(select_id=pid)
+        show_toast(dlg, "Zaktualizowano preset", duration_ms=1400)
+
+    def _delete_current_preset() -> None:
+        label = preset_var.get().strip()
+        pid = getattr(preset_cb, "_items_map", {}).get(label)
+        if not pid:
+            return
+        if not messagebox.askyesno("Usunac preset?", f"Usunac preset '{label}'?", parent=dlg):
+            return
+        presets.delete_preset(pid)
+        _refresh_preset_list()
+
+    ttk.Button(preset_row, text="▼ Wczytaj", command=_apply_preset).pack(side="left")
+    ttk.Button(preset_row, text="💾 Zapisz jako nowy", command=_save_current_as_preset).pack(side="left", padx=(6, 0))
+    ttk.Button(preset_row, text="↻ Aktualizuj", command=_update_current_preset).pack(side="left", padx=(6, 0))
+    ttk.Button(preset_row, text="🗑 Usun", command=_delete_current_preset).pack(side="left", padx=(6, 0))
 
     # ---------- Sekcja 1: parametry ----------
     params = ttk.LabelFrame(root, text="1. Parametry", padding=8)
@@ -94,7 +210,7 @@ def open_content_generator(
     ttk.Combobox(
         grid, textvariable=lang_var,
         values=[code for code, _ in platforms.LANGUAGES],
-        state="readonly", width=8,
+        state="readonly", width=10,
     ).grid(row=2, column=1, sticky="w", pady=3)
 
     ttk.Label(grid, text="Link docelowy:").grid(row=2, column=2, sticky="w", padx=(18, 6), pady=3)
@@ -165,6 +281,20 @@ def open_content_generator(
         extra_hint = hint_text.get("1.0", "end-1c").strip()
         link = link_var.get().strip()
         mode = mode_var.get()
+        if language == "oba" and mode == "series":
+            messagebox.showwarning(
+                "Jezyk PL+EN",
+                "Tryb serii nie obsluguje opcji 'oba (PL + EN)'. Wybierz jezyk PL lub EN.",
+                parent=dlg,
+            )
+            return
+        if language == "oba" and len(selected) > 1:
+            messagebox.showwarning(
+                "Jezyk PL+EN",
+                "Opcja 'oba (PL + EN)' dziala tylko przy zaznaczeniu jednej platformy.",
+                parent=dlg,
+            )
+            return
         if mode == "series" and len(selected) > 1:
             # Force single mode
             mode = "single"
@@ -276,6 +406,12 @@ def open_content_generator(
     bottom.pack(fill="x", pady=(6, 0))
     ttk.Button(bottom, text="Zamknij", command=dlg.destroy).pack(side="right")
     dlg.bind("<Escape>", lambda _e: dlg.destroy())
+
+    # Presety: wypelnij liste po utworzeniu wszystkich zmiennych
+    try:
+        _refresh_preset_list()
+    except Exception:  # noqa: BLE001
+        pass
     return dlg
 
 
@@ -319,7 +455,7 @@ def _preview(
             variant = "multi"
         else:
             parsed = prompts.parse_post_response(raw)
-            variant = "single"
+            variant = "bilingual" if parsed.get("versions") else "single"
     except ValueError as e:
         messagebox.showerror("Blad parsowania", str(e), parent=dlg)
         return
@@ -341,7 +477,7 @@ def _open_preview_dialog(
 ) -> None:
     pv = tk.Toplevel(parent)
     pv.title("Podglad postow")
-    pv.geometry("1000x780")
+    position_toplevel_screen_center(pv, 1000, 780)
     pv.minsize(820, 640)
     try:
         pv.transient(parent)
@@ -350,12 +486,13 @@ def _open_preview_dialog(
 
     language = parsed.get("language") or "pl"
     topic = parsed.get("topic") or ""
+    lang_display = "PL + EN" if parsed.get("versions") else platforms.lang_label(language)
 
     header = ttk.Frame(pv, padding=(12, 10))
     header.pack(fill="x")
     ttk.Label(
         header,
-        text=f"🎯 {variant.upper()} · jezyk: {platforms.lang_label(language)}",
+        text=f"🎯 {variant.upper()} · jezyk: {lang_display}",
         font=("Segoe UI", 13, "bold"),
     ).pack(side="left")
     if topic:
@@ -364,16 +501,19 @@ def _open_preview_dialog(
     nb = ttk.Notebook(pv)
     nb.pack(fill="both", expand=True, padx=12, pady=(0, 8))
 
-    # Struktura: lista (platform_code, post_dict)
+    # Struktura: lista (platform_code, post_dict) + rownolegle jezyk zapisu ("" = z naglowka JSON)
     post_tabs: list[tuple[str, dict[str, Any]]] = []
+    tab_save_langs: list[str] = []
     if variant == "multi":
         for code, entry in (parsed.get("platforms") or {}).items():
             post_tabs.append((code, entry.get("post") or {}))
+            tab_save_langs.append("")
     elif variant == "series":
         # Wszystkie te same platformy
         platform_code = parsed.get("platform") or ""
         for p in parsed.get("posts") or []:
             post_tabs.append((platform_code, p))
+            tab_save_langs.append("")
         # Header meta
         series_meta = parsed.get("series_meta") or {}
         if series_meta:
@@ -382,17 +522,26 @@ def _open_preview_dialog(
                 text=f"Arc: {series_meta.get('arc', '')}  |  Cadence: {series_meta.get('cadence', '')}",
                 foreground="#666", font=("Segoe UI", 9, "italic"),
             ).pack(anchor="w", padx=12)
+    elif variant == "bilingual":
+        platform_code = parsed.get("platform") or ""
+        vers = parsed.get("versions") or {}
+        post_tabs.append((platform_code, vers.get("pl") or {}))
+        post_tabs.append((platform_code, vers.get("en") or {}))
+        tab_save_langs.extend(["pl", "en"])
     else:
         platform_code = parsed.get("platform") or ""
         post_tabs.append((platform_code, parsed.get("post") or {}))
+        tab_save_langs.append("")
 
     widgets_list: list[tuple[str, dict[str, Any]]] = []
-    for i, (code, post) in enumerate(post_tabs, 1):
+    for i, ((code, post), lang_ov) in enumerate(zip(post_tabs, tab_save_langs), 1):
         p = platforms.get(code)
         frame = ttk.Frame(nb, padding=10)
         label = f"{p.icon + ' ' if p else ''}{p.label if p else code}"
         if variant == "series":
             label = f"{label} · post {i}"
+        elif variant == "bilingual":
+            label = f"{label} · {'PL' if lang_ov == 'pl' else 'EN'}"
         nb.add(frame, text=label)
         w = _build_post_preview_tab(frame, post, p)
         widgets_list.append((code, w))
@@ -413,9 +562,13 @@ def _open_preview_dialog(
             except ValueError as e:
                 messagebox.showerror("Post #" + str(i + 1), str(e), parent=pv)
                 return
+            lang_ov = tab_save_langs[i] if i < len(tab_save_langs) else ""
+            eff_lang = lang_ov if lang_ov else (parsed.get("language") or "pl")
+            if eff_lang == "oba":
+                eff_lang = "pl"
             post = storage.Post.new(
                 platform=code,
-                language=language,
+                language=eff_lang,
                 topic=topic,
                 title=data["title"],
                 caption=data["caption"],

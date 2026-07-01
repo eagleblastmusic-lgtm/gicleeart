@@ -21,7 +21,8 @@ from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 from typing import Any
 
-from .toast import show_toast
+from Komponenty._shared.toast import show_toast
+from Komponenty._shared.window_geometry import position_toplevel_screen_center
 
 
 @dataclass
@@ -259,7 +260,7 @@ class InlineTileView:
         dlg = tk.Toplevel(self.frame)
         dlg.title(f"Ustawienia - {self.title}")
         dlg.transient(self.frame.winfo_toplevel())
-        dlg.geometry("760x420")
+        position_toplevel_screen_center(dlg, 760, 420)
         dlg.minsize(600, 320)
 
         ttk.Label(

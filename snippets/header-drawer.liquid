@@ -102,6 +102,7 @@
             {% assign first_accordion_open = false %}
             {% assign animation_index = 0 %}
             {%- for link in linklist.links -%}
+              {% capture giclee_menu_url %}{% render 'giclee-resolve-menu-url', link: link %}{% endcapture %}
               {% assign animation_index = animation_index | plus: 1 %}
               <li
                 style="--menu-drawer-animation-index: {{ animation_index }};"
@@ -126,7 +127,7 @@
                         id="HeaderDrawer-{{ link.handle }}"
                         class="menu-drawer__menu-item menu-drawer__menu-item--mainlist menu-drawer__animated-element focus-inset"
                       >
-                        <span class="menu-drawer__menu-item-text wrap-text">{{ link.title | escape }}</span>
+                        <span class="menu-drawer__menu-item-text wrap-text">{% render 'giclee-i18n-menu-title', link: link %}</span>
                         <span class="svg-wrapper icon-plus">
                           {{- 'icon-plus.svg' | inline_asset_content -}}
                         </span>
@@ -167,7 +168,7 @@
                                   sizes: 'auto, 400px'
                                 %}
                               {% endif %}
-                              <span class="menu-drawer__menu-item-text wrap-text">{{ childlink.title | escape }}</span>
+                              <span class="menu-drawer__menu-item-text wrap-text">{% render 'giclee-i18n-menu-title', link: childlink %}</span>
                             </a>
                           </li>
                         {%- endfor -%}
@@ -184,13 +185,13 @@
                   {%- endcomment -%}
                   <a
                     id="HeaderDrawer-{{ link.handle }}"
-                    href="{{ link.url }}"
+                    href="{{ giclee_menu_url | strip }}"
                     class="menu-drawer__menu-item menu-drawer__menu-item--mainlist menu-drawer__animated-element focus-inset"
                     {% if link.current %}
                       aria-current="page"
                     {% endif %}
                   >
-                    <span class="menu-drawer__menu-item-text wrap-text">{{ link.title | escape }}</span>
+                    <span class="menu-drawer__menu-item-text wrap-text">{% render 'giclee-i18n-menu-title', link: link %}</span>
                   </a>
                   {% liquid
                     assign render_link_image = false
@@ -227,7 +228,7 @@
                               sizes: 'auto, 400px'
                             %}
                           {% endif %}
-                          <span class="menu-drawer__menu-item-text wrap-text">{{ childlink.title | escape }}</span>
+                          <span class="menu-drawer__menu-item-text wrap-text">{% render 'giclee-i18n-menu-title', link: childlink %}</span>
                         </a>
                       </li>
                     {%- endfor -%}
@@ -238,13 +239,13 @@
                   {%- endcomment -%}
                   <a
                     id="HeaderDrawer-{{ link.handle }}"
-                    href="{{ link.url }}"
+                    href="{{ giclee_menu_url | strip }}"
                     class="menu-drawer__menu-item menu-drawer__menu-item--mainlist menu-drawer__animated-element focus-inset"
                     {% if link.current %}
                       aria-current="page"
                     {% endif %}
                   >
-                    <span class="menu-drawer__menu-item-text wrap-text">{{ link.title | escape }}</span>
+                    <span class="menu-drawer__menu-item-text wrap-text">{% render 'giclee-i18n-menu-title', link: link %}</span>
                   </a>
                 {% endif %}
               </li>
@@ -255,6 +256,7 @@
             {%- endcomment -%}
             {% assign animation_index = 0 %}
             {%- for link in linklist.links -%}
+              {% capture giclee_menu_url %}{% render 'giclee-resolve-menu-url', link: link %}{% endcapture %}
               {% assign animation_index = animation_index | plus: 1 %}
               <li
                 class="menu-drawer__list-item"
@@ -273,7 +275,7 @@
                       class="menu-drawer__menu-item menu-drawer__menu-item--mainlist menu-drawer__animated-element focus-inset{% if link.child_active %} menu-drawer__menu-item--active{% endif %}"
                       on:click="header-drawer/open/submenu"
                     >
-                      <span class="menu-drawer__menu-item-text wrap-text">{{ link.title | escape }}</span>
+                      <span class="menu-drawer__menu-item-text wrap-text">{% render 'giclee-i18n-menu-title', link: link %}</span>
                       <span class="svg-wrapper icon-caret icon-caret--forward">
                         {{- 'icon-caret.svg' | inline_asset_content -}}
                       </span>
@@ -294,7 +296,7 @@
                             <span class="svg-wrapper icon-caret icon-caret--backward">
                               {{- 'icon-caret.svg' | inline_asset_content -}}
                             </span>
-                            <span class="menu-drawer__menu-item-text wrap-text">{{ link.title | escape }}</span>
+                            <span class="menu-drawer__menu-item-text wrap-text">{% render 'giclee-i18n-menu-title', link: link %}</span>
                           </button>
                           <button
                             class="button button-unstyled close-button menu-drawer__close-button"
@@ -355,7 +357,7 @@
                                     %}
                                   {% endif %}
                                   <span class="menu-drawer__menu-item-text wrap-text">
-                                    {{- childlink.title | escape -}}
+                                    {%- render 'giclee-i18n-menu-title', link: childlink -%}
                                   </span>
                                 </a>
                               {%- else -%}
@@ -379,7 +381,7 @@
                                         class="menu-drawer__menu-item menu-drawer__menu-item--parent focus-inset"
                                       >
                                         <span class="menu-drawer__menu-item-text wrap-text">
-                                          {{- childlink.title | escape -}}
+                                          {%- render 'giclee-i18n-menu-title', link: childlink -%}
                                         </span>
                                         <span class="svg-wrapper icon-plus">
                                           {{- 'icon-plus.svg' | inline_asset_content -}}
@@ -422,7 +424,7 @@
                                                 %}
                                               {% endif %}
                                               <span class="menu-drawer__menu-item-text wrap-text">
-                                                {{- grandchildlink.title | escape -}}
+                                                {%- render 'giclee-i18n-menu-title', link: grandchildlink -%}
                                               </span>
                                             </a>
                                           </li>
@@ -447,7 +449,7 @@
                                     {% endif %}
                                   >
                                     <span class="menu-drawer__menu-item-text wrap-text">
-                                      {{- childlink.title | escape -}}
+                                      {%- render 'giclee-i18n-menu-title', link: childlink -%}
                                     </span>
                                   </a>
                                   {% liquid
@@ -487,7 +489,7 @@
                                             %}
                                           {% endif %}
                                           <span class="menu-drawer__menu-item-text wrap-text">
-                                            {{- grandchildlink.title | escape -}}
+                                            {%- render 'giclee-i18n-menu-title', link: grandchildlink -%}
                                           </span>
                                         </a>
                                       </li>
@@ -558,13 +560,13 @@
                   {%- endcomment -%}
                   <a
                     id="HeaderDrawer-{{ link.handle }}"
-                    href="{{ link.url }}"
+                    href="{{ giclee_menu_url | strip }}"
                     class="menu-drawer__menu-item menu-drawer__menu-item--mainlist menu-drawer__animated-element focus-inset"
                     {% if link.current %}
                       aria-current="page"
                     {% endif %}
                   >
-                    <span class="menu-drawer__menu-item-text wrap-text">{{ link.title | escape }}</span>
+                    <span class="menu-drawer__menu-item-text wrap-text">{% render 'giclee-i18n-menu-title', link: link %}</span>
                   </a>
                 {%- endif -%}
               </li>

@@ -48,8 +48,21 @@ sys.path.insert(0, str(_CURSOR_API))
 
 from Komponenty._shared import auth  # noqa: E402
 from Komponenty.produkcja import retention, shipping  # noqa: E402
+from Komponenty.produkcja.frame_variant import migrate_order_frame_fields  # noqa: E402
+from Komponenty.produkcja.shopify_links import admin_order_url  # noqa: E402
 
 _ORDERS_FILE = _CURSOR_API / "Komponenty" / "produkcja" / "dane" / "zamowienia.json"
+_SESSION_FILE = _CURSOR_API / ".shopify_session.json"
+
+
+def _session_shop_domain() -> str:
+    try:
+        if _SESSION_FILE.is_file():
+            d = json.loads(_SESSION_FILE.read_text(encoding="utf-8"))
+            return str(d.get("shop") or "")
+    except (OSError, json.JSONDecodeError):
+        pass
+    return ""
 
 # In-memory sesje (token -> meta)
 _SESSIONS: dict[str, dict[str, Any]] = {}
@@ -68,9 +81,12 @@ def _load_db() -> dict:
     if not _ORDERS_FILE.is_file():
         return {"next_id": 1, "orders": []}
     try:
-        return json.loads(_ORDERS_FILE.read_text(encoding="utf-8"))
+        db = json.loads(_ORDERS_FILE.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return {"next_id": 1, "orders": []}
+    for o in db.get("orders") or []:
+        migrate_order_frame_fields(o)
+    return db
 
 
 def _save_db(db: dict) -> None:
@@ -81,6 +97,8 @@ def _save_db(db: dict) -> None:
 
 
 def _cure_remaining_seconds(order: dict) -> int:
+    if order.get("pomin_schniecie"):
+        return 0
     raw = order.get("data_pomalowania")
     if not raw:
         return 0
@@ -295,8 +313,27 @@ def _render_order_card(o: dict, status: str, status_class: str) -> str:
     oid = html.escape(o.get("id", ""))
     client = html.escape(o.get("client") or "(bez klienta)")
     title = html.escape(o.get("tytul_obrazu") or "")
-    variant = html.escape(o.get("ramka_wariant", ""))
+    dmk = html.escape(o.get("ramka_drewno") or "")
+    rmk = html.escape(o.get("ramka_rozmiar") or "")
+    kmk = html.escape(o.get("ramka_kolor") or "")
+    ppk = html.escape(o.get("passepartout_kolor") or "")
     qty = o.get("ilosc", 1)
+    img_html = ""
+    siu = (o.get("shopify_image_url") or "").strip()
+    if siu:
+        img_html = (
+            f'<div style="margin-top:6px"><img src="{html.escape(siu)}" alt="" '
+            f'style="max-width:100%;max-height:100px;border-radius:6px;object-fit:contain"></div>'
+        )
+    adm = ""
+    oidn = int(o.get("shopify_order_id") or 0)
+    if oidn:
+        dom = _session_shop_domain()
+        if dom:
+            adm = (
+                f'<div class="meta"><a href="{html.escape(admin_order_url(dom, oidn))}">'
+                f"Shopify Admin (zamowienie)</a></div>"
+            )
     wydruk = int(o.get("wydruk_step") or 0)
     ramka = int(o.get("ramka_step") or 0)
     progress_str = f"Wydruk {wydruk}/2 · Ramka {ramka}/4"
@@ -311,7 +348,9 @@ def _render_order_card(o: dict, status: str, status_class: str) -> str:
   <div class="card">
     <h3>{oid} - {client}</h3>
     <div class="meta">{title}</div>
-    <div class="meta">Ramka: {variant} x {qty}</div>
+    <div class="meta">Drewno: {dmk} · Rozmiar: {rmk} · Kolor: {kmk} · Passepartout: {ppk or "—"} · x{qty}</div>
+    {adm}
+    {img_html}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
       <span class="progress">{progress_str}</span>
       <span class="status {status_class}">{html.escape(status)}</span>
@@ -325,13 +364,31 @@ def _render_order_detail(o: dict, csrf: str, message: str = "") -> bytes:
     oid = html.escape(o.get("id", ""))
     client = html.escape(o.get("client") or "(bez klienta)")
     title = html.escape(o.get("tytul_obrazu") or "")
-    variant = html.escape(o.get("ramka_wariant", ""))
+    dmk = html.escape(o.get("ramka_drewno") or "")
+    rmk = html.escape(o.get("ramka_rozmiar") or "")
+    kmk = html.escape(o.get("ramka_kolor") or "")
+    ppk = html.escape(o.get("passepartout_kolor") or "")
     qty = o.get("ilosc", 1)
     shopify_no = html.escape(o.get("shopify_order_no", "") or "")
     adres = html.escape(o.get("adres_wysylki", "") or "")
     notatka = html.escape(o.get("notatka", "") or "")
     wydruk_step = int(o.get("wydruk_step") or 0)
     ramka_step = int(o.get("ramka_step") or 0)
+
+    adm_html = ""
+    oidn = int(o.get("shopify_order_id") or 0)
+    if oidn:
+        dom = _session_shop_domain()
+        if dom:
+            au = html.escape(admin_order_url(dom, oidn))
+            adm_html = f'<div class="meta"><a href="{au}">Shopify Admin — to zamowienie</a></div>'
+    img_d = ""
+    siu = (o.get("shopify_image_url") or "").strip()
+    if siu:
+        img_d = (
+            f'<div style="margin-top:8px"><img src="{html.escape(siu)}" alt="" '
+            f'style="max-width:100%;max-height:220px;border-radius:8px;object-fit:contain"></div>'
+        )
 
     # Countdown (jesli pomalowana)
     countdown_html = ""
@@ -408,8 +465,10 @@ def _render_order_detail(o: dict, csrf: str, message: str = "") -> bytes:
   <div class="card">
     <h3>{client}</h3>
     <div class="meta">{title}</div>
-    <div class="meta">Ramka: {variant} x {qty}</div>
+    <div class="meta">Drewno: {dmk} · Rozmiar: {rmk} · Kolor: {kmk} · Passepartout: {ppk or "—"} · x{qty}</div>
     {f'<div class="meta">Shopify: {shopify_no}</div>' if shopify_no else ''}
+    {adm_html}
+    {img_d}
   </div>
 
   {countdown_html}

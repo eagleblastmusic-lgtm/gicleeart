@@ -9,7 +9,10 @@ na kafelku:
       "description": "Krotki opis (1-2 linie)",
       "icon": "🖼️",      // emoji albo sciezka do PNG/ICO
       "color": "#1e88e5",  // kolor akcentu kafelka (hex)
-      "order": 10           // kolejnosc sortowania (mniejsze = wczesniej)
+      "order": 60           // kolejnosc sortowania (mniejsze = wczesniej)
+      "hidden": true        // opcjonalnie: ukryj kafelek w launcherze
+      "inline_width": 1040  // opcjonalnie: szerokosc okna launchera (tryb inline)
+      "inline_height": 900  // opcjonalnie: wysokosc okna launchera (tryb inline)
     }
 
 Jesli brakuje `component.json`, GicleeApp uzywa nazwy folderu i pierwszej linijki
@@ -71,7 +74,7 @@ def _read_first_docstring_line(init_path: Path) -> str:
         return ""
 
 
-def discover_components(components_dir: Path) -> list[Component]:
+def discover_components(components_dir: Path, *, include_hidden: bool = False) -> list[Component]:
     """Skanuje katalog `Komponenty/` i zwraca posortowana liste komponentow.
 
     Reguly:
@@ -103,6 +106,9 @@ def discover_components(components_dir: Path) -> list[Component]:
                     manifest = {}
             except (OSError, json.JSONDecodeError, ValueError):
                 manifest = {}
+
+        if manifest.get("hidden") and not include_hidden:
+            continue
 
         mode = str(manifest.get("mode") or "subprocess").strip().lower()
         if mode not in {"subprocess", "inline", "url"}:
@@ -143,7 +149,7 @@ def discover_components(components_dir: Path) -> list[Component]:
         url = str(manifest.get("url") or "").strip()
 
         # Extras = wszystkie pozostale pola manifestu (na przyszlosc)
-        known = {"name", "description", "icon", "color", "order", "mode", "url"}
+        known = {"name", "description", "icon", "color", "order", "mode", "url", "hidden"}
         extras = {k: v for k, v in manifest.items() if k not in known}
 
         out.append(Component(

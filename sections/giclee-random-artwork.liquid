@@ -1,0 +1,272 @@
+{%- liquid
+  assign pool_limit = section.settings.pool_limit | default: 50
+  assign pool_collection = section.settings.pool_collection
+  if pool_collection == blank
+    assign pool_collection = collections.all
+  endif
+  assign fetch_full = section.settings.fetch_full_pool
+  assign enable_webgl = section.settings.enable_webgl
+  if section.settings.enable_webgl == nil
+    assign enable_webgl = true
+  endif
+-%}
+
+<link
+  rel="stylesheet"
+  href="{{ 'giclee-random-artwork.css' | asset_url }}?v=grw-stage3-20260622"
+>
+<script
+  src="{{ 'giclee-random-artwork.js' | asset_url }}?v=grw-stage3-20260622"
+  defer
+></script>
+
+<giclee-random-artwork
+  class="giclee-random-artwork color-{{ section.settings.color_scheme }}"
+  data-state="idle"
+  data-root-url="{{ routes.root_url }}"
+  data-products-endpoint="{{ routes.root_url }}/collections/all/products.json"
+  data-fetch-full="{% if fetch_full %}true{% else %}false{% endif %}"
+  data-enable-webgl="{% if enable_webgl %}true{% else %}false{% endif %}"
+  data-webgl-url="{{ 'giclee-random-artwork-webgl.js' | asset_url }}"
+  data-three-url="{{ 'three.module.js' | asset_url }}"
+  data-phase-1="{{ section.settings.loading_text | escape }}"
+  data-phase-2="{{ section.settings.phase_text_2 | escape }}"
+  data-phase-3="{{ section.settings.phase_text_3 | escape }}"
+  {{ section.shopify_attributes }}
+>
+  <script type="application/json" data-grw-pool>
+    {%- render 'giclee-random-artwork-pool', pool_collection: pool_collection, pool_limit: pool_limit -%}
+  </script>
+
+  <div class="giclee-random-artwork__scene" data-grw-scene>
+    {%- comment -%} Warstwy tla — gradienty, swiatlo, ziarno, winieta {%- endcomment -%}
+    <div class="giclee-random-artwork__bg" aria-hidden="true">
+      <span class="giclee-random-artwork__bg-aurora"></span>
+      <span class="giclee-random-artwork__bg-beams"></span>
+      <span class="giclee-random-artwork__bg-grain"></span>
+      <span class="giclee-random-artwork__bg-vignette"></span>
+    </div>
+
+    {%- comment -%} Punkt montazu sceny WebGL (ETAP 3) {%- endcomment -%}
+    <div class="giclee-random-artwork__canvas" data-grw-canvas-mount aria-hidden="true"></div>
+
+    {%- comment -%} Portal CSS — placeholder swietlistej soczewki muzealnej {%- endcomment -%}
+    <div class="giclee-random-artwork__portal" data-grw-portal aria-hidden="true">
+      <span class="giclee-random-artwork__portal-halo"></span>
+      <span class="giclee-random-artwork__portal-ring giclee-random-artwork__portal-ring--outer"></span>
+      <span class="giclee-random-artwork__portal-ring giclee-random-artwork__portal-ring--inner"></span>
+      <span class="giclee-random-artwork__portal-core"></span>
+    </div>
+
+    <div class="giclee-random-artwork__content">
+      {%- comment -%} Intro / hero {%- endcomment -%}
+      <header class="giclee-random-artwork__intro" data-grw-intro>
+        {%- if section.settings.eyebrow != blank -%}
+          <span class="giclee-random-artwork__eyebrow">{{ section.settings.eyebrow | escape }}</span>
+        {%- endif -%}
+        {%- if section.settings.heading != blank -%}
+          <h1 class="giclee-random-artwork__heading">{{ section.settings.heading | escape }}</h1>
+        {%- endif -%}
+        {%- if section.settings.subtitle != blank -%}
+          <p class="giclee-random-artwork__subtitle">{{ section.settings.subtitle | escape }}</p>
+        {%- endif -%}
+        <button type="button" class="giclee-random-artwork__draw" data-grw-draw>
+          <span class="giclee-random-artwork__draw-glow" aria-hidden="true"></span>
+          <span class="giclee-random-artwork__draw-label">{{ section.settings.button_label | escape }}</span>
+        </button>
+      </header>
+
+      {%- comment -%} Faza losowania — teksty narracyjne {%- endcomment -%}
+      <div class="giclee-random-artwork__phase" data-grw-phase-wrap aria-live="polite">
+        <span class="giclee-random-artwork__phase-text" data-grw-phase>{{ section.settings.loading_text | escape }}</span>
+      </div>
+
+      {%- comment -%} Karta wyniku — eksponat muzealny {%- endcomment -%}
+      <div class="giclee-random-artwork__result" data-grw-result hidden>
+        <span class="giclee-random-artwork__result-eyebrow">{{ section.settings.result_heading | escape }}</span>
+        <a class="giclee-random-artwork__frame" data-grw-result-link href="#">
+          <span class="giclee-random-artwork__frame-glow" aria-hidden="true"></span>
+          <span class="giclee-random-artwork__frame-mat">
+            <img
+              class="giclee-random-artwork__result-image"
+              data-grw-result-image
+              src=""
+              alt=""
+              loading="lazy"
+              decoding="async"
+            >
+          </span>
+        </a>
+        <span class="giclee-random-artwork__plaque">
+          <h2 class="giclee-random-artwork__result-title" data-grw-result-title></h2>
+        </span>
+        <div class="giclee-random-artwork__actions">
+          <a class="giclee-random-artwork__cta giclee-random-artwork__cta--primary" data-grw-view href="#">
+            {{ section.settings.view_label | escape }}
+          </a>
+          <button type="button" class="giclee-random-artwork__cta giclee-random-artwork__cta--ghost" data-grw-replay>
+            {{ section.settings.replay_label | escape }}
+          </button>
+        </div>
+      </div>
+
+      {%- comment -%} Stan bledu {%- endcomment -%}
+      <div class="giclee-random-artwork__error" data-grw-error hidden role="alert">
+        <p class="giclee-random-artwork__error-text">{{ section.settings.error_text | escape }}</p>
+        <button type="button" class="giclee-random-artwork__cta giclee-random-artwork__cta--ghost" data-grw-retry>
+          {{ section.settings.retry_label | escape }}
+        </button>
+      </div>
+    </div>
+  </div>
+</giclee-random-artwork>
+
+{% schema %}
+{
+  "name": "Losuj Obraz — oracle",
+  "tag": "section",
+  "class": "giclee-random-artwork-section",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "Tresci"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Etykieta nad tytulem",
+      "default": "Fine Art Oracle"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Naglowek",
+      "default": "Niech sztuka wybierze Ciebie"
+    },
+    {
+      "type": "textarea",
+      "id": "subtitle",
+      "label": "Podtytul",
+      "default": "Kliknij i odkryj losowo wybrane dzielo z naszej kolekcji — byc moze wlasnie ono mialo trafic do Twojego wnetrza."
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Przycisk glowny",
+      "default": "Losuj obraz"
+    },
+    {
+      "type": "header",
+      "content": "Teksty fazy losowania"
+    },
+    {
+      "type": "text",
+      "id": "loading_text",
+      "label": "Tekst 1 (ladowanie)",
+      "default": "Przeszukuje kolekcje…"
+    },
+    {
+      "type": "text",
+      "id": "phase_text_2",
+      "label": "Tekst 2",
+      "default": "Obrazy zaczynaja mowic…"
+    },
+    {
+      "type": "text",
+      "id": "phase_text_3",
+      "label": "Tekst 3",
+      "default": "Jedno dzielo przyciaga wzrok…"
+    },
+    {
+      "type": "header",
+      "content": "Wynik"
+    },
+    {
+      "type": "text",
+      "id": "result_heading",
+      "label": "Naglowek wyniku",
+      "default": "Wybrany obraz"
+    },
+    {
+      "type": "text",
+      "id": "view_label",
+      "label": "CTA — zobacz obraz",
+      "default": "Zobacz obraz"
+    },
+    {
+      "type": "text",
+      "id": "replay_label",
+      "label": "CTA — wylosuj ponownie",
+      "default": "Wylosuj ponownie"
+    },
+    {
+      "type": "header",
+      "content": "Stan bledu"
+    },
+    {
+      "type": "text",
+      "id": "error_text",
+      "label": "Komunikat bledu",
+      "default": "Nie udalo sie wczytac kolekcji. Sprobuj ponownie."
+    },
+    {
+      "type": "text",
+      "id": "retry_label",
+      "label": "CTA — ponow",
+      "default": "Sprobuj ponownie"
+    },
+    {
+      "type": "header",
+      "content": "Pula produktow"
+    },
+    {
+      "type": "collection",
+      "id": "pool_collection",
+      "label": "Kolekcja zrodlowa",
+      "info": "Puste = wszystkie produkty (collections/all)."
+    },
+    {
+      "type": "range",
+      "id": "pool_limit",
+      "label": "Startowa pula z Liquid",
+      "min": 6,
+      "max": 50,
+      "step": 1,
+      "default": 50,
+      "info": "Shopify zwraca maks. 50 produktow w Liquid. Pelna pula doczytywana jest po stronie klienta."
+    },
+    {
+      "type": "checkbox",
+      "id": "fetch_full_pool",
+      "label": "Doczytaj pelna pule (AJAX)",
+      "default": true,
+      "info": "Pobiera wszystkie opublikowane produkty z /collections/all/products.json. Wylacz, gdy endpoint JSON jest zablokowany — zostaje pula z Liquid."
+    },
+    {
+      "type": "header",
+      "content": "Wyglad"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_webgl",
+      "label": "Wlacz efekt WebGL (Three.js)",
+      "default": true,
+      "info": "Wylaczenie zostawia elegancki wariant CSS (portal + teksty). WebGL i tak nie startuje przy prefers-reduced-motion lub braku obslugi."
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Schemat kolorow",
+      "default": "scheme-1"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Losuj Obraz — oracle"
+    }
+  ]
+}
+{% endschema %}

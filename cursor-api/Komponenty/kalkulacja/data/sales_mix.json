@@ -1,0 +1,38 @@
+[
+  {
+    "wood": "SOSNA",
+    "format": "A4",
+    "units": 4,
+    "share_per_100": 22
+  },
+  {
+    "wood": "SOSNA",
+    "format": "A3+",
+    "units": 5,
+    "share_per_100": 27
+  },
+  {
+    "wood": "SOSNA",
+    "format": "A2",
+    "units": 2,
+    "share_per_100": 11
+  },
+  {
+    "wood": "DĄB",
+    "format": "A4",
+    "units": 2,
+    "share_per_100": 13
+  },
+  {
+    "wood": "DĄB",
+    "format": "A3+",
+    "units": 3,
+    "share_per_100": 18
+  },
+  {
+    "wood": "DĄB",
+    "format": "A2",
+    "units": 1,
+    "share_per_100": 9
+  }
+]

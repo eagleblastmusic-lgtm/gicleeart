@@ -1,0 +1,170 @@
+{%- comment -%}
+  Galeria PDP (lewa kolumna) dla szablonu product.nowy-szblon-produktu.
+  Prezentuje wylacznie mockupy w ramie z passepartout — alt z '(mockup)' (aplikacja mockup).
+
+  Uklad "scena muzealna": duza scena z miekka sciana galerii + pasek miniatur.
+  Plynny crossfade, nawigacja klawiatura/strzalkami/swipe, lightbox (pelny ekran).
+
+  Wejscie: product (obiekt produktu).
+{%- endcomment -%}
+
+{%- comment -%}
+  Filtr inline (NIE przez render — {% render %} jest izolowany i nie zwraca zmiennych):
+  tylko media mockupow (alt z «(mockup)» lub nazwa pliku CDN z «mockup»).
+{%- endcomment -%}
+{%- liquid
+  assign gg_media = '' | split: ','
+  for media in product.media
+    assign alt_l = media.alt | downcase
+    assign src_l = ''
+    if media.preview_image.src != blank
+      assign src_l = media.preview_image.src | downcase
+    endif
+    assign is_mockup = false
+    if alt_l contains '(mockup)'
+      assign is_mockup = true
+    elsif src_l contains 'mockup'
+      assign is_mockup = true
+    endif
+    unless is_mockup
+      continue
+    endunless
+    assign chunk = product.media | where: 'id', media.id
+    assign gg_media = gg_media | concat: chunk
+  endfor
+  assign gg_first_ratio = 1.0
+  if gg_media.size > 0
+    assign gg_first_ratio = gg_media.first.preview_image.aspect_ratio | default: 1.0
+  endif
+-%}
+
+{%- if gg_media.size > 0 -%}
+  <giclee-gallery
+    class="giclee-gallery"
+    id="giclee-gallery-{{ product.id }}"
+    data-count="{{ gg_media.size }}"
+    tabindex="0"
+    aria-roledescription="{{ 'accessibility.gallery' | t | default: 'Galeria' }}"
+    aria-label="{{ product.title | escape }}"
+  >
+    <div class="giclee-gallery__layout">
+      {%- comment -%} Pasek miniatur {%- endcomment -%}
+      {%- if gg_media.size > 1 -%}
+        <div class="giclee-gallery__rail" role="tablist" aria-label="Miniatury zdjec produktu">
+          {%- for media in gg_media -%}
+            <button
+              type="button"
+              class="giclee-gallery__thumb{% if forloop.first %} is-active{% endif %}"
+              role="tab"
+              data-gg-thumb="{{ forloop.index0 }}"
+              aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+              aria-label="Zdjecie {{ forloop.index }} z {{ gg_media.size }}"
+            >
+              {{
+                media.preview_image
+                | image_url: width: 220
+                | image_tag:
+                  loading: 'lazy',
+                  widths: '110, 176, 220, 352',
+                  sizes: '88px',
+                  alt: media.alt,
+                  class: 'giclee-gallery__thumb-img'
+              }}
+            </button>
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+
+      {%- comment -%} Glowna scena {%- endcomment -%}
+      <div class="giclee-gallery__stage" data-gg-stage style="--gg-stage-ratio: {{ gg_first_ratio }};">
+        <div class="giclee-gallery__wall" aria-hidden="true"></div>
+
+        <div class="giclee-gallery__frames" data-gg-track>
+          {%- for media in gg_media -%}
+            {%- liquid
+              if forloop.first
+                assign gg_loading = 'eager'
+                assign gg_priority = 'high'
+              else
+                assign gg_loading = 'lazy'
+                assign gg_priority = 'auto'
+              endif
+            -%}
+            <figure
+              class="giclee-gallery__slide{% if forloop.first %} is-active{% endif %}"
+              data-gg-slide="{{ forloop.index0 }}"
+              style="--gg-ratio: {{ media.preview_image.aspect_ratio | default: 1.0 }};"
+            >
+              {{
+                media.preview_image
+                | image_url: width: 2000
+                | image_tag:
+                  loading: gg_loading,
+                  fetchpriority: gg_priority,
+                  widths: '600, 900, 1200, 1600, 2000',
+                  sizes: '(min-width: 750px) 48vw, 92vw',
+                  alt: media.alt,
+                  class: 'giclee-gallery__img'
+              }}
+            </figure>
+          {%- endfor -%}
+        </div>
+
+        {%- if gg_media.size > 1 -%}
+          <button type="button" class="giclee-gallery__nav giclee-gallery__nav--prev" data-gg-prev aria-label="Poprzednie zdjecie">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <button type="button" class="giclee-gallery__nav giclee-gallery__nav--next" data-gg-next aria-label="Nastepne zdjecie">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+        {%- endif -%}
+
+        <button type="button" class="giclee-gallery__zoom" data-gg-zoom aria-label="Powieksz zdjecie">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        </button>
+
+        {%- if gg_media.size > 1 -%}
+          <div class="giclee-gallery__counter" aria-hidden="true">
+            <span data-gg-current>1</span><span class="giclee-gallery__counter-sep">/</span><span>{{ gg_media.size }}</span>
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+
+    {%- comment -%} Lightbox (pelny ekran) {%- endcomment -%}
+    <dialog class="giclee-gallery__lightbox" data-gg-lightbox aria-label="Podglad zdjec w pelnym ekranie">
+      <button type="button" class="giclee-gallery__lb-close" data-gg-lb-close aria-label="Zamknij podglad">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+      </button>
+
+      <div class="giclee-gallery__lb-frames" data-gg-lb-track>
+        {%- for media in gg_media -%}
+          <figure class="giclee-gallery__lb-slide{% if forloop.first %} is-active{% endif %}" data-gg-lb-slide="{{ forloop.index0 }}">
+            {{
+              media.preview_image
+              | image_url: width: 2400
+              | image_tag:
+                loading: 'lazy',
+                widths: '900, 1400, 2000, 2400',
+                sizes: '100vw',
+                alt: media.alt,
+                class: 'giclee-gallery__lb-img'
+            }}
+          </figure>
+        {%- endfor -%}
+      </div>
+
+      {%- if gg_media.size > 1 -%}
+        <button type="button" class="giclee-gallery__nav giclee-gallery__nav--prev giclee-gallery__nav--lb" data-gg-prev aria-label="Poprzednie zdjecie">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button type="button" class="giclee-gallery__nav giclee-gallery__nav--next giclee-gallery__nav--lb" data-gg-next aria-label="Nastepne zdjecie">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
+        <div class="giclee-gallery__lb-counter" aria-hidden="true">
+          <span data-gg-current>1</span><span class="giclee-gallery__counter-sep">/</span><span>{{ gg_media.size }}</span>
+        </div>
+      {%- endif -%}
+    </dialog>
+  </giclee-gallery>
+{%- endif -%}

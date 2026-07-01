@@ -29,6 +29,9 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from Komponenty.produkcja.frame_variant import migrate_order_frame_fields, shipping_lookup_key
+from Komponenty.produkcja import package_templates
+
 # PL post code: 12-345
 _PL_POSTCODE_RE = re.compile(r"\b\d{2}-\d{3}\b")
 _PL_WORDS = ("polska", "poland", "pl,", " pl\n", " pl ")
@@ -54,6 +57,7 @@ def pick_carrier_url(order: dict) -> tuple[str, str]:
 
 def format_clipboard_data(order: dict) -> str:
     """Formatuje dane odbiorcy + paczki jako tekst do wklejenia w formularzu kuriera."""
+    migrate_order_frame_fields(order)
     lines: list[str] = []
     lines.append(f"=== {order.get('id', '')} ===")
     lines.append("")
@@ -67,13 +71,19 @@ def format_clipboard_data(order: dict) -> str:
     lines.append("")
     lines.append("PRZEDMIOT:")
     lines.append(f"Reprodukcja: {order.get('tytul_obrazu') or '(brak tytulu)'}")
-    lines.append(f"Ramka: {order.get('ramka_wariant', '')}")
+    lines.append(
+        f"Ramka — drewno: {order.get('ramka_drewno', '')}  |  "
+        f"rozmiar: {order.get('ramka_rozmiar', '')}  |  kolor: {order.get('ramka_kolor', '')}"
+    )
+    pp = (order.get("passepartout_kolor") or "").strip()
+    if pp:
+        lines.append(f"Passepartout: {pp}")
+    lines.append(f"   (etykieta laczona: {order.get('ramka_wariant', '')})")
     lines.append(f"Ilosc: {order.get('ilosc', 1)}")
     lines.append("")
     lines.append("WYMIARY PACZKI (wpisz recznie - zaleznie od wariantu):")
-    variant = order.get("ramka_wariant", "") or ""
-    # Proponowane wymiary per wariant ramki
-    suggested = _suggested_dimensions(variant)
+    lookup_key = shipping_lookup_key(order)
+    suggested = _suggested_dimensions(lookup_key)
     if suggested:
         lines.append(f"  {suggested}")
     else:
@@ -88,15 +98,10 @@ def format_clipboard_data(order: dict) -> str:
 
 
 def _suggested_dimensions(variant: str) -> str:
-    """Zwraca proponowane wymiary paczki dla danego wariantu ramki."""
-    # Placeholder - dostosuj do swoich wymiarow produkcyjnych
-    v = (variant or "").upper()
-    mapping = {
-        "DAB S":   "Dlugosc: 60 cm  |  Szerokosc: 45 cm  |  Wysokosc: 10 cm  |  Waga: 3 kg",
-        "DAB L":   "Dlugosc: 85 cm  |  Szerokosc: 65 cm  |  Wysokosc: 10 cm  |  Waga: 5 kg",
-        "DAB XL":  "Dlugosc: 105 cm  |  Szerokosc: 85 cm  |  Wysokosc: 12 cm  |  Waga: 7 kg",
-        "SOSNA S": "Dlugosc: 60 cm  |  Szerokosc: 45 cm  |  Wysokosc: 10 cm  |  Waga: 2.5 kg",
-        "SOSNA L": "Dlugosc: 85 cm  |  Szerokosc: 65 cm  |  Wysokosc: 10 cm  |  Waga: 4 kg",
-        "SOSNA XL": "Dlugosc: 105 cm  |  Szerokosc: 85 cm  |  Wysokosc: 12 cm  |  Waga: 6 kg",
-    }
-    return mapping.get(v, "")
+    """Zwraca proponowane wymiary paczki dla danego wariantu ramki.
+
+    Teraz czerpie z edytowalnej tabeli szablonow (`package_templates.json`).
+    Jesli klucza nie ma w tabeli — zwraca pusty string (UI wpisze pola puste
+    do uzupelnienia).
+    """
+    return package_templates.formatted_for_key(variant)

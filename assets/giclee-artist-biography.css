@@ -1,0 +1,412 @@
+/* Animacje biografii — układ tła/overlay w {% style %} sekcji (overlay-audit) */
+
+/*
+ * Stały pas bio (~573px w referencji: data-gacs-layout-locked na .giclee-artist-bio).
+ * Wysokość na elemencie treści, nie na tle — grid rozciąga custom-section-background.
+ */
+.giclee-artist-biography-section {
+  --gab-hero-height: clamp(560px, 56svh, 640px);
+}
+
+.giclee-artist-biography-section .giclee-artist-bio.layout-panel-flex {
+  height: var(--gab-hero-height) !important;
+  min-height: var(--gab-hero-height) !important;
+  max-height: var(--gab-hero-height) !important;
+  overflow: hidden !important;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.giclee-artist-bio {
+  --gab-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.giclee-artist-bio__title,
+.giclee-artist-bio--legacy h1 {
+  margin: 0;
+  transition:
+    opacity 0.88s var(--gab-ease),
+    transform 0.88s var(--gab-ease),
+    filter 0.88s var(--gab-ease);
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+}
+
+.giclee-artist-bio__body {
+  transition: none;
+}
+
+/* Mobile: pełne bio w flow strony (bez przycinania stałego hero) */
+@media screen and (max-width: 749px) {
+  .giclee-artist-biography-section {
+    --gab-hero-height: auto;
+  }
+
+  .giclee-artist-biography-section > .section,
+  .giclee-artist-biography-section .custom-section-content {
+    overflow: visible;
+  }
+
+  .giclee-artist-biography-section .giclee-artist-bio.layout-panel-flex {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .giclee-artist-bio__body,
+  .giclee-artist-bio__body-inner {
+    overflow: visible;
+  }
+}
+
+.giclee-artist-bio__body-inner,
+.giclee-artist-bio--legacy rte-formatter > div {
+  transition:
+    opacity 0.88s var(--gab-ease),
+    transform 0.88s var(--gab-ease),
+    filter 0.88s var(--gab-ease);
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+}
+
+.giclee-artist-bio__body-inner img,
+.giclee-artist-bio--legacy rte-formatter img {
+  transition:
+    opacity 0.88s var(--gab-ease),
+    transform 0.88s var(--gab-ease),
+    filter 0.88s var(--gab-ease);
+  backface-visibility: hidden;
+}
+
+.giclee-artist-bio.is-in-view.is-transitioning .giclee-artist-bio__body-inner,
+.giclee-artist-bio.is-in-view.is-transitioning .giclee-artist-bio__title,
+.giclee-artist-bio--legacy.is-in-view.is-transitioning h1 {
+  pointer-events: none;
+}
+
+/* Między fazami — bez mignięcia pełnej treści przy przekierowaniu animacji */
+.giclee-artist-bio.is-in-view.is-transitioning:not(.is-exiting-next):not(.is-exiting-prev):not(.is-entering-next):not(.is-entering-prev)
+  .giclee-artist-bio__title,
+.giclee-artist-bio.is-in-view.is-transitioning:not(.is-exiting-next):not(.is-exiting-prev):not(.is-entering-next):not(.is-entering-prev)
+  .giclee-artist-bio__body-inner,
+.giclee-artist-bio--legacy.is-in-view.is-transitioning:not(.is-exiting-next):not(.is-exiting-prev):not(.is-entering-next):not(.is-entering-prev)
+  rte-formatter > div {
+  opacity: 0;
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+.giclee-artist-bio.is-in-view.is-exiting-next .giclee-artist-bio__title,
+.giclee-artist-bio.is-in-view.is-exiting-prev .giclee-artist-bio__title,
+.giclee-artist-bio.is-in-view.is-exiting-next .giclee-artist-bio__body-inner,
+.giclee-artist-bio.is-in-view.is-exiting-prev .giclee-artist-bio__body-inner,
+.giclee-artist-bio--legacy.is-in-view.is-exiting-next h1,
+.giclee-artist-bio--legacy.is-in-view.is-exiting-prev h1,
+.giclee-artist-bio--legacy.is-in-view.is-exiting-next rte-formatter > div,
+.giclee-artist-bio--legacy.is-in-view.is-exiting-prev rte-formatter > div {
+  opacity: 0;
+  transform: translate3d(0, 8px, 0);
+  filter: blur(4px);
+}
+
+.giclee-artist-bio.is-in-view.is-exiting-next .giclee-artist-bio__body-inner img,
+.giclee-artist-bio.is-in-view.is-exiting-prev .giclee-artist-bio__body-inner img,
+.giclee-artist-bio--legacy.is-in-view.is-exiting-next rte-formatter img,
+.giclee-artist-bio--legacy.is-in-view.is-exiting-prev rte-formatter img {
+  opacity: 0.55;
+  transform: scale(0.97);
+  filter: blur(2px) grayscale(20%);
+}
+
+.giclee-artist-bio.is-in-view.is-entering-next .giclee-artist-bio__title,
+.giclee-artist-bio.is-in-view.is-entering-prev .giclee-artist-bio__title,
+.giclee-artist-bio.is-in-view.is-entering-next .giclee-artist-bio__body-inner,
+.giclee-artist-bio.is-in-view.is-entering-prev .giclee-artist-bio__body-inner,
+.giclee-artist-bio--legacy.is-in-view.is-entering-next h1,
+.giclee-artist-bio--legacy.is-in-view.is-entering-prev h1,
+.giclee-artist-bio--legacy.is-in-view.is-entering-next rte-formatter > div,
+.giclee-artist-bio--legacy.is-in-view.is-entering-prev rte-formatter > div {
+  opacity: 0;
+  transform: translate3d(0, -6px, 0);
+  filter: blur(3px);
+}
+
+.giclee-artist-bio.is-in-view.is-entering-next .giclee-artist-bio__body-inner img,
+.giclee-artist-bio.is-in-view.is-entering-prev .giclee-artist-bio__body-inner img,
+.giclee-artist-bio--legacy.is-in-view.is-entering-next rte-formatter img,
+.giclee-artist-bio--legacy.is-in-view.is-entering-prev rte-formatter img {
+  opacity: 0.6;
+  transform: scale(1.02);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giclee-artist-bio__body-inner,
+  .giclee-artist-bio__body-inner img,
+  .giclee-artist-bio__title,
+  .giclee-artist-bio--legacy h1 {
+    transition: none !important;
+  }
+
+  .giclee-artist-bio.is-in-view.is-exiting-next .giclee-artist-bio__title,
+  .giclee-artist-bio.is-in-view.is-exiting-prev .giclee-artist-bio__title,
+  .giclee-artist-bio.is-in-view.is-entering-next .giclee-artist-bio__title,
+  .giclee-artist-bio.is-in-view.is-entering-prev .giclee-artist-bio__title,
+  .giclee-artist-bio.is-in-view.is-exiting-next .giclee-artist-bio__body-inner,
+  .giclee-artist-bio.is-in-view.is-exiting-prev .giclee-artist-bio__body-inner,
+  .giclee-artist-bio.is-in-view.is-entering-next .giclee-artist-bio__body-inner,
+  .giclee-artist-bio.is-in-view.is-entering-prev .giclee-artist-bio__body-inner {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* --- Tło BIO per kolekcja (GicleeApp: Tło do Bio) --- */
+
+.giclee-artist-biography-section .giclee-artist-bio-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.giclee-artist-biography-section .giclee-artist-bio-bg__stack {
+  position: absolute;
+  inset: 0;
+}
+
+.giclee-artist-biography-section .giclee-artist-bio-bg__layer,
+.giclee-artist-biography-section .giclee-artist-bio-bg__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition:
+    opacity 0.88s var(--gab-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    transform 0.88s var(--gab-ease, cubic-bezier(0.22, 1, 0.36, 1));
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+}
+
+.giclee-artist-biography-section .giclee-artist-bio-bg__layer {
+  position: absolute;
+  inset: 0;
+}
+
+.giclee-artist-biography-section .giclee-artist-bio-bg:not(.is-bg-crossfading) .giclee-artist-bio-bg__layer.is-bg-inactive {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.giclee-artist-biography-section .giclee-artist-bio-bg.is-bg-crossfading .giclee-artist-bio-bg__layer {
+  visibility: visible;
+}
+
+.giclee-artist-biography-section .giclee-artist-bio-bg.is-bg-crossfading .giclee-artist-bio-bg__layer.is-bg-outgoing {
+  opacity: 1;
+  z-index: 0;
+}
+
+.giclee-artist-biography-section .giclee-artist-bio-bg.is-bg-crossfading .giclee-artist-bio-bg__layer.is-bg-incoming {
+  opacity: 0;
+  z-index: 1;
+}
+
+.giclee-artist-biography-section:has(.giclee-artist-bio.is-in-view.is-exiting-next) .giclee-artist-bio-bg.is-bg-crossfading .giclee-artist-bio-bg__layer.is-bg-outgoing:not(.giclee-artist-bio-bg__image--cover-scale),
+.giclee-artist-biography-section:has(.giclee-artist-bio.is-in-view.is-exiting-prev) .giclee-artist-bio-bg.is-bg-crossfading .giclee-artist-bio-bg__layer.is-bg-outgoing:not(.giclee-artist-bio-bg__image--cover-scale) {
+  opacity: 0;
+  transform: translate3d(0, 10px, 0) scale(1.02);
+}
+
+.giclee-artist-biography-section:has(.giclee-artist-bio.is-in-view.is-exiting-next) .giclee-artist-bio-bg.is-bg-crossfading .giclee-artist-bio-bg__layer.is-bg-outgoing.giclee-artist-bio-bg__image--cover-scale {
+  opacity: 0;
+  transform: translate3d(0, 10px, 0) scale(1.06);
+}
+
+.giclee-artist-biography-section:has(.giclee-artist-bio.is-in-view.is-exiting-prev) .giclee-artist-bio-bg.is-bg-crossfading .giclee-artist-bio-bg__layer.is-bg-outgoing:not(.giclee-artist-bio-bg__image--cover-scale) {
+  opacity: 0;
+  transform: translate3d(0, -8px, 0) scale(1.02);
+}
+
+.giclee-artist-biography-section:has(.giclee-artist-bio.is-in-view.is-exiting-prev) .giclee-artist-bio-bg.is-bg-crossfading .giclee-artist-bio-bg__layer.is-bg-outgoing.giclee-artist-bio-bg__image--cover-scale {
+  opacity: 0;
+  transform: translate3d(0, -8px, 0) scale(1.06);
+}
+
+.giclee-artist-biography-section:has(.giclee-artist-bio.is-in-view.is-exiting-next) .giclee-artist-bio-bg.is-bg-crossfading .giclee-artist-bio-bg__layer.is-bg-incoming:not(.giclee-artist-bio-bg__image--cover-scale),
+.giclee-artist-biography-section:has(.giclee-artist-bio.is-in-view.is-exiting-prev) .giclee-artist-bio-bg.is-bg-crossfading .giclee-artist-bio-bg__layer.is-bg-incoming:not(.giclee-artist-bio-bg__image--cover-scale) {
+  opacity: 1;
+  transform: none;
+}
+
+.giclee-artist-biography-section:has(.giclee-artist-bio.is-in-view.is-exiting-next) .giclee-artist-bio-bg.is-bg-crossfading .giclee-artist-bio-bg__layer.is-bg-incoming.giclee-artist-bio-bg__image--cover-scale,
+.giclee-artist-biography-section:has(.giclee-artist-bio.is-in-view.is-exiting-prev) .giclee-artist-bio-bg.is-bg-crossfading .giclee-artist-bio-bg__layer.is-bg-incoming.giclee-artist-bio-bg__image--cover-scale {
+  opacity: 1;
+  transform: scale(1.04);
+}
+
+.giclee-artist-biography-section .giclee-artist-bio-bg__image--cover-scale {
+  transform: scale(1.04);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giclee-artist-biography-section .giclee-artist-bio-bg__layer,
+  .giclee-artist-biography-section .giclee-artist-bio-bg__image {
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .giclee-artist-biography-section .giclee-artist-bio-bg__image--cover-scale {
+    transform: none;
+  }
+}
+
+.giclee-artist-biography-section .giclee-artist-bio-bg__image.is-swapping {
+  opacity: 0.35;
+}
+
+/*
+ * Jeden kontrolowany overlay (gradient poziomy + pionowy + lekka winieta w jednej warstwie).
+ * Lewa pod tekstem ciemniejsza; środek i prawa odsłaniają więcej kolażu (~15–25% jaśniej niż przed korektą).
+ */
+.giclee-artist-biography-section .giclee-artist-bio-bg__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: var(--gab-bg-overlay-opacity, 1);
+  transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  background:
+    radial-gradient(
+      ellipse 118% 96% at 50% 50%,
+      rgba(0, 0, 0, 0) 44%,
+      rgba(0, 0, 0, 0.22) 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.66) 0%,
+      rgba(0, 0, 0, 0.66) 28%,
+      rgba(0, 0, 0, 0.4) 52%,
+      rgba(0, 0, 0, 0.34) 72%,
+      rgba(0, 0, 0, 0.5) 100%
+    ),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.16) 0%, rgba(0, 0, 0, 0.56) 100%);
+}
+
+/*
+ * Maska radialna (ekspozycja) — osobna warstwa nad gradientem pod tekst.
+ * Parametry z metafield custom.bio_background_radial_mask (GicleeApp → Tło do Bio).
+ */
+.giclee-artist-biography-section .giclee-artist-bio-bg__radial-mask {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  background: radial-gradient(
+    ellipse var(--gab-radial-rx, 55%) var(--gab-radial-ry, 85%) at var(--gab-radial-cx, 35%) var(--gab-radial-cy, 50%),
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0) calc((100 - var(--gab-radial-feather, 50)) * 0.55 * 1%),
+    rgba(0, 0, 0, calc(var(--gab-radial-exposure, 50) * 0.65 / 100)) 100%
+  );
+}
+
+.giclee-artist-biography-section .giclee-artist-bio-bg__radial-mask[hidden] {
+  display: none;
+}
+
+.giclee-artist-biography-section .giclee-artist-bio-bg__vignette {
+  display: none;
+}
+
+.giclee-artist-biography-section--custom-bg .custom-section-content > .overlay {
+  display: none;
+}
+
+.giclee-artist-biography-section--custom-bg .giclee-artist-bio__title,
+.giclee-artist-biography-section--custom-bg .giclee-artist-bio__body {
+  color: #fff;
+}
+
+.giclee-artist-biography-section--custom-bg .giclee-artist-bio__title {
+  text-shadow: 0 1px 20px rgba(0, 0, 0, 0.42);
+}
+
+/* Portret autora — delikatniejsza ekspozycja względem inline HTML w opisie kolekcji */
+.giclee-artist-biography-section .giclee-artist-bio:not(.is-transitioning) .giclee-artist-bio__body-inner img,
+.giclee-artist-biography-section .giclee-artist-bio--legacy:not(.is-transitioning) rte-formatter img {
+  filter: grayscale(48%) brightness(1.07) contrast(1.02) !important;
+  box-shadow: none !important;
+}
+
+/* Fallback Theme Editor (bez metafield collage) — asymetryczny overlay zamiast jednolitego */
+.giclee-artist-biography-section:not(.giclee-artist-biography-section--custom-bg)
+  .custom-section-content
+  > .overlay--solid {
+  background:
+    radial-gradient(
+      ellipse 118% 96% at 50% 50%,
+      rgba(0, 0, 0, 0) 44%,
+      rgba(0, 0, 0, 0.2) 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.66) 0%,
+      rgba(0, 0, 0, 0.66) 28%,
+      rgba(0, 0, 0, 0.4) 52%,
+      rgba(0, 0, 0, 0.34) 72%,
+      rgba(0, 0, 0, 0.5) 100%
+    ),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.16) 0%, rgba(0, 0, 0, 0.56) 100%);
+}
+
+.giclee-artist-biography-section--custom-bg .giclee-artist-bio__body a {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+@media screen and (max-width: 749px) {
+  .giclee-artist-biography-section .giclee-artist-bio-bg__overlay {
+    background:
+      radial-gradient(
+        ellipse 130% 100% at 50% 50%,
+        rgba(0, 0, 0, 0.06) 34%,
+        rgba(0, 0, 0, 0.42) 100%
+      ),
+      linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.5) 0%,
+        rgba(0, 0, 0, 0.76) 100%
+      ),
+      linear-gradient(
+        90deg,
+        rgba(0, 0, 0, 0.76) 0%,
+        rgba(0, 0, 0, 0.68) 100%
+      );
+  }
+
+  .giclee-artist-biography-section:not(.giclee-artist-biography-section--custom-bg)
+    .custom-section-content
+    > .overlay--solid {
+    background:
+      radial-gradient(
+        ellipse 130% 100% at 50% 50%,
+        rgba(0, 0, 0, 0.06) 34%,
+        rgba(0, 0, 0, 0.42) 100%
+      ),
+      linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.5) 0%,
+        rgba(0, 0, 0, 0.76) 100%
+      ),
+      linear-gradient(
+        90deg,
+        rgba(0, 0, 0, 0.76) 0%,
+        rgba(0, 0, 0, 0.68) 100%
+      );
+  }
+}

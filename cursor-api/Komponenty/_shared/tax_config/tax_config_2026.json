@@ -1,0 +1,181 @@
+{
+
+  "id": "PL-JDG-2026-06-14",
+
+  "valid_from": "2026-01-01",
+
+  "source": "JDG i podatki w Polsce na 2026 (stan 14.06.2026)",
+
+  "dnr": {
+
+    "min_wage": 4806.0,
+
+    "limit_multiplier": 2.25,
+
+    "quarterly_limit": 10813.5,
+
+    "monthly_guardrail": 3604.5,
+
+    "ceidg_days": 7,
+
+    "legacy_annual_limit": 11250.0
+
+  },
+
+  "pit": {
+
+    "scale": {
+
+      "rate_low": 0.12,
+
+      "rate_high": 0.32,
+
+      "threshold_1": 120000.0,
+
+      "tax_free_annual": 30000.0,
+
+      "tax_reduction_annual": 3600.0
+
+    },
+
+    "linear": {
+
+      "rate": 0.19,
+
+      "health_annual_deduction_limit": 14100.0
+
+    }
+
+  },
+
+  "zus": {
+
+    "min_wage": 4806.0,
+
+    "ulga_na_start_months": 6,
+
+    "preferential_months": 24,
+
+    "fp_fs_full": 138.47,
+
+    "health_min_scale_linear": 432.54,
+
+    "preferential_base": 1441.8,
+
+    "preferential_social": 420.86,
+
+    "preferential_social_sick": 456.18,
+
+    "full_base": 5652.0,
+
+    "full_social": 1788.29,
+
+    "full_social_sick": 1926.76,
+
+    "ryczalt_health_tiers": [
+
+      { "up_to": 60000.0, "amount": 498.35 },
+
+      { "up_to": 300000.0, "amount": 830.58 },
+
+      { "up_to": null, "amount": 1495.04 }
+
+    ],
+
+    "maly_zus_plus": {
+
+      "months_per_cycle": 36,
+
+      "cycle_months": 60,
+
+      "prior_year_revenue_max": 120000.0,
+
+      "min_activity_days_prior_year": 60,
+
+      "base_min": 1441.8,
+
+      "base_max": 5652.0,
+
+      "effective_from": "2026-01-01"
+
+    }
+
+  },
+
+  "vat": {
+
+    "exemption_threshold_annual": 240000.0,
+
+    "exemption_article": "art. 113 ust. 1 i 9 ustawy o VAT",
+
+    "prorata_days_divisor": 365,
+
+    "wsto_tbe_threshold_pln": 42000.0,
+
+    "default_vat_rate_pl": 23.0
+
+  },
+
+  "compliance": {
+
+    "pit_advance_day": 20,
+
+    "zus_due_day": 20,
+
+    "zus_dra_due_day": 20,
+
+    "annual_pit_start_month": 2,
+
+    "annual_pit_start_day": 15,
+
+    "annual_pit_end_month": 4,
+
+    "annual_pit_end_day": 30,
+
+    "pit_advance_minimum_exempt_pln": 1000.0,
+
+    "health_annual_settlement_month": 4,
+
+    "health_annual_settlement_day": 20,
+
+    "mpp_invoice_threshold": 15000.0,
+
+    "mpp_note": "Mechanizm podzielonej płatności — dotyczy czynnych podatników VAT (załącznik 15)"
+
+  },
+
+  "small_taxpayer": {
+
+    "note": "Progi małego podatnika — rezerwa pod KSeF, księgowanie kasowe VAT itd.",
+
+    "ksef_monthly_gross_exemption_until_2026": 10000.0,
+
+    "vat_cash_accounting_threshold_annual": 2000000.0,
+
+    "vat_exemption_annual": 240000.0
+
+  },
+
+  "platforms": {
+
+    "shopify": {
+
+      "merchant_of_record_default": false,
+
+      "note": "Sprzedawcą wobec klienta jest właściciel sklepu — przychód należny i obrót VAT."
+
+    },
+
+    "allegro": {
+
+      "merchant_of_record_default": true,
+
+      "note": "Sprawdź model rozliczeń Allegro — przy MoR platforma jest sprzedawcą; wpis może nie wchodzić do limitu DNR ani obrotu VAT."
+
+    }
+
+  }
+
+}
+
+

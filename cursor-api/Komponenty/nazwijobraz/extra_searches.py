@@ -23,6 +23,7 @@ import urllib.request
 from typing import Any
 
 from .env_loader import get as env_get
+from .renamer import strip_wiki_namespace_prefix
 from .serpapi_status import SerpApiLimitError, raise_if_serpapi_limit
 
 WIKI_API = "https://en.wikipedia.org/w/api.php"
@@ -1112,6 +1113,7 @@ def _commons_clean_text(text: str) -> str:
         if new == text:
             break
         text = new
+    text = strip_wiki_namespace_prefix(text)
     return text
 
 
@@ -1437,6 +1439,9 @@ def wikimedia_commons_lookup(
 
         def _accept_title(text: str, page_t: str) -> str:
             """Zwroc text gdy wyglada na sensowny tytul, "" gdy do odrzucenia."""
+            if not text:
+                return ""
+            text = strip_wiki_namespace_prefix(text)
             if not text:
                 return ""
             if _looks_like_artwork_description(text):

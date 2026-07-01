@@ -1,0 +1,70 @@
+{% comment %}
+  Passepartout — line item property; markup i animacja jak variant-picker.
+{% endcomment %}
+{%- liquid
+  assign product_form_id = 'BuyButtons-ProductForm-' | append: section.id
+  assign hide_passepartout_picker = false
+  if template.suffix == 'szablon-wlasna-fotografia'
+    assign hide_passepartout_picker = true
+  endif
+  assign pp_white = 'giclee.ui.passepartout_white' | t | default: 'Białe'
+  assign pp_black = 'giclee.ui.passepartout_black' | t | default: 'Czarne'
+  assign pp_legend = 'giclee.ui.passepartout_label' | t | default: 'Passepartout'
+  assign pp_fieldset_id = section.id | append: '-passepartout'
+
+  assign pp_equal_width = false
+  if settings.variant_button_width == 'equal-width-buttons'
+    assign pp_equal_width = true
+  endif
+  assign pp_longest = pp_white.size
+  if pp_black.size > pp_longest
+    assign pp_longest = pp_black.size
+  endif
+-%}
+
+{%- unless hide_passepartout_picker -%}
+  <fieldset
+    class="variant-option variant-option--buttons variant-option--{{ settings.variant_button_width }}"
+    data-giclee-passepartout-picker
+    data-product-form-id="{{ product_form_id }}"
+    data-initial-value="Białe"
+    {%- if pp_equal_width %} data-option-id="{{ pp_fieldset_id }}"{% endif -%}
+  >
+    <legend>{{ pp_legend }}</legend>
+    <label class="variant-option__button-label">
+      <input
+        type="radio"
+        name="giclee-passepartout-{{ section.id }}"
+        value="Białe"
+        data-giclee-pp-value="Białe"
+        data-input-index="0"
+        data-current-checked="true"
+        aria-label="{{ pp_white }}"
+        checked
+      >
+      <span class="variant-option__button-label__pill" data-key="variant-option-pill"></span>
+      <span class="variant-option__button-label__text" data-key="variant-option-text">{{ pp_white }}</span>
+    </label>
+    <label class="variant-option__button-label">
+      <input
+        type="radio"
+        name="giclee-passepartout-{{ section.id }}"
+        value="Czarne"
+        data-giclee-pp-value="Czarne"
+        data-input-index="1"
+        data-current-checked="false"
+        aria-label="{{ pp_black }}"
+      >
+      <span class="variant-option__button-label__pill" data-key="variant-option-pill"></span>
+      <span class="variant-option__button-label__text" data-key="variant-option-text">{{ pp_black }}</span>
+    </label>
+    {%- if pp_equal_width -%}
+      {% style %}
+        [data-option-id="{{ pp_fieldset_id }}"] {
+          --variant-ch: {{ pp_longest | times: 0.65 }}em;
+        }
+      {% endstyle %}
+    {%- endif -%}
+  </fieldset>
+  <script src="{{ 'giclee-passepartout-picker.js' | asset_url }}" defer></script>
+{%- endunless -%}

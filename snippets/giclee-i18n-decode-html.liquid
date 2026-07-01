@@ -1,0 +1,16 @@
+{%- doc -%}
+  Decode HTML entities from theme locale | t strings so richtext renders as markup.
+
+  @param {string} html - entity-encoded or plain HTML from a locale translation
+{%- enddoc -%}
+
+{%- liquid
+  assign decoded = html
+  assign decoded = decoded | replace: '&amp;', 'GICLEE_AMP'
+  assign decoded = decoded | replace: '&lt;', '<'
+  assign decoded = decoded | replace: '&gt;', '>'
+  assign decoded = decoded | replace: '&quot;', '"'
+  assign decoded = decoded | replace: '&#39;', "'"
+  assign decoded = decoded | replace: 'GICLEE_AMP', '&'
+  echo decoded
+-%}

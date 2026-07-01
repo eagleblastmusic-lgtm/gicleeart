@@ -1,0 +1,35 @@
+{% comment %}
+  Inline PDP variant sync — cena + sosna→tylko czarny (bez zewnętrznego pliku, omija cache CDN).
+{% endcomment %}
+{%- unless template.suffix == 'szablon-wlasna-fotografia' -%}
+<script>
+window.__GICLEE_PDP_PRODUCT__={
+  "id":{{ product_resource.id | json }},
+  "optionNames":[{%- for option_name in product_resource.options -%}{{ option_name | json }}{%- unless forloop.last -%},{%- endunless -%}{%- endfor -%}],
+  "variants":[{%- for variant in product_resource.variants -%}
+    {"id":{{ variant.id | json }},"available":{{ variant.available | json }},"price":{{ variant.price | json }},"compare_at_price":{{ variant.compare_at_price | json }},"options":{{ variant.options | json }}}{%- unless forloop.last -%},{%- endunless -%}
+  {%- endfor -%}]
+};
+(function(){var S='<svg viewBox="0 0 100 46" preserveAspectRatio="xMidYMid slice" class="variant-option__strikethrough" aria-hidden="true"><line x1="100" y1="0" x2="0" y2="46" vector-effect="non-scaling-stroke"></line><line x1="100" y1="0" x2="0" y2="46" vector-effect="non-scaling-stroke"></line></svg>',B=new Set;
+function n(v){return String(v||'').normalize('NFC').trim().toLowerCase().replace(/ą/g,'a').replace(/ę/g,'e').replace(/ó/g,'o').replace(/ł/g,'l').replace(/ń/g,'n').replace(/ś/g,'s').replace(/ź/g,'z').replace(/ż/g,'z')}
+function ok(name){var x=n(name);if(x.indexOf('passe')>=0)return's';if(x.indexOf('kolor')>=0)return'c';if(x.indexOf('rozmiar')>=0)return'r';if(x.indexOf('drewn')>=0)return'w';return'o'}
+function pd(){return window.__GICLEE_PDP_PRODUCT__||null}
+function rs(p,d){var o={color:null,size:null,wood:null},ns=d.optionNames||[];p.querySelectorAll('fieldset[data-fieldset-index]').forEach(function(fs){var i=parseInt(fs.getAttribute('data-fieldset-index')||'',10),nm=Number.isNaN(i)?'':ns[i]||'',lg=fs.querySelector('legend'),k=ok(nm||(lg?lg.textContent:''));var ch=fs.querySelector("input[type='radio']:checked");if(!ch||k==='s'||k==='o')return;if(k==='c')o.color=ch.value;else if(k==='r')o.size=ch.value;else if(k==='w')o.wood=ch.value});return o}
+function rv(d,s){if(!s.color||!s.size||!s.wood)return null;var ns=d.optionNames||[];for(var i=0;i<d.variants.length;i++){var v=d.variants[i];if(v.available===false)continue;var op=v.options||[],m=true;for(var j=0;j<op.length;j++){var k=ok(ns[j]||'');if(k==='s'||k==='o')continue;var ov=n(op[j]);if(k==='c'&&ov!==n(s.color))m=false;if(k==='r'&&ov!==n(s.size))m=false;if(k==='w'&&ov!==n(s.wood))m=false}if(m)return v}return null}
+function sa(inp,a){var lb=inp.closest('label');inp.dataset.optionAvailable=a?'true':'false';if(a){inp.removeAttribute('aria-disabled');if(lb)lb.style.removeProperty('pointer-events');var st=lb&&lb.querySelector('.variant-option__strikethrough');if(st)st.remove();return}inp.setAttribute('aria-disabled','true');if(lb){lb.style.pointerEvents='none';if(!lb.querySelector('.variant-option__strikethrough'))lb.insertAdjacentHTML('beforeend',S)}if(inp.checked)inp.checked=false}
+function cf(p,d){var ns=d.optionNames||[],fs=Array.from(p.querySelectorAll('fieldset[data-fieldset-index]')).find(function(f){var i=parseInt(f.getAttribute('data-fieldset-index')||'',10),nm=Number.isNaN(i)?'':ns[i]||'',lg=f.querySelector('legend');return ok(nm||(lg?lg.textContent:''))==='c'});return fs||null}
+function sca(p,d,s){var fs=cf(p,d);if(!fs)return false;var pine=n(s.wood).indexOf('sosna')>=0,fb=false;fs.querySelectorAll("input[type='radio']").forEach(function(inp){var el=inp,a=true;if(pine)a=n(el.value)==='czarny';else a=!!rv(d,{color:el.value,size:s.size,wood:s.wood});sa(el,a)});if(pine&&n(s.color)!=='czarny'){fs.querySelectorAll("input[type='radio']").forEach(function(inp){if(n(inp.value)==='czarny'){inp.checked=true;fb=true}})}return fb}
+function fm(c){if(c==null||!isFinite(c))return'';if(typeof Shopify!=='undefined'&&typeof Shopify.formatMoney==='function')return Shopify.formatMoney(c);return(c/100).toLocaleString('pl-PL',{style:'currency',currency:'PLN',minimumFractionDigits:0,maximumFractionDigits:2})}
+function up(v,pid){var f=fm(v.price),hc=v.compare_at_price&&v.compare_at_price>v.price;function ap(c){if(!c)return;var rw=c.querySelector('.price__regular'),sw=c.querySelector('.price__sale');if(hc){rw&&rw.classList.add('price__hidden');sw&&sw.classList.remove('price__hidden');var sp=c.querySelector('.price-item--sale.price'),cp=c.querySelector('.compare-at-price');if(sp)sp.textContent=f;if(cp)cp.textContent=fm(v.compare_at_price)}else{rw&&rw.classList.remove('price__hidden');sw&&sw.classList.add('price__hidden');var r=c.querySelector('.price__regular .price');if(r)r.textContent=f}}document.querySelectorAll('product-price[data-product-id="'+pid+'"] [ref="priceContainer"]').forEach(ap);document.querySelectorAll(".product-details [ref='priceContainer']").forEach(ap)}
+function uv(v){document.querySelectorAll('input[name="id"]').forEach(function(inp){var f=inp.closest('form');if(!f)return;if(!f.closest('product-form-component, .product-details, .shopify-section'))return;inp.value=String(v.id)})}
+function sp(p){var d=pd();if(!d||!d.variants||!d.variants.length)return;var s=rs(p,d);if(sca(p,d,s))s=rs(p,d);var v=rv(d,s);if(!v)return;up(v,d.id);uv(v);p.dispatchEvent(new CustomEvent('variant:update',{bubbles:true,detail:{resource:v,sourceId:String(v.id),data:{html:document,productId:String(d.id)}}}));var u=new URL(location.href);u.searchParams.set('variant',String(v.id));if(u.href!==location.href)history.replaceState({},'',u.href)}
+function bp(p){if(!p||B.has(p))return;B.add(p);sp(p)}
+function oc(e){var t=e.target;if(!t||!t.closest)return;if(t.closest('[data-giclee-passepartout-picker]'))return;var p=t.closest('variant-picker[data-giclee-variant-sync="true"]');if(!p)return;requestAnimationFrame(function(){sp(p)})}
+function clk(e){var lb=e.target&&e.target.closest?e.target.closest('label'):null,inp=lb?lb.querySelector("input[type='radio']"):null;if(inp&&inp.getAttribute('aria-disabled')==='true'){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation()}}
+function boot(){document.querySelectorAll('variant-picker[data-giclee-variant-sync="true"]').forEach(bp)}
+document.addEventListener('change',oc,true);document.addEventListener('click',clk,true);
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+window.addEventListener('load',boot);document.addEventListener('shopify:section:load',boot);
+})();
+</script>
+{%- endunless -%}

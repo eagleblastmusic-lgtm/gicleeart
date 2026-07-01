@@ -136,6 +136,19 @@
     "product_total": "Total del producto",
     "cart_estimated_total": "Total estimado",
     "seller_note": "Instrucciones especiales",
+    "invoice_request_title": "Factura",
+    "invoice_request_checkbox": "Necesito factura",
+    "invoice_request_hint": "Para particulares usamos la dirección de facturación del checkout. Para empresas, indique los datos abajo.",
+    "invoice_type_legend": "Tipo de destinatario",
+    "invoice_type_private": "Particular",
+    "invoice_type_company": "Empresa",
+    "invoice_company_name": "Nombre de la empresa",
+    "invoice_tax_id_nip": "NIF / NIP",
+    "invoice_tax_id_de": "NIF-IVA",
+    "invoice_tax_id_fr": "NIF-IVA",
+    "invoice_tax_id_uk": "NIF-IVA",
+    "invoice_tax_id_generic": "NIF-IVA / ID fiscal",
+    "invoice_error_company": "Indique el nombre de la empresa y el NIF-IVA para continuar.",
     "cart_subtotal": "Subtotal",
     "discounts": "Descuentos",
     "discount": "Descuento",
@@ -348,6 +361,255 @@
       "post": "Publicar comentario",
       "success_moderated": "Comentario publicado y a la espera de moderación",
       "success": "Comentario publicado"
+    }
+  },
+  "password": {
+    "countdown": {
+      "heading": "Reestructuración de la arquitectura del sitio. Volveremos pronto.",
+      "days": "días",
+      "hours": "h",
+      "minutes": "min.",
+      "seconds": "seg.",
+      "expired": "¡Bienvenido!"
+    },
+    "maintenance": {
+      "message": "Reestructuración de la arquitectura del sitio. Volveremos pronto."
+    },
+    "newsletter_intro": "Suscríbete al boletín para ser el primero en enterarte de nuestro lanzamiento."
+  },
+  "giclee": {
+    "blocks": {
+      "text_4crMR9": {
+        "text": "<h2>Noticias</h2>"
+      },
+      "text_PDh9dG": {
+        "text": "<p>¿Quieres saber más sobre arte, producción de marcos, impresión y fine art en el sentido más amplio? ¡Te invito a leer!</p>"
+      },
+      "text_FNbyeV": {
+        "text": "<h2>Obras</h2>"
+      },
+      "text_6zXDqe": {
+        "text": "<p>Giclée Art es un taller especializado en impresiones Fine Art y enmarcación integral de obras con estándar museístico.</p><p>Combinamos la precisión de la impresión con pigmentos con el trabajo artesanal, creando piezas terminadas que pueden funcionar como obras de arte plenas — no solo reproducciones.</p><p>Cada elemento de la realización — desde el papel, pasando por el passe-partout, hasta el marco de madera maciza — se selecciona pensando en la durabilidad, la estética y el valor de colección.</p>"
+      },
+      "text_FwqCDk": {
+        "text": "<p>Es un taller independiente donde creo impresiones Fine Art de calidad coleccionista y proporciono su enmarcación integral de calidad galería.<br/><br/>Cada proyecto lo realizo personalmente — desde la cuidadosa corrección de imagen, pasando por la impresión con pigmentos precisa, hasta la selección de materiales de archivo y el enmarcado artesanal.<br/><br/>Trabajo según estándares museísticos, utilizando soportes libres de ácido y técnicas duraderas que garantizan la estabilidad y permanencia de las impresiones a largo plazo.<br/><br/>Mi objetivo es crear obras de valor real — estético, material y de colección.</p>"
+      },
+      "text_EgnMm8": {
+        "text": "<h2>Giclée Art </h2><p></p><p>Es un taller independiente donde creo impresiones Fine Art de calidad coleccionista y proporciono su enmarcación integral de calidad galería.<br/><br/>Cada proyecto lo realizo personalmente — desde la cuidadosa corrección de imagen, pasando por la impresión con pigmentos precisa, hasta la selección de materiales de archivo y el enmarcado artesanal.<br/><br/>Trabajo según estándares museísticos, utilizando soportes libres de ácido y técnicas duraderas que garantizan la estabilidad y permanencia de las impresiones a largo plazo.<br/><br/>Mi objetivo es crear obras de valor real — estético, material y de colección.</p>"
+      },
+      "text_ywirTH": {
+        "text": "<h2>Restauración de obras</h2>"
+      },
+      "text_EpbDYf": {
+        "text": "<p><br/>Una parte importante de mi actividad es la restauración digital de imágenes dañadas o degradadas, tanto de clásicos conocidos como de obras olvidadas.<br/><br/>Este proceso consiste en la reconstrucción precisa de detalles, la eliminación de daños y la restauración del equilibrio tonal y cromático original — con pleno respeto por el carácter del original.</p><p>Trato cada imagen de forma individual, evitando el efecto artificial de una «corrección excesiva». Mi objetivo es restaurar su valor visual original, no reinterpretarla.</p><p>Las imágenes restauradas pueden producirse posteriormente como impresiones Fine Art de archivo y enmarcarse según el estándar de galería.</p><p>Las restauraciones de pinturas están firmadas con la colección de autor:<br/><br/><strong>© Giclée Art — Restoration Edition 2026</strong><br/><br/><br/><br/></p>"
+      },
+      "text_9XdqrW": {
+        "text": "<p>Antes de imprimir, aplico una corrección cromática propia, adaptada al carácter de la obra y al soporte elegido.</p><p>No me baso únicamente en perfiles estándar — analizo cada imagen de forma individual, cuidando la tonalidad, la profundidad y la coherencia cromática en el contexto de la impresión final.</p><p>Presto especial atención a las transiciones tonales, al detalle en luces y sombras, y a la reproducción natural de los colores en papeles artísticos.</p><p>El objetivo no es solo la corrección técnica, sino lograr un efecto que responda a la intención del autor y preserve la plena calidad visual en forma física.</p>"
+      },
+      "button_UgW9Kt": {
+        "label": "Ver todo"
+      },
+      "text_qLVbAJ": {
+        "text": "<h2>Potencial que no siempre es visible<br/></h2>"
+      },
+      "text_FhBhaC": {
+        "text": "<p>Algunas fotografías, a pesar de una buena composición, pueden parecer fallidas — por una colorimetría, luz o tonalidad inadecuadas.</p><p>Mediante una corrección precisa, restauro sus proporciones y estética adecuadas, revelando la calidad que originalmente estaba oculta en ellas.</p>"
+      },
+      "text_rmKL7r": {
+        "text": "<h3>Ve la diferencia</h3>"
+      },
+      "text_zLzkLW": {
+        "text": "<p><br/>La primera colección de autor del mundo de pinturas restauradas digitalmente.<br/><br/></p>"
+      },
+      "text_nPizan": {
+        "text": "<h5>¿Eres fotógrafo o fotógrafa de sesiones y quieres colaborar con Giclée Art? Te invito a contactar.</h5><h5>Como parte de la colaboración, recibes:</h5><h5><br/>– descuentos para tus clientes en productos Giclée Art<br/>– presentación de tus obras seleccionadas en el sitio Giclée Art con enlace a tus redes sociales<br/>– promoción de tu trabajo en las redes sociales de Giclée Art</h5><h5>La colaboración tiene carácter de asociación — combinamos la estética de la fotografía con la impresión artística premium.</h5>"
+      },
+      "text_HJGb9e": {
+        "text": "<h2>Preguntas frecuentes</h2>"
+      },
+      "text_dQBDL3": {
+        "text": "<h2>Preguntas frecuentes</h2>"
+      },
+      "accordion_row_mUQFCU": {
+        "heading": "¿Cuál es el tiempo de procesamiento del pedido?"
+      },
+      "text_Q8RMTC": {
+        "text": "<p>El tiempo de procesamiento del pedido es de 3 a 7 días. Esto está relacionado con el plazo de entrega de la madera y los materiales necesarios para la producción. Siempre intento mantener existencias mínimas de madera, sin embargo, antes del acabado — que incluye la impregnación — la madera es propensa a deformarse. Por eso realizo los productos de principio a fin con materiales recién entregados.<br/><br/>El proceso de producción consta de muchas etapas, desde el corte de la madera, pasando por la aplicación de diversas capas de acabado que deben secar. Hay que contar: día 1 — corte y imprimación, día 2 — aceitado e impresión, otros 3 días para el secado inicial y endurecimiento de la cera aceitosa, así como el secado del papel tras aplicar el spray protector</p>"
+      },
+      "accordion_row_gq7xgd": {
+        "heading": "¿Cuál es el tiempo de envío?"
+      },
+      "text_dbKFYM": {
+        "text": "<p>Una vez completado el producto, la imagen se empaqueta y envía de inmediato, independientemente de la hora del día o de la noche, a través de un locker de paquetería. Tras el envío, recibirás un correo electrónico con más información. Los envíos suelen llegar en 1–2 días laborables</p>"
+      },
+      "accordion_row_fxrNFP": {
+        "heading": "¿Es posible el contacto telefónico?"
+      },
+      "text_KT9gtp": {
+        "text": "<p>Lamentablemente no. Dirijo el negocio yo solo y no puedo atender llamadas durante el día mientras trabajo. Por favor, contáctame por correo electrónico. Normalmente respondo por la tarde o de noche.</p>"
+      },
+      "accordion_row_VwgmXW": {
+        "heading": "¿Dónde se producen sus productos?"
+      },
+      "text_kCYhHF": {
+        "text": "<p>Mi taller está ubicado en Puck, voivodato de Pomerania, sin embargo no hay posibilidad de recogida personal</p>"
+      },
+      "accordion_row_7nCpLH": {
+        "heading": "¿Cuánto cuesta el envío?"
+      },
+      "text_BnRprG": {
+        "text": "<p>El envío es completamente gratuito</p>"
+      },
+      "text_kdAGGw": {
+        "text_part1": "<p>Giclée Art se basa en la idea de que una obra de arte no termina con el archivo digital.<br/><br/>Solo se completa cuando recibe su forma final — coherente, de archivo y lista para la exposición.<br/><br/>En el trabajo con material visual, opero en dos ámbitos paralelos.<br/><br/>El primero son las pinturas — a menudo antiguas, amarillentas, olvidadas o que requieren un nuevo tratamiento en forma de reproducciones. En este proceso las trato como materia cultural que puede devolverse a la vida mediante corrección tonal y cromática, impresión Fine Art precisa y enmarcación consciente. De este modo recuperan su presencia, profundidad y capacidad de funcionar en el espacio contemporáneo.<br/><br/>El segundo ámbito es la fotografía confiada a mí para su realización. En este caso no recreo el pasado, sino que cierro el proceso creativo, dando a la imagen su forma final y material.<br/><br/",
+        "text_part2": ">Solo en forma de impresión y enmarcación la imagen adquiere escala, estructura y relación con la luz que le permiten existir como objeto, no solo como registro digital.<br/><br/>Creo que la fotografía y la imagen «viven» plenamente solo cuando abandonan la pantalla y se transfieren al mundo físico.<br/><br/>Por eso trato cada proyecto como un proceso de transición<br/><br/>De imagen potencial — a imagen presente.<br/><br/>De archivo — a objeto.<br/><br/>De información — a materia.</p>"
+      },
+      "text_9ftdzW": {
+        "text_part1": "<p>Giclée Art se basa en la idea de que una obra de arte no termina con la imagen.<br/><br/>Solo se completa cuando recibe su forma final — coherente, de archivo y lista para la exposición.<br/><br/><br/>En el trabajo con material visual, opero en dos ámbitos paralelos.<br/><br/>El primero son las pinturas — a menudo antiguas, amarillentas, olvidadas o que requieren un nuevo tratamiento en forma de reproducciones. En este proceso las trato como materia cultural que puede devolverse a la vida mediante impresión Fine Art precisa y enmarcación consciente. De este modo recuperan su presencia, profundidad y capacidad de funcionar en el espacio contemporáneo.<br/><br/>El segundo ámbito es la fotografía — tanto autoral como confiada a mí para su realización. En este caso no recreo el pasado, sino que cierro el proceso creativo, dando a la imagen su forma final y material.<br/><br/",
+        "text_part2": ">Solo en forma de impresión y enmarcación adquieren escala, estructura y relación con la luz que les permiten existir como objeto, no solo como registro digital.<br/><br/>Creo que la fotografía y la imagen «viven» plenamente solo cuando abandonan la pantalla y se transfieren al mundo físico.<br/><br/>Solo en forma de impresión y enmarcación adquieren escala, estructura y relación con la luz que les permiten existir como objeto, no solo como registro digital.<br/><br/>Por eso trato cada proyecto como un proceso de transición<br/><br/>De imagen potencial — a imagen presente.<br/><br/>De archivo — a objeto.<br/><br/>De información — a materia.</p>"
+      },
+      "text_8JmYGT": {
+        "text": "<h2>Novedades</h2>"
+      },
+      "text_DNFLhc": {
+        "text": "<p>Hechos con esmero y amados incondicionalmente por nuestros clientes.</p>"
+      },
+      "text_nWcG7K": {
+        "text": "<h2><strong>Convierte la fotografía en una imagen atemporal</strong></h2>"
+      },
+      "text_tJcVyA": {
+        "text": "<p>Tu foto merece más que una pantalla. La transformamos en una elegante impresión fine art que parece una obra creada para una galería.</p>"
+      },
+      "button_gzAGaV": {
+        "label": "Elegir una foto"
+      },
+      "text_GifUG3": {
+        "text": "<p><strong>Giclée Frame™</strong> es un sistema de enmarcación propio que creé como parte integral de cada realización de mi taller.</p><p>No es un marco estándar — es una forma de exposición pensada, diseñada para subrayar el carácter de la imagen y darle su dimensión final de galería.</p><p>Cada elemento del enmarcado se realiza a mano, con madera maciza y materiales libres de ácido que cumplen los estándares de archivo. La construcción del marco y el método de montaje se han desarrollado para garantizar tanto la estética como la estabilidad a largo plazo de la obra.</p>"
+      },
+      "jumbo_text_NBbG7x": {
+        "text": "materiales"
+      },
+      "text_79rJDi": {
+        "text": "<p>Para crear Giclée Frame™, utilizo exclusivamente materiales cuidadosamente seleccionados:</p><p><strong>— madera maciza con veta natural<br/>— passe-partout libre de ácido de calidad galería<br/>— componentes de archivo, químicamente neutros</strong></p><p>Así, el enmarcado no solo realza las cualidades estéticas de la obra, sino que también la protege de la degradación con el tiempo.</p>"
+      },
+      "jumbo_text_Xz3A7b": {
+        "text": "ACABADO DE LA MADERA"
+      },
+      "text_xktcAN": {
+        "text": "<p>Los marcos se acaban con ceras aceitosas naturales Rubio Monocoat, que protegen la superficie de la madera al tiempo que subrayan su estructura y carácter.</p><p>En el acabado negro aplico además una capa Precolor que profundiza el color y garantiza un tinte uniforme y saturado.</p><p>El sistema aplicado no crea una capa artificial — la madera conserva su naturalidad y su estructura permanece visible y palpable.</p><p>Los aceites utilizados se basan en ingredientes naturales, incluido el aceite de lino, y se caracterizan por un contenido cero de COV (compuestos orgánicos volátiles). La fórmula sin disolventes garantiza emisiones muy bajas y uso seguro. Lo confirman certificaciones internacionales como GREENGUARD Gold</p><p>El resultado es un acabado respetuoso tanto con el medio ambiente como con el espacio donde se expone la obra — duradero, natural y que conserva su carácter durante años.</p>"
+      },
+      "text_e9qjY6": {
+        "text_part1": "<p>El passe-partout utilizado en mi taller se fabrica con cartón de archivo de alta calidad de tres capas, diseñado para el enmarcado profesional de obras de arte.<br/><br/>La capa superior está hecha de papel libre de ácido, teñido en masa <strong>Fabriano Elle Erre (Bianco)</strong> — un material con alta resistencia al envejecimiento y a la luz, que cumple la norma ISO 9706 «Long Life».<br/><br/>El núcleo está hecho de cartón libre de ácido, que no amarillea, con pH neutro, que contiene una reserva alcalina que protege adicionalmente la obra de la degradación con el tiempo. El conjunto se completa con una capa inferior de papel de alta calidad que estabiliza la construcción.<br/><br/>Los elementos se unen con adhesivos acuosos no tóxicos, libres de disolventes, lo que garantiza total seguridad para la obra enmarcada.</p>",
+        "text_part2": "<p>Cada passe-partout se corta en ángulo de 45°, creando la característica «ventana» que introduce una sutil profundidad y subraya la relación entre la imagen y su enmarcado.</p><p>Combinado con una impresión Fine Art, forma un elemento integral del sistema de enmarcación, dando a la obra espacio, estructura y carácter de galería.</p>"
+      },
+      "text_xyy4fN": {
+        "text_part1": "<p>En el proceso de impresión, utilizo exclusivamente papeles Fine Art profesionales que constituyen la base de la calidad y durabilidad de la obra final.</p><p>Los soportes principales son Hahnemühle Photo Rag 308 y Epson Fine Art Velvet — papeles con estructura excepcional, diseñados para la reproducción artística en el más alto estándar.</p><p>Su superficie se caracteriza por una textura sutil y natural que da a la impresión profundidad y un carácter cercano a las técnicas artísticas tradicionales. El acabado mate elimina los reflejos de luz, permitiendo concentrarse plenamente en la imagen y su tonalidad.</p><p>Los soportes utilizados son completamente libres de ácido y de archivo, lo que garantiza alta resistencia al envejecimiento y estabilidad cromática a largo plazo. Gracias a ello, la obra conserva su calidad visual durante décadas, sin pérdida de detalle ni profundidad cromática.</p>",
+        "text_part2": "<p>Cada impresión se realiza en tecnología de pigmentos, que combinada con el papel Fine Art permite una excepcional gama tonal, precisión de detalle y un carácter noble de galería.</p><p>El resultado es una imagen que no es solo una reproducción, sino un objeto artístico pleno — preparado para exposición profesional y almacenamiento de archivo.</p>"
+      },
+      "jumbo_text_bX7tqP": {
+        "text": "PROPORCIONES Y LA PROPORCIÓN ÁUREA"
+      },
+      "text_KxVYV6": {
+        "text_part1": "<p>En el sistema Giclée Frame™, las proporciones del enmarcado no son accidentales — constituyen una relación elaborada conscientemente entre la imagen, el passe-partout y el marco.</p><p>Un principio clave es el uso de la armonía visual basada en la proporción áurea, utilizada durante siglos en el arte, la arquitectura y la estética clásica como patrón de equilibrio natural.</p><p>La proporción áurea (φ – «phi») es una relación matemática en la que la razón del todo a la parte mayor es igual a la razón de la parte mayor a la menor. Su valor es aproximadamente <strong>1,618</strong>. En la práctica, significa una proporción percibida de forma natural e intuitiva como armoniosa y estable para el ojo humano, independientemente de la conciencia de su estructura matemática.</p><p>La relación de la superficie del papel con el ancho del passe-partout y su relación con el marco se ajusta al tamaño del producto en 3 tamaños: M, L y XL.</p>",
+        "text_part2": "<p>El objetivo de este proceso no es la decoración, sino lograr un equilibrio visual en el que la imagen «respira» en el espacio del enmarcado y gana un punto focal natural para el ojo. Me opongo conscientemente a la tendencia galerística contemporánea que dice que cuanto mayor sea el passe-partout, mejor</p><p>Gracias a ello, cada realización posee su propia lógica interna de proporciones — no derivada de una plantilla, sino de principios de armonía que organizan la percepción de la imagen.</p><p>El resultado es una composición en la que todos los elementos coexisten en equilibrio, creando un objeto visual coherente y bien equilibrado.</p>"
+      },
+      "jumbo_text_txPMEr": {
+        "text": "Dimensiones de los productos"
+      },
+      "text_d3aDXd": {
+        "text": "<p>Cada realización sale del taller como una obra completamente terminada — lista para exposición inmediata.</p><p>No requiere enmarcado adicional ni intervención. Todos los elementos han sido diseñados y ejecutados como un conjunto coherente.</p>"
+      },
+      "text_aDtPRn": {
+        "text": "<h3>Colaboración para fotógrafos<br/></h3>"
+      },
+      "text_DxzKPb": {
+        "text": "<p>Giclée Art es un espacio para creadores que trabajan con emoción, estética y calidad sin compromisos.<br/><br/>Si creas sesiones fotográficas y quieres que tus obras vivan en forma de impresión de calidad museística — te invito a colaborar.</p>"
+      },
+      "text_Bn4r9Y": {
+        "text": "<h2>Una mejor experiencia para tus clientes<br/></h2>"
+      },
+      "text_XJGn6y": {
+        "text": "<p>Colaborando conmigo, puedes ofrecer a tus clientes un descuento dedicado en productos Giclée Art.<br/><br/>Así tus sesiones ganan valor añadido — los clientes reciben no solo fotos, sino una forma lista y lujosa de su presentación.<br/></p>"
+      },
+      "text_6yVLKh": {
+        "text": "<h3>Tu trabajo en el espacio Giclée Art<br/></h3>"
+      },
+      "text_axjktk": {
+        "text": "<p>Publico realizaciones seleccionadas en el sitio Giclée Art con firma y enlace a tus redes sociales.<br/><br/>No es solo exposición — es presentación de tu trabajo en el contexto de una marca premium que eleva su valor visual.</p>"
+      },
+      "text_tQHMCe": {
+        "text": "<h3>Promoción mutua y desarrollo de marca<br/></h3>"
+      },
+      "text_wTM8Wz": {
+        "text": "<p>Construimos una relación basada en calidad, estética y crecimiento compartido — no una colaboración puntual, sino una asociación a largo plazo.<br/></p>"
+      },
+      "text_xykEfp": {
+        "text": "<h3>Colaboración para fotógrafos</h3>"
+      },
+      "text_LJAG43": {
+        "text": "<p>Giclée Art es un espacio para creadores que trabajan con emoción, estética y calidad sin compromisos.<br/><br/>Si creas sesiones fotográficas y quieres que tus obras vivan en forma de impresión de calidad museística — te invito a colaborar.</p>"
+      },
+      "text_MeaHNN": {
+        "text": "<p>Giclée Art es un espacio para creadores que trabajan con emoción, estética y calidad sin compromisos.<br/><br/>Si creas sesiones fotográficas y quieres que tus obras vivan en forma de impresión de calidad museística — te invito a colaborar.</p>"
+      },
+      "text-2": {
+        "text": "<p>Suscríbete al boletín para ser el primero en enterarte de nuestro lanzamiento</p>"
+      },
+      "text_cbcgyb": {
+        "text": "<h3>También te puede gustar</h3>"
+      }
+    },
+    "sections": {
+      "giclee_artist_collection_showcase_7djLQQ": {
+        "heading": "Obras seleccionadas",
+        "cta_label": "Ver toda la colección"
+      }
+    },
+    "ui": {
+      "splash_subtitle": "Bienvenido al mundo del arte",
+      "catalog_artists": "Artistas",
+      "catalog_view_collection": "Ver colección",
+      "showcase_eyebrow_default": "Colección del artista",
+      "showcase_heading_default": "Obras seleccionadas",
+      "showcase_lead_default": "Una selección curada de reproducciones fine art — presentada como en una galería, no en una tienda.",
+      "showcase_cta_default": "Ver toda la colección",
+      "showcase_prev_artist": "Artista anterior",
+      "showcase_next_artist": "Artista siguiente",
+      "showcase_prev_work": "Obra anterior",
+      "showcase_gallery": "Galería de obras",
+      "showcase_no_works": "No hay obras disponibles",
+      "showcase_gallery_position": "Galería de obras, posición {{ current }} de {{ total }}",
+      "showcase_go_to_work": "Ir a la obra {{ index }}",
+      "pdp_preview_show": "Vista previa de la imagen",
+      "pdp_preview_hide": "Ocultar vista previa",
+      "mockup_back_preview": "Volver a la vista previa",
+      "mockup_upload_first": "Sube una foto primero",
+      "mockup_variant_unavailable": "Variante no disponible",
+      "mockup_upload_error": "Error de carga",
+      "mockup_try_again": "Intentar de nuevo",
+      "mockup_no_product": "Sin datos del producto",
+      "mockup_invite_html": "<strong>¿Te gusta?</strong>Configura y añade al carrito. Tu archivo con el recorte se enviará automáticamente tras el pago.",
+      "mockup_quality_title": "Calidad de impresión",
+      "mockup_quality_upload": "Sube una foto para ver la evaluación de calidad de impresión.",
+      "mockup_quality_loading": "Cargando análisis…",
+      "mockup_quality_select_size": "Selecciona un tamaño para ver el análisis.",
+      "mockup_wood_oak": "roble",
+      "mockup_wood_pine": "Pino",
+      "mockup_color_light_brown": "Marrón claro",
+      "mockup_color_brown": "Marrón",
+      "mockup_color_dark_brown": "Marrón oscuro",
+      "mockup_unavailable": "No disponible",
+      "print_upload_prompt": "Sube una imagen para ver el análisis.",
+      "print_quality_highest": "Máxima calidad",
+      "print_quality_highest_note": "Máxima nitidez, Fine Art, impresión premium. Mejor visualización a 20–30 cm",
+      "print_quality_very_good": "Muy buena calidad",
+      "print_quality_very_good_note": "Prácticamente sin diferencia respecto a 300 PPI a distancia normal de 30–50 cm",
+      "print_quality_good": "Buena calidad",
+      "print_quality_good_note": "Sigue siendo una buena impresión, pero con menos margen de detalle; distancia recomendada 50–80 cm",
+      "print_quality_average": "Calidad media",
+      "print_quality_average_note": "Efecto de exposición, ligeramente más suave, aceptable a 80–120 cm",
+      "print_quality_low_note": "Demasiados pocos PPI para ver de cerca; solo se ve bien a 120 cm o más",
+      "print_quality_critical_note": "Resolución críticamente baja — pixelación visible y falta de detalle incluso de lejos; no apto para este formato"
     }
   }
 }

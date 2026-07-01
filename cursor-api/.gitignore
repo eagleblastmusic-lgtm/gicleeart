@@ -1,3 +1,10 @@
+# Python bytecode / test cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+
 # Environment Configuration
 .env
 .env.*
@@ -57,8 +64,21 @@ Komponenty/_shared/data/fx_cache.json
 # Stan synchronizacji zamowien z Shopify
 Komponenty/produkcja/dane/sync_state.json
 
-# socialmedia/cykl - lokalne dane runtime
-Komponenty/socialmedia/data/cykl/meta_credentials.json   # tokeny Meta API - SEKRET
-Komponenty/socialmedia/data/cykl/meta_state.json         # log publikacji (duzy)
-Komponenty/socialmedia/data/cykl/Obrazy/                 # zdjecia lokalne - duze pliki
+# Lokalna baza zamowien (adresy klientow — nie w repo)
+Komponenty/produkcja/dane/zamowienia.json
+Komponenty/produkcja/dane/notified.json
+
+# notatnik - notatki osobiste (nie techniczne)
+Komponenty/notatnik/notatki/Do Urzędu pracy/
+
+
+# socialmedia/cykl - lokalne dane runtime (tokeny Meta API - SEKRET)
+Komponenty/socialmedia/data/cykl/meta_credentials.json
+# log publikacji (duzy)
+Komponenty/socialmedia/data/cykl/meta_state.json
+# zdjecia lokalne - duze pliki
+Komponenty/socialmedia/data/cykl/Obrazy/
+
+# Analiza ruchu — lokalna baza eventów
+Komponenty/analytics/dane/analytics.db
 # queue.json + generation_state.json + config.json - commitujemy (to plan cyklu)

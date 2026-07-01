@@ -1,0 +1,28 @@
+/* PDP nowy-szblon-produktu — scroll reveal: nagłówek, opis, SZCZEGÓŁY, galeria, konfigurator */
+
+main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .giclee-pdp-reveal {
+  will-change: opacity, transform;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .giclee-pdp-reveal:not(.is-revealed) {
+    opacity: 0;
+    transform: translateY(1.35rem);
+  }
+
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .giclee-pdp-reveal--header:not(.is-revealed) {
+    transform: translateY(1rem);
+  }
+
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .giclee-pdp-reveal--gallery:not(.is-revealed) {
+    transform: translateY(1.35rem) scale(0.985);
+  }
+
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .giclee-pdp-reveal.is-revealed {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.72s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.72s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}

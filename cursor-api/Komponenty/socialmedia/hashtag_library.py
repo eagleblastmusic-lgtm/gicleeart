@@ -43,11 +43,21 @@ SUGGESTED_THEMES_EN: list[str] = [
 
 
 def locked_for(language: str) -> list[str]:
-    return LOCKED_HASHTAGS_EN if language.lower() == "en" else LOCKED_HASHTAGS_PL
+    lc = (language or "").lower()
+    if lc == "en":
+        return LOCKED_HASHTAGS_EN
+    if lc == "oba":
+        return merge_unique(LOCKED_HASHTAGS_PL, LOCKED_HASHTAGS_EN)
+    return LOCKED_HASHTAGS_PL
 
 
 def suggested_for(language: str) -> list[str]:
-    return SUGGESTED_THEMES_EN if language.lower() == "en" else SUGGESTED_THEMES_PL
+    lc = (language or "").lower()
+    if lc == "en":
+        return SUGGESTED_THEMES_EN
+    if lc == "oba":
+        return merge_unique(SUGGESTED_THEMES_PL, SUGGESTED_THEMES_EN)
+    return SUGGESTED_THEMES_PL
 
 
 def merge_unique(*groups: list[str]) -> list[str]:

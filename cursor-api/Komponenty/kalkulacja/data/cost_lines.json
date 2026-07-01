@@ -1,0 +1,206 @@
+[
+  {
+    "name": "Drewno",
+    "section": "production",
+    "costs": {
+      "A4_sosna": 19.17,
+      "A3+_sosna": 26.666666666666668,
+      "A2_sosna": 34.166666666666664,
+      "A4_dab": 39.166666666666664,
+      "A3+_dab": 56.666666666666664,
+      "A2_dab": 74.16666666666667
+    }
+  },
+  {
+    "name": "Passepartout",
+    "section": "production",
+    "costs": {
+      "A4_sosna": 10.0,
+      "A3+_sosna": 25.0,
+      "A2_sosna": 40.0,
+      "A4_dab": 10.0,
+      "A3+_dab": 25.0,
+      "A2_dab": 40.0
+    }
+  },
+  {
+    "name": "Foamboard Biała",
+    "section": "production",
+    "costs": {
+      "A4_sosna": 7.0,
+      "A3+_sosna": 19.008589999999998,
+      "A2_sosna": 26.931610000000003,
+      "A4_dab": 7.0,
+      "A3+_dab": 19.008589999999998,
+      "A2_dab": 26.931610000000003
+    }
+  },
+  {
+    "name": "ZAWIESZKA",
+    "section": "production",
+    "costs": {
+      "A4_sosna": 0.39990000000000003,
+      "A3+_sosna": 0.39990000000000003,
+      "A2_sosna": 0.39990000000000003,
+      "A4_dab": 0.39990000000000003,
+      "A3+_dab": 0.39990000000000003,
+      "A2_dab": 0.39990000000000003
+    }
+  },
+  {
+    "name": "RMC Precolor 1L",
+    "section": "production",
+    "costs": {
+      "A4_sosna": 1.245,
+      "A3+_sosna": 1.992,
+      "A2_sosna": 2.49,
+      "A4_dab": 1.245,
+      "A3+_dab": 1.992,
+      "A2_dab": 2.49
+    }
+  },
+  {
+    "name": "RMC 2C 1L",
+    "section": "production",
+    "costs": {
+      "A4_sosna": 2.965,
+      "A3+_sosna": 4.744,
+      "A2_sosna": 5.93,
+      "A4_dab": 2.965,
+      "A3+_dab": 4.744,
+      "A2_dab": 5.93
+    }
+  },
+  {
+    "name": "Klej",
+    "section": "production",
+    "costs": {
+      "A4_sosna": 0.09080338266384778,
+      "A3+_sosna": 0.09080338266384778,
+      "A2_sosna": 0.09080338266384778,
+      "A4_dab": 0.09080338266384778,
+      "A3+_dab": 0.09080338266384778,
+      "A2_dab": 0.09080338266384778
+    }
+  },
+  {
+    "name": "Energia CIĘCIE",
+    "section": "production",
+    "costs": {
+      "A4_sosna": 0.275,
+      "A3+_sosna": 0.275,
+      "A2_sosna": 0.275,
+      "A4_dab": 0.275,
+      "A3+_dab": 0.275,
+      "A2_dab": 0.275
+    }
+  },
+  {
+    "name": "Energia SZLIF",
+    "section": "production",
+    "costs": {
+      "A4_sosna": 1.1,
+      "A3+_sosna": 1.6500000000000001,
+      "A2_sosna": 2.2,
+      "A4_dab": 1.1,
+      "A3+_dab": 1.6500000000000001,
+      "A2_dab": 2.2
+    }
+  },
+  {
+    "name": "PAPIER ŚCIERNY ABRANET P80 I P120",
+    "section": "production",
+    "costs": {
+      "A4_sosna": 0.8583333333333334,
+      "A3+_sosna": 0.8583333333333334,
+      "A2_sosna": 0.8583333333333334,
+      "A4_dab": 0.9583333333333333,
+      "A3+_dab": 0.9583333333333333,
+      "A2_dab": 0.9583333333333333
+    }
+  },
+  {
+    "name": "Rękawiczki nitrylowe",
+    "section": "production",
+    "costs": {
+      "A4_sosna": 0.23,
+      "A3+_sosna": 0.23,
+      "A2_sosna": 0.23,
+      "A4_dab": 0.23,
+      "A3+_dab": 0.23,
+      "A2_dab": 0.23
+    }
+  },
+  {
+    "name": "Szmatka z mikrofibry ALLEGRO",
+    "section": "production",
+    "costs": {
+      "A4_sosna": 0.42,
+      "A3+_sosna": 0.42,
+      "A2_sosna": 0.42,
+      "A4_dab": 0.42,
+      "A3+_dab": 0.42,
+      "A2_dab": 0.42
+    }
+  },
+  {
+    "name": "Hahnemühle Photo Rag 308",
+    "section": "print",
+    "costs": {
+      "A4_sosna": 10.6272,
+      "A3+_sosna": 25.042800000000003,
+      "A2_sosna": 37.736399999999996,
+      "A4_dab": 10.6272,
+      "A3+_dab": 25.042800000000003,
+      "A2_dab": 37.736399999999996
+    }
+  },
+  {
+    "name": "KOSZT WYDRUKU",
+    "section": "print",
+    "costs": {
+      "A4_sosna": 3.71,
+      "A3+_sosna": 9.43,
+      "A2_sosna": 14.81,
+      "A4_dab": 3.71,
+      "A3+_dab": 9.43,
+      "A2_dab": 14.81
+    }
+  },
+  {
+    "name": "TAŚMA BEZKWASOWA",
+    "section": "print",
+    "costs": {
+      "A4_sosna": 0.5152,
+      "A3+_sosna": 0.7056,
+      "A2_sosna": 0.84,
+      "A4_dab": 0.5152,
+      "A3+_dab": 0.7056,
+      "A2_dab": 0.84
+    }
+  },
+  {
+    "name": "KARTON",
+    "section": "packaging",
+    "costs": {
+      "A4_sosna": 3.2,
+      "A3+_sosna": 5.8,
+      "A2_sosna": 9.9,
+      "A4_dab": 5.8,
+      "A3+_dab": 3.75,
+      "A2_dab": 9.9
+    }
+  },
+  {
+    "name": "WYSYŁKA FURGONETKA DPD",
+    "section": "shipping",
+    "costs": {
+      "A4_sosna": 12.71,
+      "A3+_sosna": 12.71,
+      "A2_sosna": 12.71,
+      "A4_dab": 12.71,
+      "A3+_dab": 12.71,
+      "A2_dab": 12.71
+    }
+  }
+]

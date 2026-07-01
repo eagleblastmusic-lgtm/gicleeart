@@ -4,12 +4,177 @@
   {{ closest.product | structured_data }}
 </script>
 
+{%- liquid
+  assign giclee_pdp_template = false
+  if template.suffix == 'nowy-szblon-produktu' or template.suffix == 'szablon-produktu-v2' or template.suffix == 'szablon-wlasna-fotografia'
+    assign giclee_pdp_template = true
+  endif
+
+  assign show_sticky_add_to_cart = section.settings.enable_sticky_add_to_cart
+  if template.suffix == 'szablon-wlasna-fotografia' or template.suffix == 'szablon-produktu-v2'
+    assign show_sticky_add_to_cart = false
+  endif
+-%}
+
+{%- if template.suffix != 'szablon-wlasna-fotografia' and closest.product != blank -%}
+  <script>
+    window.__GICLEE_PDP_PRODUCT__ = {
+      "id": {{ closest.product.id | json }},
+      "optionNames": [
+        {%- for option_name in closest.product.options -%}
+          {{ option_name | json }}{%- unless forloop.last -%},{%- endunless -%}
+        {%- endfor -%}
+      ],
+      "variants": [
+        {%- for variant in closest.product.variants -%}
+          {
+            "id": {{ variant.id | json }},
+            "available": {{ variant.available | json }},
+            "price": {{ variant.price | json }},
+            "compare_at_price": {{ variant.compare_at_price | json }},
+            "options": {{ variant.options | json }}
+          }{%- unless forloop.last -%},{%- endunless -%}
+        {%- endfor -%}
+      ]
+    };
+  </script>
+  <script src="{{ 'giclee-pdp-variant-sync.js' | asset_url }}?v=pdp-sync-section-20260623-2250" defer></script>
+{%- endif -%}
+
+{%- comment -%} Zoom HD (R2) tylko na szablonach Giclee PDP {%- endcomment -%}
+{%- if template.suffix == 'nowy-szblon-produktu' or template.suffix == 'szablon-produktu-v2' -%}
+  <link rel="stylesheet" href="{{ 'giclee-product-scroll-reveal.css' | asset_url }}?v=scroll-reveal-split-20260605">
+  <script src="{{ 'giclee-product-scroll-reveal.js' | asset_url }}?v=scroll-reveal-split-20260605" defer></script>
+{%- endif -%}
+
+{%- if template.suffix == 'szablon-produktu-v2' -%}
+  <link rel="stylesheet" href="{{ 'giclee-product-before-after-compare.css' | asset_url }}?v=20260627">
+  <script src="{{ 'giclee-product-before-after-compare.js' | asset_url }}?v=20260627" defer></script>
+{%- endif -%}
+
+{%- if giclee_pdp_template -%}
+  <link rel="stylesheet" href="{{ 'giclee-product-zoom.css' | asset_url }}?v=zoom-top-visible-20260605">
+  {% render 'giclee-product-zoom', product: closest.product %}
+  <link rel="stylesheet" href="{{ 'giclee-product-gallery.css' | asset_url }}?v=mobile-gallery-sep-20260605">
+  <link rel="stylesheet" href="{{ 'giclee-product-trust.css' | asset_url }}?v=20260603">
+  <link rel="stylesheet" href="{{ 'giclee-product-process.css' | asset_url }}?v=20260603">
+  <script src="{{ 'giclee-product-process.js' | asset_url }}?v=20260603" defer></script>
+  <script src="{{ 'giclee-product-gallery.js' | asset_url }}?v=mobile-gallery-fit-20260605" defer></script>
+
+  {%- comment -%} Tytul + cena w prawej kolumnie — elegancki kroj jak w naglowku/opisie {%- endcomment -%}
+  {% style %}
+    .product-details h1 {
+      font-family: 'Bodoni Moda', Georgia, serif !important;
+      font-weight: 500 !important;
+      letter-spacing: 0.01em;
+    }
+
+    .product-details .price,
+    .product-details .price * {
+      font-family: 'Cormorant Garamond', Georgia, serif !important;
+    }
+
+    .product-details .price {
+      font-size: 1.35rem;
+      letter-spacing: 0.02em;
+    }
+  {% endstyle %}
+{%- endif -%}
+
+{%- comment -%} Nowoczesny, monochromatyczny wyglad przyciskow wariantow (override schematu) {%- endcomment -%}
+{% style %}
+  .variant-picker,
+  [data-giclee-passepartout-picker] {
+    --color-variant-background: transparent;
+    --color-variant-border: rgb(var(--color-foreground-rgb) / 0.22);
+    --color-variant-text: var(--color-foreground);
+    --color-variant-text-rgb: var(--color-foreground-rgb);
+    --color-variant-hover-background: rgb(var(--color-foreground-rgb) / 0.07);
+    --color-variant-hover-text: var(--color-foreground);
+    --color-variant-hover-border: rgb(var(--color-foreground-rgb) / 0.55);
+    --color-selected-variant-background: rgb(var(--color-foreground-rgb) / 0.12);
+    --color-selected-variant-border: var(--color-foreground);
+    --color-selected-variant-text: var(--color-foreground);
+    --color-selected-variant-hover-background: rgb(var(--color-foreground-rgb) / 0.18);
+    --color-selected-variant-hover-text: var(--color-foreground);
+    --color-selected-variant-hover-border: var(--color-foreground);
+  }
+
+  .variant-picker .variant-option__button-label,
+  .variant-picker .variant-option__button-label__pill,
+  [data-giclee-passepartout-picker] .variant-option__button-label,
+  [data-giclee-passepartout-picker] .variant-option__button-label__pill {
+    border-radius: 10px;
+  }
+
+  .variant-picker .variant-option__button-label,
+  [data-giclee-passepartout-picker] .variant-option__button-label {
+    padding-block: 0.7rem;
+    transition: border-color 0.18s ease, background-color 0.18s ease,
+      color 0.18s ease;
+  }
+
+  .variant-picker .variant-option--buttons legend,
+  [data-giclee-passepartout-picker].variant-option--buttons legend {
+    letter-spacing: 0.01em;
+    opacity: 0.85;
+  }
+
+  /* Passepartout poza variant-picker: dolny padding pickera (spacing bloku)
+     wpada nad passepartout jako zbyt duza przerwa. Nadpisz BEZPOSREDNIO
+     padding-block-end (longhand wygrywa z inline custom property) i zrownaj
+     z odstepem miedzy grupami opcji (.variant-option + .variant-option). */
+  .variant-picker:has(~ [data-giclee-passepartout-picker]) {
+    padding-block-end: var(--padding-md) !important;
+  }
+
+  [data-giclee-passepartout-picker].variant-option {
+    margin-top: calc(-1 * var(--padding-xs));
+  }
+
+  /* Mniejszy odstep miedzy cena a pierwsza grupa wariantow (Kolor) */
+  .product-details product-price + .divider {
+    margin-block-start: calc(-1 * var(--padding-xs));
+    margin-block-end: calc(-1 * var(--padding-xs));
+  }
+
+  .product-details .variant-picker {
+    margin-block-start: calc(-1 * var(--padding-lg));
+  }
+
+  /* Zachecajacy hover na "Dodaj do koszyka" */
+  .add-to-cart-button {
+    transition: background-color 0.28s ease, color 0.28s ease,
+      border-color 0.28s ease, box-shadow 0.28s ease;
+  }
+
+  .add-to-cart-button.button-secondary:hover {
+    --color-secondary-button-hover-background: color-mix(
+      in srgb,
+      var(--color-secondary-button-border) 78%,
+      var(--color-background)
+    );
+    --color-secondary-button-hover-border: var(--color-secondary-button-border);
+    --color-secondary-button-hover-text: var(--color-background);
+  }
+
+  .add-to-cart-button:hover {
+    box-shadow: 0 0 18px
+      color-mix(in srgb, var(--color-secondary-button-border) 38%, transparent);
+  }
+{% endstyle %}
+
 {% capture media_gallery %}
-  {%- content_for 'block',
-    type: '_product-media-gallery',
-    id: 'media-gallery',
-    closest.product: closest.product
-  -%}
+  {%- if giclee_pdp_template -%}
+    {%- comment -%} Wlasna galeria PDP (lewa kolumna): mockupy w ramie z passepartout {%- endcomment -%}
+    {% render 'giclee-product-gallery', product: closest.product %}
+  {%- else -%}
+    {%- content_for 'block',
+      type: '_product-media-gallery',
+      id: 'media-gallery',
+      closest.product: closest.product
+    -%}
+  {%- endif -%}
 {% endcapture %}
 
 {% capture product_details %}
@@ -24,7 +189,7 @@
   {% content_for 'blocks' %}
 {% endcapture %}
 
-{% if section.settings.enable_sticky_add_to_cart %}
+{% if show_sticky_add_to_cart %}
   {% liquid
     assign current_variant = product.selected_or_first_available_variant
     # Get the initial quantity based on quantity rules
@@ -91,7 +256,7 @@
           class="sticky-add-to-cart__title"
           data-testid="sticky-product-title"
         >
-          {{ product.title | escape }}
+          {%- render 'giclee-showcase-slide-title', title: product.title -%}
         </p>
         <div
           class="sticky-add-to-cart__variant"

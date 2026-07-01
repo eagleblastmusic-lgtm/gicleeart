@@ -160,6 +160,7 @@ def all_platforms() -> list[Platform]:
 LANGUAGES: list[tuple[str, str]] = [
     ("pl", "polski"),
     ("en", "angielski"),
+    ("oba", "oba (PL + EN)"),
 ]
 
 

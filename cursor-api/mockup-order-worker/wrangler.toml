@@ -1,0 +1,30 @@
+name = "giclee-mockup-orders"
+main = "src/index.js"
+compatibility_date = "2024-08-01"
+
+# Ten sam bucket co zoom HD — pliki klientów pod prefixem customer-uploads/
+[[r2_buckets]]
+binding = "UPLOADS"
+bucket_name = "giclee-zoom"
+
+[vars]
+MERCHANT_EMAIL = "gicleeartpl@gmail.com"
+PUBLIC_BASE_URL = "https://pub-c9a1bd43074c459d98d4cc0292b1210e.r2.dev"
+ALLOWED_ORIGINS = "https://gicleeart.eu,https://www.gicleeart.eu,https://giclee-art-3.myshopify.com"
+RESEND_FROM_PL = "Giclee Art <zamowienia@gicleeart.eu>"
+RESEND_FROM_INTL = "Giclee Art <orders@gicleeart.eu>"
+ANALYTICS_ALLOWED_SHOP_DOMAIN = "gicleeart.eu"
+ANALYTICS_HASH_SALT = "giclee-analytics"
+
+# D1 — baza eventów analityki (utwórz: npx wrangler d1 create giclee-analytics)
+# Wklej database_id z outputu poniżej:
+[[d1_databases]]
+binding = "ANALYTICS_DB"
+database_name = "giclee-analytics"
+database_id = "7f7ceffa-74bd-4066-bf33-6b4523d85165"
+migrations_dir = "migrations"
+
+# Sekrety (wrangler secret put …):
+#   RESEND_API_KEY
+#   SHOPIFY_WEBHOOK_SECRET
+#   ANALYTICS_COLLECT_SECRET  (= ten sam co ANALYTICS_COLLECT_SECRET w cursor-api/.env)

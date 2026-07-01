@@ -1,10 +1,10 @@
-# SHOP_KNOWLEDGE.md - Brief dla AI
+# SHOP_KNOWLEDGE.md - Brief dla AI (ARCHIWUM — tylko czytanie)
 
-> **Cel tego dokumentu:** dac modelowi AI w nowej sesji peln{a} wiedze o sklepie i aplikacji
-> bez koniecznosci czytania calego kodu. Wszystko, co AI musi wiedziec, zeby kontynuowac
-> rozwoj, znajduje sie tutaj. Zaktualizuj ten dokument **kazdy raz**, gdy zmieniasz
-> architekture (np. dodajesz nowy rynek, zmieniasz schemat tagow, dodajesz nowe pole
-> w prompcie LLM, dodajesz scope OAuth itd.).
+> **⚠️ Nie aktualizuj tego pliku.** Nowe fakty → [`docs/komponenty/`](docs/komponenty/) (prawda) · hub: [`docs/README.md`](docs/README.md)  
+> **START:** [`../MATKA.md`](../MATKA.md) · **Integracja:** [`../docs/zaleznosci.md`](../docs/zaleznosci.md)
+
+> **Cel historyczny:** kontekst biznesowy, rynki, tagi, prompty LLM sprzed refaktoryzacji docs modułowych.  
+> Czytaj **sekcję po sekcji** tylko gdy brakuje w pliku `docs/komponenty/<moduł>.md`. Nie skanuj całości.
 
 ---
 
@@ -12,7 +12,10 @@
 
 - **Sklep:** GicleeArt (Shopify, plan: standardowy)
 - **Domena:** `gicleeart.eu`
-- **Domyslna domena Shopify:** `giclee-art-3.myshopify.com`
+- **Domyslna domena Shopify:** `giclee-art-3.myshopify.com` (alias uzywany w `.env` SHOP
+  i przy `npm run oauth`). **Kanoniczny `myshopify_domain` sklepu to `19v3bj-n0.myshopify.com`**
+  (domena publiczna: `gicleeart.eu`) - OAuth zapisuje wlasnie ten kanoniczny adres w
+  `.shopify_session.json` (`shop`), to ten sam sklep "Giclee Art".
 - **Co sprzedajemy** (DWIE galezie, oba produkty na tej samej stronie, drukowane ta sama technika giclee):
   1. **Reprodukcje klasykow malarstwa** - gotowe produkty w katalogu, kazdy obraz to jeden produkt
      (np. "Hans Dahl - Babie lato"), z wariantami wymiaru / rodzaju drewna ramy / koloru ramy.
@@ -59,8 +62,10 @@ Sklep ma rownolegle wersje na 7 rynkow. Markup liczony **od ceny PL (bazowej)**.
 >
 > Kurs walut pobierany z **NBP API** (https://api.nbp.pl, darmowe, bez klucza) przez
 > `Komponenty/_shared/fx_rates.py`. Cache 24h w `Komponenty/_shared/data/fx_cache.json`.
-> Dialog `Rynki...` pokazuje aktualny kurs + przyciski "Odswiez z NBP" i "Kurs recznie...".
-> Shopify Admin API **nie udostepnia kursow FX** - dlatego uzywamy NBP.
+> Dialog `Rynki...` pokazuje aktualny kurs + przyciski "Odswiez z NBP", "Kurs recznie..." oraz
+> **EUR w Shopify...** (GraphQL `Shop.currencySettings`: `manualRate` / `rateUpdatedAt` dla EUR).
+> Przy kursie **automatycznym** w panelu Shopify pole `manualRate` jest puste — pelnej stawki
+> jak NBP API **nie ma** w Admin API; porownanie z NBP jest w tym samym oknie informacyjnym.
 
 ---
 
@@ -70,7 +75,7 @@ Sklep ma rownolegle wersje na 7 rynkow. Markup liczony **od ceny PL (bazowej)**.
 - **Aktywne jezyki (Online Store -> Languages):** PL, EN, DE, FR, ES, NL, IT.
 - **Co MUSI byc tlumaczone na kazdy z 6 jezykow obcych** dla kazdego produktu:
   - tytul produktu (czesc po mysjniku, np. `Babie lato` -> `Indian Summer` / `Été indien` itd.)
-  - opis (`body_html`) - 3 akapity i etykiety w tabeli "SZCZEGOLY"
+  - opis (`body_html`) - 3 akapity (+ opcjonalnie 4. z ciekawostkami o obrazie) i etykiety w tabeli "SZCZEGOLY"
   - SEO `title_tag` (metafield `global.title_tag`)
   - SEO `description_tag` (metafield `global.description_tag`)
   - alt text glownego zdjecia
@@ -86,16 +91,19 @@ Sklep ma rownolegle wersje na 7 rynkow. Markup liczony **od ceny PL (bazowej)**.
   ```
   read_products, write_products, read_publications, write_publications,
   read_translations, write_translations, read_markets, write_markets,
-  read_content, write_content, read_orders
+  read_content, write_content, read_orders, read_files, write_files,
+  read_online_store_navigation, write_online_store_navigation
   ```
   - `read_content, write_content` sa wymagane przez komponent **blog** (Blog/Article REST API).
   - `read_orders` jest wymagane przez komponent **produkcja** (polling zamowien Shopify).
+  - `read/write_online_store_navigation` - edycja menu nawigacji (GraphQL `menus`/`menuUpdate`),
+    uzywane do dodawania artystow do menu (patrz sekcja 9 + `add_artist_to_menu.py`).
   - **WORKFLOW dla nowego scope** (bezwzglednie w tej kolejnosci!):
     1. Dopisz scope do `.env` (SCOPES=...) **i** do `shopify.app.toml` (`[access_scopes] scopes = "..."`) - MUSZA sie zgadzac.
     2. `cd cursor-api && npm run deploy -- --allow-updates` -> push konfiguracji do Shopify Partners (opublikuje nowa wersje aplikacji).
     3. `cd cursor-api && npm run oauth` -> otworz `http://127.0.0.1:3000`, kliknij link z `?shop=giclee-art-3.myshopify.com`, zatwierdz nowe uprawnienia (sklep `.shopify_session.json` dostaje token ze wszystkimi scope'ami).
   - **NIE** pomijac kroku 2 (deploy) - bez tego Shopify nie wie o nowych scopach i OAuth pokaze stary, okrojony ekran zgody.
-  - Aktualna wersja opublikowana w Shopify Partners: `cursor-api-6` (kwiecien 2026).
+  - Aktualna wersja opublikowana w Shopify Partners: `cursor-api-9` (czerwiec 2026; dodane scope nawigacji).
 
 ---
 
@@ -108,14 +116,15 @@ cursor-api/                                # backend Pythona + OAuth + Shopify k
   shopify.app.toml                         # konfiguracja Shopify CLI (klient, scopes)
   oauth-server.mjs                         # Node OAuth server (port 3000)
   giclee_app/                              # launcher Tkinter (kafelki komponentow)
-    launcher.py                            # uruchamia komponenty jako osobne procesy
+    launcher.py                            # uruchamia komponenty jako osobne procesy; toolbar: Stan sesji, Dziennik akcji
+    session_status.py                      # raport tekstowy: .shopify_session.json, NBP fx_cache, mtime/git shopify.app.toml
     component_loader.py
     runtime.py
   Komponenty/                              # WSZYSTKIE komponenty GUI
     dodajobraz/                            # GLOWNY komponent - tworzenie produktow
       gui.py                               # Tkinter GUI (drag-drop, kolejka, prompt, batch, dialog cennika, dialog rynkow)
       create.py                            # orkiestrator: produkt + zdjecie + meta + smart-coll. + push tlumaczen
-      shopify_client.py                    # REST + GraphQL klient Shopify (products/translations/markets/price-lists)
+      shopify_client.py                    # REST + GraphQL; iter_each_product_page / fetch_all_products (anulowanie, postep)
       prompt_builder.py                    # buduje prompt LLM + waliduje JSON (z tlumaczeniami i18n)
       parser.py                            # parsuje 'Artysta - Tytul.jpg', sufiksy F2/KK/WK
       tags_taxonomy.py                     # PL: ALWAYS_TAGS, whitelisty styl/room/gift/genre, smart-collections (+ orientation/color)
@@ -124,7 +133,14 @@ cursor-api/                                # backend Pythona + OAuth + Shopify k
       html_template.py                     # szablon HTML body_html (tabela SZCZEGOLY)
       markets_config.json                  # 7 rynkow z markup %, locale, currency, URL, Shopify GIDs
       markets.py                           # helpery: load/save, compute_market_price, push do Shopify Markets/PriceLists API
+    _shared/activity_log.py                # dziennik zdarzen JSONL (Komponenty/_shared/data/activity_log.jsonl)
+    _shared/activity_log_ui.py              # okno podgladu + kopiowanie; task_notify.py = dzwiek po batchu
     nazwijobraz/                           # nazewnictwo + SEO obrazow zrodlowych
+    mockup/                                # mock-up ramki A4 -> galeria Shopify (mockup)
+      gui.py                               # drag-drop kolejka, wybór zestawu szablonu, batch upload
+      compositor.py                        # PIL: wstawienie obrazu w pole A4 (cover) + wykrywanie slotu
+      publish.py                           # parse nazwy, render WEBP, add_follow_up_image (mockup)
+      templates.py                         # data/templates.json + assets/*.png
     pobierzobraz/                          # pobieracz obrazow IIIF z muzeow
     blog/                                  # marketing/blog: generator tresci + tematow + publikacja 7 jez.
       component.json                       # mode=inline, icon 📝
@@ -171,7 +187,7 @@ cursor-api/                                # backend Pythona + OAuth + Shopify k
       data/                                # tasks.json, signals_cache.json, reminders.json
   giclee_app/launcher.py                   # + monthly reminder (1-5 dzien miesiaca -> propozycja planu)
     cenyMarketing/                         # analiza pricing-u (standalone HTML + inline tile view)
-    obrazy/, finanse/, planer/, ...        # inne komponenty
+    obrazy/, kalkulacja/, kpir/, dokumentysprzedazy/, ksiegowosc/, finanse/, planer/, ...  # inne komponenty
 ```
 
 ### Komponent `dodajobraz` - flow
@@ -216,8 +232,21 @@ cursor-api/                                # backend Pythona + OAuth + Shopify k
    g) Ustawia `custom.kategoria = "Obrazy"`.
    h) Dodaje produkt do **kolekcji artysty** (custom collection o tytule
       "Nazwisko, Imie", np. "Dahl, Hans"). Jesli kolekcja artysty nie istnieje,
-      produkt powstaje bez przypisania (kolekcje artystow tworzone osobno przez
-      wlasciciela lub innym narzedziem).
+      produkt powstaje **bez przypisania** i trafia do `collection_gaps`
+      (`collection_assign_error="collection_not_found"`).
+      - Po batchu otwiera sie okno **«Kolekcja artysty»** (`_show_collection_fix_dialog`).
+        Dla kazdego artysty bez kolekcji sa dwie akcje:
+        - **«Stworz artyste»** -> `create.create_artist_collection_and_menu(...)`:
+          tworzy custom-collection, publikuje ja na kanalach, **buduje strone
+          kolekcji jak u innych artystow** (opcjonalne pola w dialogu: daty zycia
+          -> `<h4>`, krotki opis -> akapity, zdjecie/portret -> upload do Shopify
+          Files i osadzenie jako okragly `<img>`; nowej kolekcji ustawia tez wspolny
+          baner `ARTIST_COLLECTION_BANNER_SRC`), dodaje pozycje do menu glownego pod
+          **«ARTYŚCI»** (alfabetycznie, scope nawigacji) i przypisuje produkty.
+          Uzyj, gdy kolekcji jeszcze NIE MA. Body buduje
+          `html_template.build_artist_collection_body_html(...)`.
+        - **«Przypisz do kolekcji»** -> `assign_products_to_collection_title(...)`:
+          gdy kolekcja istnieje pod inna nazwa (tylko podpina produkty).
    i) **AUTO-TWORZY smart-collections** z tagow `style/room/gift/genre`
       (`ensure_smart_collections_from_tags`):
       - smart-collection dla kazdego tagu z `tags_taxonomy.COLLECTION_RULES`,
@@ -229,13 +258,152 @@ cursor-api/                                # backend Pythona + OAuth + Shopify k
 
 ### Komponent `dodajobraz` - reuse zdjec do istniejacych produktow
 
+- **`(preview)` w nazwie pliku** (`Hans Dahl - Babie lato - (preview).webp`) ->
+  `add_preview_image`: alt `Artysta - Tytul (preview)`, ustawia **featured** (kolekcje,
+  menu Katalog). W PDP motyw ukrywa media z `(preview)` w alt (`giclee-product-gallery-media.liquid`).
+- **`Full` w nazwie pliku** (`Hans Dahl - Babie lato - Full.webp`) ->
+  `add_full_image` lub tworzenie produktu z JSON przypisanym do tego pliku:
+  alt `Artysta - Tytul (Full)`, **position=1** w galerii; featured zostaje preview jesli jest.
+- **Batch:** najpierw nowe produkty (LLM), potem `(preview)`, potem `Full` (bez duplikatu
+  po create), na koncu `F2+`.
+- **GUI:** trzy osobne pola drag-and-drop (+ klik / przycisk pod polem) dla preview, Full
+  i pozostalych — filtruja typ pliku po nazwie. Walidacja kolejki (`queue_audit.py`):
+  kazde dzielo wymaga obu plikow w kolejce zanim «Utworz wszystko» (wyjatek: sama dogrywka F2+).
 - **Sufiks `F2` w nazwie pliku** (`Hans Dahl - Babie lato F2.jpg`) -> dogrywa kolejne
   zdjecie do produktu bazowego (`add_follow_up_image`). Produkt bazowy musi juz istniec.
+- **`I1`, `I2`, `I3`…** (`Hans Dahl - Babie lato I2.jpg`) -> dogrywka z alt `(I<N>)`.
+- **`(mockup)`** (`Hans Dahl - Babie lato - (mockup) - CZB.webp` / `... - CZCZ.webp`) ->
+  dogrywka mockupu; widoczny w galerii PDP. Sufiks **`CZB`** = czarna ramka + biale passe-partout,
+  **`CZCZ`** = czarna ramka + czarne passe-partout. Tylko `(preview)` jest ukryte w galerii.
+  Komponent **`mockup`** generuje ten plik automatycznie: naklada obraz zrodlowy na szablon
+  ramki (pole A4, pion/poziom wg orientacji) i wysyla przez `add_follow_up_image`.
 - **Sufiks `KK` / `WK`** - oznacza korekte kolorystyczna; produkt zachowuje sie jak
   zwykla dogrywka, ale alt text dostaje suffix `(KK)` lub `(WK)`.
 - **Akcja `replace_image`** w GUI - podmienia tylko zdjecie glowne (`replace_primary_image`).
 - **Akcja `replace_image_and_description`** - podmienia zdjecie + nadpisuje tytul, opis,
   tagi, SEO i metapola (uzywa nowego JSON-a z LLM).
+
+### Komponent `dodajobraz` — Zoom HD → R2 (szybkosc uploadu)
+
+- **Flow:** `zoom_tiles.generate_zoom_package` (CPU, Pillow) → `r2_storage.upload_many`
+  (sieć) → metafield `custom.zoom_manifest` + szablon `nowy-szblon-produktu`.
+- **Upload:** jeden wspolny klient S3 na paczke kafelkow; rownolegle PUT-y
+  (`r2_storage.upload_many`, domyslnie **12** watkow). Env w `cursor-api/.env`:
+  - `R2_UPLOAD_WORKERS` — ile kafelkow naraz na jeden produkt (1–64, domyslnie 12).
+  - `R2_ZOOM_PARALLEL` — ile produktow zoomuje sie rownolegle przy batchu z Shopify
+    (1–8, domyslnie 3; wczesniej na sztywno 2).
+- **Batch:** przy «Utworz wszystko» + zoom — Shopify i zoom ida rownolegle; zoom startuje
+  gdy znamy `product_id` (nie czeka na caly batch Shopify).
+- **GUI:** wiersz «Czas» pod paskiem Zoom HD — ostatni plik + srednia batcha
+  (`kafelki` / `R2` / `Shopify`); te same wartosci w logu `[zoom] Czas (...)`.
+- **Nie przyspiesza R2:** generowanie kafelkow WEBP (`method=6`) — to osobny etap CPU.
+
+### Komponent `aktualizujopis` — Aktualizuj opis (GUI)
+
+- Kafelek **«Aktualizuj opis»** w sekcji Administracja produktu GicleeApp — okno z filtrowalna lista produktow
+  typu `Obraz`, wyborem trybu i wklejeniem tablicy JSON z LLM (`parse_batch_response_json`).
+- **Tryby:** `Podmien wszystko` (caly zestaw akapitow PL + tlumaczen), `Podmien wybrany akapit`
+  (nr 1–4), `Dodaj jeszcze jeden akapit` (np. 4. z ciekawostkami gdy sa juz 3).
+- **Dopasowanie JSON → produkt:** pole `plik` (nazwa glownej grafiki), `source_key` z nazwy pliku,
+  `tytul_polski` vs tytul obrazu; przy jednym wpisie w tablicy — auto-wybór.
+- **Podglad:** po kliknieciu produktu na liscie od razu laduje **obecny opis** z Shopify
+  (PL lub wybrany jezyk z przyciskow EN/DE/…). Po «Analizuj JSON» prawa kolumna pokazuje
+  wersje po zmianie (edytowalna przed zapisem). Ekstrakcja akapitow: `html_template.extract_paragraphs_from_body_html`.
+- **Prompt tlumaczenia:** przy wybranej wersji jezykowej i akapicie pojawia sie przycisk
+  «Prompt tlumaczenia» — po pytaniu (biezacy akapit / wszystkie) kopiuje prompt LLM
+  (`build_translation_prompt` / `build_translation_prompt_all`) z instrukcja tlumaczenia na 6 rynkow.
+- **Prompt do nowego opisu:** suwak **Auto prompt** (Wl/Wyl, `description_update_prefs.json`) — gdy wlaczony,
+  po zaznaczeniu produktu prompt kopiuje sie automatycznie do schowka (toast); recznie: przycisk
+  «Prompt do nowego opisu» lub **Ctrl+C** na liscie produktow. Kopiuje
+  prompt LLM z artysta i tytulem z listy oraz wytycznymi do pola `akapity`
+  (`prompt_builder.build_new_description_prompt`). Tytuly: angielski (JSON EN / tlumaczenie
+  Shopify / nazwa pliku grafiki), oryginalny (JSON / kolumna SZCZEGOLY), polski (sklep).
+- **Wklej tlumaczenia do akapitu:** okno z JSON `{en, de, fr, es, nl, it}` — jeden obiekt
+  dla zaznaczonego akapitu, **kilka obiektow pod soba** (akapity 1–4 naraz) albo
+  **jeden obiekt** `{akapit_1: {...}, akapit_2: {...}, ...}`; parser naprawia cudzyslowy
+  w tekscie LLM (`parse_paragraph_translations_batch`).
+- **Porownywarka:** okno z 6 slotami wersji akapitu (wklej z LLM) obok edytowalnego oryginalu;
+  suwak **Model** (Sonnet / Gemini / GPT) ustawia domyslny slot przy otwarciu porownywarki:
+  Sonnet → Wersja 1, Gemini → Wersja 3, GPT → Wersja 5 (`description_compare_llm.json`);
+  «Kopiuj wersje do roboczego» + «Zastosuj do opisu» (biezacy akapit) +
+  **«Zastosuj wszystkie akapity»** (robocze wersje 1–4 naraz); **«Wklej calosc»** — JSON `{"akapity":[...]}`
+  wypelnia wybrana **Wersje** (1–6): akapity[i] → Akapit i+1 w tym slocie; pozostale wersje
+  i oryginal/roboczy po prawej bez zmian (`parse_full_akapity_json`). W polach tekstu porownywarki
+  **Ctrl+V** wkleja zwykly tekst; **Wklej calosc** (przycisk lub Ctrl+V poza polem) parsuje JSON.
+  Po udanym wklejeniu calosci **PPM** (prawy przycisk myszy) zamyka okno porownywarki.
+- **Zapis:** `PUT body_html` (PL) + `push_product_translations` dla jezykow obcych
+  (`description_update.apply_description_update`). Log: `[opis]`.
+- **Oznaczanie postepu:** kolumna **Akt.** w liscie produktow — ptaszek ✓ gdy produkt
+  zostal zaktualizowany przez to okno (zapis do Shopify: «Zastosuj w Shopify», «Zapisz obecny opis»,
+  «Zapisz kazda wersje jezykowa», «Zastosuj wszystkie akapity» w porownywarce itd.). Persystencja:
+  `Komponenty/dodajobraz/data/description_update_marks.json` (lista `product_id`). Wczesniejsze
+  oznaczenia z tego pliku wyswietlaja sie od razu jako ✓. Przyciski filtrowania «Wszystkie» /
+  «Po aktualizacji» / «Bez oznaczenia», sortowanie po «Artysta» lub «Akt.» (strzalka kierunku).
+  Na pasku licznika: **«Po aktualizacji: N/T (P%)»**. Produkty z wypelniona porownywarka bez ✓
+  maja **blekitne tlo** (zielone = ✓, zolte = flaga).
+
+### Komponent `dodajobraz` — Kontrola kolekcji (GUI)
+
+- Okno **Kontrola kolekcji...** porownuje oczekiwana kolekcje artysty (`artist_collection_title`)
+  z tym, w jakich kolekcjach jest produkt w Shopify.
+- Po odswiezeniu: licznik **unikalnych artystow** (kolumna Artysta) w podsumowaniu i na pasku
+  filtra (`artystow: N`, opcjonalnie `w widoku` przy filtrze / «Tylko problemy»).
+- **OK** — produkt jest w pasujacej kolekcji artysty. **BRAK W KOLEKCJI** — kolekcja w sklepie
+  istnieje, produkt do niej nie trafil. **BRAK KOLEKCJI** — nie znaleziono kolekcji o pasujacej
+  nazwie (czesto mylone z „nie w kolekcji”; produkt moze byc w «Van Gogh, Vincent» mimo oczekiwanego
+  «Gogh, Vincent Van»). Od 2026-06 porownanie nazw: te same tokeny slow (kolejnosc, myslniki, diakrytyki).
+
+### Komponent `mockup` — generowanie mockupow ramki
+
+- **Wejscie:** pliki `Artysta - Tytul.ext` (Full, `(preview)` lub bez sufiksu). Produkt musi juz istniec w Shopify.
+- **Szablony:** `Komponenty/mockup/data/templates.json` + PNG w `assets/`. Dwa zestawy czarnej ramki:
+  **białe** lub **czarne passe-partout** (wybor w combobox «Zestaw»); w kazdym wariant **pion**
+  i **poziom** — orientacja dobierana automatycznie wg obrazu zrodlowego. Dla czarnego
+  passe-partout **obowiazkowe** reczne `slot` w JSON (auto flood-fill myli ciemne okno z matą).
+- **Pole A4:** wspolrzedne `[x, y, w, h]` w JSON (fallback). Domyslnie **flood-fill od srodka**
+  szablonu — wykrywa przezroczyste lub ciemne otwory w passe-partout (nie cala ramke).
+- **Skladanie:** obraz skalowany **cover** (wypelnienie pola, przyciecie nadmiaru), zapis WEBP,
+  nazwa docelowa `Artysta - Tytul - (mockup) - CZB.webp` (bialy pp) lub `... - CZCZ.webp` (czarny pp).
+- **GUI:** drag-drop kolejka + **panel podgladu** (auto po zaznaczeniu) + okno «Pelny podglad» + **Eksportuj na dysk**
+  (zaznaczony obraz z kolejki → folder docelowy, WEBP bez wysylki do Shopify) przed uploadem.
+- **Braki na stronie** (`audit.py`): skan produktow bez CZB/CZCZ w galerii. Wykrywanie po **alcie i URL-u**
+  pliku (`_mockup_` w CDN) — starsze aktualizacje tytulow potrafily nadpisac alt bez «(mockup)» mimo
+  ze plik mockupu zostal w Shopify. Do generowania brakujacego mockupu zrodlo: **preview**, potem
+  **Full / WK / KK**, na koncu pierwsze nie-mockup zdjecie (produkty bez `(preview)` tez da sie dograc).
+  Gdy mockup jest w Shopify, ale **nie widac go na PDP** — alt stracil «(mockup)»; naprawa:
+  `Komponenty/mockup/repair_alts.py` (masowo `repair_all_mockup_alts()`).
+
+### Komponent `print_optimize` — optymalizacja zdjec pod druk (Gemini + kalibracja Whitewall)
+
+- **Cel:** warstwa jak Whitewall «Image optimisation» — rozpoznanie sceny (Gemini) → kontrast,
+  saturacja, balans kolorow, podbicie cieni; suwak `strength` 0–100 (domyslnie 70, odpowiednik `pcStrength`).
+- **Kod:** `Komponenty/print_optimize/` — `optimize_to_file()`, `compare_images()` (ΔE LAB, SSIM).
+- **CLI:** `python -m Komponenty.print_optimize optimize|compare|collect-pairs|collect-id|calibrate`
+  (z `cursor-api/`). Wymaga `GEMINI_API_KEY` dla analizy sceny; `playwright` tylko do `collect-pairs`.
+- **GUI (GicleeApp):** kafelek **Optymalizacja druku** — zakladki Optymalizuj / Zestaw testowy /
+  Kalibracja / Porownaj. Domyslne foldery: `data/test_photos/`, `data/ww_pairs/`.
+- **Kalibracja:** wlasny folder zdjec testowych → `collect-pairs` (upload Whitewall, pary `original` /
+  `ww70` z imageserver) → `calibrate` generuje `ours70` + `calibration_report.json`. Podglad Whitewall
+  (`type=12`) ≠ caly pipeline produkcyjny (SuperResolution, UltraHD to osobne opcje).
+- **Docs:** `cursor-api/docs/komponenty/print_optimize.md`. Integracja z Workerem / mockupem klienta — TODO.
+
+### Komponent `passepartout` — kalkulator jednostek Allegro
+
+- **Kod:** `Komponenty/passepartout/` — widok **inline Tkinter** w launcherze (bez przeglądarki).
+- **Launcher:** sekcja **Zamówienia**, `mode=inline` — klik kafelka montuje `view.build_view`.
+- **Logika:** `calculations.py` — koszt od wymiaru zewnętrznego; dwa tryby zaokrąglania; tabela 1–30 szt.; wiadomość do sprzedawcy.
+- **Weryfikacja:** `python -m Komponenty.passepartout.verify_examples`
+- **Docs:** `cursor-api/docs/komponenty/passepartout.md`.
+
+### Komponent `infoplikow` — Informacje o plikach (GUI)
+
+- Kafelek **«Informacje o plikach»** w sekcji Administracja produktu — podglad grafik produktu w Shopify.
+- Lista produktow typu `Obraz` (jak w «Aktualizuj opis»); po wyborze: tabela wszystkich zdjec galerii
+  (`products/{id}/images.json`) z kolumnami: pozycja, plik CDN (nazwa z URL), **alt** (nazwa na stronie),
+  rola (`preview` / `Full` / `mockup` / inne), widocznosc w galerii PDP, czy glowne, wymiary, warianty.
+- Klasyfikacja roli: `Komponenty/dodajobraz/parser.py` (`alt_is_catalog_preview`, `image_ref_is_mockup`, itd.).
+- Dodatkowo: wykryte tagi `<img>` w `body_html` opisu produktu.
+- PPM / dwuklik na grafice: URL, alt, miniaturka do schowka; linki do admina i `gicleeart.eu/pl-pl/products/{handle}`.
 
 ---
 
@@ -256,7 +424,11 @@ cursor-api/                                # backend Pythona + OAuth + Shopify k
   Jest dodawany **automatycznie** do kazdego produktu jako tag i jako metafield
   `custom.source_key`.
 - **Kolekcje artysty:** custom collection o tytule `"Nazwisko, Imie"` (np. `"Dahl, Hans"`,
-  `"Gogh, Vincent van"`). Tworzone osobno (poza tym kodem, bo kolekcje artystow ma sie
+  `"Gogh, Vincent van"`). **Handle URL:** slug z `"Imie Nazwisko"` — np. `"Dahl, Hans"` ->
+  `hans-dahl` (`parser.artist_collection_handle_from_title`). Przy tworzeniu kolekcji
+  (`create_custom_collection`) handle jest ustawiany automatycznie. Masowa naprawa:
+  `python scripts/fix_artist_collection_handles.py` (dry-run: `--dry-run`).
+  Tworzone osobno (poza tym kodem, bo kolekcje artystow ma sie
   ksztaltowac recznie - katalog dziel artysty).
 - **Domyslna sortacja smart-kolekcji:** `best-selling` (zmieniane w `create_smart_collection_for_tag`).
 
@@ -343,7 +515,7 @@ Dorzucane do `tags_list` w `create.py` zaraz po sparsowaniu LLM-owej listy tagow
   - `_build_batch_prompt_gpt(items_block, n)` - paczka, dla GPT (twardsze rygory JSON)
 - **Wymagane pola w JSON-ie odpowiedzi LLM** (`REQUIRED_KEYS`):
   ```
-  tytul_polski, tytul_orginalny, akapity (lista 3 stringow),
+  tytul_polski, tytul_orginalny, akapity (lista 3 lub 4 stringow — 4. opcjonalny: ciekawostki),
   data_powstania, miejsce_powstania, technika, gatunek, nurt, forma,
   tagi (lista 25-35), kategoria
   ```
@@ -362,16 +534,44 @@ Dorzucane do `tags_list` w `create.py` zaraz po sparsowaniu LLM-owej listy tagow
 - **API_VERSION = "2026-04"**
 - **Auth:** load `shop` + `accessToken` z `cursor-api/.shopify_session.json`
   (token zapisany przez `oauth-server.mjs` po `npm run oauth`).
+- **HTTP reliability:** `_urlopen_with_retries()` ustawia timeout 45s, throttling ~0,55s
+  miedzy wywolaniami (limit Shopify REST: 2/s) i ponawia tymczasowe bledy dla
+  idempotentnych requestow (`GET`/`PUT`/`DELETE`/`HEAD`): timeouty/WinError
+  10060/10053/10054 oraz HTTP 429/5xx (z `Retry-After`, jesli Shopify poda).
+  `POST` nie jest ponawiany przy 5xx (ryzyko duplikatow), ale HTTP 429 na `POST`
+  jest ponawiane — Shopify odrzucilo request przez limiter, nie przetworzylo go.
+  Transient network error jest zawijany w `ShopifyError`, wiec batch moze zapisac blad
+  w podsumowaniu zamiast wywalic cale okno przez surowy `OSError`.
 - **Kluczowe funkcje:**
   - REST: `rest_get/post/put`, `iter_all_products`, `find_artist_collection`,
     `create_product`, `update_product`, `upload_image`, `set_image_position`,
-    `delete_product_image`, `update_variant_price`, `add_to_collect`,
+    `delete_product_image`, `create_product_variant`, `update_variant`,
+    `delete_product_variant`, `update_variant_price`, `add_to_collect`,
     `set_seo_metafields`, `set_custom_metafield`, `upsert_metafield`,
     `find_metafield`, `find_smart_collection_by_handle/title`,
     `create_smart_collection_for_tag`, `upsert_smart_collection_for_tag`,
-    `set_collection_seo_metafields`, `find_products_by_tag` (REST + GraphQL fallback).
+    `set_collection_seo_metafields`, `find_products_by_tag` (REST + GraphQL fallback),
+    `find_custom_collection_by_title`, `create_custom_collection`,
+    `update_custom_collection` (body_html/baner), `upload_file_to_shopify_files`
+    (Shopify Files: stagedUploadsCreate + multipart + fileCreate + polling; scope `write_files`).
   - GraphQL: `graphql()`, `list_publications`, `publish_product_everywhere`,
     `publish_collection_everywhere`.
+- **Nawigacja / menu (NOWE, scope `read/write_online_store_navigation`):**
+  - `list_menus(shop, token)` - GraphQL `menus` z zagniezdzonymi pozycjami (do 3 poziomow).
+  - `find_menu(..., handle=, contains_item_title=)` - znajdz menu po handle lub po
+    obecnosci pozycji o danym tytule.
+  - `add_menu_child_collection(..., parent_title, child_title, collection_gid, keep_sorted=True)`
+    - dodaje pozycje typu COLLECTION pod parentem. **GOTCHA:** GraphQL `menuUpdate`
+    NADPISUJE cale menu, wiec funkcja rekonstruuje pelne drzewo (`_item_to_input`
+    zachowuje id/type/url/resourceId/tags + zagniezdzenia) i dokłada 1 pozycje.
+    `keep_sorted` wstawia alfabetycznie miedzy rodzenstwo bez ruszania pozostalych.
+  - **Struktura menu artystow:** `main-menu` -> pozycja `Katalog` [COLLECTIONS]
+    -> dziecko `ARTYŚCI` [COLLECTION] -> ~76+ pozycji-artystow [COLLECTION], kazda
+    `Nazwisko, Imie` linkujaca do kolekcji custom artysty. Artysci sa **posortowani
+    alfabetycznie** po nazwisku. Rodzic to **`ARTYŚCI`**, nie `Katalog`.
+  - **Skrypt:** `python add_artist_to_menu.py "Nazwisko, Imie" [--create-collection]`
+    - znajduje/tworzy kolekcje custom o tym tytule i dodaje ja do menu pod `ARTYŚCI`
+    (wstawienie alfabetyczne). Wymaga sesji ze scope nawigacji.
 - **Translations API (NOWE):**
   - `get_translatable_resource(shop, token, resource_gid)` - lista pol mozliwych do
     tlumaczenia + `digest` per pole (wymagane do `translationsRegister`).
@@ -481,12 +681,12 @@ w `_SECTIONS`.
 ### Hierarchia ekranow (mode=inline, bez spawn procesu)
 
 ```
-Blog (main)                                     <- 3 kafelki
-├── Generator tresci       (Toplevel)           <- prompt + paste + send
+Blog (main)                                     <- 5 kafelkow
+├── Generator tresci       (Toplevel)           <- prompt + paste + send (+ wczytaj HTML)
+├── Import z HTML          (Toplevel)           <- plik podgladu AI -> Shopify
 ├── Generator tematow      (Toplevel)           <- prompt + paste + save 10 propozycji
-└── Posty na Blogu (sub-view)                   <- 2 kafelki
-    ├── Propozycje tematow (sub-view)           <- lista z PPM (kopiuj/generuj/usun)
-    └── Obecne posty       (sub-view)           <- auto-fetch z Shopify + dwuklik -> storefront
+├── Propozycje tematow     (sub-view)           <- lista z PPM (kopiuj/generuj/usun)
+└── Posty na blogu         (sub-view)           <- obecne posty: auto-fetch + dwuklik -> storefront
 ```
 
 ### Flow Generator tresci (`generator_tresci.py`)
@@ -503,12 +703,21 @@ Blog (main)                                     <- 3 kafelki
 6. **"Podglad w przegladarce"** -> `preview.build_preview_html(parsed)` zapisuje
    `Komponenty/blog/data/preview.html` (zakladki per jezyk, Bodoni Moda + Cormorant Garamond jak motyw
    Horizon, liczniki znakow SEO) i otwiera w domyslnej przegladarce.
+   **Alternatywnie:** **"Wczytaj plik HTML"** -> `html_import.parse_preview_html_file(path)` - odwrotna
+   operacja: plik podgladu (zapisany przez AI lub z przegladarki) wraca do struktury `parsed` gotowej
+   do wysylki bez ponownego wklejania JSON.
 7. Uzytkownik moze **odznaczyc jezyki** (checkboxy) ktorych nie chce publikowac.
 8. **"Wyslij na bloga"**:
-   - `shopify_blog.create_article(...)` - PL jako baza + image (URL lub base64 attachment).
-   - Dla kazdego zaznaczonego locale != PL: `shopify_blog.register_article_translations(...)`.
-   - Jesli przyszlismy z propozycji (topic_id != ""): `storage.mark_topic_used(topic_id, True)`.
-   - Refresh cache artykulow: `shopify_blog.list_all_articles` + `storage.save_articles_cache`.
+   - `publish.publish_parsed_article(...)` - wspolna logika: PL jako baza + image (URL lub base64 attachment),
+     tlumaczenia, opcjonalnie `mark_topic_used`, refresh cache.
+
+### Flow Import z HTML (`import_html.py` + `html_import.py`)
+
+1. Kafelek **Import z HTML** (lub przycisk w Generatorze tresci).
+2. Wybor pliku `.html` - oczekiwany format: wyjscie z **Podglad w przegladarce** (panele `#panel-pl`,
+   `#panel-en`, ... z tytulem, summary, body, SEO, tagami).
+3. Parser `html_import.parse_preview_html` buduje ten sam slownik co `prompts.parse_content_response`.
+4. Podglad / wybor jezykow / obrazek / autor -> **Wyslij na bloga** (`publish.publish_parsed_article`).
 
 ### Flow Generator tematow (`generator_tematow.py`)
 
@@ -590,8 +799,11 @@ Dodatkowo sa **Cykl** i **Dodaj post** z publikacja przez Meta Graph API (tokeny
 
 ### Dodaj post + przycisk Id socjali
 
-- **Dodaj post:** 4 kanaly (`manual_post.open_manual_post_wizard`) — upload CDN Shopify,
-  potem `meta_publisher`. Link **Profil:** jest klikalny; URL FB buduje sie preferencyjnie
+- **Dodaj post:** zakladki FB PL / FB EU / IG PL / IG EU (`manual_post.build_manual_post_ui`;
+  opcjonalnie `open_manual_post_wizard` = osobne okno) — upload CDN Shopify,
+  potem `meta_publisher`. Na **Facebooku** mozliwy jest tez post **tylko z tekstem**
+  (`POST /{page-id}/feed`); **Instagram** nadal wymaga co najmniej jednego obrazu (API).
+  Link **Profil:** jest klikalny; URL FB buduje sie preferencyjnie
   jako `https://www.facebook.com/{page_id}` z creds (`platforms_cykl.public_profile_url`).
 - **Id socjali:** przycisk na ekranie wyboru kanalu — lista Page ID / Instagram user ID
   + linki do profili (te same credentiale co Cykl).
@@ -777,7 +989,7 @@ ktory:
 **Cel:** sledzenie statusu zamowien (wydruk, ramka z utwardzaniem, wysylka)
 ze szczegolowym live countdownem 72h utwardzania farby.
 
-**Sekcja w launcherze:** `Zamowienia` (z `obrazy`, `finanse`).
+**Sekcja w launcherze:** `Zamowienia` (z `obrazy`, `kalkulacja`).
 
 ### Integracja Shopify (polling)
 
@@ -790,8 +1002,9 @@ ze szczegolowym live countdownem 72h utwardzania farby.
   `shopify_order_id + shopify_line_item_id`).
   - `client` = `customer.first_name + last_name`.
   - `tytul_obrazu` = `line_item.title` (po rozdzieleniu "Artysta - Tytul" bierze czesc po myslniku).
-  - `ramka_wariant` = detekcja z `line_item.variant_title` (heurystyka `_FRAME_PATTERNS`
-    w `orders_sync.py` - rozpoznaje Dab/Sosna + S/L/XL).
+  - `ramka_drewno`, `ramka_rozmiar`, `ramka_kolor` = rozklad `line_item.variant_title`
+    jak w sklepie (separator ` / ` miedzy opcjami). `ramka_wariant` = laczona etykieta
+    (do CSV / wyszukiwania). Stary skrot jednym stringiem: [frame_variant.py](cursor-api/Komponenty/produkcja/frame_variant.py).
   - `adres_wysylki` = sklejony `shipping_address`.
 - **State:** `Komponenty/produkcja/dane/sync_state.json` z `last_sync_iso` - przy kolejnej
   sync pobieramy tylko `updated_at_min=last_sync_iso`.
@@ -807,23 +1020,96 @@ ze szczegolowym live countdownem 72h utwardzania farby.
 - **Kolor tla:** czerwony (<24h), pomaranczowy (24-48h), zielony (>48h / utwardzone).
 - **Format:** `"2d 05g 43m 12s"` (albo krotszy gdy <1d).
 - Sekcja **Ramka** pokazuje tez `ttk.Progressbar` 0-100% (procent uplynietego czasu).
+- **Pomin schniecie:** przycisk w detalu (gdy licznik > 0) ustawia `pomin_schniecie: true` —
+  zamowienie traktowane jak po 72h (mozna zaznaczyc Zlozone). Przy ponownym zaznaczeniu
+  „Ramka pomalowana” lub cofnieciu kroku malowania flaga jest zerowana. To samo pole
+  czyta [web_server.py](cursor-api/Komponenty/produkcja/web_server.py) przy odblokowaniu finalizacji.
 
 ### GUI
 
-- **Sortowanie kolumn** (klik naglowka): id / klient / wariant / postep / status.
+- **Sortowanie kolumn** (klik naglowka): id / klient / drewno / rozmiar / kolor / postep / status.
 - **Filtr tekstowy** nad lista - szuka w kliencie, tytule, numerze Shopify, notatce.
+- **Filtry kolumn (substring):** drewno / rozmiar / kolor - lacza sie z pozostalymi filtrami.
 - **Filtr statusu:** Aktywne / Wszystkie / Zrealizowane / Opoznione (>14 dni nie-wyslane).
 - **Postep w liscie:** kolumna `■■■□□` z 5 glownych krokow.
 - **Alerty overdue:** czerwone tlo + prefix "OPOZNIONE" w statusie.
 - **Eksport CSV:** przycisk `⬇ Eksport CSV` zapisuje biezaca liste (po filtrach)
   w UTF-8-BOM z separatorem `;`.
+- **Statystyki:** okno z liczbami (lacznie, aktywne, zakonczone, opoznione, wyslane 7 dni,
+  sredni wiek aktywnych, segmenty wydruk / po wydruku bez pakowania) - modul
+  [stats.py](cursor-api/Komponenty/produkcja/stats.py).
+- **Etykiety warsztatowe (HTML):** zapis pliku do druku z przegladarki (PDF) -
+  [label_html.py](cursor-api/Komponenty/produkcja/label_html.py).
+- **Shopify w detalu:** miniatura wariantu (API: `get_variant_featured_image_url` w
+  [shopify_client.py](cursor-api/Komponenty/dodajobraz/shopify_client.py); pola
+  `shopify_variant_id`, `shopify_product_id`, `shopify_image_url` w zamowieniu po sync).
+- **Link do Admin:** przycisk otwiera `https://admin.shopify.com/store/<subdomain>/orders/<id>`
+  ([shopify_links.py](cursor-api/Komponenty/produkcja/shopify_links.py)) gdy jest sesja OAuth.
+- **Przypomnienie o trackingu:** przy ustawieniu kroku **Wyslane** lub potwierdzeniu wysylki
+  bez numeru przesylki pokazuje sie ostrzezenie.
+- **Panel www** ([web_server.py](cursor-api/Komponenty/produkcja/web_server.py)): na kartach
+  i w detalu opcjonalnie link Admin + obrazek z `shopify_image_url`.
 
 ### Persystencja (`dane/`)
 
 - `zamowienia.json`: `{"next_id": N, "orders": [Order, ...]}`. Model zamowienia
-  (z migracja wstecz): `_new_order_template` w [view.py](cursor-api/Komponenty/produkcja/view.py).
+  (z migracja wstecz): `_new_order_template` w [view.py](cursor-api/Komponenty/produkcja/view.py)
+  - opcjonalnie `shopify_variant_id`, `shopify_product_id`, `shopify_image_url`;
+  `pomin_schniecie` (bool) — reczne pominiecie 72h utwardzania.
 - `sync_state.json`: `{"last_sync_iso": "...", "last_added_count": N}`.
 - Auto-save po kazdej zmianie pola / kroku.
+
+---
+
+## 9d2. KOMPONENT `kalkulacja` - Koszty produkcji ramek
+
+**Cel:** natywny kalkulator kosztow produkcji (zamiast recznego Excela) — materialy,
+marze, optymalizacja partii drewna, mix sprzedazy.
+
+**Sekcja w launcherze:** `Zamowienia` (z `obrazy`, `produkcja`, `passepartout`, `kalkulacja`).
+
+**Tryb:** `inline` — `Komponenty/kalkulacja/view.py`.
+
+### Zrodlo danych
+
+Import z `.xlsm` (`import_excel.py`) — arkusze: `CENNIK MATERIALOW`, `TABELA CEN WG MATERIALOW`,
+`CENNIK`, `KALKULATOR KOSZTU DREWNA`. JSON w `Komponenty/kalkulacja/data/`.
+
+### Logika
+
+- **6 wariantow:** Sosna / Deb x A4 / A3+ / A2 (profil 20x20).
+- **Koszt produkcji** = produkcja + wydruk + opakowanie (bez wysylki — jak kolumna N w CENNIK).
+- **Cennik:** edytowalny narzut (%), marza (%) i cena sprzedazy — zsynchronizowane; zapis w `settings.json` → `variant_pricing` (bez cen z Excela). Domyslny narzut nowych wariantow: 250%.
+- **Drewno:** optymalna partia = pierwsza, gdzie wspolczynnik H &lt; 0,2 (Excel `H7`).
+- **Mix sprzedazy:** stala lista 6 wariantow; sprzedaz (sztuki) edytowalna lokalnie; udzial = sztuki / suma; ceny i zyski z kalkulatora.
+
+**Powiazane:** `finanse` (legacy, ukryty w launcherze — otwiera zewnetrzny `GicleeArt3.xlsm`); docs:
+[cursor-api/docs/komponenty/kalkulacja.md](cursor-api/docs/komponenty/kalkulacja.md).
+
+---
+
+## 9f. KOMPONENT `kpir` - Ksiega Przychodow i Rozchodow (JDG bez VAT)
+
+**Cel:** samodzielne prowadzenie uproszczonej KPiR dla JDG zwolnionej z VAT, zintegrowanej z Shopify i fakturami bez VAT.
+
+**Launcher:** sekcja `Finanse` > kafelek **KPiR** (oraz skrot z `ksiegowosc` > JDG — KPiR).
+
+**Kod:** `Komponenty/kpir/` — `view.py` (dashboard + 9 ekranow), `models.py`, `storage.py` (JSON),
+`shopify_service.py`, `invoice_integration.py`, `cost_service.py`, `fee_import.py` (CSV Stripe/PayPal),
+`entry_detail.py` (szczegoly wpisu + historia zmian), `summary_service.py`, `export_service.py`.
+
+**Integracje:**
+- Zamowienia Shopify: `dokumentysprzedazy/shopify_orders.py` + NBP: `dokumentysprzedazy/nbp_service.py`
+- Faktury bez VAT: `dokumentysprzedazy` (`invoices.json`) — regula: nie dubluj przychodu jesli jest faktura
+- Widok zamowien w `dokumentysprzedazy/view.py` — sekcja „Ksiegowosc KPiR”
+
+**Persystencja:** `Komponenty/kpir/dane/kpir.json`, `kpir_settings.json`; eksporty w `documents/exports/YYYY/MM/`.
+
+**Testy:** `python -m Komponenty.kpir.verify_kpir`
+
+**Placeholdery:** JPK_PKPIR (XML), roznic kursowych, pelny tryb DNR i ryczalt.
+
+Docs: [cursor-api/docs/komponenty/kpir.md](cursor-api/docs/komponenty/kpir.md).
 
 ---
 
@@ -1007,12 +1293,24 @@ przy kazdym `_refresh_from_disk` w view). Pomija pola FB/IG gdy `manual_override
    probuje zarowno po dokladnym tytule, jak i po slug-handle. Jesli wlasciciel rec znie zmieni
    tytul w admin, follow-up zdjecia (F2) moga przestac trafiac w produkt - alarm w logu.
 6. **Cennik z lokalnego szablonu:** kazdy nowy produkt dziedziczy warianty/ceny z szablonu
-   domyslnego (`variant_templates.json`, dialog **Szablony...**). Dialog **Zmien ceny...**
-   zmienia ceny we WSZYSTKICH produktach, a jako wzorzec wariantow bierze rowniez lokalny
+   domyslnego (`variant_templates.json`, dialog **Szablony...** w dodajobraz). Kafelek **Zmień ceny**
+   (`zmienceny`) zmienia ceny we WSZYSTKICH produktach, a jako wzorzec wariantow bierze rowniez lokalny
    szablon (a nie live produkt z Shopify, jak bylo wczesniej).
    - Mozesz miec wiele szablonow (np. "Podstawowy", "Plotno XL", "Tylko rama premium").
    - Mozesz zaimportowac szablon z dowolnego produktu Shopify (przycisk "+ Z Shopify...").
    - Mozesz wygenerowac warianty automatycznie z opcji (Cartesian product w dialogu).
+   - **Szablony... -> Zastosuj do wszystkich produktow...** stosuje wybrany szablon
+     do calego katalogu Shopify: tworzy brakujace warianty, aktualizuje pasujace
+     pola/ceny i usuwa warianty nadmiarowe. Operacja ma dwa potwierdzenia, progress
+     dialog i anulowanie miedzy produktami. Szablon musi miescic sie w limitach Shopify:
+     max 3 opcje i max 100 wariantow na produkt.
+   - **Szablony... -> Zastosuj do produktu...** otwiera liste produktow z Shopify
+     (filtr tekstowy + ptaszki w pierwszej kolumnie). Mozna zaznaczyc wiele produktow
+     i zastosowac szablon do wszystkich naraz (`Zaznacz widoczne` / `Odznacz widoczne`).
+   - Przy stosowaniu szablonu do istniejacych produktow aplikacja jawnie wysyla
+     `inventory_management: null` dla wariantow. To wylacza sledzenie magazynu w Shopify,
+     zeby reprodukcje robione na zamowienie nie pokazywaly sie jako "wyprzedane"
+     przy stanie magazynowym 0.
 7. **Blog - scope `read_content/write_content`:** BEZ tych scope REST `/blogs.json` zwraca
    403. Po dodaniu scope trzeba koniecznie `npm run deploy -- --allow-updates` ZANIM
    zrobi sie `npm run oauth` - inaczej Shopify pokaze stary ekran zgody bez nowych uprawnien.
@@ -1272,5 +1570,5 @@ przy kazdym `_refresh_from_disk` w view). Pomija pola FB/IG gdy `manual_override
 ### 14i. Testy jednostkowe
 
 - `cursor-api/tests/` (pytest).
-- `pip install pytest` + `python -m pytest tests/ -v` -> 48 testow (auth, markets, produkcja countdown, shipping carrier picker).
+- `pip install pytest` + `python -m pytest tests/ -v` -> m.in. auth, markets, produkcja, dodajobraz (parser + klucze wariantow).
 - Nie wymagaja Shopify/NBP/sieci.

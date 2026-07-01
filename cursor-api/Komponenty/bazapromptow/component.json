@@ -1,0 +1,7 @@
+{
+  "name": "Baza Promptow",
+  "description": "Wlasna biblioteka promptow — kliknij przycisk, aby skopiowac tekst do schowka.",
+  "icon": "📋",
+  "color": "#00897b",
+  "order": 41
+}

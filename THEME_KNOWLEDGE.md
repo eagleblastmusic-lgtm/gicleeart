@@ -1,10 +1,10 @@
-# THEME_KNOWLEDGE.md - Brief o motywie sklepu (dla AI)
+# THEME_KNOWLEDGE.md - Brief o motywie sklepu (ARCHIWUM — tylko czytanie)
 
-> **Cel tego dokumentu:** dac modelowi AI wiedze o motywie sklepu Shopify (folder
-> nadrzedny wzgledem `cursor-api/`), zeby moc kontynuowac jego rozwoj bez czytania
-> calosci. Zawiera info o frameworku, strukturze, lokalizacjach, customizacjach
-> i punktach uwazliwych. Powiazany dokument o BACKENDZIE / aplikacji Pythona:
-> `cursor-api/SHOP_KNOWLEDGE.md`.
+> **⚠️ Nie aktualizuj tego pliku.** Nowe fakty → [`docs/motyw/`](docs/motyw/) (prawda) · hub: [`docs/README.md`](docs/README.md)  
+> **START:** [`MATKA.md`](MATKA.md) · [`docs/zaleznosci.md`](docs/zaleznosci.md)
+
+> **Cel historyczny:** struktura motywu Horizon + customizacje sprzed refaktoryzacji docs modułowych.  
+> Czytaj **sekcję po sekcji** tylko gdy brakuje w `docs/motyw/`. Backend: archiwum [`cursor-api/SHOP_KNOWLEDGE.md`](cursor-api/SHOP_KNOWLEDGE.md).
 
 ---
 
@@ -126,10 +126,25 @@ i ewentualnie pushuje aktualizacje do istniejacych katalogow.
 1. **Czcionki:** Bodoni Moda + Cormorant Garamond (preconnect + link Google Fonts).
 2. **Mega-menu styling:** override standardowych klas Horizon (`mega-menu__flyout-item--has-children.is-active > a`).
 3. **Gallery catalog panel** (`#giclee-catalog-panel`) - rozwijany panel z katalogiem dziel
-   po najechaniu na "Galeria" w naglowku.
+   po najechaniu na "Katalog" w naglowku. Klik w "Katalog" nie nawiguje (`#` w
+   `giclee-resolve-menu-url.liquid` + `preventDefault` w `initGalleryCatalog`).
+   Otwarcie/zamykanie (oryginalny mechanizm): `clip-path` panelu 0.85s / 0.5s + lista autorow
+   (`listCol` clip-path w JS) + `catalogColIn` na podgladzie. Nawigacja z otwartego
+   katalogu: `freezePanelForNavigation` + `is-nav-lifting` — uniesienie inline
+   (`translateY` = `bottom + 168px`, `--pt-close-duration`, easing `0.25,0.46,0.45,0.94`),
+   `z-index` nad kotara.
 4. **Splash screen** (`#splash-screen`) - logo z animacja przy wejsciu na home (homepage tylko).
+   **Powiadomienie testowe** (`snippets/giclee-site-notice.liquid` + `assets/giclee-site-notice.js`):
+   tylko `index`, przy kazdym wejsciu (bez zapamietywania; czyści legacy `localStorage`);
+   po `giclee:splash-done` + fallback 4,5 s; `pageshow` (bfcache) otwiera ponownie.
+   **Sekcja „Giclée Art”** (`section_ThWw4Q`): animacja CSS `giclee-home-intro-in` w
+   `custom.css`, klasa `html.giclee-home-intro-run` (nie zdejmowana po splash); bez
+   `transitionend` na `finishReveal` (tylko `setTimeout` 1300 ms).
 5. **Page transition curtain** (`#page-transition`) - kotara CSS przy nawigacji miedzy stronami
-   (1.7s opening, 950ms closing, custom event `giclee:navigation-start`).
+   (1.25s opening, 0.72s closing, custom event `giclee:navigation-start`). Przy nawigacji
+   kotara: `sessionStorage giclee-curtain-nav` + klasa `html.curtain-pending` (skrypt w
+   `<head>`) ukrywa tresc tylko do startu animacji otwarcia; przy `opening` tresc jest
+   widoczna pod rozsuwajacymi panelami. Usuwa tez `view-transition-render-blocker`.
 6. **Specjalna obsluga template'u `product.fotografia-obraz`** (linia ~1763) - dodatkowe CTA
    "Powrot" + invite "Zapraszam do Laboratorium".
 7. **`overflow-x: hidden`** wymuszone na `body` (zapobiega horizontal scrollowi po custom hero).
@@ -178,7 +193,7 @@ i ewentualnie pushuje aktualizacje do istniejacych katalogow.
 |---------------------------------------|------------------------------------------------------|
 | `header.liquid` (48KB)                | naglowek z mega-menu, gallery panel, search, login   |
 | `hero.liquid` (45KB)                  | duzy hero na homepage (custom design)                |
-| `slideshow.liquid` (16KB)             | slideshow z arrows + controls                        |
+| `slideshow.liquid` (16KB)             | slideshow z arrows + controls; na mobile home JS podmienia slajd na `MALE_ORG.webp` (`object-fit: contain`), pole slajdów 1:1 (`custom.css` `.giclee-home-slideshow`) |
 | `layered-slideshow.liquid` (15KB)     | warstwowy slideshow (parallax-style)                 |
 | `main-product.liquid` (jest implicit przez templates/product.json) | strona produktu |
 | `main-collection.liquid` (6KB)        | strona kolekcji + filtry                             |
@@ -215,7 +230,9 @@ i ewentualnie pushuje aktualizacje do istniejacych katalogow.
 2. **`header.liquid` (49KB) i `header-drawer.liquid` (57KB)** sa bardzo duze - jakakolwiek
    ich modyfikacja moze niechcacy popsuc cos w mobilnym widoku. Testuj na mobile.
 3. **Splash screen w `theme.liquid`** ukrywany po 2200ms tylko na homepage (`request.page_type == 'index'`).
-   Nie pokazuje sie na innych stronach - to celowe.
+   Nie pokazuje sie na innych stronach - to celowe. Anti-FOUC: krytyczne style `#splash-screen`
+   + ukrycie `#header-group` / `#MainContent` w `<head>` (klasa `splash-pending`); po `giclee:splash-done`
+   `scroll-reveal` nie chowa elementow juz widocznych w viewport (natychmiast `is-visible`).
 4. **Page transition** dziala tylko wewnatrz tego samego hostname'u. Linki externalne wlaczaja
    normalnie (bez kotary).
 5. **Customizacja per template `fotografia-obraz`** - jezeli dodajesz nowy specjalny template,
@@ -268,6 +285,7 @@ i ewentualnie pushuje aktualizacje do istniejacych katalogow.
 | Mega-menu (linki + uklad)                   | `sections/header.liquid` lub Shopify Admin -> Navigation |
 | Strona produktu                             | `templates/product.json` + `sections/main-product.liquid` |
 | Strona kolekcji + filtry                    | `templates/collection.json` + `snippets/list-filter.liquid` |
+| Kolekcja autora: bio + galeria + sync autorów | `sections/giclee-artist-biography.liquid`, `sections/giclee-artist-collection-showcase.liquid`, `assets/giclee-active-author.js` — docs: `docs/motyw/kolekcja-autora-showcase.md` |
 | Splash screen / animacje wejscia            | `layout/theme.liquid` (~linie 1742-1762)      |
 | Hero homepage                               | `sections/hero.liquid`                        |
 | Galeria zdjec na karcie produktu            | `snippets/product-media-gallery-content.liquid`|

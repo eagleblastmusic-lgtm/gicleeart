@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" role="img" aria-labelledby="logo-title logo-desc">
+  <title id="logo-title">Gicl&#233;e Art</title>
+  <desc id="logo-desc">GICL&#201;E ART - Museum-quality fine art prints</desc>
+
+  <defs>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400&amp;family=Cormorant+Garamond:wght@300&amp;display=swap");
+
+      .logo-title {
+        font-family: "Bodoni Moda", "Didot", "Bodoni MT", Georgia, serif;
+        font-size: 96px;
+        font-weight: 400;
+        font-style: normal;
+        letter-spacing: 0.1em;
+        fill: #ffffff;
+      }
+
+      .logo-tagline {
+        font-family: "Cormorant Garamond", "Times New Roman", Georgia, serif;
+        font-size: 20px;
+        font-weight: 300;
+        font-style: normal;
+        letter-spacing: 0.42em;
+        fill: #ffffff;
+      }
+    </style>
+  </defs>
+
+  <rect width="1000" height="1000" fill="#000000"/>
+
+  <g fill="#ffffff" text-anchor="middle">
+    <text class="logo-title" x="500" y="468">GICL&#201;E ART</text>
+
+    <line x1="248" y1="512" x2="752" y2="512" stroke="#ffffff" stroke-width="1.25"/>
+
+    <text class="logo-tagline" x="500" y="556">MUSEUM-QUALITY FINE ART PRINTS</text>
+  </g>
+</svg>

@@ -1,0 +1,8 @@
+{
+  "_comment": "Wymiary zewnętrzne ramki (obramowanie). Orientacja pozioma: widthCm × heightCm. W pionie zamień osie.",
+  "landscape": {
+    "M": { "widthCm": 36.1, "heightCm": 27.4 },
+    "L": { "widthCm": 58.7, "heightCm": 43.3 },
+    "XL": { "widthCm": 72.1, "heightCm": 55.1 }
+  }
+}

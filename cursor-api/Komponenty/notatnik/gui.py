@@ -37,6 +37,8 @@ except ImportError:  # pragma: no cover
     def show_toast(parent: tk.Misc, text: str, **_kw) -> None:  # type: ignore[override]
         print(f"[toast] {text}")
 
+from Komponenty._shared.window_geometry import position_toplevel_screen_center
+
 
 APP_TITLE = "Notatnik - osobista baza wiedzy"
 
@@ -56,7 +58,7 @@ class NotatnikApp:
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
         self.root.title(APP_TITLE)
-        self.root.geometry("1200x780")
+        position_toplevel_screen_center(self.root, 1200, 780)
         self.root.minsize(900, 560)
 
         self.notes_dir = Path(__file__).resolve().parent / "notatki"
@@ -585,7 +587,7 @@ class NotatnikApp:
 
         dlg = tk.Toplevel(self.root)
         dlg.title("Przenies notatke")
-        dlg.geometry("400x420")
+        position_toplevel_screen_center(dlg, 400, 420)
         dlg.transient(self.root)
         ttk.Label(dlg, text=f"Przenies '{path.name}' do rozdzialu:").pack(padx=10, pady=(10, 4), anchor="w")
 

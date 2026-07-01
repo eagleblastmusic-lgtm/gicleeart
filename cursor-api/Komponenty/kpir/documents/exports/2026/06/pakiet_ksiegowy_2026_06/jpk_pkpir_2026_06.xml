@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<JPK>
+  <KodFormularza>JPK_PKPIR</KodFormularza>
+  <WariantFormularza>7</WariantFormularza>
+  <CelZlozenia>1</CelZlozenia>
+  <DataWytworzeniaJPK>2026-06-15</DataWytworzeniaJPK>
+  <DataOd>2026-06-01</DataOd>
+  <DataDo>2026-06-30</DataDo>
+  <Podmiot1>
+    <NIP>0000000000</NIP>
+    <PelnaNazwa>Giclee Art</PelnaNazwa>
+  </Podmiot1>
+  <PKPIR />
+</JPK>

@@ -24,6 +24,8 @@ from datetime import datetime
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
+from Komponenty._shared.window_geometry import position_toplevel_screen_center
+
 from . import images, platforms_cykl as _cp, storage
 
 
@@ -39,7 +41,7 @@ def open_edit_dialog(
 
     dlg = tk.Toplevel(parent)
     dlg.title(f"Edytuj: {item.artist} - {item.painting_title_pl}")
-    dlg.geometry("1100x820")
+    position_toplevel_screen_center(dlg, 1100, 820)
     dlg.minsize(920, 680)
     try:
         dlg.transient(parent.winfo_toplevel())

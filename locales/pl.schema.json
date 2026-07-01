@@ -528,6 +528,8 @@
     "show_powered_by_shopify": "Pokaż „Technologia Shopify”",
     "gift_card_form": "Formularz karty prezentowej",
     "seller_note_open_by_default": "Domyślnie otwieraj notatkę dla sprzedawcy",
+    "cart_invoice_request": "Prośba o fakturę w koszyku",
+    "cart_invoice_open_by_default": "Domyślnie rozwijaj sekcję faktury",
     "add_to_cart_animation": "Dodaj do koszyka",
     "custom_link": "Własny link",
     "product_custom_property": {

@@ -1,0 +1,21 @@
+{%- doc -%}
+  Translated navigation label; Polish title from Admin is the fallback.
+
+  @param {link} link - Shopify menu link object
+{%- enddoc -%}
+
+{%- liquid
+  assign menu_slug = link.title | handleize
+  if menu_slug == 'giclee-frame-tm' or menu_slug == 'giclee-frametm'
+    assign menu_slug = 'giclee-frame'
+  endif
+  capture menu_key
+    echo 'giclee.menu.' | append: menu_slug
+  endcapture
+  assign menu_val = menu_key | t
+  if menu_val == menu_key or menu_val contains 'Translation missing'
+    echo link.title
+  else
+    echo menu_val
+  endif
+-%}

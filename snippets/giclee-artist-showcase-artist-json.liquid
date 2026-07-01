@@ -1,0 +1,182 @@
+{%- liquid
+  assign entry_col = artist_col
+  assign entry_name = artist_name_override
+  assign entry_heading = artist_heading_override
+  assign entry_lead = artist_lead_override
+  assign entry_preview = artist_preview_override
+  assign entry_id = artist_entry_id | default: entry_col.id
+
+  if entry_col == blank
+    assign entry_url = ''
+  else
+    assign entry_url = entry_col.url
+  endif
+
+  if entry_name == blank and entry_col != blank
+    assign entry_name = entry_col.title
+  endif
+
+  capture entry_name
+    render 'giclee-artist-catalog-name', name: entry_name
+  endcapture
+  assign entry_name = entry_name | strip
+
+  if entry_heading == blank
+    assign entry_heading = default_heading
+  endif
+
+  if entry_lead == blank
+    assign entry_lead = default_lead
+  endif
+
+  if entry_preview == blank and entry_col != blank and entry_col.products_count > 0
+    assign preview_product = entry_col.products.first
+    assign entry_preview = preview_product.featured_media.preview_image
+    if entry_preview == blank
+      assign entry_preview = preview_product.featured_image
+    endif
+  endif
+
+  assign entry_bio_html = ''
+  assign entry_bio_bg_url = ''
+  assign entry_bio_bg_pos_x = 50
+  assign entry_bio_bg_overlay_pct = 100
+  assign entry_bio_bg_cover_scale = false
+  assign entry_bio_radial_enabled = false
+  assign entry_bio_radial_cx = 35
+  assign entry_bio_radial_cy = 50
+  assign entry_bio_radial_rx = 55
+  assign entry_bio_radial_ry = 85
+  assign entry_bio_radial_feather = 50
+  assign entry_bio_radial_exposure = 50
+  assign entry_collection_quote = ''
+  assign entry_collection_quotes_json = '[]'
+  assign entry_seo_title = entry_name
+  assign entry_seo_desc = ''
+  if entry_col != blank
+    assign entry_bio_html = entry_col.description
+    assign entry_bio_bg_mf = entry_col.metafields.custom.bio_background_url
+    if entry_bio_bg_mf != blank and entry_bio_bg_mf.value != blank
+      assign entry_bio_bg_url = entry_bio_bg_mf.value
+    endif
+    assign entry_bio_pos_mf = entry_col.metafields.custom.bio_background_pos_x
+    if entry_bio_pos_mf != blank and entry_bio_pos_mf.value != blank
+      assign entry_bio_bg_pos_x = entry_bio_pos_mf.value | plus: 0
+    endif
+    assign entry_bio_overlay_mf = entry_col.metafields.custom.bio_background_overlay_pct
+    if entry_bio_overlay_mf != blank and entry_bio_overlay_mf.value != blank
+      assign entry_bio_bg_overlay_pct = entry_bio_overlay_mf.value | plus: 0
+    endif
+    assign entry_bio_scale_mf = entry_col.metafields.custom.bio_background_cover_scale
+    if entry_bio_scale_mf.value == true or entry_bio_scale_mf.value == 'true' or entry_bio_scale_mf.value == 1
+      assign entry_bio_bg_cover_scale = true
+    endif
+    assign entry_bio_radial_mf = entry_col.metafields.custom.bio_background_radial_mask
+    if entry_bio_radial_mf != blank and entry_bio_radial_mf.value != blank
+      assign entry_bio_radial = entry_bio_radial_mf.value
+      if entry_bio_radial.enabled == true or entry_bio_radial.enabled == 'true' or entry_bio_radial.enabled == 1
+        assign entry_bio_radial_enabled = true
+      endif
+      if entry_bio_radial.cx != blank
+        assign entry_bio_radial_cx = entry_bio_radial.cx | plus: 0
+      endif
+      if entry_bio_radial.cy != blank
+        assign entry_bio_radial_cy = entry_bio_radial.cy | plus: 0
+      endif
+      if entry_bio_radial.rx != blank
+        assign entry_bio_radial_rx = entry_bio_radial.rx | plus: 0
+      endif
+      if entry_bio_radial.ry != blank
+        assign entry_bio_radial_ry = entry_bio_radial.ry | plus: 0
+      endif
+      if entry_bio_radial.feather != blank
+        assign entry_bio_radial_feather = entry_bio_radial.feather | plus: 0
+      endif
+      if entry_bio_radial.exposure != blank
+        assign entry_bio_radial_exposure = entry_bio_radial.exposure | plus: 0
+      endif
+    endif
+    assign entry_quotes_mf = entry_col.metafields.custom.collection_quotes
+    if entry_quotes_mf != blank and entry_quotes_mf.value != blank
+      assign entry_collection_quotes_json = entry_quotes_mf.value | json
+      if entry_quotes_mf.value.first != blank
+        assign entry_collection_quote = entry_quotes_mf.value.first
+      endif
+    endif
+    if entry_collection_quote == blank
+      assign entry_quote_mf = entry_col.metafields.custom.collection_quote
+      if entry_quote_mf != blank
+        assign entry_collection_quote = entry_quote_mf.value | default: entry_quote_mf
+        assign entry_collection_quotes_json = entry_collection_quote | json | prepend: '[' | append: ']'
+      endif
+    endif
+    if entry_col.metafields.global.title_tag.value != blank
+      assign entry_seo_title = entry_col.metafields.global.title_tag.value
+    endif
+    if entry_col.metafields.global.description_tag.value != blank
+      assign entry_seo_desc = entry_col.metafields.global.description_tag.value
+    elsif entry_col.description != blank
+      assign entry_seo_desc = entry_col.description | strip_html | truncate: 320
+    endif
+  endif
+-%}
+{
+  "id": {{ entry_id | json }},
+  "handle": {% if entry_col != blank %}{{ entry_col.handle | json }}{% else %}""{% endif %},
+  "url": {{ entry_url | json }},
+  "artistName": {{ entry_name | json }},
+  "eyebrow": {{ entry_name | json }},
+  "heading": {{ entry_heading | json }},
+  "lead": {{ entry_lead | json }},
+  "bioHtml": {{ entry_bio_html | json }},
+  "bioBackgroundUrl": {{ entry_bio_bg_url | json }},
+  "bioBackgroundPosX": {{ entry_bio_bg_pos_x | json }},
+  "bioBackgroundOverlayPct": {{ entry_bio_bg_overlay_pct | json }},
+  "bioBackgroundCoverScale": {{ entry_bio_bg_cover_scale | json }},
+  "bioBackgroundRadialMask": {
+    "enabled": {{ entry_bio_radial_enabled | json }},
+    "cx": {{ entry_bio_radial_cx | json }},
+    "cy": {{ entry_bio_radial_cy | json }},
+    "rx": {{ entry_bio_radial_rx | json }},
+    "ry": {{ entry_bio_radial_ry | json }},
+    "feather": {{ entry_bio_radial_feather | json }},
+    "exposure": {{ entry_bio_radial_exposure | json }}
+  },
+  "collectionQuote": {{ entry_collection_quote | json }},
+  "collectionQuotes": {{ entry_collection_quotes_json }},
+  "seoTitle": {{ entry_seo_title | json }},
+  "seoDescription": {{ entry_seo_desc | json }},
+  "previewImage": {% if entry_preview != blank %}{{ entry_preview | image_url: width: 320 | json }}{% else %}""{% endif %},
+  "products": [
+    {%- if entry_col != blank and entry_col.products_count > 0 -%}
+      {%- for product in entry_col.products limit: max_products -%}
+        {%- liquid
+          assign card_image = product.featured_media.preview_image
+          if card_image == blank
+            assign card_image = product.featured_image
+          endif
+        -%}
+        {%- capture gacs_created -%}
+          {%- render 'giclee-product-body-fact', product: product, label: 'Data powstania' -%}
+        {%- endcapture -%}
+        {%- capture gacs_technique -%}
+          {%- render 'giclee-product-body-fact', product: product, label: 'Technika' -%}
+        {%- endcapture -%}
+        {%- capture gacs_genre -%}
+          {%- render 'giclee-product-body-fact', product: product, label: 'Gatunek' -%}
+        {%- endcapture -%}
+        {
+          "title": {{ product.title | json }},
+          "handle": {{ product.handle | json }},
+          "url": {{ product.url | json }},
+          "priceFormatted": {{ product.price | money | json }},
+          "createdDate": {{ gacs_created | strip | json }},
+          "technique": {{ gacs_technique | strip | json }},
+          "genre": {{ gacs_genre | strip | json }},
+          "imageSrc": {% if card_image != blank %}{{ card_image | image_url: width: 900 | json }}{% else %}""{% endif %},
+          "imageAlt": {{ product.title | json }}
+        }{% unless forloop.last %},{% endunless %}
+      {%- endfor -%}
+    {%- endif -%}
+  ]
+}

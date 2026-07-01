@@ -1,0 +1,84 @@
+{%- liquid
+  comment
+    Pipe-separated collection handles in menu / catalog order (deduplicated).
+    @param source {string} menu | all
+    @param catalog_parent {linklist link}
+    @param gacs_hidden_csv {string}
+  endcomment
+
+  assign gacs_seen = ','
+-%}
+{%- if source == 'menu' and catalog_parent != blank -%}
+  {%- for link_l1 in catalog_parent.links -%}
+    {%- liquid
+      assign nav_col = blank
+      if link_l1.type == 'collection_link'
+        assign nav_col = link_l1.object
+      elsif link_l1.url contains '/collections/'
+        assign url_tail = link_l1.url | split: '/collections/' | last | split: '?' | first | split: '/' | first
+        assign nav_col = collections[url_tail]
+      endif
+    -%}
+    {%- if nav_col != blank and nav_col.products_count > 0 -%}
+      {%- assign handle_token = nav_col.handle | prepend: ',' | append: ',' -%}
+      {%- assign seen_token = nav_col.handle | prepend: ',' | append: ',' -%}
+      {%- unless gacs_hidden_csv contains handle_token or gacs_seen contains seen_token -%}
+        {%- assign gacs_seen = gacs_seen | append: nav_col.handle | append: ',' -%}
+        {{- nav_col.handle -}}|
+      {%- endunless -%}
+    {%- endif -%}
+    {%- for link_l2 in link_l1.links -%}
+      {%- liquid
+        assign nav_col = blank
+        if link_l2.type == 'collection_link'
+          assign nav_col = link_l2.object
+        elsif link_l2.url contains '/collections/'
+          assign url_tail = link_l2.url | split: '/collections/' | last | split: '?' | first | split: '/' | first
+          assign nav_col = collections[url_tail]
+        endif
+      -%}
+      {%- if nav_col != blank and nav_col.products_count > 0 -%}
+        {%- assign handle_token = nav_col.handle | prepend: ',' | append: ',' -%}
+        {%- assign seen_token = nav_col.handle | prepend: ',' | append: ',' -%}
+        {%- unless gacs_hidden_csv contains handle_token or gacs_seen contains seen_token -%}
+          {%- assign gacs_seen = gacs_seen | append: nav_col.handle | append: ',' -%}
+          {{- nav_col.handle -}}|
+        {%- endunless -%}
+      {%- endif -%}
+      {%- for link_l3 in link_l2.links -%}
+        {%- liquid
+          assign nav_col = blank
+          if link_l3.type == 'collection_link'
+            assign nav_col = link_l3.object
+          elsif link_l3.url contains '/collections/'
+            assign url_tail = link_l3.url | split: '/collections/' | last | split: '?' | first | split: '/' | first
+            assign nav_col = collections[url_tail]
+          endif
+        -%}
+        {%- if nav_col != blank and nav_col.products_count > 0 -%}
+          {%- assign handle_token = nav_col.handle | prepend: ',' | append: ',' -%}
+          {%- assign seen_token = nav_col.handle | prepend: ',' | append: ',' -%}
+          {%- unless gacs_hidden_csv contains handle_token or gacs_seen contains seen_token -%}
+            {%- assign gacs_seen = gacs_seen | append: nav_col.handle | append: ',' -%}
+            {{- nav_col.handle -}}|
+          {%- endunless -%}
+        {%- endif -%}
+      {%- endfor -%}
+    {%- endfor -%}
+  {%- endfor -%}
+{%- elsif source == 'all' -%}
+  {%- for nav_col in collections -%}
+    {%- if nav_col.handle == 'all' or nav_col.handle == 'frontpage' -%}
+      {%- continue -%}
+    {%- endif -%}
+    {%- if nav_col.products_count == 0 -%}
+      {%- continue -%}
+    {%- endif -%}
+    {%- assign handle_token = nav_col.handle | prepend: ',' | append: ',' -%}
+    {%- assign seen_token = nav_col.handle | prepend: ',' | append: ',' -%}
+    {%- unless gacs_hidden_csv contains handle_token or gacs_seen contains seen_token -%}
+      {%- assign gacs_seen = gacs_seen | append: nav_col.handle | append: ',' -%}
+      {{- nav_col.handle -}}|
+    {%- endunless -%}
+  {%- endfor -%}
+{%- endif -%}

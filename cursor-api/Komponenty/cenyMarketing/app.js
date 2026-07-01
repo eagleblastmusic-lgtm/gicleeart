@@ -7,27 +7,27 @@
 // Zapisywane do localStorage pod kluczem "cwm-costs-v1".
 const COST_BREAKDOWN_DEFAULT = {
   // RAMA — materiały budowy ramy
-  drewno:           { S: { pine: 19.17, oak: 39.17 }, L: { pine: 26.67, oak: 56.67 }, XL: { pine: 34.17, oak: 74.17 }, group: "rama" },
-  passepartout:     { S: { pine: 10.00, oak: 10.00 }, L: { pine: 25.00, oak: 25.00 }, XL: { pine: 40.00, oak: 40.00 }, group: "rama" },
-  foamboard:        { S: { pine:  7.00, oak:  7.00 }, L: { pine: 19.01, oak: 19.01 }, XL: { pine: 26.93, oak: 26.93 }, group: "rama" },
-  zawieszka:        { S: { pine:  0.40, oak:  0.40 }, L: { pine:  0.40, oak:  0.40 }, XL: { pine:  0.40, oak:  0.40 }, group: "rama" },
-  rmcPrecolor:      { S: { pine:  1.25, oak:  1.25 }, L: { pine:  1.99, oak:  1.99 }, XL: { pine:  2.49, oak:  2.49 }, group: "rama" },
-  rmc2c:            { S: { pine:  2.97, oak:  2.97 }, L: { pine:  4.74, oak:  4.74 }, XL: { pine:  5.93, oak:  5.93 }, group: "rama" },
-  klej:             { S: { pine:  0.09, oak:  0.09 }, L: { pine:  0.09, oak:  0.09 }, XL: { pine:  0.09, oak:  0.09 }, group: "rama" },
-  energiaCiecie:    { S: { pine:  0.28, oak:  0.28 }, L: { pine:  0.28, oak:  0.28 }, XL: { pine:  0.28, oak:  0.28 }, group: "rama" },
-  energiaSzlif:     { S: { pine:  1.10, oak:  1.10 }, L: { pine:  1.65, oak:  1.65 }, XL: { pine:  2.20, oak:  2.20 }, group: "rama" },
-  papierScierny:    { S: { pine:  0.86, oak:  0.96 }, L: { pine:  0.86, oak:  0.96 }, XL: { pine:  0.86, oak:  0.96 }, group: "rama" },
-  rekawiczki:       { S: { pine:  0.23, oak:  0.23 }, L: { pine:  0.23, oak:  0.23 }, XL: { pine:  0.23, oak:  0.23 }, group: "rama" },
-  szmatka:          { S: { pine:  0.42, oak:  0.42 }, L: { pine:  0.42, oak:  0.42 }, XL: { pine:  0.42, oak:  0.42 }, group: "rama" },
+  drewno:           { M: { pine: 19.17, oak: 39.17 }, L: { pine: 26.67, oak: 56.67 }, XL: { pine: 34.17, oak: 74.17 }, group: "rama" },
+  passepartout:     { M: { pine: 10.00, oak: 10.00 }, L: { pine: 25.00, oak: 25.00 }, XL: { pine: 40.00, oak: 40.00 }, group: "rama" },
+  foamboard:        { M: { pine:  7.00, oak:  7.00 }, L: { pine: 19.01, oak: 19.01 }, XL: { pine: 26.93, oak: 26.93 }, group: "rama" },
+  zawieszka:        { M: { pine:  0.40, oak:  0.40 }, L: { pine:  0.40, oak:  0.40 }, XL: { pine:  0.40, oak:  0.40 }, group: "rama" },
+  rmcPrecolor:      { M: { pine:  1.25, oak:  1.25 }, L: { pine:  1.99, oak:  1.99 }, XL: { pine:  2.49, oak:  2.49 }, group: "rama" },
+  rmc2c:            { M: { pine:  2.97, oak:  2.97 }, L: { pine:  4.74, oak:  4.74 }, XL: { pine:  5.93, oak:  5.93 }, group: "rama" },
+  klej:             { M: { pine:  0.09, oak:  0.09 }, L: { pine:  0.09, oak:  0.09 }, XL: { pine:  0.09, oak:  0.09 }, group: "rama" },
+  energiaCiecie:    { M: { pine:  0.28, oak:  0.28 }, L: { pine:  0.28, oak:  0.28 }, XL: { pine:  0.28, oak:  0.28 }, group: "rama" },
+  energiaSzlif:     { M: { pine:  1.10, oak:  1.10 }, L: { pine:  1.65, oak:  1.65 }, XL: { pine:  2.20, oak:  2.20 }, group: "rama" },
+  papierScierny:    { M: { pine:  0.86, oak:  0.96 }, L: { pine:  0.86, oak:  0.96 }, XL: { pine:  0.86, oak:  0.96 }, group: "rama" },
+  rekawiczki:       { M: { pine:  0.23, oak:  0.23 }, L: { pine:  0.23, oak:  0.23 }, XL: { pine:  0.23, oak:  0.23 }, group: "rama" },
+  szmatka:          { M: { pine:  0.42, oak:  0.42 }, L: { pine:  0.42, oak:  0.42 }, XL: { pine:  0.42, oak:  0.42 }, group: "rama" },
   // WYDRUK
-  hahnemuhle:       { S: { pine: 10.63, oak: 10.63 }, L: { pine: 25.04, oak: 25.04 }, XL: { pine: 37.74, oak: 37.74 }, group: "wydruk" },
-  kosztWydruku:     { S: { pine:  3.71, oak:  3.71 }, L: { pine:  9.43, oak:  9.43 }, XL: { pine: 14.81, oak: 14.81 }, group: "wydruk" },
-  tasmaBezkwasowa:  { S: { pine:  0.52, oak:  0.52 }, L: { pine:  0.71, oak:  0.71 }, XL: { pine:  0.84, oak:  0.84 }, group: "wydruk" },
+  hahnemuhle:       { M: { pine: 10.63, oak: 10.63 }, L: { pine: 25.04, oak: 25.04 }, XL: { pine: 37.74, oak: 37.74 }, group: "wydruk" },
+  kosztWydruku:     { M: { pine:  3.71, oak:  3.71 }, L: { pine:  9.43, oak:  9.43 }, XL: { pine: 14.81, oak: 14.81 }, group: "wydruk" },
+  tasmaBezkwasowa:  { M: { pine:  0.52, oak:  0.52 }, L: { pine:  0.71, oak:  0.71 }, XL: { pine:  0.84, oak:  0.84 }, group: "wydruk" },
   // OPAKOWANIE + WYSYŁKA
-  karton:           { S: { pine:  3.20, oak:  5.80 }, L: { pine:  5.80, oak:  3.75 }, XL: { pine:  9.90, oak:  9.90 }, group: "opakowanie" },
-  wysylka:          { S: { pine: 12.71, oak: 12.71 }, L: { pine: 12.71, oak: 12.71 }, XL: { pine: 12.71, oak: 12.71 }, group: "opakowanie" },
+  karton:           { M: { pine:  3.20, oak:  5.80 }, L: { pine:  5.80, oak:  3.75 }, XL: { pine:  9.90, oak:  9.90 }, group: "opakowanie" },
+  wysylka:          { M: { pine: 12.71, oak: 12.71 }, L: { pine: 12.71, oak: 12.71 }, XL: { pine: 12.71, oak: 12.71 }, group: "opakowanie" },
   // ROBOCIZNA (dodane — Twoja kalkulacja tego nie zawierała)
-  robocizna:        { S: { pine: 25.00, oak: 30.00 }, L: { pine: 35.00, oak: 45.00 }, XL: { pine: 50.00, oak: 65.00 }, group: "robocizna" },
+  robocizna:        { M: { pine: 25.00, oak: 30.00 }, L: { pine: 35.00, oak: 45.00 }, XL: { pine: 50.00, oak: 65.00 }, group: "robocizna" },
 };
 
 const COST_LABELS = {
@@ -78,7 +78,7 @@ function getCostsForVariant(size, wood) {
 // ---------- DANE: 3 STRATEGIE CENOWE (koszty z breakdown) ----------
 function buildStrategyProducts(prices) {
   const out = {};
-  for (const size of ["S", "L", "XL"]) {
+  for (const size of ["M", "L", "XL"]) {
     out[size] = {};
     for (const wood of ["pine", "oak"]) {
       out[size][wood] = {
@@ -93,17 +93,17 @@ function buildStrategyProducts(prices) {
 
 const STRATEGY_PRICES = {
   penetration: {
-    S:  { pine: { price: 199,  anchor: 249  }, oak:  { price: 299,  anchor: 349  } },
+    M:  { pine: { price: 199,  anchor: 249  }, oak:  { price: 299,  anchor: 349  } },
     L:  { pine: { price: 499,  anchor: 599  }, oak:  { price: 749,  anchor: 899  } },
     XL: { pine: { price: 899,  anchor: 1099 }, oak:  { price: 1199, anchor: 1399 } },
   },
   current: {
-    S:  { pine: { price: 299,  anchor: 349  }, oak:  { price: 399,  anchor: 499  } },
+    M:  { pine: { price: 299,  anchor: 349  }, oak:  { price: 399,  anchor: 499  } },
     L:  { pine: { price: 699,  anchor: 849  }, oak:  { price: 999,  anchor: 1199 } },
     XL: { pine: { price: 1199, anchor: 1399 }, oak:  { price: 1499, anchor: 1799 } },
   },
   premium: {
-    S:  { pine: { price: 399,  anchor: 499  }, oak:  { price: 549,  anchor: 649  } },
+    M:  { pine: { price: 399,  anchor: 499  }, oak:  { price: 549,  anchor: 649  } },
     L:  { pine: { price: 899,  anchor: 1099 }, oak:  { price: 1299, anchor: 1499 } },
     XL: { pine: { price: 1599, anchor: 1899 }, oak:  { price: 1999, anchor: 2399 } },
   },
@@ -116,7 +116,7 @@ const STRATEGIES = {
 };
 
 const PRODUCT_META = {
-  S:  { label: "S — A4",   frame: "36 × 27 cm",  paper: "Hahnemühle Photo Rag 308, A4"  },
+  M:  { label: "M — A4",   frame: "36 × 27 cm",  paper: "Hahnemühle Photo Rag 308, A4"  },
   L:  { label: "L — A3+",  frame: "59 × 43 cm",  paper: "Hahnemühle Photo Rag 308, A3+" },
   XL: { label: "XL — A2",  frame: "72 × 55 cm",  paper: "Hahnemühle Photo Rag 308, A2"  },
 };
@@ -310,11 +310,11 @@ function renderProductCards() {
   if (!container) return;
   const products = getActiveProducts();
   const sizes = [
-    { key: "S",  name: "Entry · A4",       tag: "Wejście w kategorię",   tagCls: "neutral", desc: "Korytarz, biuro, sypialnia" },
+    { key: "M",  name: "Entry · A4",       tag: "Wejście w kategorię",   tagCls: "neutral", desc: "Korytarz, biuro, sypialnia" },
     { key: "L",  name: "Bestseller · A3+", tag: "Najczęstszy wybór",     tagCls: "success", desc: "Salon, jadalnia, gabinet" },
     { key: "XL", name: "Statement · A2",   tag: "Lux / kotwica",         tagCls: "gold",    desc: "Salon nad sofą, hol, hotel" },
   ];
-  const printSize = { S: "A4 (21 × 29,7 cm)", L: "A3+ (32,9 × 48,3 cm)", XL: "A2 (42 × 59,4 cm)" };
+  const printSize = { M: "A4 (21 × 29,7 cm)", L: "A3+ (32,9 × 48,3 cm)", XL: "A2 (42 × 59,4 cm)" };
 
   container.innerHTML = sizes.map((s) => {
     const p = products[s.key];
@@ -473,7 +473,7 @@ function renderStrategyCompare() {
   if (!tbody) return;
 
   const rows = [];
-  for (const size of ["S", "L", "XL"]) {
+  for (const size of ["M", "L", "XL"]) {
     for (const wood of ["pine", "oak"]) {
       const cells = [`<td><strong>${size}</strong> ${wood === "pine" ? "sosna" : "dąb"}</td>`];
       for (const stratKey of ["penetration", "current", "premium"]) {
@@ -520,7 +520,7 @@ function initSalesSim() {
     let revenue = 0, cost = 0, units = 0;
     const breakdown = {};
 
-    [["S", sS], ["L", sL], ["XL", sXL]].forEach(([size, qty]) => {
+    [["M", sS], ["L", sL], ["XL", sXL]].forEach(([size, qty]) => {
       const oakQty = Math.round(qty * oakPct / 100);
       const pineQty = qty - oakQty;
       const pine = getAvgPriceAndCost(size, "pine");
@@ -552,7 +552,7 @@ function initSalesSim() {
       ? breakeven + " szt./mies." : "—";
 
     let breakdownHTML = "";
-    ["S", "L", "XL"].forEach((size) => {
+    ["M", "L", "XL"].forEach((size) => {
       const b = breakdown[size];
       breakdownHTML += `<div class="sim__breakdown-row">
         <span>${size} (${b.qty} szt.)</span>
@@ -700,12 +700,12 @@ function renderBundles() {
   const products = getActiveProducts();
 
   const bundles = [
-    { name: "Para do sypialni",        desc: "2× S sosna",                  items: [["S", "pine", 2]],                          discount: 10, tag: "starter" },
+    { name: "Para do sypialni",        desc: "2× M sosna",                  items: [["M", "pine", 2]],                          discount: 10, tag: "starter" },
     { name: "Dyptyk salonowy",         desc: "2× L sosna",                  items: [["L", "pine", 2]],                          discount: 10, tag: "popularny" },
     { name: "Tryptyk klasyczny",       desc: "3× L sosna",                  items: [["L", "pine", 3]],                          discount: 15, tag: "bestseller" },
-    { name: "Galeria mieszana",        desc: "1× XL sosna + 2× S sosna",    items: [["XL", "pine", 1], ["S", "pine", 2]],       discount: 12, tag: "polecany" },
+    { name: "Galeria mieszana",        desc: "1× XL sosna + 2× M sosna",    items: [["XL", "pine", 1], ["M", "pine", 2]],       discount: 12, tag: "polecany" },
     { name: "Premium dyptyk",          desc: "2× L dąb",                    items: [["L", "oak", 2]],                           discount: 12, tag: "premium" },
-    { name: "Inwestycyjna kolekcja",   desc: "1× XL dąb + 1× L dąb + 1× S dąb", items: [["XL", "oak", 1], ["L", "oak", 1], ["S", "oak", 1]], discount: 15, tag: "lux" },
+    { name: "Inwestycyjna kolekcja",   desc: "1× XL dąb + 1× L dąb + 1× M dąb", items: [["XL", "oak", 1], ["L", "oak", 1], ["M", "oak", 1]], discount: 15, tag: "lux" },
   ];
 
   const rows = bundles.map((b) => {
@@ -737,7 +737,7 @@ function renderCostEditor() {
   const tbody = document.getElementById("cost-tbody");
   if (!tbody) return;
 
-  const sizes = ["S", "L", "XL"];
+  const sizes = ["M", "L", "XL"];
   const woods = ["pine", "oak"];
 
   // Grupowanie wierszy
@@ -814,7 +814,7 @@ function onCostInputChange(e) {
 }
 
 function recomputeCostSums() {
-  for (const size of ["S", "L", "XL"]) {
+  for (const size of ["M", "L", "XL"]) {
     for (const wood of ["pine", "oak"]) {
       const sum = calcCost(size, wood);
       const sumEl = document.getElementById(`cost-sum-${size}-${wood}`);

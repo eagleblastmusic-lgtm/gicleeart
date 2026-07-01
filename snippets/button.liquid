@@ -29,7 +29,7 @@
   {%- endif -%}
   {{ block.shopify_attributes }}
 >
-  {{ block_settings.label }}
+  {%- render 'giclee-i18n-text', scope: 'blocks', id: block.id, field: 'label', fallback: block_settings.label -%}
 </a>
 
 {% stylesheet %}

@@ -1,6 +1,6 @@
 # Ceny w marketingu
 
-Samodzielna aplikacja webowa z analizą cen marketingowych dla reprodukcji giclée GicleeArt — trzy rozmiary (S/L/XL), dwa typy ramy (sosna/dąb), siedem rynków UE.
+Samodzielna aplikacja webowa z analizą cen marketingowych dla reprodukcji giclée GicleeArt — trzy rozmiary (M/L/XL), dwa typy ramy (sosna/dąb), siedem rynków UE.
 
 ## Uruchomienie
 
@@ -15,7 +15,7 @@ Aplikacja **nie wymaga** Node.js, npm, Vite ani niczego — to czysty HTML + CSS
 1. **Jasny / ciemny motyw** (zapamiętany w localStorage)
 2. **Reality Check** — porównanie z realnymi cenami konkurencji (Manufaktura Obrazów, Desenio, JUNIQE, King & McGaw, Galeria Klasyki, Masiulaniec) z linkami do weryfikacji
 3. **Kalkulator cen** — interaktywny, dla każdego rozmiaru/drewna/rynku
-4. **Spec produktów** S/L/XL z pozycjonowaniem
+4. **Spec produktów** M/L/XL z pozycjonowaniem
 5. **3 strategie cenowe (przełącznik na żywo)**: penetracja / aktualna / ultra-premium — aktualizuje WSZYSTKIE sekcje
 6. **Analiza kosztów i marży** + wykres marż
 7. **Pełen cennik 7 rynków × 6 wariantów**

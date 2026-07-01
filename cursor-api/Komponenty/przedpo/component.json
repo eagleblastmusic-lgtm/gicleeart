@@ -1,0 +1,7 @@
+{
+  "name": "Przed/Po",
+  "description": "Lista produktów — wgraj grafikę «przed obróbką». «Po» to obraz Full z galerii Shopify.",
+  "icon": "↔",
+  "color": "#6a1b9a",
+  "order": 37
+}

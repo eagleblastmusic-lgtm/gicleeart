@@ -1,0 +1,283 @@
+{%- doc -%}
+  Prośba o fakturę w koszyku — checkbox, osoba prywatna / firma.
+  Zapis: cart attributes → note_attributes na zamówieniu.
+{%- enddoc -%}
+
+{%- liquid
+  assign inv_requested = cart.attributes['_Invoice requested'] | default: ''
+  assign inv_type = cart.attributes['_Invoice type'] | default: 'private'
+  assign inv_company = cart.attributes['_Company name'] | default: ''
+  assign inv_tax_id = cart.attributes['_Tax ID'] | default: ''
+
+  assign market_cc = localization.country.iso_code | default: 'PL' | upcase
+
+  if market_cc == 'PL'
+    assign tax_id_label = 'content.invoice_tax_id_nip' | t
+  elsif market_cc == 'DE'
+    assign tax_id_label = 'content.invoice_tax_id_de' | t
+  elsif market_cc == 'FR'
+    assign tax_id_label = 'content.invoice_tax_id_fr' | t
+  elsif market_cc == 'GB'
+    assign tax_id_label = 'content.invoice_tax_id_uk' | t
+  else
+    assign tax_id_label = 'content.invoice_tax_id_generic' | t
+  endif
+
+  assign inv_checked = false
+  if inv_requested == 'yes' or inv_requested == 'true' or inv_requested == '1'
+    assign inv_checked = true
+  endif
+
+  if inv_type != 'company'
+    assign inv_type = 'private'
+  endif
+-%}
+
+<script
+  type="module"
+  src="{{ 'cart-invoice-request.js' | asset_url }}"
+></script>
+
+<cart-invoice-request
+  class="cart-invoice-request"
+  data-error-company="{{ 'content.invoice_error_company' | t | escape }}"
+>
+  <details
+    class="details cart-invoice-request__details"
+    {% if settings.cart_invoice_open_by_default or inv_checked %}
+      open
+    {% endif %}
+  >
+    <summary class="cart-invoice-request__summary">
+      <span class="cart-invoice-request__title cart-primary-typography">
+        {{ 'content.invoice_request_title' | t }}
+      </span>
+      <span class="cart-totals__icon">
+        {{- 'icon-plus.svg' | inline_asset_content -}}
+      </span>
+    </summary>
+
+    <div class="details-content cart-invoice-request__body">
+      <label class="cart-invoice-request__check">
+        <input
+          type="checkbox"
+          data-invoice-requested
+          on:change="/onToggleRequested"
+          {% if inv_checked %}
+            checked
+          {% endif %}
+        >
+        <span>{{ 'content.invoice_request_checkbox' | t }}</span>
+      </label>
+
+      <div
+        class="cart-invoice-request__panel"
+        data-invoice-panel
+        {% unless inv_checked %}
+          hidden
+        {% endunless %}
+      >
+        <p class="cart-invoice-request__hint cart-primary-typography">
+          {{ 'content.invoice_request_hint' | t }}
+        </p>
+
+        <fieldset class="cart-invoice-request__types">
+          <legend class="visually-hidden">{{ 'content.invoice_type_legend' | t }}</legend>
+          <label class="cart-invoice-request__type">
+            <input
+              type="radio"
+              name="invoice-type-{{ section_id | default: 'cart' }}"
+              value="private"
+              data-invoice-type
+              on:change="/onTypeChange"
+              {% if inv_type == 'private' %}
+                checked
+              {% endif %}
+            >
+            <span>{{ 'content.invoice_type_private' | t }}</span>
+          </label>
+          <label class="cart-invoice-request__type">
+            <input
+              type="radio"
+              name="invoice-type-{{ section_id | default: 'cart' }}"
+              value="company"
+              data-invoice-type
+              on:change="/onTypeChange"
+              {% if inv_type == 'company' %}
+                checked
+              {% endif %}
+            >
+            <span>{{ 'content.invoice_type_company' | t }}</span>
+          </label>
+        </fieldset>
+
+        <div
+          class="cart-invoice-request__company"
+          data-invoice-company-fields
+          {% unless inv_checked and inv_type == 'company' %}
+            hidden
+          {% endunless %}
+        >
+          <label class="cart-invoice-request__field">
+            <span class="cart-invoice-request__label">{{ 'content.invoice_company_name' | t }}</span>
+            <input
+              type="text"
+              class="cart-invoice-request__input"
+              data-invoice-company
+              on:input="/onFieldInput"
+              value="{{ inv_company | escape }}"
+              autocomplete="organization"
+              maxlength="120"
+            >
+          </label>
+          <label class="cart-invoice-request__field">
+            <span class="cart-invoice-request__label">{{ tax_id_label }}</span>
+            <input
+              type="text"
+              class="cart-invoice-request__input"
+              data-invoice-tax-id
+              on:input="/onFieldInput"
+              value="{{ inv_tax_id | escape }}"
+              autocomplete="off"
+              maxlength="32"
+            >
+          </label>
+        </div>
+      </div>
+
+      <p
+        class="cart-invoice-request__error hidden"
+        ref="error"
+        role="alert"
+      ></p>
+    </div>
+  </details>
+</cart-invoice-request>
+
+{% stylesheet %}
+  .cart-invoice-request {
+    display: block;
+    width: 100%;
+  }
+
+  .cart-invoice-request__summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    padding-block: var(--padding-md);
+    list-style: none;
+    color: var(--color-foreground);
+  }
+
+  .cart-invoice-request__summary:hover {
+    color: rgb(var(--color-foreground-rgb) / var(--opacity-subdued-text));
+  }
+
+  .cart-invoice-request__summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .cart-invoice-request__body {
+    padding-bottom: var(--padding-md);
+  }
+
+  .cart-invoice-request__check,
+  .cart-invoice-request__type {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-sm);
+    cursor: pointer;
+    color: var(--color-foreground);
+  }
+
+  .cart-invoice-request__check:hover,
+  .cart-invoice-request__type:hover,
+  .cart-invoice-request__check span,
+  .cart-invoice-request__type span {
+    color: inherit;
+  }
+
+  .cart-invoice-request__check {
+    align-items: flex-start;
+    margin-bottom: var(--margin-sm);
+  }
+
+  .cart-invoice-request__check input {
+    margin-top: 0.2em;
+    flex-shrink: 0;
+  }
+
+  .cart-invoice-request__hint {
+    font-size: var(--font-size--xs);
+    color: rgb(var(--color-foreground-rgb) / var(--opacity-subdued-text));
+    margin: 0 0 var(--margin-sm);
+    line-height: 1.45;
+  }
+
+  .cart-invoice-request__types {
+    border: none;
+    margin: 0 0 var(--margin-sm);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-xs);
+  }
+
+  .cart-invoice-request__company {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-sm);
+    margin-top: var(--margin-xs);
+  }
+
+  .cart-invoice-request__field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-2xs);
+  }
+
+  .cart-invoice-request__label {
+    font-size: var(--font-size--xs);
+    color: rgb(var(--color-foreground-rgb) / var(--opacity-subdued-text));
+  }
+
+  .cart-invoice-request__input {
+    width: 100%;
+    padding: var(--padding-sm) var(--padding-md);
+    border: 1px solid var(--color-input-border, var(--color-border));
+    border-radius: var(--style-border-radius-inputs, 4px);
+    font: inherit;
+    background-color: var(--color-input-background);
+    color: var(--color-input-text);
+  }
+
+  .cart-invoice-request__error {
+    margin: var(--margin-sm) 0 0;
+    font-size: var(--font-size--xs);
+    color: rgb(var(--color-error-rgb, 180 40 40));
+  }
+
+  .cart-invoice-request__panel[hidden],
+  .cart-invoice-request__company[hidden],
+  .cart-invoice-request__error.hidden {
+    display: none !important;
+  }
+
+  /* Bez JS: pokaż panel gdy checkbox zaznaczony */
+  .cart-invoice-request__body:has([data-invoice-requested]:checked) .cart-invoice-request__panel {
+    display: block !important;
+  }
+
+  .cart-invoice-request__body:has([data-invoice-requested]:checked) .cart-invoice-request__panel[hidden] {
+    display: block !important;
+  }
+
+  .cart-invoice-request__body:has([data-invoice-type][value='company']:checked) .cart-invoice-request__company {
+    display: flex !important;
+  }
+
+  .cart-invoice-request__body:has([data-invoice-type][value='company']:checked) .cart-invoice-request__company[hidden] {
+    display: flex !important;
+  }
+{% endstylesheet %}

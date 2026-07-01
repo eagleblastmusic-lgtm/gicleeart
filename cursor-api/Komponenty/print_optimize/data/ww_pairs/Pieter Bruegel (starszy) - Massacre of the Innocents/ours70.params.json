@@ -1,0 +1,11 @@
+{
+  "scene": "fine_art_landscape",
+  "exposure": 0.05,
+  "contrast": 1.03,
+  "saturation": 1.02,
+  "shadow_lift": 0.08,
+  "highlight_recovery": 0.05,
+  "temperature_shift": 0.0,
+  "tint_shift": 0.0,
+  "confidence": 0.95
+}

@@ -5,12 +5,18 @@ Korzysta z sesji zapisanej przez oauth-server w .shopify_session.json.
 from __future__ import annotations
 
 import base64
+import errno
 import json
+import mimetypes
 import re
+import socket
 import ssl
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import uuid
+from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
 
@@ -20,10 +26,99 @@ API_VERSION = "2026-04"
 #   parents[2] = cursor-api/
 ROOT = Path(__file__).resolve().parents[2]
 SESSION_FILE = ROOT / ".shopify_session.json"
+REQUEST_TIMEOUT_SECONDS = 45
+_RETRY_DELAYS_SECONDS = (2, 5, 10)
+_TRANSIENT_HTTP_CODES = {429, 500, 502, 503, 504}
+# Shopify REST: 2 wywolania/s na klienta API — odstep chroni batch (create + metafields + upload).
+_MIN_REQUEST_INTERVAL_SECONDS = 0.55
+_last_request_monotonic = 0.0
 
 
 class ShopifyError(RuntimeError):
     pass
+
+
+class OperationCancelled(ShopifyError):
+    """Uzytkownik przerwal dluga operacje (np. pobieranie katalogu produktow)."""
+
+
+def _retry_after_seconds(headers: Any) -> float | None:
+    raw = (headers or {}).get("Retry-After") if headers else None
+    if raw is None:
+        return None
+    try:
+        return max(0.0, min(float(raw), 30.0))
+    except (TypeError, ValueError):
+        return None
+
+
+def _is_transient_network_error(exc: BaseException) -> bool:
+    if isinstance(exc, (TimeoutError, socket.timeout)):
+        return True
+    if isinstance(exc, urllib.error.URLError):
+        reason = exc.reason
+        if isinstance(reason, (TimeoutError, socket.timeout)):
+            return True
+        if isinstance(reason, OSError):
+            exc = reason
+        else:
+            text = str(reason).lower()
+            return "timed out" in text or "timeout" in text
+    if isinstance(exc, OSError):
+        code = getattr(exc, "winerror", None) or getattr(exc, "errno", None)
+        return code in {
+            10053,  # connection aborted
+            10054,  # connection reset
+            10060,  # connection timed out
+            errno.ECONNABORTED,
+            errno.ECONNRESET,
+            errno.ETIMEDOUT,
+        }
+    return False
+
+
+def _throttle_shopify_request() -> None:
+    global _last_request_monotonic
+    now = time.monotonic()
+    if _last_request_monotonic > 0:
+        wait = _MIN_REQUEST_INTERVAL_SECONDS - (now - _last_request_monotonic)
+        if wait > 0:
+            time.sleep(wait)
+    _last_request_monotonic = time.monotonic()
+
+
+def _urlopen_with_retries(req: urllib.request.Request) -> Any:
+    method = req.get_method().upper()
+    idempotent = method in {"GET", "PUT", "DELETE", "HEAD"}
+    attempts = len(_RETRY_DELAYS_SECONDS) + 1
+    last_error: BaseException | None = None
+    for attempt in range(attempts):
+        _throttle_shopify_request()
+        try:
+            return urllib.request.urlopen(
+                req,
+                context=ssl.create_default_context(),
+                timeout=REQUEST_TIMEOUT_SECONDS,
+            )
+        except urllib.error.HTTPError as e:
+            last_error = e
+            if e.code not in _TRANSIENT_HTTP_CODES or attempt >= attempts - 1:
+                raise
+            # POST tylko przy 429 (odrzucone przez limiter) — unikamy duplikatow przy 5xx.
+            if not idempotent and e.code != 429:
+                raise
+            delay = _retry_after_seconds(e.headers) or _RETRY_DELAYS_SECONDS[attempt]
+            e.close()
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            last_error = e
+            if not _is_transient_network_error(e) or attempt >= attempts - 1:
+                raise ShopifyError(
+                    "Tymczasowy blad polaczenia z Shopify po "
+                    f"{attempt + 1} probach: {e}"
+                ) from e
+            delay = _RETRY_DELAYS_SECONDS[attempt]
+        time.sleep(delay)
+    raise ShopifyError(f"Tymczasowy blad polaczenia z Shopify: {last_error}")
 
 
 def load_session() -> tuple[str, str]:
@@ -58,7 +153,7 @@ def _request(
         method=method,
     )
     try:
-        with urllib.request.urlopen(req, context=ssl.create_default_context()) as resp:
+        with _urlopen_with_retries(req) as resp:
             raw = resp.read().decode("utf-8")
     except urllib.error.HTTPError as e:
         detail = e.read().decode("utf-8", errors="replace")
@@ -86,6 +181,86 @@ def rest_put(shop: str, token: str, path: str, body: dict) -> Any:
     return _request("PUT", url, token, body=body)
 
 
+def rest_delete(shop: str, token: str, path: str) -> None:
+    url = f"https://{shop}/admin/api/{API_VERSION}/{path.lstrip('/')}"
+    _request("DELETE", url, token)
+
+
+def _paginate_link_header(url: str, token: str, *, list_key: str) -> Iterator[list[dict]]:
+    """GET z paginacja Link: rel=next."""
+    while url:
+        req = urllib.request.Request(
+            url,
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "X-Shopify-Access-Token": token,
+            },
+            method="GET",
+        )
+        try:
+            with _urlopen_with_retries(req) as resp:
+                raw = resp.read().decode("utf-8")
+                link_header = resp.headers.get("Link", "") or ""
+        except urllib.error.HTTPError as e:
+            detail = e.read().decode("utf-8", errors="replace")
+            raise ShopifyError(f"HTTP {e.code} GET {url}\n{detail}") from e
+        data = json.loads(raw) if raw else {}
+        yield (data or {}).get(list_key) or []
+
+        next_url = None
+        for part in link_header.split(","):
+            part = part.strip()
+            if part.endswith('rel="next"'):
+                m = re.search(r"<([^>]+)>", part)
+                if m:
+                    next_url = m.group(1)
+                    break
+        url = next_url
+
+
+def fetch_all_collects(shop: str, token: str) -> list[dict]:
+    """Wszystkie powiazania produkt <-> custom collection (collects)."""
+    base = (
+        f"https://{shop}/admin/api/{API_VERSION}/collects.json?"
+        + urllib.parse.urlencode({"limit": 250})
+    )
+    out: list[dict] = []
+    for batch in _paginate_link_header(base, token, list_key="collects"):
+        out.extend(batch)
+    return out
+
+
+def fetch_collection_catalog(shop: str, token: str) -> dict[int, dict[str, Any]]:
+    """id kolekcji -> {id, title, kind} (custom | smart)."""
+    catalog: dict[int, dict[str, Any]] = {}
+    for list_key, kind in (("custom_collections", "custom"), ("smart_collections", "smart")):
+        base = (
+            f"https://{shop}/admin/api/{API_VERSION}/{list_key}.json?"
+            + urllib.parse.urlencode({"limit": 250, "fields": "id,title"})
+        )
+        for batch in _paginate_link_header(base, token, list_key=list_key):
+            for item in batch:
+                cid = int(item.get("id") or 0)
+                if not cid:
+                    continue
+                catalog[cid] = {
+                    "id": cid,
+                    "title": (item.get("title") or "").strip(),
+                    "kind": kind,
+                }
+    return catalog
+
+
+def list_product_collects(shop: str, token: str, product_id: int) -> list[dict]:
+    data = rest_get(shop, token, "collects.json", product_id=int(product_id), limit=250)
+    return (data or {}).get("collects") or []
+
+
+def delete_collect(shop: str, token: str, collect_id: int) -> None:
+    rest_delete(shop, token, f"collects/{int(collect_id)}.json")
+
+
 def graphql(shop: str, token: str, query: str, variables: dict | None = None) -> dict:
     url = f"https://{shop}/admin/api/{API_VERSION}/graphql.json"
     body = {"query": query, "variables": variables or {}}
@@ -95,6 +270,72 @@ def graphql(shop: str, token: str, query: str, variables: dict | None = None) ->
     if data.get("errors"):
         raise ShopifyError(f"GraphQL errors: {json.dumps(data['errors'], ensure_ascii=False)}")
     return data.get("data") or {}
+
+
+def get_presentment_currency_setting(
+    shop: str,
+    token: str,
+    currency_code: str = "EUR",
+) -> dict[str, Any]:
+    """Zwraca ustawienia waluty prezentacji z `Shop.currencySettings` (Admin GraphQL).
+
+    Dla sklepu w PLN i waluty EUR pole `manual_rate` to opcjonalny mnoznik przy konwersji
+    **ze waluty sklepu** (gdy wlaczony reczny kurs w Shopify). Gdy `manual_rate` jest None,
+    Shopify stosuje kurs automatyczny — liczby nie ma w tym API (zostaje `rate_updated_at`).
+
+    Zwraca m.in.: `shop_currency`, `found`, `currency`, `enabled`, `manual_rate`, `rate_updated_at`.
+    """
+    target = (currency_code or "EUR").strip().upper()
+    query = """
+    query ShopCurrencySettings($first: Int!) {
+      shop {
+        currencyCode
+        currencySettings(first: $first) {
+          edges {
+            node {
+              currencyCode
+              currencyName
+              enabled
+              manualRate
+              rateUpdatedAt
+            }
+          }
+        }
+      }
+    }
+    """
+    data = graphql(shop, token, query, {"first": 80})
+    s = (data or {}).get("shop") or {}
+    base = str(s.get("currencyCode") or "").upper()
+    edges = (((s.get("currencySettings") or {}).get("edges")) or [])
+    for e in edges:
+        n = (e or {}).get("node") or {}
+        code = str(n.get("currencyCode") or "").upper()
+        if code != target:
+            continue
+        raw_mr = n.get("manualRate")
+        manual: float | None
+        if raw_mr is None or raw_mr == "":
+            manual = None
+        else:
+            try:
+                manual = float(raw_mr)
+            except (TypeError, ValueError):
+                manual = None
+        return {
+            "found": True,
+            "shop_currency": base,
+            "currency": target,
+            "currency_name": str(n.get("currencyName") or ""),
+            "enabled": bool(n.get("enabled")),
+            "manual_rate": manual,
+            "rate_updated_at": n.get("rateUpdatedAt"),
+        }
+    return {
+        "found": False,
+        "shop_currency": base,
+        "currency": target,
+    }
 
 
 def get_reference_variants(shop: str, token: str, product_id: int) -> dict:
@@ -184,17 +425,27 @@ def upload_image(
     image_path: Path,
     *,
     alt: str | None = None,
+    position: int | None = None,
+    logger: Callable[[str], None] | None = None,
 ) -> dict:
-    raw = image_path.read_bytes()
-    b64 = base64.b64encode(raw).decode("ascii")
-    image_obj: dict = {
-        "attachment": b64,
-        "filename": image_path.name,
-    }
-    if alt:
-        image_obj["alt"] = alt
-    out = rest_post(shop, token, f"products/{product_id}/images.json", {"image": image_obj})
-    return (out or {}).get("image") or {}
+    from .image_upload import resolve_shopify_upload
+
+    resolved = resolve_shopify_upload(image_path, logger=logger)
+    try:
+        raw = resolved.path.read_bytes()
+        b64 = base64.b64encode(raw).decode("ascii")
+        image_obj: dict = {
+            "attachment": b64,
+            "filename": resolved.filename,
+        }
+        if alt:
+            image_obj["alt"] = alt
+        if position is not None:
+            image_obj["position"] = int(position)
+        out = rest_post(shop, token, f"products/{product_id}/images.json", {"image": image_obj})
+        return (out or {}).get("image") or {}
+    finally:
+        resolved.cleanup()
 
 
 def add_to_collect(shop: str, token: str, product_id: int, collection_id: int) -> dict:
@@ -205,6 +456,30 @@ def add_to_collect(shop: str, token: str, product_id: int, collection_id: int) -
         {"collect": {"product_id": product_id, "collection_id": collection_id}},
     )
     return (out or {}).get("collect") or {}
+
+
+def is_product_in_collection(
+    shop: str,
+    token: str,
+    product_id: int,
+    collection_id: int,
+    *,
+    collection_kind: str | None = None,
+) -> bool:
+    """Sprawdza, czy produkt jest w danej kolekcji (custom przez collects, smart przez liste produktow)."""
+    pid = int(product_id)
+    cid = int(collection_id)
+    kind = (collection_kind or "").strip().lower()
+    if kind == "custom":
+        data = rest_get(shop, token, "collects.json", product_id=pid, limit=250)
+        for row in (data or {}).get("collects") or []:
+            if int(row.get("collection_id") or 0) == cid:
+                return True
+        return False
+    for prod in iter_collection_products(shop, token, cid, fields="id"):
+        if int(prod.get("id") or 0) == pid:
+            return True
+    return False
 
 
 def set_seo_metafields(
@@ -390,9 +665,123 @@ def get_product(shop: str, token: str, product_id: int) -> dict:
     return (out or {}).get("product") or {}
 
 
+def get_variant_featured_image_url(
+    shop: str,
+    token: str,
+    *,
+    variant_id: int | None,
+    product_id: int | None = None,
+) -> str | None:
+    """URL glownego obrazu wariantu (do miniatur w Produkcji itd.).
+
+    Kolejnosc: obraz przypisany do wariantu (`image_id`), inaczej pierwsze zdjecie produktu.
+    """
+    if not variant_id:
+        return None
+    try:
+        vid = int(variant_id)
+    except (TypeError, ValueError):
+        return None
+    try:
+        out = rest_get(shop, token, f"variants/{vid}.json")
+        v = (out or {}).get("variant") or {}
+        pid = int(v.get("product_id") or product_id or 0)
+        image_id = v.get("image_id")
+        if not pid:
+            return None
+        imgs_out = rest_get(shop, token, f"products/{pid}/images.json")
+        images = (imgs_out or {}).get("images") or []
+        if image_id:
+            iid = int(image_id)
+            for im in images:
+                if int(im.get("id") or 0) == iid:
+                    src = str(im.get("src") or "").strip()
+                    return src or None
+        if images:
+            return str(images[0].get("src") or "").strip() or None
+    except ShopifyError:
+        return None
+    return None
+
+
 def count_product_images(shop: str, token: str, product_id: int) -> int:
     out = rest_get(shop, token, f"products/{product_id}/images/count.json")
     return int((out or {}).get("count") or 0)
+
+
+def iter_each_product_page(
+    shop: str,
+    token: str,
+    *,
+    product_type: str | None = None,
+    fields: str | None = None,
+) -> Iterator[list[dict]]:
+    """Yields kolejne strony produktow (max 250 na strone). Paginacja Link-header."""
+    params: dict[str, Any] = {
+        "limit": 250,
+        "fields": fields or "id,title,handle,variants,options",
+    }
+    if product_type:
+        params["product_type"] = product_type
+    url = (
+        f"https://{shop}/admin/api/{API_VERSION}/products.json?"
+        + urllib.parse.urlencode({k: v for k, v in params.items() if v is not None})
+    )
+    while url:
+        req = urllib.request.Request(
+            url,
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "X-Shopify-Access-Token": token,
+            },
+            method="GET",
+        )
+        try:
+            with _urlopen_with_retries(req) as resp:
+                raw = resp.read().decode("utf-8")
+                link_header = resp.headers.get("Link", "") or ""
+        except urllib.error.HTTPError as e:
+            detail = e.read().decode("utf-8", errors="replace")
+            raise ShopifyError(f"HTTP {e.code} GET {url}\n{detail}") from e
+        data = json.loads(raw) if raw else {}
+        batch = (data or {}).get("products") or []
+        yield batch
+
+        next_url = None
+        for part in link_header.split(","):
+            part = part.strip()
+            if part.endswith('rel="next"'):
+                m = re.search(r"<([^>]+)>", part)
+                if m:
+                    next_url = m.group(1)
+                    break
+        url = next_url
+
+
+def fetch_all_products(
+    shop: str,
+    token: str,
+    *,
+    product_type: str | None = None,
+    fields: str | None = None,
+    should_cancel: Callable[[], bool] | None = None,
+    on_page_progress: Callable[[int], None] | None = None,
+) -> list[dict]:
+    """Pobiera wszystkie produkty z opcjonalnym anulowaniem miedzy stronami.
+
+    `on_page_progress(n)` wywolywane po kazdej stronie z licznikiem produktow dotychczas.
+    """
+    all_products: list[dict] = []
+    for batch in iter_each_product_page(
+        shop, token, product_type=product_type, fields=fields
+    ):
+        if should_cancel and should_cancel():
+            raise OperationCancelled("Przerwano pobieranie katalogu produktow.")
+        all_products.extend(batch)
+        if on_page_progress:
+            on_page_progress(len(all_products))
+    return all_products
 
 
 def iter_all_products(
@@ -411,47 +800,7 @@ def iter_all_products(
 
     Zwraca liste slownikow produktu z Shopify REST.
     """
-    params: dict[str, Any] = {
-        "limit": 250,
-        "fields": fields or "id,title,handle,variants,options",
-    }
-    if product_type:
-        params["product_type"] = product_type
-    url = (
-        f"https://{shop}/admin/api/{API_VERSION}/products.json?"
-        + urllib.parse.urlencode({k: v for k, v in params.items() if v is not None})
-    )
-    all_products: list[dict] = []
-    while url:
-        req = urllib.request.Request(
-            url,
-            headers={
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-                "X-Shopify-Access-Token": token,
-            },
-            method="GET",
-        )
-        try:
-            with urllib.request.urlopen(req, context=ssl.create_default_context()) as resp:
-                raw = resp.read().decode("utf-8")
-                link_header = resp.headers.get("Link", "") or ""
-        except urllib.error.HTTPError as e:
-            detail = e.read().decode("utf-8", errors="replace")
-            raise ShopifyError(f"HTTP {e.code} GET {url}\n{detail}") from e
-        data = json.loads(raw) if raw else {}
-        all_products.extend((data or {}).get("products") or [])
-
-        next_url = None
-        for part in link_header.split(","):
-            part = part.strip()
-            if part.endswith('rel="next"'):
-                m = re.search(r"<([^>]+)>", part)
-                if m:
-                    next_url = m.group(1)
-                    break
-        url = next_url
-    return all_products
+    return fetch_all_products(shop, token, product_type=product_type, fields=fields)
 
 
 def iter_orders_since(
@@ -510,7 +859,7 @@ def iter_orders_since(
             method="GET",
         )
         try:
-            with urllib.request.urlopen(req, context=ssl.create_default_context()) as resp:
+            with _urlopen_with_retries(req) as resp:
                 raw = resp.read().decode("utf-8")
                 link_header = resp.headers.get("Link", "") or ""
         except urllib.error.HTTPError as e:
@@ -652,7 +1001,7 @@ def iter_collection_products(
             method="GET",
         )
         try:
-            with urllib.request.urlopen(req, context=ssl.create_default_context()) as resp:
+            with _urlopen_with_retries(req) as resp:
                 raw = resp.read().decode("utf-8")
                 link_header = resp.headers.get("Link", "") or ""
         except urllib.error.HTTPError as e:
@@ -675,13 +1024,35 @@ def iter_collection_products(
 
 def update_variant_price(shop: str, token: str, variant_id: int, price: str) -> dict:
     """Aktualizuje cene pojedynczego wariantu (REST PUT /variants/{id}.json)."""
+    return update_variant(shop, token, variant_id, {"price": str(price)})
+
+
+def create_product_variant(shop: str, token: str, product_id: int, fields: dict) -> dict:
+    """Tworzy wariant produktu (REST POST /products/{product_id}/variants.json)."""
+    out = rest_post(
+        shop,
+        token,
+        f"products/{int(product_id)}/variants.json",
+        {"variant": dict(fields or {})},
+    )
+    return (out or {}).get("variant") or {}
+
+
+def update_variant(shop: str, token: str, variant_id: int, fields: dict) -> dict:
+    """Aktualizuje pola wariantu, zachowujac pozostale dane Shopify (SKU, barcode itd.)."""
+    vid = int(variant_id)
     out = rest_put(
         shop,
         token,
-        f"variants/{variant_id}.json",
-        {"variant": {"id": variant_id, "price": str(price)}},
+        f"variants/{vid}.json",
+        {"variant": {"id": vid, **dict(fields or {})}},
     )
     return (out or {}).get("variant") or {}
+
+
+def delete_product_variant(shop: str, token: str, product_id: int, variant_id: int) -> None:
+    """Usuwa wariant produktu (REST DELETE /products/{product_id}/variants/{variant_id}.json)."""
+    rest_delete(shop, token, f"products/{int(product_id)}/variants/{int(variant_id)}.json")
 
 
 def list_product_images(shop: str, token: str, product_id: int) -> list[dict]:
@@ -706,14 +1077,88 @@ def set_image_position(shop: str, token: str, product_id: int, image_id: int, po
     return (out or {}).get("image") or {}
 
 
+def set_product_featured_image(
+    shop: str, token: str, product_id: int, image_id: int
+) -> dict:
+    """Ustawia zdjecie glowne produktu (kolekcje, kafelki) niezaleznie od position w galerii."""
+    return update_product(shop, token, product_id, {"image": {"id": image_id}})
+
+
+def find_redirect(shop: str, token: str, redirect_path: str) -> dict | None:
+    """GET /redirects.json?path=... — pierwsze dopasowanie lub None."""
+    normalized = redirect_path if redirect_path.startswith("/") else f"/{redirect_path}"
+    qs = urllib.parse.urlencode({"path": normalized, "limit": 1})
+    out = rest_get(shop, token, f"redirects.json?{qs}")
+    items = (out or {}).get("redirects") or []
+    return items[0] if items else None
+
+
+def create_redirect(shop: str, token: str, path: str, target: str) -> dict:
+    """POST/PUT /redirects.json — przekierowanie (np. stary handle produktu)."""
+    normalized_path = path if path.startswith("/") else f"/{path}"
+    normalized_target = target if target.startswith("/") else f"/{target}"
+    existing = find_redirect(shop, token, normalized_path)
+    if existing:
+        rid = int(existing.get("id") or 0)
+        if existing.get("target") == normalized_target:
+            return existing
+        if rid:
+            out = rest_put(
+                shop,
+                token,
+                f"redirects/{rid}.json",
+                {
+                    "redirect": {
+                        "id": rid,
+                        "path": normalized_path,
+                        "target": normalized_target,
+                    }
+                },
+            )
+            return (out or {}).get("redirect") or {}
+    out = rest_post(
+        shop,
+        token,
+        "redirects.json",
+        {"redirect": {"path": normalized_path, "target": normalized_target}},
+    )
+    return (out or {}).get("redirect") or {}
+
+
+def ensure_product_handle_redirect(
+    shop: str, token: str, old_handle: str, new_handle: str
+) -> dict | None:
+    """Redirect /products/{old} -> /products/{new} gdy handle sie zmienil."""
+    old_handle = (old_handle or "").strip()
+    new_handle = (new_handle or "").strip()
+    if not old_handle or not new_handle or old_handle == new_handle:
+        return None
+    return create_redirect(
+        shop,
+        token,
+        f"/products/{old_handle}",
+        f"/products/{new_handle}",
+    )
+
+
 def update_product(shop: str, token: str, product_id: int, fields: dict) -> dict:
     """PUT /products/{id}.json - aktualizuje wskazane pola (body_html, tags, handle, title, ...).
 
     Nie rusza wariantow, opcji ani kolekcji, chyba ze jawnie je przekazesz.
+    Przy zmianie handle tworzy redirect ze starego URL produktu.
     """
-    payload = {"product": {"id": product_id, **(fields or {})}}
+    fields = dict(fields or {})
+    old_handle: str | None = None
+    new_handle = fields.get("handle")
+    if new_handle:
+        prod = get_product(shop, token, product_id)
+        old_handle = (prod or {}).get("handle") or ""
+    payload = {"product": {"id": product_id, **fields}}
     out = rest_put(shop, token, f"products/{product_id}.json", payload)
-    return (out or {}).get("product") or {}
+    product = (out or {}).get("product") or {}
+    if new_handle and old_handle and old_handle != new_handle:
+        ensure_product_handle_redirect(shop, token, old_handle, new_handle)
+    return product
 
 
 def find_metafield(
@@ -880,6 +1325,464 @@ def set_collection_seo_metafields(
 
 def collection_gid(collection_id: int) -> str:
     return f"gid://shopify/Collection/{collection_id}"
+
+
+def find_custom_collection_by_title(shop: str, token: str, title: str) -> dict | None:
+    """Szuka custom-collection po tytule (case-insensitive)."""
+    t = (title or "").strip().lower()
+    if not t:
+        return None
+    data = rest_get(shop, token, "custom_collections.json", title=title, limit=5)
+    for it in (data or {}).get("custom_collections") or []:
+        if (it.get("title") or "").strip().lower() == t:
+            return it
+    return None
+
+
+def create_custom_collection(
+    shop: str,
+    token: str,
+    *,
+    title: str,
+    body_html: str = "",
+    published: bool = True,
+    handle: str | None = None,
+) -> dict:
+    """Tworzy custom-collection (np. kolekcje artysty 'Nazwisko, Imie')."""
+    from .parser import artist_collection_handle_from_title
+
+    payload = {
+        "custom_collection": {
+            "title": title,
+            "body_html": body_html,
+            "published": published,
+        }
+    }
+    h = (handle or "").strip()
+    if not h and ", " in (title or ""):
+        h = artist_collection_handle_from_title(title)
+    if h:
+        payload["custom_collection"]["handle"] = h
+    out = rest_post(shop, token, "custom_collections.json", payload)
+    return (out or {}).get("custom_collection") or {}
+
+
+def update_custom_collection(
+    shop: str,
+    token: str,
+    collection_id: int,
+    *,
+    body_html: str | None = None,
+    image_src: str | None = None,
+    handle: str | None = None,
+) -> dict:
+    """Aktualizuje custom-collection (opis `body_html`, baner `image.src`, opcjonalnie `handle`)."""
+    cc: dict[str, Any] = {"id": int(collection_id)}
+    if body_html is not None:
+        cc["body_html"] = body_html
+    if image_src:
+        cc["image"] = {"src": image_src}
+    if handle is not None:
+        cc["handle"] = handle
+    out = rest_put(
+        shop, token, f"custom_collections/{int(collection_id)}.json", {"custom_collection": cc}
+    )
+    return (out or {}).get("custom_collection") or {}
+
+
+def _http_post_multipart(url: str, body: bytes, content_type: str) -> None:
+    """POST multipart na zewnetrzny URL (staged upload target - GCS/S3), bez tokenu Shopify."""
+    req = urllib.request.Request(
+        url, data=body, headers={"Content-Type": content_type}, method="POST"
+    )
+    try:
+        with _urlopen_with_retries(req) as resp:
+            resp.read()
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", errors="replace")
+        raise ShopifyError(f"HTTP {e.code} POST (staged upload)\n{detail}") from e
+
+
+def _poll_file_node_url(shop: str, token: str, file_id: str) -> str | None:
+    """Zwraca CDN url pliku z Shopify Files (gdy READY), inaczej None."""
+    query = """
+    query FileUrl($id: ID!) {
+      node(id: $id) {
+        ... on MediaImage { fileStatus image { url } }
+        ... on GenericFile { fileStatus url }
+      }
+    }
+    """
+    node_data = graphql(shop, token, query, {"id": file_id})
+    node = (node_data or {}).get("node") or {}
+    if (node.get("fileStatus") or "").upper() != "READY":
+        return None
+    img = node.get("image") or {}
+    return (img.get("url") or node.get("url") or "").strip() or None
+
+
+def upload_file_to_shopify_files(
+    local_path: Path, *, alt: str | None = None
+) -> str:
+    """Uploaduje lokalny plik do Shopify Files i zwraca publiczny CDN URL.
+
+    Kroki (GraphQL Admin 2026-04): stagedUploadsCreate -> POST multipart ->
+    fileCreate -> polling fileStatus=READY. Wymaga scope `write_files`.
+    """
+    local_path = Path(local_path)
+    if not local_path.is_file():
+        raise ShopifyError(f"Plik nie istnieje: {local_path}")
+    shop, token = load_session()
+    raw = local_path.read_bytes()
+    size = len(raw)
+    mime = mimetypes.guess_type(local_path.name)[0] or "image/jpeg"
+    filename = local_path.name
+
+    staged = """
+    mutation stagedUploadsCreate($input: [StagedUploadInput!]!) {
+      stagedUploadsCreate(input: $input) {
+        stagedTargets { url resourceUrl parameters { name value } }
+        userErrors { field message }
+      }
+    }
+    """
+    data = graphql(
+        shop,
+        token,
+        staged,
+        {
+            "input": [
+                {
+                    "resource": "FILE",
+                    "filename": filename,
+                    "mimeType": mime,
+                    "httpMethod": "POST",
+                    "fileSize": str(size),
+                }
+            ]
+        },
+    )
+    res = (data or {}).get("stagedUploadsCreate") or {}
+    if res.get("userErrors"):
+        raise ShopifyError(f"stagedUploadsCreate errors: {res['userErrors']}")
+    targets = res.get("stagedTargets") or []
+    if not targets:
+        raise ShopifyError("stagedUploadsCreate: brak targets.")
+    t = targets[0]
+    upload_url = t.get("url")
+    resource_url = t.get("resourceUrl")
+    params = {p["name"]: p["value"] for p in (t.get("parameters") or [])}
+
+    boundary = "----gicleeart-" + uuid.uuid4().hex
+    parts: list[bytes] = []
+    for name, value in params.items():
+        parts.append(f"--{boundary}\r\n".encode("utf-8"))
+        parts.append(
+            f'Content-Disposition: form-data; name="{name}"\r\n\r\n'.encode("utf-8")
+        )
+        parts.append(f"{value}\r\n".encode("utf-8"))
+    parts.append(f"--{boundary}\r\n".encode("utf-8"))
+    parts.append(
+        f'Content-Disposition: form-data; name="file"; filename="{filename}"\r\n'.encode(
+            "utf-8"
+        )
+    )
+    parts.append(f"Content-Type: {mime}\r\n\r\n".encode("utf-8"))
+    parts.append(raw)
+    parts.append(f"\r\n--{boundary}--\r\n".encode("utf-8"))
+    _http_post_multipart(
+        upload_url, b"".join(parts), f"multipart/form-data; boundary={boundary}"
+    )
+
+    file_create = """
+    mutation fileCreate($files: [FileCreateInput!]!) {
+      fileCreate(files: $files) {
+        files { id fileStatus ... on MediaImage { image { url } } ... on GenericFile { url } }
+        userErrors { field message }
+      }
+    }
+    """
+    fc = graphql(
+        shop,
+        token,
+        file_create,
+        {"files": [{"alt": alt or filename, "originalSource": resource_url}]},
+    )
+    fc_res = (fc or {}).get("fileCreate") or {}
+    if fc_res.get("userErrors"):
+        raise ShopifyError(f"fileCreate errors: {fc_res['userErrors']}")
+    files = fc_res.get("files") or []
+    if not files:
+        raise ShopifyError("fileCreate: brak files w odpowiedzi.")
+    file_id = files[0].get("id")
+
+    for _ in range(30):
+        url = _poll_file_node_url(shop, token, file_id)
+        if url:
+            return url
+        time.sleep(1)
+    raise ShopifyError(f"Shopify File {file_id} nie bylo gotowe po 30s.")
+
+
+# ---------------------------------------------------------------------------
+# Online Store Navigation (menu) - GraphQL Admin
+# Wymaga scope: read_online_store_navigation, write_online_store_navigation.
+# menuUpdate NADPISUJE cale menu, wiec zawsze rekonstruujemy pelne drzewo pozycji.
+# ---------------------------------------------------------------------------
+
+_MENU_ITEM_FIELDS = "id title type url resourceId tags"
+
+
+def _menu_items_block(depth: int = 3) -> str:
+    block = _MENU_ITEM_FIELDS
+    for _ in range(depth - 1):
+        block = _MENU_ITEM_FIELDS + " items { " + block + " }"
+    return block
+
+
+def list_menus(shop: str, token: str, *, first: int = 50) -> list[dict]:
+    """Lista menu nawigacji z zagniezdzonymi pozycjami (do 3 poziomow)."""
+    query = (
+        "query Menus($first: Int!) { menus(first: $first) { nodes { "
+        "id handle title items { " + _menu_items_block(3) + " } } } }"
+    )
+    data = graphql(shop, token, query, {"first": int(first)})
+    return ((data.get("menus") or {}).get("nodes")) or []
+
+
+def _find_menu_item(items: list[dict], title: str) -> dict | None:
+    want = (title or "").strip().lower()
+    for it in items or []:
+        if (it.get("title") or "").strip().lower() == want:
+            return it
+        sub = _find_menu_item(it.get("items") or [], title)
+        if sub:
+            return sub
+    return None
+
+
+def fetch_artist_catalog_order(
+    shop: str,
+    token: str,
+    *,
+    menu_handle: str = "main-menu",
+    parent_title: str = "ARTYŚCI",
+) -> list[dict]:
+    """Kolejnosc artystow jak w katalogu na stronie (menu -> ARTYSCI -> dzieci).
+
+    Kazdy element: {sort_index, collection_title}.
+    """
+    menu = find_menu(shop, token, handle=menu_handle)
+    if menu is None:
+        menu = find_menu(shop, token, contains_item_title=parent_title)
+    if not menu:
+        return []
+    parent = _find_menu_item(menu.get("items") or [], parent_title)
+    if not parent:
+        return []
+    out: list[dict] = []
+    for idx, child in enumerate(parent.get("items") or []):
+        title = (child.get("title") or "").strip()
+        if not title:
+            continue
+        out.append({"sort_index": idx, "collection_title": title})
+    return out
+
+
+def find_menu(
+    shop: str,
+    token: str,
+    *,
+    handle: str | None = None,
+    contains_item_title: str | None = None,
+) -> dict | None:
+    """Znajduje menu po handle lub po obecnosci pozycji o danym tytule."""
+    menus = list_menus(shop, token)
+    if handle:
+        h = handle.strip().lower()
+        for m in menus:
+            if (m.get("handle") or "").strip().lower() == h:
+                return m
+    if contains_item_title:
+        for m in menus:
+            if _find_menu_item(m.get("items") or [], contains_item_title):
+                return m
+    return None
+
+
+def _item_to_input(item: dict) -> dict:
+    """Pozycja z query -> MenuItemUpdateInput (zachowuje id/typ/zasob/zagniezdzenia)."""
+    out: dict = {
+        "id": item.get("id"),
+        "title": item.get("title") or "",
+        "type": item.get("type") or "HTTP",
+    }
+    if item.get("url"):
+        out["url"] = item["url"]
+    if item.get("resourceId"):
+        out["resourceId"] = item["resourceId"]
+    if item.get("tags"):
+        out["tags"] = item["tags"]
+    children = item.get("items") or []
+    if children:
+        out["items"] = [_item_to_input(c) for c in children]
+    return out
+
+
+def _find_input_by_title(items: list[dict], title: str) -> dict | None:
+    want = (title or "").strip().lower()
+    for it in items or []:
+        if (it.get("title") or "").strip().lower() == want:
+            return it
+        sub = _find_input_by_title(it.get("items") or [], title)
+        if sub:
+            return sub
+    return None
+
+
+def add_menu_child_collection(
+    shop: str,
+    token: str,
+    *,
+    parent_title: str,
+    child_title: str,
+    collection_gid: str,
+    menu_handle: str | None = None,
+    skip_if_exists: bool = True,
+    keep_sorted: bool = True,
+) -> dict:
+    """Dodaje pozycje typu COLLECTION pod parentem o danym tytule (np. 'ARTYSCI').
+
+    Gdy keep_sorted=True wstawia nowa pozycje alfabetycznie (case-insensitive)
+    miedzy rodzenstwo, NIE zmieniajac kolejnosci pozostalych pozycji.
+
+    Zwraca {'menu_handle', 'created': bool}. Gdy pozycja juz istnieje i
+    skip_if_exists=True - nie modyfikuje menu.
+    """
+    menu = None
+    if menu_handle:
+        menu = find_menu(shop, token, handle=menu_handle)
+    if menu is None:
+        menu = find_menu(shop, token, contains_item_title=parent_title)
+    if menu is None:
+        raise ShopifyError(
+            f"Nie znaleziono menu z pozycja '{parent_title}'. "
+            "Podaj poprawny handle (np. 'main-menu')."
+        )
+
+    items = [_item_to_input(it) for it in (menu.get("items") or [])]
+    parent = _find_input_by_title(items, parent_title)
+    if parent is None:
+        raise ShopifyError(
+            f"W menu '{menu.get('handle')}' brak pozycji nadrzednej '{parent_title}'."
+        )
+
+    parent.setdefault("items", [])
+    if skip_if_exists:
+        for ch in parent["items"]:
+            if (ch.get("title") or "").strip().lower() == child_title.strip().lower():
+                return {"menu_handle": menu.get("handle"), "created": False}
+
+    new_child = {"title": child_title, "type": "COLLECTION", "resourceId": collection_gid}
+    if keep_sorted:
+        from .parser import catalog_artist_sort_key
+
+        key = catalog_artist_sort_key(child_title)
+        insert_at = len(parent["items"])
+        for idx, ch in enumerate(parent["items"]):
+            if catalog_artist_sort_key(ch.get("title") or "") > key:
+                insert_at = idx
+                break
+        parent["items"].insert(insert_at, new_child)
+    else:
+        parent["items"].append(new_child)
+
+    mutation = (
+        "mutation MenuUpdate($id: ID!, $title: String!, $handle: String!, "
+        "$items: [MenuItemUpdateInput!]!) { "
+        "menuUpdate(id: $id, title: $title, handle: $handle, items: $items) { "
+        "menu { id handle title } userErrors { field message } } }"
+    )
+    res = graphql(
+        shop,
+        token,
+        mutation,
+        {
+            "id": menu["id"],
+            "title": menu["title"],
+            "handle": menu["handle"],
+            "items": items,
+        },
+    )
+    payload = res.get("menuUpdate") or {}
+    errs = payload.get("userErrors") or []
+    if errs:
+        raise ShopifyError(
+            f"menuUpdate userErrors: {json.dumps(errs, ensure_ascii=False)}"
+        )
+    return {"menu_handle": menu.get("handle"), "created": True}
+
+
+def resort_artist_menu_children(
+    shop: str,
+    token: str,
+    *,
+    parent_title: str = "ARTYŚCI",
+    menu_handle: str | None = None,
+) -> dict:
+    """Ponownie sortuje dzieci pozycji menu (np. ARTYŚCI) po nazwisku z czastkami."""
+    from .parser import catalog_artist_sort_key, format_catalog_artist_title
+
+    menu = None
+    if menu_handle:
+        menu = find_menu(shop, token, handle=menu_handle)
+    if menu is None:
+        menu = find_menu(shop, token, contains_item_title=parent_title)
+    if menu is None:
+        raise ShopifyError(
+            f"Nie znaleziono menu z pozycja '{parent_title}'. "
+            "Podaj poprawny handle (np. 'main-menu')."
+        )
+
+    items = [_item_to_input(it) for it in (menu.get("items") or [])]
+    parent = _find_input_by_title(items, parent_title)
+    if parent is None:
+        raise ShopifyError(
+            f"W menu '{menu.get('handle')}' brak pozycji nadrzednej '{parent_title}'."
+        )
+
+    children = parent.get("items") or []
+    for ch in children:
+        raw = (ch.get("title") or "").strip()
+        if raw:
+            ch["title"] = format_catalog_artist_title(raw)
+    children.sort(key=lambda ch: catalog_artist_sort_key(ch.get("title") or ""))
+    parent["items"] = children
+
+    mutation = (
+        "mutation MenuUpdate($id: ID!, $title: String!, $handle: String!, "
+        "$items: [MenuItemUpdateInput!]!) { "
+        "menuUpdate(id: $id, title: $title, handle: $handle, items: $items) { "
+        "menu { id handle title } userErrors { field message } } }"
+    )
+    res = graphql(
+        shop,
+        token,
+        mutation,
+        {
+            "id": menu["id"],
+            "title": menu["title"],
+            "handle": menu["handle"],
+            "items": items,
+        },
+    )
+    payload = res.get("menuUpdate") or {}
+    errs = payload.get("userErrors") or []
+    if errs:
+        raise ShopifyError(
+            f"menuUpdate userErrors: {json.dumps(errs, ensure_ascii=False)}"
+        )
+    return {"menu_handle": menu.get("handle"), "count": len(children)}
 
 
 # ---------------------------------------------------------------------------

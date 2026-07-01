@@ -1,0 +1,6 @@
+﻿accession_number : 84.XD.1283
+date_created : about 1859ľ1881
+id : object/47d0a58f-f038-4b16-bdb6-9c07a7263eea
+primary_name : [The Westmorland album]
+slug_with_path : /object/1040P3
+---

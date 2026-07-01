@@ -8,21 +8,48 @@ w kazdym z procesow.
 from __future__ import annotations
 
 import importlib
+import math
 import subprocess
 import sys
 import threading
+import time
 import tkinter as tk
 import webbrowser
 from datetime import date
 from pathlib import Path
 from tkinter import messagebox, ttk
+from collections.abc import Callable
 from typing import Any
 
 from . import __version__
 from .component_loader import Component, discover_components, find_components_dir
+from .launcher_layout import (
+    SECTION_OTHER as _SECTION_OTHER,
+    DEFAULT_SECTIONS as _SECTIONS,
+    load_layout,
+    merge_layout,
+    resolve_sections,
+)
+from .launcher_options import show_launcher_options
 from .runtime import get_bundle_root, get_component_cwd, resolve_python_interpreter
 
+try:
+    from Komponenty._shared.window_geometry import position_toplevel_screen_center
+except ImportError:
+
+    def position_toplevel_screen_center(win: tk.Misc, width: int, height: int) -> None:
+        sw, sh = win.winfo_screenwidth(), win.winfo_screenheight()
+        x, y = max(0, (sw - width) // 2), max(0, (sh - height) // 2)
+        win.geometry(f"{width}x{height}+{x}+{y}")
+
 APP_TITLE = "GicleeApp - launcher komponentow"
+LAUNCHER_WIDTH = 920
+LAUNCHER_HEIGHT = 780
+LAUNCHER_MIN_WIDTH = 840
+LAUNCHER_MIN_HEIGHT = 640
+
+# Hasło przy starcie launchera — False = wyłączone (tymczasowo).
+_LAUNCHER_AUTH_ENABLED = False
 
 # Logi subprocess-ow komponentow (stdout/stderr przekierowany tutaj)
 _LOGS_DIR = Path(__file__).resolve().parents[1] / "logs"
@@ -35,18 +62,8 @@ _TILE_PAD_Y = 6   # pionowy odstep wewnatrz sekcji
 _SECTION_GAP_TOP = 4    # gora pierwszej sekcji
 _SECTION_GAP_BETWEEN = 12  # odstep miedzy kolejnymi sekcjami
 
-# Glowny widok pogrupowany w sekcje. Klucz to nazwa sekcji wyswietlana
-# nad rzadem kafelkow; wartosci to nazwy folderow komponentow w
-# kolejnosci, w jakiej maja sie pokazac (NIE wg pola "order" z
-# component.json - tu liczy sie kolejnosc na liscie ponizej).
-_SECTIONS: list[tuple[str, list[str]]] = [
-    ("Administracja produktu", ["dodajobraz", "nazwijobraz", "pobierzobraz"]),
-    ("Zamowienia",             ["obrazy", "produkcja", "finanse"]),
-    ("Marketing",              ["blog", "socialmedia", "zadania", "cenyMarketing"]),
-    ("Narzedzia pomocnicze",   ["planer", "notatnik", "sklep"]),
-]
-_SECTION_OTHER = "Inne"
-
+# Domyślny układ sekcji: giclee_app/launcher_layout.py (DEFAULT_SECTIONS).
+# Użytkownik może go zmienić w Opcje → zapis launcher_layout.json.
 
 class GicleeApp:
     def __init__(self, root: tk.Tk) -> None:
@@ -54,14 +71,28 @@ class GicleeApp:
         self.root.title(f"{APP_TITLE} · v{__version__}")
         # Rozmiar okna dobrany pod 3 sekcje x 3 kafelki w rzedzie
         # (3 * (170 + 24) + 3 * naglowek_sekcji + paddingi + status bar).
-        self.root.geometry("920x780")
-        self.root.minsize(840, 640)
+        position_toplevel_screen_center(self.root, LAUNCHER_WIDTH, LAUNCHER_HEIGHT)
+        self.root.minsize(LAUNCHER_MIN_WIDTH, LAUNCHER_MIN_HEIGHT)
 
         self.components_dir: Path = find_components_dir()
-        self.components: list[Component] = []
+        self._all_components: list[Component] = []
         self._running_procs: list[subprocess.Popen] = []  # noqa: PLR0402
         # Aktualnie zamontowany widok inline (None = pokazujemy siatke kafelkow)
         self._inline_view: Any = None
+        self._geometry_before_inline: str | None = None
+        self._current_inline_folder: str | None = None
+        self._next_inline_on_back: Callable[[], None] | None = None
+        # Hover na kafelkach: podczas scrolla canvas kafelki przesuwaja sie pod kursorem
+        # i Tk generuje lawine Enter/Leave -> set bg na wielu widgetach = przycinanie UI.
+        self._suppress_tile_hover_until = 0.0
+        self._tile_hover_clearers: list[Callable[[], None]] = []
+        # Szybkie kolo / touchpad: lacz delty w jednym idle — mniej rysowan canvasu.
+        self._wheel_delta_acc = 0
+        self._wheel_idle_id: str | None = None
+        # Stan zwinietych sekcji na ekranie startowym (nazwa sekcji -> True = zwinieta).
+        self._section_collapsed: dict[str, bool] = {}
+        self._layout = load_layout()
+        self._normally_visible: set[str] = set()
 
         self.status_var = tk.StringVar(value="")
 
@@ -83,6 +114,9 @@ class GicleeApp:
         # Polling zamowien Shopify -> Produkcja (co 5 minut).
         # Pierwszy sync po 30s (zeby OAuth / siec byly juz gotowe).
         self.root.after(30_000, self._poll_orders_from_shopify)
+
+        # Polling zamówień Shopify → Księgowość / Dokumenty sprzedaży (co 5 min).
+        self.root.after(35_000, self._poll_accounting_orders)
 
         # Auto-backup raz dziennie (idempotentne).
         self.root.after(2000, self._run_daily_backup)
@@ -125,6 +159,9 @@ class GicleeApp:
         tools = ttk.Frame(header)
         tools.pack(side="right")
         ttk.Button(tools, text="Token setup", command=self._show_token_setup).pack(side="left", padx=4)
+        ttk.Button(tools, text="Stan sesji", command=self._show_session_status).pack(side="left", padx=4)
+        ttk.Button(tools, text="Dziennik akcji", command=self._show_activity_log).pack(side="left", padx=4)
+        ttk.Button(tools, text="Opcje", command=self._show_launcher_options).pack(side="left", padx=4)
         ttk.Button(tools, text="Instrukcja", command=self._show_help).pack(side="left", padx=4)
         ttk.Button(tools, text="Odswiez", command=self._refresh_components).pack(side="left", padx=4)
         ttk.Button(tools, text="Otworz folder Komponenty", command=self._open_components_dir).pack(
@@ -164,13 +201,8 @@ class GicleeApp:
         self.tiles_frame.bind("<Configure>", _on_tiles_configure)
         self.canvas.bind("<Configure>", _on_canvas_configure)
 
-        # Scroll mysza
-        def _on_mousewheel(evt: tk.Event) -> None:
-            delta = -1 * (evt.delta // 120) if evt.delta else 0
-            if delta:
-                self.canvas.yview_scroll(delta, "units")
-
-        self.canvas.bind_all("<MouseWheel>", _on_mousewheel)
+        # Scroll kolem / touchpadem (delta < 120 na Windows = glowny powod "klejenia" przy // 120)
+        self._ensure_tiles_wheel_binding()
 
         # Status bar
         status = ttk.Frame(self.root, padding=(12, 4))
@@ -182,26 +214,132 @@ class GicleeApp:
             foreground="#aaa",
         ).pack(side="right")
 
-    # ---------- Discover + rendering ----------
-    def _refresh_components(self) -> None:
-        new_list = discover_components(self.components_dir)
-        # Sprawdz czy sa zmiany (zeby nie odrysowywac niepotrzebnie)
-        old_keys = [(c.folder_name, c.name, c.description, c.color, c.order) for c in self.components]
-        new_keys = [(c.folder_name, c.name, c.description, c.color, c.order) for c in new_list]
-        if new_keys == old_keys:
+    def _pointer_is_over_tiles_canvas(self, evt: tk.Event) -> bool:
+        """True gdy zdarzenie dotyczy obszaru canvas z kafelkami (nie naglowka / innego okna)."""
+        try:
+            w = self.root.winfo_containing(evt.x_root, evt.y_root)
+        except tk.TclError:
+            return False
+        if w is None:
+            return False
+        cur: tk.Misc | None = w
+        while cur is not None:
+            if cur == self.canvas:
+                return True
+            if isinstance(cur, tk.Toplevel) and cur != self.root:
+                return False
+            cur = cur.master  # type: ignore[assignment]
+        return False
+
+    def _on_canvas_mousewheel(self, evt: tk.Event) -> None:
+        if not self.tiles_view.winfo_ismapped():
             return
-        self.components = new_list
+        if not self._pointer_is_over_tiles_canvas(evt):
+            return
+        d = evt.delta
+        if not d:
+            return
+        self._wheel_delta_acc += d
+        if self._wheel_idle_id is not None:
+            try:
+                self.root.after_cancel(self._wheel_idle_id)
+            except (tk.TclError, ValueError):
+                pass
+        self._wheel_idle_id = self.root.after_idle(self._flush_tiles_canvas_wheel)
+
+    def _flush_tiles_canvas_wheel(self) -> None:
+        self._wheel_idle_id = None
+        d = self._wheel_delta_acc
+        self._wheel_delta_acc = 0
+        if not d:
+            return
+        self._suppress_tile_hover_until = time.monotonic() + 0.18
+        for clear in self._tile_hover_clearers:
+            try:
+                clear()
+            except tk.TclError:
+                pass
+        step = -d / 120.0
+        if -1 < step < 1 and step != 0:
+            step = math.copysign(1.0, float(-d))
+        self.canvas.yview_scroll(int(step), "units")
+
+    def _sync_tiles_canvas_scroll(self) -> None:
+        """Po zwinięciu/rozwinięciu sekcji odśwież wysokość obszaru przewijania."""
+        self.tiles_frame.update_idletasks()
+        bbox = self.canvas.bbox("all")
+        if bbox:
+            self.canvas.configure(scrollregion=bbox)
+
+    # ---------- Discover + rendering ----------
+    def _sync_component_lists(self) -> bool:
+        """Odświeża listy komponentów. Zwraca True gdy metadane się zmieniły."""
+        new_visible = discover_components(self.components_dir)
+        new_all = discover_components(self.components_dir, include_hidden=True)
+        old_keys = [(c.folder_name, c.name, c.description, c.color, c.order) for c in self._all_components]
+        new_keys = [(c.folder_name, c.name, c.description, c.color, c.order) for c in new_all]
+        changed = new_keys != old_keys
+        self._all_components = new_all
+        self._normally_visible = {c.folder_name for c in new_visible}
+        self._layout = merge_layout(
+            self._layout,
+            self._all_components,
+            normally_visible=self._normally_visible,
+        )
+        return changed
+
+    def _refresh_components(self) -> None:
+        changed = self._sync_component_lists()
+        if not changed and self.tiles_frame.winfo_children():
+            return
         self._render_tiles()
-        if not self.components:
+        self._sync_tiles_canvas_scroll()
+        if not self._all_components:
             self.status_var.set(f"Brak komponentow w {self.components_dir}")
         else:
-            self.status_var.set(f"Znaleziono komponentow: {len(self.components)}")
+            self.status_var.set(
+                f"Komponentow: {len(self._all_components)} "
+                f"(widocznych na siatce: {self._visible_tile_count()})"
+            )
+
+    def _visible_tile_count(self) -> int:
+        from .launcher_layout import is_tile_visible
+
+        return sum(
+            1
+            for c in self._all_components
+            if is_tile_visible(c.folder_name, self._layout, normally_visible=self._normally_visible)
+        )
+
+    def _show_launcher_options(self) -> None:
+        show_launcher_options(
+            self.root,
+            all_components=self._all_components or discover_components(
+                self.components_dir, include_hidden=True,
+            ),
+            normally_visible=self._normally_visible,
+            layout=self._layout,
+            on_saved=self._apply_launcher_layout,
+        )
+
+    def _apply_launcher_layout(self, layout: object) -> None:
+        from .launcher_layout import LauncherLayout
+
+        if isinstance(layout, LauncherLayout):
+            self._layout = layout
+        self._render_tiles()
+        self._sync_tiles_canvas_scroll()
+        self.status_var.set(
+            f"Komponentow: {len(self._all_components)} "
+            f"(widocznych na siatce: {self._visible_tile_count()})"
+        )
 
     def _render_tiles(self) -> None:
+        self._tile_hover_clearers.clear()
         for child in list(self.tiles_frame.winfo_children()):
             child.destroy()
 
-        if not self.components:
+        if not self._all_components:
             empty = tk.Label(
                 self.tiles_frame,
                 text=(
@@ -226,39 +364,34 @@ class GicleeApp:
         for i in range(_TILES_PER_ROW):
             self.tiles_frame.columnconfigure(i, weight=1, uniform="tiles")
 
-        # Pogrupuj komponenty wg _SECTIONS, zachowujac kolejnosc z listy.
-        by_folder = {c.folder_name: c for c in self.components}
-        sections: list[tuple[str, list[Component]]] = []
-        used: set[str] = set()
-        for section_title, folder_order in _SECTIONS:
-            comps_in_section: list[Component] = []
-            for fld in folder_order:
-                comp = by_folder.get(fld)
-                if comp is not None:
-                    comps_in_section.append(comp)
-                    used.add(fld)
-            if comps_in_section:
-                sections.append((section_title, comps_in_section))
+        sections = resolve_sections(
+            self._all_components,
+            self._layout,
+            normally_visible=self._normally_visible,
+        )
+        if not sections:
+            empty = tk.Label(
+                self.tiles_frame,
+                text=(
+                    "Brak widocznych kafelków.\n\n"
+                    "Kliknij „Opcje” w górnym pasku, aby włączyć komponenty\n"
+                    "i przypisać je do sekcji."
+                ),
+                bg="#f4f4f7",
+                fg="#666",
+                font=("Segoe UI", 10),
+                justify="center",
+                pady=40,
+            )
+            empty.pack(fill="both", expand=True)
+            return
 
-        # Komponenty nie zmapowane - trafia do sekcji "Inne" na koncu (nie ginie nic nowego).
-        leftover = [c for c in self.components if c.folder_name not in used]
-        if leftover:
-            sections.append((_SECTION_OTHER, leftover))
-
-        # Renderowanie sekcja po sekcji.
+        # Renderowanie sekcja po sekcji (naglowek rozwijany / zwijany).
         row_cursor = 0
         for sec_idx, (section_title, comps) in enumerate(sections):
-            # Naglowek sekcji
-            header = tk.Label(
-                self.tiles_frame,
-                text=section_title,
-                bg="#f4f4f7",
-                fg="#222",
-                font=("Segoe UI", 13, "bold"),
-                anchor="w",
-                padx=4,
-            )
-            header.grid(
+            collapsed = self._section_collapsed.get(section_title, False)
+            section_outer = tk.Frame(self.tiles_frame, bg="#f4f4f7")
+            section_outer.grid(
                 row=row_cursor,
                 column=0,
                 columnspan=_TILES_PER_ROW,
@@ -266,35 +399,90 @@ class GicleeApp:
                 padx=_TILE_PAD_X,
                 pady=(
                     _SECTION_GAP_TOP if sec_idx == 0 else _SECTION_GAP_BETWEEN,
-                    1,
+                    0,
                 ),
             )
             row_cursor += 1
 
-            # Cienka kreska pod naglowkiem sekcji
-            sep = tk.Frame(self.tiles_frame, height=1, bg="#dcdce2")
-            sep.grid(
-                row=row_cursor,
-                column=0,
-                columnspan=_TILES_PER_ROW,
-                sticky="ew",
-                padx=_TILE_PAD_X,
-                pady=(0, 2),
-            )
-            row_cursor += 1
+            header = tk.Frame(section_outer, bg="#ececf1", cursor="hand2")
+            header.grid(row=0, column=0, sticky="ew")
+            section_outer.columnconfigure(0, weight=1)
 
-            # Kafelki sekcji
+            chevron_var = tk.StringVar(value="▶" if collapsed else "▼")
+            chevron_lbl = tk.Label(
+                header,
+                textvariable=chevron_var,
+                bg="#ececf1",
+                fg="#444",
+                font=("Segoe UI", 11),
+                width=2,
+                anchor="center",
+            )
+            chevron_lbl.pack(side="left", padx=(6, 2), pady=6)
+
+            title_lbl = tk.Label(
+                header,
+                text=section_title,
+                bg="#ececf1",
+                fg="#222",
+                font=("Segoe UI", 13, "bold"),
+                anchor="w",
+            )
+            title_lbl.pack(side="left", pady=6)
+
+            count_lbl = tk.Label(
+                header,
+                text=f"({len(comps)})",
+                bg="#ececf1",
+                fg="#666",
+                font=("Segoe UI", 10),
+                anchor="w",
+            )
+            count_lbl.pack(side="left", padx=(6, 0), pady=6)
+
+            sep = tk.Frame(section_outer, height=1, bg="#dcdce2")
+            body = tk.Frame(section_outer, bg="#f4f4f7")
+            for i in range(_TILES_PER_ROW):
+                body.columnconfigure(i, weight=1, uniform="tiles")
+
             for i, comp in enumerate(comps):
                 sub_row, col = divmod(i, _TILES_PER_ROW)
-                tile = self._build_tile(self.tiles_frame, comp)
+                tile = self._build_tile(body, comp)
                 tile.grid(
-                    row=row_cursor + sub_row,
+                    row=sub_row,
                     column=col,
                     padx=_TILE_PAD_X,
                     pady=_TILE_PAD_Y,
-                    sticky="",  # bez rozciagania - kafelki maja staly rozmiar
+                    sticky="",
                 )
-            row_cursor += (len(comps) + _TILES_PER_ROW - 1) // _TILES_PER_ROW
+
+            def _toggle(
+                *,
+                _title: str = section_title,
+                _body: tk.Frame = body,
+                _sep: tk.Frame = sep,
+                _chevron: tk.StringVar = chevron_var,
+            ) -> None:
+                now_collapsed = not self._section_collapsed.get(_title, False)
+                self._section_collapsed[_title] = now_collapsed
+                _chevron.set("▶" if now_collapsed else "▼")
+                if now_collapsed:
+                    _sep.grid_remove()
+                    _body.grid_remove()
+                else:
+                    _sep.grid(row=1, column=0, sticky="ew", pady=(0, 2))
+                    _body.grid(row=2, column=0, sticky="ew")
+                self._sync_tiles_canvas_scroll()
+
+            for widget in (header, chevron_lbl, title_lbl, count_lbl):
+                widget.bind("<Button-1>", lambda _e, fn=_toggle: fn())
+
+            if collapsed:
+                sep.grid_remove()
+                body.grid_remove()
+            else:
+                sep.grid(row=1, column=0, sticky="ew", pady=(0, 2))
+                body.grid(row=2, column=0, sticky="ew")
 
     def _show_tile_context_menu(self, event: tk.Event, comp: Component) -> None:
         m = tk.Menu(self.root, tearoff=0)
@@ -317,7 +505,7 @@ class GicleeApp:
         path = self._component_log_path(comp)
         win = tk.Toplevel(self.root)
         win.title(f"Log: {comp.name}")
-        win.geometry("900x560")
+        position_toplevel_screen_center(win, 900, 560)
         try:
             win.transient(self.root)
         except tk.TclError:
@@ -506,10 +694,16 @@ class GicleeApp:
                 except tk.TclError:
                     pass
 
+        self._tile_hover_clearers.append(lambda: _set_hover(False))
+
         def _on_enter(_evt: object) -> None:
+            if time.monotonic() < self._suppress_tile_hover_until:
+                return
             _set_hover(True)
 
         def _on_leave(_evt: object) -> None:
+            if time.monotonic() < self._suppress_tile_hover_until:
+                return
             # W Tk rodzic dostaje <Leave> gdy mysz wjedzie na DZIECKO.
             # Sprawdzamy czy mysz wciaz jest w bbox outer-a - jesli tak,
             # ignorujemy (nie ma faktycznego opuszczenia kafelka).
@@ -673,18 +867,34 @@ class GicleeApp:
                 pass
             self._inline_host = None
 
+        entering_from_tiles = self.tiles_view.winfo_ismapped()
         # Schowaj siatke
         self.tiles_view.pack_forget()
+
+        if entering_from_tiles:
+            self._geometry_before_inline = self.root.geometry()
 
         self._inline_host = ttk.Frame(self._body_container)
         self._inline_host.pack(fill="both", expand=True)
 
+        on_back = self._next_inline_on_back if self._next_inline_on_back else self._show_tiles
+        self._next_inline_on_back = None
+
         try:
-            view = builder(self._inline_host, self._show_tiles)
+            try:
+                view = builder(
+                    self._inline_host,
+                    on_back,
+                    on_open_component=self._open_component_by_folder,
+                )
+            except TypeError:
+                view = builder(self._inline_host, on_back)
         except Exception as e:  # noqa: BLE001
             messagebox.showerror(comp.name, f"Blad budowy widoku:\n{e}")
             self._show_tiles()
             return
+
+        self._current_inline_folder = comp.folder_name
 
         # Komponent moze sam pakowac siebie; jesli nie, wepchniemy go
         if isinstance(view, (tk.Widget, ttk.Frame)):
@@ -695,6 +905,76 @@ class GicleeApp:
 
         self._inline_view = view
         self.status_var.set(f"Otwarto: {comp.name}")
+        if comp.folder_name in ("finanse", "kpir", "dnr", "dokumentysprzedazy"):
+            try:
+                from Komponenty._shared.finance_navigation import register_open_callback
+
+                register_open_callback(self._open_component_by_folder)
+            except ImportError:
+                pass
+        self.root.after_idle(lambda c=comp: self._apply_inline_window_size(c))
+
+    def _restore_launcher_window_size(self) -> None:
+        """Domyślny rozmiar okna startowego po powrocie z widoku inline."""
+        self._geometry_before_inline = None
+        self.root.minsize(LAUNCHER_MIN_WIDTH, LAUNCHER_MIN_HEIGHT)
+        position_toplevel_screen_center(self.root, LAUNCHER_WIDTH, LAUNCHER_HEIGHT)
+
+    def _apply_inline_window_size(self, comp: Component) -> None:
+        """Powieksza okno pod widok inline, jesli komponent podaje inline_width/height w component.json."""
+        try:
+            w = int(comp.extras.get("inline_width") or 0)
+            h = int(comp.extras.get("inline_height") or 0)
+        except (TypeError, ValueError):
+            return
+        if w <= 0 or h <= 0:
+            return
+        try:
+            min_w = int(comp.extras.get("inline_min_width") or w)
+            min_h = int(comp.extras.get("inline_min_height") or h)
+        except (TypeError, ValueError):
+            min_w, min_h = w, h
+        self.root.update_idletasks()
+        req_w = max(w, self.root.winfo_reqwidth(), min_w)
+        req_h = max(h, self.root.winfo_reqheight(), min_h)
+        sw, sh = self.root.winfo_screenwidth(), self.root.winfo_screenheight()
+        req_w = min(req_w, max(LAUNCHER_MIN_WIDTH, sw - 40))
+        req_h = min(req_h, max(LAUNCHER_MIN_HEIGHT, sh - 80))
+        self.root.minsize(min(LAUNCHER_MIN_WIDTH, req_w), min(LAUNCHER_MIN_HEIGHT, req_h))
+        position_toplevel_screen_center(self.root, req_w, req_h)
+
+    def _component_by_folder(self, folder_name: str) -> Component | None:
+        pool = self._all_components or discover_components(self.components_dir, include_hidden=True)
+        return next((c for c in pool if c.folder_name == folder_name), None)
+
+    def _return_to_finanse_hub(self) -> None:
+        comp = self._component_by_folder("finanse")
+        if comp is None:
+            self._show_tiles()
+            return
+        self._next_inline_on_back = None
+        self._show_inline(comp)
+
+    def _open_component_by_folder(self, folder_name: str) -> None:
+        """Otwiera ukryty lub widoczny komponent inline (np. z huba Finanse)."""
+        comp = self._component_by_folder(folder_name)
+        if comp is None:
+            messagebox.showwarning("Księgowość", f"Nie znaleziono komponentu: {folder_name}")
+            return
+        if comp.mode != "inline":
+            self._launch(comp)
+            return
+        parent = self._current_inline_folder
+        if parent == "finanse" and folder_name != "finanse":
+            self._next_inline_on_back = self._return_to_finanse_hub
+        self._show_inline(comp)
+
+    def _ensure_tiles_wheel_binding(self) -> None:
+        """Przywraca scroll siatki kafelkow (inline komponenty nie moga robic unbind_all)."""
+        try:
+            self.root.bind_all("<MouseWheel>", self._on_canvas_mousewheel)
+        except tk.TclError:
+            pass
 
     def _show_tiles(self) -> None:
         """Wraca do siatki kafelkow z widoku inline."""
@@ -705,8 +985,12 @@ class GicleeApp:
                 pass
             self._inline_host = None
         self._inline_view = None
+        self._current_inline_folder = None
+        self._next_inline_on_back = None
+        self._restore_launcher_window_size()
         if not self.tiles_view.winfo_ismapped():
             self.tiles_view.pack(fill="both", expand=True)
+        self._ensure_tiles_wheel_binding()
         self.status_var.set("")
 
     # ---------- Misc ----------
@@ -794,7 +1078,7 @@ class GicleeApp:
 
     def _open_zadania_generator(self) -> None:
         """Otwiera komponent 'zadania' inline + uruchamia jego generator LLM."""
-        comp = next((c for c in self.components if c.folder_name == "zadania"), None)
+        comp = next((c for c in self._all_components if c.folder_name == "zadania"), None)
         if comp is None:
             messagebox.showwarning(
                 "Brak komponentu",
@@ -1021,6 +1305,59 @@ class GicleeApp:
         except RuntimeError:
             pass
 
+    def _poll_accounting_orders(self) -> None:
+        """Co 5 minut — nowe opłacone zamówienia bez dokumentu (panel księgowy)."""
+
+        def _worker() -> None:
+            try:
+                from Komponenty.dokumentysprzedazy.orders_sync import sync_accounting_orders
+                from Komponenty._shared.finance_navigation import set_nav
+                from Komponenty._shared.notifications import notify
+            except ImportError:
+                return
+            try:
+                new_rows = sync_accounting_orders(days_back=30)
+            except Exception as exc:  # noqa: BLE001
+                try:
+                    self.root.after(0, lambda: self.status_var.set(
+                        f"Księgowość: błąd sync Shopify ({exc})"
+                    ))
+                except RuntimeError:
+                    pass
+                return
+            if not new_rows:
+                return
+            first = new_rows[0]
+            name = first.get("shopify_order_name") or "?"
+            client = first.get("customer_name") or ""
+            msg = f"{len(new_rows)} nowe zamówienie(a) — pierwsze: {name}"
+            if client:
+                msg += f" ({client})"
+            try:
+                self.root.after(0, lambda: self.status_var.set(f"Księgowość: {msg}"))
+                from Komponenty._shared.toast import show_toast
+                self.root.after(0, lambda: show_toast(
+                    self.root, f"Księgowość: {msg}", duration_ms=4000,
+                ))
+            except (RuntimeError, ImportError):
+                pass
+            try:
+                notify(f"Nowe zamówienie: {name}", msg)
+            except ImportError:
+                pass
+            try:
+                oid = str(first.get("shopify_order_id") or "")
+                if oid:
+                    set_nav("dokumentysprzedazy", "orders", oid)
+            except Exception:
+                pass
+
+        threading.Thread(target=_worker, daemon=True).start()
+        try:
+            self.root.after(5 * 60 * 1000, self._poll_accounting_orders)
+        except RuntimeError:
+            pass
+
     # ---------- Cykl social-media publisher ----------
     def _poll_cykl_publisher(self) -> None:
         """Co 60s sprawdza kolejke cyklu i publikuje posty ktorych nadszedl czas.
@@ -1121,6 +1458,25 @@ class GicleeApp:
             return
         show_help(self.root, title="Token setup (Shopify + Meta)", text=text)
 
+    def _show_session_status(self) -> None:
+        from .session_status import format_session_status_text
+
+        text = format_session_status_text()
+        try:
+            from Komponenty._shared.help_dialog import show_help
+
+            show_help(self.root, title="Stan sesji / NBP / konfiguracja Partners", text=text)
+        except ImportError:
+            messagebox.showinfo("Stan sesji", text)
+
+    def _show_activity_log(self) -> None:
+        try:
+            from Komponenty._shared.activity_log_ui import open_activity_log_dialog
+
+            open_activity_log_dialog(self.root, title="Dziennik akcji")
+        except ImportError as exc:
+            messagebox.showerror("Dziennik akcji", f"Nie udalo sie zaladowac modulu:\n{exc}")
+
     def _show_help(self) -> None:
         try:
             from Komponenty._shared.help_dialog import show_help
@@ -1143,6 +1499,9 @@ procesie**, wiec ewentualny crash jednego komponentu NIE polozy launchera.
 
 ## Toolbar w prawym gornym rogu
 - **Token setup** - checklista OAuth Shopify + Meta (`CHECKLIST_SETUP.md`).
+- **Stan sesji** - podglad `.shopify_session.json`, cache kursow NBP, mtime / git dla `shopify.app.toml`.
+- **Dziennik akcji** - ostatnie wpisy z komponentow (np. batch w dodajobraz).
+- **Opcje** - układ kafelków: sekcja (nagłówek), widoczność, kolejność w sekcji. Zapis lokalny w `giclee_app/data/launcher_layout.json`.
 - **Instrukcja** - to okno.
 - **Odswiez** - rescanuje folder `Komponenty/` szukajac nowych aplikacji (i tak robi to co 3s automatycznie).
 - **Otworz folder Komponenty** - pokazuje folder w Eksploratorze. Tu trafiaja wszystkie komponenty.
@@ -1163,20 +1522,38 @@ procesie**, wiec ewentualny crash jednego komponentu NIE polozy launchera.
 4. Kafelek pojawi sie w GicleeApp w ciagu 3 sekund (auto-rescan).
 
 ## Sekcje glownego widoku
-Komponenty pogrupowane sa w trzy sekcje (kazda z naglowkiem):
+Komponenty pogrupowane sa w sekcje (kazda z naglowkiem). Kliknij naglowek
+lub strzalke, zeby zwinac / rozwinac sekcje — latwiej nawigowac przy wielu kafelkach.
 
 ### Administracja produktu
 - **Dodaj obraz** (`dodajobraz`) - tworzenie produktow w Shopify na podstawie zdjecia.
+- **Aktualizuj opis** (`aktualizujopis`) - podmiana akapitow opisu z JSON LLM (lista produktow, 7 jezykow).
+- **Zmien ceny** (`zmienceny`) - masowa aktualizacja cen wariantow + markup per rynek (Rynki).
+- **Wybor szablonu produktu** (`wyborszablonu`) - lista produktow z przypisanym szablonem wariantow; przypisanie, zmiana nazwy, nowy/kopia.
+- **Zmien tytuly** (`zmietytuly`) - generator promptu do zmiany tytulow produktu (Cursor).
 - **Nazwij obraz** (`nazwijobraz`) - automatyczna zmiana nazw plikow na "Autor - Tytul".
 - **Pobierz obraz** (`pobierzobraz`) - pobieranie pelnych obrazow IIIF (np. National Gallery).
+- **Squoosh WebP** (`squoosh`) - batch konwersja do WebP.
+- **Optymalizacja druku** (`print_optimize`) - Gemini + korekcja kolorow pod druk; zbieranie par Whitewall i kalibracja vs ww70.
+- **Mock-up** (`mockup`) - obraz w ramce A4 -> galeria produktu (mockup) w Shopify.
+- **Informacje o plikach** (`infoplikow`) - podglad grafik produktu w Shopify (plik CDN, alt, rola preview/Full/mockup).
+- **Przed/Po** (`przedpo`) - upload grafiki «przed obróbką» (metafield); «po» = obraz Full z galerii; sekcja PDP v2.
 
 ### Zamowienia
 - **Obrazy** (`obrazy`) - szybki dostep do folderow z reprodukcjami i obrazami klientow.
 - **Produkcja** (`produkcja`) - status zamowien (wydruk + ramka + utwardzanie + wysylka).
-- **Finanse** (`finanse`) - wyliczenia i ksiegowosc.
+- **Kalkulator kosztow** (`kalkulacja`) - koszty produkcji ramek (materialy, marze, drewno, import z .xlsm).
+
+### Finanse
+- **Księgowość — panel** (`finanse`) — jeden ekran: limit kwartalny DNR, próg VAT 240k, przepływ sprzedaży, compliance, checklist miesiąca z linkami do zamówień/faktur. Skróty do Dokumentów, KPiR i DNR (moduły ukryte na siatce, otwierane z panelu).
+- **Import DNR (zaległe)** — w Zamknięciu miesiąca: domknięcie braków (faktura wystawiona, brak wpisu DNR); bez hurtowych szkiców.
+- **DNR — cofnięcie przekroczenia** — gdy pierwsze przekroczenie limitu było błędne (np. przed zwrotem), w DNR → Kreator migracji: „Cofnij zapisane przekroczenie”.
+- **Dokumenty sprzedaży** (`dokumentysprzedazy`) — faktury bez VAT; szkic bez daty wpływu (uzupełniasz przy wystawieniu po wpłacie).
+- **JDG — KPiR** (`kpir`) — Księga Przychodów i Rozchodów; przy czynnym VAT kwota z faktury netto.
+- **Działalność nierejestrowana** (`dnr`) — ewidencja DNR; import tylko z faktur (nie bezpośrednio Shopify).
 
 ### Marketing
-- **Blog** (`blog`) - generator tresci + generator tematow + podglad postow z bloga Shopify (7 jezykow).
+- **Blog** (`blog`) - generator tresci, **import z HTML**, generator tematow, lista propozycji tematow, obecne posty (Shopify, 7 jezykow).
 - **Social Media** (`socialmedia`) - generator postow (6 platform: IG Feed/Stories/Reels, FB, TikTok, Pinterest) i planer postow (PL+EN).
 - **Zadania** (`zadania`) - organizer marketingowy: sygnaly z Shopify + kalendarz swiat + LLM -> plan miesiaca.
 - **Ceny w marketingu** (`cenyMarketing`) - analiza pricingu na rynkach.
@@ -1200,19 +1577,25 @@ Komponenty nie wpisane do zadnej sekcji wpadna do dodatkowej sekcji "Inne" na do
 
 
 def main() -> None:
-    # Auth: przy pierwszym uruchomieniu prosi o ustawienie hasla, potem za
-    # kazdym razem loguje uzytkownika. Jesli nie wybierze - apka sie nie otworzy.
-    try:
-        from Komponenty._shared import auth
-        if not auth.prompt_setup_or_login(None):
-            # User anulowal albo 3x bledne haslo -> apka zamykana.
-            return
-    except ImportError:
-        # Fallback - brak modulu auth to pozwalamy dzialac bez ochrony
-        pass
+    if _LAUNCHER_AUTH_ENABLED:
+        # Auth: pierwszy start = ustawienie hasla, potem logowanie przy kazdym uruchomieniu.
+        try:
+            from Komponenty._shared import auth
+            if not auth.prompt_setup_or_login(None):
+                return
+        except ImportError:
+            pass
 
     root = tk.Tk()
-    GicleeApp(root)
+    root.withdraw()
+
+    def _show_main() -> None:
+        GicleeApp(root)
+        root.deiconify()
+
+    from .splash_screen import run_splash_then
+
+    run_splash_then(root, _show_main)
     root.mainloop()
 
 

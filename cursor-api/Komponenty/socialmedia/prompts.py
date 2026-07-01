@@ -104,6 +104,104 @@ def build_post_prompt_gpt(
     )
 
 
+def _build_post_prompt_bilingual(
+    *,
+    topic: str,
+    platform_code: str,
+    extra_hint: str,
+    link: str,
+    variant: str,
+) -> str:
+    """Jedna platforma — dwie pelne wersje posta: PL i EN w jednym JSON (`versions`)."""
+    p = platforms.get(platform_code)
+    if p is None:
+        raise ValueError(f"Nieznana platforma: {platform_code}")
+
+    locked_pl = hashtag_library.locked_for("pl")
+    locked_en = hashtag_library.locked_for("en")
+    suggested_pl = hashtag_library.suggested_for("pl")
+    suggested_en = hashtag_library.suggested_for("en")
+
+    hint_block = f"\nDODATKOWY KONTEKST OD UZYTKOWNIKA:\n{extra_hint.strip()}\n" if extra_hint.strip() else ""
+    link_block = f"\nLINK DOCELOWY (do wklecenia w CTA tam gdzie ma sens): {link.strip()}\n" if link.strip() else ""
+
+    format_json = """\
+{
+  "platform": "%PLATFORM%",
+  "language": "oba",
+  "topic": "%TOPIC%",
+  "versions": {
+    "pl": {
+      "title": "",
+      "caption": "",
+      "on_screen_text": [],
+      "hashtags": [],
+      "image_hint": "",
+      "link": "",
+      "music_hint": ""
+    },
+    "en": {
+      "title": "",
+      "caption": "",
+      "on_screen_text": [],
+      "hashtags": [],
+      "image_hint": "",
+      "link": "",
+      "music_hint": ""
+    }
+  }
+}
+"""
+    format_json = (
+        format_json.replace("%PLATFORM%", p.code)
+        .replace("%TOPIC%", topic.replace('"', "'"))
+    )
+
+    variant_note = _variant_note(variant)
+
+    return f"""\
+Jestes copywriterem social media specjalizujacym sie w sztuce, fotografii i dekoracji wnetrz.
+Przygotuj DWA PELNE POSTY na tej samej platformie (**{p.label}**) dla sklepu GicleeArt:
+- wersja **polska** (`versions.pl`) — caly tekst po polsku,
+- wersja **angielska** (`versions.en`) — caly tekst po angielsku (nie tlumacz doslownie z PL — pisz naturalnie po angielsku).
+
+{SHOP_CONTEXT}
+
+TEMAT POSTA (wspolny dla obu wersji):
+"{topic}"
+{hint_block}{link_block}
+PLATFORMA: {p.label}
+- Caption limit znakow: {p.caption_limit} (osobno dla kazdej wersji)
+- Rekomendowana liczba slow: {p.recommended_words[0]}-{p.recommended_words[1]}
+- Rekomendowana liczba hashtagow: {p.recommended_hashtags} (limit platformy: {p.hashtag_limit})
+- Format zdjecia/video: {p.format_hint}
+- Ton: {p.tone}
+- Struktura: {p.structure}
+
+HASHTAGI — wersja PL:
+- Stale (na koncu): {' '.join(locked_pl) if locked_pl else '(brak)'}
+- Propozycje: {' '.join(suggested_pl[:12])}
+
+HASHTAGI — wersja EN:
+- Stale (na koncu): {' '.join(locked_en) if locked_en else '(brak)'}
+- Propozycje: {' '.join(suggested_en[:12])}
+
+CO WYGENEROWAC:
+- Dla kazdej wersji (`pl` i `en`) uzupelnij te same pola co w pojedynczym poscie: title, caption, on_screen_text, hashtags, image_hint, link, music_hint.
+- `title`: tylko Pinterest (100 znakow). Dla innych platform pusty string w obu wersjach.
+- `on_screen_text`: TYLKO dla Reels/TikTok — napisy w danym jezyku wersji.
+- Hashtagi w `pl` po polsku / angielsku w `en` (zgodnie z konwencja jezyka).
+
+WAZNE:
+- Nie duplikuj word-for-word miedzy jezykami — dwie autentyczne wersje.
+- NIE stosuj twardego sellu.
+
+{variant_note}
+FORMAT ODPOWIEDZI - JSON (dokladnie jeden obiekt z kluczem `versions`):
+{format_json}
+"""
+
+
 def _build_post_prompt(
     *,
     topic: str,
@@ -116,6 +214,15 @@ def _build_post_prompt(
     p = platforms.get(platform_code)
     if p is None:
         raise ValueError(f"Nieznana platforma: {platform_code}")
+
+    if (language or "").strip().lower() == "oba":
+        return _build_post_prompt_bilingual(
+            topic=topic,
+            platform_code=platform_code,
+            extra_hint=extra_hint,
+            link=link,
+            variant=variant,
+        )
 
     lang_label = platforms.lang_label(language)
     locked = hashtag_library.locked_for(language)
@@ -242,6 +349,11 @@ def _build_multi_post_prompt(
         active.append(p)
     if not active:
         raise ValueError("Nie wybrano zadnej platformy.")
+    if (language or "").strip().lower() == "oba":
+        raise ValueError(
+            "Jezyk 'oba (PL + EN)' jest dostepny tylko przy jednej platformie i trybie pojedynczego posta "
+            "(bez wielu platform naraz)."
+        )
 
     lang_label = platforms.lang_label(language)
     locked = hashtag_library.locked_for(language)
@@ -441,6 +553,10 @@ def _build_multi_platform_prompt(
     variant: str,
 ) -> str:
     """Prompt generujacy ten sam temat zaadaptowany na kilka platform jednoczesnie."""
+    if (language or "").strip().lower() == "oba":
+        raise ValueError(
+            "Jezyk 'oba (PL + EN)' jest dostepny tylko przy jednej platformie i trybie pojedynczego posta."
+        )
     plats: list[platforms.Platform] = []
     for code in platform_codes:
         p = platforms.get(code)
@@ -579,6 +695,11 @@ def _build_series_prompt(
     p = platforms.get(platform_code)
     if p is None:
         raise ValueError(f"Nieznana platforma: {platform_code}")
+    if (language or "").strip().lower() == "oba":
+        raise ValueError(
+            "Jezyk 'oba (PL + EN)' nie jest obslugiwany w trybie serii — wybierz PL lub EN "
+            "albo tryb pojedynczego posta."
+        )
 
     n = max(2, min(count, 7))
     lang_label = platforms.lang_label(language)
@@ -713,9 +834,23 @@ def parse_post_response(raw: str) -> dict[str, Any]:
         raise ValueError(f"Bledny JSON: {e}") from e
     if not isinstance(data, dict):
         raise ValueError("Odpowiedz nie jest obiektem JSON.")
+    vers = data.get("versions")
+    if isinstance(vers, dict):
+        pl_post = vers.get("pl")
+        en_post = vers.get("en")
+        if pl_post is not None and en_post is not None:
+            return {
+                "platform": str(data.get("platform") or "").strip(),
+                "language": "oba",
+                "topic": str(data.get("topic") or "").strip(),
+                "versions": {
+                    "pl": _validate_post_obj(pl_post),
+                    "en": _validate_post_obj(en_post),
+                },
+            }
     post = data.get("post")
     if post is None:
-        raise ValueError("Brak pola 'post' w odpowiedzi.")
+        raise ValueError("Brak pola 'post' w odpowiedzi (lub 'versions.pl' / 'versions.en').")
     return {
         "platform": str(data.get("platform") or "").strip(),
         "language": str(data.get("language") or "").strip(),

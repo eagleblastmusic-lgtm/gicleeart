@@ -1,9 +1,48 @@
-# IDE / narzedzia
+# IDE / narzędzia lokalne
 .cursor/
 .cache/
 
-# Pliki-puste czesto powstale przy przypadkowym `> python` / `> shopify` w katalogu glownym
+# Pliki-puste z przypadkowego `> python` / `> shopify` w korzeniu
 /python
 /shopify
 
+# Przypadkowe pliki wersji (np. błędny pip w katalogu głównym)
+/[0-9]+.[0-9]+.[0-9]*
+
 .DS_Store
+Thumbs.db
+
+# Node (motyw / skrypty w korzeniu)
+node_modules/
+npm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+.venv/
+venv/
+
+# Sekrety — nigdy w repo
+.env
+.env.*
+!.env.example
+
+# Artefakty audytu / tymczasowe (korzeń repo)
+_audit*
+_tmp*
+_live*
+_gacs*
+_patch*
+_restore*
+_extract*
+_analyze*
+_ww_*
+_section_api.json
+/*.html
+
+# Eksporty generowane lokalnie
+/exports/

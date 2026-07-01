@@ -1,0 +1,23 @@
+{%- doc -%}
+  Theme-editor copy keyed by block/section id for non-default locales.
+  PL falls back to `fallback` from JSON settings when no locale key exists.
+
+  @param {string} scope - "blocks" or "sections"
+  @param {string} id - block.id or section.id
+  @param {string} field - setting field (text, heading, label, …)
+  @param {string} fallback - default value (usually Polish from theme JSON)
+{%- enddoc -%}
+
+{%- liquid
+  assign giclee_i18n_id = id
+  if giclee_i18n_id contains '__'
+    assign giclee_i18n_id = giclee_i18n_id | split: '__' | last
+  endif
+  assign giclee_i18n_key = 'giclee.' | append: scope | append: '.' | append: giclee_i18n_id | append: '.' | append: field
+  assign giclee_i18n_val = giclee_i18n_key | t
+  if giclee_i18n_val == giclee_i18n_key or giclee_i18n_val contains 'Translation missing'
+    echo fallback
+  else
+    echo giclee_i18n_val
+  endif
+-%}

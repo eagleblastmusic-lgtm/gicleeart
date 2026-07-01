@@ -1,0 +1,20 @@
+{% comment %}
+  „Własna fotografia” → PDP (nie strona /pages/fotografia-obraz).
+  @param {link} link
+{% endcomment %}
+{%- liquid
+  assign resolved_url = link.url
+  assign wlasna_product_handle = 'twoje-zdjecie-jako-wydruk-giclee-na-papierze-fine-art-w-drewnianej-ramie'
+  assign title_norm = link.title | strip | downcase
+  if link.handle == 'katalog' or title_norm == 'katalog'
+    assign resolved_url = '#'
+  elsif title_norm == 'własna fotografia' or link.url contains '/pages/fotografia-obraz' or link.handle == 'wlasna-fotografia'
+    assign wlasna_product = all_products[wlasna_product_handle]
+    if wlasna_product != blank
+      assign resolved_url = wlasna_product.url
+    else
+      assign resolved_url = '/products/' | append: wlasna_product_handle
+    endif
+  endif
+-%}
+{{- resolved_url -}}

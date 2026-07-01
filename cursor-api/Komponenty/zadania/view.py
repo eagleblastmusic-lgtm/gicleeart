@@ -23,6 +23,7 @@ from datetime import date, timedelta
 from tkinter import filedialog, messagebox, ttk
 
 from Komponenty._shared.toast import show_toast
+from Komponenty._shared.window_geometry import position_toplevel_screen_center
 
 from . import storage
 from .generator_zadan import open_tasks_generator
@@ -640,7 +641,7 @@ def _open_edit_dialog(
 ) -> None:
     dlg = tk.Toplevel(parent)
     dlg.title("Nowe zadanie" if task is None else "Edycja zadania")
-    dlg.geometry("780x780")
+    position_toplevel_screen_center(dlg, 780, 780)
     dlg.minsize(680, 640)
     try:
         dlg.transient(parent.winfo_toplevel())

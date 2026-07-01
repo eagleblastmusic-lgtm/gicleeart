@@ -1,0 +1,48 @@
+{
+  "uids": [
+    "77",
+    "76",
+    "75",
+    "74",
+    "80",
+    "81",
+    "82"
+  ],
+  "orders": {
+    "#1004": {
+      "uid": "77",
+      "folder": "E:\\Firma\\1. Obrazy\\3. Klienci\\Numer zamówienia #1004",
+      "at": "2026-06-12T13:59:28+00:00"
+    },
+    "#1003": {
+      "uid": "76",
+      "folder": "E:\\Firma\\1. Obrazy\\3. Klienci\\Numer zamówienia #1003",
+      "at": "2026-06-12T13:59:28+00:00"
+    },
+    "#1002": {
+      "uid": "75",
+      "folder": "E:\\Firma\\1. Obrazy\\3. Klienci\\Numer zamówienia #1002",
+      "at": "2026-06-12T13:59:29+00:00"
+    },
+    "#1001": {
+      "uid": "74",
+      "folder": "E:\\Firma\\1. Obrazy\\3. Klienci\\Numer zamówienia #1001",
+      "at": "2026-06-12T13:59:29+00:00"
+    },
+    "#1005": {
+      "uid": "80",
+      "folder": "E:\\Firma\\1. Obrazy\\3. Klienci\\Numer zamówienia #1005",
+      "at": "2026-06-12T13:59:27+00:00"
+    },
+    "#1006": {
+      "uid": "81",
+      "folder": "E:\\Firma\\1. Obrazy\\3. Klienci\\Numer zamówienia #1006",
+      "at": "2026-06-12T13:59:27+00:00"
+    },
+    "#1007": {
+      "uid": "82",
+      "folder": "E:\\Firma\\1. Obrazy\\3. Klienci\\Numer zamówienia #1007",
+      "at": "2026-06-12T13:59:27+00:00"
+    }
+  }
+}

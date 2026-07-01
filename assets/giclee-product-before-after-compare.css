@@ -1,0 +1,268 @@
+/* Porównanie przed/po — szablon product.szablon-produktu-v2 */
+
+.giclee-before-after-shopify-section {
+  display: contents;
+}
+
+.giclee-before-after-source {
+  display: none !important;
+}
+
+.giclee-before-after {
+  width: 100%;
+  padding: clamp(2.25rem, 4.5vw, 3.5rem) 0 clamp(1.75rem, 3.5vw, 2.75rem);
+  text-align: center;
+}
+
+.giclee-before-after__eyebrow {
+  margin: 0 0 0.65rem;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(0.78rem, 1vw, 0.88rem);
+  font-weight: 300;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgb(var(--color-foreground-rgb, 255, 255, 255) / 0.55);
+}
+
+.giclee-before-after__heading {
+  margin: 0 0 0.85rem;
+  font-family: 'Bodoni Moda', Georgia, serif;
+  font-weight: 500;
+  font-size: clamp(1.35rem, 2.2vw, 1.85rem);
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  color: rgb(var(--color-foreground-rgb, 255, 255, 255) / 0.95);
+}
+
+.giclee-before-after__description {
+  margin: 0 auto clamp(1.75rem, 3vw, 2.25rem);
+  max-width: 58ch;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-weight: 300;
+  font-size: clamp(0.95rem, 1.15vw, 1.05rem);
+  line-height: 1.55;
+  letter-spacing: 0.01em;
+  color: rgb(var(--color-foreground-rgb, 255, 255, 255) / 0.68);
+}
+
+.giclee-before-after__frame {
+  margin: 0 auto;
+  max-width: min(100%, 920px);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 20px;
+  overflow: hidden;
+  background: rgb(0 0 0 / 0.35);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.04) inset,
+    0 24px 64px rgb(0 0 0 / 0.42),
+    0 0 48px rgb(255 255 255 / 0.03);
+}
+
+.giclee-before-after__compare {
+  position: relative;
+  width: 100%;
+}
+
+.giclee-before-after__media {
+  --compare: 50;
+
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--giclee-ba-ratio, 1.6);
+  display: grid;
+  grid-template: 1fr / 1fr;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.giclee-before-after__media.is-dragging {
+  touch-action: none;
+}
+
+.giclee-before-after__layer {
+  grid-area: 1 / 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.giclee-before-after__layer--after {
+  z-index: 1;
+}
+
+.giclee-before-after__layer--before {
+  z-index: 2;
+  clip-path: inset(0 calc((100 - var(--compare)) * 1%) 0 0);
+}
+
+.giclee-before-after__layer--after {
+  clip-path: inset(0 0 0 calc(var(--compare) * 1%));
+}
+
+.giclee-before-after__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+.giclee-before-after__label {
+  position: absolute;
+  bottom: clamp(0.75rem, 2vw, 1.1rem);
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 0.18);
+  background: rgb(0 0 0 / 0.45);
+  backdrop-filter: blur(8px);
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(0.78rem, 0.95vw, 0.88rem);
+  font-weight: 300;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.88);
+  pointer-events: none;
+}
+
+.giclee-before-after__label--before {
+  left: clamp(0.75rem, 2vw, 1.1rem);
+}
+
+.giclee-before-after__label--after {
+  right: clamp(0.75rem, 2vw, 1.1rem);
+}
+
+.giclee-before-after__divider {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.giclee-before-after__handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--compare) * 1%);
+  width: 0;
+  transform: translateX(-50%);
+}
+
+.giclee-before-after__handle-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    to bottom,
+    rgb(255 255 255 / 0),
+    rgb(255 255 255 / 0.85) 18%,
+    rgb(255 255 255 / 0.85) 82%,
+    rgb(255 255 255 / 0)
+  );
+  box-shadow: 0 0 16px rgb(255 255 255 / 0.22);
+}
+
+.giclee-before-after__handle-grip {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(2.35rem, 4vw, 2.75rem);
+  height: clamp(2.35rem, 4vw, 2.75rem);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid rgb(255 255 255 / 0.22);
+  background: rgb(8 8 8 / 0.72);
+  color: rgb(255 255 255 / 0.92);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.06) inset,
+    0 10px 28px rgb(0 0 0 / 0.45);
+}
+
+.giclee-before-after__handle-grip svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.giclee-before-after__slider {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: ew-resize;
+  appearance: none;
+}
+
+.giclee-before-after__slider::-webkit-slider-thumb,
+.giclee-before-after__slider::-moz-range-thumb {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  cursor: ew-resize;
+  appearance: none;
+}
+
+.giclee-before-after__slider::-webkit-slider-track,
+.giclee-before-after__slider::-moz-range-track {
+  background: transparent;
+  border: 0;
+  appearance: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .giclee-before-after:not(.is-revealed) .giclee-before-after__eyebrow,
+  .giclee-before-after:not(.is-revealed) .giclee-before-after__heading,
+  .giclee-before-after:not(.is-revealed) .giclee-before-after__description,
+  .giclee-before-after:not(.is-revealed) .giclee-before-after__frame {
+    opacity: 0;
+    transform: translateY(1.1rem);
+  }
+
+  @keyframes giclee-before-after-reveal {
+    from {
+      opacity: 0;
+      transform: translateY(1.1rem);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .giclee-before-after.is-revealed .giclee-before-after__eyebrow {
+    animation: giclee-before-after-reveal 0.68s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .giclee-before-after.is-revealed .giclee-before-after__heading {
+    animation: giclee-before-after-reveal 0.68s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+  }
+
+  .giclee-before-after.is-revealed .giclee-before-after__description {
+    animation: giclee-before-after-reveal 0.68s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+  }
+
+  .giclee-before-after.is-revealed .giclee-before-after__frame {
+    animation: giclee-before-after-reveal 0.72s cubic-bezier(0.22, 1, 0.36, 1) 0.28s both;
+  }
+}
+
+@media screen and (max-width: 599px) {
+  .giclee-before-after__label {
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+  }
+}

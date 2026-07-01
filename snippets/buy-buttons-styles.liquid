@@ -335,4 +335,59 @@
   .shopify-payment-button__more-options[aria-hidden='true'] {
     display: none;
   }
+
+  /* BLIK (Polska) zamiast Shop Pay */
+  .blik-checkout-button {
+    -webkit-appearance: none;
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    width: 100%;
+    min-height: var(--height-buy-buttons);
+    padding: 0.7rem 1.1rem;
+    border: none;
+    border-radius: 999px;
+    background: #1a1a1a;
+    color: rgb(var(--color-foreground-rgb, 255, 255, 255) / 0.9);
+    font-family: var(--font-paragraph--family);
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.2;
+    cursor: pointer;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+    transition:
+      background-color 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.12s ease,
+      opacity 0.2s ease;
+  }
+
+  .blik-checkout-button:hover:not(:disabled) {
+    background: #1f1f1f;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+
+  .blik-checkout-button:active:not(:disabled) {
+    transform: scale(0.985);
+  }
+
+  .blik-checkout-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .blik-checkout-button__label {
+    letter-spacing: 0.01em;
+    color: rgb(var(--color-foreground-rgb, 255, 255, 255) / 0.82);
+  }
+
+  .blik-checkout-button__logo {
+    display: block;
+    height: 1.75rem;
+    width: auto;
+    flex: 0 0 auto;
+    border-radius: 6px;
+  }
 {% endstylesheet %}

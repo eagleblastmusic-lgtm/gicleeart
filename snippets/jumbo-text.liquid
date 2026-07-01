@@ -12,6 +12,15 @@
 {% liquid
   assign block_settings = block_settings | default: block.settings
   assign shown_text = text | default: block_settings.text
+  if block.id != blank and text == blank
+    capture giclee_resolved_text
+      render 'giclee-i18n-block-text', block: block, fallback: block_settings.text
+    endcapture
+    assign giclee_resolved_text = giclee_resolved_text | strip
+    if giclee_resolved_text != blank and giclee_resolved_text != block_settings.text
+      assign shown_text = giclee_resolved_text
+    endif
+  endif
   assign descenders = 'alphabetic'
   assign trim = 'trim-both'
   assign cap_text = false

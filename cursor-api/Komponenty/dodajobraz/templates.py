@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -124,6 +125,24 @@ def load_templates() -> list[VariantTemplate]:
     return [_from_dict(x) for x in raw if isinstance(x, dict)]
 
 
+def apply_default_flag(
+    templates: list[VariantTemplate],
+    template_id: str,
+    *,
+    is_default: bool,
+) -> None:
+    """Ustawia `is_default` dla wskazanego szablonu.
+
+    Gdy `is_default=True`, wszystkie pozostale szablony dostaja `False` (tylko jeden domyslny).
+    Gdy `is_default=False`, zmieniany jest tylko wskazany rekord (inne bez zmian).
+    """
+    for t in templates:
+        if t.id == template_id:
+            t.is_default = is_default
+        elif is_default:
+            t.is_default = False
+
+
 def save_templates(templates: list[VariantTemplate]) -> None:
     _ensure_dir()
     # Dbamy zeby tylko jeden byl is_default
@@ -202,17 +221,15 @@ def delete_template(template_id: str) -> bool:
 
 def set_default(template_id: str) -> bool:
     templates = load_templates()
-    found = False
+    if not any(t.id == template_id for t in templates):
+        return False
+    apply_default_flag(templates, template_id, is_default=True)
     for t in templates:
         if t.id == template_id:
-            t.is_default = True
             t.updated_at = _now()
-            found = True
-        else:
-            t.is_default = False
-    if found:
-        save_templates(templates)
-    return found
+            break
+    save_templates(templates)
+    return True
 
 
 def duplicate_template(template_id: str, *, new_name: str | None = None) -> VariantTemplate | None:
@@ -357,6 +374,382 @@ def template_to_shopify_payload(template: VariantTemplate) -> tuple[list[dict], 
                 entry[k] = v[k]
         variants.append(entry)
     return options, variants
+
+
+# ---------------------------------------------------------------------------
+# Masowe zastosowanie szablonu do istniejacych produktow
+# ---------------------------------------------------------------------------
+
+_VARIANT_UPDATE_KEYS: tuple[str, ...] = (
+    "option1", "option2", "option3",
+    "price", "compare_at_price",
+    "weight", "weight_unit",
+    "inventory_policy", "fulfillment_service", "inventory_management",
+    "requires_shipping", "taxable", "position",
+)
+
+
+def _log(logger: Callable[[str], None] | None, msg: str) -> None:
+    if logger:
+        try:
+            logger(msg)
+        except Exception:  # noqa: BLE001
+            pass
+
+
+def _variant_key(v: dict[str, Any]) -> tuple[str, ...]:
+    parts: list[str] = []
+    for i in (1, 2, 3):
+        val = v.get(f"option{i}")
+        if val is not None and str(val).strip():
+            parts.append(str(val).strip())
+    return tuple(parts)
+
+
+def _variant_fields_for_shopify(
+    v: dict[str, Any],
+    *,
+    clear_inventory_tracking: bool = False,
+) -> dict[str, Any]:
+    fields: dict[str, Any] = {}
+    for key in _VARIANT_UPDATE_KEYS:
+        if key in v and v[key] is not None:
+            fields[key] = v[key]
+        elif clear_inventory_tracking and key == "inventory_management":
+            fields[key] = None
+    if clear_inventory_tracking and "inventory_management" not in fields:
+        fields["inventory_management"] = None
+    return fields
+
+
+def _variant_field_changed(current_fields: dict[str, Any], key: str, desired: Any) -> bool:
+    current = current_fields.get(key)
+    if desired is None:
+        return current not in (None, "")
+    return str(current if current is not None else "") != str(desired)
+
+
+def validate_template_for_existing_products(template: VariantTemplate) -> None:
+    """Sprawdza limity Shopify przed masowa aktualizacja istniejacych produktow."""
+    options, variants = template_to_shopify_payload(template)
+    if len(options) > 3:
+        raise sc.ShopifyError(
+            f"Shopify obsluguje maksymalnie 3 opcje produktu, a szablon ma {len(options)}."
+        )
+    if len(variants) > 100:
+        raise sc.ShopifyError(
+            f"Shopify obsluguje maksymalnie 100 wariantow na produkt, a szablon ma {len(variants)}."
+        )
+    if not variants:
+        raise sc.ShopifyError("Szablon nie ma zadnych wariantow.")
+
+    seen: set[tuple[str, ...]] = set()
+    for v in variants:
+        key = _variant_key(v)
+        if not key:
+            raise sc.ShopifyError("Szablon zawiera wariant bez wartosci opcji.")
+        if key in seen:
+            raise sc.ShopifyError(
+                f"Szablon zawiera zduplikowany wariant: {' / '.join(key)}"
+            )
+        seen.add(key)
+
+
+def apply_template_to_product(
+    shop: str,
+    token: str,
+    product: dict[str, Any],
+    template: VariantTemplate,
+    *,
+    logger: Callable[[str], None] | None = None,
+) -> dict[str, int]:
+    """Dopasowuje warianty jednego produktu do szablonu.
+
+    Strategia jest zachowawcza: najpierw tworzy brakujace warianty, potem aktualizuje
+    pasujace i dopiero na koncu usuwa warianty, ktorych nie ma w szablonie.
+    """
+    options_payload, variants_payload = template_to_shopify_payload(template)
+    pid = int(product.get("id") or 0)
+    if not pid:
+        raise sc.ShopifyError("Produkt bez ID.")
+
+    existing_variants = list(product.get("variants") or [])
+    existing_by_key: dict[tuple[str, ...], dict[str, Any]] = {}
+    for v in existing_variants:
+        key = _variant_key(v)
+        if key and key not in existing_by_key:
+            existing_by_key[key] = v
+
+    desired_by_key = {_variant_key(v): v for v in variants_payload}
+    desired_keys = set(desired_by_key)
+    keep_seen: set[tuple[str, ...]] = set()
+    variants_to_delete: list[dict[str, Any]] = []
+    for v in existing_variants:
+        key = _variant_key(v)
+        if key in desired_keys and key not in keep_seen:
+            keep_seen.add(key)
+            continue
+        variants_to_delete.append(v)
+
+    created = 0
+    updated = 0
+    deleted = 0
+    unchanged = 0
+    current_count = len(existing_variants)
+
+    def delete_existing_variant(v: dict[str, Any]) -> None:
+        nonlocal deleted, current_count
+        vid = v.get("id")
+        if not vid:
+            return
+        sc.delete_product_variant(shop, token, pid, int(vid))
+        deleted += 1
+        current_count = max(0, current_count - 1)
+
+    for key, desired in desired_by_key.items():
+        current = existing_by_key.get(key)
+        fields = _variant_fields_for_shopify(desired, clear_inventory_tracking=True)
+        if current is None:
+            while current_count >= 100 and variants_to_delete and current_count > 1:
+                delete_existing_variant(variants_to_delete.pop(0))
+            sc.create_product_variant(shop, token, pid, fields)
+            current_count += 1
+            created += 1
+            continue
+
+        current_fields = _variant_fields_for_shopify(current)
+        needs_update = any(_variant_field_changed(current_fields, k, v) for k, v in fields.items())
+        if not needs_update:
+            unchanged += 1
+            continue
+        sc.update_variant(shop, token, int(current["id"]), fields)
+        updated += 1
+
+    for v in variants_to_delete:
+        try:
+            delete_existing_variant(v)
+        except sc.ShopifyError as e:
+            vid = v.get("id")
+            _log(logger, f"[szablony] Nie usunieto wariantu {vid} produktu {pid}: {e}")
+
+    # Nazwy opcji aktualizujemy po operacjach na wariantach, zeby wartosci byly juz obecne.
+    sc.update_product(shop, token, pid, {"options": options_payload})
+
+    return {
+        "created": created,
+        "updated": updated,
+        "deleted": deleted,
+        "unchanged": unchanged,
+    }
+
+
+def apply_template_to_all_products(
+    template_id: str,
+    *,
+    product_type: str | None = None,
+    logger: Callable[[str], None] | None = None,
+    should_cancel: Callable[[], bool] | None = None,
+    on_progress: Callable[[str], None] | None = None,
+) -> dict[str, Any]:
+    """Stosuje wybrany szablon wariantow do wszystkich produktow z katalogu Shopify."""
+    template = get_by_id(template_id)
+    if template is None:
+        raise sc.ShopifyError(f"Szablon wariantow {template_id} nie istnieje.")
+    validate_template_for_existing_products(template)
+
+    shop, token = sc.load_session()
+    scope_label = product_type or "wszystkie"
+    _log(logger, f"[szablony] Sesja: {shop}")
+    _log(
+        logger,
+        f"[szablony] Stosuje szablon '{template.name}' do produktow (typ={scope_label}).",
+    )
+    if on_progress:
+        on_progress("Ladowanie katalogu produktow...")
+
+    def _page_progress(n: int) -> None:
+        msg = f"Ladowanie katalogu: {n} produktow..."
+        _log(logger, f"[szablony] {msg}")
+        if on_progress:
+            on_progress(msg)
+
+    products = sc.fetch_all_products(
+        shop,
+        token,
+        product_type=product_type,
+        fields="id,title,handle,product_type,variants",
+        should_cancel=should_cancel,
+        on_page_progress=_page_progress,
+    )
+
+    total = len(products)
+    _log(logger, f"[szablony] Znaleziono {total} produktow.")
+    counters = {
+        "products_total": total,
+        "products_updated": 0,
+        "variants_created": 0,
+        "variants_updated": 0,
+        "variants_deleted": 0,
+        "variants_unchanged": 0,
+        "errors": [],
+    }
+
+    for idx, product in enumerate(products, start=1):
+        if should_cancel and should_cancel():
+            raise sc.OperationCancelled("Przerwano stosowanie szablonu wariantow.")
+        title = str(product.get("title") or f"id={product.get('id')}")
+        msg = f"Produkt {idx}/{total}: {title}"
+        if on_progress:
+            on_progress(msg)
+        try:
+            res = apply_template_to_product(shop, token, product, template, logger=logger)
+            counters["products_updated"] += 1
+            counters["variants_created"] += res["created"]
+            counters["variants_updated"] += res["updated"]
+            counters["variants_deleted"] += res["deleted"]
+            counters["variants_unchanged"] += res["unchanged"]
+            _log(
+                logger,
+                "[szablony] OK "
+                f"{title}: +{res['created']} / upd {res['updated']} / "
+                f"del {res['deleted']} / bez zmian {res['unchanged']}",
+            )
+        except sc.ShopifyError as e:
+            err = f"{title}: {e}"
+            counters["errors"].append(err)
+            _log(logger, f"[szablony] BLAD {err}")
+
+    _log(
+        logger,
+        "[szablony] Gotowe. "
+        f"Produkty: {counters['products_updated']}/{total}, "
+        f"dodano wariantow: {counters['variants_created']}, "
+        f"zmieniono: {counters['variants_updated']}, "
+        f"usunieto: {counters['variants_deleted']}, "
+        f"bledow: {len(counters['errors'])}.",
+    )
+    return counters
+
+
+def apply_template_to_product_id(
+    template_id: str,
+    product_id: int,
+    *,
+    logger: Callable[[str], None] | None = None,
+    on_progress: Callable[[str], None] | None = None,
+) -> dict[str, Any]:
+    """Stosuje wybrany szablon wariantow do jednego produktu Shopify."""
+    template = get_by_id(template_id)
+    if template is None:
+        raise sc.ShopifyError(f"Szablon wariantow {template_id} nie istnieje.")
+    validate_template_for_existing_products(template)
+
+    shop, token = sc.load_session()
+    pid = int(product_id)
+    _log(logger, f"[szablony] Sesja: {shop}")
+    _log(logger, f"[szablony] Pobieram produkt {pid}...")
+    if on_progress:
+        on_progress("Pobieranie produktu z Shopify...")
+    product = sc.get_product(shop, token, pid)
+    if not product:
+        raise sc.ShopifyError(f"Nie znaleziono produktu {pid}.")
+
+    title = str(product.get("title") or f"id={pid}")
+    if on_progress:
+        on_progress(f"Stosowanie szablonu do: {title}")
+    res = apply_template_to_product(shop, token, product, template, logger=logger)
+    _log(
+        logger,
+        "[szablony] OK "
+        f"{title}: +{res['created']} / upd {res['updated']} / "
+        f"del {res['deleted']} / bez zmian {res['unchanged']}",
+    )
+    return {
+        "product_id": pid,
+        "product_title": title,
+        "variants_created": res["created"],
+        "variants_updated": res["updated"],
+        "variants_deleted": res["deleted"],
+        "variants_unchanged": res["unchanged"],
+    }
+
+
+def apply_template_to_product_ids(
+    template_id: str,
+    product_ids: list[int],
+    *,
+    logger: Callable[[str], None] | None = None,
+    should_cancel: Callable[[], bool] | None = None,
+    on_progress: Callable[[str], None] | None = None,
+) -> dict[str, Any]:
+    """Stosuje wybrany szablon wariantow do wskazanych produktow Shopify."""
+    ids = [int(x) for x in product_ids if int(x) > 0]
+    if not ids:
+        raise sc.ShopifyError("Nie wybrano zadnego produktu.")
+
+    template = get_by_id(template_id)
+    if template is None:
+        raise sc.ShopifyError(f"Szablon wariantow {template_id} nie istnieje.")
+    validate_template_for_existing_products(template)
+
+    shop, token = sc.load_session()
+    total = len(ids)
+    _log(logger, f"[szablony] Sesja: {shop}")
+    _log(logger, f"[szablony] Stosuje szablon '{template.name}' do {total} produktow.")
+
+    counters: dict[str, Any] = {
+        "products_total": total,
+        "products_updated": 0,
+        "variants_created": 0,
+        "variants_updated": 0,
+        "variants_deleted": 0,
+        "variants_unchanged": 0,
+        "errors": [],
+    }
+    successful_pids: list[int] = []
+
+    for idx, pid in enumerate(ids, start=1):
+        if should_cancel and should_cancel():
+            raise sc.OperationCancelled("Przerwano stosowanie szablonu wariantow.")
+        if on_progress:
+            on_progress(f"Produkt {idx}/{total} (id={pid})...")
+        try:
+            product = sc.get_product(shop, token, pid)
+            if not product:
+                raise sc.ShopifyError(f"Nie znaleziono produktu {pid}.")
+            title = str(product.get("title") or f"id={pid}")
+            res = apply_template_to_product(shop, token, product, template, logger=logger)
+            counters["products_updated"] += 1
+            successful_pids.append(pid)
+            counters["variants_created"] += res["created"]
+            counters["variants_updated"] += res["updated"]
+            counters["variants_deleted"] += res["deleted"]
+            counters["variants_unchanged"] += res["unchanged"]
+            _log(
+                logger,
+                "[szablony] OK "
+                f"{title}: +{res['created']} / upd {res['updated']} / "
+                f"del {res['deleted']} / bez zmian {res['unchanged']}",
+            )
+        except sc.ShopifyError as e:
+            err = f"id={pid}: {e}"
+            counters["errors"].append(err)
+            _log(logger, f"[szablony] BLAD {err}")
+
+    _log(
+        logger,
+        "[szablony] Gotowe. "
+        f"Produkty: {counters['products_updated']}/{total}, "
+        f"bledow: {len(counters['errors'])}.",
+    )
+    try:
+        from .product_template_assignments import set_product_template_assignments_batch
+
+        if successful_pids:
+            set_product_template_assignments_batch(successful_pids, template_id)
+    except Exception:  # noqa: BLE001
+        pass
+    return counters
 
 
 def variants_as_rows(

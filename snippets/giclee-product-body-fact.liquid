@@ -1,0 +1,20 @@
+{%- comment -%}
+  Wyciąga wartość pola SZCZEGÓŁY z product.description (body_html dodajobraz).
+
+  Parametry:
+    product — obiekt produktu Shopify
+    label   — etykieta PL, np. "Data powstania", "Technika", "Gatunek"
+{%- endcomment -%}
+{%- liquid
+  assign fact_value = ''
+  assign body = product.description | default: ''
+  if body != blank and label != blank
+    assign needle = '<strong>' | append: label | append: ': </strong>'
+    assign parts = body | split: needle
+    if parts.size > 1
+      assign tail = parts[1]
+      assign fact_value = tail | split: '<br>' | first | strip_html | strip
+    endif
+  endif
+-%}
+{{- fact_value -}}

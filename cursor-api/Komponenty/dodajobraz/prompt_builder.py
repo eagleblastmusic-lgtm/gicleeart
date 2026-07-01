@@ -5,6 +5,7 @@ import json
 import re
 from typing import Any
 
+from .parser import IMAGE_ROLE_FULL, IMAGE_ROLE_MOCKUP, IMAGE_ROLE_PREVIEW
 from .tags_taxonomy import (
     ALWAYS_TAGS,
     GIFT_WHITELIST,
@@ -34,7 +35,7 @@ TRANSLATION_LANGS: tuple[str, ...] = ("en", "de", "fr", "es", "nl", "it")
 # Wymagane pola w kazdym bloku 'tlumaczenia.<lang>'.
 TRANSLATION_KEYS: tuple[str, ...] = (
     "tytul_polski",        # tytul produktu w jezyku docelowym (mimo nazwy klucza - to przetlumaczony tytul)
-    "akapity",             # 3 akapity opisu w jezyku docelowym
+    "akapity",             # 3-4 akapity opisu w jezyku docelowym (4. opcjonalny)
     "seo_title",           # title_tag w jezyku docelowym
     "seo_description",     # description_tag w jezyku docelowym
     "alt_text",            # alt zdjecia w jezyku docelowym (max 125 znakow)
@@ -130,12 +131,19 @@ _KATEGORIA_GUIDELINES = (
 
 
 _AKAPITY_GUIDELINES = """\
-Wytyczne do pola "akapity" (opis obrazu, DOKLADNIE 3 AKAPITY):
+Wytyczne do pola "akapity" (opis obrazu — MINIMUM 3 AKAPITY, OPCJONALNIE 4.):
 Napisz opis tego obrazu w jezyku polskim, w eleganckim, literackim stylu, ktory brzmi naturalnie, swiezo i interesujaco. Tekst ma budzic ciekawosc odbiorcy, zachecac do zatrzymania sie nad dzielem i sprawiac, ze klient bedzie chcial spojrzec na obraz dluzej.
 
 Nie narzucaj sztywnej struktury ani schematu opisu. Pozwol, by tekst sam wynikal z charakteru obrazu i byl unikalny dla konkretnego dziela. Unikaj powtarzalnych formulek, szkolnego tonu i nadmiernie oczywistych sformulowan.
 
-Opis powinien byc sugestywny, estetyczny i angazujacy, ale nie przesadnie patetyczny. Ma sprawiac wrazenie tekstu premium - takiego, ktory dobrze brzmi na stronie galerii, w ofercie dla klienta lub w katalogu sztuki. Opis ma miec 3 akapity.
+Opis powinien byc sugestywny, estetyczny i angazujacy, ale nie przesadnie patetyczny. Ma sprawiac wrazenie tekstu premium - takiego, ktory dobrze brzmi na stronie galerii, w ofercie dla klienta lub w katalogu sztuki.
+
+Struktura akapitow:
+- ZAWSZE dokladnie 3 akapity glownego opisu (estetyka, nastroj, znaczenie dziela).
+- OPCJONALNIE 4. akapit — TYLKO gdy znasz autentyczne, konkretne ciekawostki zwiazane z TYM obrazem
+  (np. historia powstania, ciekawa proweniencja, anegdota o modelu, kontekst wystawy, rzadki fakt
+  z biografii artysty w zwiazku z tym dzielem). Nie wymyslaj ciekawostek na sile.
+- Gdy brak sensownych ciekawostek — zwroc tablice z 3 elementami (bez pustego 4. akapitu).
 
 Najwazniejsze: tekst ma wzbudzac zainteresowanie, emocje i wrazenie obcowania z czyms wyjatkowym.
 """
@@ -151,8 +159,8 @@ Pole "tlumaczenia" (KRYTYCZNE - 6 jezykow obcych):
                           (uzyj OFICJALNEGO tlumaczenia jesli istnieje, np. dla Indian Summer
                            niemieckie 'Altweibersommer'); klucz nazywa sie 'tytul_polski'
                            historycznie - wartoscia ma byc tytul w jezyku docelowym.
-  * "akapity"          -> 3 akapity opisu w jezyku docelowym (NATURALNIE,
-                           nie doslowne tlumaczenie z polskiego - dopuszczalna
+  * "akapity"          -> 3 akapity opisu w jezyku docelowym (+ opcjonalnie 4. z ciekawostkami,
+                           jesli sa w wersji PL; NATURALNIE, nie doslowne tlumaczenie - dopuszczalna
                            lekka swobodna adaptacja stylistyczna; zachowaj fakty.)
   * "seo_title"        -> title_tag (do meta) w jezyku docelowym, max ok. 70 znakow,
                            format: 'Tytul - Artysta | <fraza zakupowa>' (np. 'Wall art / Wandbild / Tableau mural').
@@ -161,7 +169,7 @@ Pole "tlumaczenia" (KRYTYCZNE - 6 jezykow obcych):
 
 Format JSON:
 "tlumaczenia": {
-  "en": { "tytul_polski": "...", "akapity": ["...","...","..."],
+  "en": { "tytul_polski": "...", "akapity": ["...","...","..."] lub ["...","...","...","..."],
           "seo_title": "...", "seo_description": "...", "alt_text": "..." },
   "de": { ... },
   "fr": { ... },
@@ -183,6 +191,83 @@ _ORIGINAL_TITLE_NOTE = (
     "- Dopiero gdy oryginal jest naprawde nieznany - wpisz 'Nieznana'. Nie wpisuj wtedy angielskiej\n"
     "  wersji z pliku jako 'oryginalu' - chyba ze masz pewnosc, ze artysta byl anglojezyczny."
 )
+
+
+def canonical_product_filename(artist: str, base_title: str, *, suffix: str) -> str:
+    """Nazwa pliku do promptu/JSON: «Artysta - Tytul.ext» bez preview/Full/mockup."""
+    ext = suffix if suffix.startswith(".") else f".{suffix}"
+    return f"{artist.strip()} - {base_title.strip()}{ext}"
+
+
+def _work_key(item: dict[str, Any]) -> tuple[str, str] | None:
+    artist = (item.get("artist") or "").strip()
+    base = (item.get("base_title") or item.get("title") or "").strip()
+    if not artist or not base:
+        return None
+    return artist, base
+
+
+def _rank_work_item(it: dict[str, Any]) -> int:
+    if it.get("image_role") == IMAGE_ROLE_FULL:
+        return 0
+    if not it.get("image_role"):
+        return 1
+    return 2
+
+
+def dedupe_queue_items_by_work(queue_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Jeden wpis kolejki na dzielo (artysta + tytul bazowy).
+
+    Pomija preview/mockup i dogrywki F/I. Preferuje plik Full przy tworzeniu produktu.
+    """
+    groups: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for it in queue_items:
+        if it.get("follow_up_number") is not None:
+            continue
+        if it.get("image_role") in (IMAGE_ROLE_PREVIEW, IMAGE_ROLE_MOCKUP):
+            continue
+        key = _work_key(it)
+        if key is None:
+            continue
+        groups.setdefault(key, []).append(it)
+
+    out: list[dict[str, Any]] = []
+    for key in sorted(groups.keys(), key=lambda k: (k[0].lower(), k[1].lower())):
+        out.append(sorted(groups[key], key=_rank_work_item)[0])
+    return out
+
+
+def dedupe_items_for_prompt(queue_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Jeden wpis promptu na dzielo — nazwa pliku bez sufiksow preview/Full."""
+    out: list[dict[str, Any]] = []
+    for rep in dedupe_queue_items_by_work(queue_items):
+        path = rep["path"]
+        artist = (rep.get("artist") or "").strip()
+        base = (rep.get("base_title") or rep.get("title") or "").strip()
+        filename = canonical_product_filename(artist, base, suffix=path.suffix or ".webp")
+        out.append(
+            {
+                "filename": filename,
+                "artist": artist,
+                "title": base,
+                "title_is_polish": rep.get("title_is_polish", True),
+            }
+        )
+    return out
+
+
+def lookup_llm_entry(item: dict[str, Any], llm_map: dict[str, dict[str, Any]]) -> dict[str, Any] | None:
+    """Dopasowuje JSON po nazwie pliku w kolejce lub po nazwie kanonicznej (bez sufiksow)."""
+    path = item.get("path")
+    if path is not None:
+        hit = llm_map.get(path.name)
+        if hit:
+            return hit
+    key = _work_key(item)
+    if key is None:
+        return None
+    suffix = path.suffix if path is not None else ".webp"
+    return llm_map.get(canonical_product_filename(key[0], key[1], suffix=suffix))
 
 
 def build_prompt(
@@ -223,7 +308,8 @@ Wymagane pola JSON (wszystkie obowiazkowe; jesli nie znasz pewnej wartosci histo
   "akapity": [
     "<AKAPIT 1 opisu>",
     "<AKAPIT 2 opisu>",
-    "<AKAPIT 3 opisu>"
+    "<AKAPIT 3 opisu>",
+    "<OPCJONALNIE AKAPIT 4: ciekawostki o tym obrazie — tylko gdy masz konkretne fakty>"
   ],
   "data_powstania": "<rok lub zakres; jesli nieznany: 'Nieznana'>",
   "miejsce_powstania": "<miasto/kraj; jesli nieznany: 'Nieznana'>",
@@ -255,43 +341,247 @@ Zwracaj TYLKO jeden obiekt JSON.
 """
 
 
-BATCH_PROMPT_MODELS = ("opus", "gpt")
+_UNKNOWN_TITLE_VALUES = frozenset({"nieznana", "unknown", "n/a", "—", "-"})
 
 
-def build_batch_prompt(items: list[dict[str, Any]], *, model: str = "opus") -> str:
-    """Buduje jeden prompt dla N obrazow na raz.
+def build_new_description_prompt(
+    *,
+    artist: str,
+    title: str = "",
+    title_pl: str = "",
+    title_en: str = "",
+    title_original: str = "",
+) -> str:
+    """Prompt LLM tylko do nowego opisu (akapity PL) — bez tagow i tlumaczen.
 
-    items: lista slownikow { 'artist', 'title', 'filename', 'title_is_polish' (bool) }.
-    model: 'opus' - wariant dla Claude (krotszy, bez nadmiernych rygorow),
-           'gpt'  - wariant dla GPT (wzmocniony: zero code-fence, zero prozy, sprawdz nawiasy).
+    Do identyfikacji dziela podawaj tytul angielski i/lub oryginalny (gdy znane),
+    bo polskie tytuly bywaja wspolne dla roznych obrazow tego samego artysty.
     """
-    model_norm = (model or "opus").strip().lower()
+    pl = (title_pl or title or "").strip()
+    en = (title_en or "").strip()
+    orig = (title_original or "").strip()
+    if orig.lower() in _UNKNOWN_TITLE_VALUES:
+        orig = ""
+
+    title_lines: list[str] = [f"artysta: {artist}"]
+    if en:
+        title_lines.append(f"tytul (angielski): {en}")
+    if orig:
+        title_lines.append(f"tytul oryginalny (jezyk artysty): {orig}")
+    if pl:
+        title_lines.append(f"tytul (polski, w sklepie): {pl}")
+
+    ident = ""
+    if en or orig:
+        ident = (
+            "\nWazne: identyfikuj KONKRETNE dzielo po tytule angielskim i/lub oryginalnym — "
+            "u tego artysty wiele obrazow ma ten sam lub podobny polski tytul.\n"
+        )
+
+    return f"""Jestes ekspertem od sztuki i copywritingu premium dla galerii obrazow.
+Przygotuj OPIS.
+{ident}
+{chr(10).join(title_lines)}
+
+- "akapity": MINIMUM 3 akapity opisu obrazu po polsku (+ opcjonalnie 4. z ciekawostkami) -
+  trzymaj sie SZCZEGOLOWYCH WYTYCZNYCH dla pola "akapity" w dalszej czesci promptu.
+
+"akapity": ["<AKAPIT 1>", "<AKAPIT 2>", "<AKAPIT 3>"] lub z opcjonalnym "<AKAPIT 4 ciekawostki>",
+
+{_AKAPITY_GUIDELINES}
+Zwroc WYLACZNIE obiekt JSON z polem "akapity" (bez markdown, bez tekstu dookola).
+"""
+
+
+_IMAGE_DESCRIPTION_PROMPT_TEMPLATE = """\
+Działasz jako elitarny ekspert historii sztuki oraz wybitny copywriter premium dla luksusowych galerii sztuki i domów aukcyjnych. Twoim zadaniem jest stworzenie unikalnego, literackiego opisu obrazu, który załączam w pliku.
+
+Zanim zaczniesz pisać tekst premium, przeprowadź wewnętrzną, rygorystyczną ANALIZĘ WIZUALNĄ załączonego obrazu. Zwróć szczególną uwagę na:
+1. Spojrzenia i relacje: Gdzie DOKŁADNIE patrzą postacie? Czy patrzą na siebie, na widza, czy na konkretny przedmiot?
+2. Kluczowe rekwizyty/atrybuty: Jaki unikalny przedmiot, zwierzę, roślinę lub detal trzymają postacie lub co znajduje się w ich bezpośrednim otoczeniu? Jaka jest tego symbolika?
+3. Kompozycję i tło: Co znajduje się w tle? (np. surowa architektura, pejzaż, kotara, mrok). Jak światło i kolor budują nastrój?
+
+WYTYCZNE DLA TEKSTU PREMIUM:
+- Styl ma być elegancki, sugestywny, pełen polotu i głębi. Unikaj szkolnych formułek ("Na obrazie widzimy..."), tanich chwytów marketingowych, lania wody i ogólników, które pasowałyby do każdego innego dzieła z tej epoki.
+- Tekst musi bezpośrednio wynikać z unikalnej dramaturgii TEGO KONKRETNEGO dzieła. Ma budzić zachwyt, ciekawość i chęć posiadania obrazu u wymagającego konesera.
+
+STRUKTURA WYJŚCIOWA (Zwróć wyłącznie obiekt JSON z polem "akapity"):
+- Dokładnie 3 akapity opisu (Akapit 1: Główna oś dramaturgii, relacje i unikalny punkt skupienia uwagi; Akapit 2: Przestrzeń, tło, kolorystyka i gra światła; Akapit 3: Detale warsztatowe, kunszt techniczny i podsumowanie estetyczne).
+- OPCJONALNIE 4. akapit: Wyłącznie jeśli znasz autentyczną, fascynującą ciekawostkę (ikonograficzną, biograficzną lub historyczną) dotyczącą dokładnie TEGO dzieła lub motywu. Jeśli nie ma unikalnej ciekawostki, zwróć tylko 3 akapity.
+
+Oto dane identyfikacyjne dzieła:
+- Artysta: {artist}
+- Tytuł: {title}
+"""
+
+
+def build_image_description_prompt(*, artist: str, title: str) -> str:
+    """Prompt «Opis z obrazu» — analiza wizualna + opis premium (Gemini z załączonym zdjęciem)."""
+    return _IMAGE_DESCRIPTION_PROMPT_TEMPLATE.format(
+        artist=artist.strip(),
+        title=title.strip(),
+    )
+
+
+_IMAGE_DESCRIPTION_PROMPT_V2_TEMPLATE = """\
+Działasz jako elitarny ekspert historii sztuki oraz wybitny copywriter premium dla luksusowych galerii sztuki i domów aukcyjnych. Twoim zadaniem jest stworzenie unikalnego, literackiego opisu obrazu, który załączam w pliku.
+
+Zanim zaczniesz pisać tekst premium, przeprowadź wewnętrzną, rygorystyczną ANALIZĘ WIZUALNĄ załączonego obrazu. Zwróć szczególną uwagę na:
+1. Spojrzenia i relacje: Gdzie DOKŁADNIE patrzą postacie? Czy patrzą na siebie, na widza, czy na konkretny przedmiot?
+2. Kluczowe rekwizyty/atrybuty: Jaki unikalny przedmiot, zwierzę, roślinę lub detal trzymają postacie lub co znajduje się w ich bezpośrednim otoczeniu? Jaka jest tego symbolika?
+3. Kompozycję i tło: Co znajduje się w tle? (np. surowa architektura, pejzaż, kotara, mrok). Jak światło i kolor budują nastrój?
+
+WYTYCZNE DLA TEKSTU PREMIUM:
+- Styl ma być elegancki, sugestywny, pełen polotu i głębi. Ma brzmieć naturalnie, świeżo i interesująco. Unikaj szkolnych formułek ("Na obrazie widzimy..."), tanich chwytów marketingowych, lania wody i ogólników, które pasowałyby do każdego innego dzieła z tej epoki.
+- Tekst musi bezpośrednio wynikać z unikalnej dramaturgii TEGO KONKRETNEGO dzieła. Ma budzić zachwyt, ciekawość i chęć posiadania obrazu u wymagającego konesera. Nie narzucaj sztywnej struktury ani schematu opisu. Pozwól, by tekst sam wynikał z charakteru obrazu i był unikalny dla konkretnego dzieła.
+
+STRUKTURA WYJŚCIOWA (Zwróć wyłącznie obiekt JSON z polem "akapity"):
+- Dokładnie 3 akapity opisu (Akapit 1: Główna oś dramaturgii, relacje i unikalny punkt skupienia uwagi; Akapit 2: Przestrzeń, tło, kolorystyka i gra światła; Akapit 3: Detale warsztatowe, kunszt techniczny i podsumowanie estetyczne).
+- OPCJONALNIE 4. akapit: Wyłącznie jeśli znasz autentyczną, fascynującą ciekawostkę (ikonograficzną, biograficzną lub historyczną) dotyczącą dokładnie TEGO dzieła lub motywu. Jeśli nie ma unikalnej ciekawostki, zwróć tylko 3 akapity.
+
+Oto dane identyfikacyjne dzieła:
+- Artysta: {artist}
+- Tytuł: {title}
+"""
+
+
+def build_image_description_prompt_v2(*, artist: str, title: str) -> str:
+    """Prompt «Opis z obrazu v2» — naturalniejszy styl, bez sztywnego schematu."""
+    return _IMAGE_DESCRIPTION_PROMPT_V2_TEMPLATE.format(
+        artist=artist.strip(),
+        title=title.strip(),
+    )
+
+
+BATCH_PROMPT_MODELS = ("opus", "gpt")
+PROMPT_CHUNK_SIZE = 4
+
+
+def _format_items_block(items: list[dict[str, Any]], *, start_index: int = 1) -> str:
     lines: list[str] = []
-    for i, it in enumerate(items, start=1):
+    for i, it in enumerate(items, start=start_index):
         lang = "POLSKI" if it.get("title_is_polish", True) else "OBCY (wymaga tlumaczenia na polski)"
         lines.append(
             f"{i}. plik: {it['filename']}\n"
             f"   artysta: {it['artist']}\n"
             f"   tytul: {it['title']}   [jezyk: {lang}]"
         )
-    items_block = "\n".join(lines) if lines else "(brak pozycji)"
+    return "\n".join(lines) if lines else "(brak pozycji)"
 
+
+def chunk_prompt_items(
+    items: list[dict[str, Any]],
+    *,
+    chunk_size: int = PROMPT_CHUNK_SIZE,
+) -> list[list[dict[str, Any]]]:
+    """Dzieli liste dziel na paczki po max chunk_size (domyslnie 4) obrazow na jeden prompt LLM."""
+    if not items:
+        return []
+    size = max(1, int(chunk_size))
+    return [items[i : i + size] for i in range(0, len(items), size)]
+
+
+def _chunk_preamble(
+    *,
+    chunk_no: int,
+    chunk_total: int,
+    chunk_count: int,
+    global_start: int,
+    global_total: int,
+) -> str:
+    if chunk_total <= 1:
+        return ""
+    end = global_start + chunk_count - 1
+    return (
+        f"=== CZESC {chunk_no} Z {chunk_total} (osobny request w Cursor / ChatGPT) ===\n"
+        f"W tej czesci opracuj WYLACZNIE {chunk_count} dziel ponizej "
+        f"(pozycje {global_start}–{end} z {global_total} lacznie).\n"
+        f"Zwroc tablice JSON z DOKLADNIE {chunk_count} obiektami — po jednym na kazde dzielo z listy.\n"
+        f"Nie dodawaj innych plikow. Po uzyskaniu wszystkich czesci polacz tablice recznie w Kroku 2.\n\n"
+    )
+
+
+def build_batch_prompt_chunk(
+    items: list[dict[str, Any]],
+    *,
+    model: str = "opus",
+    chunk_no: int = 1,
+    chunk_total: int = 1,
+    global_start_index: int = 1,
+    global_total: int | None = None,
+) -> str:
+    """Jeden prompt dla podzbioru dziel (max PROMPT_CHUNK_SIZE w items)."""
+    model_norm = (model or "opus").strip().lower()
+    n = len(items)
+    items_block = _format_items_block(items, start_index=global_start_index)
+    total = global_total if global_total is not None else n
+    preamble = _chunk_preamble(
+        chunk_no=chunk_no,
+        chunk_total=chunk_total,
+        chunk_count=n,
+        global_start=global_start_index,
+        global_total=total,
+    )
     if model_norm == "gpt":
-        return _build_batch_prompt_gpt(items_block, len(items))
-    return _build_batch_prompt_opus(items_block)
+        body = _build_batch_prompt_gpt(items_block, n)
+    else:
+        body = _build_batch_prompt_opus(items_block, n)
+    return preamble + body
 
 
-def _build_batch_prompt_opus(items_block: str) -> str:
+def build_all_prompt_chunks(
+    items: list[dict[str, Any]],
+    *,
+    model: str = "opus",
+    chunk_size: int = PROMPT_CHUNK_SIZE,
+) -> list[tuple[int, int, str]]:
+    """Zwraca [(numer_czesci, liczba_czesci, tekst_promptu), ...]."""
+    parts = chunk_prompt_items(items, chunk_size=chunk_size)
+    total = len(parts)
+    out: list[tuple[int, int, str]] = []
+    start = 1
+    global_n = len(items)
+    for i, chunk in enumerate(parts, start=1):
+        out.append(
+            (
+                i,
+                total,
+                build_batch_prompt_chunk(
+                    chunk,
+                    model=model,
+                    chunk_no=i,
+                    chunk_total=total,
+                    global_start_index=start,
+                    global_total=global_n,
+                ),
+            )
+        )
+        start += len(chunk)
+    return out
+
+
+def build_batch_prompt(items: list[dict[str, Any]], *, model: str = "opus") -> str:
+    """Buduje jeden prompt dla N dziel (po deduplikacji — jeden wpis na obraz).
+
+    Gdy wiecej niz PROMPT_CHUNK_SIZE dziel, zwraca tylko pierwsza czesc (uzyj build_all_prompt_chunks).
+    """
+    chunks = build_all_prompt_chunks(items, model=model)
+    if not chunks:
+        return ""
+    return chunks[0][2]
+
+
+def _build_batch_prompt_opus(items_block: str, n: int) -> str:
     return f"""Jestes ekspertem od sztuki i copywritingu premium dla galerii obrazow.
 Dla KAZDEGO z dziel ponizej przygotuj OPIS + komplet danych faktograficznych.
 Zwroc WYLACZNIE jedna tablice JSON (bez komentarzy, bez code-fence markdown, bez tekstu dookola).
-Tablica ma tyle obiektow, ile pozycji ponizej - jeden obiekt na jeden plik.
+Tablica ma tyle obiektow, ile pozycji ponizej - jeden obiekt na jedno DZIELO (nie na kazdy plik preview/Full).
 
-Pozycje do opracowania:
+Pozycje do opracowania (nazwa pliku BEZ sufiksow preview/Full/mockup — to ten sam obraz):
 {items_block}
 
 Wymagania wspolne dla KAZDEGO obiektu:
-- Pole "plik" MUSI dokladnie odpowiadac nazwie pliku z listy powyzej (do dopasowania po stronie aplikacji).
+- Pole "plik" MUSI dokladnie odpowiadac nazwie pliku z listy powyzej (bez «(preview)» i bez «Full»).
 - Pole "tytul_polski":
   - jesli pozycja ma [jezyk: POLSKI] - przepisz tytul z pliku doslownie (1:1),
   - jesli [jezyk: OBCY (wymaga tlumaczenia na polski)] - PRZETLUMACZ na polski; NAJPIERW sprawdz czy
@@ -306,8 +596,8 @@ Wymagania wspolne dla KAZDEGO obiektu:
   * Tylko gdy artysta tworzyl po angielsku (malarze brytyjscy/amerykanscy itp.) - oryginalem
     moze byc tytul angielski z pliku.
   * Gdy oryginal naprawde nieznany - "Nieznana". Nie wpisuj wtedy mechanicznie tytulu z pliku.
-- "akapity": DOKLADNIE 3 akapity opisu obrazu po polsku - trzymaj sie SZCZEGOLOWYCH WYTYCZNYCH
-  dla pola "akapity" podanych w dalszej czesci promptu (sekcja 'Wytyczne do pola "akapity"').
+- "akapity": MINIMUM 3 akapity opisu obrazu po polsku (+ opcjonalnie 4. z ciekawostkami) -
+  trzymaj sie SZCZEGOLOWYCH WYTYCZNYCH dla pola "akapity" w dalszej czesci promptu.
 - "tagi" (KRYTYCZNE - SEO sklepu PL): 25-35 pozycji po polsku, male litery, bez hashy,
   bez srednikow, bez duplikatow. Cel: maksymalny SEO PL pod klientow chcacych KUPIC obraz.
   Wymagane grupy:
@@ -329,7 +619,7 @@ Schemat kazdego obiektu (WSZYSTKIE POLA WYMAGANE):
   "plik": "<nazwa pliku, taka sama jak w liscie>",
   "tytul_polski": "<polski tytul obrazu (oficjalny, jesli istnieje)>",
   "tytul_orginalny": "<oryginalny tytul w jezyku artysty (np. dunski/niemiecki/francuski) lub 'Nieznana'>",
-  "akapity": ["<AKAPIT 1>", "<AKAPIT 2>", "<AKAPIT 3>"],
+  "akapity": ["<AKAPIT 1>", "<AKAPIT 2>", "<AKAPIT 3>"] lub z opcjonalnym "<AKAPIT 4 ciekawostki>",
   "data_powstania": "<rok lub zakres lub 'Nieznana'>",
   "miejsce_powstania": "<miasto/kraj lub 'Nieznana'>",
   "technika": "<np. Olej na plotnie>",
@@ -352,7 +642,7 @@ Schemat kazdego obiektu (WSZYSTKIE POLA WYMAGANE):
 
 {_TRANSLATIONS_GUIDELINES}
 
-Zwracaj DOKLADNIE jedna tablice JSON z N obiektami (N = liczba pozycji wyzej), nic wiecej.
+Zwracaj DOKLADNIE jedna tablice JSON z {n} obiektami (tyle, ile pozycji wyzej), nic wiecej.
 """
 
 
@@ -370,17 +660,17 @@ TWARDE ZASADY FORMATU ODPOWIEDZI (MUSISZ ICH PRZESTRZEGAC):
 5. Apostrofy i cudzyslowy WEWNATRZ tekstu (np. w akapitach) wymieniaj na polskie
    cudzyslowy drukarskie \u201e ... \u201d albo usuwaj - NIGDY surowy " w srodku stringu.
 6. Kazda tablica musi byc zamknieta ']' zanim otworzysz kolejne pole.
-   W szczegolnosci: po 3 akapitach domknij '[...]' NAWIASEM ']' zanim napiszesz
-   "data_powstania". Po liscie tagow domknij ']' zanim napiszesz "kategoria".
+   W szczegolnosci: po ostatnim akapicie (3 lub 4) domknij '[...]' NAWIASEM ']'
+   zanim napiszesz "data_powstania". Po liscie tagow domknij ']' zanim napiszesz "kategoria".
 7. Kazdy obiekt musi byc zamkniety '}}'. Tablica zewnetrzna musi byc zamknieta ']'.
-8. Liczba obiektow w tablicy = DOKLADNIE {n} (tyle, ile pozycji ponizej).
+8. Liczba obiektow w tablicy = DOKLADNIE {n} (tyle, ile pozycji ponizej — jedna na DZIELO).
 9. Pole "plik" w kazdym obiekcie MUSI byc 1:1 rowne nazwie pliku z listy ponizej
-   (z podkresleniami, spacjami i rozszerzeniem - kopiuj doslownie).
+   (bez sufiksow «(preview)» i «Full» — kopiuj doslownie).
 
 ZADANIE MERYTORYCZNE:
-Dla KAZDEJ pozycji ponizej utworz obiekt JSON wedlug schematu nizej.
+Dla KAZDEJ pozycji ponizej utworz obiekt JSON wedlug schematu nizej (jeden obiekt = jedno dzielo).
 
-Pozycje do opracowania:
+Pozycje do opracowania (nazwa pliku bez preview/Full — ten sam obraz):
 {items_block}
 
 Wymagania merytoryczne dla kazdego obiektu:
@@ -397,8 +687,8 @@ Wymagania merytoryczne dla kazdego obiektu:
   * Tylko gdy artysta tworzyl po angielsku (UK/USA itp.) - oryginalem moze byc tytul
     angielski z pliku.
   * Gdy oryginal naprawde nieznany - "Nieznana"; nie wpisuj wtedy mechanicznie tytulu z pliku.
-- "akapity": DOKLADNIE 3 akapity opisu obrazu po polsku - trzymaj sie SZCZEGOLOWYCH WYTYCZNYCH
-  dla pola "akapity" podanych w dalszej czesci promptu (sekcja 'Wytyczne do pola "akapity"').
+- "akapity": MINIMUM 3 akapity opisu obrazu po polsku (+ opcjonalnie 4. z ciekawostkami) -
+  trzymaj sie SZCZEGOLOWYCH WYTYCZNYCH dla pola "akapity" w dalszej czesci promptu.
 - "tagi" (KRYTYCZNE - SEO sklepu PL): 25-35 pozycji po polsku, male litery, bez hashy,
   bez srednikow, bez duplikatow. Cel: maksymalny SEO PL pod klientow chcacych KUPIC obraz.
   Wymagane grupy:
@@ -420,7 +710,7 @@ SCHEMAT KAZDEGO OBIEKTU (WSZYSTKIE POLA WYMAGANE, W PODANEJ KOLEJNOSCI):
   "plik": "<nazwa pliku, taka sama jak w liscie>",
   "tytul_polski": "<polski tytul>",
   "tytul_orginalny": "<oryginalny tytul w jezyku artysty (dunski/niemiecki/francuski/...) lub 'Nieznana'>",
-  "akapity": ["<AKAPIT 1>", "<AKAPIT 2>", "<AKAPIT 3>"],
+  "akapity": ["<AKAPIT 1>", "<AKAPIT 2>", "<AKAPIT 3>"] lub z opcjonalnym "<AKAPIT 4 ciekawostki>",
   "data_powstania": "<rok lub zakres lub 'Nieznana'>",
   "miejsce_powstania": "<miasto/kraj lub 'Nieznana'>",
   "technika": "<np. Olej na plotnie>",
@@ -457,6 +747,25 @@ Zwroc TERAZ tylko tablice JSON z {n} obiektami. Nic wiecej.
 _JSON_BLOCK = re.compile(r"\{.*\}", re.DOTALL)
 _JSON_ARRAY_BLOCK = re.compile(r"\[.*\]", re.DOTALL)
 
+_AKAPITY_MIN = 3
+_AKAPITY_MAX = 4
+
+
+def _normalize_akapity(akapity: Any) -> list[str]:
+    """Waliduje i normalizuje 3-4 akapity (4. opcjonalny — ciekawostki)."""
+    if not isinstance(akapity, list) or not all(isinstance(a, str) for a in akapity):
+        raise ValueError(
+            f"Pole 'akapity' musi byc lista {_AKAPITY_MIN} lub {_AKAPITY_MAX} stringow "
+            f"(4. tylko gdy sa ciekawostki o obrazie)."
+        )
+    cleaned = [a.strip() for a in akapity if a.strip()]
+    if len(cleaned) not in (_AKAPITY_MIN, _AKAPITY_MAX):
+        raise ValueError(
+            f"Pole 'akapity' musi miec {_AKAPITY_MIN} lub {_AKAPITY_MAX} niepustych elementow "
+            f"(otrzymano {len(cleaned)})."
+        )
+    return cleaned
+
 
 def _validate_item(data: dict[str, Any]) -> None:
     if "tytul_polski" not in data and "tytul_orginalny" in data:
@@ -464,9 +773,7 @@ def _validate_item(data: dict[str, Any]) -> None:
     missing = [k for k in REQUIRED_KEYS if k not in data]
     if missing:
         raise ValueError(f"Brakujace pola: {', '.join(missing)}")
-    akapity = data.get("akapity")
-    if not isinstance(akapity, list) or len(akapity) != 3 or not all(isinstance(a, str) for a in akapity):
-        raise ValueError("Pole 'akapity' musi byc lista 3 stringow.")
+    data["akapity"] = _normalize_akapity(data.get("akapity"))
     tagi = data.get("tagi")
     if not isinstance(tagi, list) or not all(isinstance(t, str) for t in tagi):
         raise ValueError("Pole 'tagi' musi byc lista stringow.")
@@ -479,7 +786,7 @@ def _normalize_translations(data: dict[str, Any]) -> None:
     """Sanityzuje pole 'tlumaczenia' (opcjonalne).
 
     Jesli LLM zwrocil go - sprawdzamy ze dla kazdego z TRANSLATION_LANGS sa pola
-    TRANSLATION_KEYS (akapity musi byc lista 3 stringow). Niezgodne sa wycinane.
+    TRANSLATION_KEYS (akapity: 3 lub 4 stringi). Niezgodne sa wycinane.
     Jesli LLM go pominal - tworzymy puste {} (caly produkt bedzie po polsku).
     """
     tr = data.get("tlumaczenia")
@@ -495,14 +802,34 @@ def _normalize_translations(data: dict[str, Any]) -> None:
         for k in TRANSLATION_KEYS:
             v = block.get(k)
             if k == "akapity":
-                if isinstance(v, list) and len(v) == 3 and all(isinstance(a, str) for a in v):
-                    out[k] = [s.strip() for s in v]
+                try:
+                    out[k] = _normalize_akapity(v)
+                except ValueError:
+                    pass
             else:
                 if isinstance(v, str) and v.strip():
                     out[k] = v.strip()
         if out:
             cleaned[lang] = out
     data["tlumaczenia"] = cleaned
+
+
+def merge_json_part_lists(
+    parts_by_index: dict[int, list[dict[str, Any]]],
+    *,
+    total_parts: int,
+) -> list[dict[str, Any]]:
+    """Scala odpowiedzi z czesci 1..total_parts w jedna tablice (kolejnosc zachowana)."""
+    merged: list[dict[str, Any]] = []
+    for i in range(1, max(1, int(total_parts)) + 1):
+        part = parts_by_index.get(i)
+        if part:
+            merged.extend(part)
+    return merged
+
+
+def format_merged_json(items: list[dict[str, Any]]) -> str:
+    return json.dumps(items, ensure_ascii=False, indent=2)
 
 
 def parse_batch_response_json(text: str) -> list[dict[str, Any]]:
@@ -520,16 +847,7 @@ def parse_batch_response_json(text: str) -> list[dict[str, Any]]:
     if not m:
         raise ValueError("Nie znaleziono tablicy JSON w odpowiedzi (oczekiwano '[...]').")
     blob = m.group(0)
-    try:
-        data = json.loads(blob)
-    except json.JSONDecodeError:
-        repaired = _sanitize_inner_quotes(blob)
-        try:
-            data = json.loads(repaired)
-        except json.JSONDecodeError as e2:
-            raise ValueError(
-                f"Niepoprawny JSON (tablica): {e2.msg} (pozycja {e2.pos})."
-            ) from e2
+    data = _loads_json_array_blob(blob)
 
     if not isinstance(data, list):
         raise ValueError("Oczekiwano tablicy JSON (lista obiektow).")
@@ -548,6 +866,227 @@ def parse_batch_response_json(text: str) -> list[dict[str, Any]]:
 
 
 
+
+
+def _fix_polish_open_close_quote_pairs(blob: str) -> str:
+    """„Tytul lub „L'Allegro" — zamykajacy ASCII \" zamien na typograficzny (U+201D).
+
+    Nie ruszaj cudzyslowu zamykajacego wartosc JSON (np. ...Tamenunds",\\n \"akapity\").
+    """
+    return re.sub(
+        r"„((?:[^\"\\]|\\.)*?)\"(?!\s*,\s*\n\s*\")(?!\s*\n\s*])",
+        lambda m: f"„{m.group(1)}\u201d",
+        blob,
+    )
+
+
+def _loads_json_array_blob(blob: str) -> list[Any]:
+    """json.loads z naprawa typowych bledow LLM (polskie cudzyslowy, apostrofy w tekscie)."""
+    repairs = [
+        lambda s: s,
+        _fix_polish_open_close_quote_pairs,
+        _strip_json_trailing_commas,
+        _sanitize_control_chars_in_strings,
+        _sanitize_polish_ascii_quotes,
+        _sanitize_inner_quotes,
+    ]
+    candidates: list[str] = []
+    seen: set[str] = set()
+
+    def _add(s: str) -> None:
+        if s not in seen:
+            seen.add(s)
+            candidates.append(s)
+
+    _add(blob)
+    step = blob
+    for fn in repairs[1:]:
+        step = fn(step)
+        _add(step)
+    combo = _sanitize_inner_quotes(
+        _sanitize_polish_ascii_quotes(
+            _sanitize_control_chars_in_strings(
+                _strip_json_trailing_commas(_fix_polish_open_close_quote_pairs(blob))
+            )
+        )
+    )
+    _add(combo)
+
+    last_err: json.JSONDecodeError | None = None
+    for cand in candidates:
+        try:
+            return json.loads(cand)
+        except json.JSONDecodeError as e:
+            last_err = e
+    assert last_err is not None
+    hints: list[str] = []
+    if "„" in blob or "\u201e" in blob:
+        hints.append("polskie cudzyslowy „…\"")
+    if re.search(r",\s*[\]}]", blob):
+        hints.append("przecinek na koncu tablicy/obiektu")
+    if re.search(r'"(?:[^"\\]|\\.)*[\x00-\x1f]', blob):
+        hints.append("znaki nowej linii w tekscie (powinny byc w jednej linii)")
+    hint = ""
+    if hints:
+        hint = " (" + "; ".join(hints) + " — popraw w LLM lub wklej ponownie)"
+    raise ValueError(
+        f"Niepoprawny JSON (tablica): {last_err.msg} (pozycja {last_err.pos}).{hint}"
+    ) from last_err
+
+
+def _loads_json_object_blob(blob: str) -> dict[str, Any]:
+    """json.loads obiektu z naprawa typowych bledow LLM (cudzyslowy w tlumaczeniach)."""
+    repairs = [
+        lambda s: s,
+        _fix_polish_open_close_quote_pairs,
+        _strip_json_trailing_commas,
+        _sanitize_control_chars_in_strings,
+        _sanitize_polish_ascii_quotes,
+        _sanitize_inner_quotes,
+    ]
+    candidates: list[str] = []
+    seen: set[str] = set()
+
+    def _add(s: str) -> None:
+        if s not in seen:
+            seen.add(s)
+            candidates.append(s)
+
+    _add(blob)
+    step = blob
+    for fn in repairs[1:]:
+        step = fn(step)
+        _add(step)
+    combo = _sanitize_inner_quotes(
+        _sanitize_polish_ascii_quotes(
+            _sanitize_control_chars_in_strings(
+                _strip_json_trailing_commas(_fix_polish_open_close_quote_pairs(blob))
+            )
+        )
+    )
+    _add(combo)
+
+    last_err: json.JSONDecodeError | None = None
+    for cand in candidates:
+        try:
+            data = json.loads(cand)
+        except json.JSONDecodeError as e:
+            last_err = e
+            continue
+        if not isinstance(data, dict):
+            raise ValueError("Oczekiwano obiektu JSON (slownik).")
+        return data
+    assert last_err is not None
+    hints: list[str] = []
+    if "„" in blob or "\u201e" in blob or '"' in blob:
+        hints.append('cudzyslowy w tekscie (np. „Am Klavier")')
+    if re.search(r",\s*[\]}]", blob):
+        hints.append("przecinek na koncu obiektu")
+    hint = ""
+    if hints:
+        hint = " (" + "; ".join(hints) + ")"
+    raise ValueError(
+        f"Niepoprawny JSON: {last_err.msg} (pozycja {last_err.pos}).{hint}"
+    ) from last_err
+
+
+def _strip_json_trailing_commas(blob: str) -> str:
+    """Usuwa przecinki bezposrednio przed ] lub } (czesty blad LLM)."""
+    out: list[str] = []
+    in_string = False
+    escape = False
+    for i, ch in enumerate(blob):
+        if in_string:
+            out.append(ch)
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+            out.append(ch)
+            continue
+        if ch == ",":
+            j = i + 1
+            while j < len(blob) and blob[j] in " \t\n\r":
+                j += 1
+            if j < len(blob) and blob[j] in "]}":
+                continue
+        out.append(ch)
+    return "".join(out)
+
+
+def _sanitize_control_chars_in_strings(blob: str) -> str:
+    """Nowe linie / znaki sterujace wewnatrz stringow JSON -> escape lub spacja."""
+    out: list[str] = []
+    in_string = False
+    escape = False
+    for ch in blob:
+        if in_string:
+            if escape:
+                out.append(ch)
+                escape = False
+                continue
+            if ch == "\\":
+                out.append(ch)
+                escape = True
+                continue
+            if ch == '"':
+                out.append(ch)
+                in_string = False
+                continue
+            if ch == "\n":
+                out.append("\\n")
+            elif ch == "\r":
+                out.append("\\r")
+            elif ch == "\t":
+                out.append("\\t")
+            elif ord(ch) < 32:
+                out.append(" ")
+            else:
+                out.append(ch)
+            continue
+        out.append(ch)
+        if ch == '"':
+            in_string = True
+    return "".join(out)
+
+
+def _sanitize_polish_ascii_quotes(blob: str) -> str:
+    """„cytat\" — zamykajacy ASCII \" w srodku stringu JSON zamien na typograficzny."""
+    out: list[str] = []
+    in_string = False
+    seen_polish_open = False
+    prev = ""
+    for i, ch in enumerate(blob):
+        if not in_string:
+            out.append(ch)
+            if ch == '"' and prev != "\\":
+                in_string = True
+                seen_polish_open = False
+        else:
+            if ch == "\u201e" or ch == "„":
+                seen_polish_open = True
+                out.append(ch)
+            elif ch == '"' and prev != "\\":
+                rest = blob[i + 1 :]
+                looks_structural = bool(
+                    re.match(r"\s*[,}\]:]", rest) or i == len(blob) - 1
+                )
+                if looks_structural:
+                    out.append(ch)
+                    in_string = False
+                    seen_polish_open = False
+                else:
+                    out.append("\u201d")
+                    seen_polish_open = False
+            else:
+                out.append(ch)
+        prev = ch
+    return "".join(out)
 
 
 def _sanitize_inner_quotes(blob: str) -> str:
@@ -612,9 +1151,7 @@ def parse_response_json(text: str) -> dict[str, Any]:
     if missing:
         raise ValueError(f"Brakujace pola: {', '.join(missing)}")
 
-    akapity = data.get("akapity")
-    if not isinstance(akapity, list) or len(akapity) != 3 or not all(isinstance(a, str) for a in akapity):
-        raise ValueError("Pole 'akapity' musi byc lista 3 stringow.")
+    data["akapity"] = _normalize_akapity(data.get("akapity"))
 
     tagi = data.get("tagi")
     if not isinstance(tagi, list) or not all(isinstance(t, str) for t in tagi):

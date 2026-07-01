@@ -1,17 +1,247 @@
+/* Laptop: menu katalogu + flyout mieści się na ekranie */
+@media screen and (min-width: 750px) and (max-width: 1400px) {
+  .header-menu .menu-list {
+    --menu-horizontal-gap: 12px;
+  }
+
+  .header-menu .menu-list__link-title {
+    padding-inline: 0.4em;
+  }
+}
+
+@media screen and (max-width: 1400px) {
+  .menu-list__submenu-inner,
+  .mega-menu.section {
+    max-width: 100vw;
+    box-sizing: border-box;
+  }
+
+  .mega-menu__flyout-panel {
+    min-width: min(420px, calc(100vw - 48px));
+    max-width: calc(100vw - 48px);
+  }
+
+  .mega-menu__flyout-list {
+    columns: 2;
+  }
+
+  .mega-menu__flyout-item--has-children:nth-last-child(-n + 2) .mega-menu__flyout-panel {
+    left: auto;
+    right: 100%;
+    transform: translateX(8px);
+  }
+
+  .mega-menu__flyout-item--has-children:nth-last-child(-n + 2):hover .mega-menu__flyout-panel {
+    transform: translateX(0);
+  }
+}
+
+@media screen and (max-width: 1100px) {
+  .mega-menu__flyout-list {
+    columns: 1;
+  }
+}
+
+/* Giclée Art — wjazd przy otwarciu strony głównej (CSS, nie scroll-reveal) */
+@keyframes giclee-home-intro-in {
+  from {
+    opacity: 1;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+html.giclee-home-intro-run .shopify-section[id*='section_ThWw4Q'] > .section-background,
+html.giclee-home-intro-run .shopify-section[id*='section_ThWw4Q'] > .section {
+  animation: giclee-home-intro-in 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+html.giclee-home-intro-run .shopify-section[id*='section_ThWw4Q'] > .section {
+  animation-delay: 0.1s;
+}
+
+.shopify-section[id*='section_ThWw4Q'] > .scroll-reveal {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.giclee-home-intro-run .shopify-section[id*='section_ThWw4Q'] > * {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+/* Homepage intro — mobile: tekst przed obrazem */
+@media (max-width: 749px) {
+  .shopify-section[id*='section_ThWw4Q'] .group-block-content.mobile-column > .image-block {
+    order: 2;
+  }
+
+  .shopify-section[id*='section_ThWw4Q'] .group-block-content.mobile-column > .text-block {
+    order: 1;
+  }
+
+  /* Korekcja kolorystyczna — mobile: tekst przed sliderem PRZED/PO */
+  .shopify-section[id*='section_bj9cY3'] .section-content-wrapper.mobile-column > comparison-slider-component {
+    order: 2;
+  }
+
+  .shopify-section[id*='section_bj9cY3'] .section-content-wrapper.mobile-column > .group-block {
+    order: 1;
+  }
+
+  /* Zobacz różnicę — mobile: tekst przed sliderami */
+  .shopify-section[id*='section_P9LgB3'] .section-content-wrapper.mobile-column > .group-block {
+    order: 1;
+  }
+
+  .shopify-section[id*='section_P9LgB3'] .section-content-wrapper.mobile-column > comparison-slider-component {
+    order: 2;
+  }
+
+  /* Zobacz różnicę — mobile: ukryj drugi slider PRZED/PO na końcu sekcji */
+  .shopify-section[id*='section_P9LgB3']
+    .section-content-wrapper.mobile-column
+    > comparison-slider-component:last-of-type {
+    display: none !important;
+  }
+
+  /* PDP nowy-szblon-produktu: SZCZEGÓŁY pod opisem (nie obok) */
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .product-description-below table,
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .product-description-below table tbody,
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .product-description-below table tr {
+    display: block;
+    width: 100%;
+  }
+
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .product-description-below table td {
+    display: block;
+    width: 100% !important;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .product-description-below table tbody tr:last-child > td:nth-child(2) {
+    display: none !important;
+  }
+
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .product-description-below table tbody tr:last-child > td:first-child {
+    padding-right: 0 !important;
+    padding-bottom: 1.25rem;
+  }
+
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .product-description-below table tbody tr:last-child > td:last-child {
+    padding-left: 0 !important;
+    padding-top: 1.25rem !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .product-description-below table tbody tr:last-child > td:last-child > strong:first-child {
+    text-align: center;
+  }
+
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .product-description-below table tbody tr:last-child > td:last-child > strong:first-child::after {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* PDP własna fotografia: opis na pełną szerokość (bez pustej kolumny SZCZEGÓŁY) */
+  main[data-template='product.szablon-wlasna-fotografia'] .product-description-below table,
+  main[data-template='product.szablon-wlasna-fotografia'] .product-description-below table tbody,
+  main[data-template='product.szablon-wlasna-fotografia'] .product-description-below table tr {
+    display: block;
+    width: 100%;
+  }
+
+  main[data-template='product.szablon-wlasna-fotografia'] .product-description-below table td {
+    display: block;
+    width: 100% !important;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  main[data-template='product.szablon-wlasna-fotografia'] .product-description-below table tbody tr:last-child > td:nth-child(2),
+  main[data-template='product.szablon-wlasna-fotografia']
+    .product-description-below--wlasna-no-details
+    table
+    tbody
+    tr:last-child
+    > td:last-child {
+    display: none !important;
+  }
+
+  main[data-template='product.szablon-wlasna-fotografia'] .product-description-below table tbody tr:last-child > td:first-child {
+    padding-right: 0 !important;
+  }
+}
+
+/* PDP nowy-szblon-produktu: SZCZEGÓŁY wyśrodkowane na desktopie */
+@media screen and (min-width: 750px) {
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .product-description-below table tbody tr:last-child > td:last-child {
+    text-align: center;
+  }
+
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .product-description-below table tbody tr:last-child > td:last-child > strong:first-child {
+    text-align: center;
+  }
+
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .product-description-below table tbody tr:last-child > td:last-child > strong:first-child::after {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
 /* Mobile slideshow images */
 @media (max-width: 767px) {
+  .giclee-home-slideshow slideshow-container,
+  .giclee-home-slideshow slideshow-slides,
+  .giclee-home-slideshow slideshow-slide {
+    aspect-ratio: 1 / 1;
+  }
+
+  .giclee-home-slideshow slideshow-slides {
+    min-height: 0 !important;
+    height: auto;
+  }
+
   slideshow-slide {
     position: relative;
   }
+
+  /* Homepage hero: nie pokazuj przyciętego cover zanim wstrzykniemy mobilną grafikę */
+  .giclee-home-slideshow slideshow-slide:not(:has(.mobile-slide-image.is-ready))
+    .slide__image-container
+    > :is(.slide__image, .slide__video, .slide__video-poster) {
+    visibility: hidden;
+  }
+
   .mobile-slide-image {
     display: block;
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
+    object-position: center center;
+    background: #e8e8e4;
     z-index: 3;
     pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
+
+  .mobile-slide-image.is-ready {
+    opacity: 1;
+  }
+
+  slideshow-slide:has(.mobile-slide-image.is-ready) .slide__image,
+  slideshow-slide:has(.mobile-slide-image.is-ready) .slide__video,
+  slideshow-slide:has(.mobile-slide-image.is-ready) .slide__video-poster {
+    visibility: hidden;
   }
   slideshow-slide .mobile-slide-image ~ * {
     position: relative;
@@ -43,4 +273,92 @@
   .mobile-chevron--prev { left: 12px; }
   .mobile-chevron--next { right: 12px; }
   .mobile-chevron svg { width: 20px; height: 20px; }
+}
+
+/* Koszyk (drawer + strona): scheme-1 ma primary_hover = czarny na ciemnym tle.
+   base.css summary:hover używa --color-primary-hover — tu nadpisanie globalne (custom.css ładuje się zawsze). */
+.cart-drawer__dialog,
+.cart-drawer__dialog .cart-drawer__summary,
+.cart-summary {
+  --color-primary-hover: var(--color-foreground);
+}
+
+.cart-drawer__dialog .cart-actions summary:hover,
+.cart-drawer__dialog .cart-invoice-request__summary:hover,
+.cart-drawer__dialog .cart-actions :is(.cart-note__summary, .cart-discount__summary):hover,
+.cart-summary .cart-actions summary:hover,
+.cart-summary .cart-invoice-request__summary:hover,
+.cart-summary .cart-actions :is(.cart-note__summary, .cart-discount__summary):hover {
+  color: rgb(var(--color-foreground-rgb) / var(--opacity-subdued-text));
+}
+
+.cart-drawer__dialog .cart-actions summary,
+.cart-drawer__dialog .cart-invoice-request__summary,
+.cart-drawer__dialog .cart-actions :is(.cart-note__summary, .cart-discount__summary),
+.cart-summary .cart-actions summary,
+.cart-summary .cart-invoice-request__summary,
+.cart-summary .cart-actions :is(.cart-note__summary, .cart-discount__summary) {
+  color: var(--color-foreground);
+}
+
+.cart-drawer__dialog .cart-actions summary:hover :is(.cart-note__label, .cart-discount__label, .cart-invoice-request__title),
+.cart-summary .cart-actions summary:hover :is(.cart-note__label, .cart-discount__label, .cart-invoice-request__title) {
+  color: inherit;
+}
+
+.cart-drawer__dialog .cart-actions label,
+.cart-drawer__dialog .cart-actions label:hover,
+.cart-drawer__dialog .cart-invoice-request__check,
+.cart-drawer__dialog .cart-invoice-request__check:hover,
+.cart-drawer__dialog .cart-invoice-request__type,
+.cart-drawer__dialog .cart-invoice-request__type:hover,
+.cart-drawer__dialog .cart-invoice-request__check span,
+.cart-drawer__dialog .cart-invoice-request__type span,
+.cart-summary .cart-actions label,
+.cart-summary .cart-actions label:hover,
+.cart-summary .cart-invoice-request__check,
+.cart-summary .cart-invoice-request__check:hover,
+.cart-summary .cart-invoice-request__type,
+.cart-summary .cart-invoice-request__type:hover,
+.cart-summary .cart-invoice-request__check span,
+.cart-summary .cart-invoice-request__type span {
+  color: var(--color-foreground);
+}
+
+.cart-drawer__dialog .cart-invoice-request__input,
+.cart-summary .cart-invoice-request__input {
+  background-color: var(--color-input-background);
+  color: var(--color-input-text);
+  border-color: var(--color-input-border, var(--color-border));
+}
+
+/* Tytuł produktu: base.css p>a:hover daje czarny primary_hover na ciemnym tle */
+.cart-drawer__dialog .cart-items__details p:not(.h1, .h2, .h3, .h4, .h5, .h6) > a.cart-items__title:not(.button, .button-secondary),
+.cart-items__details p:not(.h1, .h2, .h3, .h4, .h5, .h6) > a.cart-items__title:not(.button, .button-secondary) {
+  text-decoration: none;
+  transition: color var(--animation-speed, 0.2s) var(--animation-easing, ease);
+}
+
+.cart-drawer__dialog .cart-items__details p:not(.h1, .h2, .h3, .h4, .h5, .h6) > a.cart-items__title:not(.button, .button-secondary):hover,
+.cart-items__details p:not(.h1, .h2, .h3, .h4, .h5, .h6) > a.cart-items__title:not(.button, .button-secondary):hover {
+  color: rgb(var(--color-foreground-rgb) / var(--opacity-subdued-text));
+  text-decoration: none;
+}
+
+/* Zrealizuj zakup: czarny przycisk ze złotym obrysem (marka #c6a96b) */
+.cart-drawer__dialog .cart__checkout-button.button,
+.cart-summary .cart__checkout-button.button {
+  --button-color: #ffffff;
+  --button-background-color: #000000;
+  --button-border-color: #c6a96b;
+}
+
+.cart-drawer__dialog .cart__checkout-button.button:hover:not(:disabled),
+.cart-summary .cart__checkout-button.button:hover:not(:disabled) {
+  --button-color: #ffffff;
+  --button-background-color: #1a1a1a;
+  --button-border-color: #d4b87a;
+  box-shadow:
+    inset 0 0 0 var(--button-border-width) var(--button-border-color),
+    0 0 14px rgb(198 169 107 / 0.28);
 }

@@ -35,6 +35,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from Komponenty._shared.window_geometry import position_toplevel_screen_center
+
 _ALGO = "pbkdf2_sha256"
 _ITERATIONS = 480_000  # OWASP 2023+ rekomendacja dla PBKDF2-SHA256
 _SALT_BYTES = 32
@@ -182,7 +184,6 @@ def _show_setup_dialog(parent: Any) -> bool:
 
     dlg = tk.Toplevel(parent)
     dlg.title("GicleeApp - ustaw haslo")
-    dlg.geometry("480x280")
     dlg.resizable(False, False)
     try:
         dlg.transient(parent.winfo_toplevel())
@@ -193,11 +194,7 @@ def _show_setup_dialog(parent: Any) -> bool:
         dlg.attributes("-topmost", True)
     except tk.TclError:
         pass
-    dlg.update_idletasks()
-    # Wycentruj na ekranie
-    sw, sh = dlg.winfo_screenwidth(), dlg.winfo_screenheight()
-    ww, wh = 480, 280
-    dlg.geometry(f"{ww}x{wh}+{(sw - ww) // 2}+{(sh - wh) // 2}")
+    position_toplevel_screen_center(dlg, 480, 280)
     dlg.lift()
     dlg.focus_force()
     dlg.grab_set()
@@ -283,7 +280,6 @@ def _show_login_dialog(parent: Any) -> bool:
 
     dlg = tk.Toplevel(parent)
     dlg.title("GicleeApp - logowanie")
-    dlg.geometry("380x200")
     dlg.resizable(False, False)
     try:
         dlg.transient(parent.winfo_toplevel())
@@ -293,10 +289,7 @@ def _show_login_dialog(parent: Any) -> bool:
         dlg.attributes("-topmost", True)
     except tk.TclError:
         pass
-    dlg.update_idletasks()
-    sw, sh = dlg.winfo_screenwidth(), dlg.winfo_screenheight()
-    ww, wh = 380, 200
-    dlg.geometry(f"{ww}x{wh}+{(sw - ww) // 2}+{(sh - wh) // 2}")
+    position_toplevel_screen_center(dlg, 380, 200)
     dlg.lift()
     dlg.focus_force()
     dlg.grab_set()

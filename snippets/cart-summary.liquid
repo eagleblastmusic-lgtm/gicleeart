@@ -38,7 +38,7 @@
     {%- endif -%}
   </div>
 
-  {% if settings.show_cart_note or settings.show_add_discount_code %}
+  {% if settings.show_cart_note or settings.show_add_discount_code or settings.show_cart_invoice_request %}
     <div class="cart-actions">
       {% if settings.show_cart_note %}
         <script
@@ -91,6 +91,12 @@
       {% endif %}
       {% if settings.show_cart_note and settings.show_add_discount_code %}
         <div class="cart-actions__divider"></div>
+      {% endif %}
+      {% if settings.show_cart_invoice_request %}
+        {% if settings.show_cart_note or settings.show_add_discount_code %}
+          <div class="cart-actions__divider"></div>
+        {% endif %}
+        {% render 'cart-invoice-request', section_id: section_id %}
       {% endif %}
       {% if settings.show_add_discount_code %}
         {% liquid
@@ -286,6 +292,29 @@
 </div>
 
 {% stylesheet %}
+  /* scheme-1 (drawer): primary_hover = #000 — nie używać w ciemnym koszyku */
+  .cart-summary,
+  .cart-drawer__summary {
+    --color-primary-hover: var(--color-foreground);
+  }
+
+  .cart-actions summary,
+  .cart-actions summary:hover,
+  .cart-actions :is(.cart-note__summary, .cart-discount__summary, .cart-invoice-request__summary):hover {
+    color: rgb(var(--color-foreground-rgb) / var(--opacity-subdued-text));
+  }
+
+  .cart-actions :is(.cart-note__summary, .cart-discount__summary, .cart-invoice-request__summary, .cart-invoice-request__title) {
+    color: var(--color-foreground);
+  }
+
+  .cart-actions label,
+  .cart-actions label:hover,
+  .cart-actions .cart-invoice-request__check span,
+  .cart-actions .cart-invoice-request__type span {
+    color: var(--color-foreground);
+  }
+
   .cart-actions {
     display: flex;
     flex-direction: column;

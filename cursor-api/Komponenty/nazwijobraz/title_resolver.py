@@ -13,7 +13,7 @@ import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 
-from .renamer import _strip_extension_artifacts, format_artwork_title
+from .renamer import _strip_extension_artifacts, format_artwork_title, strip_wiki_namespace_prefix
 
 _TOKEN_RE = re.compile(r"[A-Za-z\u00C0-\u017F\u0180-\u024F]+")
 _STOPWORDS = frozenset(
@@ -215,6 +215,32 @@ _YEAR_PAREN_SUFFIX_RE = re.compile(r"\s*\((?:1[0-9]|20)\d{2}\)\s*$")
 _TRAILING_YEAR_RE = re.compile(r"\s*,?\s*\b(?:1[0-9]|20)\d{2}\s*$")
 
 
+def _pick_title_segment(raw: str) -> str:
+    """Wybierz sensowny fragment tytulu sprzed sufiksow typu ' - Wikipedia'.
+
+    Pomija wiodace segmenty 'File' / 'Image' / 'Media' (typowe w wynikach
+    wyszukiwania stron plikow Commons), zeby nie zostawiac samego 'File'.
+    """
+    parts = [p.strip() for p in re.split(r"\s[\-\u2013\u2014|:]\s", raw) if p.strip()]
+    if not parts:
+        return strip_wiki_namespace_prefix(raw)
+    if len(parts) == 1:
+        return strip_wiki_namespace_prefix(parts[0])
+    for part in parts:
+        cleaned = strip_wiki_namespace_prefix(part)
+        if not cleaned:
+            continue
+        toks = _tokens(cleaned)
+        if toks and toks[0] in _REJECT_FIRST_TOKENS and len(toks) == 1:
+            continue
+        return cleaned
+    for part in reversed(parts):
+        cleaned = strip_wiki_namespace_prefix(part)
+        if cleaned and not is_generic_title(cleaned):
+            return cleaned
+    return strip_wiki_namespace_prefix(parts[0]) or parts[0]
+
+
 def _clean_for_pick(raw: str) -> str:
     s = (raw or "").strip()
     if not s:
@@ -223,7 +249,12 @@ def _clean_for_pick(raw: str) -> str:
     # listingiem produktu, nie tytulem dziela. Odrzucamy do pustego.
     if _MARKETPLACE_PREFIX_RE.match(s):
         return ""
-    s = re.split(r"\s[\-\u2013\u2014|:]\s", s)[0].strip()
+    s = _pick_title_segment(s)
+    if not s:
+        return ""
+    s = strip_wiki_namespace_prefix(s)
+    if not s:
+        return ""
     s = s.strip("\"'\u201c\u201d\u2018\u2019")
     s = _NOISE_SUFFIX_RE.sub("", s).strip(" -:|,.")
     s = _strip_extension_artifacts(s)
@@ -249,6 +280,9 @@ def clean_title_descriptor(raw: str) -> str:
     zwracajacy 'The wave (1889), by Ivan Aïvazovski' jako EN trafial w nazwe pliku.
     """
     s = (raw or "").strip()
+    if not s:
+        return ""
+    s = strip_wiki_namespace_prefix(s)
     if not s:
         return ""
     s = s.strip("\"'\u201c\u201d\u2018\u2019")

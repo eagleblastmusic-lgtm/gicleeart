@@ -1,0 +1,7 @@
+{
+  "name": "Wybór szablonu produktu",
+  "description": "Lista produktów typu Obraz z przypisanym szablonem wariantów — przypisanie, zmiana nazwy, nowy szablon, kopia.",
+  "icon": "📋",
+  "color": "#5c6bc0",
+  "order": 14
+}

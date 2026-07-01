@@ -1,0 +1,9 @@
+INSTRUKCJA OBSŁUGI PROGRAMU — Podatkowa Księga Przychodów i Rozchodów
+Moduł: GicleeApp / Komponenty/kpir
+Rok podatkowy: 2026
+
+1. Przychody księgowane wyłącznie z wystawionych faktur.
+2. Koszty — z załącznikiem PDF lub importu bankowego; data wg metody memoriałowej/kasowej.
+3. Remanent — obowiązkowy na 1 I i 31 XII; wycena w 14 dni.
+4. Eksport roczny XML — przekaż do US do 30 kwietnia (forma elektroniczna od 2026).
+5. Kopia zapasowa: folder documents/ oraz kpir.json.

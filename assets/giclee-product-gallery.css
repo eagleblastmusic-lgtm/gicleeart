@@ -1,0 +1,464 @@
+/* ============================================================
+ * Galeria PDP (lewa kolumna) — szablon product.nowy-szblon-produktu
+ * "Scena muzealna": miekka sciana galerii + pionowy pasek miniatur,
+ * crossfade, lightbox. Monochromatyczny, dopasowany do motywu Horizon.
+ * ============================================================ */
+
+.giclee-gallery {
+  display: block;
+  width: 100%;
+  outline: none;
+  --gg-fg: var(--color-foreground-rgb, 18, 18, 18);
+  --gg-radius: 14px;
+  --gg-line: rgb(var(--gg-fg) / 0.12);
+}
+
+.giclee-gallery__layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+@media screen and (min-width: 750px) {
+  .giclee-gallery__layout {
+    grid-template-columns: 88px minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+/* --- Pasek miniatur ------------------------------------------------------ */
+.giclee-gallery__rail {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  order: 2;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+  scroll-behavior: smooth;
+}
+
+.giclee-gallery__rail::-webkit-scrollbar {
+  height: 4px;
+}
+.giclee-gallery__rail::-webkit-scrollbar-thumb {
+  background: rgb(var(--gg-fg) / 0.25);
+  border-radius: 99px;
+}
+
+@media screen and (min-width: 750px) {
+  .giclee-gallery__rail {
+    flex-direction: column;
+    order: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: min(72vh, 760px);
+    padding-right: 4px;
+  }
+}
+
+.giclee-gallery__thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 0;
+  margin: 0;
+  border: 1px solid var(--gg-line);
+  background: rgb(var(--gg-fg) / 0.03);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  flex: 0 0 auto;
+  width: 72px;
+  height: 72px;
+  position: relative;
+  opacity: 0.62;
+  transition: opacity 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+}
+
+@media screen and (min-width: 750px) {
+  .giclee-gallery__thumb {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+  }
+}
+
+.giclee-gallery__thumb:hover {
+  opacity: 0.92;
+}
+
+.giclee-gallery__thumb.is-active {
+  opacity: 1;
+  border-color: rgb(var(--gg-fg) / 0.85);
+}
+
+.giclee-gallery__thumb.is-active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgb(var(--gg-fg) / 0.85);
+  pointer-events: none;
+}
+
+.giclee-gallery__thumb:focus-visible {
+  outline: 2px solid rgb(var(--gg-fg) / 0.8);
+  outline-offset: 2px;
+}
+
+.giclee-gallery__thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* --- Glowna scena -------------------------------------------------------- */
+.giclee-gallery__stage {
+  order: 1;
+  position: relative;
+  border-radius: var(--gg-radius);
+  overflow: hidden;
+  /* Scena dopasowuje sie do proporcji mockupu (mniej pustej "sciany") */
+  aspect-ratio: var(--gg-stage-ratio, 1);
+  min-height: 300px;
+  max-height: 80vh;
+  isolation: isolate;
+}
+
+@media screen and (min-width: 750px) {
+  .giclee-gallery__stage {
+    max-height: min(82vh, 880px);
+  }
+}
+
+/* Miekka "sciana galerii": delikatne swiatlo z gory + winieta */
+.giclee-gallery__wall {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(125% 90% at 50% -10%, rgb(var(--gg-fg) / 0.08), transparent 58%),
+    radial-gradient(140% 120% at 50% 120%, rgb(var(--gg-fg) / 0.10), transparent 55%),
+    rgb(var(--gg-fg) / 0.035);
+}
+
+/* Subtelna linia "podlogi" pod dzielem */
+.giclee-gallery__wall::after {
+  content: '';
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 11%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(var(--gg-fg) / 0.18), transparent);
+}
+
+.giclee-gallery__frames {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.giclee-gallery__slide {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(6px, 2%, 22px);
+  opacity: 0;
+  transform: scale(1.012);
+  transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+
+.giclee-gallery__slide.is-active {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.giclee-gallery__img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  border-radius: 2px;
+  /* "zawieszone na scianie" — miekki, kierunkowy cien pod rama */
+  filter: drop-shadow(0 24px 34px rgb(0 0 0 / 0.42))
+    drop-shadow(0 4px 10px rgb(0 0 0 / 0.28));
+}
+
+/* --- Strzalki nawigacji -------------------------------------------------- */
+.giclee-gallery__nav {
+  position: absolute;
+  top: 50%;
+  z-index: 3;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(255 255 255 / 0.18);
+  border-radius: 50%;
+  background: rgb(18 18 18 / 0.45);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  -webkit-backdrop-filter: blur(10px) saturate(130%);
+  backdrop-filter: blur(10px) saturate(130%);
+  transition: opacity 0.25s ease, background-color 0.2s ease, transform 0.15s ease;
+}
+
+.giclee-gallery__stage:hover .giclee-gallery__nav,
+.giclee-gallery:focus-within .giclee-gallery__nav {
+  opacity: 1;
+}
+
+.giclee-gallery__nav:hover {
+  background: rgb(18 18 18 / 0.72);
+}
+.giclee-gallery__nav:active {
+  transform: translateY(-50%) scale(0.92);
+}
+.giclee-gallery__nav:focus-visible {
+  opacity: 1;
+  outline: 2px solid rgb(255 255 255 / 0.85);
+  outline-offset: 2px;
+}
+
+.giclee-gallery__nav--prev {
+  left: 14px;
+}
+.giclee-gallery__nav--next {
+  right: 14px;
+}
+
+.giclee-gallery__nav svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* --- Przycisk powiekszenia + licznik ------------------------------------ */
+.giclee-gallery__zoom {
+  position: absolute;
+  z-index: 3;
+  right: 14px;
+  bottom: 14px;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(255 255 255 / 0.18);
+  border-radius: 50%;
+  background: rgb(18 18 18 / 0.45);
+  color: #fff;
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(10px) saturate(130%);
+  backdrop-filter: blur(10px) saturate(130%);
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.giclee-gallery__zoom:hover {
+  background: rgb(18 18 18 / 0.72);
+}
+.giclee-gallery__zoom:active {
+  transform: scale(0.92);
+}
+.giclee-gallery__zoom:focus-visible {
+  outline: 2px solid rgb(255 255 255 / 0.85);
+  outline-offset: 2px;
+}
+.giclee-gallery__zoom svg {
+  width: 20px;
+  height: 20px;
+}
+
+.giclee-gallery__counter {
+  position: absolute;
+  z-index: 3;
+  left: 14px;
+  bottom: 16px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 5px 11px;
+  border-radius: 99px;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: rgb(18 18 18 / 0.4);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  font-variant-numeric: tabular-nums;
+}
+
+.giclee-gallery__counter-sep {
+  opacity: 0.55;
+}
+
+/* --- Lightbox ------------------------------------------------------------ */
+.giclee-gallery__lightbox {
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: rgb(8 8 8 / 0.97);
+  overflow: hidden;
+}
+
+.giclee-gallery__lightbox::backdrop {
+  background: rgb(8 8 8 / 0.92);
+}
+
+.giclee-gallery__lightbox[open] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.giclee-gallery__lb-frames {
+  position: absolute;
+  inset: 0;
+}
+
+.giclee-gallery__lb-slide {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(20px, 5vw, 64px);
+  opacity: 0;
+  transform: scale(1.02);
+  transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+.giclee-gallery__lb-slide.is-active {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.giclee-gallery__lb-img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 30px 60px rgb(0 0 0 / 0.6));
+}
+
+.giclee-gallery__lb-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 5;
+  width: 46px;
+  height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(255 255 255 / 0.2);
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.08);
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+.giclee-gallery__lb-close:hover {
+  background: rgb(255 255 255 / 0.18);
+}
+.giclee-gallery__lb-close:active {
+  transform: scale(0.92);
+}
+.giclee-gallery__lb-close svg {
+  width: 22px;
+  height: 22px;
+}
+
+.giclee-gallery__nav--lb {
+  opacity: 1;
+  width: 52px;
+  height: 52px;
+}
+.giclee-gallery__nav--lb.giclee-gallery__nav--prev {
+  left: clamp(12px, 3vw, 36px);
+}
+.giclee-gallery__nav--lb.giclee-gallery__nav--next {
+  right: clamp(12px, 3vw, 36px);
+}
+
+.giclee-gallery__lb-counter {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 99px;
+  color: #fff;
+  font-size: 0.82rem;
+  letter-spacing: 0.05em;
+  background: rgb(255 255 255 / 0.08);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Dostepnosc / reduced motion ---------------------------------------- */
+@media screen and (max-width: 749px) {
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .giclee-gallery {
+    padding-bottom: 1.25rem;
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .giclee-gallery__stage {
+    min-height: 200px;
+    max-height: min(68vh, 600px);
+    transition: aspect-ratio 0.35s ease;
+  }
+
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .giclee-gallery__slide {
+    padding: 4px;
+    align-items: stretch;
+    justify-content: stretch;
+  }
+
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .giclee-gallery__img {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    object-position: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giclee-gallery__slide,
+  .giclee-gallery__lb-slide {
+    transition: opacity 0.2s linear;
+    transform: none !important;
+  }
+
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .giclee-gallery__stage {
+    transition: none;
+  }
+}

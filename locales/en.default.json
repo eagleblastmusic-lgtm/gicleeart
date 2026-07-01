@@ -33,7 +33,6 @@
     "inventory_status": "Inventory status",
     "localization_region_and_language": "Region and language selector",
     "menu": "Menu",
-    // This is the label for the header navigation menu when using screen readers, it will read "Primary navigation"
     "header_navigation_label": "Primary",
     "nested_product": "{{ product_title }} for {{ parent_title }}",
     "new_window": "Opens in a new window.",
@@ -66,52 +65,40 @@
     "price_filter_high": "High price"
   },
   "actions": {
-    // Quick add button on product cards, shortened version of add to cart
     "add": "Add",
     "add_to_cart": "Add to cart",
-    // Success message shown after adding item to cart
     "added": "Added",
-    // Button to apply discount code to cart
     "apply": "Apply",
     "back": "Back",
     "back_to": "Back to {{ title }}",
     "choose": "Choose",
-    // Button to reset current selection or input
     "clear": "Clear",
-    // Button to remove all applied product filters
     "clear_all": "Clear all",
     "close": "Close",
     "open": "Open",
-    // Continue shopping link on the cart page which takes the user back to a collection page
     "continue_shopping": "Continue shopping",
     "enter_password": "Enter password",
     "log_in_html": "Have an account? <a href=\"{{ link }}\">Log in</a> to check out faster.",
     "log_in": "Sign in",
     "log_out": "Log out",
     "open_image_in_full_screen": "Open image in full screen",
-    // Button to remove applied filters from search/collection results
     "remove": "Remove",
     "remove_discount": "Remove discount {{ code }}",
-    // Button to expand hidden product variant options
     "show_all_options": "Show all options",
     "see_items": {
       "one": "See {{ count }} item",
-      // Button to view filtered product results and close filter dialog
       "other": "See {{ count }} items"
     },
     "show_filters": "Filter",
     "show_less": "Show less",
     "show_more": "Show more",
     "sign_in_options": "Other sign in options",
-    // AR button to view 3D product model in physical space
     "view_in_your_space": "View in your space",
-    // Button to view complete collection/product list
     "view_all": "View all",
     "more": "More",
     "zoom": "Zoom",
     "zoom_media": "Zoom media {{ index }}",
     "close_dialog": "Close dialog",
-    // Button to clear search filter and restore default view
     "reset": "Reset",
     "enter_using_password": "Enter using password",
     "sign_up": "Sign up",
@@ -257,7 +244,6 @@
     "search_results_no_results_check_spelling": "No results found for \"{{ terms }}\". Check the spelling or use a different word or phrase.",
     "search_results_resource_articles": "Blog posts",
     "search_results_resource_collections": "Collections",
-    // Section heading for Shopify store pages in search results
     "search_results_resource_pages": "Pages",
     "search_results_resource_products": "Products",
     "search_results_resource_products_count": {
@@ -274,11 +260,22 @@
       "one": "1 item added to cart",
       "other": "{{ count }} items added to cart"
     },
-    // Button to go from search preview to full search results page
     "search_results_view_all": "View all",
     "search_results_view_all_button": "View all",
-    // Label for customer's note to seller during checkout
     "seller_note": "Special instructions",
+    "invoice_request_title": "Invoice",
+    "invoice_request_checkbox": "I need an invoice",
+    "invoice_request_hint": "For private individuals we use your billing address from checkout. Company invoices require details below.",
+    "invoice_type_legend": "Invoice recipient type",
+    "invoice_type_private": "Private individual",
+    "invoice_type_company": "Company",
+    "invoice_company_name": "Company name",
+    "invoice_tax_id_nip": "Tax ID (NIP)",
+    "invoice_tax_id_de": "VAT ID (USt-IdNr.)",
+    "invoice_tax_id_fr": "VAT number (n° TVA)",
+    "invoice_tax_id_uk": "VAT number",
+    "invoice_tax_id_generic": "VAT / Tax ID",
+    "invoice_error_company": "Enter company name and tax ID to continue.",
     "shipping_policy": "Shipping calculated at checkout.",
     "shipping_policy_html": "<a href=\"{{ link }}\">Shipping</a> calculated at checkout.",
     "store_owner_link_html": "Are you the store owner? <a href=\"{{ link }}\">Log in here</a>",
@@ -293,7 +290,6 @@
     "taxes_included_shipping_at_checkout_without_policy_without_discounts": "Taxes included. Shipping is calculated at checkout.",
     "unavailable": "Unavailable",
     "use_fewer_filters_html": "Try using fewer filters, or <a class=\"{{ class }}\" href=\"{{ link }}\">clear all filters</a>.",
-    // Link or button to expand additional information
     "view_more_details": "View more details",
     "volume_pricing_available": "Volume pricing available",
     "volume_pricing": "Volume pricing",
@@ -306,7 +302,6 @@
     "product_count": "Product count",
     "errors": "Errors",
     "wrong_password": "Wrong password",
-    // Legend text for gift card delivery options
     "recipient_form_send_to": "Send to",
     "recipient_form_email_label": "Recipient’s email",
     "recipient_form_email_label_my_email": "My email",
@@ -322,7 +317,6 @@
     "product_custom_property_character_count": "{{ used_chars }}/{{ max_chars }} characters used"
   },
   "fields": {
-    // Separates min and max values in price range filter
     "separator": "to"
   },
   "gift_cards": {
@@ -366,6 +360,255 @@
       "in_cart": "in cart",
       "default_title": "Default Title",
       "sticky_add_to_cart": "Quick add to cart bar"
+    }
+  },
+  "password": {
+    "countdown": {
+      "heading": "Site architecture rebuild in progress. We'll be back soon.",
+      "days": "days",
+      "hours": "hrs",
+      "minutes": "min.",
+      "seconds": "sec.",
+      "expired": "Welcome!"
+    },
+    "maintenance": {
+      "message": "Site architecture rebuild in progress. We'll be back soon."
+    },
+    "newsletter_intro": "Sign up for the newsletter to be the first to know about our launch."
+  },
+  "giclee": {
+    "blocks": {
+      "text_4crMR9": {
+        "text": "<h2>News</h2>"
+      },
+      "text_PDh9dG": {
+        "text": "<p>Want to learn more about art, frame production, printing, and fine art in the broadest sense? You're invited to read on!</p>"
+      },
+      "text_FNbyeV": {
+        "text": "<h2>Works</h2>"
+      },
+      "text_6zXDqe": {
+        "text": "<p>Giclée Art is a studio specialising in Fine Art prints and comprehensive framing of works to museum standards.</p><p>We combine the precision of pigment printing with hand craftsmanship, creating finished pieces that can function as full-fledged works of art — not merely reproductions.</p><p>Every element of production — from paper, through passe-partout, to solid wood frames — is selected with durability, aesthetics, and collector value in mind.</p>"
+      },
+      "text_FwqCDk": {
+        "text": "<p>This is an independent studio where I create collector-grade Fine Art prints and provide their comprehensive, gallery-quality framing.<br/><br/>I personally oversee every project — from careful image correction, through precise pigment printing, to the selection of archival materials and hand-crafted framing.<br/><br/>I work to museum standards, using acid-free substrates and durable techniques that guarantee long-term stability and permanence of the prints.<br/><br/>My goal is to create works of real value — aesthetic, material, and collector.</p>"
+      },
+      "text_EgnMm8": {
+        "text": "<h2>Giclée Art </h2><p></p><p>This is an independent studio where I create collector-grade Fine Art prints and provide their comprehensive, gallery-quality framing.<br/><br/>I personally oversee every project — from careful image correction, through precise pigment printing, to the selection of archival materials and hand-crafted framing.<br/><br/>I work to museum standards, using acid-free substrates and durable techniques that guarantee long-term stability and permanence of the prints.<br/><br/>My goal is to create works of real value — aesthetic, material, and collector.</p>"
+      },
+      "text_ywirTH": {
+        "text": "<h2>Art restoration</h2>"
+      },
+      "text_EpbDYf": {
+        "text": "<p><br/>An important part of my work is the digital restoration of damaged or degraded paintings, both well-known classics and forgotten works.<br/><br/>This process involves precise reconstruction of details, removal of damage, and restoration of the original tonal and colour balance — with full respect for the character of the original.</p><p>I treat each image individually, avoiding the artificial effect of \"over-correction\". My goal is to restore its original visual value, not to reinterpret it.</p><p>Restored images can then be produced as archival Fine Art prints and framed to gallery standards.</p><p>Painting restorations are signed with the author's collection:<br/><br/><strong>© Giclée Art — Restoration Edition 2026</strong><br/><br/><br/><br/></p>"
+      },
+      "text_9XdqrW": {
+        "text": "<p>Before printing, I apply proprietary colour correction tailored to the character of the work and the chosen medium.</p><p>I do not rely solely on standard profiles — I analyse each image individually, ensuring proper tonality, depth, and colour coherence in the context of the final print.</p><p>I pay particular attention to tonal transitions, detail in highlights and shadows, and the natural reproduction of colours on artistic papers.</p><p>The goal is not merely technical correctness, but achieving an effect that reflects the author's intent and preserves the full visual quality in physical form.</p>"
+      },
+      "button_UgW9Kt": {
+        "label": "View all"
+      },
+      "text_qLVbAJ": {
+        "text": "<h2>Potential that isn't always visible<br/></h2>"
+      },
+      "text_FhBhaC": {
+        "text": "<p>Some photographs, despite a good composition, can seem unsuccessful — due to incorrect colour, light, or tonality.</p><p>Through precise correction, I restore their proper proportions and aesthetics, revealing the quality that was originally hidden within them.</p>"
+      },
+      "text_rmKL7r": {
+        "text": "<h3>See the difference</h3>"
+      },
+      "text_zLzkLW": {
+        "text": "<p><br/>The world's first author's collection of digitally restored paintings.<br/><br/></p>"
+      },
+      "text_nPizan": {
+        "text": "<h5>Are you a photographer or session photographer and want to collaborate with Giclée Art? I invite you to get in touch.</h5><h5>As part of the collaboration, you receive:</h5><h5><br/>– discounts for your clients on Giclée Art products<br/>– presentation of your selected works on the Giclée Art website with a link to your social media<br/>– promotion of your work on Giclée Art social media</h5><h5>The collaboration is partnership-based — we combine the aesthetics of photography with premium artistic printing.</h5>"
+      },
+      "text_HJGb9e": {
+        "text": "<h2>Frequently asked questions</h2>"
+      },
+      "text_dQBDL3": {
+        "text": "<h2>Frequently asked questions</h2>"
+      },
+      "accordion_row_mUQFCU": {
+        "heading": "What is the order processing time?"
+      },
+      "text_Q8RMTC": {
+        "text": "<p>Order processing takes 3 to 7 days. This is related to the delivery time of wood and materials needed for production. I always try to keep minimal wood stock, however before finishing — which includes impregnation — wood is prone to warping. Therefore, I produce products from start to finish using freshly delivered materials.<br/><br/>The production process consists of many stages, from cutting the wood, through applying various finishing layers that need to dry, so you should count: day 1 — cutting and priming, day 2 — oiling and printing, then 3 more days for initial drying and hardening of the oil wax, as well as drying of the paper after applying protective spray</p>"
+      },
+      "accordion_row_gq7xgd": {
+        "heading": "What is the shipping time?"
+      },
+      "text_dbKFYM": {
+        "text": "<p>Once the product is completed, the artwork is packed and shipped immediately, regardless of the time of day or night, via parcel locker. After dispatch, you will receive an email with further information. Shipments usually arrive within 1–2 business days</p>"
+      },
+      "accordion_row_fxrNFP": {
+        "heading": "Is phone contact possible?"
+      },
+      "text_KT9gtp": {
+        "text": "<p>Unfortunately not. I run the business on my own and cannot answer phone calls during the day while working. Please contact me by email. I usually reply in the evening or at night.</p>"
+      },
+      "accordion_row_VwgmXW": {
+        "heading": "Where are your products made?"
+      },
+      "text_kCYhHF": {
+        "text": "<p>My studio is located in Puck, Pomeranian Voivodeship, however personal pickup is not available</p>"
+      },
+      "accordion_row_7nCpLH": {
+        "heading": "How much does shipping cost?"
+      },
+      "text_BnRprG": {
+        "text": "<p>Shipping is completely free</p>"
+      },
+      "text_kdAGGw": {
+        "text_part1": "<p>Giclée Art is based on the idea that a work of art does not end with a digital file.<br/><br/>It is only complete when it receives its final form — coherent, archival, and ready for display.<br/><br/>In working with visual material, I operate in two parallel areas.<br/><br/>The first is paintings — often old, yellowed, forgotten, or requiring reworking as reproductions. In this process, I treat them as cultural matter that can be brought back to life through tonal and colour correction, precise Fine Art printing, and conscious framing. In this way, they regain their presence, depth, and ability to function in contemporary space.<br/><br/>The second area is photography entrusted to me for production. In this case, I do not recreate the past, but complete the creative process, giving the image its final, material form.<br/><br/",
+        "text_part2": ">Only in the form of a print and framing does the image gain scale, structure, and a relationship with light that allow it to exist as an object, not merely a digital record.<br/><br/>I believe that photography and image truly \"live\" only when they leave the screen and are transferred to the physical world.<br/><br/>That is why I treat every project as a process of transition<br/><br/>From potential image — to present image.<br/><br/>From file — to object.<br/><br/>From information — to matter.</p>"
+      },
+      "text_9ftdzW": {
+        "text_part1": "<p>Giclée Art is based on the idea that a work of art does not end with the image.<br/><br/>It is only complete when it receives its final form — coherent, archival, and ready for display.<br/><br/><br/>In working with visual material, I operate in two parallel areas.<br/><br/>The first is paintings — often old, yellowed, forgotten, or requiring reworking as reproductions. In this process, I treat them as cultural matter that can be brought back to life through precise Fine Art printing and conscious framing. In this way, they regain their presence, depth, and ability to function in contemporary space.<br/><br/>The second area is photography — both authorial and entrusted to me for production. In this case, I do not recreate the past, but complete the creative process, giving the image its final, material form.<br/><br/",
+        "text_part2": ">Only in the form of a print and framing do they gain scale, structure, and a relationship with light that allow them to exist as an object, not merely a digital record.<br/><br/>I believe that photography and image truly \"live\" only when they leave the screen and are transferred to the physical world.<br/><br/>Only in the form of a print and framing do they gain scale, structure, and a relationship with light that allow them to exist as an object, not merely a digital record.<br/><br/>That is why I treat every project as a process of transition<br/><br/>From potential image — to present image.<br/><br/>From file — to object.<br/><br/>From information — to matter.</p>"
+      },
+      "text_8JmYGT": {
+        "text": "<h2>New arrivals</h2>"
+      },
+      "text_DNFLhc": {
+        "text": "<p>Made with care and unconditionally loved by our customers.</p>"
+      },
+      "text_nWcG7K": {
+        "text": "<h2><strong>Turn photography into a timeless image</strong></h2>"
+      },
+      "text_tJcVyA": {
+        "text": "<p>Your photo deserves more than a screen. We transform it into an elegant fine art print that looks like a work created for a gallery.</p>"
+      },
+      "button_gzAGaV": {
+        "label": "Choose a photo"
+      },
+      "text_GifUG3": {
+        "text": "<p><strong>Giclée Frame™</strong> is a proprietary framing system I created as an integral part of every production from my studio.</p><p>It is not a standard frame — it is a considered form of display, designed to emphasise the character of the image and give it its final, gallery dimension.</p><p>Every element of the framing is handcrafted, using solid wood and acid-free materials that meet archival standards. The frame construction and mounting method have been developed to ensure both aesthetics and long-term stability of the work.</p>"
+      },
+      "jumbo_text_NBbG7x": {
+        "text": "materials"
+      },
+      "text_79rJDi": {
+        "text": "<p>To create Giclée Frame™, I use only carefully selected materials:</p><p><strong>— solid wood with natural grain<br/>— acid-free passe-partout of gallery quality<br/>— archival, chemically neutral components</strong></p><p>This ensures the framing not only enhances the aesthetic qualities of the work, but also protects it from degradation over time.</p>"
+      },
+      "jumbo_text_Xz3A7b": {
+        "text": "WOOD FINISHING"
+      },
+      "text_xktcAN": {
+        "text": "<p>Frames are finished using natural Rubio Monocoat oil waxes, which protect the wood surface while emphasising its structure and character.</p><p>For black finishes, I additionally apply a Precolor layer that deepens the colour and ensures even, saturated tinting.</p><p>The applied system does not create an artificial coating — the wood retains its natural quality, and its structure remains visible and tangible.</p><p>The oils used are based on natural ingredients, including linseed oil, and are characterised by zero VOC (volatile organic compounds) content. The solvent-free formula ensures very low emissions and safe use. This is confirmed by international certifications such as GREENGUARD Gold</p><p>The result is a finish that is friendly both to the environment and to the space where the work is displayed — durable, natural, and retaining its character for years.</p>"
+      },
+      "text_e9qjY6": {
+        "text_part1": "<p>The passe-partout used in my studio is made from high-quality, three-layer archival board, designed for professional framing of works of art.<br/><br/>The top layer is made from acid-free, through-dyed paper <strong>Fabriano Elle Erre (Bianco)</strong> — a material with high resistance to ageing and light, meeting the ISO 9706 \"Long Life\" standard.<br/><br/>The core is made from acid-free, non-yellowing board with neutral pH, containing an alkaline reserve that additionally protects the work from degradation over time. The whole is completed by a bottom layer of high-grade paper that stabilises the construction.<br/><br/>The elements are joined using non-toxic water-based adhesives, free of solvents, ensuring complete safety for the framed work.</p><p>Each passe-partout is cut at a 45° angle, creating the characteristic \"window\" that introduces subtle depth and emphasises the relationship between the image and its framing.</p>",
+        "text_part2": "<p>Combined with a Fine Art print, it forms an integral part of the framing system, giving the work space, structure, and gallery character.</p>"
+      },
+      "text_xyy4fN": {
+        "text_part1": "<p>In the printing process, I use exclusively professional Fine Art papers that form the foundation of the quality and durability of the final work.</p><p>The primary media are Hahnemühle Photo Rag 308 and Epson Fine Art Velvet — papers with exceptional structure, designed for art reproduction at the highest standard.</p><p>Their surface is characterised by a subtle, natural texture that gives the print depth and a character close to traditional artistic techniques. The matte finish eliminates light reflections, allowing full focus on the image and its tonality.</p><p>The substrates used are fully acid-free and archival, ensuring high resistance to ageing and colour stability over the long term. Thanks to this, the work retains its visual quality for decades, without loss of detail and colour depth.</p>",
+        "text_part2": "<p>Each print is produced using pigment technology, which combined with Fine Art paper allows exceptional tonal range, detail precision, and a noble, gallery character.</p><p>The result is an image that is not merely a reproduction, but a full-fledged artistic object — prepared for professional display and archival storage.</p>"
+      },
+      "jumbo_text_bX7tqP": {
+        "text": "PROPORTIONS AND THE GOLDEN RATIO"
+      },
+      "text_KxVYV6": {
+        "text_part1": "<p>In the Giclée Frame™ system, framing proportions are not accidental — they form a consciously developed relationship between the image, passe-partout, and frame.</p><p>A key principle is the use of visual harmony based on the golden ratio, which for centuries has been used in art, architecture, and classical aesthetics as a pattern of natural balance.</p><p>The golden ratio (φ – \"phi\") is a mathematical proportion in which the ratio of the whole to the larger part is the same as the ratio of the larger part to the smaller. Its value is approximately <strong>1.618</strong>. In practice, this means a proportion that is naturally and intuitively perceived as harmonious and stable to the human eye, regardless of awareness of its mathematical structure.</p><p>The ratio of paper surface to passe-partout width and its relationship with the frame is adjusted to the product size in 3 sizes: M, L, and XL.</p>",
+        "text_part2": "<p>The goal of this process is not decoration, but achieving visual balance in which the image \"breathes\" within the framing space and gains a natural focal point for the eye. I consciously stand in opposition to the contemporary gallery trend that says the larger the passe-partout, the better</p><p>Thanks to this, each production has its own internal logic of proportions — arising not from a template, but from principles of harmony that organise how the image is perceived.</p><p>The result is a composition in which all elements coexist in balance, creating a coherent and well-balanced visual object.</p>"
+      },
+      "jumbo_text_txPMEr": {
+        "text": "Product dimensions"
+      },
+      "text_d3aDXd": {
+        "text": "<p>Each production leaves the studio as a fully completed work — ready for immediate display.</p><p>It requires no additional framing or intervention. All elements have been designed and executed as a coherent whole.</p>"
+      },
+      "text_aDtPRn": {
+        "text": "<h3>Collaboration for Photographers<br/></h3>"
+      },
+      "text_DxzKPb": {
+        "text": "<p>Giclée Art is a space for creators who work on emotion, aesthetics, and quality without compromise.<br/><br/>If you create photographic sessions and want your work to live on in the form of museum-quality printing — I invite you to collaborate.</p>"
+      },
+      "text_Bn4r9Y": {
+        "text": "<h2>A better experience for your clients<br/></h2>"
+      },
+      "text_XJGn6y": {
+        "text": "<p>By collaborating with me, you can offer your clients a dedicated discount on Giclée Art products.<br/><br/>This gives your sessions added value — clients receive not only photos, but a ready, luxurious form of their presentation.<br/></p>"
+      },
+      "text_6yVLKh": {
+        "text": "<h3>Your work in the Giclée Art space<br/></h3>"
+      },
+      "text_axjktk": {
+        "text": "<p>I publish selected productions on the Giclée Art website with a credit and link to your social media.<br/><br/>It is not just exposure — it is presentation of your work in the context of a premium brand that elevates its visual value.</p>"
+      },
+      "text_tQHMCe": {
+        "text": "<h3>Mutual promotion and brand growth<br/></h3>"
+      },
+      "text_wTM8Wz": {
+        "text": "<p>We build a relationship based on quality, aesthetics, and shared growth — not a one-off collaboration, but a long-term partnership.<br/></p>"
+      },
+      "text_xykEfp": {
+        "text": "<h3>Collaboration for Photographers</h3>"
+      },
+      "text_LJAG43": {
+        "text": "<p>Giclée Art is a space for creators who work on emotion, aesthetics, and quality without compromise.<br/><br/>If you create photographic sessions and want your work to live on in the form of museum-quality printing — I invite you to collaborate.</p>"
+      },
+      "text_MeaHNN": {
+        "text": "<p>Giclée Art is a space for creators who work on emotion, aesthetics, and quality without compromise.<br/><br/>If you create photographic sessions and want your work to live on in the form of museum-quality printing — I invite you to collaborate.</p>"
+      },
+      "text-2": {
+        "text": "<p>Sign up for the newsletter to be the first to know about our launch</p>"
+      },
+      "text_cbcgyb": {
+        "text": "<h3>You may also like</h3>"
+      }
+    },
+    "sections": {
+      "giclee_artist_collection_showcase_7djLQQ": {
+        "heading": "Selected works",
+        "cta_label": "View the full collection"
+      }
+    },
+    "ui": {
+      "splash_subtitle": "Welcome to the world of art",
+      "catalog_artists": "Artists",
+      "catalog_view_collection": "View collection",
+      "showcase_eyebrow_default": "Artist collection",
+      "showcase_heading_default": "Selected works",
+      "showcase_lead_default": "A curated selection of fine art reproductions — presented like a gallery, not a shop.",
+      "showcase_cta_default": "View the full collection",
+      "showcase_prev_artist": "Previous artist",
+      "showcase_next_artist": "Next artist",
+      "showcase_prev_work": "Previous work",
+      "showcase_gallery": "Works gallery",
+      "showcase_no_works": "No works available",
+      "showcase_gallery_position": "Works gallery, position {{ current }} of {{ total }}",
+      "showcase_go_to_work": "Go to work {{ index }}",
+      "pdp_preview_show": "Preview image",
+      "pdp_preview_hide": "Hide preview",
+      "mockup_back_preview": "Back to preview",
+      "mockup_upload_first": "Upload a photo first",
+      "mockup_variant_unavailable": "Variant unavailable",
+      "mockup_upload_error": "Upload error",
+      "mockup_try_again": "Try again",
+      "mockup_no_product": "No product data",
+      "mockup_invite_html": "<strong>Like it?</strong>Configure and add to cart. Your file along with cropping will be sent automatically after payment.",
+      "mockup_quality_title": "Print quality",
+      "mockup_quality_upload": "Upload a photo to see the print quality rating.",
+      "mockup_quality_loading": "Loading analysis…",
+      "mockup_quality_select_size": "Select a size to see the analysis.",
+      "mockup_wood_oak": "oak",
+      "mockup_wood_pine": "Pine",
+      "mockup_color_light_brown": "Light Brown",
+      "mockup_color_brown": "Brown",
+      "mockup_color_dark_brown": "Dark Brown",
+      "mockup_unavailable": "Unavailable",
+      "print_upload_prompt": "Upload an image to see the analysis.",
+      "print_quality_highest": "Highest quality",
+      "print_quality_highest_note": "Maximum sharpness, Fine Art, premium print. Best viewed from 20–30 cm",
+      "print_quality_very_good": "Very good quality",
+      "print_quality_very_good_note": "Virtually no difference from 300 PPI at normal viewing distance of 30–50 cm",
+      "print_quality_good": "Good quality",
+      "print_quality_good_note": "Still a good print, but with less detail headroom; recommended viewing distance 50–80 cm",
+      "print_quality_average": "Average quality",
+      "print_quality_average_note": "Exhibition effect, slightly softer, acceptable from 80–120 cm",
+      "print_quality_low_note": "Too few PPI for close viewing; only looks good from 120 cm and beyond",
+      "print_quality_critical_note": "Critically low resolution — visible pixelation and lack of detail even from afar; not suitable for this format"
     }
   }
 }

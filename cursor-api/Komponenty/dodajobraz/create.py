@@ -7,7 +7,7 @@ from typing import Any, Callable
 from . import shopify_client as sc
 from . import templates as variant_templates
 from .body_i18n import translate_field_value_or_pl
-from .html_template import build_body_html
+from .html_template import build_artist_collection_body_html, build_body_html
 from .image_analysis import analyze_image
 from .options_i18n import (
     find_missing_option_translations,
@@ -15,12 +15,24 @@ from .options_i18n import (
     translate_option_value,
 )
 from .parser import (
+    FOLLOW_UP_KIND_F,
+    FOLLOW_UP_KIND_I,
+    IMAGE_ROLE_FULL,
+    IMAGE_ROLE_MOCKUP,
+    IMAGE_ROLE_PREVIEW,
+    alt_is_catalog_preview,
+    alt_is_gallery_full,
     artist_collection_title,
     compute_source_key,
+    full_alt_text,
+    installment_alt_text,
+    mockup_alt_text,
+    preview_alt_text,
     slugify,
     source_key_tag,
     surname_only,
 )
+from .prompt_builder import dedupe_queue_items_by_work, lookup_llm_entry
 from .tags_taxonomy import collection_blueprints_for_tags
 from .tags_taxonomy_i18n import LOCALE_DISPLAY
 
@@ -32,7 +44,21 @@ REFERENCE_PRODUCT_ID = variant_templates.REFERENCE_PRODUCT_ID
 VENDOR = "Giclee Art"
 PRODUCT_TYPE = "Obraz"
 
+# Menu nawigacji: kolekcje artystow wisza jako dzieci pozycji 'ARTYŚCI'
+# w menu glownym 'main-menu' (patrz SHOP_KNOWLEDGE.md sekcja 9).
+ARTIST_MENU_HANDLE = "main-menu"
+ARTIST_MENU_PARENT = "ARTYŚCI"
+
+# Wspolny baner kolekcji artysty (jak u pozostalych artystow). To samo zdjecie
+# (Andreas Achenbach - Raddampfer) jest ustawione jako image kolekcji u innych.
+ARTIST_COLLECTION_BANNER_SRC = (
+    "https://cdn.shopify.com/s/files/1/1011/0517/2828/collections/"
+    "Andreas_Achenbach_-_Raddampfer_in_sturmischer_See.jpg"
+)
+
 Logger = Callable[[str], None]
+BatchProgress = Callable[[int, int, str], None]
+ProductReadyCallback = Callable[[dict[str, Any], dict[str, Any]], None]
 
 # Cache zywy w pamieci procesu - zeby przy paczce N produktow nie pytac Shopify
 # o te same kolekcje N razy. Klucz = handle smart-collection. Wartosc = dict z 'id'.
@@ -125,7 +151,7 @@ def push_product_translations(
 
     Dla kazdego jezyka z `translations` (en/de/fr/es/nl/it) ustawia:
       - title          (tytul produktu '{Artysta} - {tlumaczenie tytulu}')
-      - body_html      (caly szablon z 3 akapitami w jezyku docelowym + tabela szczegolow)
+      - body_html      (caly szablon z 3-4 akapitami w jezyku docelowym + tabela szczegolow)
       - global.title_tag       (SEO title)
       - global.description_tag (SEO description)
 
@@ -174,7 +200,7 @@ def push_product_translations(
         # 3) Pelny body_html w jezyku docelowym (kompletny szablon z lokalizowanym
         #    naglowkiem 'SZCZEGOLY' i etykietami pol - wszystko z body_i18n.body_labels(lang)).
         body_html_lang = ""
-        if isinstance(akapity_lang, list) and len(akapity_lang) == 3:
+        if isinstance(akapity_lang, list) and 3 <= len([a for a in akapity_lang if (a or "").strip()]) <= 4:
             body_html_lang = build_body_html(
                 tytul_obrazu=translated_title,
                 artysta=artist,
@@ -226,7 +252,7 @@ def push_product_translations(
         pushed.append(lang)
 
     # 3) Tlumaczenia opcji wariantow (Kolor/Rozmiar/Rodzaj drewna) i ich wartosci
-    #    (Czarny/Brąz/Sosna/Dąb/S/L/XL/...). Statyczny slownik - bez LLM.
+    #    (Czarny/Brąz/Sosna/Dąb/M/L/XL/...). Statyczny slownik - bez LLM.
     try:
         opt_summary = push_option_translations(
             product_gid=product_gid,
@@ -312,7 +338,7 @@ def push_option_translations(
                 errors.append({"lang": lang, "scope": f"option:{name_pl}", "error": str(e)})
                 _log(logger, f"[i18n][opcje] {lang} '{name_pl}': BLAD: {e}")
 
-        # 3b) Tlumaczenie WARTOSCI opcji (Czarny/Brąz/Sosna/Dąb/S/L/XL/...)
+        # 3b) Tlumaczenie WARTOSCI opcji (Czarny/Brąz/Sosna/Dąb/M/L/XL/...)
         for opt in options:
             for v in (opt.get("values") or []):
                 v_gid = (v or {}).get("id") or ""
@@ -421,10 +447,12 @@ def create_painting_product(
     llm_data: dict[str, Any],
     logger: Logger | None = None,
     template_id: str | None = None,
+    image_role: str | None = None,
+    base_title: str | None = None,
 ) -> dict[str, Any]:
     """Tworzy pelny produkt w Shopify. Zwraca podsumowanie.
 
-    llm_data: dict z polami: tytul_polski, tytul_orginalny, akapity (list[3]),
+    llm_data: dict z polami: tytul_polski, tytul_orginalny, akapity (list[3-4]),
               data_powstania, miejsce_powstania, technika, gatunek, nurt, forma,
               tagi (list[str]), kategoria.
 
@@ -504,7 +532,8 @@ def create_painting_product(
     except Exception as e:
         _log(logger, f"[analiza] BLAD analizy obrazu (pomijam auto-tagi): {e}")
 
-    source_key = compute_source_key(artist, title)
+    base_for_key = (base_title or display_title).strip()
+    source_key = compute_source_key(artist, base_for_key)
     src_tag = source_key_tag(source_key) if source_key else ""
     if src_tag and src_tag not in tags_list:
         tags_list.append(src_tag)
@@ -516,13 +545,18 @@ def create_painting_product(
         gatunek=llm_data.get("gatunek", ""),
         nurt=llm_data.get("nurt", ""),
     )
-    image_alt = build_image_alt(
-        artysta=artist,
-        tytul=display_title,
-        gatunek=llm_data.get("gatunek", ""),
-        nurt=llm_data.get("nurt", ""),
-        technika=llm_data.get("technika", ""),
-    )
+    if image_role == IMAGE_ROLE_FULL:
+        image_alt = full_alt_text(artist, base_for_key)
+    elif image_role == IMAGE_ROLE_PREVIEW:
+        image_alt = preview_alt_text(artist, base_for_key)
+    else:
+        image_alt = build_image_alt(
+            artysta=artist,
+            tytul=display_title,
+            gatunek=llm_data.get("gatunek", ""),
+            nurt=llm_data.get("nurt", ""),
+            technika=llm_data.get("technika", ""),
+        )
 
     product_payload: dict[str, Any] = {
         "title": f"{artist} - {display_title}",
@@ -544,8 +578,23 @@ def create_painting_product(
     _log(logger, f"[produkt] OK id={pid} handle={prod.get('handle')} source_key={source_key or '(brak)'}")
 
     _log(logger, f"[obraz] Wgrywam zdjecie: {image_path.name} (alt: '{image_alt}')")
-    img = sc.upload_image(shop, token, pid, image_path, alt=image_alt)
-    _log(logger, f"[obraz] OK image_id={img.get('id')}")
+    upload_pos = 1 if image_role == IMAGE_ROLE_FULL else None
+    img = sc.upload_image(
+        shop, token, pid, image_path, alt=image_alt, position=upload_pos, logger=logger
+    )
+    new_img_id = int(img.get("id") or 0)
+    _log(logger, f"[obraz] OK image_id={new_img_id}")
+    if image_role == IMAGE_ROLE_PREVIEW and new_img_id:
+        try:
+            sc.set_product_featured_image(shop, token, pid, new_img_id)
+            _log(logger, "[obraz] Ustawiono (preview) jako zdjecie glowne (kolekcje/menu).")
+        except sc.ShopifyError as e:
+            _log(logger, f"[obraz] Nie ustawiono featured preview: {e}")
+    elif image_role == IMAGE_ROLE_FULL and new_img_id:
+        try:
+            sc.set_image_position(shop, token, pid, new_img_id, 1)
+        except sc.ShopifyError as e:
+            _log(logger, f"[obraz] Nie ustawiono position=1 dla Full: {e}")
 
     _log(logger, "[seo] Metapola title_tag/description_tag...")
     sc.set_seo_metafields(shop, token, pid, title_tag=title_tag, description_tag=meta_desc)
@@ -592,17 +641,36 @@ def create_painting_product(
         except Exception as e:
             _log(logger, f"[i18n] BLAD push tlumaczen: {e}")
 
+    collection_assigned = False
+    collection_assign_error: str | None = None
     if collection and collection.get("kind") == "custom":
         try:
             sc.add_to_collect(shop, token, pid, int(collection["id"]))
+            collection_assigned = True
             _log(logger, f"[kolekcja] Dodano do custom collection id={collection['id']}.")
         except sc.ShopifyError as e:
+            collection_assign_error = str(e)
             _log(logger, f"[kolekcja] Blad dodawania do kolekcji: {e}")
     elif collection and collection.get("kind") == "smart":
         _log(
             logger,
             "[kolekcja] Smart collection - produkt powinien sie dodac automatycznie na bazie regul (vendor/tagi).",
         )
+        try:
+            if sc.is_product_in_collection(
+                shop,
+                token,
+                pid,
+                int(collection["id"]),
+                collection_kind="smart",
+            ):
+                collection_assigned = True
+            else:
+                collection_assign_error = "smart_rules_no_match"
+        except sc.ShopifyError as e:
+            collection_assign_error = str(e)
+    elif not collection:
+        collection_assign_error = "collection_not_found"
 
     # LAZY: tworzymy smart-collections (style/pomieszczenie/prezent/gatunek) na bazie tagow.
     # Idempotentne, cache w pamieci sesji - nie spamuje API w petli batcha.
@@ -628,11 +696,16 @@ def create_painting_product(
         "product_id": pid,
         "handle": prod.get("handle"),
         "admin_url": admin_url,
+        "artist": artist,
         "surname": surname_only(artist),
         "seo_title": title_tag,
         "seo_description": meta_desc,
         "lifespan": lifespan,
         "collection_id": (collection or {}).get("id"),
+        "collection_kind": (collection or {}).get("kind"),
+        "collection_title_expected": coll_title,
+        "collection_assigned": collection_assigned,
+        "collection_assign_error": collection_assign_error,
     }
 
 
@@ -673,7 +746,8 @@ def find_existing_product_for_new(
     """
     shop, token = sc.load_session()
 
-    key = compute_source_key(artist, filename_title)
+    base = (filename_title or "").strip()
+    key = compute_source_key(artist, base)
     if key:
         tag = source_key_tag(key)
         try:
@@ -687,7 +761,7 @@ def find_existing_product_for_new(
         _log(logger, f"[match] tag '{tag}' -> brak trafien, probuje po tytule...")
 
     tried: set[str] = set()
-    for t in (filename_title, polish_title):
+    for t in (base, polish_title):
         if not t:
             continue
         k = t.strip().lower()
@@ -787,7 +861,7 @@ def replace_primary_image(
 
     alt = build_image_alt(artysta=artist, tytul=display_title)
     _log(logger, f"[podmiana] Wgrywam nowe zdjecie glowne: {image_path.name} (alt: '{alt}')")
-    img = sc.upload_image(shop, token, product_id, image_path, alt=alt)
+    img = sc.upload_image(shop, token, product_id, image_path, alt=alt, logger=logger)
     new_id = int(img.get("id"))
     try:
         sc.set_image_position(shop, token, product_id, new_id, 1)
@@ -966,11 +1040,307 @@ def update_existing_product_content(
     }
 
 
+def audit_batch_collection_gaps(
+    created: list[dict[str, Any]],
+    *,
+    logger: Logger | None = None,
+) -> list[dict[str, Any]]:
+    """Grupuje nowe produkty, ktore nie sa w kolekcji artysty (do poprawki nazwy kolekcji)."""
+    try:
+        shop, token = sc.load_session()
+    except Exception as e:
+        _log(logger, f"[kolekcja-audit] Pomijam (brak sesji Shopify): {e}")
+        return []
+
+    by_artist: dict[str, dict[str, Any]] = {}
+    for row in created:
+        mode = (row.get("mode") or "").strip()
+        if mode in ("replace_image", "replace_image_and_description"):
+            continue
+        pid = row.get("product_id")
+        artist = (row.get("artist") or "").strip()
+        if not pid or not artist:
+            continue
+        expected = (row.get("collection_title_expected") or "").strip() or artist_collection_title(artist)
+        coll_id = row.get("collection_id")
+        coll_kind = row.get("collection_kind")
+        in_coll = False
+        if coll_id:
+            try:
+                in_coll = sc.is_product_in_collection(
+                    shop,
+                    token,
+                    int(pid),
+                    int(coll_id),
+                    collection_kind=coll_kind,
+                )
+            except sc.ShopifyError as e:
+                _log(logger, f"[kolekcja-audit] {row.get('file')}: {e}")
+        if not in_coll:
+            coll = sc.find_artist_collection(shop, token, expected)
+            if coll:
+                try:
+                    in_coll = sc.is_product_in_collection(
+                        shop,
+                        token,
+                        int(pid),
+                        int(coll["id"]),
+                        collection_kind=coll.get("kind"),
+                    )
+                except sc.ShopifyError:
+                    pass
+        if in_coll:
+            continue
+        grp = by_artist.setdefault(
+            artist,
+            {
+                "artist": artist,
+                "collection_title_default": expected,
+                "products": [],
+            },
+        )
+        grp["products"].append(
+            {
+                "product_id": int(pid),
+                "file": row.get("file"),
+                "admin_url": row.get("admin_url"),
+                "reason": row.get("collection_assign_error") or "not_in_collection",
+            }
+        )
+    out = list(by_artist.values())
+    if out:
+        total = sum(len(g["products"]) for g in out)
+        _log(
+            logger,
+            f"[kolekcja-audit] {total} produkt(ow) poza kolekcja artysty — mozesz podac poprawna nazwe.",
+        )
+    return out
+
+
+def assign_products_to_collection_title(
+    *,
+    collection_title: str,
+    product_ids: list[int],
+    logger: Logger | None = None,
+) -> dict[str, Any]:
+    """Przypisuje produkty do kolekcji custom po tytule (np. 'Monet, Claude')."""
+    title = collection_title.strip()
+    if not title:
+        raise sc.ShopifyError("Pusta nazwa kolekcji.")
+    shop, token = sc.load_session()
+    from .collection_control import resolve_artist_collection_in_catalog
+
+    catalog = sc.fetch_collection_catalog(shop, token)
+    coll_meta = resolve_artist_collection_in_catalog(catalog, title)
+    if coll_meta:
+        coll = {
+            "id": coll_meta["id"],
+            "title": coll_meta["title"],
+            "kind": coll_meta.get("kind") or "custom",
+        }
+    else:
+        coll = sc.find_artist_collection(shop, token, title)
+    if not coll:
+        raise sc.ShopifyError(f"Nie znaleziono kolekcji o nazwie: {title!r}")
+    cid = int(coll["id"])
+    kind = (coll.get("kind") or "custom").strip().lower()
+    added: list[int] = []
+    already: list[int] = []
+    failed: list[dict[str, Any]] = []
+    for pid in product_ids:
+        try:
+            if sc.is_product_in_collection(shop, token, int(pid), cid, collection_kind=kind):
+                already.append(int(pid))
+                continue
+            if kind == "custom":
+                sc.add_to_collect(shop, token, int(pid), cid)
+                added.append(int(pid))
+                _log(logger, f"[kolekcja-fix] Dodano produkt id={pid} do '{title}'.")
+            else:
+                failed.append(
+                    {
+                        "product_id": int(pid),
+                        "error": "Kolekcja smart — produkt musi spelniac reguly (tagi/vendor).",
+                    }
+                )
+        except sc.ShopifyError as e:
+            failed.append({"product_id": int(pid), "error": str(e)})
+    return {
+        "collection_id": cid,
+        "collection_title": coll.get("title") or title,
+        "collection_kind": kind,
+        "added": added,
+        "already": already,
+        "failed": failed,
+    }
+
+
+def create_artist_collection_and_menu(
+    *,
+    collection_title: str,
+    product_ids: list[int] | None = None,
+    description: str | None = None,
+    lifespan: str | None = None,
+    portrait_path: "Path | str | None" = None,
+    portrait_url: str | None = None,
+    logger: Logger | None = None,
+) -> dict[str, Any]:
+    """Tworzy artyste "na wzor pozostalych": kolekcja custom + opis + zdjecie + menu + przypisanie.
+
+    Krok po kroku:
+      1. Znajduje lub tworzy custom-collection o tytule 'Nazwisko, Imie'.
+      2. (jesli nowa) publikuje kolekcje na wszystkich kanalach (best-effort).
+      3. Ustawia opis strony kolekcji (`body_html` jak u innych artystow):
+         daty zycia (<h4>), okragly portret + akapity opisu. Portret jest
+         wgrywany do Shopify Files (`portrait_path`). Nowej kolekcji ustawia
+         tez wspolny baner (`image`).
+      4. Dodaje pozycje do menu glownego pod 'ARTYŚCI' (wstawienie alfabetyczne).
+      5. Przypisuje podane produkty do kolekcji (add_to_collect).
+
+    Wymaga scope: write_products, write_publications, write_online_store_navigation,
+    write_files (dla portretu). Zwraca dict z polami: collection_id, collection_title,
+    created_collection, menu_added, menu_error, enrich_error, portrait_url, added,
+    already, failed.
+    """
+    title = (collection_title or "").strip()
+    if not title:
+        raise sc.ShopifyError("Pusta nazwa artysty/kolekcji.")
+    shop, token = sc.load_session()
+
+    existing = sc.find_artist_collection(shop, token, title)
+    if existing and (existing.get("kind") or "").lower() == "smart":
+        raise sc.ShopifyError(
+            f"'{title}' istnieje jako kolekcja SMART — nie tworze kolekcji custom artysty."
+        )
+
+    created_collection = False
+    if existing:
+        cid = int(existing["id"])
+        _log(logger, f"[artysta] Kolekcja '{title}' juz istnieje (id={cid}).")
+    else:
+        created = sc.create_custom_collection(shop, token, title=title)
+        cid = int(created.get("id") or 0)
+        if not cid:
+            raise sc.ShopifyError(f"Nie udalo sie utworzyc kolekcji '{title}'.")
+        created_collection = True
+        _log(logger, f"[artysta] Utworzono kolekcje custom '{title}' (id={cid}).")
+        try:
+            names = sc.publish_collection_everywhere(shop, token, sc.collection_gid(cid))
+            _log(
+                logger,
+                f"[artysta] Opublikowano kolekcje na kanalach: "
+                f"{', '.join(names) if names else '(brak)'}",
+            )
+        except sc.ShopifyError as e:
+            _log(logger, f"[artysta] Publikacja kolekcji (pominieto): {e}")
+
+    # Opis strony kolekcji + portret + baner (jak u pozostalych artystow).
+    enrich_error: str | None = None
+    resolved_portrait_url = (portrait_url or "").strip()
+    want_body = bool(
+        (description or "").strip()
+        or portrait_path
+        or resolved_portrait_url
+        or (lifespan or "").strip()
+    )
+    try:
+        if want_body:
+            if portrait_path:
+                _log(
+                    logger,
+                    f"[artysta] Wgrywam portret do Shopify Files: {Path(portrait_path).name}",
+                )
+                resolved_portrait_url = sc.upload_file_to_shopify_files(
+                    Path(portrait_path), alt=title
+                )
+                _log(logger, f"[artysta] Portret (CDN): {resolved_portrait_url}")
+            elif resolved_portrait_url:
+                _log(logger, f"[artysta] Portret (gotowy CDN): {resolved_portrait_url}")
+            body_html = build_artist_collection_body_html(
+                title=title,
+                description=description or "",
+                lifespan=(lifespan or "").strip(),
+                portrait_url=resolved_portrait_url,
+            )
+            sc.update_custom_collection(
+                shop,
+                token,
+                cid,
+                body_html=body_html,
+                image_src=ARTIST_COLLECTION_BANNER_SRC if created_collection else None,
+            )
+            _log(
+                logger,
+                "[artysta] Zaktualizowano opis kolekcji"
+                + (" + baner" if created_collection else "")
+                + ".",
+            )
+        elif created_collection:
+            sc.update_custom_collection(
+                shop, token, cid, image_src=ARTIST_COLLECTION_BANNER_SRC
+            )
+            _log(logger, "[artysta] Ustawiono baner kolekcji.")
+    except sc.ShopifyError as e:
+        enrich_error = str(e)
+        _log(logger, f"[artysta] Nie zaktualizowano opisu/zdjecia: {e}")
+
+    menu_added = False
+    menu_error: str | None = None
+    try:
+        res = sc.add_menu_child_collection(
+            shop,
+            token,
+            parent_title=ARTIST_MENU_PARENT,
+            child_title=title,
+            collection_gid=sc.collection_gid(cid),
+            menu_handle=ARTIST_MENU_HANDLE,
+        )
+        menu_added = bool(res.get("created"))
+        if menu_added:
+            _log(logger, f"[artysta] Dodano '{title}' do menu pod '{ARTIST_MENU_PARENT}'.")
+        else:
+            _log(logger, f"[artysta] '{title}' juz byl w menu pod '{ARTIST_MENU_PARENT}'.")
+    except sc.ShopifyError as e:
+        menu_error = str(e)
+        _log(logger, f"[artysta] Menu (pominieto): {e}")
+
+    added: list[int] = []
+    already: list[int] = []
+    failed: list[dict[str, Any]] = []
+    for pid in product_ids or []:
+        try:
+            if sc.is_product_in_collection(
+                shop, token, int(pid), cid, collection_kind="custom"
+            ):
+                already.append(int(pid))
+                continue
+            sc.add_to_collect(shop, token, int(pid), cid)
+            added.append(int(pid))
+            _log(logger, f"[artysta] Przypisano produkt id={pid} do '{title}'.")
+        except sc.ShopifyError as e:
+            failed.append({"product_id": int(pid), "error": str(e)})
+
+    return {
+        "collection_id": cid,
+        "collection_title": title,
+        "created_collection": created_collection,
+        "menu_added": menu_added,
+        "menu_error": menu_error,
+        "enrich_error": enrich_error,
+        "portrait_url": resolved_portrait_url,
+        "added": added,
+        "already": already,
+        "failed": failed,
+    }
+
+
 def process_batch(
     *,
     items: list[dict[str, Any]],
     llm_items: list[dict[str, Any]] | None = None,
     logger: Logger | None = None,
+    on_batch_progress: BatchProgress | None = None,
+    on_product_ready: ProductReadyCallback | None = None,
 ) -> dict[str, Any]:
     """Przetwarza liste plikow (mieszanka: nowe produkty + dogrywki F2/F3).
 
@@ -986,7 +1356,7 @@ def process_batch(
     llm_items: lista slownikow zwrocona przez parse_batch_response_json (dla nowych produktow).
         Kazdy ma pole 'plik' do dopasowania po nazwie pliku.
 
-    Kolejnosc: najpierw dogrywki (nie wymagaja LLM), potem nowe produkty.
+    Kolejnosc: nowe produkty (LLM) -> (preview) -> (Full) bez LLM -> dogrywki F2+.
     Zwraca: { 'created': [...], 'followed_up': [...], 'errors': [{'file','error'}], 'skipped': [...] }.
     """
     llm_map: dict[str, dict[str, Any]] = {}
@@ -995,33 +1365,55 @@ def process_batch(
         if key:
             llm_map[key] = it
 
-    new_items = [it for it in items if it.get("follow_up_number") is None]
-    followup_items = [it for it in items if it.get("follow_up_number") is not None]
+    preview_items = [
+        it for it in items if it.get("image_role") == IMAGE_ROLE_PREVIEW
+    ]
+    new_items = dedupe_queue_items_by_work(
+        [
+            it
+            for it in items
+            if it.get("follow_up_number") is None
+            and it.get("image_role")
+            not in (IMAGE_ROLE_PREVIEW, IMAGE_ROLE_MOCKUP)
+        ]
+    )
+    full_attach_items = [
+        it
+        for it in items
+        if it.get("image_role") == IMAGE_ROLE_FULL
+        and it.get("follow_up_number") is None
+    ]
+    followup_items = [
+        it
+        for it in items
+        if it.get("follow_up_number") is not None or it.get("image_role") == IMAGE_ROLE_MOCKUP
+    ]
 
     created: list[dict[str, Any]] = []
     followed_up: list[dict[str, Any]] = []
     errors: list[dict[str, str]] = []
     skipped: list[dict[str, str]] = []
+    created_in_batch: set[str] = set()
+    batch_done = 0
+    batch_total = (
+        len(new_items)
+        + len(preview_items)
+        + len(full_attach_items)
+        + len(followup_items)
+    )
 
-    if followup_items:
-        _log(logger, f"\n[batch] Dogrywki: {len(followup_items)} plik(ow)")
-    for it in followup_items:
-        path: Path = it["path"]
-        try:
-            res = add_follow_up_image(
-                image_path=path,
-                artist=it["artist"],
-                base_title=it["base_title"],
-                follow_up_number=int(it["follow_up_number"]),
-                logger=logger,
-            )
-            followed_up.append({"file": path.name, **res})
-        except ProductNotFoundError as e:
-            _log(logger, f"[batch] POMINIETO {path.name}: {e}")
-            skipped.append({"file": path.name, "reason": str(e)})
-        except Exception as e:
-            _log(logger, f"[batch] BLAD (dogrywka) {path.name}: {e}")
-            errors.append({"file": path.name, "error": str(e)})
+    def _batch_tick(label: str) -> None:
+        nonlocal batch_done
+        batch_done += 1
+        if on_batch_progress:
+            on_batch_progress(batch_done, batch_total, label)
+
+    def _ready(item: dict[str, Any], res: dict[str, Any]) -> None:
+        if on_product_ready and res.get("product_id"):
+            try:
+                on_product_ready(item, res)
+            except Exception:
+                pass
 
     if new_items:
         _log(logger, f"\n[batch] Nowe produkty / podmiany: {len(new_items)} plik(ow)")
@@ -1030,17 +1422,55 @@ def process_batch(
         fname = path.name
         action = (it.get("action") or "create").strip()
         existing_pid = it.get("existing_product_id")
-        data = llm_map.get(fname)
+        data = lookup_llm_entry(it, llm_map)
 
         if action == "skip":
+            manual_pid = it.get("existing_product_id")
+            role = it.get("image_role")
+            if manual_pid and role == IMAGE_ROLE_FULL:
+                try:
+                    res = add_full_image(
+                        image_path=path,
+                        artist=it["artist"],
+                        base_title=it["base_title"],
+                        product_id=int(manual_pid),
+                        logger=logger,
+                    )
+                    row = {"file": fname, **res, "follow_up_number": 0}
+                    followed_up.append(row)
+                    _ready(it, res)
+                except Exception as e:
+                    _log(logger, f"[batch] BLAD (full, reczne id) {fname}: {e}")
+                    errors.append({"file": fname, "error": str(e)})
+                _batch_tick(fname)
+                continue
+            if manual_pid and role == IMAGE_ROLE_PREVIEW:
+                try:
+                    res = add_preview_image(
+                        image_path=path,
+                        artist=it["artist"],
+                        base_title=it["base_title"],
+                        product_id=int(manual_pid),
+                        logger=logger,
+                    )
+                    row = {"file": fname, **res}
+                    followed_up.append(row)
+                    _ready(it, res)
+                except Exception as e:
+                    _log(logger, f"[batch] BLAD (preview, reczne id) {fname}: {e}")
+                    errors.append({"file": fname, "error": str(e)})
+                _batch_tick(fname)
+                continue
             _log(logger, f"[batch] POMINIETO {fname} (wybor uzytkownika).")
             skipped.append({"file": fname, "reason": "Uzytkownik wybral 'pomin'."})
+            _batch_tick(fname)
             continue
 
         if action == "replace_image":
             if not existing_pid:
                 _log(logger, f"[batch] BLAD {fname}: brak id istniejacego produktu do podmiany zdjecia.")
                 errors.append({"file": fname, "error": "Brak id produktu do podmiany."})
+                _batch_tick(fname)
                 continue
             try:
                 res = replace_primary_image(
@@ -1051,16 +1481,20 @@ def process_batch(
                     base_title=it.get("base_title") or it["title"],
                     logger=logger,
                 )
-                followed_up.append({"file": fname, "mode": "replace_image", **res, "follow_up_number": 0})
+                row = {"file": fname, "mode": "replace_image", **res, "follow_up_number": 0}
+                followed_up.append(row)
+                _ready(it, res)
             except Exception as e:
                 _log(logger, f"[batch] BLAD (podmiana zdjecia) {fname}: {e}")
                 errors.append({"file": fname, "error": str(e)})
+            _batch_tick(fname)
             continue
 
         if action == "replace_image_and_description":
             if not existing_pid:
                 _log(logger, f"[batch] BLAD {fname}: brak id istniejacego produktu do aktualizacji.")
                 errors.append({"file": fname, "error": "Brak id produktu do aktualizacji."})
+                _batch_tick(fname)
                 continue
             if data is None:
                 _log(
@@ -1068,6 +1502,7 @@ def process_batch(
                     f"[batch] POMINIETO {fname}: akcja 'podmien obraz+opis' wymaga JSON-a z pola 'plik'.",
                 )
                 skipped.append({"file": fname, "reason": "Brak odpowiadajacego JSON dla 'obraz+opis'."})
+                _batch_tick(fname)
                 continue
             try:
                 res = update_existing_product_content(
@@ -1078,16 +1513,20 @@ def process_batch(
                     llm_data=data,
                     logger=logger,
                 )
-                created.append({"file": fname, "mode": "replace_image_and_description", **res})
+                row = {"file": fname, "mode": "replace_image_and_description", **res}
+                created.append(row)
+                _ready(it, res)
             except Exception as e:
                 _log(logger, f"[batch] BLAD (podmiana obraz+opis) {fname}: {e}")
                 errors.append({"file": fname, "error": str(e)})
+            _batch_tick(fname)
             continue
 
         # action == "create" (default) lub "force_create"
         if data is None:
             _log(logger, f"[batch] POMINIETO {fname}: brak JSON-a dla tego pliku (pole 'plik').")
             skipped.append({"file": fname, "reason": "Brak odpowiadajacego obiektu JSON (pole 'plik')."})
+            _batch_tick(fname)
             continue
         try:
             res = create_painting_product(
@@ -1096,12 +1535,111 @@ def process_batch(
                 title=it["title"],
                 llm_data=data,
                 logger=logger,
+                image_role=it.get("image_role"),
+                base_title=it.get("base_title") or it["title"],
             )
-            created.append({"file": fname, **res})
+            row = {"file": fname, **res}
+            created.append(row)
+            created_in_batch.add(fname)
+            _ready(it, res)
         except Exception as e:
             _log(logger, f"[batch] BLAD (nowy) {fname}: {e}")
             errors.append({"file": fname, "error": str(e)})
+        _batch_tick(fname)
 
+    new_item_filenames = {it["path"].name for it in new_items}
+    full_to_attach = [
+        it
+        for it in full_attach_items
+        if it["path"].name not in created_in_batch
+        and it["path"].name not in new_item_filenames
+    ]
+    if len(full_to_attach) != len(full_attach_items):
+        batch_total = (
+            len(new_items)
+            + len(preview_items)
+            + len(full_to_attach)
+            + len(followup_items)
+        )
+        if on_batch_progress and batch_done <= batch_total:
+            on_batch_progress(batch_done, batch_total, "")
+
+    if preview_items:
+        _log(logger, f"\n[batch] Podglad (preview): {len(preview_items)} plik(ow)")
+    for it in preview_items:
+        path = it["path"]
+        try:
+            res = add_preview_image(
+                image_path=path,
+                artist=it["artist"],
+                base_title=it["base_title"],
+                product_id=it.get("existing_product_id"),
+                logger=logger,
+            )
+            row = {"file": path.name, **res}
+            followed_up.append(row)
+            _ready(it, res)
+        except ProductNotFoundError as e:
+            _log(logger, f"[batch] POMINIETO {path.name}: {e}")
+            skipped.append({"file": path.name, "reason": str(e)})
+        except Exception as e:
+            _log(logger, f"[batch] BLAD (preview) {path.name}: {e}")
+            errors.append({"file": path.name, "error": str(e)})
+        _batch_tick(path.name)
+
+    if full_to_attach:
+        _log(logger, f"\n[batch] Full (dogrywka): {len(full_to_attach)} plik(ow)")
+    for it in full_to_attach:
+        path = it["path"]
+        try:
+            res = add_full_image(
+                image_path=path,
+                artist=it["artist"],
+                base_title=it["base_title"],
+                product_id=it.get("existing_product_id"),
+                logger=logger,
+            )
+            row = {"file": path.name, **res}
+            followed_up.append(row)
+            _ready(it, res)
+        except ProductNotFoundError as e:
+            _log(logger, f"[batch] POMINIETO {path.name}: {e}")
+            skipped.append({"file": path.name, "reason": str(e)})
+        except Exception as e:
+            _log(logger, f"[batch] BLAD (full) {path.name}: {e}")
+            errors.append({"file": path.name, "error": str(e)})
+        _batch_tick(path.name)
+
+    if followup_items:
+        _log(logger, f"\n[batch] Dogrywki F2+: {len(followup_items)} plik(ow)")
+    for it in followup_items:
+        path = it["path"]
+        try:
+            fkind = it.get("follow_up_kind") or FOLLOW_UP_KIND_F
+            if it.get("image_role") == IMAGE_ROLE_MOCKUP:
+                fkind = IMAGE_ROLE_MOCKUP
+            res = add_follow_up_image(
+                image_path=path,
+                artist=it["artist"],
+                base_title=it["base_title"],
+                follow_up_number=int(it["follow_up_number"] or 0),
+                follow_up_kind=fkind,
+                product_id=it.get("existing_product_id"),
+                logger=logger,
+            )
+            followed_up.append({"file": path.name, **res})
+        except ProductNotFoundError as e:
+            _log(logger, f"[batch] POMINIETO {path.name}: {e}")
+            skipped.append({"file": path.name, "reason": str(e)})
+        except Exception as e:
+            _log(logger, f"[batch] BLAD (dogrywka) {path.name}: {e}")
+            errors.append({"file": path.name, "error": str(e)})
+        _batch_tick(path.name)
+
+    if on_batch_progress and batch_total:
+        on_batch_progress(batch_total, batch_total, "Gotowe")
+
+    collection_gaps = audit_batch_collection_gaps(created, logger=logger)
     _log(
         logger,
         f"\n[batch] GOTOWE. Utworzono: {len(created)}, dograno: {len(followed_up)}, "
@@ -1112,29 +1650,24 @@ def process_batch(
         "followed_up": followed_up,
         "skipped": skipped,
         "errors": errors,
+        "collection_gaps": collection_gaps,
     }
 
 
-def add_follow_up_image(
-    *,
-    image_path: Path,
+def _find_product_for_base(
+    shop: str,
+    token: str,
     artist: str,
     base_title: str,
-    follow_up_number: int,
+    *,
     logger: Logger | None = None,
+    log_prefix: str = "[obraz]",
 ) -> dict[str, Any]:
-    """Dogrywa dodatkowe zdjecie (F2, F3...) do istniejacego produktu.
-
-    Szuka produktu o tytule '{artist} - {base_title}' (lub po slug handle).
-    Jesli nie istnieje - rzuca ProductNotFoundError.
-    """
-    shop, token = sc.load_session()
-    _log(logger, f"[shopify] Sesja: {shop}")
-
+    """Szuka produktu po tagu src:... lub tytule '{artist} - {base_title}'."""
     key = compute_source_key(artist, base_title)
     prod: dict | None = None
     if key:
-        _log(logger, f"[dogrywka] Szukam po kodzie: {source_key_tag(key)}")
+        _log(logger, f"{log_prefix} Szukam po kodzie: {source_key_tag(key)}")
         try:
             matches = sc.find_products_by_tag(shop, token, source_key_tag(key))
         except sc.ShopifyError:
@@ -1144,23 +1677,278 @@ def add_follow_up_image(
 
     if not prod:
         target_title = f"{artist} - {base_title}"
-        _log(logger, f"[dogrywka] Fallback po tytule: '{target_title}'")
+        _log(logger, f"{log_prefix} Fallback po tytule: '{target_title}'")
         prod = sc.find_product_by_title(shop, token, target_title)
 
     if not prod:
-        raise ProductNotFoundError(
-            f"Nie znaleziono produktu bazowego dla '{artist} - {base_title}' (ani po kodzie, ani po tytule). "
-            "Najpierw utworz produkt orginalny (bez sufiksu F), a potem dogrywaj kolejne zdjecia."
+        prod = _find_product_in_artist_collection(
+            shop, token, artist, base_title, logger=logger, log_prefix=log_prefix
         )
+
+    if not prod:
+        tag_hint = source_key_tag(key) if key else "(brak kodu)"
+        target_title = f"{artist} - {base_title}"
+        raise ProductNotFoundError(
+            f"Nie znaleziono produktu dla '{artist} - {base_title}'.\n"
+            f"Szukany tag: {tag_hint}, tytul: '{target_title}'.\n"
+            "Najpierw utworz produkt (plik Full + JSON) z TYM SAMYM tytulem bazowym w nazwie "
+            "(np. «The Harvesters» w Full i w preview), potem wrzuc preview.\n"
+            "Jesli produkt jest po polsku w sklepie, uzyj polskiego tytulu w obu nazwach plikow."
+        )
+    return prod
+
+
+def _find_product_in_artist_collection(
+    shop: str,
+    token: str,
+    artist: str,
+    base_title: str,
+    *,
+    logger: Logger | None = None,
+    log_prefix: str = "[match]",
+) -> dict[str, Any] | None:
+    """Fallback: produkt w kolekcji artysty po fragmencie handle / tagu src:...__<slug>."""
+    base_slug = slugify(base_title)
+    if not base_slug:
+        return None
+    try:
+        products = get_artist_products(artist, logger=logger)
+    except Exception:
+        return None
+    if not products:
+        return None
+
+    matches: list[dict[str, Any]] = []
+    for p in products:
+        handle = slugify(p.get("handle") or "")
+        if handle.endswith(base_slug) or f"-{base_slug}" in handle:
+            matches.append(p)
+            continue
+        for raw_tag in (p.get("tags") or "").split(","):
+            tag = raw_tag.strip().lower()
+            if tag.startswith("src:") and tag.endswith(f"__{base_slug}"):
+                matches.append(p)
+                break
+
+    if len(matches) == 1:
+        _log(
+            logger,
+            f"{log_prefix} Kolekcja artysty -> id={matches[0].get('id')} "
+            f"(handle/tag pasuje do '{base_title}').",
+        )
+        return matches[0]
+    if len(matches) > 1:
+        _log(
+            logger,
+            f"{log_prefix} W kolekcji artysty jest {len(matches)} produktow pasujacych "
+            f"do '{base_title}' — doprecyzuj tytul w nazwie pliku lub dodaj tag src:.",
+        )
+    return None
+
+
+def _delete_images_matching(
+    shop: str,
+    token: str,
+    product_id: int,
+    *,
+    predicate: Callable[[str | None], bool],
+    logger: Logger | None = None,
+) -> None:
+    for im in sc.list_product_images(shop, token, product_id):
+        if predicate(im.get("alt")):
+            try:
+                sc.delete_product_image(shop, token, product_id, int(im["id"]))
+                _log(logger, f"[obraz] Usunieto stare id={im.get('id')} alt='{im.get('alt')}'")
+            except sc.ShopifyError as e:
+                _log(logger, f"[obraz] Nie usunieto id={im.get('id')}: {e}")
+
+
+def _preview_image_id(images: list[dict]) -> int | None:
+    for im in images:
+        if alt_is_catalog_preview(im.get("alt")):
+            try:
+                return int(im["id"])
+            except (TypeError, ValueError):
+                continue
+    return None
+
+
+def _product_for_attach(
+    shop: str,
+    token: str,
+    *,
+    artist: str,
+    base_title: str,
+    product_id: int | None = None,
+    logger: Logger | None = None,
+    log_prefix: str = "[obraz]",
+) -> dict[str, Any]:
+    if product_id:
+        prod = sc.get_product(shop, token, int(product_id))
+        if not prod:
+            raise ProductNotFoundError(f"Nie znaleziono produktu id={product_id}.")
+        _log(logger, f"{log_prefix} Produkt reczny id={product_id} handle={prod.get('handle')}")
+        return prod
+    prod = _find_product_for_base(
+        shop, token, artist, base_title, logger=logger, log_prefix=log_prefix
+    )
+    if not prod:
+        raise ProductNotFoundError(
+            f"Nie znaleziono produktu dla '{artist} - {base_title}'."
+        )
+    return prod
+
+
+def add_preview_image(
+    *,
+    image_path: Path,
+    artist: str,
+    base_title: str,
+    product_id: int | None = None,
+    logger: Logger | None = None,
+) -> dict[str, Any]:
+    """Wgrywa (preview) — zdjecie glowne w kolekcjach/menu, ukryte w galerii PDP (motyw)."""
+    shop, token = sc.load_session()
+    _log(logger, f"[preview] Sesja: {shop}")
+    prod = _product_for_attach(
+        shop,
+        token,
+        artist=artist,
+        base_title=base_title,
+        product_id=product_id,
+        logger=logger,
+        log_prefix="[preview]",
+    )
+    pid = int(prod.get("id"))
+    handle = prod.get("handle")
+    _ensure_source_key(product=prod, artist=artist, base_title=base_title, logger=logger)
+
+    _delete_images_matching(
+        shop, token, pid, predicate=alt_is_catalog_preview, logger=logger
+    )
+
+    alt = preview_alt_text(artist, base_title)
+    _log(logger, f"[preview] Wgrywam: {image_path.name} (alt: '{alt}')")
+    img = sc.upload_image(shop, token, pid, image_path, alt=alt, position=2, logger=logger)
+    new_id = int(img.get("id") or 0)
+    if new_id:
+        try:
+            sc.set_product_featured_image(shop, token, pid, new_id)
+            _log(logger, f"[preview] Ustawiono featured image_id={new_id}")
+        except sc.ShopifyError as e:
+            _log(logger, f"[preview] Nie ustawiono featured: {e}")
+
+    admin_url = f"https://{shop.replace('.myshopify.com', '')}.myshopify.com/admin/products/{pid}"
+    return {
+        "product_id": pid,
+        "handle": handle,
+        "admin_url": admin_url,
+        "image_id": new_id,
+        "mode": "preview",
+    }
+
+
+def add_full_image(
+    *,
+    image_path: Path,
+    artist: str,
+    base_title: str,
+    product_id: int | None = None,
+    logger: Logger | None = None,
+) -> dict[str, Any]:
+    """Wgrywa (Full) — pierwsze w galerii PDP; featured zostaje (preview) jesli jest."""
+    shop, token = sc.load_session()
+    _log(logger, f"[full] Sesja: {shop}")
+    prod = _product_for_attach(
+        shop,
+        token,
+        artist=artist,
+        base_title=base_title,
+        product_id=product_id,
+        logger=logger,
+        log_prefix="[full]",
+    )
+    pid = int(prod.get("id"))
+    handle = prod.get("handle")
+    _ensure_source_key(product=prod, artist=artist, base_title=base_title, logger=logger)
+
+    existing = sc.list_product_images(shop, token, pid)
+    preview_id = _preview_image_id(existing)
+
+    _delete_images_matching(
+        shop, token, pid, predicate=alt_is_gallery_full, logger=logger
+    )
+
+    alt = full_alt_text(artist, base_title)
+    _log(logger, f"[full] Wgrywam: {image_path.name} (alt: '{alt}')")
+    img = sc.upload_image(shop, token, pid, image_path, alt=alt, position=1, logger=logger)
+    new_id = int(img.get("id") or 0)
+    if new_id:
+        try:
+            sc.set_image_position(shop, token, pid, new_id, 1)
+        except sc.ShopifyError as e:
+            _log(logger, f"[full] position=1: {e}")
+        if preview_id:
+            try:
+                sc.set_product_featured_image(shop, token, pid, preview_id)
+                _log(logger, f"[full] Featured pozostaje preview id={preview_id}")
+            except sc.ShopifyError as e:
+                _log(logger, f"[full] Nie przywrocono featured preview: {e}")
+
+    admin_url = f"https://{shop.replace('.myshopify.com', '')}.myshopify.com/admin/products/{pid}"
+    return {
+        "product_id": pid,
+        "handle": handle,
+        "admin_url": admin_url,
+        "image_id": new_id,
+        "mode": "full",
+    }
+
+
+def add_follow_up_image(
+    *,
+    image_path: Path,
+    artist: str,
+    base_title: str,
+    follow_up_number: int,
+    follow_up_kind: str = FOLLOW_UP_KIND_F,
+    mockup_name_suffix: str = "",
+    product_id: int | None = None,
+    logger: Logger | None = None,
+) -> dict[str, Any]:
+    """Dogrywa dodatkowe zdjecie do istniejacego produktu.
+
+    follow_up_kind: 'F' (F2+), 'I' (I1, I2...), 'mockup' ((mockup) — widoczny w galerii PDP).
+    """
+    shop, token = sc.load_session()
+    _log(logger, f"[shopify] Sesja: {shop}")
+
+    prod = _product_for_attach(
+        shop,
+        token,
+        artist=artist,
+        base_title=base_title,
+        product_id=product_id,
+        logger=logger,
+        log_prefix="[dogrywka]",
+    )
     pid = int(prod.get("id"))
     handle = prod.get("handle")
     _log(logger, f"[dogrywka] OK baza: id={pid} handle={handle}")
 
     _ensure_source_key(product=prod, artist=artist, base_title=base_title, logger=logger)
 
-    alt = f"{artist} - {base_title} (F{follow_up_number})"
-    _log(logger, f"[obraz] Dogrywam zdjecie F{follow_up_number}: {image_path.name}")
-    img = sc.upload_image(shop, token, pid, image_path, alt=alt)
+    if follow_up_kind == IMAGE_ROLE_MOCKUP:
+        alt = mockup_alt_text(artist, base_title, name_suffix=mockup_name_suffix)
+        log_tag = "mockup"
+    elif follow_up_kind == FOLLOW_UP_KIND_I:
+        alt = installment_alt_text(artist, base_title, follow_up_number)
+        log_tag = f"I{follow_up_number}"
+    else:
+        alt = f"{artist} - {base_title} (F{follow_up_number})"
+        log_tag = f"F{follow_up_number}"
+    _log(logger, f"[obraz] Dogrywam zdjecie {log_tag}: {image_path.name}")
+    img = sc.upload_image(shop, token, pid, image_path, alt=alt, logger=logger)
     _log(logger, f"[obraz] OK image_id={img.get('id')}")
 
     try:
@@ -1176,8 +1964,9 @@ def add_follow_up_image(
         "admin_url": admin_url,
         "image_id": img.get("id"),
         "follow_up_number": follow_up_number,
+        "follow_up_kind": follow_up_kind,
         "image_count": total,
-        "mode": "follow_up",
+        "mode": "follow_up" if follow_up_kind != IMAGE_ROLE_MOCKUP else "mockup",
     }
 
 
@@ -1213,15 +2002,113 @@ def _match_option_index(option_names: list[str], target: str) -> int | None:
     return None
 
 
+def _variant_key_from_rest(v: dict[str, Any]) -> tuple[str, ...]:
+    """Klucz dopasowania wariantu: tylko niepuste option1/2/3 (jak w szablonie)."""
+    key_parts: list[str] = []
+    for i in (1, 2, 3):
+        val = v.get(f"option{i}")
+        if val is not None and str(val).strip():
+            key_parts.append(str(val).strip())
+    return tuple(key_parts)
+
+
+def _price_sort_key(p: str) -> tuple[int, float | str]:
+    try:
+        return (0, float(p.replace(",", ".").strip()))
+    except ValueError:
+        return (1, p)
+
+
+def _fetch_live_prices_from_catalog(
+    logger: Logger | None,
+    *,
+    product_type: str | None = PRODUCT_TYPE,
+    on_catalog_progress: Callable[[str], None] | None = None,
+    should_cancel: Callable[[], bool] | None = None,
+) -> dict[tuple[str, ...], str] | None:
+    """Zbiera ceny wariantow ze wszystkich produktow danego typu (np. 'Obraz').
+
+    Dla kazdego klucza (option1/2/3) zbiera unikalne ceny z calego katalogu.
+    Gdy produkt referencyjny ze szablonu (shopify:ID) juz nie istnieje, nadal
+    mamy poprawny podglad 'Obecna cena' w dialogu hurtowej zmiany.
+
+    - Jedna unikalna cena w sklepie dla klucza -> wyswietlamy ja.
+    - Wiecej niz jedna -> string 'rozne (N)' (jak w widoku grupowym GUI).
+    """
+    try:
+        shop, token = sc.load_session()
+    except (sc.ShopifyError, OSError, ValueError) as e:
+        _log(logger, f"[ceny] Brak sesji — nie skanuje katalogu: {e}")
+        return None
+
+    _log(
+        logger,
+        f"[ceny] Skanuje ceny we wszystkich produktach (typ={product_type or 'dowolny'})...",
+    )
+
+    def _on_page(n: int) -> None:
+        msg = f"[ceny] Pobrano {n} produktow ze sklepu (agregacja cen)..."
+        _log(logger, msg)
+        if on_catalog_progress:
+            on_catalog_progress(msg)
+
+    try:
+        products = sc.fetch_all_products(
+            shop,
+            token,
+            product_type=product_type,
+            should_cancel=should_cancel,
+            on_page_progress=_on_page,
+        )
+    except sc.OperationCancelled:
+        _log(logger, "[ceny] Przerwano pobieranie katalogu — zostaja ceny z pliku szablonu.")
+        return None
+    except sc.ShopifyError as e:
+        _log(logger, f"[ceny] Nie udalo sie pobrac katalogu: {e}")
+        return None
+
+    by_key: dict[tuple[str, ...], set[str]] = {}
+    for prod in products:
+        for v in prod.get("variants") or []:
+            k = _variant_key_from_rest(v)
+            if not k:
+                continue
+            raw = str(v.get("price") or "").strip()
+            if not raw:
+                continue
+            by_key.setdefault(k, set()).add(raw)
+
+    out: dict[tuple[str, ...], str] = {}
+    for k, prices in by_key.items():
+        uniq = sorted(prices, key=_price_sort_key)
+        if len(uniq) == 1:
+            out[k] = uniq[0]
+        else:
+            out[k] = f"rozne ({len(uniq)})"
+
+    _log(
+        logger,
+        f"[ceny] Obecna cena = agregacja ze sklepu ({len(products)} prod., "
+        f"{len(by_key)} roznych kluczy wariantow).",
+    )
+    return out
+
+
 def get_reference_variant_rows(
     logger: Logger | None = None,
     *,
     template_id: str | None = None,
+    on_catalog_progress: Callable[[str], None] | None = None,
+    should_cancel: Callable[[], bool] | None = None,
 ) -> list[dict[str, Any]]:
     """Zwraca liste wariantow z lokalnego szablonu z polami:
       'key'    - krotka wartosci (option1, option2, option3) (do matchingu)
       'label'  - string 'Rodzaj drewna / Rozmiar / Kolor' w kolejnosci wyswietlania
-      'price'  - obecna cena (string)
+      'price'  - obecna cena (string): **nadpisywana** przez agregacje cen z calego
+                 katalogu produktow danego typu (domyslnie 'Obraz'); przy jednej
+                 cenie dla klucza — ta cena, przy roznych — 'rozne (N)'. Jesli skan
+                 sie nie uda, zostaje cena z pliku szablonu.
+
     Wiersze sa POSORTOWANE wedlug priorytetu: Rodzaj drewna -> Rozmiar -> Kolor.
 
     `template_id`: id szablonu (jesli None, uzywa domyslnego).
@@ -1292,6 +2179,19 @@ def get_reference_variant_rows(
     rows.sort(key=lambda r: r["_sort"])
     for r in rows:
         r.pop("_sort", None)
+
+    live_prices = _fetch_live_prices_from_catalog(
+        logger,
+        product_type=PRODUCT_TYPE,
+        on_catalog_progress=on_catalog_progress,
+        should_cancel=should_cancel,
+    )
+    if live_prices:
+        for r in rows:
+            k = r["key"]
+            if k in live_prices:
+                r["price"] = live_prices[k]
+
     return rows
 
 
@@ -1300,6 +2200,8 @@ def update_all_product_prices(
     option_values_to_price: dict[tuple[str, ...], str],
     product_type: str | None = PRODUCT_TYPE,
     logger: Logger | None = None,
+    should_cancel: Callable[[], bool] | None = None,
+    on_progress: Callable[[str], None] | None = None,
 ) -> dict[str, Any]:
     """Aktualizuje ceny wszystkich wariantow pasujacych do mapy option_values -> price.
 
@@ -1311,13 +2213,37 @@ def update_all_product_prices(
     shop, token = sc.load_session()
     _log(logger, f"[shopify] Sesja: {shop}")
     _log(logger, f"[ceny] Pobieram wszystkie produkty (typ={product_type or 'dowolny'})...")
-    products = sc.iter_all_products(shop, token, product_type=product_type)
+    if on_progress:
+        on_progress("Ladowanie katalogu produktow...")
+
+    def _on_page(n: int) -> None:
+        _log(logger, f"[ceny] Pobrano {n} produktow...")
+        if on_progress:
+            on_progress(f"Ladowanie katalogu: {n} produktow...")
+
+    try:
+        products = sc.fetch_all_products(
+            shop,
+            token,
+            product_type=product_type,
+            should_cancel=should_cancel,
+            on_page_progress=_on_page,
+        )
+    except sc.OperationCancelled:
+        _log(logger, "[ceny] Przerwano podczas pobierania katalogu.")
+        raise
+
     _log(logger, f"[ceny] Znaleziono {len(products)} produktow.")
 
     updated = 0
     skipped = 0
     errors: list[str] = []
-    for prod in products:
+    p_total = len(products)
+    for pi, prod in enumerate(products):
+        if should_cancel and should_cancel():
+            raise sc.OperationCancelled("Przerwano aktualizacje cen.")
+        if on_progress and p_total and (pi % 3 == 0 or pi == p_total - 1):
+            on_progress(f"Aktualizacja cen: produkt {pi + 1}/{p_total}...")
         ptitle = prod.get("title") or f"id={prod.get('id')}"
         for v in prod.get("variants") or []:
             key = tuple(

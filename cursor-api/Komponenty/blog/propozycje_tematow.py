@@ -32,7 +32,7 @@ def build_topics_screen(
     # Toolbar
     toolbar = tk.Frame(outer, bg=_BG)
     toolbar.pack(fill="x", padx=14, pady=(12, 4))
-    ttk.Button(toolbar, text="< Posty na Blogu", command=on_back).pack(side="left")
+    ttk.Button(toolbar, text="< Blog", command=on_back).pack(side="left")
     tk.Label(
         toolbar, text="Propozycje tematow", bg=_BG,
         font=("Segoe UI", 18, "bold"), fg="#222",

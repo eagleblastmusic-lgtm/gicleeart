@@ -22,8 +22,9 @@ from tkinter import filedialog, messagebox, ttk
 from typing import Any
 
 from Komponenty._shared.toast import show_toast
+from Komponenty._shared.window_geometry import position_toplevel_screen_center
 
-from . import preview, prompts, shopify_blog, storage
+from . import html_import, preview, prompts, publish, storage
 
 _LANG_LABELS = {
     "pl": "Polski",
@@ -45,7 +46,7 @@ def open_content_generator(
     """Otwiera okno generatora tresci."""
     dlg = tk.Toplevel(parent)
     dlg.title("Blog - Generator tresci")
-    dlg.geometry("1100x780")
+    position_toplevel_screen_center(dlg, 1100, 780)
     dlg.minsize(900, 650)
     try:
         dlg.transient(parent.winfo_toplevel())
@@ -176,6 +177,12 @@ def open_content_generator(
         resp_btn_row, text="🌐 Podglad w przegladarce",
         command=lambda: _open_preview(dlg, state, response_text, lang_vars, preview_label),
     ).pack(side="left", padx=(6, 0))
+    ttk.Button(
+        resp_btn_row, text="📂 Wczytaj plik HTML",
+        command=lambda: _load_html_file(
+            dlg, state, topic_var, image_var, lang_vars, preview_label, response_text,
+        ),
+    ).pack(side="left", padx=(6, 0))
 
     resp_container = ttk.Frame(resp_frame)
     resp_container.pack(fill="both", expand=True)
@@ -263,6 +270,51 @@ def _copy_to_clipboard(dlg: tk.Toplevel, content: str) -> None:
     except tk.TclError:
         return
     show_toast(dlg, "Skopiowano do schowka", duration_ms=1200)
+
+
+def _load_html_file(
+    dlg: tk.Toplevel,
+    state: dict[str, Any],
+    topic_var: tk.StringVar,
+    image_var: tk.StringVar,
+    lang_vars: dict[str, tk.BooleanVar],
+    preview_label: ttk.Label,
+    response_text: tk.Text,
+) -> None:
+    path = filedialog.askopenfilename(
+        title="Wybierz plik HTML posta",
+        filetypes=[("HTML", "*.html *.htm"), ("Wszystkie", "*.*")],
+        parent=dlg,
+    )
+    if not path:
+        return
+    try:
+        data = html_import.parse_preview_html_file(path)
+    except ValueError as e:
+        messagebox.showerror("Blad importu HTML", str(e), parent=dlg)
+        return
+
+    state["parsed"] = data
+    topic = str(data.get("topic") or "").strip()
+    if topic:
+        topic_var.set(topic)
+    hint = str(data.get("image_hint") or "").strip()
+    if hint.startswith("http://") or hint.startswith("https://"):
+        image_var.set(hint)
+
+    langs = data.get("languages") or {}
+    found = [code for code in lang_vars if code in langs]
+    pl_title = (langs.get("pl") or {}).get("title") or "(brak)"
+    preview_label.configure(
+        text=f'✅ HTML: "{pl_title[:60]}" | jezyki: {", ".join(found)}',
+        foreground="#1b5e20",
+    )
+    for code, v in lang_vars.items():
+        v.set(code in langs)
+
+    response_text.delete("1.0", "end")
+    response_text.insert("1.0", f"(wczytano z pliku HTML: {Path(path).name})\n")
+    show_toast(dlg, f"Wczytano: {Path(path).name}", duration_ms=1200)
 
 
 def _paste_from_clipboard(dlg: tk.Toplevel, target: tk.Text) -> None:
@@ -390,68 +442,21 @@ def _send_article(
     send_btn.configure(state="disabled", text="Wysylam...")
     preview_label.configure(text="⏳ Wysylam na Shopify...", foreground="#555")
 
+    topic_id = state.get("topic_id") or ""
+
     def _worker() -> None:
         try:
-            shop, token = shopify_blog.load_session()
-            blogs = shopify_blog.list_blogs(shop, token)
-            if not blogs:
-                raise shopify_blog.ShopifyError(
-                    "Brak blogow w sklepie Shopify. Utworz bloga w Shopify Admin -> Sklep internetowy -> Blog."
-                )
-            blog_id = int(blogs[0].get("id") or 0)
-
-            # 1) Utworz artykul w PL
-            tags = pl.get("tags") or []
-            if isinstance(tags, str):
-                tags = [t.strip() for t in tags.split(",") if t.strip()]
-            article = shopify_blog.create_article(
-                shop, token, blog_id,
-                title=str(pl.get("title") or ""),
-                body_html=str(pl.get("body_html") or ""),
-                summary_html=str(pl.get("summary_html") or ""),
-                tags=list(tags),
+            result = publish.publish_parsed_article(
+                data,
+                image_url=image_url,
                 author=author,
-                image_src=image_url,
-                image_alt=str(pl.get("title") or ""),
-                seo_title=str(pl.get("seo_title") or ""),
-                seo_description=str(pl.get("seo_description") or ""),
-                published=True,
+                selected_locales=selected_locales,
+                topic_id=topic_id,
             )
-            article_id = int(article.get("id") or 0)
-            if not article_id:
-                raise shopify_blog.ShopifyError(f"Shopify nie zwrocil id artykulu: {article}")
-
-            # 2) Tlumaczenia
-            translation_errors: list[str] = []
-            for locale in selected_locales:
-                loc = langs.get(locale) or {}
-                try:
-                    shopify_blog.register_article_translations(
-                        shop, token,
-                        article_id=article_id,
-                        locale=locale,
-                        title=str(loc.get("title") or ""),
-                        body_html=str(loc.get("body_html") or ""),
-                        summary_html=str(loc.get("summary_html") or ""),
-                        seo_title=str(loc.get("seo_title") or ""),
-                        seo_description=str(loc.get("seo_description") or ""),
-                    )
-                except shopify_blog.ShopifyError as e:
-                    translation_errors.append(f"{locale}: {e}")
-
-            # 3) Oznaczamy temat jako uzyty (jesli przyszlismy z propozycji)
-            topic_id = state.get("topic_id") or ""
-            if topic_id:
-                storage.mark_topic_used(topic_id, True)
-
-            # 4) Odswiez cache artykulow (bez blokowania - best effort)
-            try:
-                all_articles = shopify_blog.list_all_articles(shop, token)
-                storage.save_articles_cache(all_articles)
-            except shopify_blog.ShopifyError:
-                pass
-
-            admin_url = shopify_blog.article_admin_url(shop, blog_id, article_id)
+            article_id = result["article_id"]
+            article = result["article"]
+            translation_errors = result["translation_errors"]
+            admin_url = result["admin_url"]
             summary = (
                 f"✅ Post opublikowany!\n\n"
                 f"ID: {article_id}\nTytul: {article.get('title')}\n"

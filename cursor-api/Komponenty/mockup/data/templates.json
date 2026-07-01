@@ -1,0 +1,46 @@
+{
+  "sets": [
+    {
+      "id": "czarna_ramka_biale_pp",
+      "name": "Czarna ramka — białe passe-partout",
+      "name_suffix": "CZB",
+      "templates": [
+        {
+          "id": "czarna_ramka_pion",
+          "name": "Pion (A4)",
+          "file": "czarna_ramka_pion.png",
+          "orientation": "portrait",
+          "slot": [177, 206, 433, 611]
+        },
+        {
+          "id": "czarna_ramka_poziom",
+          "name": "Poziom (A4)",
+          "file": "czarna_ramka_poziom.png",
+          "orientation": "landscape",
+          "slot": [206, 163, 611, 433]
+        }
+      ]
+    },
+    {
+      "id": "czarna_ramka_czarne_pp",
+      "name": "Czarna ramka — czarne passe-partout",
+      "name_suffix": "CZCZ",
+      "templates": [
+        {
+          "id": "czarna_ramka_czarne_pp_pion",
+          "name": "Pion (A4)",
+          "file": "czarna_ramka_czarne_pp_pion.png",
+          "orientation": "portrait",
+          "slot": [177, 206, 433, 611]
+        },
+        {
+          "id": "czarna_ramka_czarne_pp_poziom",
+          "name": "Poziom (A4)",
+          "file": "czarna_ramka_czarne_pp_poziom.png",
+          "orientation": "landscape",
+          "slot": [206, 163, 611, 433]
+        }
+      ]
+    }
+  ]
+}

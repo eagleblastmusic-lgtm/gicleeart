@@ -23,6 +23,7 @@
 ## Flow publikacji
 
 - **FB single photo**: POST /{page_id}/photos url=<cdn> message=<caption> access_token=...
+- **FB sam tekst**: POST /{page_id}/feed message=<tresc> access_token=... (bez zdjecia)
 - **IG single**: POST /{ig_user_id}/media image_url=... caption=... -> creation_id.
   Potem POST /{ig_user_id}/media_publish creation_id=... -> media_id.
 - **IG carousel (2-10 obrazow)**:
@@ -511,6 +512,25 @@ def publish_fb_photo(
     return post_id
 
 
+def publish_fb_feed_text(
+    *,
+    page_id: str,
+    access_token: str,
+    message: str,
+) -> str:
+    """POST /{page_id}/feed — post ze samym tekstem (bez grafiki). Zwraca id postu."""
+    token = resolve_fb_page_access_token(page_id, access_token)
+    feed_url = f"{GRAPH_BASE}/{page_id}/feed"
+    res = _post(feed_url, {
+        "message": message,
+        "access_token": token,
+    })
+    post_id = str(res.get("id") or "")
+    if not post_id:
+        raise MetaError(f"FB feed (tekst): brak id w odpowiedzi {res}")
+    return post_id
+
+
 def _fb_upload_unpublished(
     page_id: str,
     access_token: str,
@@ -692,15 +712,43 @@ def publish_item(
     channels: list[str] | None = None,
     *,
     logger=None,
+    skip_preflight: bool = False,
 ) -> dict[str, str]:
     """Publikuje pozycje na wybranych kanalach. Zwraca dict {channel: status_msg}.
 
     Per-kanal try/except: blad w jednym kanale nie blokuje pozostalych.
     Aktualizuje pola item.published_<channel> + item.media_ids + zapisuje w meta_state.
     Caller odpowiada za save_queue().
+
+    Domyslnie uruchamia pre-flight check (credentiale, caption, obrazy) i nie
+    wysyla do kanalow, ktore go nie przejdza. `skip_preflight=True` pomija check.
     """
     if channels is None:
         channels = list(item.channels_enabled) or list(_cp.CHANNEL_ORDER)
+
+    if not skip_preflight:
+        try:
+            from . import preflight as _pf
+        except ImportError:
+            _pf = None  # type: ignore[assignment]
+        if _pf is not None:
+            skipped_channels: list[str] = []
+            for ch in list(channels):
+                rep = _pf.preflight_for_channel(item, ch)
+                if not rep.ok:
+                    msg = _pf.summarize_result(rep)
+                    err_msg = f"error: preflight ({msg})"
+                    setattr(item, f"published_{ch}", err_msg)
+                    storage.append_meta_log({
+                        "item_id": item.id, "channel": ch, "status": "error",
+                        "message": msg, "phase": "preflight",
+                    })
+                    skipped_channels.append(ch)
+            if skipped_channels:
+                channels = [c for c in channels if c not in skipped_channels]
+            if not channels:
+                item.status = "error"
+                return {ch: getattr(item, f"published_{ch}", "error") for ch in skipped_channels}
 
     # Przygotuj CDN URL-e (raz per platforma - FB i IG osobno)
     fb_main_url = ""

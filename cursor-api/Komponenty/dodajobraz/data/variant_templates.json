@@ -3,7 +3,7 @@
     {
       "id": "b7b753154c3e",
       "name": "Podstawowy",
-      "is_default": true,
+      "is_default": false,
       "source": "shopify:15524677845340",
       "options": [
         {
@@ -19,7 +19,641 @@
         {
           "name": "Rozmiar",
           "values": [
-            "S",
+            "M",
+            "L",
+            "XL"
+          ],
+          "position": 2
+        },
+        {
+          "name": "Rodzaj drewna",
+          "values": [
+            "Sosna",
+            "Dąb"
+          ],
+          "position": 3
+        },
+        {
+          "name": "Kolor passe-partout",
+          "values": [
+            "Białe",
+            "Czarne"
+          ],
+          "position": 4
+        }
+      ],
+      "variants": [
+        {
+          "option1": "Czarny",
+          "option2": "M",
+          "option3": "Sosna",
+          "price": "229.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Czarny",
+          "option2": "M",
+          "option3": "Sosna",
+          "price": "229.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Czarny",
+          "option2": "M",
+          "option3": "Dąb",
+          "price": "299.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Czarny",
+          "option2": "M",
+          "option3": "Dąb",
+          "price": "299.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Czarny",
+          "option2": "L",
+          "option3": "Sosna",
+          "price": "349.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Czarny",
+          "option2": "L",
+          "option3": "Sosna",
+          "price": "349.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Czarny",
+          "option2": "L",
+          "option3": "Dąb",
+          "price": "449.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Czarny",
+          "option2": "L",
+          "option3": "Dąb",
+          "price": "449.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Czarny",
+          "option2": "XL",
+          "option3": "Sosna",
+          "price": "499.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Czarny",
+          "option2": "XL",
+          "option3": "Sosna",
+          "price": "499.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Czarny",
+          "option2": "XL",
+          "option3": "Dąb",
+          "price": "699.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Czarny",
+          "option2": "XL",
+          "option3": "Dąb",
+          "price": "699.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Jasny Brąz",
+          "option2": "M",
+          "option3": "Dąb",
+          "price": "299.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Jasny Brąz",
+          "option2": "M",
+          "option3": "Dąb",
+          "price": "299.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Jasny Brąz",
+          "option2": "L",
+          "option3": "Dąb",
+          "price": "449.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Jasny Brąz",
+          "option2": "L",
+          "option3": "Dąb",
+          "price": "449.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Jasny Brąz",
+          "option2": "XL",
+          "option3": "Dąb",
+          "price": "699.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Jasny Brąz",
+          "option2": "XL",
+          "option3": "Dąb",
+          "price": "699.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Brąz",
+          "option2": "M",
+          "option3": "Dąb",
+          "price": "299.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Brąz",
+          "option2": "M",
+          "option3": "Dąb",
+          "price": "299.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Brąz",
+          "option2": "L",
+          "option3": "Dąb",
+          "price": "449.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Brąz",
+          "option2": "L",
+          "option3": "Dąb",
+          "price": "449.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Brąz",
+          "option2": "XL",
+          "option3": "Dąb",
+          "price": "699.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Brąz",
+          "option2": "XL",
+          "option3": "Dąb",
+          "price": "699.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Ciemny Brąz",
+          "option2": "M",
+          "option3": "Dąb",
+          "price": "299.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Ciemny Brąz",
+          "option2": "M",
+          "option3": "Dąb",
+          "price": "299.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Ciemny Brąz",
+          "option2": "L",
+          "option3": "Dąb",
+          "price": "449.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Ciemny Brąz",
+          "option2": "L",
+          "option3": "Dąb",
+          "price": "449.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Ciemny Brąz",
+          "option2": "XL",
+          "option3": "Dąb",
+          "price": "699.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Ciemny Brąz",
+          "option2": "XL",
+          "option3": "Dąb",
+          "price": "699.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        }
+      ],
+      "created_at": "2026-04-20T18:09:12",
+      "updated_at": "2026-06-16T15:58:54"
+    },
+    {
+      "id": "76ae7efa4f33",
+      "name": "Podstawowy (kopia)",
+      "is_default": false,
+      "source": "manual",
+      "options": [
+        {
+          "name": "Kolor",
+          "values": [
+            "Czarny",
+            "Jasny Brąz",
+            "Brąz",
+            "Ciemny Brąz"
+          ],
+          "position": 1
+        },
+        {
+          "name": "Rozmiar",
+          "values": [
+            "M",
+            "L",
+            "XL"
+          ],
+          "position": 2
+        },
+        {
+          "name": "Rodzaj drewna",
+          "values": [
+            "Sosna",
+            "Dąb"
+          ],
+          "position": 3
+        },
+        {
+          "name": "Kolor passe-partout",
+          "values": [
+            "Białe",
+            "Czarne"
+          ],
+          "position": 4
+        }
+      ],
+      "variants": [
+        {
+          "option1": "Czarny",
+          "option2": "M",
+          "option3": "Sosna",
+          "price": "229.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Czarny",
+          "option2": "M",
+          "option3": "Sosna",
+          "price": "229.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Czarny",
+          "option2": "M",
+          "option3": "Dąb",
+          "price": "299.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Czarny",
+          "option2": "M",
+          "option3": "Dąb",
+          "price": "299.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Czarny",
+          "option2": "L",
+          "option3": "Sosna",
+          "price": "349.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Czarny",
+          "option2": "L",
+          "option3": "Sosna",
+          "price": "349.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Czarny",
+          "option2": "L",
+          "option3": "Dąb",
+          "price": "449.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Czarny",
+          "option2": "L",
+          "option3": "Dąb",
+          "price": "449.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Czarny",
+          "option2": "XL",
+          "option3": "Sosna",
+          "price": "499.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Czarny",
+          "option2": "XL",
+          "option3": "Sosna",
+          "price": "499.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Czarny",
+          "option2": "XL",
+          "option3": "Dąb",
+          "price": "699.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Czarny",
+          "option2": "XL",
+          "option3": "Dąb",
+          "price": "699.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Jasny Brąz",
+          "option2": "M",
+          "option3": "Dąb",
+          "price": "299.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Jasny Brąz",
+          "option2": "M",
+          "option3": "Dąb",
+          "price": "299.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Jasny Brąz",
+          "option2": "L",
+          "option3": "Dąb",
+          "price": "449.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Jasny Brąz",
+          "option2": "L",
+          "option3": "Dąb",
+          "price": "449.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Jasny Brąz",
+          "option2": "XL",
+          "option3": "Dąb",
+          "price": "699.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Jasny Brąz",
+          "option2": "XL",
+          "option3": "Dąb",
+          "price": "699.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Brąz",
+          "option2": "M",
+          "option3": "Dąb",
+          "price": "299.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Brąz",
+          "option2": "M",
+          "option3": "Dąb",
+          "price": "299.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Brąz",
+          "option2": "L",
+          "option3": "Dąb",
+          "price": "449.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Brąz",
+          "option2": "L",
+          "option3": "Dąb",
+          "price": "449.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Brąz",
+          "option2": "XL",
+          "option3": "Dąb",
+          "price": "699.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Brąz",
+          "option2": "XL",
+          "option3": "Dąb",
+          "price": "699.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Ciemny Brąz",
+          "option2": "M",
+          "option3": "Dąb",
+          "price": "299.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Ciemny Brąz",
+          "option2": "M",
+          "option3": "Dąb",
+          "price": "299.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Ciemny Brąz",
+          "option2": "L",
+          "option3": "Dąb",
+          "price": "449.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Ciemny Brąz",
+          "option2": "L",
+          "option3": "Dąb",
+          "price": "449.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        },
+        {
+          "option1": "Ciemny Brąz",
+          "option2": "XL",
+          "option3": "Dąb",
+          "price": "699.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Białe"
+        },
+        {
+          "option1": "Ciemny Brąz",
+          "option2": "XL",
+          "option3": "Dąb",
+          "price": "699.00",
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "option4": "Czarne"
+        }
+      ],
+      "created_at": "2026-04-22T02:08:03",
+      "updated_at": "2026-06-16T15:58:54"
+    },
+    {
+      "id": "968b9e43df3b",
+      "name": "Szablon z Henri Fantin-Latour - Róże i lilie",
+      "is_default": true,
+      "source": "shopify:15611315487068",
+      "options": [
+        {
+          "name": "Kolor",
+          "values": [
+            "Czarny",
+            "Jasny Brąz",
+            "Brąz",
+            "Ciemny Brąz"
+          ],
+          "position": 1
+        },
+        {
+          "name": "Rozmiar",
+          "values": [
+            "M",
             "L",
             "XL"
           ],
@@ -37,9 +671,9 @@
       "variants": [
         {
           "option1": "Czarny",
-          "option2": "S",
+          "option2": "M",
           "option3": "Sosna",
-          "price": "248.00",
+          "price": "229.00",
           "weight": 0.0,
           "weight_unit": "kg",
           "inventory_policy": "deny",
@@ -50,9 +684,9 @@
         },
         {
           "option1": "Czarny",
-          "option2": "S",
+          "option2": "M",
           "option3": "Dąb",
-          "price": "359.00",
+          "price": "299.00",
           "weight": 0.0,
           "weight_unit": "kg",
           "inventory_policy": "deny",
@@ -65,7 +699,7 @@
           "option1": "Czarny",
           "option2": "L",
           "option3": "Sosna",
-          "price": "359.00",
+          "price": "349.00",
           "weight": 0.0,
           "weight_unit": "kg",
           "inventory_policy": "deny",
@@ -78,7 +712,7 @@
           "option1": "Czarny",
           "option2": "L",
           "option3": "Dąb",
-          "price": "459.00",
+          "price": "449.00",
           "weight": 0.0,
           "weight_unit": "kg",
           "inventory_policy": "deny",
@@ -91,7 +725,7 @@
           "option1": "Czarny",
           "option2": "XL",
           "option3": "Sosna",
-          "price": "459.00",
+          "price": "499.00",
           "weight": 0.0,
           "weight_unit": "kg",
           "inventory_policy": "deny",
@@ -104,7 +738,7 @@
           "option1": "Czarny",
           "option2": "XL",
           "option3": "Dąb",
-          "price": "559.00",
+          "price": "699.00",
           "weight": 0.0,
           "weight_unit": "kg",
           "inventory_policy": "deny",
@@ -115,9 +749,9 @@
         },
         {
           "option1": "Jasny Brąz",
-          "option2": "S",
+          "option2": "M",
           "option3": "Dąb",
-          "price": "359.00",
+          "price": "299.00",
           "weight": 0.0,
           "weight_unit": "kg",
           "inventory_policy": "deny",
@@ -130,7 +764,7 @@
           "option1": "Jasny Brąz",
           "option2": "L",
           "option3": "Dąb",
-          "price": "459.00",
+          "price": "449.00",
           "weight": 0.0,
           "weight_unit": "kg",
           "inventory_policy": "deny",
@@ -143,7 +777,7 @@
           "option1": "Jasny Brąz",
           "option2": "XL",
           "option3": "Dąb",
-          "price": "559.00",
+          "price": "699.00",
           "weight": 0.0,
           "weight_unit": "kg",
           "inventory_policy": "deny",
@@ -154,9 +788,9 @@
         },
         {
           "option1": "Brąz",
-          "option2": "S",
+          "option2": "M",
           "option3": "Dąb",
-          "price": "358.00",
+          "price": "299.00",
           "weight": 0.0,
           "weight_unit": "kg",
           "inventory_policy": "deny",
@@ -169,7 +803,7 @@
           "option1": "Brąz",
           "option2": "L",
           "option3": "Dąb",
-          "price": "459.00",
+          "price": "449.00",
           "weight": 0.0,
           "weight_unit": "kg",
           "inventory_policy": "deny",
@@ -182,7 +816,7 @@
           "option1": "Brąz",
           "option2": "XL",
           "option3": "Dąb",
-          "price": "559.00",
+          "price": "699.00",
           "weight": 0.0,
           "weight_unit": "kg",
           "inventory_policy": "deny",
@@ -193,9 +827,9 @@
         },
         {
           "option1": "Ciemny Brąz",
-          "option2": "S",
+          "option2": "M",
           "option3": "Dąb",
-          "price": "359.00",
+          "price": "299.00",
           "weight": 0.0,
           "weight_unit": "kg",
           "inventory_policy": "deny",
@@ -208,7 +842,7 @@
           "option1": "Ciemny Brąz",
           "option2": "L",
           "option3": "Dąb",
-          "price": "459.00",
+          "price": "449.00",
           "weight": 0.0,
           "weight_unit": "kg",
           "inventory_policy": "deny",
@@ -221,7 +855,7 @@
           "option1": "Ciemny Brąz",
           "option2": "XL",
           "option3": "Dąb",
-          "price": "559.00",
+          "price": "699.00",
           "weight": 0.0,
           "weight_unit": "kg",
           "inventory_policy": "deny",
@@ -231,8 +865,242 @@
           "position": 15
         }
       ],
-      "created_at": "2026-04-20T18:09:12",
-      "updated_at": "2026-04-20T18:10:35"
+      "created_at": "2026-06-03T02:45:49",
+      "updated_at": "2026-06-16T15:58:54"
+    },
+    {
+      "id": "df5b0e49b2c3",
+      "name": "Szablon z Henri Fantin-Latour - Róże i lilie (kopia)",
+      "is_default": false,
+      "source": "manual",
+      "options": [
+        {
+          "name": "Kolor",
+          "values": [
+            "Czarny",
+            "Jasny Brąz",
+            "Brąz",
+            "Ciemny Brąz"
+          ],
+          "position": 1
+        },
+        {
+          "name": "Rozmiar",
+          "values": [
+            "M",
+            "L",
+            "XL"
+          ],
+          "position": 2
+        },
+        {
+          "name": "Rodzaj drewna",
+          "values": [
+            "Sosna",
+            "Dąb"
+          ],
+          "position": 3
+        }
+      ],
+      "variants": [
+        {
+          "option1": "Czarny",
+          "option2": "M",
+          "option3": "Sosna",
+          "price": "229.00",
+          "weight": 0.0,
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "fulfillment_service": "manual",
+          "requires_shipping": true,
+          "taxable": true,
+          "position": 1
+        },
+        {
+          "option1": "Czarny",
+          "option2": "M",
+          "option3": "Dąb",
+          "price": "299.00",
+          "weight": 0.0,
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "fulfillment_service": "manual",
+          "requires_shipping": true,
+          "taxable": true,
+          "position": 2
+        },
+        {
+          "option1": "Czarny",
+          "option2": "L",
+          "option3": "Sosna",
+          "price": "349.00",
+          "weight": 0.0,
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "fulfillment_service": "manual",
+          "requires_shipping": true,
+          "taxable": true,
+          "position": 3
+        },
+        {
+          "option1": "Czarny",
+          "option2": "L",
+          "option3": "Dąb",
+          "price": "449.00",
+          "weight": 0.0,
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "fulfillment_service": "manual",
+          "requires_shipping": true,
+          "taxable": true,
+          "position": 4
+        },
+        {
+          "option1": "Czarny",
+          "option2": "XL",
+          "option3": "Sosna",
+          "price": "499.00",
+          "weight": 0.0,
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "fulfillment_service": "manual",
+          "requires_shipping": true,
+          "taxable": true,
+          "position": 5
+        },
+        {
+          "option1": "Czarny",
+          "option2": "XL",
+          "option3": "Dąb",
+          "price": "699.00",
+          "weight": 0.0,
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "fulfillment_service": "manual",
+          "requires_shipping": true,
+          "taxable": true,
+          "position": 6
+        },
+        {
+          "option1": "Jasny Brąz",
+          "option2": "M",
+          "option3": "Dąb",
+          "price": "299.00",
+          "weight": 0.0,
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "fulfillment_service": "manual",
+          "requires_shipping": true,
+          "taxable": true,
+          "position": 7
+        },
+        {
+          "option1": "Jasny Brąz",
+          "option2": "L",
+          "option3": "Dąb",
+          "price": "449.00",
+          "weight": 0.0,
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "fulfillment_service": "manual",
+          "requires_shipping": true,
+          "taxable": true,
+          "position": 8
+        },
+        {
+          "option1": "Jasny Brąz",
+          "option2": "XL",
+          "option3": "Dąb",
+          "price": "699.00",
+          "weight": 0.0,
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "fulfillment_service": "manual",
+          "requires_shipping": true,
+          "taxable": true,
+          "position": 9
+        },
+        {
+          "option1": "Brąz",
+          "option2": "M",
+          "option3": "Dąb",
+          "price": "299.00",
+          "weight": 0.0,
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "fulfillment_service": "manual",
+          "requires_shipping": true,
+          "taxable": true,
+          "position": 10
+        },
+        {
+          "option1": "Brąz",
+          "option2": "L",
+          "option3": "Dąb",
+          "price": "449.00",
+          "weight": 0.0,
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "fulfillment_service": "manual",
+          "requires_shipping": true,
+          "taxable": true,
+          "position": 11
+        },
+        {
+          "option1": "Brąz",
+          "option2": "XL",
+          "option3": "Dąb",
+          "price": "699.00",
+          "weight": 0.0,
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "fulfillment_service": "manual",
+          "requires_shipping": true,
+          "taxable": true,
+          "position": 12
+        },
+        {
+          "option1": "Ciemny Brąz",
+          "option2": "M",
+          "option3": "Dąb",
+          "price": "299.00",
+          "weight": 0.0,
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "fulfillment_service": "manual",
+          "requires_shipping": true,
+          "taxable": true,
+          "position": 13
+        },
+        {
+          "option1": "Ciemny Brąz",
+          "option2": "L",
+          "option3": "Dąb",
+          "price": "449.00",
+          "weight": 0.0,
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "fulfillment_service": "manual",
+          "requires_shipping": true,
+          "taxable": true,
+          "position": 14
+        },
+        {
+          "option1": "Ciemny Brąz",
+          "option2": "XL",
+          "option3": "Dąb",
+          "price": "699.00",
+          "weight": 0.0,
+          "weight_unit": "kg",
+          "inventory_policy": "deny",
+          "fulfillment_service": "manual",
+          "requires_shipping": true,
+          "taxable": true,
+          "position": 15
+        }
+      ],
+      "created_at": "2026-06-03T02:46:28",
+      "updated_at": "2026-06-16T15:58:54"
     }
   ]
 }

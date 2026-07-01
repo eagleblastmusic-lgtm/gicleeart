@@ -368,8 +368,19 @@ def load_meta_credentials() -> dict[str, dict[str, str]]:
 
 def save_meta_credentials(creds: dict[str, dict[str, str]]) -> None:
     _ensure_dirs()
+    merged: dict[str, Any] = {}
+    if _CREDS_FILE.is_file():
+        try:
+            raw = json.loads(_CREDS_FILE.read_text(encoding="utf-8"))
+            if isinstance(raw, dict):
+                merged = dict(raw)
+        except (OSError, json.JSONDecodeError):
+            merged = {}
+    for code, entry in creds.items():
+        if isinstance(entry, dict):
+            merged[code] = {k: str(v) for k, v in entry.items() if v is not None}
     _CREDS_FILE.write_text(
-        json.dumps(creds, indent=2, ensure_ascii=False),
+        json.dumps(merged, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
 

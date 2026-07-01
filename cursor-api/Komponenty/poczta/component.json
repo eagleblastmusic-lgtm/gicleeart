@@ -1,0 +1,8 @@
+{
+  "name": "Poczta firmowa",
+  "description": "Podgląd nowych wiadomości — gicleeartpl@gmail.com (IMAP).",
+  "icon": "✉️",
+  "color": "#d84315",
+  "order": 72,
+  "mode": "inline"
+}

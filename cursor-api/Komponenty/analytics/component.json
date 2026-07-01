@@ -1,0 +1,8 @@
+{
+  "name": "Analiza ruchu",
+  "description": "Ruch na sklepie, lejek zakupowy, kraje, produkty i źródła — połączone z Shopify.",
+  "icon": "📈",
+  "color": "#5c3d2e",
+  "order": 64,
+  "mode": "inline"
+}

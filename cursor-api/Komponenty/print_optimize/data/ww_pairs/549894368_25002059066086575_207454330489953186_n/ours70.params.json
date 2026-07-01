@@ -1,0 +1,11 @@
+{
+  "scene": "landscape_forest",
+  "exposure": 0.12,
+  "contrast": 1.03,
+  "saturation": 1.05,
+  "shadow_lift": 0.18,
+  "highlight_recovery": 0.08,
+  "temperature_shift": -0.02,
+  "tint_shift": 0.01,
+  "confidence": 0.92
+}

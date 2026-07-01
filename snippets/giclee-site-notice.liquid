@@ -1,0 +1,31 @@
+{%- if settings.site_notice_enabled and request.design_mode == false and request.page_type == 'index' -%}
+  {{ 'giclee-site-notice.css' | asset_url | stylesheet_tag }}
+  <div
+    id="giclee-site-notice"
+    class="giclee-site-notice"
+    hidden
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="giclee-site-notice-title"
+    aria-describedby="giclee-site-notice-text"
+    data-version="{{ settings.site_notice_version | default: '1' | escape }}"
+    data-homepage="true"
+  >
+    <div class="giclee-site-notice__dialog">
+      <h2 id="giclee-site-notice-title" class="giclee-site-notice__title">
+        {{ settings.site_notice_title | default: 'Informacja' | escape }}
+      </h2>
+      <p id="giclee-site-notice-text" class="giclee-site-notice__text">
+        {{ settings.site_notice_message | escape }}
+      </p>
+      <button
+        type="button"
+        class="giclee-site-notice__btn"
+        data-giclee-site-notice-accept
+      >
+        {{ settings.site_notice_button | default: 'Rozumiem' | escape }}
+      </button>
+    </div>
+  </div>
+  <script src="{{ 'giclee-site-notice.js' | asset_url }}" defer></script>
+{%- endif -%}

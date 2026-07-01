@@ -1,0 +1,7 @@
+{
+  "name": "Zmień tytuły",
+  "description": "Generator promptu do zmiany tytulow produktu (PL, EN, oryginalny, DE/FR/ES/NL/IT) — do wklejenia w Cursorze.",
+  "icon": "✍️",
+  "color": "#5e35b1",
+  "order": 15
+}

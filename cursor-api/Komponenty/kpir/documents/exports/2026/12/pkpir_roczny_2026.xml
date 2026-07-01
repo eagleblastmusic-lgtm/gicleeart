@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='utf-8'?>
+<JPK>
+  <KodFormularza>JPK_PKPIR</KodFormularza>
+  <WariantFormularza>7</WariantFormularza>
+  <CelZlozenia>1</CelZlozenia>
+  <RokDataOd>2026-01-01</RokDataOd>
+  <RokDataDo>2026-12-31</RokDataDo>
+  <DataWytworzeniaJPK>2026-06-15T13:19:35</DataWytworzeniaJPK>
+  <Podmiot1>
+    <NIP />
+    <PelnaNazwa>Giclee Art</PelnaNazwa>
+    <Adres />
+    <RodzajDzialalnosci />
+  </Podmiot1>
+  <PKPIR />
+  <PodsumowanieRoczne>
+    <revenue_goods>0.00</revenue_goods>
+    <revenue_other>0.00</revenue_other>
+    <total_revenue>0.00</total_revenue>
+    <purchase_goods>0.00</purchase_goods>
+    <purchase_side>0.00</purchase_side>
+    <wages>0.00</wages>
+    <other_expenses>0.00</other_expenses>
+    <total_expenses>0.00</total_expenses>
+    <RemanentPoczatkowy>0.00</RemanentPoczatkowy>
+    <RemanentKoncowy>0.00</RemanentKoncowy>
+    <Dochod>0.00</Dochod>
+  </PodsumowanieRoczne>
+</JPK>

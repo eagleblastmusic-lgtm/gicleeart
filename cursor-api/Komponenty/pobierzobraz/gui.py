@@ -21,6 +21,8 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
+from Komponenty._shared.window_geometry import position_toplevel_screen_center
+
 APP_TITLE = "Pobierz obraz - IIIF Full Downloader"
 
 # Regex do parsowania postepu z podprocesu.
@@ -50,7 +52,7 @@ class PobierzObrazApp:
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
         self.root.title(APP_TITLE)
-        self.root.geometry("960x780")
+        position_toplevel_screen_center(self.root, 960, 780)
         self.root.minsize(800, 620)
 
         self._proc: subprocess.Popen[str] | None = None

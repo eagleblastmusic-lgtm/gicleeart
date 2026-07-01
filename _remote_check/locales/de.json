@@ -1,0 +1,606 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin language editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "blocks": {
+    "load_video": "Video laden: {{ description }}",
+    "sold_out": "Ausverkauft",
+    "email_signup": {
+      "label": "E-Mail",
+      "placeholder": "E-Mail-Adresse",
+      "success": "Danke für deine Anmeldung!"
+    },
+    "filter": "Filtern",
+    "payment_methods": "Zahlungsmethoden",
+    "contact_form": {
+      "name": "Name",
+      "email": "E-Mail-Adresse",
+      "phone": "Telefonnummer",
+      "comment": "Kommentar",
+      "post_success": "Danke, dass du uns kontaktiert hast. Wir werden uns so schnell wie möglich bei dir melden.",
+      "error_heading": "Bitte passe Folgendes an:"
+    },
+    "slider_label": "Slider"
+  },
+  "accessibility": {
+    "play_model": "3D-Modell abspielen",
+    "play_video": "Video abspielen",
+    "unit_price": "Grundpreis",
+    "country_results_count": "{{ count }} Ergebnisse",
+    "slideshow_pause": "Slideshow pausieren",
+    "slideshow_play": "Slideshow abspielen",
+    "remove_item": "Entferne {{ title}}",
+    "skip_to_text": "Direkt zum Inhalt",
+    "skip_to_product_info": "Zu Produktinformationen springen",
+    "skip_to_results_list": "Zur Ergebnisliste springen",
+    "new_window": "Wird in einem neuen Fenster geöffnet.",
+    "slideshow_next": "Nächste Folie",
+    "slideshow_previous": "Vorherige Folie",
+    "close_dialog": "Dialogfeld schließen",
+    "reset_search": "Suche zurücksetzen",
+    "search_results_count": "{{ count }} Suchergebnisse für „{{ query }}“ gefunden",
+    "search_results_no_results": "Keine Ergebnisse für „{{ query }}“ gefunden",
+    "filters": "Filter",
+    "account": "Konto",
+    "cart": "Warenkorb",
+    "cart_count": "Artikel im Warenkorb insgesamt",
+    "filter_count": {
+      "one": "{{ count }} Filter angewandt",
+      "other": "{{ count }} Filter angewandt"
+    },
+    "menu": "Menü",
+    "country_region": "Land/Region",
+    "slide_status": "Folie {{ index }} von {{ length }}",
+    "scroll_to": "Zu {{ title }} scrollen",
+    "discount": "Rabattcode anwenden",
+    "discount_menu": "Rabattcodes",
+    "loading_product_recommendations": "Produktempfehlungen werden geladen",
+    "discount_applied": "Angewendeter Rabattcode: {{ code }}",
+    "inventory_status": "Inventarstatus",
+    "pause_video": "Video pausieren",
+    "find_country": "Land finden",
+    "localization_region_and_language": "Region- und Sprachwahl",
+    "decrease_quantity": "Menge verringern",
+    "increase_quantity": "Menge erhöhen",
+    "quantity": "Anzahl",
+    "rating": "Die Bewertung für dieses Produkts lautet {{ rating }} von 5 Sternen",
+    "nested_product": "{{ product_title }} für {{ parent_title }}",
+    "remove": "Entfernen",
+    "view_pricing_info": "Preisinformationen anzeigen",
+    "slideshow": "Slideshow",
+    "header_navigation_label": "Haupt-",
+    "home": "Startseite",
+    "active_filters": "Aktive Filter:",
+    "product_details": "Produktdetails",
+    "show_product_details": "Produktdetails für {{ product_name }} anzeigen",
+    "featured_product": "Vorgestelltes Produkt"
+  },
+  "actions": {
+    "add_to_cart": "In den Warenkorb legen",
+    "clear_all": "Alles löschen",
+    "remove": "Entfernen",
+    "view_in_your_space": "In deinem Bereich anzeigen",
+    "show_filters": "Filtern",
+    "clear": "Löschen",
+    "continue_shopping": "Weiter einkaufen",
+    "log_in_html": "Hast du ein Konto? <a href=\"{{ link }}\">Logge dich ein</a>, damit es beim Checkout schneller geht.",
+    "see_items": {
+      "one": "{{ count }} Artikel anzeigen",
+      "other": "{{ count }} Artikel anzeigen"
+    },
+    "view_all": "Alle anzeigen",
+    "add": "Hinzufügen",
+    "choose": "Auswählen",
+    "added": "Hinzugefügt",
+    "show_less": "Weniger anzeigen",
+    "show_more": "Mehr anzeigen",
+    "close": "Schließen",
+    "more": "Mehr",
+    "reset": "Zurücksetzen",
+    "zoom": "Zoomen",
+    "close_dialog": "Dialogfeld schließen",
+    "back": "Zurück",
+    "log_in": "Anmelden",
+    "log_out": "Abmelden",
+    "remove_discount": "Rabatt {{ code }} entfernen",
+    "enter_using_password": "Mit Passwort anmelden",
+    "submit": "Senden",
+    "enter_password": "Passwort eingeben",
+    "view_store_information": "Shop-Informationen anzeigen",
+    "apply": "Anwenden",
+    "sign_in_options": "Andere Anmeldeoptionen",
+    "sign_up": "Registrieren",
+    "open_image_in_full_screen": "Bild im Vollbildmodus öffnen",
+    "sort": "Sortieren",
+    "show_all_options": "Alle Optionen anzeigen",
+    "open": "Öffnen"
+  },
+  "content": {
+    "reviews": "Reviews",
+    "language": "Sprache",
+    "localization_region_and_language": "Region und Sprache",
+    "no_results_found": "Keine Ergebnisse gefunden",
+    "cart_total": "Gesamtbetrag im Warenkorb",
+    "your_cart_is_empty": "Dein Warenkorb ist leer",
+    "product_image": "Produktbild",
+    "product_information": "Produktinformationen",
+    "quantity": "Anzahl",
+    "product_total": "Produkt insgesamt",
+    "cart_estimated_total": "Geschätzter Gesamtbetrag",
+    "seller_note": "Besondere Anweisungen",
+    "invoice_request_title": "Rechnung",
+    "invoice_request_checkbox": "Ich benötige eine Rechnung",
+    "invoice_request_hint": "Für Privatpersonen verwenden wir die Rechnungsadresse aus dem Checkout. Für Firmen bitte Angaben unten.",
+    "invoice_type_legend": "Rechnungsempfänger",
+    "invoice_type_private": "Privatperson",
+    "invoice_type_company": "Unternehmen",
+    "invoice_company_name": "Firmenname",
+    "invoice_tax_id_nip": "Steuer-ID (NIP)",
+    "invoice_tax_id_de": "USt-IdNr.",
+    "invoice_tax_id_fr": "USt-IdNr. / TVA",
+    "invoice_tax_id_uk": "Umsatzsteuer-ID",
+    "invoice_tax_id_generic": "USt-IdNr. / Steuernummer",
+    "invoice_error_company": "Bitte Firmenname und USt-IdNr. angeben.",
+    "cart_subtotal": "Zwischensumme",
+    "discounts": "Rabatte",
+    "discount": "Rabatt",
+    "duties_and_taxes_included_shipping_at_checkout_with_policy_html": "Inkl. Zollgebühren und Steuern. Rabatte und <a href=\"{{ link }}\">Versand</a> werden beim Checkout berechnet.",
+    "duties_and_taxes_included_shipping_at_checkout_without_policy": "Inkl. Zollgebühren und Steuern. Rabatte und Versand werden beim Checkout berechnet.",
+    "taxes_included_shipping_at_checkout_with_policy_html": "Inkl. Steuern. Rabatte und <a href=\"{{ link }}\">Versand</a> werden beim Checkout berechnet.",
+    "taxes_included_shipping_at_checkout_without_policy": "Inkl. Steuern. Rabatte und Versand werden beim Checkout berechnet.",
+    "duties_included_taxes_at_checkout_shipping_at_checkout_with_policy_html": "Inkl. Zollgebühren. Steuern, Rabatte und <a href=\"{{ link }}\">Versand</a> werden beim Checkout berechnet.",
+    "duties_included_taxes_at_checkout_shipping_at_checkout_without_policy": "Inkl. Zollgebühren. Steuern, Rabatte und Versand werden beim Checkout berechnet.",
+    "taxes_at_checkout_shipping_at_checkout_with_policy_html": "Steuern, Rabatte und <a href=\"{{ link }}\">Versand</a> werden beim Checkout berechnet.",
+    "taxes_at_checkout_shipping_at_checkout_without_policy": "Steuern, Rabatte und Versand werden beim Checkout berechnet.",
+    "checkout": "Auschecken",
+    "cart_title": "Warenkorb",
+    "price": "Preis",
+    "price_regular": "Normaler Preis",
+    "price_compare_at": "Vergleichspreis",
+    "price_sale": "Angebotspreis",
+    "duties_and_taxes_included": "Inkl. Zollgebühren und Steuern.",
+    "duties_included": "Inkl. Zollgebühren.",
+    "shipping_policy_html": "<a href=\"{{ link }}\">Versand</a> wird beim Checkout berechnet.",
+    "taxes_included": "Inkl. Steuern.",
+    "product_badge_sold_out": "Ausverkauft",
+    "product_badge_sale": "Sale",
+    "search_input_label": "Suchen",
+    "search_input_placeholder": "Suchen",
+    "search_results": "Suchergebnisse",
+    "search_results_label": "Suchergebnisse",
+    "search_results_no_results": "Keine Ergebnisse für „{{ terms }}“ gefunden. Versuche es mit einem anderen Suchbegriff.",
+    "search_results_resource_articles": "Blog-Beiträge",
+    "search_results_resource_collections": "Kollektionen",
+    "search_results_resource_pages": "Seiten",
+    "search_results_resource_products": "Produkte",
+    "search_results_resource_queries": "Suchvorschläge",
+    "search_results_view_all": "Alle anzeigen",
+    "search_results_view_all_button": "Alle anzeigen",
+    "search_results_resource_products_count": {
+      "one": "{{ count }} Produkt",
+      "other": "{{ count }} Produkte"
+    },
+    "grid_view": {
+      "default_view": "Standard",
+      "grid_fieldset": "Spaltenraster",
+      "single_item": "Einzeln",
+      "zoom_out": "Herauszoomen"
+    },
+    "recently_viewed_products": "Zuletzt angesehen",
+    "unavailable": "Nicht verfügbar",
+    "collection_placeholder": "Kollektionstitel",
+    "product_card_placeholder": "Produkttitel",
+    "product_count": "Produktanzahl",
+    "item_count": {
+      "one": "{{ count }} Artikel",
+      "other": "{{ count }} Artikel"
+    },
+    "errors": "Fehler",
+    "price_from": "Ab {{ price }}",
+    "search": "Suche",
+    "search_results_no_results_check_spelling": "Keine Ergebnisse für „{{ terms }}“ gefunden. Überprüfe die Schreibweise oder versuche es mit einer anderen Suchanfrage.",
+    "featured_products": "Vorgestellte Produkte",
+    "filters": "Filter",
+    "no_products_found": "Keine Produkte gefunden.",
+    "price_filter_html": "Der höchste Preis ist {{ price }}",
+    "use_fewer_filters_html": "Versuche, weniger Filter zu verwenden oder <a class=\"{{ class }}\" href=\"{{ link }}\">alle Filter zu löschen</a>.",
+    "account_title": "Konto",
+    "account_title_personalized": "Hallo {{ first_name }}",
+    "account_orders": "Bestellungen",
+    "account_profile": "Profil",
+    "blog_details_separator": "|",
+    "discount_code": "Rabattcode",
+    "duties_and_taxes_included_shipping_at_checkout_with_policy_without_discounts_html": "Inkl. Zollgebühren und Steuern. Versand wird beim Checkout berechnet.",
+    "duties_and_taxes_included_shipping_at_checkout_without_policy_without_discounts": "Inkl. Zollgebühren und Steuern. Versand wird beim Checkout berechnet.",
+    "duties_included_taxes_at_checkout_shipping_at_checkout_with_policy_without_discounts_html": "Inkl. Zollgebühren. Versand wird beim Checkout berechnet.",
+    "duties_included_taxes_at_checkout_shipping_at_checkout_without_policy_without_discounts": "Inkl. Zollgebühren. Versand wird beim Checkout berechnet.",
+    "pickup_available_at_html": "Abholung bei <b>{{ location }}</b> verfügbar",
+    "pickup_available_in": "Abholung verfügbar, {{ pickup_time }}",
+    "pickup_not_available": "Abholung derzeit nicht verfügbar",
+    "pickup_ready_in": "{{ pickup_time }}",
+    "read_more": "Mehr lesen …",
+    "taxes_at_checkout_shipping_at_checkout_with_policy_without_discounts_html": "Steuern und <a href=\"{{ link }}\">Versand</a> werden beim Checkout berechnet.",
+    "taxes_at_checkout_shipping_at_checkout_without_policy_without_discounts": "Steuern und Versand werden beim Checkout berechnet.",
+    "taxes_included_shipping_at_checkout_with_policy_without_discounts_html": "Inkl. Steuern. Versand wird beim Checkout berechnet.",
+    "taxes_included_shipping_at_checkout_without_policy_without_discounts": "Inkl. Steuern. Versand wird beim Checkout berechnet.",
+    "wrong_password": "Falsches Passwort",
+    "view_more_details": "Weitere Details anzeigen",
+    "inventory_low_stock": "Niedriger Lagerbestand",
+    "inventory_in_stock": "Auf Lager",
+    "inventory_out_of_stock": "Nicht vorrätig",
+    "page_placeholder_title": "Seitentitel",
+    "page_placeholder_content": "Wähle eine Seite aus, die angezeigt werden soll.",
+    "placeholder_image": "Platzhalterbild",
+    "shipping_policy": "Versandkosten werden beim Checkout berechnet.",
+    "inventory_low_stock_show_count": {
+      "one": "{{ count }} übrig",
+      "other": "{{ count }} übrig"
+    },
+    "powered_by": "Dieser Shop wird unterstützt werden von",
+    "store_owner_link_html": "Bist du der Shop-Inhaber? <a href=\"{{ link }}\">Hier einloggen</a>",
+    "shipping_discount_error": "Versandrabatte werden beim Checkout angezeigt, nachdem die Adresse hinzugefügt wurde",
+    "discount_code_error": "Rabattcode kann nicht auf den Warenkorb angewendet werden",
+    "recipient_form_send_to": "Senden an",
+    "recipient_form_email_label": "E-Mail-Adresse des Empfängers",
+    "recipient_form_email_label_my_email": "Meine E-Mail-Adresse",
+    "recipient_form_email_address": "Empfänger-E-Mail-Adresse",
+    "recipient_form_name_label": "Name des Empfängers (optional)",
+    "recipient_form_message": "Nachricht (optional)",
+    "recipient_form_characters_used": "{{ used_chars }}/{{ max_chars }} Zeichen verwendet",
+    "recipient_form_send_on": "JJJJ-MM-TT",
+    "recipient_form_send_on_label": "Senden am (optional)",
+    "recipient_form_fields_visible": "Empfängerformularfelder sind jetzt sichtbar.",
+    "recipient_form_fields_hidden": "Empfängerformularfelder sind jetzt ausgeblendet.",
+    "recipient_form_error": "Beim Absenden des Formulars ist ein Fehler aufgetreten.",
+    "product_custom_property_character_count": "{{ used_chars }}/{{ max_chars }} Zeichen verwendet",
+    "terms_and_policies": "Geschäftsbedingungen und Richtlinien",
+    "pagination": {
+      "nav_label": "Seitennavigation",
+      "previous": "Zurück",
+      "next": "Weiter",
+      "page": "Seite {{ page }}"
+    },
+    "volume_pricing_available": "Volumenabhängige Preisgestaltung verfügbar",
+    "volume_pricing": "Mengenrabatte",
+    "at_price_each": "bei {{ price }}/Stück",
+    "each": "({{ price }}/Stück)",
+    "each_abbreviation": "Stück",
+    "price_at": "bei",
+    "price_range": "Preisspanne",
+    "item_count_cutoff": "Mehr als {{ count }} Artikel",
+    "cancel": "Abbrechen",
+    "product_subtotal": "Produktzwischensumme",
+    "quantity_per_item": "/Stk.",
+    "remove_all": "Alle entfernen",
+    "remove_all_items_confirmation": "Alle {{ count }} Artikel aus deinem Warenkorb entfernen?",
+    "remove_one_item_confirmation": "1 Artikel aus dem Warenkorb entfernen?",
+    "total_items": "Artikel gesamt",
+    "variant": "Variante",
+    "variant_total": "Varianten insgesamt",
+    "view_cart": "Warenkorb ansehen",
+    "your_cart": "Dein Warenkorb",
+    "items_added_to_cart": {
+      "one": "1 Artikel zum Warenkorb hinzugefügt",
+      "other": "{{ count }} Artikel zum Warenkorb hinzugefügt"
+    }
+  },
+  "gift_cards": {
+    "issued": {
+      "how_to_use_gift_card": "Verwende diesen Geschenkgutscheincode online oder verwende den QR-Code im Shop",
+      "title": "Hier ist dein {{ value }}-Gutschein für {{ shop }}!",
+      "subtext": "Dein Gutschein",
+      "shop_link": "Onlineshop besuchen",
+      "add_to_apple_wallet": "Zu Apple Wallet hinzufügen",
+      "qr_image_alt": "QR-Code – Scannen, um Gutschein einzulösen",
+      "copy_code": "Geschenkgutscheincode kopieren",
+      "expiration_date": "Gültig bis {{ expires_on }}",
+      "copy_code_success": "Code erfolgreich kopiert",
+      "expired": "Abgelaufen"
+    }
+  },
+  "placeholders": {
+    "password": "Passwort",
+    "search": "Suchen",
+    "product_title": "Produkttitel",
+    "collection_title": "Kollektionstitel",
+    "blog_posts": "Blog-Beiträge",
+    "blog_post_title": "Titel",
+    "blog_post_author": "Autor",
+    "blog_post_date": "Datum",
+    "blog_post_description": "Ein Auszug aus dem Inhalt deines Blog-Beitrags"
+  },
+  "products": {
+    "product": {
+      "add_to_cart": "In den Warenkorb legen",
+      "added_to_cart": "Zum Warenkorb hinzugefügt",
+      "adding_to_cart": "Wird hinzugefügt...",
+      "add_to_cart_error": "Fehler beim Hinzufügen zum Warenkorb",
+      "sold_out": "Ausverkauft",
+      "unavailable": "Nicht verfügbar",
+      "quantity_error_max": "Dieser Artikel hat ein Maximum von {{ maximum }}",
+      "quantity": "Menge",
+      "quantity_increments": "In {{ increment }}er Schritten",
+      "quantity_minimum": "Mindestens {{ minimum }}",
+      "quantity_maximum": "Maximal {{ maximum }}",
+      "in_cart": "im Warenkorb",
+      "default_title": "Standardtitel",
+      "sticky_add_to_cart": "Leiste „Schnell in den Warenkorb“"
+    }
+  },
+  "fields": {
+    "separator": "bis"
+  },
+  "blogs": {
+    "article": {
+      "comment_author_separator": "•",
+      "comments_heading": {
+        "one": "{{ count }} Kommentar",
+        "other": "{{ count }} Kommentare"
+      }
+    },
+    "comment_form": {
+      "email": "E-Mail",
+      "error": "Kommentar konnte nicht gepostet werden. Bitte beachte Folgendes:",
+      "heading": "Hinterlasse einen Kommentar",
+      "message": "Nachricht",
+      "moderated": "Bitte beachte, dass Kommentare vor der Veröffentlichung freigegeben werden müssen.",
+      "name": "Name",
+      "post": "Kommentar posten",
+      "success_moderated": "Kommentar gepostet, Moderation ausstehend",
+      "success": "Kommentar gepostet"
+    }
+  },
+  "password": {
+    "countdown": {
+      "heading": "Wir überarbeiten die Architektur der Website. Wir sind bald wieder da.",
+      "days": "Tage",
+      "hours": "Std.",
+      "minutes": "Min.",
+      "seconds": "Sek.",
+      "expired": "Willkommen!"
+    },
+    "newsletter_intro": "Melden Sie sich für den Newsletter an und erfahren Sie als Erste von unserem Start."
+  },
+  "giclee": {
+    "blocks": {
+      "text_4crMR9": {
+        "text": "<h2>Aktuelles</h2>"
+      },
+      "text_PDh9dG": {
+        "text": "<p>Möchten Sie mehr über Kunst, Rahmenproduktion, Druck und Fine Art im weitesten Sinne erfahren? Ich lade Sie zum Lesen ein!</p>"
+      },
+      "text_FNbyeV": {
+        "text": "<h2>Werke</h2>"
+      },
+      "text_6zXDqe": {
+        "text": "<p>Giclée Art ist eine Werkstatt, die sich auf Fine-Art-Drucke und die umfassende Rahmung von Werken nach Museumsstandard spezialisiert hat.</p><p>Wir verbinden die Präzision des Pigmentdrucks mit handwerklicher Arbeit und schaffen fertige Werke, die als vollwertige Kunstwerke funktionieren können — nicht nur als Reproduktionen.</p><p>Jedes Element der Realisierung — vom Papier über das Passepartout bis zum Rahmen aus Massivholz — wird mit Blick auf Haltbarkeit, Ästhetik und Sammlerwert ausgewählt.</p>"
+      },
+      "text_FwqCDk": {
+        "text": "<p>Dies ist ein eigenes Atelier, in dem ich Sammler-Fine-Art-Drucke erstelle und deren umfassende, galeriewürdige Rahmung sicherstelle.<br/><br/>Jedes Projekt realisiere ich persönlich — von sorgfältiger Bildkorrektur über präzisen Pigmentdruck bis zur Auswahl archivischer Materialien und handwerklicher Rahmung.<br/><br/>Ich arbeite nach Museumsstandards und nutze säurefreie Trägermaterialien sowie dauerhafte Techniken, die langfristige Stabilität und Beständigkeit der Drucke gewährleisten.<br/><br/>Mein Ziel ist es, Werke von echtem Wert zu schaffen — ästhetisch, materiell und sammlerisch.</p>"
+      },
+      "text_EgnMm8": {
+        "text": "<h2>Giclée Art </h2><p></p><p>Dies ist ein eigenes Atelier, in dem ich Sammler-Fine-Art-Drucke erstelle und deren umfassende, galeriewürdige Rahmung sicherstelle.<br/><br/>Jedes Projekt realisiere ich persönlich — von sorgfältiger Bildkorrektur über präzisen Pigmentdruck bis zur Auswahl archivischer Materialien und handwerklicher Rahmung.<br/><br/>Ich arbeite nach Museumsstandards und nutze säurefreie Trägermaterialien sowie dauerhafte Techniken, die langfristige Stabilität und Beständigkeit der Drucke gewährleisten.<br/><br/>Mein Ziel ist es, Werke von echtem Wert zu schaffen — ästhetisch, materiell und sammlerisch.</p>"
+      },
+      "text_ywirTH": {
+        "text": "<h2>Kunstrestaurierung</h2>"
+      },
+      "text_EpbDYf": {
+        "text": "<p><br/>Ein wichtiger Teil meiner Arbeit ist die digitale Restaurierung beschädigter oder degradierter Gemälde — sowohl bekannter Klassiker als auch vergessener Werke.<br/><br/>Dieser Prozess umfasst die präzise Rekonstruktion von Details, die Entfernung von Schäden sowie die Wiederherstellung des ursprünglichen tonalischen und farblichen Gleichgewichts — mit vollem Respekt für den Charakter des Originals.</p><p>Jedes Bild behandle ich individuell und vermeide den künstlichen Effekt einer „übermäßigen Korrektur“. Mein Ziel ist es, seinen ursprünglichen visuellen Wert wiederherzustellen, nicht ihn neu zu interpretieren.</p><p>Restaurierte Bilder können anschließend als archivische Fine-Art-Drucke gefertigt und nach Galeriestandard gerahmt werden.</p><p>Gemälderestaurierungen sind mit der Autorenkollektion signiert:<br/><br/><strong>© Giclée Art — Restoration Edition 2026</strong><br/><br/><br/><br/></p>"
+      },
+      "text_9XdqrW": {
+        "text": "<p>Vor dem Druck unterziehe ich jede Datei einer eigenen Farbkorrektur, abgestimmt auf den Charakter des Werks und das gewählte Medium.</p><p>Ich verlasse mich nicht ausschließlich auf Standardprofile — jedes Bild analysiere ich individuell und achte auf die richtige Tonalität, Tiefe und Farbkohärenz im Kontext des finalen Drucks.</p><p>Besondere Aufmerksamkeit schenke ich tonalen Übergängen, Details in Lichtern und Schatten sowie der natürlichen Wiedergabe von Farben auf künstlerischen Papieren.</p><p>Ziel ist nicht nur technische Korrektheit, sondern ein Effekt, der der Intention des Autors entspricht und die volle visuelle Qualität in physischer Form bewahrt.</p>"
+      },
+      "button_UgW9Kt": {
+        "label": "Alle anzeigen"
+      },
+      "text_qLVbAJ": {
+        "text": "<h2>Potenzial, das nicht immer sichtbar ist<br/></h2>"
+      },
+      "text_FhBhaC": {
+        "text": "<p>Einige Fotografien können trotz guter Komposition erfolglos wirken — wegen falscher Farbgebung, Licht oder Tonalität.</p><p>Durch präzise Korrektur stelle ich ihre richtigen Proportionen und Ästhetik wieder her und bringe die Qualität zum Vorschein, die ursprünglich in ihnen verborgen war.</p>"
+      },
+      "text_rmKL7r": {
+        "text": "<h3>Sehen Sie den Unterschied</h3>"
+      },
+      "text_zLzkLW": {
+        "text": "<p><br/>Die weltweit erste Autorenkollektion digital restaurierter Gemälde.<br/><br/></p>"
+      },
+      "text_nPizan": {
+        "text": "<h5>Sind Sie Fotograf oder Fotografin und möchten mit Giclée Art zusammenarbeiten? Ich lade Sie zum Kontakt ein.</h5><h5>Im Rahmen der Zusammenarbeit erhalten Sie:</h5><h5><br/>– Rabatte für Ihre Kunden auf Giclée Art-Produkte<br/>– Präsentation Ihrer ausgewählten Werke auf der Giclée Art-Website mit Link zu Ihren Social Media<br/>– Bewerbung Ihrer Arbeit in den sozialen Medien von Giclée Art</h5><h5>Die Zusammenarbeit hat einen partnerschaftlichen Charakter — wir verbinden die Ästhetik der Fotografie mit künstlerischem Premium-Druck.</h5>"
+      },
+      "text_HJGb9e": {
+        "text": "<h2>Häufig gestellte Fragen</h2>"
+      },
+      "text_dQBDL3": {
+        "text": "<h2>Häufig gestellte Fragen</h2>"
+      },
+      "accordion_row_mUQFCU": {
+        "heading": "Wie lange dauert die Bearbeitung einer Bestellung?"
+      },
+      "text_Q8RMTC": {
+        "text": "<p>Die Bearbeitungszeit einer Bestellung beträgt 3 bis 7 Tage. Dies hängt mit der Lieferzeit von Holz und Materialien für die Produktion zusammen. Ich versuche immer, minimale Holzvorräte zu halten, jedoch ist Holz vor der Endbearbeitung, die eine Imprägnierung umfasst, zu Verziehen neigend. Deshalb realisiere ich Produkte von Anfang bis Ende mit frisch gelieferten Materialien.<br/><br/>Der Produktionsprozess besteht aus vielen Etappen — vom Zuschneiden des Holzes über das Auftragen verschiedener Finishschichten, die trocknen müssen. Man sollte rechnen: Tag 1 — Zuschnitt und Grundierung, Tag 2 — Ölen und Drucken, weitere 3 Tage für das anfängliche Trocknen und Aushärten des Ölwachses sowie das Trocknen des Papiers nach dem Schutzlack</p>"
+      },
+      "accordion_row_gq7xgd": {
+        "heading": "Wie lange dauert der Versand?"
+      },
+      "text_dbKFYM": {
+        "text": "<p>Nach Fertigstellung des Produkts wird das Bild umgehend verpackt und versendet — unabhängig von Tages- oder Nachtzeit — über ein Paketautomaten-System. Nach dem Versand erhalten Sie eine E-Mail mit weiteren Informationen. Sendungen kommen in der Regel innerhalb von 1–2 Werktagen an</p>"
+      },
+      "accordion_row_fxrNFP": {
+        "heading": "Ist telefonischer Kontakt möglich?"
+      },
+      "text_KT9gtp": {
+        "text": "<p>Leider nicht. Ich führe das Geschäft allein und kann während der Arbeit tagsüber keine Telefonate entgegennehmen. Bitte kontaktieren Sie mich per E-Mail. In der Regel antworte ich abends oder nachts.</p>"
+      },
+      "accordion_row_VwgmXW": {
+        "heading": "Wo werden Ihre Produkte hergestellt?"
+      },
+      "text_kCYhHF": {
+        "text": "<p>Meine Werkstatt befindet sich in Puck, Woiwodschaft Pommern, jedoch ist eine persönliche Abholung nicht möglich</p>"
+      },
+      "accordion_row_7nCpLH": {
+        "heading": "Wie viel kostet der Versand?"
+      },
+      "text_BnRprG": {
+        "text": "<p>Der Versand ist vollständig kostenlos</p>"
+      },
+      "text_kdAGGw": {
+        "text_part1": "<p>Giclée Art basiert auf der Idee, dass ein Kunstwerk nicht mit der digitalen Datei endet.<br/><br/>Es ist erst vollendet, wenn es seine endgültige Form erhält — stimmig, archivisch und ausstellungsbereit.<br/><br/>In der Arbeit mit visuellem Material bewege ich mich in zwei parallelen Bereichen.<br/><br/>Der erste sind Gemälde — oft alt, vergilbt, vergessen oder in Form von Reproduktionen neu zu bearbeiten. In diesem Prozess behandle ich sie als kulturelle Substanz, die durch tonale und farbliche Korrektur, präzisen Fine-Art-Druck und bewusste Rahmung wieder zum Leben erweckt werden kann. So gewinnen sie ihre Präsenz, Tiefe und die Möglichkeit zurück, im zeitgenössischen Raum zu wirken.<br/><br/>Der zweite Bereich ist Fotografie, die mir zur Realisierung anvertraut wird. In diesem Fall rekonstruiere ich nicht die Vergangenheit, sondern schließe den kreativen Prozess ab und gebe dem Bild seine finale, materielle Form.<br/><br/",
+        "text_part2": ">Erst in Form von Druck und Rahmung gewinnt das Bild Maßstab, Struktur und eine Beziehung zum Licht, die es als Objekt existieren lassen — nicht nur als digitaler Eintrag.<br/><br/>Ich glaube, dass Fotografie und Bild erst dann wirklich „leben“, wenn sie den Bildschirm verlassen und in die physische Welt übertragen werden.<br/><br/>Deshalb behandle ich jedes Projekt als einen Übergangsprozess<br/><br/>Vom potenziellen Bild — zum gegenwärtigen Bild.<br/><br/>Von der Datei — zum Objekt.<br/><br/>Von der Information — zur Materie.</p>"
+      },
+      "text_9ftdzW": {
+        "text_part1": "<p>Giclée Art basiert auf der Idee, dass ein Kunstwerk nicht mit dem Bild endet.<br/><br/>Es ist erst vollendet, wenn es seine endgültige Form erhält — stimmig, archivisch und ausstellungsbereit.<br/><br/><br/>In der Arbeit mit visuellem Material bewege ich mich in zwei parallelen Bereichen.<br/><br/>Der erste sind Gemälde — oft alt, vergilbt, vergessen oder in Form von Reproduktionen neu zu bearbeiten. In diesem Prozess behandle ich sie als kulturelle Substanz, die durch präzisen Fine-Art-Druck und bewusste Rahmung wieder zum Leben erweckt werden kann. So gewinnen sie ihre Präsenz, Tiefe und die Möglichkeit zurück, im zeitgenössischen Raum zu wirken.<br/><br/>Der zweite Bereich ist Fotografie — sowohl eigenständige als auch mir zur Realisierung anvertraute. In diesem Fall rekonstruiere ich nicht die Vergangenheit, sondern schließe den kreativen Prozess ab und gebe dem Bild seine finale, materielle Form.<br/><br/",
+        "text_part2": ">Erst in Form von Druck und Rahmung gewinnen sie Maßstab, Struktur und eine Beziehung zum Licht, die sie als Objekt existieren lassen — nicht nur als digitaler Eintrag.<br/><br/>Ich glaube, dass Fotografie und Bild erst dann wirklich „leben“, wenn sie den Bildschirm verlassen und in die physische Welt übertragen werden.<br/><br/>Erst in Form von Druck und Rahmung gewinnen sie Maßstab, Struktur und eine Beziehung zum Licht, die sie als Objekt existieren lassen — nicht nur als digitaler Eintrag.<br/><br/>Deshalb behandle ich jedes Projekt als einen Übergangsprozess<br/><br/>Vom potenziellen Bild — zum gegenwärtigen Bild.<br/><br/>Von der Datei — zum Objekt.<br/><br/>Von der Information — zur Materie.</p>"
+      },
+      "text_8JmYGT": {
+        "text": "<h2>Neuheiten</h2>"
+      },
+      "text_DNFLhc": {
+        "text": "<p>Mit Sorgfalt gefertigt und von unseren Kunden bedingungslos geschätzt.</p>"
+      },
+      "text_nWcG7K": {
+        "text": "<h2><strong>Verwandeln Sie Fotografie in ein zeitloses Bild</strong></h2>"
+      },
+      "text_tJcVyA": {
+        "text": "<p>Ihr Foto verdient mehr als einen Bildschirm. Wir verwandeln es in einen eleganten Fine-Art-Druck, der wie ein für die Galerie geschaffenes Werk wirkt.</p>"
+      },
+      "button_gzAGaV": {
+        "label": "Foto auswählen"
+      },
+      "text_GifUG3": {
+        "text": "<p><strong>Giclée Frame™</strong> ist ein eigenes Rahmensystem, das ich als integraler Bestandteil jeder Realisierung aus meiner Werkstatt geschaffen habe.</p><p>Es ist kein Standardrahmen — es ist eine durchdachte Form der Präsentation, konzipiert, um den Charakter des Bildes zu betonen und ihm seine endgültige, galeriewürdige Dimension zu verleihen.</p><p>Jedes Element der Rahmung entsteht in Handarbeit, mit Massivholz und säurefreien Materialien, die archivische Standards erfüllen. Konstruktion und Montage wurden so entwickelt, dass sowohl Ästhetik als auch langfristige Stabilität des Werks gewährleistet sind.</p>"
+      },
+      "jumbo_text_NBbG7x": {
+        "text": "Materialien"
+      },
+      "text_79rJDi": {
+        "text": "<p>Für die Herstellung von Giclée Frame™ verwende ich ausschließlich sorgfältig ausgewählte Materialien:</p><p><strong>— Massivholz mit natürlicher Struktur<br/>— säurefreies Passepartout in Galeriequalität<br/>— archivische, chemisch neutrale Komponenten</strong></p><p>Dadurch unterstreicht die Rahmung nicht nur die ästhetischen Qualitäten des Werks, sondern schützt es auch vor Degradation im Laufe der Zeit.</p>"
+      },
+      "jumbo_text_Xz3A7b": {
+        "text": "HOLZVEREDELUNG"
+      },
+      "text_xktcAN": {
+        "text_part1": "<p>Rahmen werden mit natürlichen Ölwachsen von Rubio Monocoat veredelt, die die Holzoberfläche schützen und gleichzeitig ihre Struktur und ihren Charakter betonen.</p><p>Bei schwarzer Veredelung trage ich zusätzlich eine Precolor-Schicht auf, die die Farbe vertieft und eine gleichmäßige, gesättigte Färbung gewährleistet.</p><p>Das angewandte System bildet keine künstliche Schicht — das Holz behält seine Natürlichkeit, und seine Struktur bleibt sichtbar und spürbar.</p><p>Die verwendeten Öle basieren auf natürlichen Inhaltsstoffen, darunter Leinöl, und zeichnen sich durch null LZO-Gehalt (flüchtige organische Verbindungen) aus. Die lösungsmittelfreie Formel gewährleistet sehr geringe Emissionen und sichere Anwendung. Dies bestätigen internationale Zertifizierungen wie GREENGUARD Gold</p>",
+        "text_part2": "<p>Das Ergebnis ist eine Veredelung, die sowohl der Umwelt als auch dem Raum, in dem das Werk präsentiert wird, freundlich ist — langlebig, natürlich und über Jahre ihren Charakter bewahrend.</p>"
+      },
+      "text_e9qjY6": {
+        "text_part1": "<p>Das in meiner Werkstatt verwendete Passepartout wird aus hochwertigem, dreischichtigem Archivkarton gefertigt, der für die professionelle Rahmung von Kunstwerken konzipiert ist.<br/><br/>Die oberste Schicht besteht aus säurefreiem, durchgefärbtem Papier <strong>Fabriano Elle Erre (Bianco)</strong> — einem Material mit hoher Beständigkeit gegen Alterung und Licht, das der Norm ISO 9706 „Long Life“ entspricht.<br/><br/>Der Kern besteht aus säurefreier, nicht vergilbender Pappe mit neutralem pH, die eine alkalische Reserve enthält und das Werk zusätzlich vor Degradation im Laufe der Zeit schützt. Die Konstruktion wird durch eine untere Schicht aus hochwertigem Papier stabilisiert.<br/><br/>Die Elemente werden mit ungiftigen, wasserbasierten, lösungsmittelfreien Klebstoffen verbunden, was vollständige Sicherheit für das gerahmte Werk gewährleistet.</p>",
+        "text_part2": "<p>Jedes Passepartout wird im 45°-Winkel geschnitten und bildet das charakteristische „Fenster“, das subtile Tiefe einführt und die Beziehung zwischen Bild und Rahmung betont.</p><p>In Verbindung mit einem Fine-Art-Druck bildet es ein integrales Element des Rahmensystems und verleiht dem Werk Raum, Struktur und Galeriecharakter.</p>"
+      },
+      "text_xyy4fN": {
+        "text_part1": "<p>Im Druckprozess verwende ich ausschließlich professionelle Fine-Art-Papiere, die die Grundlage für Qualität und Haltbarkeit des finalen Werks bilden.</p><p>Die Hauptmedien sind Hahnemühle Photo Rag 308 und Epson Fine Art Velvet — Papiere mit außergewöhnlicher Struktur, konzipiert für Kunstdruck im höchsten Standard.</p><p>Ihre Oberfläche zeichnet sich durch eine subtile, natürliche Struktur aus, die dem Druck Tiefe und einen Charakter verleiht, der traditionellen künstlerischen Techniken nahekommt. Die matte Oberfläche eliminiert Lichtreflexe und ermöglicht volle Konzentration auf das Bild und seine Tonalität.</p><p>Die verwendeten Träger sind vollständig säurefrei und archivisch, was hohe Beständigkeit gegen Alterung und Farbstabilität auf lange Sicht gewährleistet. Dadurch behält das Werk seine visuelle Qualität über Jahrzehnte, ohne Verlust von Detail und Farbtiefe.</p>",
+        "text_part2": "<p>Jeder Druck wird in Pigmenttechnologie gefertigt, die in Verbindung mit Fine-Art-Papier außergewöhnliche Tonwertspannweite, Detailpräzision und einen edlen, galeriewürdigen Charakter ermöglicht.</p><p>Das Ergebnis ist ein Bild, das nicht nur eine Reproduktion ist, sondern ein vollwertiges künstlerisches Objekt — bereit für professionelle Präsentation und archivische Aufbewahrung.</p>"
+      },
+      "jumbo_text_bX7tqP": {
+        "text": "PROPORTIONEN UND DER GOLDENE SCHNITT"
+      },
+      "text_KxVYV6": {
+        "text_part1": "<p>Im Giclée Frame™-System sind die Proportionen der Rahmung kein Zufall — sie bilden eine bewusst entwickelte Beziehung zwischen Bild, Passepartout und Rahmen.</p><p>Ein zentrales Prinzip ist die Anwendung visueller Harmonie auf Basis des goldenen Schnitts, der seit Jahrhunderten in Kunst, Architektur und klassischer Ästhetik als Muster natürlicher Balance dient.</p><p>Der goldene Schnitt (φ – „Phi“) ist ein mathematisches Proportionsverhältnis, bei dem das Verhältnis des Ganzen zum größeren Teil dem Verhältnis des größeren zum kleineren Teil entspricht. Sein Wert beträgt ungefähr <strong>1,618</strong>. In der Praxis bedeutet dies eine Proportion, die natürlich und intuitiv als harmonisch und stabil für das menschliche Auge wahrgenommen wird — unabhängig vom Bewusstsein ihrer mathematischen Struktur.</p><p>Das Verhältnis der Papierfläche zur Passepartout-Breite und seine Beziehung zum Rahmen wird an die Produktgröße in 3 Größen angepasst: S, L und XL.</p>",
+        "text_part2": "<p>Ziel dieses Prozesses ist nicht Dekoration, sondern die Erreichung visueller Balance, in der das Bild im Raum der Rahmung „atmet“ und einen natürlichen Blickpunkt gewinnt. Ich stelle mich bewusst dem zeitgenössischen Galerietrend entgegen, der besagt: je größer das Passepartout, desto besser</p><p>Dadurch besitzt jede Realisierung ihre eigene innere Proportionslogik — nicht aus einer Vorlage, sondern aus Harmonieprinzipien, die die Wahrnehmung des Bildes ordnen.</p><p>Das Ergebnis ist eine Komposition, in der alle Elemente im Gleichgewicht koexistieren und ein stimmiges, ausgewogenes visuelles Objekt bilden.</p>"
+      },
+      "jumbo_text_txPMEr": {
+        "text": "Produktabmessungen"
+      },
+      "text_d3aDXd": {
+        "text": "<p>Jede Realisierung verlässt die Werkstatt als vollständig fertiggestelltes Werk — bereit zur sofortigen Präsentation.</p><p>Es bedarf keiner zusätzlichen Rahmung oder Eingriffe. Alle Elemente wurden als stimmige Einheit konzipiert und ausgeführt.</p>"
+      },
+      "text_aDtPRn": {
+        "text": "<h3>Zusammenarbeit für Fotografen<br/></h3>"
+      },
+      "text_DxzKPb": {
+        "text": "<p>Giclée Art ist ein Raum für Schaffende, die mit Emotion, Ästhetik und Qualität ohne Kompromisse arbeiten.<br/><br/>Wenn Sie Fotosessions gestalten und möchten, dass Ihre Werke in Form von Museumsdruck weiterleben — lade ich Sie zur Zusammenarbeit ein.</p>"
+      },
+      "text_Bn4r9Y": {
+        "text": "<h2>Ein besseres Erlebnis für Ihre Kunden<br/></h2>"
+      },
+      "text_XJGn6y": {
+        "text": "<p>Durch die Zusammenarbeit mit mir können Sie Ihren Kunden einen dedizierten Rabatt auf Giclée Art-Produkte anbieten.<br/><br/>So gewinnen Ihre Sessions zusätzlichen Wert — Kunden erhalten nicht nur Fotos, sondern eine fertige, luxuriöse Form ihrer Präsentation.<br/></p>"
+      },
+      "text_6yVLKh": {
+        "text": "<h3>Ihre Arbeit im Raum von Giclée Art<br/></h3>"
+      },
+      "text_axjktk": {
+        "text": "<p>Ausgewählte Realisierungen veröffentliche ich auf der Giclée Art-Website mit Signatur und Link zu Ihren Social Media.<br/><br/>Das ist nicht nur Präsenz — es ist Präsentation Ihrer Arbeit im Kontext einer Premiummarke, die ihren visuellen Wert erhöht.</p>"
+      },
+      "text_tQHMCe": {
+        "text": "<h3>Gegenseitige Promotion und Markenentwicklung<br/></h3>"
+      },
+      "text_wTM8Wz": {
+        "text": "<p>Wir bauen eine Beziehung auf, die auf Qualität, Ästhetik und gemeinsamem Wachstum basiert — keine einmalige Zusammenarbeit, sondern eine langfristige Partnerschaft.<br/></p>"
+      },
+      "text_xykEfp": {
+        "text": "<h3>Zusammenarbeit für Fotografen</h3>"
+      },
+      "text_LJAG43": {
+        "text": "<p>Giclée Art ist ein Raum für Schaffende, die mit Emotion, Ästhetik und Qualität ohne Kompromisse arbeiten.<br/><br/>Wenn Sie Fotosessions gestalten und möchten, dass Ihre Werke in Form von Museumsdruck weiterleben — lade ich Sie zur Zusammenarbeit ein.</p>"
+      },
+      "text_MeaHNN": {
+        "text": "<p>Giclée Art ist ein Raum für Schaffende, die mit Emotion, Ästhetik und Qualität ohne Kompromisse arbeiten.<br/><br/>Wenn Sie Fotosessions gestalten und möchten, dass Ihre Werke in Form von Museumsdruck weiterleben — lade ich Sie zur Zusammenarbeit ein.</p>"
+      },
+      "text-2": {
+        "text": "<p>Melden Sie sich zum Newsletter an, um als Erster über unseren Start informiert zu werden</p>"
+      },
+      "text_cbcgyb": {
+        "text": "<h3>Das könnte Ihnen auch gefallen</h3>"
+      }
+    },
+    "sections": {
+      "giclee_artist_collection_showcase_7djLQQ": {
+        "heading": "Ausgewählte Werke",
+        "cta_label": "Gesamte Kollektion ansehen"
+      }
+    },
+    "ui": {
+      "splash_subtitle": "Willkommen in der Welt der Kunst",
+      "catalog_artists": "Künstler",
+      "catalog_view_collection": "Kollektion ansehen",
+      "showcase_eyebrow_default": "Künstlerkollektion",
+      "showcase_heading_default": "Ausgewählte Werke",
+      "showcase_lead_default": "Eine kuratierte Auswahl an Fine-Art-Reproduktionen — präsentiert wie in einer Galerie, nicht in einem Shop.",
+      "showcase_cta_default": "Gesamte Kollektion ansehen",
+      "showcase_prev_artist": "Vorheriger Künstler",
+      "showcase_next_artist": "Nächster Künstler",
+      "showcase_prev_work": "Vorheriges Werk",
+      "showcase_gallery": "Werkgalerie",
+      "showcase_no_works": "Keine Werke verfügbar",
+      "showcase_gallery_position": "Werkgalerie, Position {{ current }} von {{ total }}",
+      "showcase_go_to_work": "Zum Werk {{ index }}",
+      "pdp_preview_show": "Bildvorschau",
+      "pdp_preview_hide": "Vorschau ausblenden",
+      "mockup_back_preview": "Zurück zur Vorschau",
+      "mockup_upload_first": "Laden Sie zuerst ein Foto hoch",
+      "mockup_variant_unavailable": "Variante nicht verfügbar",
+      "mockup_upload_error": "Upload-Fehler",
+      "mockup_try_again": "Erneut versuchen",
+      "mockup_no_product": "Keine Produktdaten",
+      "mockup_invite_html": "<strong>Gefällt es Ihnen?</strong>Konfigurieren und in den Warenkorb legen. Ihre Datei mit Zuschnitt wird nach der Bezahlung automatisch übermittelt.",
+      "mockup_quality_title": "Druckqualität",
+      "mockup_quality_upload": "Laden Sie ein Foto hoch, um die Druckqualitätsbewertung zu sehen.",
+      "mockup_quality_loading": "Analyse wird geladen…",
+      "mockup_quality_select_size": "Wählen Sie eine Größe, um die Analyse zu sehen.",
+      "mockup_wood_oak": "Eiche",
+      "mockup_wood_pine": "Kiefer",
+      "mockup_color_light_brown": "Hellbraun",
+      "mockup_color_brown": "Braun",
+      "mockup_color_dark_brown": "Dunkelbraun",
+      "mockup_unavailable": "Nicht verfügbar",
+      "print_upload_prompt": "Laden Sie ein Bild hoch, um die Analyse zu sehen.",
+      "print_quality_highest": "Höchste Qualität",
+      "print_quality_highest_note": "Maximale Schärfe, Fine Art, Premium-Druck. Beste Betrachtung aus 20–30 cm",
+      "print_quality_very_good": "Sehr gute Qualität",
+      "print_quality_very_good_note": "Praktisch kein Unterschied zu 300 PPI bei normaler Betrachtungsdistanz von 30–50 cm",
+      "print_quality_good": "Gute Qualität",
+      "print_quality_good_note": "Immer noch ein guter Druck, aber mit weniger Detailreserve; empfohlene Betrachtungsdistanz 50–80 cm",
+      "print_quality_average": "Durchschnittliche Qualität",
+      "print_quality_average_note": "Ausstellungseffekt, leicht weicher, akzeptabel aus 80–120 cm",
+      "print_quality_low_note": "Zu wenig PPI für Nahbetrachtung; sieht nur aus 120 cm und weiter gut aus",
+      "print_quality_critical_note": "Kritisch niedrige Auflösung — sichtbare Pixelierung und fehlende Details selbst aus der Ferne; für dieses Format ungeeignet"
+    }
+  }
+}

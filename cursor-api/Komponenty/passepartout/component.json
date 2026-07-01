@@ -1,0 +1,8 @@
+{
+  "name": "Passe-partout",
+  "description": "Kalkulator kosztu passe-partout z Allegro — jednostki, zaokrąglenia, wiadomość do sprzedawcy (w launcherze).",
+  "icon": "🖼️",
+  "color": "#6b4423",
+  "order": 45,
+  "mode": "inline"
+}

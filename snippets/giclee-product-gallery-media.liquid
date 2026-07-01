@@ -1,0 +1,26 @@
+{%- comment -%}
+  Filtruje media produktu pod galerie PDP:
+  - pomija alt z '(preview)' (podglad kolekcji/menu — nie w galerii PDP)
+  - (Full) / '(full)' na poczatku listy
+  Wejscie: product (obiekt produktu). Wyjscie: giclee_gallery_media (tablica media).
+{%- endcomment -%}
+{%- liquid
+  assign giclee_gallery_media = '' | split: ','
+  assign giclee_gallery_full = '' | split: ','
+  assign giclee_gallery_rest = '' | split: ','
+
+  for media in product.media
+    assign alt_l = media.alt | downcase
+    if alt_l contains '(preview)'
+      continue
+    endif
+    assign chunk = product.media | where: 'id', media.id
+    if alt_l contains '(full)' or alt_l contains ' full'
+      assign giclee_gallery_full = giclee_gallery_full | concat: chunk
+    else
+      assign giclee_gallery_rest = giclee_gallery_rest | concat: chunk
+    endif
+  endfor
+
+  assign giclee_gallery_media = giclee_gallery_full | concat: giclee_gallery_rest
+-%}

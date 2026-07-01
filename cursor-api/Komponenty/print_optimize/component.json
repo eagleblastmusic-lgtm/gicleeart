@@ -1,0 +1,7 @@
+{
+  "name": "Optymalizacja druku",
+  "description": "Gemini (scena) + korekcja kolorow pod druk; kalibracja par vs Whitewall.",
+  "icon": "🎨",
+  "color": "#5d4037",
+  "order": 37
+}

@@ -1,0 +1,1352 @@
+/* Kolekcja autora — premium gallery showcase (coverflow + editorial) */
+
+.giclee-artist-showcase {
+  --gacs-bg: #10100f;
+  --gacs-bg-gradient: radial-gradient(120% 82% at 50% 0%, #1f1c17 0%, var(--gacs-bg) 50%, #0a0908 100%);
+  --gacs-surface: #171614;
+  --gacs-ink: #f4f0e8;
+  --gacs-muted: rgba(244, 240, 232, 0.62);
+  --gacs-gold: #c9a84c;
+  --gacs-gold-soft: rgba(201, 168, 76, 0.35);
+  --gacs-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --gacs-slide-w: clamp(220px, 28vw, 340px);
+  --gacs-slide-h: clamp(300px, 42vw, 480px);
+  position: relative;
+  color: var(--gacs-ink);
+  background: var(--gacs-bg-gradient);
+  overflow-x: visible;
+  overflow-y: hidden;
+}
+
+.giclee-artist-showcase::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(201, 168, 76, 0.085), transparent 44%),
+    radial-gradient(circle at 80% 90%, rgba(255, 255, 255, 0.045), transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(36, 32, 28, 0.28), transparent 58%);
+  pointer-events: none;
+}
+
+.giclee-artist-showcase__inner {
+  position: relative;
+  z-index: 1;
+  max-width: min(1280px, 100%);
+  margin-inline: auto;
+  padding: clamp(48px, 8vw, 96px) clamp(20px, 4vw, 40px);
+}
+
+.giclee-artist-showcase__header {
+  text-align: center;
+  max-width: 46rem;
+  margin: 0 auto;
+}
+
+/* ── Nawigacja między autorami ── */
+
+.giclee-artist-showcase__header-row {
+  display: grid;
+  grid-template-columns: minmax(108px, 1fr) minmax(240px, 2.2fr) minmax(108px, 1fr);
+  align-items: center;
+  gap: clamp(12px, 2.5vw, 28px);
+  margin-bottom: clamp(28px, 4vw, 40px);
+}
+
+.giclee-artist-showcase__header-row--solo {
+  grid-template-columns: 1fr;
+}
+
+.giclee-artist-showcase__header-row--solo .giclee-artist-showcase__header {
+  margin-bottom: clamp(36px, 6vw, 64px);
+}
+
+.giclee-artist-showcase__artist-nav {
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  margin: 0;
+  padding: 0.65rem 0.35rem 0.75rem;
+  border: 0;
+  border-top: 1px solid rgba(201, 168, 76, 0.14);
+  background: transparent;
+  color: rgba(244, 240, 232, 0.72);
+  cursor: pointer;
+  text-align: inherit;
+  font: inherit;
+  min-width: 0;
+  transition:
+    color 0.45s var(--gacs-ease),
+    opacity 0.45s var(--gacs-ease),
+    transform 0.45s var(--gacs-ease),
+    border-color 0.45s var(--gacs-ease);
+}
+
+.giclee-artist-showcase__artist-nav--prev {
+  justify-self: start;
+  text-align: left;
+}
+
+.giclee-artist-showcase__artist-nav--next {
+  justify-self: end;
+  text-align: right;
+}
+
+.giclee-artist-showcase__artist-nav-label {
+  display: block;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(0.62rem, 1vw, 0.7rem);
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(244, 240, 232, 0.48);
+  transition: color 0.45s var(--gacs-ease);
+}
+
+.giclee-artist-showcase__artist-nav-name {
+  display: block;
+  margin-top: 0.35rem;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(1rem, 1.8vw, 1.22rem);
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: var(--gacs-ink);
+  transition: color 0.45s var(--gacs-ease);
+}
+
+.giclee-artist-showcase__artist-nav-preview {
+  position: absolute;
+  top: 50%;
+  width: clamp(52px, 6vw, 68px);
+  aspect-ratio: 3 / 4;
+  border-radius: 4px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%) scale(0.94);
+  filter: blur(6px) saturate(88%);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  transition:
+    opacity 0.55s var(--gacs-ease),
+    transform 0.55s var(--gacs-ease),
+    filter 0.55s var(--gacs-ease);
+}
+
+.giclee-artist-showcase__artist-nav--prev .giclee-artist-showcase__artist-nav-preview {
+  left: calc(100% + 12px);
+}
+
+.giclee-artist-showcase__artist-nav--next .giclee-artist-showcase__artist-nav-preview {
+  right: calc(100% + 12px);
+}
+
+.giclee-artist-showcase__artist-nav-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0.82;
+}
+
+.giclee-artist-showcase__artist-nav:hover,
+.giclee-artist-showcase__artist-nav:focus-visible {
+  color: var(--gacs-ink);
+  border-top-color: rgba(201, 168, 76, 0.42);
+  transform: translateY(-1px);
+}
+
+.giclee-artist-showcase__artist-nav:hover .giclee-artist-showcase__artist-nav-label,
+.giclee-artist-showcase__artist-nav:focus-visible .giclee-artist-showcase__artist-nav-label {
+  color: var(--gacs-gold);
+}
+
+.giclee-artist-showcase__artist-nav:hover .giclee-artist-showcase__artist-nav-name,
+.giclee-artist-showcase__artist-nav:focus-visible .giclee-artist-showcase__artist-nav-name {
+  color: #faf6ee;
+}
+
+.giclee-artist-showcase__artist-nav:hover .giclee-artist-showcase__artist-nav-preview,
+.giclee-artist-showcase__artist-nav:focus-visible .giclee-artist-showcase__artist-nav-preview {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+  filter: blur(0) saturate(100%);
+}
+
+.giclee-artist-showcase__artist-nav:focus-visible {
+  outline: 1px solid var(--gacs-gold-soft);
+  outline-offset: 6px;
+}
+
+.giclee-artist-showcase__artist-nav[disabled],
+.giclee-artist-showcase__artist-nav[hidden] {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.giclee-artist-showcase__exhibition-content {
+  filter: blur(0) brightness(1);
+  transition:
+    transform 0.88s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.88s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.88s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, opacity, filter;
+  backface-visibility: hidden;
+}
+
+.giclee-artist-showcase.is-artist-exiting-next .giclee-artist-showcase__exhibition-content,
+.giclee-artist-showcase.is-artist-exiting-prev .giclee-artist-showcase__exhibition-content {
+  pointer-events: none;
+}
+
+/* Wyjście: start brightness(1) (stan spoczynku) → koniec przygaszone + blur */
+.giclee-artist-showcase.is-artist-exiting-next .giclee-artist-showcase__exhibition-content {
+  transform: translate3d(-5%, 0, 0) scale(0.965);
+  opacity: 0;
+  filter: blur(7px) brightness(0.88);
+}
+
+.giclee-artist-showcase.is-artist-exiting-prev .giclee-artist-showcase__exhibition-content {
+  transform: translate3d(5%, 0, 0) scale(0.965);
+  opacity: 0;
+  filter: blur(7px) brightness(0.88);
+}
+
+/* Wejście: start przygaszone + blur → po zdjęciu klas do brightness(1) (transition) */
+.giclee-artist-showcase.is-artist-entering-next .giclee-artist-showcase__exhibition-content {
+  transform: translate3d(6%, 0, 0) scale(0.975);
+  opacity: 0;
+  filter: blur(5px) brightness(0.92);
+}
+
+.giclee-artist-showcase.is-artist-entering-prev .giclee-artist-showcase__exhibition-content {
+  transform: translate3d(-6%, 0, 0) scale(0.975);
+  opacity: 0;
+  filter: blur(5px) brightness(0.92);
+}
+
+/* Między wyjściem a wejściem — bez mignięcia treści w pełnych barwach */
+.giclee-artist-showcase.is-artist-transitioning:not(.is-artist-exiting-next):not(.is-artist-exiting-prev):not(.is-artist-entering-next):not(.is-artist-entering-prev)
+  .giclee-artist-showcase__exhibition-content {
+  opacity: 0;
+  filter: blur(7px) brightness(0.88);
+  pointer-events: none;
+}
+
+.giclee-artist-showcase.is-artist-transitioning::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 36%, rgba(255, 248, 235, 0.045), transparent 58%),
+    rgba(4, 4, 4, 0.08);
+  opacity: 1;
+  transition: opacity 0.88s var(--gacs-ease);
+}
+
+/* Po fazie wyjścia — bez przyciemnienia całej sekcji (karuzela zachowuje barwy) */
+.giclee-artist-showcase.is-artist-transitioning:not(.is-artist-exiting-next):not(.is-artist-exiting-prev)::after {
+  opacity: 0;
+}
+
+.giclee-artist-showcase--multi-artist .giclee-artist-showcase__header-row {
+  align-items: start;
+}
+
+@media screen and (min-width: 990px) and (max-width: 1199px) {
+  .giclee-artist-showcase__inner {
+    padding: clamp(42px, 6vw, 72px) clamp(20px, 3vw, 32px);
+  }
+
+  .giclee-artist-showcase__header-row {
+    grid-template-columns: minmax(96px, 0.9fr) minmax(260px, 2.4fr) minmax(96px, 0.9fr);
+    gap: clamp(10px, 2vw, 20px);
+    margin-bottom: clamp(24px, 3vw, 34px);
+  }
+
+  .giclee-artist-showcase__title {
+    font-size: clamp(2rem, 4.2vw, 2.8rem);
+  }
+
+  .giclee-artist-showcase__lead {
+    font-size: clamp(1rem, 1.8vw, 1.18rem);
+  }
+}
+
+@media screen and (max-width: 989px) {
+  .giclee-artist-showcase__inner {
+    padding: clamp(36px, 6vw, 64px) clamp(18px, 4vw, 32px);
+  }
+
+  .giclee-artist-showcase__header-row {
+    grid-template-columns: minmax(88px, 1fr) minmax(200px, 2fr) minmax(88px, 1fr);
+    gap: clamp(10px, 2vw, 18px);
+    margin-bottom: clamp(22px, 4vw, 32px);
+  }
+
+  .giclee-artist-showcase__artist-nav-preview {
+    display: none;
+  }
+
+  .giclee-artist-showcase__artist-nav-label {
+    letter-spacing: 0.14em;
+  }
+
+  .giclee-artist-showcase__title {
+    font-size: clamp(1.85rem, 5.2vw, 2.55rem);
+  }
+
+  .giclee-artist-showcase__lead {
+    font-size: clamp(1rem, 2.4vw, 1.16rem);
+  }
+}
+
+@media screen and (max-width: 749px) {
+  .giclee-artist-showcase {
+    --gacs-slide-w: clamp(158px, 58vw, 224px);
+    --gacs-slide-h: clamp(216px, 76vw, 300px);
+  }
+
+  .giclee-artist-showcase__inner {
+    padding: clamp(22px, 6vw, 34px) max(var(--page-margin, 16px), 14px);
+  }
+
+  .giclee-artist-showcase__title {
+    font-size: clamp(1.45rem, 7vw, 2.05rem);
+  }
+
+  .giclee-artist-showcase__lead {
+    font-size: clamp(0.92rem, 3.6vw, 1.04rem);
+    max-width: none;
+  }
+
+  .giclee-artist-showcase__eyebrow {
+    letter-spacing: 0.16em;
+    font-size: 0.62rem;
+  }
+
+  /* Nagłówek na pełną szerokość, pod spodem prev | next */
+  .giclee-artist-showcase__header-row {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "title title"
+      "prev next";
+    gap: 0.5rem 0.45rem;
+    margin-bottom: clamp(16px, 4vw, 22px);
+  }
+
+  .giclee-artist-showcase__header-row .giclee-artist-showcase__exhibition-content:first-of-type {
+    grid-area: title;
+  }
+
+  .giclee-artist-showcase__artist-nav {
+    min-height: 34px;
+    padding: 0.36rem 0.12rem 0.42rem;
+    border-top-color: rgba(201, 168, 76, 0.1);
+  }
+
+  .giclee-artist-showcase__artist-nav--prev {
+    grid-area: prev;
+    justify-self: stretch;
+    text-align: left;
+    padding-left: 0;
+  }
+
+  .giclee-artist-showcase__artist-nav--next {
+    grid-area: next;
+    justify-self: stretch;
+    text-align: right;
+    padding-right: 0;
+  }
+
+  .giclee-artist-showcase__artist-nav-label {
+    font-size: 0.5rem;
+    letter-spacing: 0.09em;
+  }
+
+  .giclee-artist-showcase__artist-nav-name {
+    margin-top: 0.22rem;
+    font-size: clamp(0.72rem, 3vw, 0.88rem);
+    line-height: 1.08;
+  }
+
+  .giclee-artist-showcase__header {
+    margin-bottom: 0;
+  }
+
+  .giclee-artist-showcase__viewport {
+    min-height: calc(var(--gacs-slide-h) + 18px);
+    perspective: 950px;
+    touch-action: pan-y;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .giclee-artist-showcase__slide,
+  .giclee-artist-showcase__slide-link {
+    touch-action: pan-y;
+  }
+
+  .giclee-artist-showcase__track {
+    height: calc(var(--gacs-slide-h) + 12px);
+  }
+
+  .giclee-artist-showcase__slide-meta {
+    padding: 0.58rem 0.68rem 0.68rem;
+    min-height: 58px;
+  }
+
+  .giclee-artist-showcase__slide-title {
+    font-size: 0.82rem;
+  }
+
+  .giclee-artist-showcase__dots {
+    margin-top: 0.9rem;
+    gap: 0.55rem;
+  }
+
+  .giclee-artist-showcase__dot {
+    width: 8px;
+    height: 8px;
+  }
+
+  .giclee-artist-showcase__nav {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+@media screen and (max-width: 420px) {
+  .giclee-artist-showcase {
+    --gacs-slide-w: clamp(148px, 62vw, 204px);
+    --gacs-slide-h: clamp(204px, 82vw, 282px);
+  }
+
+  .giclee-artist-showcase__inner {
+    padding-top: clamp(18px, 5vw, 26px);
+    padding-bottom: clamp(22px, 6vw, 32px);
+  }
+
+  .giclee-artist-showcase__lead {
+    display: none;
+  }
+
+  .giclee-artist-showcase__header-row {
+    margin-bottom: 14px;
+  }
+
+  .giclee-artist-showcase__artist-nav-label {
+    font-size: 0.46rem;
+  }
+
+  .giclee-artist-showcase__artist-nav-name {
+    font-size: clamp(0.68rem, 3.4vw, 0.8rem);
+  }
+}
+
+.giclee-artist-showcase__eyebrow {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(0.72rem, 1.2vw, 0.82rem);
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gacs-gold);
+}
+
+.giclee-artist-showcase__title {
+  margin: 0 0 0.85rem;
+  font-family: "Bodoni Moda", Georgia, serif;
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: 0.02em;
+}
+
+.giclee-artist-showcase__lead {
+  margin: 0 auto;
+  max-width: 38ch;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(1.05rem, 2vw, 1.28rem);
+  line-height: 1.55;
+  color: var(--gacs-muted);
+}
+
+.giclee-artist-showcase__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1.5rem;
+  padding: 0.72rem 1.35rem;
+  border: 1px solid var(--gacs-gold-soft);
+  border-radius: 999px;
+  color: var(--gacs-ink);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: border-color 0.35s var(--gacs-ease), background 0.35s var(--gacs-ease),
+    box-shadow 0.35s var(--gacs-ease);
+}
+
+.giclee-artist-showcase__cta:hover {
+  border-color: var(--gacs-gold);
+  background: rgba(201, 168, 76, 0.08);
+  box-shadow: 0 0 28px rgba(201, 168, 76, 0.12);
+}
+
+.giclee-artist-showcase__cta-spacer {
+  display: inline-flex;
+  margin-top: 1.5rem;
+  padding: 0.72rem 1.35rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  line-height: 1;
+  visibility: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Coverflow stage ── */
+
+.giclee-artist-showcase__stage {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: clamp(8px, 2vw, 16px);
+  overflow: visible;
+}
+
+.giclee-artist-showcase__nav {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(244, 240, 232, 0.18);
+  background: rgba(12, 12, 12, 0.55);
+  color: var(--gacs-ink);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.3s var(--gacs-ease), background 0.3s var(--gacs-ease),
+    transform 0.2s ease;
+  backdrop-filter: blur(8px);
+}
+
+.giclee-artist-showcase__nav:hover {
+  border-color: var(--gacs-gold-soft);
+  background: rgba(201, 168, 76, 0.1);
+}
+
+.giclee-artist-showcase__nav:active {
+  transform: scale(0.94);
+}
+
+.giclee-artist-showcase__nav:focus-visible {
+  outline: 2px solid var(--gacs-gold);
+  outline-offset: 3px;
+}
+
+.giclee-artist-showcase__nav svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.giclee-artist-showcase__viewport {
+  position: relative;
+  min-height: calc(var(--gacs-slide-h) + 48px);
+  perspective: 1400px;
+  perspective-origin: 50% 42%;
+  touch-action: pan-y;
+  outline: none;
+}
+
+.giclee-artist-showcase__viewport.is-dragging {
+  cursor: grabbing;
+}
+
+.giclee-artist-showcase__track {
+  position: relative;
+  width: 100%;
+  height: calc(var(--gacs-slide-h) + 32px);
+  transform-style: preserve-3d;
+  /* Track sits behind 3D-transformed slides but still wins hit-testing without this. */
+  pointer-events: none;
+}
+
+.giclee-artist-showcase__slide {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--gacs-slide-w);
+  height: var(--gacs-slide-h);
+  margin-left: calc(var(--gacs-slide-w) / -2);
+  margin-top: calc(var(--gacs-slide-h) / -2);
+  transform-style: preserve-3d;
+  will-change: transform, opacity, filter;
+  transition:
+    transform 0.72s var(--gacs-ease),
+    opacity 0.55s var(--gacs-ease),
+    filter 0.55s var(--gacs-ease);
+  cursor: pointer;
+}
+
+.giclee-artist-showcase__slide-link {
+  display: block;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: rgba(201, 168, 76, 0.18);
+}
+
+.giclee-artist-showcase__slide-link:focus-visible {
+  outline: 2px solid var(--gacs-gold);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+.giclee-artist-showcase__slide-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--gacs-surface);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+  transition:
+    box-shadow 0.55s var(--gacs-ease),
+    transform 0.55s var(--gacs-ease);
+}
+
+.giclee-artist-showcase__slide.is-active .giclee-artist-showcase__slide-card {
+  box-shadow:
+    0 32px 80px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(201, 168, 76, 0.28),
+    0 0 48px rgba(201, 168, 76, 0.08);
+}
+
+.giclee-artist-showcase__slide-media {
+  position: relative;
+  width: 100%;
+  height: calc(100% - 72px);
+  overflow: hidden;
+  background: #0e0e0e;
+}
+
+.giclee-artist-showcase__slide-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.8s var(--gacs-ease), filter 0.55s var(--gacs-ease);
+}
+
+.giclee-artist-showcase__slide:not(.is-active) .giclee-artist-showcase__slide-media img {
+  filter: brightness(0.72) saturate(0.88);
+}
+
+.giclee-artist-showcase__slide.is-active:hover .giclee-artist-showcase__slide-media img {
+  transform: scale(1.03);
+}
+
+.giclee-artist-showcase__slide-meta {
+  padding: 0.85rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-height: 72px;
+  justify-content: center;
+}
+
+.giclee-artist-showcase__slide-title {
+  margin: 0;
+  font-family: "Bodoni Moda", Georgia, serif;
+  font-size: clamp(0.95rem, 1.6vw, 1.12rem);
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+}
+
+.giclee-artist-showcase__slide-price {
+  margin: 0;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 0.92rem;
+  color: var(--gacs-muted);
+  letter-spacing: 0.04em;
+}
+
+.giclee-artist-showcase__dots {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: clamp(24px, 4vw, 36px);
+}
+
+.giclee-artist-showcase__dot {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(244, 240, 232, 0.22);
+  cursor: pointer;
+  transition: transform 0.3s var(--gacs-ease), background 0.3s var(--gacs-ease);
+}
+
+.giclee-artist-showcase__dot.is-active {
+  background: var(--gacs-gold);
+  transform: scale(1.25);
+}
+
+.giclee-artist-showcase__dot:focus-visible {
+  outline: 2px solid var(--gacs-gold);
+  outline-offset: 3px;
+}
+
+/* ── Editorial layout ── */
+
+.giclee-artist-showcase--editorial .giclee-artist-showcase__stage {
+  display: block;
+}
+
+.giclee-artist-showcase--editorial .giclee-artist-showcase__nav {
+  display: none;
+}
+
+.giclee-artist-showcase--editorial .giclee-artist-showcase__viewport {
+  perspective: none;
+  min-height: 0;
+}
+
+.giclee-artist-showcase--editorial .giclee-artist-showcase__track {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: clamp(16px, 2.5vw, 28px);
+  height: auto;
+  position: static;
+}
+
+.giclee-artist-showcase--editorial .giclee-artist-showcase__slide {
+  position: relative;
+  left: auto;
+  top: auto;
+  margin: 0;
+  width: auto;
+  height: auto;
+  transform: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+  transition: transform 0.55s var(--gacs-ease), box-shadow 0.55s var(--gacs-ease);
+}
+
+.giclee-artist-showcase--editorial .giclee-artist-showcase__slide:nth-child(8n + 1) {
+  grid-column: 2 / span 4;
+  grid-row: span 2;
+}
+
+.giclee-artist-showcase--editorial .giclee-artist-showcase__slide:nth-child(8n + 2) {
+  grid-column: 7 / span 5;
+  grid-row: span 2;
+}
+
+.giclee-artist-showcase--editorial .giclee-artist-showcase__slide:nth-child(8n + 3) {
+  grid-column: 1 / span 8;
+}
+
+.giclee-artist-showcase--editorial .giclee-artist-showcase__slide:nth-child(8n + 4) {
+  grid-column: 3 / span 8;
+}
+
+.giclee-artist-showcase--editorial .giclee-artist-showcase__slide:nth-child(8n + 5) {
+  grid-column: 7 / span 5;
+}
+
+.giclee-artist-showcase--editorial .giclee-artist-showcase__slide:nth-child(8n + 6) {
+  grid-column: 2 / span 4;
+}
+
+.giclee-artist-showcase--editorial .giclee-artist-showcase__slide:nth-child(8n + 7) {
+  grid-column: 5 / span 8;
+}
+
+.giclee-artist-showcase--editorial .giclee-artist-showcase__slide:nth-child(8n + 8) {
+  grid-column: 2 / span 8;
+}
+
+.giclee-artist-showcase--editorial .giclee-artist-showcase__slide-card {
+  height: 100%;
+  min-height: clamp(240px, 32vw, 360px);
+}
+
+.giclee-artist-showcase--editorial .giclee-artist-showcase__slide-media {
+  height: calc(100% - 72px);
+  min-height: 180px;
+}
+
+.giclee-artist-showcase--editorial .giclee-artist-showcase__slide:hover {
+  transform: translateY(-6px) !important;
+}
+
+.giclee-artist-showcase--editorial .giclee-artist-showcase__slide:hover .giclee-artist-showcase__slide-card {
+  box-shadow:
+    0 28px 70px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(201, 168, 76, 0.2);
+}
+
+.giclee-artist-showcase--editorial .giclee-artist-showcase__dots {
+  display: none;
+}
+
+@media screen and (max-width: 749px) {
+  .giclee-artist-showcase--editorial .giclee-artist-showcase__track {
+    grid-template-columns: 1fr;
+  }
+
+  .giclee-artist-showcase--editorial .giclee-artist-showcase__slide {
+    grid-column: 1 / -1 !important;
+  }
+
+  .giclee-artist-showcase__nav--prev {
+    order: 2;
+    justify-self: start;
+  }
+
+  .giclee-artist-showcase__nav--next {
+    order: 3;
+    justify-self: end;
+  }
+
+  .giclee-artist-showcase__viewport {
+    order: 1;
+    grid-column: 1 / -1;
+  }
+
+  .giclee-artist-showcase__stage {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+  }
+}
+
+/* ── Modal ── */
+
+.giclee-artist-showcase__modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  max-width: none;
+  max-height: none;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.45s var(--gacs-ease);
+}
+
+.giclee-artist-showcase__modal[open] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.giclee-artist-showcase__modal::backdrop {
+  background: rgba(4, 4, 4, 0.72);
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+}
+
+.giclee-artist-showcase__modal-panel {
+  position: fixed;
+  inset: clamp(12px, 3vw, 24px);
+  margin: auto;
+  max-width: min(920px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #111;
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.65);
+  transform: translateY(16px) scale(0.985);
+  transition: transform 0.5s var(--gacs-ease);
+}
+
+.giclee-artist-showcase__modal[open] .giclee-artist-showcase__modal-panel {
+  transform: none;
+}
+
+.giclee-artist-showcase__modal-media {
+  background: #0a0a0a;
+  min-height: 280px;
+}
+
+.giclee-artist-showcase__modal-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  background: #0a0a0a;
+}
+
+.giclee-artist-showcase__modal-body {
+  padding: clamp(24px, 4vw, 40px);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-y: auto;
+}
+
+.giclee-artist-showcase__modal-eyebrow {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gacs-gold);
+}
+
+.giclee-artist-showcase__modal-title {
+  margin: 0;
+  font-family: "Bodoni Moda", Georgia, serif;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.giclee-artist-showcase__modal-price {
+  margin: 0;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.15rem;
+  color: var(--gacs-muted);
+}
+
+.giclee-artist-showcase__modal-text {
+  margin: 0;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--gacs-muted);
+}
+
+.giclee-artist-showcase__modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+.giclee-artist-showcase__modal-link,
+.giclee-artist-showcase__modal-close {
+  -webkit-appearance: none;
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 1.2rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.3s var(--gacs-ease), border-color 0.3s var(--gacs-ease);
+}
+
+.giclee-artist-showcase__modal-link {
+  border: 1px solid var(--gacs-gold-soft);
+  background: rgba(201, 168, 76, 0.1);
+  color: var(--gacs-ink);
+}
+
+.giclee-artist-showcase__modal-link:hover {
+  border-color: var(--gacs-gold);
+  background: rgba(201, 168, 76, 0.16);
+}
+
+.giclee-artist-showcase__modal-close {
+  border: 1px solid rgba(244, 240, 232, 0.16);
+  background: transparent;
+  color: var(--gacs-muted);
+}
+
+.giclee-artist-showcase__modal-close:hover {
+  color: var(--gacs-ink);
+  border-color: rgba(244, 240, 232, 0.35);
+}
+
+.giclee-artist-showcase__modal-x {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(244, 240, 232, 0.18);
+  background: rgba(8, 8, 8, 0.65);
+  color: var(--gacs-ink);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.giclee-artist-showcase__modal-x:focus-visible {
+  outline: 2px solid var(--gacs-gold);
+  outline-offset: 2px;
+}
+
+@media screen and (max-width: 749px) {
+  .giclee-artist-showcase__modal-panel {
+    grid-template-columns: 1fr;
+    max-height: calc(100dvh - 16px);
+    inset: 8px;
+  }
+
+  .giclee-artist-showcase__modal-media {
+    max-height: 42vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giclee-artist-showcase__slide,
+  .giclee-artist-showcase__slide-media img,
+  .giclee-artist-showcase__slide-card,
+  .giclee-artist-showcase__modal,
+  .giclee-artist-showcase__modal-panel,
+  .giclee-artist-showcase__exhibition-content,
+  .giclee-artist-showcase__artist-nav-preview {
+    transition: none !important;
+  }
+
+  .giclee-artist-showcase.is-artist-exiting-next .giclee-artist-showcase__exhibition-content,
+  .giclee-artist-showcase.is-artist-exiting-prev .giclee-artist-showcase__exhibition-content,
+  .giclee-artist-showcase.is-artist-entering-next .giclee-artist-showcase__exhibition-content,
+  .giclee-artist-showcase.is-artist-entering-prev .giclee-artist-showcase__exhibition-content {
+    transform: none !important;
+    opacity: 1 !important;
+    filter: blur(0) brightness(1) !important;
+  }
+
+  .gacs-panel-scroll__sticky,
+  .gacs-panel-scroll__surface,
+  .gacs-panel-scroll__veil,
+  .shopify-section.gacs-under-panel {
+    transition: none !important;
+  }
+}
+
+/* ── Scroll panel — luksusowa warstwa ekspozycyjna ── */
+
+.gacs-panel-scroll {
+  --gacs-bg: #10100f;
+  --gacs-bg-gradient: radial-gradient(120% 82% at 50% 0%, #1f1c17 0%, var(--gacs-bg) 50%, #0a0908 100%);
+  --gacs-gap: clamp(64px, 8vw, 112px);
+  --gacs-overlap: clamp(88px, 18vh, 176px);
+  --gacs-top-fill: max(var(--gacs-overlap), var(--header-group-height, 72px));
+  --gacs-panel-z: var(--layer-gacs-exhibition, 100000);
+  --gacs-progress: 0;
+  --gacs-translate-y: 0px;
+  --gacs-layout-trim: 0px;
+  --gacs-shadow-y: -8px;
+  --gacs-shadow-blur: 24px;
+  --gacs-shadow-alpha: 0.12;
+  --gacs-veil-alpha: 0;
+  position: relative;
+  z-index: var(--gacs-panel-z);
+  isolation: isolate;
+  padding-top: var(--gacs-gap);
+  margin-top: 0;
+}
+
+.gacs-panel-scroll.gacs-end-page-wrap {
+  /*
+   * Ten wariant kończy stronę. Duży overlap (~162px desktop) podnosił całą galerię
+   * i zostawiał pusty pas na dole viewportu. Zostawiamy subtelne nachodzenie bez ogona.
+   */
+  --gacs-overlap: 1px;
+}
+
+/* end_page + static: scroll-linked trim wyłączony, czarna przerwa = padding-top panelu */
+.gacs-panel-scroll.gacs-end-page-wrap.gacs-panel-scroll--static {
+  padding-top: var(--gacs-gap);
+  z-index: auto;
+}
+
+/*
+ * Czarny pasek nad "Kolekcją autora" po scrollu i zmianie autora:
+ * sticky header + overflow:hidden panelu/sekcji odsłaniały body #000 nad przesuniętym __surface.
+ * Header chowamy dopiero po przypięciu panelu do góry; wcześniejsze ukrycie odsłaniało body #000.
+ */
+body:has(.gacs-panel-scroll.is-pinned-top) .header-section {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.shopify-section.giclee-artist-collection-showcase-section.gacs-section-over-chrome {
+  position: relative;
+  z-index: var(--layer-gacs-exhibition, 100000) !important;
+  isolation: isolate;
+  overflow: visible;
+}
+
+.gacs-panel-scroll.is-overlapping,
+.gacs-panel-scroll.is-pinned-top {
+  overflow: visible;
+  clip-path: none;
+}
+
+.gacs-panel-scroll--static {
+  padding-top: 0;
+  z-index: auto;
+}
+
+.gacs-panel-scroll--static .gacs-panel-scroll__sticky {
+  position: relative;
+  top: auto;
+  z-index: auto;
+  margin-bottom: 0 !important;
+  background: transparent;
+}
+
+.gacs-panel-scroll--static .gacs-panel-scroll__surface {
+  transform: none !important;
+  margin-bottom: 0 !important;
+  box-shadow: none;
+}
+
+.gacs-panel-scroll--static .gacs-panel-scroll__veil {
+  display: none;
+}
+
+.gacs-panel-scroll__sentinel {
+  position: absolute;
+  top: var(--gacs-gap);
+  left: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.gacs-panel-scroll__veil {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--gacs-panel-z) - 1);
+  background: rgba(4, 4, 4, var(--gacs-veil-alpha));
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.gacs-panel-scroll.is-overlapping .gacs-panel-scroll__veil {
+  opacity: 1;
+  visibility: visible;
+}
+
+.gacs-panel-scroll__sticky {
+  position: sticky;
+  top: 0;
+  z-index: var(--gacs-panel-z);
+  overflow: visible;
+  background: transparent;
+  /* transform na __surface nie zmienia wysokości sticky — trim tutaj */
+  margin-bottom: calc(
+    -1 * var(--gacs-layout-trim, calc(var(--gacs-overlap) * var(--gacs-progress, 0)))
+  );
+}
+
+.gacs-panel-scroll.is-overlapping .gacs-panel-scroll__sticky {
+  /*
+   * Czarny pasek po zmianie autora był widocznym body (#000) w miejscach,
+   * gdzie przesunięty __surface albo animowany content nie pokrywał sticky viewportu.
+   * Tło na sticky wypełnia tylko obszar panelu, bez zmiany wysokości i bez pseudo-pasów.
+   */
+  background: var(--gacs-bg-gradient);
+}
+
+.gacs-panel-scroll__surface {
+  position: relative;
+  z-index: 1;
+  transform: translate3d(0, var(--gacs-translate-y, 0), 0);
+  will-change: transform;
+  backface-visibility: hidden;
+  box-shadow:
+    0 var(--gacs-shadow-y) var(--gacs-shadow-blur) rgba(0, 0, 0, var(--gacs-shadow-alpha));
+}
+
+.gacs-panel-scroll.is-overlapping .gacs-panel-scroll__surface::before,
+.gacs-panel-scroll.is-pinned-top .gacs-panel-scroll__surface::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: var(--gacs-bg);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.gacs-panel-scroll .giclee-artist-showcase {
+  position: relative;
+  z-index: 1;
+  border-radius: clamp(14px, 2.2vw, 22px) clamp(14px, 2.2vw, 22px) 0 0;
+  overflow-x: visible;
+  overflow-y: hidden;
+}
+
+.gacs-panel-scroll.is-overlapping .giclee-artist-showcase {
+  overflow: visible;
+  border-radius: 0;
+  margin-top: -2px;
+}
+
+.gacs-panel-scroll.is-pinned-top .gacs-panel-scroll__surface {
+  --gacs-shadow-y: -4px;
+}
+
+.gacs-panel-scroll.is-pinned-top .giclee-artist-showcase {
+  border-radius: 0;
+}
+
+.gacs-panel-scroll.is-overlapping .gacs-panel-scroll__surface {
+  --gacs-shadow-y: -14px;
+}
+
+.shopify-section.gacs-under-panel {
+  --gacs-under-dim: 0;
+  position: relative;
+  z-index: 0;
+}
+
+.shopify-section.gacs-under-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 4, 4, calc(var(--gacs-under-dim) * 0.38));
+  pointer-events: none;
+  z-index: 2;
+}
+
+@media screen and (max-width: 749px) {
+  .gacs-panel-scroll {
+    --gacs-gap: clamp(48px, 10vw, 80px);
+    --gacs-overlap: clamp(72px, 16vh, 136px);
+  }
+
+  .gacs-panel-scroll .giclee-artist-showcase {
+    border-radius: clamp(10px, 3vw, 16px) clamp(10px, 3vw, 16px) 0 0;
+  }
+}
+
+/* ── Strona kończy się na galerii ── */
+
+body:has(.giclee-artist-showcase.gacs-end-page),
+body.gacs-gallery-end-page {
+  min-height: auto !important;
+}
+
+main.content-for-layout:has(.giclee-artist-showcase.gacs-end-page),
+body.gacs-gallery-end-page main.content-for-layout {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+}
+
+body:has(.giclee-artist-showcase.gacs-end-page) footer,
+body.gacs-gallery-end-page footer {
+  display: none !important;
+}
+
+.shopify-section:has(.giclee-artist-showcase.gacs-end-page),
+.content-for-layout > .shopify-section.giclee-artist-collection-showcase-section.gacs-section-end-page {
+  flex-grow: 0 !important;
+  flex-shrink: 0;
+  align-self: flex-start;
+  width: 100%;
+  min-height: 0 !important;
+}
+
+.shopify-section.giclee-artist-collection-showcase-section.gacs-section-end-page > .section-background {
+  display: none;
+}
+
+.giclee-artist-showcase.gacs-end-page .giclee-artist-showcase__viewport {
+  max-height: calc(var(--gacs-slide-h) + 48px);
+  contain: layout paint;
+}
+
+.giclee-artist-showcase.gacs-end-page .giclee-artist-showcase__track {
+  max-height: calc(var(--gacs-slide-h) + 32px);
+}
+
+.giclee-artist-showcase.gacs-end-page {
+  margin-bottom: 0;
+}
+
+.giclee-artist-showcase.gacs-end-page .giclee-artist-showcase__inner {
+  padding-bottom: clamp(32px, 5vw, 56px);
+}
+
+.gacs-panel-scroll.gacs-end-page-wrap {
+  padding-bottom: 0;
+  --gacs-overlap: 1px;
+}
+
+/* ── Wygląd sekcji V1 (GicleeApp → Karuzela) — ciemniejsze tło sprzed korekty ── */
+
+html[data-giclee-showcase-look="V1"] .giclee-artist-showcase,
+html[data-giclee-showcase-look="V1"] .gacs-panel-scroll {
+  --gacs-bg: #0a0a0a;
+  --gacs-bg-gradient: radial-gradient(120% 80% at 50% 0%, #1a1814 0%, var(--gacs-bg) 52%, #050505 100%);
+  --gacs-surface: #141414;
+}
+
+html[data-giclee-showcase-look="V1"] .giclee-artist-showcase::before {
+  background:
+    radial-gradient(circle at 20% 10%, rgba(201, 168, 76, 0.06), transparent 42%),
+    radial-gradient(circle at 80% 90%, rgba(255, 255, 255, 0.03), transparent 38%);
+}
+
+/* ── Wygląd V3 — spokojniejsze tło (widoczne, ale drugoplanowe względem karuzeli) ── */
+
+html[data-giclee-showcase-look="V3"] .giclee-artist-showcase,
+html[data-giclee-showcase-look="V3"] .gacs-panel-scroll {
+  --gacs-bg: #0c0b0a;
+  --gacs-bg-gradient: radial-gradient(118% 80% at 50% 0%, #181614 0%, var(--gacs-bg) 52%, #080706 100%);
+  --gacs-surface: #131211;
+}
+
+html[data-giclee-showcase-look="V3"] .giclee-artist-showcase::before {
+  background:
+    radial-gradient(circle at 20% 10%, rgba(201, 168, 76, 0.048), transparent 42%),
+    radial-gradient(circle at 80% 90%, rgba(255, 255, 255, 0.026), transparent 38%),
+    radial-gradient(circle at 50% 100%, rgba(28, 26, 22, 0.14), transparent 56%);
+}
+
+html[data-giclee-showcase-look="V3"] .giclee-artist-showcase::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: rgba(4, 4, 3, 0.09);
+}

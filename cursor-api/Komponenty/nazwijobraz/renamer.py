@@ -51,6 +51,16 @@ _NON_ENGLISH_LETTER_RE = re.compile(
 # Trailing junk typu ",,1815" / " - 1815" - rok przyklejony do koncowki.
 _TRAILING_YEAR_JUNK_RE = re.compile(r"[\s,;:._-]*\b(?:15|16|17|18|19|20)\d{2}\s*$")
 
+# Prefiks strony pliku Wikipedia / Commons (File:, Image:, Media:).
+_WIKI_NAMESPACE_PREFIX_RE = re.compile(
+    r"^(?:file|image|media|archivo|datei|fichier|plik)\s*[:_\-]+\s*",
+    re.IGNORECASE,
+)
+_WIKI_NAMESPACE_ONLY_RE = re.compile(
+    r"^(?:file|image|media)\s*:?\s*$",
+    re.IGNORECASE,
+)
+
 
 def _looks_non_english(text: str) -> bool:
     """Heurystyka: czy tekst zawiera znaki spoza standardowego angielskiego."""
@@ -106,6 +116,26 @@ def _capitalize_word(word: str) -> str:
     return "".join(out)
 
 
+def strip_wiki_namespace_prefix(text: str) -> str:
+    """Usun prefiks strony pliku Wikipedia/Commons (File:, Image:, Media:).
+
+    Przyklady:
+        "File: The Wave" -> "The Wave"
+        "File" / "File:" -> ""
+    """
+    s = (text or "").strip()
+    if not s:
+        return ""
+    while True:
+        new = _WIKI_NAMESPACE_PREFIX_RE.sub("", s, count=1).strip()
+        if new == s:
+            break
+        s = new
+    if _WIKI_NAMESPACE_ONLY_RE.match(s):
+        return ""
+    return s
+
+
 def format_artwork_title(text: str) -> str:
     """Sformatuj tytul obrazu w Title Case z poprawnym traktowaniem malych slow.
 
@@ -118,6 +148,9 @@ def format_artwork_title(text: str) -> str:
     rzeczowniki z duzej, przymiotniki z malej).
     """
     s = (text or "").strip()
+    if not s:
+        return ""
+    s = strip_wiki_namespace_prefix(s)
     if not s:
         return ""
     s = _strip_extension_artifacts(s)

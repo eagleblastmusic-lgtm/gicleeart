@@ -36,6 +36,7 @@ a = Analysis(
         "giclee_app.launcher",
         "giclee_app.component_loader",
         "giclee_app.runtime",
+        "giclee_app.splash_screen",
     ],
     hookspath=[],
     hooksconfig={},

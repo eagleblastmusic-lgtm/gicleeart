@@ -1,0 +1,67 @@
+{
+  "profile": "20X20",
+  "frame_type": "STANDARDOWA",
+  "default_markup_pct": 250,
+  "variant_pricing": {
+    "DĄB_A3+": {
+      "sell_price": 449.0,
+      "markup_pct": 198.61,
+      "margin_pct": 66.51,
+      "driver": "price"
+    },
+    "SOSNA_A4": {
+      "sell_price": 229.0,
+      "markup_pct": 270.51,
+      "margin_pct": 73.01,
+      "driver": "price"
+    },
+    "SOSNA_A2": {
+      "sell_price": 499.0,
+      "markup_pct": 181.48,
+      "margin_pct": 64.47,
+      "driver": "price"
+    },
+    "SOSNA_A3+": {
+      "sell_price": 349.0,
+      "markup_pct": 185.33,
+      "margin_pct": 64.95,
+      "driver": "price"
+    },
+    "DĄB_A4": {
+      "sell_price": 299.0,
+      "markup_pct": 421.48,
+      "margin_pct": 80.82,
+      "driver": "price"
+    },
+    "DĄB_A2": {
+      "sell_price": 699.0,
+      "markup_pct": 221.56,
+      "margin_pct": 68.9,
+      "driver": "price"
+    }
+  },
+  "variant_production_minutes": {
+    "SOSNA_A4": 240.0,
+    "SOSNA_A3+": 300.0,
+    "SOSNA_A2": 360.0,
+    "DĄB_A2": 360.0,
+    "DĄB_A3+": 300.0,
+    "DĄB_A4": 240.0
+  },
+  "wood_origin": "drewno dla majsterkowicza",
+  "frames_per_day_mode": "manual",
+  "frames_per_day": 4,
+  "business_costs": {
+    "enabled": true,
+    "tax_form": "skala",
+    "zus_stage": "ulga_na_start",
+    "relief_month": 1,
+    "voluntary_sickness": false,
+    "ryczalt_rate_pct": 5.0,
+    "accounting_monthly": 0.0,
+    "insurance_oc_monthly": 0.0,
+    "bank_fees_monthly": 0.0,
+    "other_monthly": 100.0,
+    "tax_free_annual": 30000.0
+  }
+}

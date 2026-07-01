@@ -1071,6 +1071,8 @@
     "section_width": "Section width",
     "seller_note": "Allow note to seller",
     "seller_note_open_by_default": "Open note to seller by default",
+    "cart_invoice_request": "Invoice request in cart",
+    "cart_invoice_open_by_default": "Open invoice section by default",
     "shadow_color": "Shadow",
     "shadow_opacity": "Shadow opacity",
     // Background shape for carousel navigation buttons

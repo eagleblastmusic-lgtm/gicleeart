@@ -1,0 +1,66 @@
+{%- doc -%}
+  Resolve translated richtext for a theme block (multi-part or single key).
+
+  @param {object} block
+  @param {string} fallback - Polish/default HTML from theme JSON
+{%- enddoc -%}
+
+{%- liquid
+  assign text_out = fallback
+
+  if block.id != blank
+    assign giclee_block_id = block.id
+    if giclee_block_id contains '__'
+      assign giclee_block_id = giclee_block_id | split: '__' | last
+    endif
+
+    capture text_key
+      echo 'giclee.blocks.' | append: giclee_block_id | append: '.text'
+    endcapture
+    assign text_val = text_key | t
+    assign giclee_from_locale = false
+    if text_val != text_key
+      unless text_val contains 'Translation missing'
+        assign text_out = text_val
+        assign giclee_from_locale = true
+      endunless
+    endif
+
+    if text_out == fallback
+      capture part1_key
+        echo 'giclee.blocks.' | append: giclee_block_id | append: '.text_part1'
+      endcapture
+      assign part1 = part1_key | t
+      if part1 != part1_key
+        unless part1 contains 'Translation missing'
+          assign text_out = part1
+          assign giclee_from_locale = true
+          for i in (2..8)
+            capture part_key
+              echo 'giclee.blocks.' | append: giclee_block_id | append: '.text_part' | append: i
+            endcapture
+            assign part_val = part_key | t
+            if part_val == part_key
+              break
+            endif
+            if part_val contains 'Translation missing'
+              break
+            endif
+            assign text_out = text_out | append: part_val
+          endfor
+        endunless
+      endif
+    endif
+  endif
+
+  if giclee_from_locale
+    assign text_out = text_out | replace: '&amp;', 'GICLEE_AMP'
+    assign text_out = text_out | replace: '&lt;', '<'
+    assign text_out = text_out | replace: '&gt;', '>'
+    assign text_out = text_out | replace: '&quot;', '"'
+    assign text_out = text_out | replace: '&#39;', "'"
+    assign text_out = text_out | replace: 'GICLEE_AMP', '&'
+  endif
+
+  echo text_out
+-%}

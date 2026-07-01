@@ -18,6 +18,7 @@ from tkinter import messagebox, ttk
 from typing import Any
 
 from Komponenty._shared.toast import show_toast
+from Komponenty._shared.window_geometry import position_toplevel_screen_center
 
 from . import holidays, prompts, shopify_signals, storage
 
@@ -29,7 +30,7 @@ def open_tasks_generator(
 ) -> tk.Toplevel:
     dlg = tk.Toplevel(parent)
     dlg.title("Zadania - Generator planu marketingowego")
-    dlg.geometry("1100x820")
+    position_toplevel_screen_center(dlg, 1100, 820)
     dlg.minsize(900, 700)
     try:
         dlg.transient(parent.winfo_toplevel())

@@ -1,0 +1,80 @@
+{
+  "seller": {
+    "name": "GICLÉE ART",
+    "owner_name": "Bartosz Bajda",
+    "address": "Wesoła 8, 84-100 Połczyno",
+    "email": "gicleeartpl@gmail.com",
+    "phone": "501-433-438",
+    "website": "www.gicleeart.eu",
+    "nip": "",
+    "logo_path": "C:/Users/Skarabeusz/Downloads/logo1.png",
+    "business_mode": "dnr",
+    "footnotes_pl": "Sprzedaż prowadzona w ramach działalności nierejestrowanej. Sprzedawca nie jest czynnym podatnikiem VAT.",
+    "footnotes_en": "Sale conducted as non-registered business activity. The seller is not an active VAT taxpayer.",
+    "thank_you_footer_pl": "Dziękujemy za zakup.",
+    "thank_you_footer_en": "Thank you for your purchase."
+  },
+  "numbering_pl": {
+    "prefix": "FBV",
+    "next_number": 1,
+    "year": 2026,
+    "used_numbers": [],
+    "format": "legacy"
+  },
+  "numbering_dnr_pl": {
+    "prefix": "DN",
+    "next_number": 1,
+    "year": 2026,
+    "used_numbers": [],
+    "format": "legacy"
+  },
+  "numbering_en": {
+    "prefix": "INV",
+    "next_number": 1,
+    "year": 2026,
+    "used_numbers": [],
+    "format": "legacy"
+  },
+  "numbering_dnr_en": {
+    "prefix": "DN-INV",
+    "next_number": 1,
+    "year": 2026,
+    "used_numbers": [],
+    "format": "legacy"
+  },
+  "numbering_correction_pl": {
+    "prefix": "KOR",
+    "next_number": 1,
+    "year": 2026,
+    "used_numbers": [],
+    "format": "legacy"
+  },
+  "numbering_dnr_correction_pl": {
+    "prefix": "KDN",
+    "next_number": 1,
+    "year": 2026,
+    "used_numbers": [],
+    "format": "legacy"
+  },
+  "numbering_correction_en": {
+    "prefix": "COR",
+    "next_number": 1,
+    "year": 2026,
+    "used_numbers": [],
+    "format": "legacy"
+  },
+  "numbering_test_pl": {
+    "prefix": "TEST",
+    "next_number": 1,
+    "year": 2026,
+    "used_numbers": [],
+    "format": "legacy"
+  },
+  "numbering_test_en": {
+    "prefix": "TST",
+    "next_number": 1,
+    "year": 2026,
+    "used_numbers": [],
+    "format": "legacy"
+  }
+}

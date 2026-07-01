@@ -1,0 +1,109 @@
+{%- comment -%}
+  Porównanie przed/po obróbce — markup współdzielony przez sekcję i slot PDP v2.
+  Parametry: eyebrow, heading, description, label_before, label_after,
+  image_before (obiekt), image_before_url (URL), image_after (obiekt), section_id
+{%- endcomment -%}
+
+{%- liquid
+  assign ba_eyebrow = eyebrow | default: 'Cyfrowa korekta'
+  assign ba_heading = heading | default: 'Przed i po obróbce'
+  assign ba_description = description
+  assign ba_label_before = label_before | default: 'Przed obróbką'
+  assign ba_label_after = label_after | default: 'Po obróbce'
+  assign ba_section_id = section_id | default: 'before-after'
+  assign ba_before_url = image_before_url | default: ''
+  assign ba_ratio = image_before.aspect_ratio | default: image_after.aspect_ratio | default: 1.6
+  if ba_ratio == 0 or ba_ratio == blank
+    assign ba_ratio = 1.6
+  endif
+
+  assign ba_alt_before = image_before.alt | default: ba_label_before
+  assign ba_alt_after = image_after.alt | default: ba_label_after
+-%}
+
+<section
+  class="giclee-before-after"
+  aria-labelledby="giclee-before-after-heading-{{ ba_section_id }}"
+  data-giclee-before-after
+  style="--giclee-ba-ratio: {{ ba_ratio }};"
+>
+  <p class="giclee-before-after__eyebrow">{{ ba_eyebrow | escape }}</p>
+  <h2 class="giclee-before-after__heading" id="giclee-before-after-heading-{{ ba_section_id }}">
+    {{ ba_heading | escape }}
+  </h2>
+
+  {%- if ba_description != blank -%}
+    <p class="giclee-before-after__description">{{ ba_description | escape }}</p>
+  {%- endif -%}
+
+  <div class="giclee-before-after__frame">
+    <div class="giclee-before-after__compare" data-giclee-before-after-compare>
+      <div class="giclee-before-after__media" data-giclee-before-after-media data-orientation="horizontal">
+        <div class="giclee-before-after__layer giclee-before-after__layer--before">
+          {%- if image_before != blank -%}
+            {{
+              image_before
+              | image_url: width: 3840
+              | image_tag:
+                loading: 'lazy',
+                class: 'giclee-before-after__image',
+                alt: ba_alt_before,
+                sizes: '(min-width: 990px) 920px, 100vw',
+                width: image_before.width,
+                height: image_before.height
+            }}
+          {%- elsif ba_before_url != blank -%}
+            <img
+              class="giclee-before-after__image"
+              src="{{ ba_before_url | escape }}"
+              alt="{{ ba_alt_before | escape }}"
+              loading="lazy"
+              sizes="(min-width: 990px) 920px, 100vw"
+              width="{{ image_after.width | default: 1600 }}"
+              height="{{ image_after.height | default: 1000 }}"
+            >
+          {%- endif -%}
+          <span class="giclee-before-after__label giclee-before-after__label--before">{{ ba_label_before | escape }}</span>
+        </div>
+
+        <div class="giclee-before-after__layer giclee-before-after__layer--after">
+          {%- if image_after != blank -%}
+            {{
+              image_after
+              | image_url: width: 3840
+              | image_tag:
+                loading: 'lazy',
+                class: 'giclee-before-after__image',
+                alt: ba_alt_after,
+                sizes: '(min-width: 990px) 920px, 100vw',
+                width: image_after.width,
+                height: image_after.height
+            }}
+          {%- endif -%}
+          <span class="giclee-before-after__label giclee-before-after__label--after">{{ ba_label_after | escape }}</span>
+        </div>
+
+        <div class="giclee-before-after__divider" aria-hidden="true">
+          <span class="giclee-before-after__handle">
+            <span class="giclee-before-after__handle-line"></span>
+            <span class="giclee-before-after__handle-grip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.35" aria-hidden="true">
+                <path d="M8 8l-4 4 4 4M16 8l4 4-4 4"/>
+              </svg>
+            </span>
+          </span>
+        </div>
+
+        <input
+          type="range"
+          class="giclee-before-after__slider"
+          min="0"
+          max="100"
+          value="50"
+          aria-label="{{ ba_heading | escape }} — suwak porównania przed i po obróbce"
+          data-giclee-before-after-slider
+        >
+      </div>
+    </div>
+  </div>
+</section>

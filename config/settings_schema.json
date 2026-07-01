@@ -1745,6 +1745,19 @@
       },
       {
         "type": "checkbox",
+        "id": "show_cart_invoice_request",
+        "label": "t:settings.cart_invoice_request",
+        "default": true
+      },
+      {
+        "type": "checkbox",
+        "id": "cart_invoice_open_by_default",
+        "label": "t:settings.cart_invoice_open_by_default",
+        "default": false,
+        "visible_if": "{{ settings.show_cart_invoice_request == true }}"
+      },
+      {
+        "type": "checkbox",
         "id": "show_add_discount_code",
         "label": "t:settings.add_discount_code",
         "default": true
@@ -2282,6 +2295,80 @@
           }
         ],
         "default": "equal-width-buttons"
+      }
+    ]
+  },
+  {
+    "name": "Strona hasła",
+    "settings": [
+      {
+        "type": "header",
+        "content": "Licznik odliczania (wszystkie języki)"
+      },
+      {
+        "type": "paragraph",
+        "content": "Ta data obowiązuje na całej stronie hasła niezależnie od wersji językowej i nadpisuje pole „Data końca” w sekcji Password (tam Shopify często trzyma osobne wartości per język)."
+      },
+      {
+        "type": "text",
+        "id": "password_page_countdown_end",
+        "label": "Data i godzina końca (ISO 8601)",
+        "default": "2026-06-03T00:00:00+02:00",
+        "info": "Np. 2026-06-03T00:00:00+02:00. Wartość 2026-06-01 jest ignorowana (stary placeholder)."
+      }
+    ]
+  },
+  {
+    "name": "Mockup — własna fotografia",
+    "settings": [
+      {
+        "type": "paragraph",
+        "content": "Adres API Cloudflare Worker do wysyłki zdjęć klienta przy zamówieniu (R2). Po deploy Workera wklej pełny URL kończący się na /api/mockup-upload. Instrukcja: cursor-api/mockup-order-worker/WDROZENIE.md"
+      },
+      {
+        "type": "text",
+        "id": "pm_upload_api_url",
+        "label": "URL uploadu mockupu",
+        "placeholder": "https://giclee-mockup-orders.twoje-konto.workers.dev/api/mockup-upload"
+      }
+    ]
+  },
+  {
+    "name": "Powiadomienie strony",
+    "settings": [
+      {
+        "type": "paragraph",
+        "content": "Modal po wejsciu na strone — znika po kliknieciu «Rozumiem» (zapamietywane w przegladarce). Zmien wersje, aby pokazac ponownie po aktualizacji tresci."
+      },
+      {
+        "type": "checkbox",
+        "id": "site_notice_enabled",
+        "label": "Wlacz powiadomienie",
+        "default": true
+      },
+      {
+        "type": "text",
+        "id": "site_notice_version",
+        "label": "Wersja (zmien, aby wymusic ponowne wyswietlenie)",
+        "default": "1"
+      },
+      {
+        "type": "text",
+        "id": "site_notice_title",
+        "label": "Tytul",
+        "default": "Informacja"
+      },
+      {
+        "type": "textarea",
+        "id": "site_notice_message",
+        "label": "Tresc",
+        "default": "Strona w fazie testow i naprawy bledow. W krotce pojawi sie wiecej materialow."
+      },
+      {
+        "type": "text",
+        "id": "site_notice_button",
+        "label": "Przycisk zatwierdzenia",
+        "default": "Rozumiem"
       }
     ]
   }

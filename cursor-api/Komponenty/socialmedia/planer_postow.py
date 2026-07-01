@@ -20,6 +20,7 @@ PPM:
 
 from __future__ import annotations
 
+import calendar
 import csv
 import os
 import subprocess
@@ -27,12 +28,14 @@ import sys
 import tkinter as tk
 import webbrowser
 from collections.abc import Callable
+from datetime import date, datetime
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 from typing import Any
 
 from Komponenty._shared.toast import show_toast
 from Komponenty._shared.tree_sort import attach_sortable_headings
+from Komponenty._shared.window_geometry import position_toplevel_screen_center
 
 from . import platforms, storage
 from .generator_tresci import open_content_generator
@@ -103,9 +106,17 @@ def build_planer_screen(
         command=lambda: _export_csv(outer, _filtered()),
     ).pack(side="right", padx=(0, 6))
 
+    # Notebook: "Lista" + "Kalendarz"
+    nb = ttk.Notebook(outer)
+    nb.pack(fill="both", expand=True, padx=14, pady=(0, 12))
+    tab_list = ttk.Frame(nb)
+    tab_cal = ttk.Frame(nb)
+    nb.add(tab_list, text="📋 Lista")
+    nb.add(tab_cal, text="🗓 Kalendarz")
+
     # Treeview
-    tv_frame = tk.Frame(outer, bg="#f4f4f7")
-    tv_frame.pack(fill="both", expand=True, padx=14, pady=(0, 12))
+    tv_frame = tk.Frame(tab_list, bg="#f4f4f7")
+    tv_frame.pack(fill="both", expand=True)
 
     cols = ("status", "scheduled", "platform", "lang", "topic", "caption_preview", "series")
     tree = ttk.Treeview(tv_frame, columns=cols, show="headings", selectmode="extended")
@@ -196,8 +207,52 @@ def build_planer_screen(
         posts.sort(key=_sort_key)
         return posts
 
+    # Kalendarz
+    cal_state: dict[str, int] = {
+        "year": _today().year,
+        "month": _today().month,
+    }
+
+    def _refresh_calendar() -> None:
+        for child in tab_cal.winfo_children():
+            child.destroy()
+        _render_calendar(
+            tab_cal,
+            cal_state,
+            posts=_filtered(),
+            on_prev=lambda: _nav_month(-1),
+            on_next=lambda: _nav_month(1),
+            on_today=lambda: _nav_month(0, reset=True),
+            on_edit=lambda post_id: _open_edit_dialog(outer.winfo_toplevel(), _get_post(post_id), on_saved=_refresh),
+        )
+
+    def _get_post(post_id: str) -> storage.Post:
+        p = storage.get_post(post_id)
+        if p is None:
+            raise LookupError(post_id)
+        return p
+
+    def _nav_month(delta: int, *, reset: bool = False) -> None:
+        if reset:
+            t = _today()
+            cal_state["year"] = t.year
+            cal_state["month"] = t.month
+        else:
+            m = cal_state["month"] + delta
+            y = cal_state["year"]
+            while m < 1:
+                m += 12
+                y -= 1
+            while m > 12:
+                m -= 12
+                y += 1
+            cal_state["year"] = y
+            cal_state["month"] = m
+        _refresh_calendar()
+
     def _refresh() -> None:
         _fill(_filtered())
+        _refresh_calendar()
 
     plat_var.trace_add("write", lambda *_: _refresh())
     lang_var.trace_add("write", lambda *_: _refresh())
@@ -321,7 +376,7 @@ def build_planer_screen(
 def _open_edit_dialog(parent: tk.Misc, post: storage.Post, *, on_saved: Callable[[], None]) -> None:
     dlg = tk.Toplevel(parent)
     dlg.title(f"Edycja posta - {post.platform}/{post.language}")
-    dlg.geometry("820x720")
+    position_toplevel_screen_center(dlg, 820, 720)
     dlg.minsize(700, 600)
     try:
         dlg.transient(parent.winfo_toplevel())
@@ -526,6 +581,168 @@ def _open_path(widget: tk.Widget, path: str) -> None:
             subprocess.Popen(["xdg-open", str(p)])  # noqa: S607
     except OSError as e:
         messagebox.showerror("Blad", f"Nie udalo sie otworzyc:\n{e}", parent=widget)
+
+
+# ---------------------------------------------------------------------------
+# CSV export
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Kalendarz contentu
+# ---------------------------------------------------------------------------
+
+_MONTH_NAMES_PL = [
+    "", "Styczen", "Luty", "Marzec", "Kwiecien", "Maj", "Czerwiec",
+    "Lipiec", "Sierpien", "Wrzesien", "Pazdziernik", "Listopad", "Grudzien",
+]
+_WEEKDAYS_PL = ["Pon", "Wt", "Sr", "Czw", "Pt", "Sob", "Nd"]
+
+# Kolor per platforma (fallback jesli p.color nieobecny)
+_PLATFORM_FALLBACK = "#607d8b"
+
+
+def _today() -> date:
+    return date.today()
+
+
+def _post_date(post: storage.Post) -> date | None:
+    raw = (post.scheduled_at or "").strip()
+    if not raw:
+        return None
+    try:
+        return datetime.fromisoformat(raw).date()
+    except ValueError:
+        try:
+            return date.fromisoformat(raw[:10])
+        except ValueError:
+            return None
+
+
+def _render_calendar(
+    container: ttk.Frame,
+    state: dict,
+    *,
+    posts: list[storage.Post],
+    on_prev: Callable[[], None],
+    on_next: Callable[[], None],
+    on_today: Callable[[], None],
+    on_edit: Callable[[str], None],
+) -> None:
+    year = int(state.get("year") or _today().year)
+    month = int(state.get("month") or _today().month)
+
+    # Nagłowek z nawigacja
+    header = ttk.Frame(container, padding=(6, 6))
+    header.pack(fill="x")
+    ttk.Button(header, text="◀", width=3, command=on_prev).pack(side="left")
+    ttk.Button(header, text="Dzis", command=on_today).pack(side="left", padx=(4, 0))
+    ttk.Button(header, text="▶", width=3, command=on_next).pack(side="left", padx=(4, 12))
+    ttk.Label(
+        header,
+        text=f"{_MONTH_NAMES_PL[month]} {year}",
+        font=("Segoe UI", 13, "bold"),
+    ).pack(side="left")
+
+    # Grupowanie postow po dacie
+    bucket: dict[date, list[storage.Post]] = {}
+    unscheduled: list[storage.Post] = []
+    for post in posts:
+        d = _post_date(post)
+        if d is None:
+            unscheduled.append(post)
+            continue
+        bucket.setdefault(d, []).append(post)
+
+    # Siatka 7 x 6 tygodni (Pon-Nd)
+    grid = ttk.Frame(container, padding=(6, 2))
+    grid.pack(fill="both", expand=True)
+    for c in range(7):
+        grid.columnconfigure(c, weight=1, uniform="col")
+    for r in range(1, 7):
+        grid.rowconfigure(r, weight=1, uniform="row")
+
+    # Naglowki dni tygodnia
+    for i, name in enumerate(_WEEKDAYS_PL):
+        tk.Label(
+            grid, text=name, bg="#e3eef5", fg="#333",
+            font=("Segoe UI", 9, "bold"),
+            padx=6, pady=3, anchor="center",
+        ).grid(row=0, column=i, sticky="nsew", padx=1, pady=1)
+
+    cal = calendar.Calendar(firstweekday=0)  # Monday = 0
+    weeks = cal.monthdatescalendar(year, month)
+    today = _today()
+
+    for w_i, week in enumerate(weeks, start=1):
+        for d_i, day in enumerate(week):
+            is_current_month = day.month == month
+            is_today = day == today
+            bg = "#ffffff" if is_current_month else "#f7f7f7"
+            if is_today:
+                bg = "#fff8e1"
+            cell = tk.Frame(grid, bg=bg, bd=1, relief="solid", highlightthickness=0)
+            cell.grid(row=w_i, column=d_i, sticky="nsew", padx=1, pady=1)
+
+            top = tk.Frame(cell, bg=bg)
+            top.pack(fill="x")
+            color = "#111" if is_current_month else "#bbb"
+            if is_today:
+                color = "#ef6c00"
+            tk.Label(
+                top, text=str(day.day), bg=bg, fg=color,
+                font=("Segoe UI", 9, "bold"),
+            ).pack(side="left", padx=4, pady=2)
+
+            items = bucket.get(day, [])
+            if items:
+                tk.Label(
+                    top, text=f"{len(items)}",
+                    bg="#1565c0", fg="white",
+                    font=("Segoe UI", 8, "bold"),
+                    padx=4,
+                ).pack(side="right", padx=4, pady=2)
+
+            body = tk.Frame(cell, bg=bg)
+            body.pack(fill="both", expand=True)
+            max_shown = 4
+            for post in items[:max_shown]:
+                p_meta = platforms.get(post.platform)
+                plat_icon = p_meta.icon if p_meta else "•"
+                plat_color = getattr(p_meta, "color", None) or _PLATFORM_FALLBACK
+                text = (post.topic or post.caption or "(post)").strip().splitlines()[0]
+                if len(text) > 28:
+                    text = text[:28] + "…"
+                row = tk.Frame(body, bg=bg)
+                row.pack(fill="x", padx=3, pady=1)
+                dot = tk.Label(row, text=plat_icon, bg=bg, fg=plat_color)
+                dot.pack(side="left")
+                lbl = tk.Label(
+                    row, text=" " + text, bg=bg, fg="#222", anchor="w",
+                    font=("Segoe UI", 8),
+                    cursor="hand2",
+                )
+                lbl.pack(side="left", fill="x", expand=True)
+                lbl.bind("<Button-1>", lambda _e, pid=post.id: on_edit(pid))
+                if post.status == "done":
+                    lbl.configure(fg="#2e7d32", font=("Segoe UI", 8, "overstrike"))
+                elif post.status == "skipped":
+                    lbl.configure(fg="#888", font=("Segoe UI", 8, "overstrike"))
+            if len(items) > max_shown:
+                tk.Label(
+                    body, text=f"+{len(items) - max_shown} wiecej", bg=bg,
+                    fg="#666", font=("Segoe UI", 8, "italic"),
+                ).pack(anchor="w", padx=6, pady=(0, 3))
+
+    # Posty bez daty — na dole w tooltipie
+    if unscheduled:
+        foot = ttk.Frame(container, padding=(8, 4))
+        foot.pack(fill="x")
+        ttk.Label(
+            foot,
+            text=f"Bez zaplanowanej daty: {len(unscheduled)} post(y/ow)."
+                 " Ustaw pole 'Data' w edytorze, aby pokazaly sie w kalendarzu.",
+            foreground="#c62828", font=("Segoe UI", 9, "italic"),
+        ).pack(anchor="w")
 
 
 # ---------------------------------------------------------------------------

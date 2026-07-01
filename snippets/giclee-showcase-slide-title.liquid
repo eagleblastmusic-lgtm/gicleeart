@@ -1,0 +1,27 @@
+{%- doc -%}
+  Krótki tytuł slajdu karuzeli — wariant główny bez alternatyw «(lub …)» ani «… lub …».
+
+  @param {string} title - pełny tytuł produktu
+{%- enddoc -%}
+
+{%- liquid
+  assign display_title = title | default: '' | strip
+  assign alt_markers = 'lub|or|oder|ou|of|oppure|o' | split: '|'
+
+  for marker in alt_markers
+    assign paren_spaced = ' (' | append: marker | append: ' '
+    assign paren_tight = '(' | append: marker | append: ' '
+    if display_title contains paren_spaced
+      assign display_title = display_title | split: paren_spaced | first | strip
+    endif
+    if display_title contains paren_tight
+      assign display_title = display_title | split: paren_tight | first | strip
+    endif
+    assign bare = ' ' | append: marker | append: ' '
+    assign bare_parts = display_title | split: bare
+    if bare_parts.size > 1
+      assign display_title = bare_parts.first | strip
+    endif
+  endfor
+-%}
+{{- display_title | escape -}}

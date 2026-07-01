@@ -1,0 +1,7 @@
+{
+  "name": "Strony z obrazami",
+  "description": "Zakladki do muzeow i galerii + silnik wyszukiwania obrazow (API/CSV) w tych kolekcjach.",
+  "icon": "🏛️",
+  "color": "#6d4c41",
+  "order": 42
+}

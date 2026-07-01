@@ -1,0 +1,14 @@
+{%- doc -%}
+  Normalize theme-editor block/section id for giclee locale keys.
+  Runtime ids may be prefixed: "AenFtTFR6b3hSdDduc__text_EgnMm8" -> "text_EgnMm8".
+
+  @param {string} raw_id - block.id or section.id
+{%- enddoc -%}
+
+{%- liquid
+  assign giclee_i18n_id = raw_id
+  if giclee_i18n_id contains '__'
+    assign giclee_i18n_id = giclee_i18n_id | split: '__' | last
+  endif
+  echo giclee_i18n_id
+-%}

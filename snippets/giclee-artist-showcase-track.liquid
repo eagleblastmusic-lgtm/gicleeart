@@ -1,0 +1,81 @@
+{%- liquid
+  assign track_collection = collection
+  assign track_max = max_products | default: 50
+-%}
+{%- if track_collection != blank and track_collection.products_count > 0 -%}
+  {%- for product in track_collection.products limit: track_max -%}
+    {%- liquid
+      assign card_image = product.featured_media.preview_image
+      if card_image == blank
+        assign card_image = product.featured_image
+      endif
+    -%}
+    {%- capture slide_title -%}
+      {%- render 'giclee-showcase-slide-title', title: product.title -%}
+    {%- endcapture -%}
+    {%- capture gacs_created -%}
+      {%- render 'giclee-product-body-fact', product: product, label: 'Data powstania' -%}
+    {%- endcapture -%}
+    {%- capture gacs_technique -%}
+      {%- render 'giclee-product-body-fact', product: product, label: 'Technika' -%}
+    {%- endcapture -%}
+    {%- capture gacs_genre -%}
+      {%- render 'giclee-product-body-fact', product: product, label: 'Gatunek' -%}
+    {%- endcapture -%}
+    <article
+      class="giclee-artist-showcase__slide{% if forloop.first %} is-active{% endif %}"
+      data-index="{{ forloop.index0 }}"
+      {% if gacs_created != blank %}data-gacs-created="{{ gacs_created | strip | escape }}"{% endif %}
+      {% if gacs_technique != blank %}data-gacs-technique="{{ gacs_technique | strip | escape }}"{% endif %}
+      {% if gacs_genre != blank %}data-gacs-genre="{{ gacs_genre | strip | escape }}"{% endif %}
+      {% if card_image != blank %}
+        data-image-base="{{ card_image | image_url: width: 3840, format: 'webp' }}"
+      {% endif %}
+    >
+      <a
+        class="giclee-artist-showcase__slide-link"
+        href="{{ product.url }}"
+        aria-label="{{ 'Zobacz: ' | append: slide_title | strip | escape }}"
+      >
+        <div class="giclee-artist-showcase__slide-card">
+          <div class="giclee-artist-showcase__slide-media">
+            {%- if card_image != blank -%}
+              {{
+                card_image
+                | image_url: width: 900
+                | image_tag:
+                  loading: 'lazy',
+                  widths: '360, 540, 720, 900',
+                  sizes: '(max-width: 749px) 72vw, 28vw',
+                  alt: product.title
+              }}
+            {%- else -%}
+              {{ 'product-1' | placeholder_svg_tag: 'placeholder' }}
+            {%- endif -%}
+          </div>
+          <div class="giclee-artist-showcase__slide-meta">
+            <h3 class="giclee-artist-showcase__slide-title">{{ slide_title | strip }}</h3>
+          </div>
+        </div>
+      </a>
+    </article>
+  {%- endfor -%}
+{%- else -%}
+  {%- assign sample_titles = 'Auvers,Portret,Nocturne,Study I,Study II,Landscape' | split: ',' -%}
+  {%- for i in (1..6) -%}
+    {%- assign sample_idx = forloop.index0 -%}
+    <article
+      class="giclee-artist-showcase__slide{% if forloop.first %} is-active{% endif %}"
+      data-index="{{ sample_idx }}"
+    >
+      <div class="giclee-artist-showcase__slide-card">
+        <div class="giclee-artist-showcase__slide-media">
+          {{ 'product-' | append: forloop.index | placeholder_svg_tag: 'placeholder' }}
+        </div>
+        <div class="giclee-artist-showcase__slide-meta">
+          <h3 class="giclee-artist-showcase__slide-title">{{ sample_titles[sample_idx] | default: 'Dzieło' }}</h3>
+        </div>
+      </div>
+    </article>
+  {%- endfor -%}
+{%- endif -%}

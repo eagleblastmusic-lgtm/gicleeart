@@ -134,6 +134,31 @@ def compute_market_price(
     return round(float(base_price) / float(fx_rate) * multiplier, 2)
 
 
+def market_price_in_eur(
+    base_price_pln: float,
+    markup_percent: float,
+    *,
+    currency: str = "PLN",
+    fx_rates: dict[str, float] | None = None,
+) -> float | None:
+    """Cena rynkowa przeliczona na EUR — do porównania między rynkami w dialogu Rynki."""
+    fx = fx_rates or {}
+    eur_rate = fx.get("EUR")
+    if not eur_rate or eur_rate <= 0:
+        return None
+    cur = (currency or "PLN").upper()
+    rate = fx.get(cur) if cur != "PLN" else None
+    price = compute_market_price(
+        base_price_pln,
+        markup_percent,
+        currency=cur,
+        fx_rate=rate,
+    )
+    if cur == "EUR":
+        return price
+    return round(price / float(eur_rate), 2)
+
+
 def compute_prices_for_markets(
     base_price: float,
     markets: list[Market] | None = None,

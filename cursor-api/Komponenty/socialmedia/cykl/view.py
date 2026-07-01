@@ -23,6 +23,7 @@ Dwuklik -> Edytuj.
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 import threading
@@ -35,6 +36,7 @@ from tkinter import filedialog, messagebox, ttk
 
 from Komponenty._shared.toast import show_toast
 from Komponenty._shared.tree_sort import attach_sortable_headings
+from Komponenty._shared.window_geometry import position_toplevel_screen_center
 
 from . import (
     content_gen,
@@ -143,6 +145,13 @@ class CykleView:
                    command=self._open_images_folder).pack(side="left", padx=(6, 0))
         ttk.Separator(toolbar, orient="vertical").pack(side="left", fill="y", padx=8)
 
+        ttk.Separator(toolbar, orient="vertical").pack(side="left", fill="y", padx=8)
+        ttk.Button(toolbar, text="🔍 Pre-flight kolejki",
+                   command=self._run_preflight_queue).pack(side="left")
+        ttk.Button(toolbar, text="🔁 Ponow bledne",
+                   command=self._retry_failed_items).pack(side="left", padx=(6, 0))
+
+        ttk.Separator(toolbar, orient="vertical").pack(side="left", fill="y", padx=8)
         ttk.Button(toolbar, text="Wyczysc kolejke",
                    command=self._clear_queue).pack(side="left")
 
@@ -355,6 +364,14 @@ class CykleView:
         ttk.Label(parent, text="Main:", font=("Segoe UI", 9, "bold")).pack(anchor="w")
         main_val = getattr(item, f"image_{platform}_main", "") or ""
         main_var = tk.StringVar(value=_short_name(main_val))
+
+        main_pf = tk.Frame(parent, width=124, height=124, bg="#eef1f5", highlightbackground="#cfd8dc", highlightthickness=1)
+        main_pf.pack_propagate(False)
+        main_pf.pack(anchor="w", pady=(2, 4))
+        main_thumb = tk.Label(main_pf, bg="#eef1f5")
+        main_thumb.pack(expand=True, fill="both")
+        _apply_side_preview(main_thumb, main_val if main_val else None, max_wh=(118, 118))
+
         main_lbl = ttk.Label(parent, textvariable=main_var, foreground="#1976d2", wraplength=160)
         main_lbl.pack(anchor="w")
         main_row = ttk.Frame(parent)
@@ -385,6 +402,7 @@ class CykleView:
                 f"cdn_{platform}_main": "",
             })
             main_var.set(_short_name(rel))
+            _apply_side_preview(main_thumb, rel, max_wh=(118, 118))
             show_toast(self.frame.winfo_toplevel(), f"{platform.upper()} main: {Path(p).name}")
 
         def _clear_main() -> None:
@@ -393,6 +411,7 @@ class CykleView:
                 f"cdn_{platform}_main": "",
             })
             main_var.set("(brak)")
+            _apply_side_preview(main_thumb, None, max_wh=(118, 118))
 
         ttk.Button(main_row, text="Wybierz", command=_set_main, width=9).pack(side="left")
         ttk.Button(main_row, text="X", command=_clear_main, width=2).pack(side="left", padx=(4, 0))
@@ -401,6 +420,12 @@ class CykleView:
 
         # --- Zoomy ---
         ttk.Label(parent, text="Zoomy:", font=("Segoe UI", 9, "bold")).pack(anchor="w")
+        zoom_pf = tk.Frame(parent, width=104, height=104, bg="#eef1f5", highlightbackground="#cfd8dc", highlightthickness=1)
+        zoom_pf.pack_propagate(False)
+        zoom_pf.pack(anchor="w", pady=(2, 4))
+        zoom_thumb = tk.Label(zoom_pf, bg="#eef1f5")
+        zoom_thumb.pack(expand=True, fill="both")
+
         zoom_box = tk.Listbox(parent, height=5, font=("Consolas", 8), exportselection=False)
         for z in getattr(item, f"image_{platform}_zooms") or []:
             zoom_box.insert("end", _short_name(z))
@@ -411,6 +436,19 @@ class CykleView:
         def _zoom_rel_paths() -> list[str]:
             it2 = storage.get_item(item_id)
             return list(getattr(it2, f"image_{platform}_zooms") or []) if it2 else []
+
+        def _sync_zoom_thumb() -> None:
+            zpaths = _zoom_rel_paths()
+            if not zpaths:
+                _apply_side_preview(zoom_thumb, None, max_wh=(98, 98))
+                return
+            sel = list(zoom_box.curselection())
+            idx = sel[0] if sel else 0
+            if idx >= len(zpaths):
+                idx = len(zpaths) - 1
+            _apply_side_preview(zoom_thumb, zpaths[idx], max_wh=(98, 98))
+
+        zoom_box.bind("<<ListboxSelect>>", lambda _e: _sync_zoom_thumb())
 
         def _add_zoom() -> None:
             paths = filedialog.askopenfilenames(
@@ -441,6 +479,10 @@ class CykleView:
                     f"image_{platform}_zooms": zooms,
                     f"cdn_{platform}_zooms": [],
                 })
+                zoom_box.selection_clear(0, "end")
+                zoom_box.selection_set(zoom_box.size() - 1)
+                zoom_box.see(zoom_box.size() - 1)
+                _sync_zoom_thumb()
                 show_toast(self.frame.winfo_toplevel(),
                            f"Dodano {added} zoomow do {platform.upper()}")
 
@@ -460,14 +502,25 @@ class CykleView:
                 f"image_{platform}_zooms": zooms,
                 f"cdn_{platform}_zooms": [],
             })
+            _sync_zoom_thumb()
 
         ttk.Button(zoom_row, text="+", command=_add_zoom, width=3).pack(side="left")
         ttk.Button(zoom_row, text="-", command=_remove_zoom, width=3).pack(side="left", padx=(2, 0))
+
+        _sync_zoom_thumb()
 
         # --- Mockup ---
         ttk.Label(parent, text="Mockup:", font=("Segoe UI", 9, "bold")).pack(anchor="w")
         mockup_val = getattr(item, f"image_{platform}_mockup", "") or ""
         mockup_var = tk.StringVar(value=_short_name(mockup_val) if mockup_val else "(brak)")
+
+        mup_pf = tk.Frame(parent, width=124, height=124, bg="#eef1f5", highlightbackground="#cfd8dc", highlightthickness=1)
+        mup_pf.pack_propagate(False)
+        mup_pf.pack(anchor="w", pady=(2, 4))
+        mockup_thumb = tk.Label(mup_pf, bg="#eef1f5")
+        mockup_thumb.pack(expand=True, fill="both")
+        _apply_side_preview(mockup_thumb, mockup_val if mockup_val else None, max_wh=(118, 118))
+
         ttk.Label(parent, textvariable=mockup_var, foreground="#1976d2", wraplength=160).pack(anchor="w")
         mockup_row = ttk.Frame(parent)
         mockup_row.pack(fill="x", pady=(2, 0))
@@ -495,6 +548,7 @@ class CykleView:
                 f"cdn_{platform}_mockup": "",
             })
             mockup_var.set(_short_name(rel))
+            _apply_side_preview(mockup_thumb, rel, max_wh=(118, 118))
             show_toast(self.frame.winfo_toplevel(), f"{platform.upper()} mockup: {Path(p).name}")
 
         def _clear_mockup() -> None:
@@ -503,6 +557,7 @@ class CykleView:
                 f"cdn_{platform}_mockup": "",
             })
             mockup_var.set("(brak)")
+            _apply_side_preview(mockup_thumb, None, max_wh=(118, 118))
 
         ttk.Button(mockup_row, text="Wybierz", command=_set_mockup, width=9).pack(side="left")
         ttk.Button(mockup_row, text="X", command=_clear_mockup, width=2).pack(side="left", padx=(4, 0))
@@ -806,7 +861,7 @@ class CykleView:
 
         dlg = tk.Toplevel(self.frame.winfo_toplevel())
         dlg.title("Rozpocznij od artysty")
-        dlg.geometry("520x260")
+        position_toplevel_screen_center(dlg, 520, 260)
         try:
             dlg.transient(self.frame.winfo_toplevel())
         except tk.TclError:
@@ -867,6 +922,68 @@ class CykleView:
 
         ttk.Button(btns, text="Zastosuj", command=_apply).pack(side="right", padx=(6, 0))
         ttk.Button(btns, text="Anuluj", command=dlg.destroy).pack(side="right")
+
+    def _run_preflight_queue(self) -> None:
+        from . import preflight
+        items = storage.load_queue()
+        active = [it for it in items if it.status not in ("done", "skipped")]
+        if not active:
+            messagebox.showinfo("Pre-flight", "Brak aktywnych pozycji do sprawdzenia.")
+            return
+
+        lines: list[str] = []
+        ok_total = 0
+        bad_total = 0
+        for it in active:
+            results = preflight.preflight_item(it)
+            item_bad = [r for r in results if not r.ok]
+            if not item_bad:
+                ok_total += 1
+                continue
+            bad_total += 1
+            title = f"{it.artist} — {it.painting_title_pl} [{it.id}]"
+            lines.append(title)
+            for r in item_bad:
+                lines.append(f"   {preflight.summarize_result(r)}")
+            lines.append("")
+
+        head = f"Sprawdzono {len(active)} pozycji: OK = {ok_total}, z problemami = {bad_total}"
+        body = head + "\n\n" + ("\n".join(lines).strip() if lines else "Brak problemow - mozesz publikowac.")
+        _open_text_dialog(self.frame.winfo_toplevel(), "Pre-flight kolejki", body)
+
+    def _retry_failed_items(self) -> None:
+        from . import retry_queue
+        summary = retry_queue.retry_summary()
+        if summary["items_count"] == 0:
+            messagebox.showinfo(
+                "Kolejka awaryjna",
+                "Brak pozycji do ponowienia (zaden kanal nie ma statusu 'error').",
+            )
+            return
+        if not messagebox.askyesno(
+            "Kolejka awaryjna — retry",
+            (
+                f"Znaleziono {summary['items_count']} pozycji "
+                f"({summary['channels_count']} kanalow) z bledami.\n"
+                f"Ponowic publikacje? "
+                f"(limit prob: {summary['cap']} per kanal)"
+            ),
+        ):
+            return
+        results = retry_queue.retry_all()
+        # Podsumowanie
+        ok_ch = sum(
+            1 for _iid, res in results for v in res.values() if str(v).startswith("done@")
+        )
+        err_ch = sum(
+            1 for _iid, res in results for v in res.values() if str(v).startswith("error")
+        )
+        show_toast(
+            self.frame.winfo_toplevel(),
+            f"Retry: {len(results)} pozycji, OK={ok_ch}, bledy={err_ch}",
+            duration_ms=2200,
+        )
+        self._refresh_from_disk()
 
     def _clear_queue(self) -> None:
         items = storage.load_queue()
@@ -1069,7 +1186,7 @@ class CykleView:
 
         dlg = tk.Toplevel(self.frame.winfo_toplevel())
         dlg.title("Lista kontrolna zdjec")
-        dlg.geometry("940x620")
+        position_toplevel_screen_center(dlg, 940, 620)
 
         top = ttk.Frame(dlg, padding=(10, 8))
         top.pack(fill="x")
@@ -1185,7 +1302,7 @@ def _open_generator_dialog(
 ) -> tk.Toplevel:
     dlg = tk.Toplevel(parent)
     dlg.title("Cykl - Generator tresci na tydzien (Opus)")
-    dlg.geometry("1080x860")
+    position_toplevel_screen_center(dlg, 1080, 860)
     dlg.minsize(900, 640)
     try:
         dlg.transient(parent.winfo_toplevel())
@@ -1276,7 +1393,7 @@ class _ProgressDialog:
     def __init__(self, parent: tk.Misc, title: str) -> None:
         self.dlg = tk.Toplevel(parent)
         self.dlg.title(title)
-        self.dlg.geometry("640x380")
+        position_toplevel_screen_center(self.dlg, 640, 380)
         try:
             self.dlg.transient(parent)
         except tk.TclError:
@@ -1344,6 +1461,76 @@ def _short_name(rel_path: str, max_len: int = 22) -> str:
     return f"{head}...{tail}"
 
 
+def _abs_cycle_image(rel: str) -> Path | None:
+    """Sciezka bezwzgledna do pliku obrazka cyklu (folder Obrazy/)."""
+    r = (rel or "").strip()
+    if not r:
+        return None
+    p = storage.images_dir() / r
+    return p if p.is_file() else None
+
+
+def _tk_thumbnail_photo(path: Path, max_w: int, max_h: int) -> tk.PhotoImage:
+    """Miniaturka dla tk.Label — wymaga Pillow (jak inne komponenty projektu)."""
+    from PIL import Image, ImageTk
+
+    im = Image.open(path)
+    try:
+        resample = Image.Resampling.LANCZOS
+    except AttributeError:
+        resample = Image.LANCZOS  # Pillow < 9
+    im.thumbnail((max_w, max_h), resample)
+    return ImageTk.PhotoImage(im)
+
+
+def _apply_side_preview(lbl: tk.Label, rel: str | None, *, max_wh: tuple[int, int]) -> None:
+    """Ustawia miniature w Label; utrzymuje referencje PhotoImage na widzecie."""
+    lbl.unbind("<Button-1>")
+    lbl.configure(image="", text="", cursor="arrow")
+    lbl._thumb_photo = None  # type: ignore[attr-defined]
+
+    abs_p = _abs_cycle_image(rel or "")
+    if abs_p is None:
+        lbl.configure(
+            text="(brak)",
+            fg="#90a4ae",
+            bg="#eef1f5",
+            font=("Segoe UI", 9),
+            justify="center",
+            compound="center",
+        )
+        return
+
+    try:
+        photo = _tk_thumbnail_photo(abs_p, max_wh[0], max_wh[1])
+        lbl.configure(image=photo, text="", bg="#ffffff", compound="center")
+        lbl._thumb_photo = photo  # type: ignore[attr-defined]
+
+        def _open_full(_e: object | None = None) -> None:
+            try:
+                if sys.platform.startswith("win"):
+                    os.startfile(str(abs_p))  # noqa: S606
+                elif sys.platform == "darwin":
+                    subprocess.run(["open", str(abs_p)], check=False)  # noqa: S607
+                else:
+                    subprocess.run(["xdg-open", str(abs_p)], check=False)  # noqa: S607
+            except OSError:
+                pass
+
+        lbl.configure(cursor="hand2")
+        lbl.bind("<Button-1>", _open_full)
+    except ImportError:
+        lbl.configure(
+            text="pip install\nPillow",
+            fg="#c62828",
+            bg="#fce4ec",
+            font=("Segoe UI", 8),
+            justify="center",
+        )
+    except Exception:
+        lbl.configure(text="nie wczytano", fg="#c62828", bg="#fff3e0", font=("Segoe UI", 8))
+
+
 def _preview(text: str, max_len: int = 70) -> str:
     if not text:
         return ""
@@ -1382,3 +1569,30 @@ def _next_artist_in_queue(items) -> str:
             nxt = f" -> {it.next_artist}" if (it.is_last_of_artist and it.next_artist) else ""
             return f"Aktualnie: {it.artist} ({it.artist_position}/{it.artist_total}){nxt}"
     return ""
+
+
+def _open_text_dialog(parent: tk.Misc, title: str, body: str) -> None:
+    dlg = tk.Toplevel(parent)
+    dlg.title(title)
+    try:
+        dlg.transient(parent.winfo_toplevel())
+    except (tk.TclError, AttributeError):
+        pass
+    dlg.geometry("760x520")
+
+    head = ttk.Frame(dlg, padding=(10, 8))
+    head.pack(fill="x")
+    ttk.Label(head, text=title, font=("Segoe UI", 12, "bold")).pack(side="left")
+    ttk.Button(head, text="Zamknij", command=dlg.destroy).pack(side="right")
+
+    body_frame = ttk.Frame(dlg, padding=(10, 4))
+    body_frame.pack(fill="both", expand=True)
+    txt = tk.Text(body_frame, wrap="word", font=("Consolas", 10))
+    sb = ttk.Scrollbar(body_frame, orient="vertical", command=txt.yview)
+    txt.configure(yscrollcommand=sb.set)
+    txt.pack(side="left", fill="both", expand=True)
+    sb.pack(side="right", fill="y")
+    txt.insert("1.0", body)
+    txt.configure(state="disabled")
+
+    dlg.bind("<Escape>", lambda _e: dlg.destroy())

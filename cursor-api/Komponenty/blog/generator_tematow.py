@@ -19,6 +19,7 @@ from collections.abc import Callable
 from tkinter import messagebox, ttk
 
 from Komponenty._shared.toast import show_toast
+from Komponenty._shared.window_geometry import position_toplevel_screen_center
 
 from . import prompts, shopify_blog, storage
 
@@ -30,7 +31,7 @@ def open_topics_generator(
 ) -> tk.Toplevel:
     dlg = tk.Toplevel(parent)
     dlg.title("Blog - Generator tematow")
-    dlg.geometry("1000x720")
+    position_toplevel_screen_center(dlg, 1000, 720)
     dlg.minsize(820, 600)
     try:
         dlg.transient(parent.winfo_toplevel())

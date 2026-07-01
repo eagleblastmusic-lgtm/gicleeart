@@ -304,13 +304,9 @@ class PlanerView(ttk.Frame):
         self.task_holder.bind("<Configure>", _on_inner)
         canvas.bind("<Configure>", _on_canvas)
 
-        def _wheel(e: tk.Event) -> None:
-            if not e.delta:
-                return
-            canvas.yview_scroll(int(-1 * (e.delta / 120)), "units")
+        from Komponenty._shared.tk_scroll import bind_mousewheel_to_canvas
 
-        canvas.bind("<Enter>", lambda _e: canvas.bind_all("<MouseWheel>", _wheel))
-        canvas.bind("<Leave>", lambda _e: canvas.unbind_all("<MouseWheel>"))
+        bind_mousewheel_to_canvas(canvas, self.task_holder)
 
     def _build_week_body(self) -> None:
         self.week_frame = ttk.Frame(self.body)

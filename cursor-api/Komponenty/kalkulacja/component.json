@@ -1,0 +1,8 @@
+{
+  "name": "Kalkulator kosztów",
+  "description": "Koszty produkcji ramek: materiały, marże, optymalizacja drewna, mix sprzedaży.",
+  "icon": "🧮",
+  "color": "#1565c0",
+  "order": 55,
+  "mode": "inline"
+}

@@ -39,7 +39,12 @@ PRODUCT_TYPE = "Obraz"
 
 
 def _log(msg: str) -> None:
-    print(msg, flush=True)
+    try:
+        print(msg, flush=True)
+    except UnicodeEncodeError:
+        enc = getattr(sys.stdout, "encoding", None) or "utf-8"
+        safe = msg.encode(enc, errors="replace").decode(enc, errors="replace")
+        print(safe, flush=True)
 
 
 def main() -> int:

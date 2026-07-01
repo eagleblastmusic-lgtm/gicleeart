@@ -1,0 +1,7 @@
+{
+  "name": "Squoosh WebP",
+  "description": "Kolejka plikow -> WebP. Squoosh CLI (oryginalny WASM) lub Pillow. Quality 80, Effort 4.",
+  "icon": "🗜",
+  "color": "#5c6bc0",
+  "order": 35
+}

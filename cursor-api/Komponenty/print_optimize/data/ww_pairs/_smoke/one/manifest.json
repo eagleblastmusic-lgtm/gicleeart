@@ -1,0 +1,11 @@
+{
+  "source_file": "C:\\Strona\\pusty\\cursor-api\\_tmp_one_pair_in\\one.jpg",
+  "image_id": "0:653837366338:65415535de220:7b311",
+  "strengths": {
+    "0": "one\\original.jpg",
+    "70": "one\\ww70.jpg",
+    "100": "one\\ww100.jpg"
+  },
+  "original_url": "https://imageserver.whitewall.com/imageserver/image/view?id=0:653837366338:65415535de220:7b311&type=12&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ3ZWJhcHAiLCJ1dWlkIjoiMDo2NTM4MzczNjYzMzg6NjU0MTU1MzVkZTIyMDo3YjMxMSIsInZlcnNpb24iOjEsImlhdCI6MTc4MTMwMDQwMCwiZXhwIjoxNzgxMzg3NDAwfQ.pKzxeuCRA9dqIWSZp8wdU0Nsgs_rzmlc9PqEfGLGneQ",
+  "notes": "Whitewall imageserver; podglad type=12"
+}

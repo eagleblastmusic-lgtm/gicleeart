@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from Komponenty.produkcja.view import (  # noqa: E402
     _cure_remaining_seconds,
+    _cure_remaining_seconds_raw,
     _cure_progress_fraction,
     _cure_color,
     _format_countdown,
@@ -19,6 +20,7 @@ from Komponenty.produkcja.view import (  # noqa: E402
     _wydruk_ready,
     _ramka_ready,
 )
+from Komponenty.produkcja.frame_variant import parse_shopify_variant_title  # noqa: E402
 from Komponenty.produkcja.orders_sync import _detect_frame_variant  # noqa: E402
 from Komponenty.produkcja.shipping import is_poland, pick_carrier_url  # noqa: E402
 
@@ -33,6 +35,18 @@ class TestCountdownLogic:
         remaining = _cure_remaining_seconds(order)
         # 72h = 259200s, tolerancja 2s na czas testu
         assert 259198 <= remaining <= 259200
+
+    def test_pomin_schniecie_forces_done(self) -> None:
+        now = datetime.now()
+        order = {"data_pomalowania": now.isoformat(), "pomin_schniecie": True}
+        assert _cure_remaining_seconds(order) == 0
+        assert _cure_progress_fraction(order) == 1.0
+        assert _cure_remaining_seconds_raw(order) >= 259198
+
+    def test_raw_without_pomin_matches_effective(self) -> None:
+        now = datetime.now()
+        order = {"data_pomalowania": now.isoformat()}
+        assert _cure_remaining_seconds(order) == _cure_remaining_seconds_raw(order)
 
     def test_24h_ago_returns_48h(self) -> None:
         past = (datetime.now() - timedelta(hours=24)).isoformat()
@@ -128,6 +142,9 @@ class TestProgressSteps:
         old = (datetime.now() - timedelta(hours=100)).isoformat()
         assert not _ramka_ready({"ramka_step": 4, "data_pomalowania": recent})
         assert _ramka_ready({"ramka_step": 4, "data_pomalowania": old})
+        assert _ramka_ready(
+            {"ramka_step": 4, "data_pomalowania": recent, "pomin_schniecie": True}
+        )
 
 
 class TestProfitSummary:
@@ -168,12 +185,27 @@ class TestFrameDetection:
     def test_dab_xl(self) -> None:
         assert _detect_frame_variant("Dąb / XL") == "Dab XL"
 
-    def test_sosna_s(self) -> None:
-        assert _detect_frame_variant("Sosna / S") == "Sosna S"
+    def test_sosna_m(self) -> None:
+        assert _detect_frame_variant("Sosna / M") == "Sosna M"
+        assert _detect_frame_variant("Sosna / S") == "Sosna M"
 
     def test_unknown_fallback(self) -> None:
-        assert _detect_frame_variant("") == "Dab S"
-        assert _detect_frame_variant("Plastic / Medium") == "Dab S"
+        assert _detect_frame_variant("") == "Dab M"
+        assert _detect_frame_variant("Plastic / Medium") == "Dab M"
+
+
+class TestShopifyVariantParts:
+    def test_three_options_like_store(self) -> None:
+        d, r, k = parse_shopify_variant_title("Dąb / 50x70 / Czarny mat")
+        assert d == "Dąb"
+        assert r == "50x70"
+        assert k == "Czarny mat"
+
+    def test_wood_only_label(self) -> None:
+        d, r, k = parse_shopify_variant_title("Dąb")
+        assert d == "Dąb"
+        assert r == ""
+        assert k == ""
 
 
 class TestShippingCarrierPicker:

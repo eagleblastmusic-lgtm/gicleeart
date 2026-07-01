@@ -1,0 +1,12 @@
+﻿sale_date,shopify_order,invoice_number,country,client,email,currency,amount_currency,shipping,discounts,total,payment_status,refund_status,document_language,pdf_path,nbp_rate,nbp_rate_date,nbp_table,amount_pln,rate_source,rate_status
+2026-06-14,,FBV/1/2026,PL,Imię i nazwa / firma,,PLN,123.0,0.0,0.0,123.0,paid,,pl,C:\Strona\pusty\cursor-api\Komponenty\dokumentysprzedazy\documents\invoices\2026\06\FBV-1-2026-order-0.pdf,1.0,2026-06-14,,123.0,NBP,not_needed
+2026-06-14,,FBV/2/2026,PL,Imię i nazwa / firma,,PLN,55.0,0.0,0.0,55.0,paid,,pl,C:\Strona\pusty\cursor-api\Komponenty\dokumentysprzedazy\documents\invoices\2026\06\FBV-2-2026-order-0.pdf,1.0,2026-06-14,,55.0,NBP,not_needed
+2026-06-14,,FBV/3/2026,PL,Imię i nazwa / firma,,PLN,345.0,0.0,0.0,345.0,paid,,pl,C:\Strona\pusty\cursor-api\Komponenty\dokumentysprzedazy\documents\invoices\2026\06\FBV-3-2026-order-0.pdf,1.0,2026-06-14,,345.0,NBP,not_needed
+2026-06-14,,FBV/4/2026,PL,Imię i nazwa / firma,,PLN,765.0,0.0,0.0,765.0,paid,,pl,C:\Strona\pusty\cursor-api\Komponenty\dokumentysprzedazy\documents\invoices\2026\06\FBV-4-2026-order-0.pdf,1.0,2026-06-14,,765.0,NBP,not_needed
+,,,,,,,,,,,,,,,,,,,,
+PODSUMOWANIE,Polska: 1288.00 PLN,,,,,,,,,,,,,,,,,,,
+,Zagranica: 0.00 PLN,,,,,,,,,,,,,,,,,,,
+,UE B2C: 0.00 PLN,,,,,,,,,,,,,,,,,,,
+,Poza UE: 0.00 PLN,,,,,,,,,,,,,,,,,,,
+,Suma PLN: 1288.00,,,,,,,,,,,,,,,,,,,
+,Suma PLN: 1288.00,,,,,,,,,,,,,,,,,,,

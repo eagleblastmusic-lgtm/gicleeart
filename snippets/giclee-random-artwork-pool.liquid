@@ -1,0 +1,45 @@
+{%- comment -%}
+  Losuj Obraz — startowa pula realnych produktow (warstwa 1).
+  Renderuje JSON z produktow Shopify dostepnych w Liquid.
+
+  Ograniczenie Shopify: petla po `collection.products` zwraca maksymalnie 50
+  produktow na render. Pelna pula (>50) jest doczytywana po stronie klienta
+  z /collections/all/products.json (warstwa 2 w giclee-random-artwork.js).
+
+  Parametry:
+    pool_collection - obiekt kolekcji (domyslnie collections.all)
+    pool_limit      - maks. liczba produktow (1..50)
+{%- endcomment -%}
+{%- liquid
+  assign grw_collection = pool_collection
+  if grw_collection == blank
+    assign grw_collection = collections.all
+  endif
+  assign grw_limit = pool_limit | default: 50
+  if grw_limit > 50
+    assign grw_limit = 50
+  endif
+-%}
+[
+{%- assign grw_emitted = 0 -%}
+{%- if grw_collection != blank and grw_collection.products_count > 0 -%}
+  {%- for product in grw_collection.products limit: grw_limit -%}
+    {%- liquid
+      assign grw_image = product.featured_media.preview_image
+      if grw_image == blank
+        assign grw_image = product.featured_image
+      endif
+    -%}
+    {%- if grw_emitted > 0 %},{% endif -%}
+    {
+      "title": {{ product.title | json }},
+      "handle": {{ product.handle | json }},
+      "url": {{ product.url | json }},
+      "available": {{ product.available }},
+      "image": {% if grw_image != blank %}{{ grw_image | image_url: width: 1280 | json }}{% else %}null{% endif %},
+      "imageAlt": {{ product.title | json }}
+    }
+    {%- assign grw_emitted = grw_emitted | plus: 1 -%}
+  {%- endfor -%}
+{%- endif -%}
+]

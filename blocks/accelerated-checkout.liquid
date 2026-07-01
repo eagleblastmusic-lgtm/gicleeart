@@ -18,9 +18,20 @@
   endif
 %}
 
+{% liquid
+  assign use_blik_checkout = false
+  if localization.country.iso_code == 'PL'
+    assign use_blik_checkout = true
+  endif
+%}
+
 {% capture accelerated_checkout_button %}
   {% if product != blank and form_obj != blank %}
-    {{ form_obj | payment_button }}
+    {% if use_blik_checkout %}
+      {% render 'blik-checkout-button', can_add_to_cart: can_add_to_cart %}
+    {% else %}
+      {{ form_obj | payment_button }}
+    {% endif %}
   {% endif %}
 {% endcapture %}
 
@@ -38,6 +49,9 @@
   >
     {{ accelerated_checkout_button }}
   </div>
+  {% if use_blik_checkout %}
+    <script src="{{ 'blik-checkout-button.js' | asset_url }}?v=20260605c" defer></script>
+  {% endif %}
 {% endif %}
 
 {% render 'buy-buttons-styles' %}

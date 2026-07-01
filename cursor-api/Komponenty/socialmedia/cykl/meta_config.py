@@ -20,13 +20,16 @@ import webbrowser
 from collections.abc import Callable
 from tkinter import messagebox, ttk
 
+from Komponenty._shared.window_geometry import position_toplevel_screen_center
+
 from . import meta_publisher, platforms_cykl as _cp, storage
+from .meta_token_status import refresh_token_metadata_in_file
 
 
 def open_meta_config_dialog(parent: tk.Misc, on_saved: Callable[[], None] | None = None) -> tk.Toplevel:
     dlg = tk.Toplevel(parent)
     dlg.title("Cykl - Ustawienia Meta API")
-    dlg.geometry("820x720")
+    position_toplevel_screen_center(dlg, 820, 720)
     dlg.minsize(740, 640)
     try:
         dlg.transient(parent.winfo_toplevel())
@@ -173,6 +176,7 @@ def open_meta_config_dialog(parent: tk.Misc, on_saved: Callable[[], None] | None
                     entry[k] = v.get().strip()
             new_creds[code] = entry
         storage.save_meta_credentials(new_creds)
+        refresh_token_metadata_in_file(mark_renewed=True)
         # Config auto_publish
         cfg2 = storage.load_config()
         cfg2["auto_publish"] = bool(auto_var.get())

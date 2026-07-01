@@ -1,8 +1,12 @@
 {
-  "name": "Finanse",
-  "description": "Wyliczenia i ksiegowosc - skroty do plikow i narzedzi.",
+  "name": "Księgowość",
+  "description": "Panel: limit DNR, VAT 240k, checklist, compliance — skróty do dokumentów, KPiR i DNR.",
   "icon": "💰",
   "color": "#2e7d32",
-  "order": 60,
-  "mode": "inline"
+  "order": 54,
+  "mode": "inline",
+  "inline_width": 1060,
+  "inline_height": 900,
+  "inline_min_width": 980,
+  "inline_min_height": 780
 }

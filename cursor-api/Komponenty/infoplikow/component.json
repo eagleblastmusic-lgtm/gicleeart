@@ -1,0 +1,7 @@
+{
+  "name": "Informacje o plikach",
+  "description": "Wybierz produkt i zobacz grafiki w galerii Shopify: nazwa pliku CDN, alt, rola (preview/Full/mockup), widocznosc na PDP.",
+  "icon": "🗂️",
+  "color": "#5c6bc0",
+  "order": 35
+}

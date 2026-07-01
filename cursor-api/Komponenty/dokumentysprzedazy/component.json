@@ -1,0 +1,9 @@
+{
+  "name": "Dokumenty sprzedaży",
+  "description": "Faktury bez VAT / Invoice without VAT — zamówienia Shopify, PDF, numeracja, eksport.",
+  "icon": "📄",
+  "color": "#37474f",
+  "order": 57,
+  "mode": "inline",
+  "hidden": true
+}

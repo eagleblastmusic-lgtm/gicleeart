@@ -1,0 +1,11 @@
+{
+  "source_file": "C:\\Strona\\pusty\\cursor-api\\Komponenty\\print_optimize\\data\\test_photos\\549894368_25002059066086575_207454330489953186_n.jpg",
+  "image_id": "0:653837366338:65416146d0658:7b311",
+  "strengths": {
+    "0": "549894368_25002059066086575_207454330489953186_n\\original.jpg",
+    "70": "549894368_25002059066086575_207454330489953186_n\\ww70.jpg",
+    "100": "549894368_25002059066086575_207454330489953186_n\\ww100.jpg"
+  },
+  "original_url": "https://imageserver.whitewall.com/imageserver/image/view?id=0:653837366338:65416146d0658:7b311&type=12&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ3ZWJhcHAiLCJ1dWlkIjoiMDo2NTM4MzczNjYzMzg6NjU0MTYxNDZkMDY1ODo3YjMxMSIsInZlcnNpb24iOjEsImlhdCI6MTc4MTMwMzQwMCwiZXhwIjoxNzgxMzkwNDAwfQ.pSG-ErPQbZBz9UrcyQxXDr8ECFCEuY9pYezdVWMnfG4",
+  "notes": "original.jpg = WW preview URL (enhancement=0, ten sam crop co ww70); original_url w manifescie = surowy imageserver id+token"
+}

@@ -40,93 +40,19 @@
       }
     },
     "section": {
-      "type": "section",
-      "blocks": {
-        "text_tqQTNE": {
-          "type": "text",
-          "name": "Title",
-          "settings": {
-            "text": "<h1>{{ closest.collection.title }}</h1>",
-            "width": "fit-content",
-            "max_width": "normal",
-            "alignment": "left",
-            "type_preset": "h2",
-            "font": "var(--font-primary--family)",
-            "font_size": "",
-            "line_height": "normal",
-            "letter_spacing": "normal",
-            "case": "none",
-            "wrap": "pretty",
-            "color": "",
-            "background": false,
-            "background_color": "#00000026",
-            "corner_radius": 0,
-            "padding-block-start": 0,
-            "padding-block-end": 0,
-            "padding-inline-start": 0,
-            "padding-inline-end": 0
-          },
-          "blocks": {}
-        },
-        "text_twGGkJ": {
-          "type": "text",
-          "name": "Description",
-          "settings": {
-            "text": "{{ closest.collection.description }}",
-            "width": "fit-content",
-            "max_width": "normal",
-            "alignment": "left",
-            "type_preset": "rte",
-            "font": "var(--font-primary--family)",
-            "font_size": "",
-            "line_height": "normal",
-            "letter_spacing": "normal",
-            "case": "none",
-            "wrap": "pretty",
-            "color": "",
-            "background": false,
-            "background_color": "#0000004a",
-            "corner_radius": 50,
-            "padding-block-start": 0,
-            "padding-block-end": 0,
-            "padding-inline-start": 0,
-            "padding-inline-end": 0
-          },
-          "blocks": {}
-        }
-      },
-      "block_order": [
-        "text_tqQTNE",
-        "text_twGGkJ"
-      ],
-      "name": "Collection heading",
+      "type": "giclee-artist-biography",
+      "name": "Biografia autora",
       "settings": {
-        "content_direction": "column",
-        "vertical_on_mobile": true,
-        "horizontal_alignment": "flex-start",
-        "vertical_alignment": "center",
-        "align_baseline": false,
-        "horizontal_alignment_flex_direction_column": "flex-start",
-        "vertical_alignment_flex_direction_column": "center",
-        "gap": 12,
+        "collection": "",
         "section_width": "page-width",
-        "section_height": "",
-        "section_height_custom": 50,
         "color_scheme": "scheme-1",
-        "background_media": "image",
-        "video_position": "cover",
-        "background_image": "shopify://shop_images/frescoes-in-the-chapel-of-versailles.jpg",
-        "background_image_position": "cover",
-        "border": "none",
-        "border_width": 1,
-        "border_opacity": 100,
-        "border_radius": 0,
+        "background_image": "shopify://shop_images/pexels-dominik-257777306-15246190.jpg",
         "toggle_overlay": true,
-        "overlay_color": "#00000036",
+        "overlay_color": "#0000008c",
         "overlay_style": "solid",
         "gradient_direction": "to top",
-        "padding-block-start": 48,
-        "padding-block-end": 48
+        "padding_top": 48,
+        "padding_bottom": 48
       }
     },
     "divider_GDCkcq": {
@@ -142,6 +68,46 @@
         "alignment_horizontal": "center",
         "padding-block-start": 16,
         "padding-block-end": 16
+      }
+    },
+    "divider_gbjFn6": {
+      "type": "divider",
+      "disabled": true,
+      "name": "t:names.divider_section",
+      "settings": {
+        "color_scheme": "scheme-6",
+        "section_width": "full-width",
+        "thickness": 1,
+        "corner_radius": "square",
+        "width_percent": 100,
+        "alignment_horizontal": "center",
+        "padding-block-start": 16,
+        "padding-block-end": 16
+      }
+    },
+    "giclee_artist_collection_showcase_7djLQQ": {
+      "type": "giclee-artist-collection-showcase",
+      "name": "Kolekcja autora — galeria",
+      "settings": {
+        "collection": "",
+        "max_products": 50,
+        "layout_mode": "coverflow",
+        "eyebrow": "Kolekcja autora",
+        "heading": "Wybrane dzieła",
+        "artist_name": "",
+        "lead": "Reprodukcji fine art — z kolekcji © Giclée Art — Restoration Edition 2026",
+        "artist_nav_source": "auto_catalog",
+        "catalog_menu": "main-menu",
+        "catalog_menu_parent": "Katalog",
+        "enable_artist_nav": true,
+        "show_cta": false,
+        "cta_label": "Zobacz całą kolekcję",
+        "cta_link": "",
+        "enable_scroll_panel": true,
+        "end_page": true,
+        "enable_autoplay": true,
+        "autoplay_interval": 7,
+        "color_scheme": ""
       }
     },
     "divider_EgwUqt": {
@@ -192,6 +158,7 @@
       "block_order": [
         "text_FNbyeV"
       ],
+      "disabled": true,
       "name": "t:names.rich_text_section",
       "settings": {
         "content_direction": "row",
@@ -221,22 +188,9 @@
         "padding-block-end": 22
       }
     },
-    "divider_gbjFn6": {
-      "type": "divider",
-      "name": "t:names.divider_section",
-      "settings": {
-        "color_scheme": "scheme-6",
-        "section_width": "full-width",
-        "thickness": 1,
-        "corner_radius": "square",
-        "width_percent": 100,
-        "alignment_horizontal": "center",
-        "padding-block-start": 16,
-        "padding-block-end": 16
-      }
-    },
     "divider_WPKrg3": {
       "type": "divider",
+      "disabled": true,
       "name": "t:names.divider_section",
       "settings": {
         "color_scheme": "scheme-6",
@@ -362,6 +316,7 @@
           ]
         }
       },
+      "disabled": true,
       "settings": {
         "layout_type": "grid",
         "product_card_size": "medium",
@@ -393,6 +348,7 @@
     },
     "custom_liquid_Q8zizT": {
       "type": "custom-liquid",
+      "disabled": true,
       "name": "t:names.custom_liquid",
       "settings": {
         "custom_liquid": "<style>\n.back-btn {\n  display: inline-flex;\n  align-items: center;\n  gap: 8px;\n  padding: 10px 24px;\n  border: 1px solid rgba(200, 170, 110, 0.6);\n  color: #c8aa6e;\n  background: transparent;\n  letter-spacing: 0.14em;\n  font-size: 0.72rem;\n  text-transform: uppercase;\n  text-decoration: none;\n  font-family: inherit;\n  white-space: nowrap;\n  transition: background 0.35s ease, color 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;\n}\n\n.back-btn:hover {\n  background: rgba(200, 170, 110, 0.1);\n  border-color: #c8aa6e;\n  color: #e8d5a3;\n  box-shadow: 0 0 22px rgba(200, 170, 110, 0.18), inset 0 0 12px rgba(200, 170, 110, 0.05);\n}\n\n/* Ukryj przycisk Quick add */\n[class*=\"quick-add\"],\n[class*=\"quick_add\"],\n.quick-add,\n.quick_add {\n  display: none !important;\n}\n</style>",
@@ -408,9 +364,10 @@
     "divider_acE9RQ",
     "section",
     "divider_GDCkcq",
+    "divider_gbjFn6",
+    "giclee_artist_collection_showcase_7djLQQ",
     "divider_EgwUqt",
     "section_ANxq96",
-    "divider_gbjFn6",
     "divider_WPKrg3",
     "main",
     "custom_liquid_7dVXzf",

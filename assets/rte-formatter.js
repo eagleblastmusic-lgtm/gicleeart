@@ -6,7 +6,21 @@ import { Component } from '@theme/component';
 class RTEFormatter extends Component {
   connectedCallback() {
     super.connectedCallback();
+    this.#decodeEscapedHtml();
     this.querySelectorAll('table').forEach(this.#formatTable);
+  }
+
+  /**
+   * Theme locale | t strings are HTML-escaped when output from Liquid variables.
+   * Decode entity-encoded markup so headings and paragraphs render correctly.
+   */
+  #decodeEscapedHtml() {
+    const html = this.innerHTML;
+    if (!html.includes('&lt;') && !html.includes('&amp;lt;')) return;
+
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = html;
+    this.innerHTML = textarea.value;
   }
 
   /**

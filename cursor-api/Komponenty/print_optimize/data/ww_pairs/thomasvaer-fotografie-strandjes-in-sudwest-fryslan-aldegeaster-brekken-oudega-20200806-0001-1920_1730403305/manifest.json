@@ -1,0 +1,11 @@
+{
+  "source_file": "C:\\Strona\\pusty\\cursor-api\\Komponenty\\print_optimize\\data\\test_photos\\thomasvaer-fotografie-strandjes-in-sudwest-fryslan-aldegeaster-brekken-oudega-20200806-0001-1920_1730403305.jpeg",
+  "image_id": "0:333133363933:6541630946060:7b78",
+  "strengths": {
+    "0": "thomasvaer-fotografie-strandjes-in-sudwest-fryslan-aldegeaster-brekken-oudega-20200806-0001-1920_1730403305\\original.jpg",
+    "70": "thomasvaer-fotografie-strandjes-in-sudwest-fryslan-aldegeaster-brekken-oudega-20200806-0001-1920_1730403305\\ww70.jpg",
+    "100": "thomasvaer-fotografie-strandjes-in-sudwest-fryslan-aldegeaster-brekken-oudega-20200806-0001-1920_1730403305\\ww100.jpg"
+  },
+  "original_url": "https://imageserver.whitewall.com/imageserver/image/view?id=0:333133363933:6541630946060:7b78&type=12&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ3ZWJhcHAiLCJ1dWlkIjoiMDozMzMxMzMzNjM5MzM6NjU0MTYzMDk0NjA2MDo3Yjc4IiwidmVyc2lvbiI6MSwiaWF0IjoxNzgxMzA0MDAwLCJleHAiOjE3ODEzOTEwMDB9.4xPmtHpt125P_LazR7w_Ti4GtK2pG64d6SsXXN1D-aA",
+  "notes": "original.jpg = WW preview URL (enhancement=0, ten sam crop co ww70); original_url w manifescie = surowy imageserver id+token"
+}

@@ -1,6 +1,12 @@
 
 
-{% assign block_settings = block.settings %}
+{% liquid
+  assign block_settings = block.settings
+  assign signup_btn_label = block_settings.label | strip
+  if signup_btn_label == blank or signup_btn_label == 'Zapisz się'
+    assign signup_btn_label = 'actions.sign_up' | t
+  endif
+%}
 <div
   class="email-signup-block size-style spacing-style"
   style="{% render 'size-style', settings: block_settings %}{% render 'spacing-style', settings: block_settings %}"
@@ -47,7 +53,7 @@
         {% endif %}
       >
         {% if block_settings.display_type == 'text' %}
-          {{ block_settings.label }}
+          {{ signup_btn_label }}
         {% else %}
           <svg
             viewBox="0 0 20 20"

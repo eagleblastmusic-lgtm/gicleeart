@@ -1,0 +1,22 @@
+# Warstwa cursor-api / docs — nie należy do motywu Shopify
+cursor-api/**
+docs/**
+lib/**
+node_modules/**
+
+# Artefakty audytu / tymczasowe
+_audit*
+_tmp*
+_live*
+_gacs*
+_patch*
+_restore*
+_section_api.json
+*.html
+
+# Dokumentacja projektu (korzeń repo)
+MATKA.md
+USLUGI.md
+THEME_KNOWLEDGE.md
+package.json
+package-lock.json

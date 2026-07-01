@@ -1,0 +1,7 @@
+{
+  "name": "Tytuły AI (Gemini)",
+  "description": "Tytuły i robocze opisy obrazów przez Gemini API — prompty Cursora / podgląd opisów (bez zapisu do Shopify).",
+  "icon": "🤖",
+  "color": "#1565c0",
+  "order": 16
+}

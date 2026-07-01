@@ -203,7 +203,7 @@ header-menu,
         href="{{ link.url }}"
         class="mega-menu__link {% if link.links != blank %}mega-menu__link--parent mega-menu__link--flyout-trigger{% endif %}"
       >
-        <span class="wrap-text">{{- link.title -}}</span>
+        <span class="wrap-text">{%- render 'giclee-i18n-menu-title', link: link -%}</span>
         {% if link.links != blank %}
           <span class="mega-menu__flyout-arrow">›</span>
         {% endif %}
@@ -215,7 +215,7 @@ header-menu,
             {% for childLink in link.links %}
               <li>
                 <a href="{{ childLink.url }}" class="mega-menu__link mega-menu__link--child">
-                  <span class="wrap-text">{{- childLink.title -}}</span>
+                  <span class="wrap-text">{%- render 'giclee-artist-catalog-name', name: childLink.title -%}</span>
                 </a>
               </li>
             {% endfor %}

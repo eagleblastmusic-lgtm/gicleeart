@@ -1,0 +1,120 @@
+{% comment %}
+  Mockup własnej fotografii — wspólny dla pages/fotografia-obraz i product.szablon-wlasna-fotografia.
+{% endcomment %}
+{%- liquid
+  assign pm_upload_api_default = 'https://giclee-mockup-orders.eagleblastmusic.workers.dev/api/mockup-upload'
+  assign pm_upload_api_url = settings.pm_upload_api_url | default: pm_upload_api_default
+  if pm_upload_api_url == blank
+    assign pm_upload_api_url = pm_upload_api_default
+  endif
+-%}
+<link rel="stylesheet" href="{{ 'giclee-photo-mockup.css' | asset_url }}?v=mobile-cart-fix-20260605">
+<div id="pm-hero" data-pm-upload-api="{{ pm_upload_api_url | escape }}">
+  <div class="pm-stage">
+    <div id="pm-hero-ui" class="pm-hero-ui">
+      <div class="pm-header">
+        <div class="pm-badge">{{ 'giclee.ui.mockup_badge' | t }}</div>
+        <h2>{{ 'giclee.ui.mockup_heading' | t }}</h2>
+        <p>{{ 'giclee.ui.mockup_lead' | t }}</p>
+      </div>
+      <label class="pm-upload-btn">
+        <span>{{ 'giclee.ui.mockup_choose_photo' | t }}</span>
+        <input type="file" id="pm-upload" accept="image/jpeg,image/png,image/heic,image/heif,image/webp,.heic,.heif">
+      </label>
+    </div>
+
+    <div class="pm-side-shop" id="pm-side-shop" hidden>
+      <section class="pm-side-price" aria-label="{{ 'giclee.ui.mockup_price_label' | t }}">
+        <div class="pm-config-price" id="pm-config-price" aria-live="polite">
+          <span class="pm-config-price__eyebrow">{{ 'giclee.ui.mockup_price_label' | t }}</span>
+          <span class="pm-config-price__value" id="pm-config-price-value">—</span>
+        </div>
+      </section>
+      <section class="pm-side-cart" aria-label="{{ 'actions.add_to_cart' | t }}">
+        <button type="button" class="pm-config-add-to-cart" id="pm-config-add-to-cart">{{ 'actions.add_to_cart' | t }}</button>
+      </section>
+    </div>
+
+    <aside class="pm-hint" aria-label="{{ 'giclee.ui.mockup_aria_controls' | t }}">
+      <div class="pm-hint__group">
+        <span class="pm-hint__word">{{ 'giclee.ui.mockup_hint_drag' | t }}</span>
+        <span class="pm-hint__sep" aria-hidden="true"></span>
+        <span class="pm-hint__word">{{ 'giclee.ui.mockup_hint_scroll' | t }}</span>
+        <span class="pm-hint__sep" aria-hidden="true"></span>
+        <span class="pm-hint__word">{{ 'giclee.ui.mockup_hint_dblclick' | t }}</span>
+      </div>
+      <div class="pm-hint__goal">
+        <span class="pm-hint__rule" aria-hidden="true"></span>
+        <span class="pm-hint__word pm-hint__word--accent">{{ 'giclee.ui.mockup_hint_fit' | t }}</span>
+      </div>
+      <div class="pm-hint__sizes">
+        <label class="pm-hint__sizes-toggle" for="pm-size-toggle">
+          <input type="checkbox" id="pm-size-toggle" class="pm-hint__sizes-toggle__input">
+          <span class="pm-hint__sizes-toggle__track" aria-hidden="true">
+            <span class="pm-hint__sizes-toggle__thumb"></span>
+          </span>
+          <span class="pm-hint__sizes-toggle__label">{{ 'giclee.ui.mockup_frame_dimensions' | t }}</span>
+        </label>
+      </div>
+      <div class="pm-hint__export">
+        <button type="button" class="pm-hint__export-btn" id="pm-export-jpg" aria-label="{{ 'giclee.ui.mockup_aria_export' | t }}">
+          <svg class="pm-hint__export-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <path d="M12 3v12m0 0l4-4m-4 4L8 11"/>
+            <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+          </svg>
+          <span class="pm-hint__export-btn__label">{{ 'giclee.ui.mockup_export_jpg' | t }}</span>
+        </button>
+        <p class="pm-export-toast" id="pm-export-toast" role="status" aria-live="polite" hidden>{{ 'giclee.ui.mockup_file_saved' | t }}</p>
+      </div>
+    </aside>
+
+    <div class="pm-mockup-shell">
+      <div id="pm-wrapper">
+        <canvas id="pm-canvas"></canvas>
+        <img id="pm-frame" src="https://cdn.shopify.com/s/files/1/1011/0517/2828/files/a4_pion_v5_-_CZB.png?v=1780499407" alt="" width="800" height="921" loading="eager" draggable="false" crossorigin="anonymous">
+
+        <div class="pm-glow"></div>
+        <div class="pm-vignette"></div>
+        <div class="pm-grain"></div>
+        <div class="pm-sheen"></div>
+        <div class="pm-reupload-toolbar" role="toolbar" aria-label="{{ 'giclee.ui.mockup_aria_photo_toolbar' | t }}">
+          <button type="button" class="pm-toolbar-btn" id="pm-reupload" aria-label="{{ 'giclee.ui.mockup_aria_reupload' | t }}">
+            <svg class="pm-toolbar-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <path d="M12 16V4m0 0L8 8m4-4 4 4"/>
+              <path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>
+            </svg>
+            <span class="pm-toolbar-btn__label">{{ 'giclee.ui.mockup_reupload' | t }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="pm-size-overlay" id="pm-size-overlay" aria-hidden="true"></div>
+    </div>
+
+    <aside class="pm-zoom-rail" aria-label="{{ 'giclee.ui.mockup_aria_zoom' | t }}">
+      <button type="button" class="pm-zoom-rail__btn" id="pm-zoom-in" aria-label="{{ 'giclee.ui.mockup_aria_zoom_in' | t }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+      </button>
+      <div class="pm-zoom-rail__track">
+        <input type="range" class="pm-zoom-rail__range" id="pm-zoom-slider" min="0" max="100" value="0" step="1" aria-label="{{ 'giclee.ui.mockup_aria_zoom_level' | t }}" orient="vertical">
+      </div>
+      <button type="button" class="pm-zoom-rail__btn" id="pm-zoom-out" aria-label="{{ 'giclee.ui.mockup_aria_zoom_out' | t }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false">
+          <path d="M5 12h14"/>
+        </svg>
+      </button>
+    </aside>
+
+    <a class="pm-cta" id="pm-cta" href="#giclee-shell">
+      <span class="pm-cta-label">{{ 'giclee.ui.mockup_cta_gicleelab' | t }}</span>
+      <div class="pm-cta-chevrons" aria-hidden="true">
+        <svg width="28" height="16" viewBox="0 0 28 16" fill="none"><path d="M2 2l12 12L26 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg width="28" height="16" viewBox="0 0 28 16" fill="none"><path d="M2 2l12 12L26 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg width="28" height="16" viewBox="0 0 28 16" fill="none"><path d="M2 2l12 12L26 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </a>
+  </div>
+</div>
+<script src="{{ 'giclee-photo-mockup.js' | asset_url }}?v=mobile-cart-fix-20260605" defer></script>

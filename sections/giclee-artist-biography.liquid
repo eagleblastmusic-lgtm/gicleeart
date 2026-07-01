@@ -1,0 +1,355 @@
+{%- liquid
+  assign bio_collection = collection
+  if bio_collection == blank
+    assign bio_collection = section.settings.collection
+  endif
+
+  assign artist_title = bio_collection.title | default: ''
+  capture artist_title
+    render 'giclee-artist-catalog-name', name: artist_title
+  endcapture
+  assign artist_title = artist_title | strip
+  assign bio_html = bio_collection.description
+
+  assign bio_bg_url = ''
+  assign bio_bg_pos_x = 50
+  assign bio_bg_overlay_pct = 100
+  assign bio_bg_cover_scale = false
+  assign bio_radial_enabled = false
+  assign bio_radial_cx = 35
+  assign bio_radial_cy = 50
+  assign bio_radial_rx = 55
+  assign bio_radial_ry = 85
+  assign bio_radial_feather = 50
+  assign bio_radial_exposure = 50
+  if bio_collection != blank
+    assign bio_bg_mf = bio_collection.metafields.custom.bio_background_url
+    if bio_bg_mf != blank and bio_bg_mf.value != blank
+      assign bio_bg_url = bio_bg_mf.value
+    endif
+    assign bio_pos_mf = bio_collection.metafields.custom.bio_background_pos_x
+    if bio_pos_mf != blank and bio_pos_mf.value != blank
+      assign bio_bg_pos_x = bio_pos_mf.value | plus: 0
+    endif
+    assign bio_overlay_mf = bio_collection.metafields.custom.bio_background_overlay_pct
+    if bio_overlay_mf != blank and bio_overlay_mf.value != blank
+      assign bio_bg_overlay_pct = bio_overlay_mf.value | plus: 0
+    endif
+    assign bio_scale_mf = bio_collection.metafields.custom.bio_background_cover_scale
+    if bio_scale_mf.value == true or bio_scale_mf.value == 'true' or bio_scale_mf.value == 1
+      assign bio_bg_cover_scale = true
+    endif
+    assign bio_radial_mf = bio_collection.metafields.custom.bio_background_radial_mask
+    if bio_radial_mf != blank and bio_radial_mf.value != blank
+      assign bio_radial = bio_radial_mf.value
+      if bio_radial.enabled == true or bio_radial.enabled == 'true' or bio_radial.enabled == 1
+        assign bio_radial_enabled = true
+      endif
+      if bio_radial.cx != blank
+        assign bio_radial_cx = bio_radial.cx | plus: 0
+      endif
+      if bio_radial.cy != blank
+        assign bio_radial_cy = bio_radial.cy | plus: 0
+      endif
+      if bio_radial.rx != blank
+        assign bio_radial_rx = bio_radial.rx | plus: 0
+      endif
+      if bio_radial.ry != blank
+        assign bio_radial_ry = bio_radial.ry | plus: 0
+      endif
+      if bio_radial.feather != blank
+        assign bio_radial_feather = bio_radial.feather | plus: 0
+      endif
+      if bio_radial.exposure != blank
+        assign bio_radial_exposure = bio_radial.exposure | plus: 0
+      endif
+    endif
+  endif
+-%}
+
+<link
+  rel="stylesheet"
+  href="{{ 'giclee-artist-biography.css' | asset_url }}&gab=gab-text-header-sync-20260628"
+>
+
+{% style %}
+  /*
+    Strona kolekcji ładuje przycięty compiled_assets/styles.css (subset) BEZ:
+    - .background-image-container (base.css)
+    - .overlay / .overlay--solid (snippets/overlay.liquid, blok stylesheet)
+    - .custom-section-background (snippets/section.liquid, blok stylesheet)
+  */
+  .giclee-artist-biography-section > .section {
+    position: relative;
+  }
+
+  .giclee-artist-biography-section .custom-section-background {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    z-index: 0;
+  }
+
+  .giclee-artist-biography-section .custom-section-content {
+    grid-column: 2;
+    grid-row: 1;
+    z-index: 1;
+  }
+
+  .giclee-artist-biography-section .section--full-width .custom-section-content {
+    grid-column: 1 / -1;
+  }
+
+  .giclee-artist-biography-section .background-image-container {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    z-index: 0;
+  }
+
+  .giclee-artist-biography-section .background-image-container img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .giclee-artist-biography-section .custom-section-content > .overlay {
+    position: absolute;
+    inset: 0;
+    z-index: var(--overlay-layer, 0);
+    pointer-events: none;
+    border-radius: var(--overlay-border-radius, 0);
+  }
+
+  .giclee-artist-biography-section .custom-section-content > .overlay--solid {
+    background: var(--overlay-color);
+  }
+
+  .giclee-artist-biography-section .custom-section-content > .overlay--gradient {
+    background: linear-gradient(
+      var(--overlay-direction, to top),
+      var(--overlay-color),
+      var(--overlay-color--end, transparent)
+    );
+  }
+
+  .giclee-artist-biography-section .giclee-artist-bio {
+    position: relative;
+    z-index: 2;
+  }
+{% endstyle %}
+
+<div class="section-background color-{{ section.settings.color_scheme }}"></div>
+<div
+  class="section section--{{ section.settings.section_width }} color-{{ section.settings.color_scheme }}{% if bio_bg_url != blank %} giclee-artist-biography-section--custom-bg{% endif %}"
+  {{ section.shopify_attributes }}
+>
+  <div class="custom-section-background" data-gab-bg-wrap>
+    <div
+      class="giclee-artist-bio-bg"
+      data-gab-custom-bg
+      {% if bio_bg_url == blank %}hidden{% endif %}
+    >
+      <div class="giclee-artist-bio-bg__stack" data-gab-bg-stack aria-hidden="true">
+        {%- if bio_bg_url != blank -%}
+          <img
+            class="giclee-artist-bio-bg__layer giclee-artist-bio-bg__image{% if bio_bg_cover_scale %} giclee-artist-bio-bg__image--cover-scale{% endif %}"
+            data-gab-bg-layer="0"
+            data-gab-bg-image
+            data-gab-cover-scale="{% if bio_bg_cover_scale %}true{% else %}false{% endif %}"
+            src="{{ bio_bg_url | escape }}"
+            alt=""
+            loading="eager"
+            fetchpriority="high"
+            decoding="async"
+            width="3840"
+            height="2160"
+            style="object-position: {{ bio_bg_pos_x }}% center;"
+          >
+        {%- else -%}
+          <img
+            class="giclee-artist-bio-bg__layer giclee-artist-bio-bg__image"
+            data-gab-bg-layer="0"
+            data-gab-bg-image
+            alt=""
+            decoding="async"
+            hidden
+          >
+        {%- endif -%}
+        <img
+          class="giclee-artist-bio-bg__layer giclee-artist-bio-bg__image"
+          data-gab-bg-layer="1"
+          alt=""
+          decoding="async"
+          hidden
+        >
+      </div>
+      <div
+        class="giclee-artist-bio-bg__overlay"
+        data-gab-bg-overlay
+        style="opacity: {{ bio_bg_overlay_pct | times: 0.01 }};"
+        aria-hidden="true"
+      ></div>
+      <div
+        class="giclee-artist-bio-bg__radial-mask"
+        data-gab-bg-radial-mask
+        {% unless bio_radial_enabled %}hidden{% endunless %}
+        style="
+          --gab-radial-cx: {{ bio_radial_cx }}%;
+          --gab-radial-cy: {{ bio_radial_cy }}%;
+          --gab-radial-rx: {{ bio_radial_rx }}%;
+          --gab-radial-ry: {{ bio_radial_ry }}%;
+          --gab-radial-feather: {{ bio_radial_feather }};
+          --gab-radial-exposure: {{ bio_radial_exposure }};
+        "
+        aria-hidden="true"
+      ></div>
+      <div class="giclee-artist-bio-bg__vignette" aria-hidden="true"></div>
+    </div>
+    {%- if section.settings.background_image != blank -%}
+      <div
+        class="background-image-container"
+        data-gab-default-bg
+        {% if bio_bg_url != blank %}hidden{% endif %}
+      >
+        {{
+          section.settings.background_image
+          | image_url: width: 3840
+          | image_tag: loading: 'eager', fetchpriority: 'high', sizes: '100vw', alt: ''
+        }}
+      </div>
+    {%- endif -%}
+  </div>
+
+  <div
+    class="border-style custom-section-content"
+    style="--border-width: 1px; --border-style: none; --border-radius: 0px;"
+  >
+    {%- if section.settings.toggle_overlay and bio_bg_url == blank -%}
+      {% render 'overlay', settings: section.settings, layer: '0' %}
+    {%- endif -%}
+
+    <div
+      class="giclee-artist-bio spacing-style layout-panel-flex layout-panel-flex--column section-content-wrapper mobile-column"
+      data-giclee-artist-bio
+      data-gab-handle="{{ bio_collection.handle | default: '' }}"
+      style="
+        --flex-direction: column;
+        --gap: 12px;
+        --horizontal-alignment: flex-start;
+        --vertical-alignment: center;
+        --padding-block-start: max(20px, calc(var(--spacing-scale) * {{ section.settings.padding_top }}px));
+        --padding-block-end: max(20px, calc(var(--spacing-scale) * {{ section.settings.padding_bottom }}px));
+      "
+    >
+      {%- if artist_title != blank -%}
+        <h1 class="giclee-artist-bio__title h2" data-gab-field="title">{{ artist_title | escape }}</h1>
+      {%- endif -%}
+
+      <div class="giclee-artist-bio__body rte" data-gab-field="body">
+        {%- if bio_html != blank -%}
+          <div class="giclee-artist-bio__body-inner">{{ bio_html }}</div>
+        {%- else -%}
+          <div class="giclee-artist-bio__body-inner"></div>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Biografia autora",
+  "tag": "section",
+  "class": "giclee-artist-biography-section bio-section",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Kolekcja (opcjonalnie)",
+      "info": "Na stronie kolekcji używa bieżącej kolekcji."
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "Szerokość",
+      "options": [
+        { "value": "page-width", "label": "Strona" },
+        { "value": "full-width", "label": "Pełna" }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Schemat kolorów",
+      "default": "scheme-1"
+    },
+    {
+      "type": "image_picker",
+      "id": "background_image",
+      "label": "Tło"
+    },
+    {
+      "type": "checkbox",
+      "id": "toggle_overlay",
+      "label": "Nakładka na tło",
+      "default": true
+    },
+    {
+      "type": "color",
+      "id": "overlay_color",
+      "label": "Kolor nakładki",
+      "default": "#0000008c"
+    },
+    {
+      "type": "select",
+      "id": "overlay_style",
+      "label": "Styl nakładki",
+      "options": [
+        { "value": "solid", "label": "Jednolita" },
+        { "value": "gradient", "label": "Gradient" }
+      ],
+      "default": "solid"
+    },
+    {
+      "type": "select",
+      "id": "gradient_direction",
+      "label": "Kierunek gradientu",
+      "options": [
+        { "value": "to top", "label": "Do góry" }
+      ],
+      "default": "to top"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Padding góra",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Padding dół",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "presets": [
+    {
+      "name": "Biografia autora"
+    }
+  ]
+}
+{% endschema %}

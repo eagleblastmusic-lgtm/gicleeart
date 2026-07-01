@@ -69,9 +69,10 @@
         {% if menu %}
           <ul class="list-unstyled">
             {% for link in menu.links %}
+              {% capture giclee_menu_url %}{% render 'giclee-resolve-menu-url', link: link %}{% endcapture %}
               <li class="menu__item {{ block_settings.link_preset }}">
-                <a href="{{ link.url }}">
-                  {{ link.title }}
+                <a href="{{ giclee_menu_url | strip }}">
+                  {% render 'giclee-i18n-menu-title', link: link %}
                 </a>
               </li>
             {% endfor %}

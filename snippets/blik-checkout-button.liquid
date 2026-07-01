@@ -1,0 +1,27 @@
+{%- comment -%}
+  Polska: zamiast Shop Pay — przycisk BLIK (dodaje do koszyka i przechodzi do kasy,
+  gdzie BLIK jest dostępny w Shopify Payments).
+  Materiały: https://www.blik.com/materialy-marketingowe
+{%- endcomment -%}
+
+<button
+  type="button"
+  class="blik-checkout-button"
+  data-blik-checkout
+  aria-label="Wygodna płatność z BLIK"
+  {% unless can_add_to_cart %}
+    disabled
+    aria-disabled="true"
+  {% endunless %}
+>
+  <span class="blik-checkout-button__label">Wygodna płatność z</span>
+  <img
+    class="blik-checkout-button__logo"
+    src="{{ 'logo-blik.png' | asset_url }}"
+    alt="BLIK"
+    width="72"
+    height="32"
+    loading="lazy"
+    decoding="async"
+  >
+</button>

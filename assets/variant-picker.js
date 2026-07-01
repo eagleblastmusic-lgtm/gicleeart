@@ -1,6 +1,7 @@
 import { Component } from '@theme/component';
 import { VariantSelectedEvent, VariantUpdateEvent } from '@theme/events';
 import { morph, MORPH_OPTIONS } from '@theme/morph';
+import { normalizeSectionId } from '@theme/section-renderer';
 import { OverflowList } from '@theme/overflow-list';
 import { yieldToMainThread, getViewParameterValue, ResizeNotifier } from '@theme/utilities';
 
@@ -28,6 +29,9 @@ export default class VariantPicker extends Component {
 
   /** @type {HTMLInputElement[][]} */
   #radios = [];
+
+  /** @type {string | undefined} */
+  #lastChangedOptionValueId;
 
   #resizeObserver = new ResizeNotifier(() => this.updateVariantPickerCss());
 
@@ -61,15 +65,24 @@ export default class VariantPicker extends Component {
   variantChanged(event) {
     if (!(event.target instanceof HTMLElement)) return;
 
+    if (event.target.closest('[data-giclee-passepartout-picker]')) return;
+
     const selectedOption =
       event.target instanceof HTMLSelectElement ? event.target.options[event.target.selectedIndex] : event.target;
 
     if (!selectedOption) return;
 
+    this.#lastChangedOptionValueId = selectedOption.dataset.optionValueId;
+
     this.updateSelectedOption(event.target);
     this.dispatchEvent(new VariantSelectedEvent({
       id: selectedOption.dataset.optionValueId ?? '',
     }));
+
+    // PDP reprodukcji — cena i dostępność obsługuje giclee-pdp-variant-sync.js
+    if (this.dataset.gicleeVariantSync === 'true') {
+      return;
+    }
 
     const isOnProductPage =
       this.dataset.templateProductMatch === 'true' &&
@@ -269,14 +282,25 @@ export default class VariantPicker extends Component {
     // preserve view parameter, if it exists, for alternative product view testing
     if (viewParamValue) params.push(`view=${viewParamValue}`);
 
-    if (this.selectedOptionsValues.length && !source) {
-      params.push(`option_values=${this.selectedOptionsValues.join(',')}`);
+    let optionValues = [];
+    try {
+      optionValues = this.selectedOptionsValues;
+    } catch (error) {
+      console.warn('Could not read selected option values', error);
+    }
+
+    if (optionValues.length && !source) {
+      params.push(`option_values=${optionValues.join(',')}`);
     } else if (source === 'product-card') {
-      if (this.selectedOptionsValues.length) {
+      if (optionValues.length) {
         params.push(`option_values=${sourceSelectedOptionsValues.join(',')}`);
       } else {
         params.push(`option_values=${selectedOption.dataset.optionValueId}`);
       }
+    }
+
+    if (this.dataset.templateProductMatch === 'true' && this.dataset.sectionId) {
+      params.push(`section_id=${normalizeSectionId(this.dataset.sectionId)}`);
     }
 
     // If variant-picker is a child of some specific sections, we need to append section_id=xxxx to the URL
@@ -318,8 +342,16 @@ export default class VariantPicker extends Component {
         // Defer is only useful for the initial rendering of the page. Remove it here.
         html.querySelector('overflow-list[defer]')?.removeAttribute('defer');
 
-        const textContent = html.querySelector(`variant-picker script[type="application/json"]`)?.textContent;
+        const pickerSelector = this.#getPickerSelector();
+        const textContent = html.querySelector(`${pickerSelector} script[type="application/json"]`)?.textContent;
         if (!textContent) return;
+
+        let variant;
+        try {
+          variant = JSON.parse(textContent);
+        } catch {
+          return;
+        }
 
         let newProduct;
 
@@ -343,15 +375,14 @@ export default class VariantPicker extends Component {
         }
 
         // Dispatch for all paths so product-form-component can reset #variantChangeInProgress
-        if (this.selectedOptionId) {
-          this.dispatchEvent(
-            new VariantUpdateEvent(JSON.parse(textContent), this.selectedOptionId, {
-              html,
-              productId: this.dataset.productId ?? '',
-              newProduct,
-            })
-          );
-        }
+        const sourceId = this.#lastChangedOptionValueId || String(variant?.id ?? '');
+        this.dispatchEvent(
+          new VariantUpdateEvent(variant, sourceId, {
+            html,
+            productId: this.dataset.productId ?? '',
+            newProduct,
+          })
+        );
       })
       .catch((error) => {
         if (error.name === 'AbortError') {
@@ -377,7 +408,7 @@ export default class VariantPicker extends Component {
     /** @type {NewProduct | undefined} */
     let newProduct;
 
-    const newVariantPickerSource = newHtml.querySelector(this.tagName.toLowerCase());
+    const newVariantPickerSource = newHtml.querySelector(this.#getPickerSelector());
 
     if (!newVariantPickerSource) {
       throw new Error('No new variant picker source found');
@@ -456,8 +487,25 @@ export default class VariantPicker extends Component {
    * Gets the selected option.
    * @returns {HTMLInputElement | HTMLOptionElement | undefined} The selected option.
    */
+  /**
+   * CSS selector for this picker instance (avoids wrong variant-picker on the page).
+   * @returns {string}
+   */
+  #getPickerSelector() {
+    let selector = this.tagName.toLowerCase();
+    if (this.dataset.productId) {
+      selector += `[data-product-id="${this.dataset.productId}"]`;
+    }
+    if (this.dataset.sectionId) {
+      selector += `[data-section-id="${this.dataset.sectionId}"]`;
+    }
+    return selector;
+  }
+
   get selectedOption() {
-    const selectedOption = this.querySelector('select option[selected], fieldset input:checked');
+    const selectedOption = this.querySelector(
+      'select option[selected], fieldset[data-fieldset-index] input:checked'
+    );
 
     if (!(selectedOption instanceof HTMLInputElement || selectedOption instanceof HTMLOptionElement)) {
       return undefined;
@@ -475,10 +523,6 @@ export default class VariantPicker extends Component {
     if (!selectedOption) return undefined;
     const { optionValueId } = selectedOption.dataset;
 
-    if (!optionValueId) {
-      throw new Error('No option value ID found');
-    }
-
     return optionValueId;
   }
 
@@ -488,15 +532,11 @@ export default class VariantPicker extends Component {
    */
   get selectedOptionsValues() {
     /** @type HTMLElement[] */
-    const selectedOptions = Array.from(this.querySelectorAll('select option[selected], fieldset input:checked'));
+    const selectedOptions = Array.from(
+      this.querySelectorAll('select option[selected], fieldset[data-fieldset-index] input:checked')
+    ).filter((option) => option.dataset.optionValueId);
 
-    return selectedOptions.map((option) => {
-      const { optionValueId } = option.dataset;
-
-      if (!optionValueId) throw new Error('No option value ID found');
-
-      return optionValueId;
-    });
+    return selectedOptions.map((option) => option.dataset.optionValueId).filter((id) => id !== undefined);
   }
 }
 

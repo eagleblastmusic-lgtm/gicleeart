@@ -1,1 +1,1 @@
-"""Finanse - kafelki do wyliczen i ksiegowosci."""
+"""Finanse — hub panelu finansowego."""

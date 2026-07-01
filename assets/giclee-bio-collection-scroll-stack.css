@@ -1,0 +1,146 @@
+/*
+ * BIO → kolekcja: warstwowy scroll-overlap (sticky + z-index, bez spacerów i scroll JS).
+ * Aktywne tylko gdy na stronie są obie sekcje (Biografia autora + Kolekcja autora).
+ *
+ * Warstwy: header 10 → main 15 → BIO 20 → kolekcja 30.
+ * BIO zakrywa menu; kolekcja zakrywa BIO i menu.
+ */
+
+body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section) {
+  --bio-scroll-header-z: 10;
+  --bio-scroll-main-z: 15;
+  --bio-scroll-bio-z: 20;
+  --bio-scroll-collection-z: 30;
+  --bio-scroll-gap: 100px;
+}
+
+/* Header — pod BIO i kolekcją */
+body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+  #header-group,
+body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+  .header-section,
+body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+  .header-section:has(> #header-component[sticky='always']),
+body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+  .header-section:has(> #header-component[sticky='scroll-up'][data-sticky-state='active']),
+body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+  #header-component {
+  z-index: var(--bio-scroll-header-z) !important;
+}
+
+body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+  #MainContent.content-for-layout {
+  position: relative;
+  z-index: var(--bio-scroll-main-z);
+  overflow: visible;
+}
+
+/* ── BIO: sticky, nad menu ── */
+
+body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+  .shopify-section.giclee-artist-biography-section.bio-section,
+body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+  .shopify-section.giclee-artist-biography-section {
+  position: sticky;
+  top: 0;
+  z-index: var(--bio-scroll-bio-z);
+  overflow: hidden;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+  .shopify-section.giclee-artist-biography-section
+  > .section-background {
+  z-index: 0;
+}
+
+body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+  .shopify-section.giclee-artist-biography-section
+  > .section {
+  position: relative;
+  z-index: 1;
+}
+
+body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+  .shopify-section.giclee-artist-biography-section
+  .custom-section-background,
+body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+  .shopify-section.giclee-artist-biography-section
+  .giclee-artist-bio-bg {
+  background-color: var(--color-background, #0a0a0a);
+}
+
+/* Czarny dystans między BIO a kolekcją */
+body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+  .shopify-section.giclee-artist-biography-section::after {
+  content: "";
+  display: block;
+  height: var(--bio-scroll-gap);
+  background: #000;
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+}
+
+/* ── Kolekcja: nad menu i BIO ── */
+
+body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+  .shopify-section.giclee-artist-collection-showcase-section.collection-section,
+body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+  .shopify-section.giclee-artist-collection-showcase-section {
+  position: relative;
+  z-index: var(--bio-scroll-collection-z) !important;
+  margin-top: 0;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+  .shopify-section.giclee-artist-collection-showcase-section
+  > .section-background {
+  z-index: 0;
+  background: var(--gacs-bg, #10100f);
+}
+
+body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+  .shopify-section.giclee-artist-collection-showcase-section
+  .giclee-artist-showcase {
+  position: relative;
+  z-index: 1;
+  background: var(
+    --gacs-bg-gradient,
+    radial-gradient(120% 82% at 50% 0%, #1f1c17 0%, #10100f 50%, #0a0908 100%)
+  );
+}
+
+/* Pełne tło u góry sekcji — bez przezroczystej szczeliny nad menu */
+body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+  .shopify-section.giclee-artist-collection-showcase-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: max(var(--header-group-height, 72px), 1px);
+  background: var(--gacs-bg, #10100f);
+  pointer-events: none;
+  z-index: 0;
+}
+
+@media screen and (max-width: 749px) {
+  body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+    .shopify-section.giclee-artist-biography-section {
+    overflow: visible;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+    .shopify-section.giclee-artist-biography-section,
+  body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+    .shopify-section.giclee-artist-collection-showcase-section {
+    transition: none;
+    transform: none;
+  }
+}

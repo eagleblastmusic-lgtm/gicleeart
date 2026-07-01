@@ -1,0 +1,149 @@
+{"id": "dcf5e3b4-7358-4f2a-aa5f-fed3f7f15139", "action": "draft_created", "invoice_id": "INV-000023", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T14:33:11"}
+{"id": "cdd0d8d2-a52a-43e3-af7c-f39362d1f45b", "action": "draft_created", "invoice_id": "INV-000024", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T14:35:14"}
+{"id": "2602f865-3eb8-4686-8b72-97e8cb76f86a", "action": "draft_created", "invoice_id": "INV-000025", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T14:36:11"}
+{"id": "7fb02021-10af-4056-a716-dc84110d9d25", "action": "issued", "invoice_id": "INV-000025", "actor": "user", "details": "FBV/1/2026", "at": "2026-06-14T14:36:51"}
+{"id": "32fe003d-ebd7-4d70-aa4e-1b7b6543e814", "action": "pdf_sent", "invoice_id": "INV-000025", "actor": "user", "details": "", "at": "2026-06-14T14:46:18"}
+{"id": "e3d0cf48-b007-4977-8d2c-0f58c1933c51", "action": "pdf_downloaded", "invoice_id": "INV-000025", "actor": "user", "details": "", "at": "2026-06-14T14:46:28"}
+{"id": "c7dd66f3-4ed5-492c-bc09-820f1ad91a60", "action": "deleted", "invoice_id": "INV-000023", "actor": "user", "details": "INV-000023", "at": "2026-06-14T17:30:29"}
+{"id": "5de8d9e7-26c1-476b-8dc1-b2ea8cf714fb", "action": "deleted", "invoice_id": "INV-000024", "actor": "user", "details": "INV-000024", "at": "2026-06-14T17:30:29"}
+{"id": "96ae4cb9-2fdc-405f-a7fc-10e0fcad50eb", "action": "draft_created", "invoice_id": "INV-000031", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T18:45:28"}
+{"id": "38e75783-a9f8-43fe-bbcc-0fae63b18afe", "action": "draft_created", "invoice_id": "INV-000032", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T18:45:36"}
+{"id": "b51f0d94-e2c1-4ced-9940-a4757ca94ce0", "action": "draft_created", "invoice_id": "INV-000033", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T18:57:22"}
+{"id": "758f4c37-bdb0-4468-9ebd-bebf645cb138", "action": "issued", "invoice_id": "INV-000031", "actor": "user", "details": "FBV/2/2026", "at": "2026-06-14T19:10:26"}
+{"id": "c8055805-2d10-4be6-acd5-273a1267cbe1", "action": "issued", "invoice_id": "INV-000032", "actor": "user", "details": "FBV/3/2026", "at": "2026-06-14T19:10:49"}
+{"id": "f308c3cd-2ba0-479b-a644-9af73cdeafcc", "action": "issued", "invoice_id": "INV-000033", "actor": "user", "details": "FBV/4/2026", "at": "2026-06-14T19:10:53"}
+{"id": "668e4fc3-f528-4fc9-897a-69caed62621d", "action": "pdf_downloaded", "invoice_id": "INV-000025", "actor": "user", "details": "", "at": "2026-06-14T19:11:04"}
+{"id": "0fe29be9-b6c0-4292-8b3c-67c4f722bb43", "action": "draft_created", "invoice_id": "INV-000034", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T19:44:43"}
+{"id": "9bbb2596-d5fd-4427-9564-a307b7361972", "action": "issued", "invoice_id": "INV-000034", "actor": "user", "details": "FBV/5/2026", "at": "2026-06-14T19:44:47"}
+{"id": "5a4dbdaf-b951-482e-be87-af8af63e33ee", "action": "draft_created", "invoice_id": "INV-000035", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T19:56:33"}
+{"id": "fd47e293-8378-4681-9b3b-01822dd64e08", "action": "issued", "invoice_id": "INV-000035", "actor": "user", "details": "FBV/6/2026", "at": "2026-06-14T19:57:13"}
+{"id": "d577caa8-3c2e-4fec-ae9c-1da925226f11", "action": "deleted", "invoice_id": "INV-000031", "actor": "user", "details": "FBV/2/2026", "at": "2026-06-14T20:26:51"}
+{"id": "edf6b052-066d-452f-afc4-704c7d361efc", "action": "deleted", "invoice_id": "INV-000032", "actor": "user", "details": "FBV/3/2026", "at": "2026-06-14T20:26:51"}
+{"id": "1c4889da-7199-42f6-b37d-191b813ace2d", "action": "deleted", "invoice_id": "INV-000033", "actor": "user", "details": "FBV/4/2026", "at": "2026-06-14T20:26:51"}
+{"id": "955bc479-e06d-481e-81a5-e7ec72c2aed7", "action": "deleted", "invoice_id": "INV-000034", "actor": "user", "details": "FBV/5/2026", "at": "2026-06-14T20:26:51"}
+{"id": "e87d041f-2290-4742-9002-d1ddfbc07742", "action": "deleted", "invoice_id": "INV-000035", "actor": "user", "details": "FBV/6/2026", "at": "2026-06-14T20:26:51"}
+{"id": "1c00ad11-f43b-49fa-9078-1127ac1f0852", "action": "draft_created", "invoice_id": "INV-000036", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T20:27:08"}
+{"id": "7aa116c7-c427-4053-9c71-880c2e69a586", "action": "issued", "invoice_id": "INV-000036", "actor": "user", "details": "FBV/7/2026", "at": "2026-06-14T20:27:11"}
+{"id": "8dcd8e33-bcb8-4da8-9e86-77f2395aac86", "action": "draft_created", "invoice_id": "INV-000037", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T20:34:14"}
+{"id": "b1b3f4d8-78fc-4a3c-93be-b5447e912d33", "action": "issued", "invoice_id": "INV-000037", "actor": "user", "details": "FBV/8/2026", "at": "2026-06-14T20:34:19"}
+{"id": "0d7303de-0e50-4027-a8bf-c39118809970", "action": "deleted", "invoice_id": "INV-000037", "actor": "user", "details": "FBV/8/2026", "at": "2026-06-14T20:34:38"}
+{"id": "15120583-3a9d-488a-8538-74687cba84be", "action": "draft_created", "invoice_id": "INV-000038", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T20:34:40"}
+{"id": "37a3ca76-2e06-4d1a-8733-9378038bcc9a", "action": "issued", "invoice_id": "INV-000038", "actor": "user", "details": "FBV/9/2026", "at": "2026-06-14T20:34:48"}
+{"id": "16b41dd0-222c-4538-a307-6e18be5dc5f8", "action": "deleted", "invoice_id": "INV-000038", "actor": "user", "details": "FBV/9/2026", "at": "2026-06-14T20:35:27"}
+{"id": "3bc998cf-2537-48f9-b8d1-158f119abeda", "action": "draft_created", "invoice_id": "INV-000044", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T20:38:48"}
+{"id": "968d502f-36a7-474d-88b8-f2ac723d5c24", "action": "issued", "invoice_id": "INV-000044", "actor": "user", "details": "FBV/8/2026", "at": "2026-06-14T20:38:52"}
+{"id": "4d2b3a67-2323-4020-a2fe-8e230250f847", "action": "draft_created", "invoice_id": "INV-000045", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T20:38:56"}
+{"id": "26f07e9d-c50a-4bdb-aa2c-c101ac12a36f", "action": "issued", "invoice_id": "INV-000045", "actor": "user", "details": "FBV/9/2026", "at": "2026-06-14T20:39:01"}
+{"id": "f1e12553-b68c-44e8-91f9-b2384cd0b97e", "action": "deleted", "invoice_id": "INV-000045", "actor": "user", "details": "FBV/9/2026", "at": "2026-06-14T20:39:06"}
+{"id": "cef70b6c-e22e-4100-a692-2554e70c3d93", "action": "deleted", "invoice_id": "INV-000044", "actor": "user", "details": "FBV/8/2026", "at": "2026-06-14T20:39:08"}
+{"id": "82720d56-0c60-4117-9d48-c4705374e470", "action": "draft_created", "invoice_id": "INV-000046", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T20:39:09"}
+{"id": "c318ee7e-d821-4adf-84dc-099b1c35d2b9", "action": "draft_created", "invoice_id": "INV-000047", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T20:39:14"}
+{"id": "cbdcca19-9d92-4e03-a648-e3d1d1f9aa49", "action": "issued", "invoice_id": "INV-000047", "actor": "user", "details": "FBV/8/2026", "at": "2026-06-14T20:39:16"}
+{"id": "bdfab963-c2b0-4c77-b834-ca5643f175d4", "action": "deleted", "invoice_id": "INV-000036", "actor": "user", "details": "FBV/7/2026", "at": "2026-06-14T20:39:32"}
+{"id": "9fc85ddf-d8cf-487e-9752-49ad0f9d8953", "action": "deleted", "invoice_id": "INV-000046", "actor": "user", "details": "INV-000046", "at": "2026-06-14T20:39:34"}
+{"id": "19ec7cb2-7ed6-4e1b-88de-91b4cdc4a18a", "action": "deleted", "invoice_id": "INV-000047", "actor": "user", "details": "FBV/8/2026", "at": "2026-06-14T20:39:43"}
+{"id": "6e03cf49-833b-44d2-9f87-4439fc5d27bd", "action": "deleted", "invoice_id": "INV-000025", "actor": "user", "details": "FBV/1/2026", "at": "2026-06-14T20:40:43"}
+{"id": "68f5334d-8452-4a8a-96a1-fcbf4ab48795", "action": "draft_created", "invoice_id": "INV-000048", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T20:41:11"}
+{"id": "fc746c36-d6c5-4fa3-8e1b-b71f09dede9d", "action": "issued", "invoice_id": "INV-000048", "actor": "user", "details": "FBV/1/2026", "at": "2026-06-14T20:41:14"}
+{"id": "d2723613-960a-44d2-8e12-903ce02c2da9", "action": "deleted", "invoice_id": "INV-000048", "actor": "user", "details": "FBV/1/2026", "at": "2026-06-14T20:41:21"}
+{"id": "ba145512-eebc-41cb-bf17-5a2350e0877a", "action": "draft_created", "invoice_id": "INV-000049", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T20:41:22"}
+{"id": "e0b40252-ab84-45de-8e7b-c16fae71ed02", "action": "issued", "invoice_id": "INV-000049", "actor": "user", "details": "FBV/1/2026", "at": "2026-06-14T20:41:24"}
+{"id": "9c2d0b9b-9609-4444-83d3-ec0449d3e45d", "action": "draft_created", "invoice_id": "INV-000061", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T20:54:36"}
+{"id": "526c8883-46b3-4aed-a503-b91da12161f1", "action": "draft_created", "invoice_id": "INV-000062", "actor": "user", "details": "test", "at": "2026-06-14T20:54:45"}
+{"id": "40d742b3-5d9c-4e4f-8b0e-821546de60fa", "action": "issued", "invoice_id": "INV-000062", "actor": "user", "details": "TEST/1/2026", "at": "2026-06-14T20:55:01"}
+{"id": "05fdabb1-d78d-4db8-ad86-1bfdf2a03f44", "action": "draft_created", "invoice_id": "INV-000063", "actor": "user", "details": "test", "at": "2026-06-14T20:55:04"}
+{"id": "0dd2a877-586a-4f40-b39a-72cd11128f76", "action": "issued", "invoice_id": "INV-000063", "actor": "user", "details": "TEST/2/2026", "at": "2026-06-14T20:55:18"}
+{"id": "35bc0371-4c6b-4fb0-93af-457461342a61", "action": "pdf_downloaded", "invoice_id": "INV-000062", "actor": "user", "details": "", "at": "2026-06-14T21:48:55"}
+{"id": "84ea7c06-fa15-45ba-be13-286e2501ddde", "action": "deleted", "invoice_id": "INV-000061", "actor": "user", "details": "INV-000061", "at": "2026-06-14T21:54:38"}
+{"id": "2c42f73e-dfb3-4bc8-a86d-95962ad11cf3", "action": "deleted", "invoice_id": "INV-000062", "actor": "user", "details": "TEST/1/2026", "at": "2026-06-14T21:54:40"}
+{"id": "95fe3bbe-1375-4fc5-ba4f-486883b20f96", "action": "deleted", "invoice_id": "INV-000063", "actor": "user", "details": "TEST/2/2026", "at": "2026-06-14T21:54:42"}
+{"id": "0dc298f0-0b2f-4581-8b74-3fa05ac76f3f", "action": "draft_created", "invoice_id": "INV-000071", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T21:54:43"}
+{"id": "4da8bed1-15e9-41cd-8d1e-859fb07b6c25", "action": "issued", "invoice_id": "INV-000071", "actor": "user", "details": "FBV/2/2026", "at": "2026-06-14T21:54:47"}
+{"id": "c2910d9d-6616-489a-be84-41958b4dc9e6", "action": "draft_created", "invoice_id": "INV-000072", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T21:54:48"}
+{"id": "f4873e30-4904-4e69-a01b-dc394b0490d9", "action": "issued", "invoice_id": "INV-000072", "actor": "user", "details": "FBV/3/2026", "at": "2026-06-14T21:54:51"}
+{"id": "5fd2d87e-b6b7-49c0-b534-05b346b0ddc3", "action": "deleted", "invoice_id": "INV-000072", "actor": "user", "details": "FBV/3/2026", "at": "2026-06-14T21:56:04"}
+{"id": "6e3a9415-918d-4267-a93a-f1b10968156a", "action": "deleted", "invoice_id": "INV-000071", "actor": "user", "details": "FBV/2/2026", "at": "2026-06-14T21:58:01"}
+{"id": "d848b365-0d1e-4a44-8486-c6f743fddcd7", "action": "deleted", "invoice_id": "INV-000049", "actor": "user", "details": "FBV/1/2026", "at": "2026-06-14T21:58:05"}
+{"id": "bc89266c-5eb0-4367-8d53-9289be0847ce", "action": "draft_created", "invoice_id": "INV-000080", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T21:58:11"}
+{"id": "dfe19e9a-117f-4aec-9122-d393ab0e7b82", "action": "issued", "invoice_id": "INV-000080", "actor": "user", "details": "FBV/1/2026", "at": "2026-06-14T21:58:13"}
+{"id": "6d1deea0-9508-4090-9b89-e3de0fb15f03", "action": "draft_created", "invoice_id": "INV-000081", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T21:58:29"}
+{"id": "c72f6b1f-d883-484c-891b-242e29cd97ea", "action": "issued", "invoice_id": "INV-000081", "actor": "user", "details": "INV/1/2026", "at": "2026-06-14T21:58:43"}
+{"id": "f843ec8e-35fa-4d61-be79-28e660189165", "action": "pdf_downloaded", "invoice_id": "INV-000081", "actor": "user", "details": "", "at": "2026-06-14T21:59:19"}
+{"id": "7387fcfb-5172-4580-8ac1-a225a9806e74", "action": "deleted", "invoice_id": "INV-000081", "actor": "user", "details": "INV/1/2026", "at": "2026-06-14T21:59:44"}
+{"id": "199b48ae-4654-4af8-afa4-8c5a73ed7799", "action": "deleted", "invoice_id": "INV-000080", "actor": "user", "details": "FBV/1/2026", "at": "2026-06-14T21:59:47"}
+{"id": "31f5e37e-ec9c-4908-97e9-4642fb5aaefc", "action": "draft_created", "invoice_id": "INV-000082", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T22:22:13"}
+{"id": "46594f86-0c08-4d7e-8827-fbbb54bef817", "action": "issued", "invoice_id": "INV-000082", "actor": "user", "details": "FBV/1/2026", "at": "2026-06-14T22:22:20"}
+{"id": "b91c37ec-c3ff-4bf6-bfc4-122edebc0ebd", "action": "pdf_downloaded", "invoice_id": "INV-000082", "actor": "user", "details": "", "at": "2026-06-14T22:22:23"}
+{"id": "4dde9984-4d96-47d1-9de0-152aae4f3544", "action": "pdf_downloaded", "invoice_id": "INV-000082", "actor": "user", "details": "", "at": "2026-06-14T22:22:52"}
+{"id": "802d3730-fc05-4f5d-bc9c-9401752a5150", "action": "deleted", "invoice_id": "INV-000082", "actor": "user", "details": "FBV/1/2026", "at": "2026-06-14T22:22:59"}
+{"id": "9aabac24-77eb-4848-b1f3-d5f895bacefe", "action": "draft_created", "invoice_id": "INV-000083", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T22:23:00"}
+{"id": "87786f26-ba5d-4dda-bbcd-7f522573de35", "action": "draft_created", "invoice_id": "INV-000084", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T22:23:05"}
+{"id": "c52dfc2c-a3c6-4477-9801-521c2980ecea", "action": "issued", "invoice_id": "INV-000084", "actor": "user", "details": "FBV/1/2026", "at": "2026-06-14T22:23:08"}
+{"id": "bc483952-2273-4461-a66c-e5343927d852", "action": "pdf_downloaded", "invoice_id": "INV-000084", "actor": "user", "details": "", "at": "2026-06-14T22:23:12"}
+{"id": "6a437b75-4492-41fc-b7e1-e28211b8bdac", "action": "draft_created", "invoice_id": "INV-000085", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T22:23:48"}
+{"id": "0411816e-a193-4bad-a18a-95ce0c9f2d13", "action": "issued", "invoice_id": "INV-000085", "actor": "user", "details": "FBV/1/2026", "at": "2026-06-14T22:23:51"}
+{"id": "1de1bc45-892c-4ebb-8602-b84e99f67e81", "action": "pdf_downloaded", "invoice_id": "INV-000085", "actor": "user", "details": "", "at": "2026-06-14T22:24:03"}
+{"id": "4b2626e4-15a3-4e93-8eaf-93836fe03fc0", "action": "pdf_downloaded", "invoice_id": "INV-000085", "actor": "user", "details": "", "at": "2026-06-14T22:27:00"}
+{"id": "280cd54d-4959-45bf-a008-30b8f9000101", "action": "draft_created", "invoice_id": "INV-000086", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T22:27:05"}
+{"id": "fde3cd92-d767-44ad-8499-8152c1da876d", "action": "pdf_downloaded", "invoice_id": "INV-000084", "actor": "user", "details": "", "at": "2026-06-14T22:38:57"}
+{"id": "73826831-f34d-4384-83d9-661ca80130d9", "action": "draft_created", "invoice_id": "INV-000113", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T22:42:25"}
+{"id": "b82c6fe1-9806-4d56-88a5-81608a2b58a4", "action": "issued", "invoice_id": "INV-000114", "actor": "user", "details": "FBV/2/2026", "at": "2026-06-14T22:44:31"}
+{"id": "bd9f0061-36c4-4b76-8e54-8fbff5b0c9cf", "action": "deleted", "invoice_id": "INV-000114", "actor": "user", "details": "FBV/2/2026", "at": "2026-06-14T22:44:48"}
+{"id": "e01a9c92-0a20-4ced-878f-bb6ff732c0fb", "action": "draft_created", "invoice_id": "INV-000123", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T22:45:42"}
+{"id": "e67932b8-db80-41e4-a676-ece3ed5b4824", "action": "deleted", "invoice_id": "INV-000083", "actor": "user", "details": "INV-000083", "at": "2026-06-14T22:51:20"}
+{"id": "12277ece-7200-4aad-9133-18076ec4703d", "action": "deleted", "invoice_id": "INV-000084", "actor": "user", "details": "FBV/1/2026", "at": "2026-06-14T22:51:20"}
+{"id": "a97d6ecd-f6c2-4a64-b85d-1f6d47dc16ec", "action": "deleted", "invoice_id": "INV-000085", "actor": "user", "details": "FBV/1/2026", "at": "2026-06-14T22:51:20"}
+{"id": "0e02aac3-9d98-43c1-9d72-7d56b64d997b", "action": "deleted", "invoice_id": "INV-000086", "actor": "user", "details": "INV-000086", "at": "2026-06-14T22:51:20"}
+{"id": "a96b964a-dbcd-47a5-a892-4c9c49dd0ee9", "action": "deleted", "invoice_id": "INV-000113", "actor": "user", "details": "INV-000113", "at": "2026-06-14T22:51:20"}
+{"id": "0047fa25-1f96-471b-bd2d-bac447b1a749", "action": "deleted", "invoice_id": "INV-000123", "actor": "user", "details": "INV-000123", "at": "2026-06-14T22:51:20"}
+{"id": "0c8d7dfe-9ac4-498f-b359-f7e30123cd30", "action": "draft_created", "invoice_id": "INV-000132", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T22:59:20"}
+{"id": "05d10e97-5ea9-48d6-9ff0-6a0a18997332", "action": "issued", "invoice_id": "INV-000132", "actor": "user", "details": "FBV/1/2026", "at": "2026-06-14T22:59:24"}
+{"id": "6de9387b-c203-4574-8b29-ebdc6ed7bcf9", "action": "draft_created", "invoice_id": "INV-000133", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T22:59:28"}
+{"id": "db139979-f809-4d2c-8710-6629f3772a09", "action": "issued", "invoice_id": "INV-000133", "actor": "user", "details": "FBV/2/2026", "at": "2026-06-14T22:59:31"}
+{"id": "97ce683c-089a-497b-a85f-8e00e01fb5b7", "action": "draft_created", "invoice_id": "INV-000134", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T23:00:25"}
+{"id": "17b39005-9842-47fe-b21a-f30c76659ab4", "action": "issued", "invoice_id": "INV-000134", "actor": "user", "details": "FBV/3/2026", "at": "2026-06-14T23:00:30"}
+{"id": "bb76e6b1-0342-45b4-80aa-032729ba4b59", "action": "draft_created", "invoice_id": "INV-000135", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T23:00:32"}
+{"id": "4b996538-12d8-4c3d-a702-5aa582da3c0e", "action": "deleted", "invoice_id": "INV-000135", "actor": "user", "details": "INV-000135", "at": "2026-06-14T23:01:10"}
+{"id": "b2e4cf76-4bca-417d-98c0-c39165b9644b", "action": "draft_created", "invoice_id": "INV-000136", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T23:01:11"}
+{"id": "9d36d298-c683-4dc9-bf83-99534b07286f", "action": "issued", "invoice_id": "INV-000136", "actor": "user", "details": "DN/2026/001", "at": "2026-06-14T23:01:17"}
+{"id": "8151434b-fee7-4587-ade6-166f8947571b", "action": "draft_created", "invoice_id": "INV-000137", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T23:01:21"}
+{"id": "061d1a42-2044-4225-941f-ab08710fc384", "action": "issued", "invoice_id": "INV-000137", "actor": "user", "details": "DN/2026/002", "at": "2026-06-14T23:01:26"}
+{"id": "d4e71c4a-4e50-447b-9d17-6058f7ca6ca6", "action": "draft_created", "invoice_id": "INV-000138", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T23:02:52"}
+{"id": "01e384e6-2c9b-48ac-9fed-41b366513fca", "action": "issued", "invoice_id": "INV-000138", "actor": "user", "details": "FBV/4/2026", "at": "2026-06-14T23:02:57"}
+{"id": "abff4ae5-fb80-45b4-9838-cbfeec951246", "action": "draft_created", "invoice_id": "INV-000156", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T23:21:28"}
+{"id": "58429600-ccf6-42f2-bd0d-9ef57d5b5492", "action": "issued", "invoice_id": "INV-000156", "actor": "user", "details": "INV/1/2026", "at": "2026-06-14T23:21:50"}
+{"id": "2fc09dc4-129f-4127-970d-777fb6445560", "action": "pdf_downloaded", "invoice_id": "INV-000156", "actor": "user", "details": "", "at": "2026-06-14T23:21:57"}
+{"id": "62d3487a-86ea-4bc5-968f-16e60594c4ed", "action": "deleted", "invoice_id": "INV-000132", "actor": "user", "details": "FBV/1/2026", "at": "2026-06-14T23:22:07"}
+{"id": "3da03cc0-1838-4c7d-9cc2-322b5ac96406", "action": "deleted", "invoice_id": "INV-000133", "actor": "user", "details": "FBV/2/2026", "at": "2026-06-14T23:22:07"}
+{"id": "98b35e58-9fc8-41c7-bdf5-bd29106b49f0", "action": "deleted", "invoice_id": "INV-000134", "actor": "user", "details": "FBV/3/2026", "at": "2026-06-14T23:22:07"}
+{"id": "f4d51a7c-1c2c-4819-a4dd-cc623e725bdd", "action": "deleted", "invoice_id": "INV-000136", "actor": "user", "details": "DN/2026/001", "at": "2026-06-14T23:22:07"}
+{"id": "682230d9-bbb4-40e3-8e1f-9238259d1967", "action": "deleted", "invoice_id": "INV-000137", "actor": "user", "details": "DN/2026/002", "at": "2026-06-14T23:22:07"}
+{"id": "d8c7d2e1-c4ef-49c3-8dd9-406c09ea2469", "action": "deleted", "invoice_id": "INV-000138", "actor": "user", "details": "FBV/4/2026", "at": "2026-06-14T23:22:07"}
+{"id": "2a349a8b-2cc2-44bc-a18e-2691e867f02f", "action": "deleted", "invoice_id": "INV-000156", "actor": "user", "details": "INV/1/2026", "at": "2026-06-14T23:22:07"}
+{"id": "1a20e8f6-8274-43f5-ae42-1b64fa501647", "action": "draft_created", "invoice_id": "INV-000166", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T23:24:33"}
+{"id": "7ff0fdc9-6aec-4c21-a76d-aefd67e6c0be", "action": "issued", "invoice_id": "INV-000166", "actor": "user", "details": "INV/1/2026", "at": "2026-06-14T23:25:17"}
+{"id": "095dd2cd-c65c-4c26-8e1e-4846a6e1aca5", "action": "draft_created", "invoice_id": "INV-000167", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T23:25:23"}
+{"id": "c683d102-7b34-4380-96d6-f4df7a51b039", "action": "issued", "invoice_id": "INV-000167", "actor": "user", "details": "INV/2/2026", "at": "2026-06-14T23:25:47"}
+{"id": "5f81b931-14ae-4fda-a83c-f7ca21f26ad4", "action": "draft_created", "invoice_id": "INV-000168", "actor": "user", "details": "poza Shopify", "at": "2026-06-14T23:26:10"}
+{"id": "cedfdf08-61de-4e97-a6e4-a22b9dc10659", "action": "issued", "invoice_id": "INV-000168", "actor": "user", "details": "FBV/1/2026", "at": "2026-06-14T23:26:14"}
+{"id": "823bac49-14a6-4ce8-ad9f-ff9c23ddf978", "action": "deleted", "invoice_id": "INV-000166", "actor": "user", "details": "INV/1/2026", "at": "2026-06-15T00:08:08"}
+{"id": "82de773a-3428-4e30-a60e-391211a84f7f", "action": "deleted", "invoice_id": "INV-000167", "actor": "user", "details": "INV/2/2026", "at": "2026-06-15T00:08:08"}
+{"id": "c87b7341-b96a-4fb4-81a7-4e25ba1f85fb", "action": "deleted", "invoice_id": "INV-000168", "actor": "user", "details": "FBV/1/2026", "at": "2026-06-15T00:08:08"}
+{"id": "d3de9469-3359-471f-9db4-2eca8f270a1d", "action": "draft_created", "invoice_id": "INV-000205", "actor": "user", "details": "poza Shopify", "at": "2026-06-15T00:22:40"}
+{"id": "cd7722ad-d8f1-4334-8b78-af4f39cfcf3e", "action": "draft_created", "invoice_id": "INV-000206", "actor": "user", "details": "poza Shopify", "at": "2026-06-15T00:22:43"}
+{"id": "7d0aaf6c-ea5d-4ad1-b11a-955ebe683611", "action": "draft_created", "invoice_id": "INV-000207", "actor": "user", "details": "poza Shopify", "at": "2026-06-15T00:22:43"}
+{"id": "85ec7353-e0c6-4a03-800f-165541ea4d23", "action": "draft_created", "invoice_id": "INV-000208", "actor": "user", "details": "poza Shopify", "at": "2026-06-15T00:22:43"}
+{"id": "5b28b357-c0b5-4235-a839-932f1b89f913", "action": "draft_created", "invoice_id": "INV-000209", "actor": "user", "details": "poza Shopify", "at": "2026-06-15T00:22:43"}
+{"id": "8b387ca7-8bda-4005-8122-21f695c9a17e", "action": "draft_created", "invoice_id": "INV-000210", "actor": "user", "details": "poza Shopify", "at": "2026-06-15T00:23:12"}
+{"id": "d2e3dfd9-13fe-4a79-85e4-50f2794cf567", "action": "draft_created", "invoice_id": "INV-000211", "actor": "user", "details": "poza Shopify", "at": "2026-06-15T00:23:19"}
+{"id": "d2d90c01-739f-4a57-9196-5d34912ad484", "action": "draft_created", "invoice_id": "INV-000212", "actor": "user", "details": "poza Shopify", "at": "2026-06-15T00:23:27"}
+{"id": "214d2876-c18d-4074-89e7-e2786944829b", "action": "deleted", "invoice_id": "INV-000205", "actor": "user", "details": "INV-000205", "at": "2026-06-15T01:19:12"}
+{"id": "eafb34a1-001d-41b4-bc35-2c74ba85bd74", "action": "deleted", "invoice_id": "INV-000206", "actor": "user", "details": "INV-000206", "at": "2026-06-15T01:19:13"}
+{"id": "b6b09b0d-fa83-4351-a864-88db91ea0fd6", "action": "deleted", "invoice_id": "INV-000207", "actor": "user", "details": "INV-000207", "at": "2026-06-15T01:19:13"}
+{"id": "d6cb1877-f9f0-4ec5-980a-fe0209ec5491", "action": "deleted", "invoice_id": "INV-000208", "actor": "user", "details": "INV-000208", "at": "2026-06-15T01:19:13"}
+{"id": "9d54410e-668f-4b9a-8062-16f2f41bb387", "action": "deleted", "invoice_id": "INV-000209", "actor": "user", "details": "INV-000209", "at": "2026-06-15T01:19:15"}
+{"id": "edc14232-e36b-4dc2-a86d-aab1fa196f2c", "action": "deleted", "invoice_id": "INV-000210", "actor": "user", "details": "INV-000210", "at": "2026-06-15T01:19:15"}
+{"id": "5fb54d59-cd39-4958-a919-c619687123b1", "action": "deleted", "invoice_id": "INV-000211", "actor": "user", "details": "INV-000211", "at": "2026-06-15T01:19:15"}
+{"id": "039e14ed-356f-4d7f-b5b4-1dd689c398b7", "action": "deleted", "invoice_id": "INV-000212", "actor": "user", "details": "INV-000212", "at": "2026-06-15T01:19:15"}
+{"id": "b1c7a704-2bf9-4bd8-a847-20e6f57f8a13", "action": "draft_created", "invoice_id": "INV-000213", "actor": "user", "details": "poza Shopify", "at": "2026-06-15T01:21:32"}
+{"id": "1ff102ff-4c68-4df2-a357-6403b3acc39d", "action": "deleted", "invoice_id": "INV-000213", "actor": "user", "details": "INV-000213", "at": "2026-06-15T13:39:42"}

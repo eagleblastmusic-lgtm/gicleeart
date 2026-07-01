@@ -1,7 +1,7 @@
 """Tlumaczenia nazw opcji wariantow i ich wartosci na 6 jezykow obcych.
 
 Opcje wariantow (Kolor / Rozmiar / Rodzaj drewna) i ich wartosci (Czarny / Brąz /
-Sosna / Dąb / S / L / XL / 50x70 / ...) sa STALE w sklepie - powtarzaja sie na
+Sosna / Dąb / M / L / XL / 50x70 / ...) sa STALE w sklepie - powtarzaja sie na
 KAZDYM produkcie generowanym przez `dodajobraz`. Dlatego trzymamy tlumaczenia
 deterministycznie po stronie aplikacji (zero zuzycia tokenow LLM, zero ryzyka
 rozjazdu nazw miedzy produktami, idealna spojnosc multi-market).
@@ -56,7 +56,7 @@ OPTION_NAME_TRANSLATIONS: dict[str, dict[str, str]] = {
 # Wartosci opcji - tlumaczenia per jezyk.
 #
 # Konwencja:
-#   - rozmiary literowe (S/L/XL) i wymiarowe (50x70, 70x100) - bez tlumaczenia,
+#   - rozmiary literowe (M/L/XL) i wymiarowe (50x70, 70x100) - bez tlumaczenia,
 #     identycznie we wszystkich jezykach (uzywamy 'as_is' helpera w runtime).
 #   - kolory ramy / rodzaje drewna - tlumaczone naturalnie.
 # ---------------------------------------------------------------------------
@@ -194,7 +194,7 @@ def _is_dimensional_size(value: str) -> bool:
 
 
 def _is_pass_through(value: str) -> bool:
-    """Wartosci ktore w kazdym jezyku brzmia tak samo (rozmiar S/L/XL, '50x70')."""
+    """Wartosci ktore w kazdym jezyku brzmia tak samo (rozmiar M/L/XL, '50x70')."""
     s = (value or "").strip()
     if not s:
         return False
@@ -218,7 +218,7 @@ def translate_option_name(name_pl: str, lang: str) -> str | None:
 def translate_option_value(value_pl: str, lang: str) -> str | None:
     """Zwraca tlumaczenie wartosci opcji (np. 'Czarny' -> 'Noir') albo None.
 
-    Dla 'pass-through' (S/L/XL, '50x70') zwraca te sama wartosc - dzieki temu
+    Dla 'pass-through' (M/L/XL, '50x70') zwraca te sama wartosc - dzieki temu
     Shopify dostaje wpis tlumaczenia (a nie pusty backstop)."""
     if not value_pl or lang not in SUPPORTED_LANGS:
         return None

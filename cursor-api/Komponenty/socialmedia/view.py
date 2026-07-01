@@ -6,7 +6,7 @@ Hierarchia ekranow (nawigacja w ramach jednego frame'u w launcherze):
     +-- Generator tresci  (Toplevel dialog)
     +-- Planer postow     (sub-view z kolejka)
     +-- Cykl              (sub-view)
-    +-- Dodaj post        (sub-view: 4 kanaly -> Toplevel kreator)
+    +-- Dodaj post        (sub-view: checkboxy kanalow + jeden podpis)
 
 `on_back` z launchera wraca do glownego menu launchera.
 """
@@ -19,7 +19,7 @@ from tkinter import ttk
 
 from .cykl.view import build_cykl_view
 from .generator_tresci import open_content_generator
-from .manual_post import open_manual_post_wizard, open_social_ids_dialog
+from .manual_post import attach_media_list_section, build_multi_channel_hub_ui, open_social_ids_dialog
 from .planer_postow import build_planer_screen
 
 _BG = "#f4f4f7"
@@ -109,12 +109,12 @@ class SocialMediaView:
         return outer
 
     def _build_dodaj_post_hub(self) -> tk.Widget:
-        """Ekran z 4 kafelkami kanalow recznej publikacji."""
+        """Ekran: lista plikow + checkboxy kanalow + jeden podpis + publikacja wielokrotna."""
         outer = tk.Frame(self.frame, bg=_BG)
         _toolbar(
             outer,
             title="Dodaj post",
-            subtitle="Wybierz kanal (wymaga tokenow Meta z Cyklu)",
+            subtitle="Zaznacz konta (ptaszki), jeden podpis — tokeny: Cykl → Ustawienia Meta API",
             on_back=self.show_main,
         )
 
@@ -127,46 +127,29 @@ class SocialMediaView:
         ).pack(side="left")
 
         body = tk.Frame(outer, bg=_BG)
-        body.pack(fill="both", expand=True, padx=14, pady=10)
-
-        hub_specs = [
-            ("fb_pl", "Facebook PL", "📘", "#1877f2"),
-            ("ig_pl", "Instagram PL", "📸", "#e1306c"),
-            ("fb_en", "Facebook EU", "📘", "#1565c0"),
-            ("ig_en", "Instagram EU", "📸", "#c2185b"),
-        ]
+        body.pack(fill="both", expand=True, padx=14, pady=(10, 14))
 
         intro = tk.Label(
             body,
-            text="Kazdy kanal otwiera ten sam kreator: dodaj zdjecia, wpisz podpis, Publikuj.\n"
-            "Grafiki trafiaja na CDN Shopify, potem do Meta (jak w Cyklu).",
+            text="Wgraj grafiki (możesz wiele), wpisz podpis, zaznacz ptaszki przy kontach Facebook / Instagram "
+                 "(PL i EN) — jedno kliknięcie wyśle ten sam post wszędzie. Shopify Files → Meta.",
             bg=_BG, fg="#555", font=("Segoe UI", 10), justify="left",
         )
-        intro.pack(anchor="w", pady=(0, 12))
+        intro.pack(anchor="w", pady=(0, 6))
 
-        grid = tk.Frame(body, bg=_BG)
-        grid.pack(fill="both", expand=True)
+        root_win = self.frame.winfo_toplevel()
+        hub_paths: list[str] = []
+        attach_media_list_section(
+            body,
+            root_win,
+            hub_paths,
+            lb_lines=6,
+            hint_wrap=900,
+            title="Grafiki (media)",
+            shared_for_all_tabs=True,
+        )
 
-        for i in range(2):
-            grid.columnconfigure(i, weight=1)
-        for i in range(2):
-            grid.rowconfigure(i, weight=1)
-
-        for idx, (code, label, icon, color) in enumerate(hub_specs):
-            r, c = divmod(idx, 2)
-
-            def _open(code=code) -> None:
-                open_manual_post_wizard(self.frame.winfo_toplevel(), code)
-
-            spec = _Tile(
-                label=label,
-                icon=icon,
-                color=color,
-                description="Grafika + podpis. Wiele zdjec = karuzela (IG) lub album (FB).",
-                command=_open,
-            )
-            tile = _build_tile(grid, spec)
-            tile.grid(row=r, column=c, padx=_TILE_PAD, pady=_TILE_PAD, sticky="")
+        build_multi_channel_hub_ui(body, root_win, hub_paths)
 
         return outer
 

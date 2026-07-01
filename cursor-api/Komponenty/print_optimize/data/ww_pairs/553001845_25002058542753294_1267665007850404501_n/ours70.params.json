@@ -1,0 +1,11 @@
+{
+  "scene": "nature_backlit",
+  "exposure": 0.05,
+  "contrast": 1.02,
+  "saturation": 1.03,
+  "shadow_lift": 0.12,
+  "highlight_recovery": 0.08,
+  "temperature_shift": 0.01,
+  "tint_shift": 0.0,
+  "confidence": 0.92
+}

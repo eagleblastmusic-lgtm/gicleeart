@@ -1,0 +1,7 @@
+{
+  "name": "Aktualizuj opis",
+  "description": "Podmiana akapitow opisu produktu z tablicy JSON LLM — lista produktow, podglad, tlumaczenia 7 jezykow.",
+  "icon": "📝",
+  "color": "#00897b",
+  "order": 12
+}

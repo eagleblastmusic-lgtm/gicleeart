@@ -17,7 +17,7 @@
         width: block_settings.width,
         class_name: 'details__icon'
       %}
-      {{ block_settings.heading }}
+      {%- render 'giclee-i18n-text', scope: 'blocks', id: block.id, field: 'heading', fallback: block_settings.heading -%}
       <span class="svg-wrapper icon-caret icon-animated">
         {{- 'icon-caret.svg' | inline_asset_content -}}
       </span>

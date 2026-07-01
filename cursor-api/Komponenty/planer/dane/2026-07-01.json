@@ -1,0 +1,20 @@
+{
+  "date": "2026-07-01",
+  "tasks": [
+    {
+      "id": "4d18b9b8e2",
+      "text": "Dodać w cytatach opcję do zaznaczenia \" - Giclee Art o i tutaj nazwa artysty\" i pole \"- Artysta\"",
+      "done": false,
+      "priority": "normal",
+      "color": ""
+    },
+    {
+      "id": "fc9d78ff8b",
+      "text": "zrobić eksport cytatów do json. Zrób import cytatów dla każdego języka z pliku json",
+      "done": false,
+      "priority": "normal",
+      "color": ""
+    }
+  ],
+  "saved_at": "2026-06-30T17:54:36"
+}
