@@ -53,7 +53,8 @@ Tryb: `subprocess`. Sekcja launchera: **Narzędzia pomocnicze**.
 2. **Wklej linki…** — wiele adresów naraz (`Nazwa | https://…`).
 3. Dwuklik / **Otwórz** — strona w przeglądarce.
 
-Dane: `Komponenty/stronyzobrazami/data/sites.json`.
+Dane: `Komponenty/stronyzobrazami/data/sites.json`.  
+Cache: `data/cache/` (CSV NGA/Walters, aliasy Wikidata) — pobierany lokalnie przy pierwszym użyciu; **nie w repo** (`.gitignore`).
 
 ## Wyszukiwarka (silnik)
 
