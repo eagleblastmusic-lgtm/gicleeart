@@ -12,6 +12,37 @@
     const host = embedHost || hero.closest(".shopify-section");
     const PM_REST_SCALE = 0.9;
 
+    /* ── Sticky pin (intro) — desktop, strona standalone, przed uploadem ── */
+    const pinTrackEl = hero.closest(".pm-pin-track");
+    const PM_PIN_MQ =
+      window.matchMedia &&
+      window.matchMedia(
+        "(min-width: 981px) and (prefers-reduced-motion: no-preference)"
+      );
+    /** Ile poczatku dystansu toru przypada na animacje tekstu (reszta = trzymanie). */
+    const PM_PIN_ANIM_PART = 0.7;
+
+    function pmPinActive() {
+      return (
+        !isPdpEmbed &&
+        !!pinTrackEl &&
+        !!PM_PIN_MQ &&
+        PM_PIN_MQ.matches &&
+        !hero.classList.contains("loaded")
+      );
+    }
+
+    function getPinProgress() {
+      if (!pinTrackEl) return 0;
+      var rect = pinTrackEl.getBoundingClientRect();
+      var vh = window.innerHeight || 1;
+      var span = rect.height - vh;
+      if (span <= 0) return 0;
+      var t = Math.max(0, Math.min(1, -rect.top / span));
+      var p = Math.min(1, t / PM_PIN_ANIM_PART);
+      return p * p * (3 - 2 * p);
+    }
+
     function getSideScale() {
       if (!mockupShell) return PM_REST_SCALE;
       var v = parseFloat(
@@ -71,6 +102,10 @@
       var ticking = false;
 
       function update() {
+        if (pmPinActive()) {
+          hero.style.setProperty("--pm-lift", "0px");
+          return;
+        }
         var r = section.getBoundingClientRect();
         var vh = window.innerHeight || 1;
         var start = vh * travel;
@@ -1768,7 +1803,11 @@
         }
         return;
       }
-      var targetP = isPdpEmbed && !mockupUiActive ? 0 : targetPFromAccum(accum);
+      var targetP = pmPinActive()
+        ? getPinProgress()
+        : isPdpEmbed && !mockupUiActive
+          ? 0
+          : targetPFromAccum(accum);
       var k = reduceMotion ? 1 : 0.1;
       displayP += (targetP - displayP) * k;
       if (Math.abs(targetP - displayP) < 0.0004) displayP = targetP;

@@ -8,7 +8,8 @@
     assign pm_upload_api_url = pm_upload_api_default
   endif
 -%}
-<link rel="stylesheet" href="{{ 'giclee-photo-mockup.css' | asset_url }}?v=mobile-cart-fix-20260605">
+<link rel="stylesheet" href="{{ 'giclee-photo-mockup.css' | asset_url }}?v=sticky-pin-20260701">
+<div class="pm-pin-track">
 <div id="pm-hero" data-pm-upload-api="{{ pm_upload_api_url | escape }}">
   <div class="pm-stage">
     <div id="pm-hero-ui" class="pm-hero-ui">
@@ -117,4 +118,5 @@
     </a>
   </div>
 </div>
-<script src="{{ 'giclee-photo-mockup.js' | asset_url }}?v=mobile-cart-fix-20260605" defer></script>
+</div>
+<script src="{{ 'giclee-photo-mockup.js' | asset_url }}?v=sticky-pin-20260701" defer></script>

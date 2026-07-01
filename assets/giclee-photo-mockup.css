@@ -13,6 +13,29 @@
     max-width: 100% !important;
   }
 
+  /* ── Sticky pin (intro) — tylko strona standalone, desktop, przed uploadem ── */
+  .pm-pin-track {
+    display: contents;
+  }
+
+  @media (min-width: 981px) and (prefers-reduced-motion: no-preference) {
+    .shopify-section:has(#pm-hero):not(:has(.product-wlasna-fotografia-mockup)) .pm-pin-track:not(:has(#pm-hero.loaded)) {
+      display: block;
+      height: calc(100vh + var(--pm-pin-distance, 85vh));
+    }
+
+    .shopify-section:has(#pm-hero):not(:has(.product-wlasna-fotografia-mockup)) .pm-pin-track:not(:has(#pm-hero.loaded)) #pm-hero {
+      position: sticky;
+      top: 0;
+      min-height: 100vh;
+    }
+
+    .shopify-section:has(#pm-hero):not(:has(.product-wlasna-fotografia-mockup)) .pm-pin-track:not(:has(#pm-hero.loaded)) #pm-hero .pm-stage {
+      justify-content: center;
+      min-height: 100vh;
+    }
+  }
+
   #pm-hero {
     --pm-bg0: #060606;
     --pm-bg1: #0c0c0c;

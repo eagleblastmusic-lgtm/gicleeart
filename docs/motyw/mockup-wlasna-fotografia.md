@@ -51,6 +51,15 @@ Cache-bust JS/CSS (2026-06): `?v=mobile-cart-fix-20260605` w `giclee-photo-mocku
 
 ---
 
+## Sticky pin — intro (strona standalone)
+
+Na stronie `pages/fotografia-obraz`, przed uploadem, sekcja mockupu ma miekki efekt „pin”: gdy grafika dochodzi do srodka ekranu, `#pm-hero` przykleja sie (natywny CSS `position: sticky`), a przewijanie ~jednego ekranu napedza istniejaca animacje tekstu `#pm-hero-ui` do srodka grafiki (`tickUiSmooth`). Po przejsciu dystansu toru strona plynnie jedzie dalej.
+
+- **Markup:** `#pm-hero` owiniete w `.pm-pin-track` (`snippets/giclee-photo-mockup.liquid`). Domyslnie tor to `display: contents` (inertny).
+- **CSS** (`assets/giclee-photo-mockup.css`): tylko `@media (min-width: 981px) and (prefers-reduced-motion: no-preference)` + selektor standalone `:not(:has(.product-wlasna-fotografia-mockup))` + `.pm-pin-track:not(:has(#pm-hero.loaded))` — tor dostaje `height: calc(100vh + var(--pm-pin-distance, 85vh))`, a `#pm-hero` `position: sticky; top: 0; min-height: 100vh` (stage wysrodkowany w pionie). Dystans pinu regulowany zmienna `--pm-pin-distance`.
+- **JS** (`assets/giclee-photo-mockup.js`): `pmPinActive()` (gate: standalone + desktop MQ + not `loaded`), `getPinProgress()` liczy postep z rect toru; gdy pin aktywny `tickUiSmooth` bierze `targetP` z progresu zamiast z `accum`. `scrollLift` zeruje `--pm-lift` na czas pinu.
+- **Wylaczone dla:** PDP (`product-wlasna-fotografia-mockup`), mobile/tablet (<981px), po uploadzie (`.loaded` zwija tor), `prefers-reduced-motion`.
+
 ## Auto-centrowanie mockupu (scroll strony)
 
 Przy najechaniu na ramkę mockup może przewinąć stronę tak, by mockup był bliżej środka viewportu (`scrollMockupToViewportCenter`). To kolidowało z flow koszyka — po scrollu na górę mechanizm cofał stronę do mockupu.
