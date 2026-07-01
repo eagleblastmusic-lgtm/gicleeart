@@ -18,7 +18,7 @@ Panel **„Jakość wydruku”** w konfiguratorze mockupu pokazuje werdykt (np. 
 ## Jak to działa (skrót)
 
 1. Po wgraniu zdjęcia: `pm-image-loaded` z `widthPx`, `heightPx`, `fileBytes`
-2. Przy zmianie rozmiaru M/L/XL lub zoomu: przeliczenie **limiting PPI** dla wybranego formatu A4 ramki
+2. Przy zmianie rozmiaru M/L/XL lub zoomu: przeliczenie **limiting PPI** dla wybranego formatu A4 ramki (`normalizeShopifySize` — legacy `S` → `M`)
 3. Werdykt z progów (cel **300 DPI** w analizie = `TARGET_DPI`)
 4. Przy mocnym zoomie używany może być PPI **kadru** (widoczny fragment), nie całego pliku
 

@@ -22,6 +22,7 @@
   assign bio_radial_ry = 85
   assign bio_radial_feather = 50
   assign bio_radial_exposure = 50
+  assign bio_bg_menu_gradient = 'wide'
   if bio_collection != blank
     assign bio_bg_mf = bio_collection.metafields.custom.bio_background_url
     if bio_bg_mf != blank and bio_bg_mf.value != blank
@@ -64,13 +65,32 @@
         assign bio_radial_exposure = bio_radial.exposure | plus: 0
       endif
     endif
+    assign bio_menu_gradient_mf = bio_collection.metafields.custom.bio_background_menu_gradient
+    if bio_menu_gradient_mf != blank and bio_menu_gradient_mf.value != blank
+      assign bio_menu_gradient_raw = bio_menu_gradient_mf.value | downcase | strip
+      if bio_menu_gradient_raw == 'none' or bio_menu_gradient_raw == 'off' or bio_menu_gradient_raw == '0' or bio_menu_gradient_raw == 'false' or bio_menu_gradient_raw == 'nie'
+        assign bio_bg_menu_gradient = 'none'
+      elsif bio_menu_gradient_raw == 'narrow' or bio_menu_gradient_raw == 'waski' or bio_menu_gradient_raw == 'wąski' or bio_menu_gradient_raw == 'gradient wąski' or bio_menu_gradient_raw == 'was'
+        assign bio_bg_menu_gradient = 'narrow'
+      elsif bio_menu_gradient_raw == 'wide' or bio_menu_gradient_raw == 'szeroki' or bio_menu_gradient_raw == 'gradient szeroki' or bio_menu_gradient_raw == '1' or bio_menu_gradient_raw == 'true'
+        assign bio_bg_menu_gradient = 'wide'
+      endif
+    endif
+  endif
+
+  assign bio_bg_display_url = bio_bg_url
+  if bio_bg_url != blank
+    if bio_bg_url contains 'cdn.shopify.com' or bio_bg_url contains '/cdn/'
+      unless bio_bg_url contains 'width='
+        if bio_bg_url contains '?'
+          assign bio_bg_display_url = bio_bg_url | append: '&width=3840'
+        else
+          assign bio_bg_display_url = bio_bg_url | append: '?width=3840'
+        endif
+      endunless
+    endif
   endif
 -%}
-
-<link
-  rel="stylesheet"
-  href="{{ 'giclee-artist-biography.css' | asset_url }}&gab=gab-text-header-sync-20260628"
->
 
 {% style %}
   /*
@@ -79,6 +99,38 @@
     - .overlay / .overlay--solid (snippets/overlay.liquid, blok stylesheet)
     - .custom-section-background (snippets/section.liquid, blok stylesheet)
   */
+  .giclee-artist-biography-section.bio-section:has(.giclee-artist-biography-section--bg-pending),
+  .giclee-artist-biography-section.bio-section:has(.giclee-artist-biography-section--custom-bg) {
+    background-color: #000 !important;
+  }
+
+  .giclee-artist-biography-section--bg-pending.color-scheme-1,
+  .giclee-artist-biography-section--bg-pending.color-scheme-2,
+  .giclee-artist-biography-section--bg-pending[class*="color-"] {
+    background-color: #000 !important;
+  }
+
+  .giclee-artist-biography-section--bg-pending .custom-section-background,
+  .giclee-artist-biography-section--bg-pending .giclee-artist-bio-bg__stack {
+    background-color: #000 !important;
+  }
+
+  .giclee-artist-biography-section--bg-pending [data-gab-bg-image]:not([hidden]) {
+    opacity: 0 !important;
+  }
+
+  .giclee-artist-biography-section--bg-pending [data-gab-custom-bg]:not([hidden]) {
+    visibility: hidden;
+  }
+
+  .giclee-artist-biography-section--bg-ready [data-gab-custom-bg]:not([hidden]) {
+    visibility: visible;
+  }
+
+  .giclee-artist-biography-section--bg-ready [data-gab-bg-image]:not([hidden]) {
+    opacity: 1 !important;
+  }
+
   .giclee-artist-biography-section > .section {
     position: relative;
   }
@@ -87,6 +139,9 @@
     grid-column: 1 / -1;
     grid-row: 1;
     z-index: 0;
+    position: relative;
+    min-height: var(--gab-hero-height);
+    align-self: stretch;
   }
 
   .giclee-artist-biography-section .custom-section-content {
@@ -138,11 +193,38 @@
     position: relative;
     z-index: 2;
   }
+
+  /* Tło z metafield zastępuje scheme — bez jasnej obwódki section-background */
+  .giclee-artist-biography-section:has(.giclee-artist-biography-section--custom-bg) > .section-background,
+  .giclee-artist-biography-section.giclee-artist-biography-section--custom-bg > .section-background {
+    display: none !important;
+  }
+
+  .giclee-artist-biography-section:has(.giclee-artist-biography-section--custom-bg) .custom-section-background,
+  .giclee-artist-biography-section.giclee-artist-biography-section--custom-bg .custom-section-background {
+    background-color: #000;
+    overflow: hidden;
+  }
+
+  .giclee-artist-biography-section--custom-bg .giclee-artist-bio-bg,
+  .giclee-artist-biography-section--custom-bg .giclee-artist-bio-bg__stack {
+    top: -2px;
+    bottom: -4px;
+  }
 {% endstyle %}
 
-<div class="section-background color-{{ section.settings.color_scheme }}"></div>
+<link
+  rel="stylesheet"
+  href="{{ 'giclee-artist-biography.css' | asset_url }}&gab=gab-seam-fix-20260701"
+>
+
+{%- if bio_bg_url != blank -%}
+  <link rel="preload" as="image" href="{{ bio_bg_display_url | escape }}" fetchpriority="high">
+{%- endif -%}
+
+<div class="section-background color-{{ section.settings.color_scheme }}"{% if bio_bg_url != blank %} hidden{% endif %}></div>
 <div
-  class="section section--{{ section.settings.section_width }} color-{{ section.settings.color_scheme }}{% if bio_bg_url != blank %} giclee-artist-biography-section--custom-bg{% endif %}"
+  class="section section--{{ section.settings.section_width }} color-{{ section.settings.color_scheme }}{% if bio_bg_url != blank %} giclee-artist-biography-section--custom-bg giclee-artist-biography-section--bg-pending{% endif %}{% if bio_bg_menu_gradient == 'wide' %} giclee-artist-biography-section--menu-gradient-wide{% elsif bio_bg_menu_gradient == 'narrow' %} giclee-artist-biography-section--menu-gradient-narrow{% endif %}"
   {{ section.shopify_attributes }}
 >
   <div class="custom-section-background" data-gab-bg-wrap>
@@ -158,11 +240,11 @@
             data-gab-bg-layer="0"
             data-gab-bg-image
             data-gab-cover-scale="{% if bio_bg_cover_scale %}true{% else %}false{% endif %}"
-            src="{{ bio_bg_url | escape }}"
+            src="{{ bio_bg_display_url | escape }}"
             alt=""
             loading="eager"
             fetchpriority="high"
-            decoding="async"
+            decoding="sync"
             width="3840"
             height="2160"
             style="object-position: {{ bio_bg_pos_x }}% center;"
@@ -207,6 +289,36 @@
       ></div>
       <div class="giclee-artist-bio-bg__vignette" aria-hidden="true"></div>
     </div>
+    {%- if bio_bg_url != blank -%}
+      <script>
+        (function () {
+          var host = document.getElementById("shopify-section-{{ section.id }}");
+          if (!host) return;
+          var section = host;
+          var inner = host.querySelector(".giclee-artist-biography-section--bg-pending");
+          if (!inner) return;
+          section.classList.add("giclee-artist-biography-section--bg-pending");
+          var img = inner.querySelector("[data-gab-bg-image]:not([hidden])");
+          function ready() {
+            section.classList.remove("giclee-artist-biography-section--bg-pending");
+            inner.classList.remove("giclee-artist-biography-section--bg-pending");
+            section.classList.add("giclee-artist-biography-section--bg-ready");
+            inner.classList.add("giclee-artist-biography-section--bg-ready");
+          }
+          if (!img || !img.getAttribute("src")) {
+            ready();
+            return;
+          }
+          if (img.complete && img.naturalWidth > 0) {
+            ready();
+            return;
+          }
+          img.addEventListener("load", ready, { once: true });
+          img.addEventListener("error", ready, { once: true });
+          window.setTimeout(ready, 6000);
+        })();
+      </script>
+    {%- endif -%}
     {%- if section.settings.background_image != blank -%}
       <div
         class="background-image-container"
@@ -234,6 +346,8 @@
       class="giclee-artist-bio spacing-style layout-panel-flex layout-panel-flex--column section-content-wrapper mobile-column"
       data-giclee-artist-bio
       data-gab-handle="{{ bio_collection.handle | default: '' }}"
+      data-gab-menu-gradient="{{ bio_bg_menu_gradient }}"
+      {% if bio_bg_url != blank %}data-gab-has-custom-bg="true"{% endif %}
       style="
         --flex-direction: column;
         --gap: 12px;

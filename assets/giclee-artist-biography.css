@@ -6,6 +6,8 @@
  */
 .giclee-artist-biography-section {
   --gab-hero-height: clamp(560px, 56svh, 640px);
+  --gab-menu-fade-height: clamp(88px, calc(var(--header-group-height, 72px) + 36px), 168px);
+  --gab-menu-fade-height-narrow: clamp(52px, calc(var(--header-group-height, 72px) + 4px), 96px);
 }
 
 .giclee-artist-biography-section .giclee-artist-bio.layout-panel-flex {
@@ -164,6 +166,47 @@
 
 /* --- Tło BIO per kolekcja (GicleeApp: Tło do Bio) --- */
 
+.giclee-artist-biography-section.bio-section:has(.giclee-artist-biography-section--bg-pending),
+.giclee-artist-biography-section.bio-section:has(.giclee-artist-biography-section--custom-bg) {
+  background-color: #000 !important;
+}
+
+.giclee-artist-biography-section--bg-pending[class*="color-"] {
+  background-color: #000 !important;
+}
+
+.giclee-artist-biography-section--bg-pending .custom-section-background,
+.giclee-artist-biography-section--bg-pending .giclee-artist-bio-bg__stack {
+  background-color: #000 !important;
+}
+
+.giclee-artist-biography-section--bg-pending [data-gab-custom-bg]:not([hidden]) {
+  visibility: hidden;
+}
+
+.giclee-artist-biography-section--bg-ready [data-gab-custom-bg]:not([hidden]) {
+  visibility: visible;
+}
+
+.giclee-artist-biography-section--bg-pending [data-gab-bg-image]:not([hidden]) {
+  opacity: 0 !important;
+}
+
+.giclee-artist-biography-section--bg-ready [data-gab-bg-image]:not([hidden]) {
+  opacity: 1 !important;
+}
+
+.giclee-artist-biography-section:has(.giclee-artist-biography-section--custom-bg) > .section-background,
+.giclee-artist-biography-section.giclee-artist-biography-section--custom-bg > .section-background {
+  display: none !important;
+}
+
+.giclee-artist-biography-section:has(.giclee-artist-biography-section--custom-bg) .custom-section-background,
+.giclee-artist-biography-section.giclee-artist-biography-section--custom-bg .custom-section-background {
+  background-color: #000;
+  overflow: hidden;
+}
+
 .giclee-artist-biography-section .giclee-artist-bio-bg {
   position: absolute;
   inset: 0;
@@ -171,9 +214,17 @@
   overflow: hidden;
 }
 
+.giclee-artist-biography-section--custom-bg .giclee-artist-bio-bg,
+.giclee-artist-biography-section--custom-bg .giclee-artist-bio-bg__stack {
+  top: -2px;
+  bottom: -4px;
+}
+
 .giclee-artist-biography-section .giclee-artist-bio-bg__stack {
   position: absolute;
   inset: 0;
+  background-color: #000;
+  isolation: isolate;
 }
 
 .giclee-artist-biography-section .giclee-artist-bio-bg__layer,
@@ -183,11 +234,12 @@
   height: 100%;
   object-fit: cover;
   object-position: center;
+  border: none;
+  outline: none;
   transition:
     opacity 0.88s var(--gab-ease, cubic-bezier(0.22, 1, 0.36, 1)),
     transform 0.88s var(--gab-ease, cubic-bezier(0.22, 1, 0.36, 1));
   will-change: opacity, transform;
-  backface-visibility: hidden;
 }
 
 .giclee-artist-biography-section .giclee-artist-bio-bg__layer {
@@ -267,7 +319,7 @@
 }
 
 .giclee-artist-biography-section .giclee-artist-bio-bg__image.is-swapping {
-  opacity: 0.35;
+  opacity: 0;
 }
 
 /*
@@ -322,6 +374,52 @@
 
 .giclee-artist-biography-section .giclee-artist-bio-bg__vignette {
   display: none;
+}
+
+/*
+ * Wtopienie hero BIO w czarne menu — tylko strony kolekcji z karuzelą i włączonym gradientem.
+ * Sterowane metafield custom.bio_background_menu_gradient (GicleeApp → Tło do Bio → Gradient).
+ */
+body:has(.giclee-artist-collection-showcase-section)
+  .giclee-artist-biography-section--menu-gradient-wide
+  .custom-section-background::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  height: var(--gab-menu-fade-height);
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    #000 0%,
+    #000 12%,
+    rgba(0, 0, 0, 0.94) 30%,
+    rgba(0, 0, 0, 0.72) 52%,
+    rgba(0, 0, 0, 0.28) 78%,
+    transparent 100%
+  );
+}
+
+body:has(.giclee-artist-collection-showcase-section)
+  .giclee-artist-biography-section--menu-gradient-narrow
+  .custom-section-background::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  height: var(--gab-menu-fade-height-narrow);
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    #000 0%,
+    #000 22%,
+    rgba(0, 0, 0, 0.82) 58%,
+    transparent 100%
+  );
 }
 
 .giclee-artist-biography-section--custom-bg .custom-section-content > .overlay {

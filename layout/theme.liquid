@@ -3050,7 +3050,7 @@ const interval = setInterval(function() {
     }
   </script>
   {%- endif -%}
-  <script src="{{ 'giclee-print-analysis.js' | asset_url }}"></script>
+  <script src="{{ 'giclee-print-analysis.js' | asset_url }}?v=size-m-20260701"></script>
   <script>
     (function() {
       var hero = document.getElementById('pm-hero');
@@ -3070,6 +3070,17 @@ const interval = setInterval(function() {
       }
 
       var pmSizeToVariant = { M: 'M', S: 'M', L: 'L', XL: 'XL' };
+
+      function pmNormalizeShopifySize(size) {
+        var analysis = window.GicleePrintAnalysis;
+        if (analysis && analysis.normalizeShopifySize) {
+          return analysis.normalizeShopifySize(size) || 'M';
+        }
+        var key = String(size || '').trim().toUpperCase();
+        if (key === 'S') return 'M';
+        if (key === 'M' || key === 'L' || key === 'XL') return key;
+        return 'M';
+      }
 
       function pmNormalize(value) {
         return String(value || '').normalize('NFC').trim().toLowerCase();
@@ -3610,7 +3621,9 @@ const interval = setInterval(function() {
 
         var imageData = null;
         var viewCrop = null;
-        var currentSize = (window.pmFrameConfig && window.pmFrameConfig.size) || 'M';
+        var currentSize = pmNormalizeShopifySize(
+          (window.pmFrameConfig && window.pmFrameConfig.size) || 'M'
+        );
         var orientation = 'portrait';
         var qualityRaf = 0;
 
@@ -3647,7 +3660,8 @@ const interval = setInterval(function() {
           }
 
           var image = { widthPx: imageData.widthPx, heightPx: imageData.heightPx };
-          var fileResult = analysis.analyseForShopifySize(image, currentSize, orientation);
+          var sizeKey = pmNormalizeShopifySize(currentSize);
+          var fileResult = analysis.analyseForShopifySize(image, sizeKey, orientation);
           if (!fileResult) {
             setPlaceholder(gicleeT('mockup_quality_select_size', 'Wybierz rozmiar, aby zobaczyć analizę.'));
             return;
@@ -3662,7 +3676,7 @@ const interval = setInterval(function() {
           if (useCropPpi) {
             var cropResult = analysis.analyseForShopifySize(
               image,
-              currentSize,
+              sizeKey,
               orientation,
               {
                 widthPx: viewCrop.visibleWidthPx,
@@ -3683,7 +3697,7 @@ const interval = setInterval(function() {
           }
           if (fileEl) fileEl.textContent = formatFileInfo(imageData);
           if (noteEl) noteEl.textContent = active.verdict.note;
-          if (formatEl) formatEl.textContent = fileResult.name + ' · ' + currentSize;
+          if (formatEl) formatEl.textContent = fileResult.name + ' · ' + sizeKey;
           if (barFill) {
             barFill.style.width = Math.min(100, active.quality) + '%';
             barFill.className = 'pm-quality-panel__bar-fill pm-quality-panel__bar-fill--' +
@@ -3716,7 +3730,7 @@ const interval = setInterval(function() {
 
         heroEl.addEventListener('pm-config-change', function(e) {
           if (e.detail && e.detail.size) {
-            currentSize = e.detail.size;
+            currentSize = pmNormalizeShopifySize(e.detail.size);
             renderQuality();
           }
         });

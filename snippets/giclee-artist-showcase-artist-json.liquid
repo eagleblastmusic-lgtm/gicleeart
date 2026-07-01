@@ -49,6 +49,7 @@
   assign entry_bio_radial_ry = 85
   assign entry_bio_radial_feather = 50
   assign entry_bio_radial_exposure = 50
+  assign entry_bio_menu_gradient = 'wide'
   assign entry_collection_quote = ''
   assign entry_collection_quotes_json = '[]'
   assign entry_seo_title = entry_name
@@ -96,6 +97,17 @@
         assign entry_bio_radial_exposure = entry_bio_radial.exposure | plus: 0
       endif
     endif
+    assign entry_bio_menu_gradient_mf = entry_col.metafields.custom.bio_background_menu_gradient
+    if entry_bio_menu_gradient_mf != blank and entry_bio_menu_gradient_mf.value != blank
+      assign entry_bio_menu_gradient_raw = entry_bio_menu_gradient_mf.value | downcase | strip
+      if entry_bio_menu_gradient_raw == 'none' or entry_bio_menu_gradient_raw == 'off' or entry_bio_menu_gradient_raw == '0' or entry_bio_menu_gradient_raw == 'false' or entry_bio_menu_gradient_raw == 'nie'
+        assign entry_bio_menu_gradient = 'none'
+      elsif entry_bio_menu_gradient_raw == 'narrow' or entry_bio_menu_gradient_raw == 'waski' or entry_bio_menu_gradient_raw == 'wąski' or entry_bio_menu_gradient_raw == 'gradient wąski' or entry_bio_menu_gradient_raw == 'was'
+        assign entry_bio_menu_gradient = 'narrow'
+      elsif entry_bio_menu_gradient_raw == 'wide' or entry_bio_menu_gradient_raw == 'szeroki' or entry_bio_menu_gradient_raw == 'gradient szeroki' or entry_bio_menu_gradient_raw == '1' or entry_bio_menu_gradient_raw == 'true'
+        assign entry_bio_menu_gradient = 'wide'
+      endif
+    endif
     assign entry_quotes_mf = entry_col.metafields.custom.collection_quotes
     if entry_quotes_mf != blank and entry_quotes_mf.value != blank
       assign entry_collection_quotes_json = entry_quotes_mf.value | json
@@ -133,6 +145,7 @@
   "bioBackgroundPosX": {{ entry_bio_bg_pos_x | json }},
   "bioBackgroundOverlayPct": {{ entry_bio_bg_overlay_pct | json }},
   "bioBackgroundCoverScale": {{ entry_bio_bg_cover_scale | json }},
+  "bioBackgroundMenuGradient": {{ entry_bio_menu_gradient | json }},
   "bioBackgroundRadialMask": {
     "enabled": {{ entry_bio_radial_enabled | json }},
     "cx": {{ entry_bio_radial_cx | json }},

@@ -71,6 +71,30 @@ body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcas
   background-color: var(--color-background, #0a0a0a);
 }
 
+/* Własne tło BIO — bez jasnej obwódki ze schematu motywu (subpixel przy sticky) */
+body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+  .shopify-section.giclee-artist-biography-section:has(.giclee-artist-biography-section--custom-bg)
+  .custom-section-background,
+body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+  .shopify-section.giclee-artist-biography-section:has(.giclee-artist-biography-section--custom-bg)
+  .giclee-artist-bio-bg,
+body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+  .shopify-section.giclee-artist-biography-section:has(.giclee-artist-biography-section--custom-bg)
+  .giclee-artist-bio-bg__stack {
+  background-color: #000 !important;
+}
+
+/* Szew dolny BIO — przedłużenie tła pod linię subpixel (sticky + translateZ) */
+body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+  .shopify-section.giclee-artist-biography-section:has(.giclee-artist-biography-section--custom-bg)
+  .giclee-artist-bio-bg,
+body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
+  .shopify-section.giclee-artist-biography-section:has(.giclee-artist-biography-section--custom-bg)
+  .giclee-artist-bio-bg__stack {
+  top: -2px;
+  bottom: -4px;
+}
+
 /* Czarny dystans między BIO a kolekcją */
 body:has(.giclee-artist-biography-section):has(.giclee-artist-collection-showcase-section)
   .shopify-section.giclee-artist-biography-section::after {

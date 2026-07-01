@@ -30,7 +30,11 @@ from .preview_render import (
 )
 from .service import (
     ALLOWED_SUFFIXES,
+    BIO_MENU_GRADIENT_NARROW,
+    BIO_MENU_GRADIENT_NONE,
+    BIO_MENU_GRADIENT_WIDE,
     DEFAULT_BIO_COVER_SCALE,
+    DEFAULT_BIO_MENU_GRADIENT,
     DEFAULT_BIO_OVERLAY_PCT,
     DEFAULT_BIO_POS_X,
     DEFAULT_BIO_RADIAL_MASK,
@@ -39,6 +43,7 @@ from .service import (
     load_cached_collection_rows,
     load_collections_with_backgrounds,
     normalize_bio_cover_scale,
+    normalize_bio_menu_gradient,
     normalize_bio_overlay_pct,
     normalize_bio_pos_x,
     normalize_bio_radial_mask,
@@ -46,6 +51,12 @@ from .service import (
     save_bio_background_display_settings,
     upload_bio_background,
 )
+
+_MENU_GRADIENT_LABELS = {
+    BIO_MENU_GRADIENT_NONE: "Bez gradientu",
+    BIO_MENU_GRADIENT_NARROW: "Gradient wąski",
+    BIO_MENU_GRADIENT_WIDE: "Gradient szeroki",
+}
 
 APP_TITLE = "Tło do Bio — sekcja biografii autora"
 _IMAGE_SUFFIXES = ALLOWED_SUFFIXES
@@ -74,7 +85,7 @@ def _preview_fonts() -> tuple[ImageFont.FreeTypeFont | ImageFont.ImageFont, Imag
             return default, default
 
 
-def _wrap_text_lines(
+def _draw_radial_mask_guides(
     canvas: tk.Canvas,
     mask: dict[str, Any],
     *,
@@ -170,6 +181,7 @@ def _compose_bio_preview(
     overlay_pct: int = DEFAULT_BIO_OVERLAY_PCT,
     cover_scale: bool = DEFAULT_BIO_COVER_SCALE,
     radial_mask: dict[str, Any] | None = None,
+    menu_gradient: str = DEFAULT_BIO_MENU_GRADIENT,
 ) -> Image.Image:
     from .service import normalize_bio_overlay_pct, normalize_bio_pos_x
 
@@ -181,6 +193,7 @@ def _compose_bio_preview(
         overlay_pct=normalize_bio_overlay_pct(overlay_pct),
         cover_scale=cover_scale,
         radial_mask=radial_mask,
+        menu_gradient=menu_gradient,
     )
     if not show_text:
         return composed.convert("RGB")
@@ -256,6 +269,7 @@ def _build_ui(host: tk.Tk) -> None:
         "_overlay_pct_stash": DEFAULT_BIO_OVERLAY_PCT,
         "_cover_scale_saved": DEFAULT_BIO_COVER_SCALE,
         "_radial_saved": dict(DEFAULT_BIO_RADIAL_MASK),
+        "_menu_gradient_saved": DEFAULT_BIO_MENU_GRADIENT,
         "_preview_title": "",
         "_preview_bio": "",
         "_drag_x": None,
@@ -414,6 +428,18 @@ def _build_ui(host: tk.Tk) -> None:
     )
     cover_scale_check.pack(anchor="w", pady=(6, 0))
 
+    gradient_frame = ttk.Frame(right)
+    gradient_frame.pack(fill="x", pady=(0, 8))
+    menu_gradient_var = tk.StringVar(value=_MENU_GRADIENT_LABELS[DEFAULT_BIO_MENU_GRADIENT])
+    ttk.Label(gradient_frame, text="Gradient u góry (pod menu):").pack(anchor="w")
+    gradient_row = ttk.Frame(gradient_frame)
+    gradient_row.pack(fill="x", pady=(4, 0))
+    gradient_btn = ttk.Button(gradient_row, text="Gradient", state="disabled")
+    gradient_btn.pack(side="left")
+    ttk.Label(gradient_row, textvariable=menu_gradient_var, foreground="#666").pack(
+        side="left", padx=(8, 0)
+    )
+
     radial_frame = ttk.LabelFrame(right, text="Maska radialna (ekspozycja)", padding=(8, 6))
     radial_frame.pack(fill="x", pady=(0, 8))
     radial_enabled_var = tk.BooleanVar(value=False)
@@ -522,6 +548,20 @@ def _build_ui(host: tk.Tk) -> None:
             }
         )
 
+    def _current_menu_gradient() -> str:
+        return normalize_bio_menu_gradient(state.get("_menu_gradient_value", DEFAULT_BIO_MENU_GRADIENT))
+
+    def _set_menu_gradient(value: str) -> None:
+        normalized = normalize_bio_menu_gradient(value)
+        state["_menu_gradient_value"] = normalized
+        menu_gradient_var.set(_MENU_GRADIENT_LABELS.get(normalized, normalized))
+        _on_pos_change()
+
+    def _apply_menu_gradient_vars(value: str | None) -> None:
+        normalized = normalize_bio_menu_gradient(value)
+        state["_menu_gradient_value"] = normalized
+        menu_gradient_var.set(_MENU_GRADIENT_LABELS.get(normalized, normalized))
+
     def _apply_radial_vars(mask: dict[str, Any] | None) -> None:
         mask = normalize_bio_radial_mask(mask)
         radial_enabled_var.set(bool(mask.get("enabled")))
@@ -552,11 +592,16 @@ def _build_ui(host: tk.Tk) -> None:
         )
         radial = _current_radial_mask()
         saved_radial = normalize_bio_radial_mask(state.get("_radial_saved", DEFAULT_BIO_RADIAL_MASK))
+        menu_gradient = _current_menu_gradient()
+        saved_menu_gradient = normalize_bio_menu_gradient(
+            state.get("_menu_gradient_saved", DEFAULT_BIO_MENU_GRADIENT)
+        )
         pos_dirty = pos != saved_pos
         overlay_dirty = overlay != saved_overlay
         cover_scale_dirty = cover_scale != saved_cover_scale
         radial_dirty = not _radial_masks_equal(radial, saved_radial)
-        if pos_dirty or overlay_dirty or cover_scale_dirty or radial_dirty:
+        menu_gradient_dirty = menu_gradient != saved_menu_gradient
+        if pos_dirty or overlay_dirty or cover_scale_dirty or radial_dirty or menu_gradient_dirty:
             pos_saved_var.set("Niezapisane zmiany ustawień tła")
         else:
             pos_saved_var.set("Ustawienia zapisane")
@@ -592,6 +637,7 @@ def _build_ui(host: tk.Tk) -> None:
             overlay_pct=_effective_overlay_pct(),
             cover_scale=bool(cover_scale_var.get()),
             radial_mask=_current_radial_mask(),
+            menu_gradient=_current_menu_gradient(),
         )
         photo = ImageTk.PhotoImage(cropped)
         state["_thumb_ref"] = photo
@@ -611,6 +657,7 @@ def _build_ui(host: tk.Tk) -> None:
         nudge_right_btn.configure(state=state_ctrl)
         overlay_scale.configure(state="disabled" if not enabled or overlay_off_var.get() else "normal")
         save_settings_btn.configure(state=state_ctrl)
+        gradient_btn.configure(state=state_ctrl)
         _set_radial_controls(enabled)
 
     def _load_preview_from_url(
@@ -620,6 +667,7 @@ def _build_ui(host: tk.Tk) -> None:
         overlay_pct: int,
         cover_scale: bool = DEFAULT_BIO_COVER_SCALE,
         radial_mask: dict[str, Any] | None = None,
+        menu_gradient: str = DEFAULT_BIO_MENU_GRADIENT,
     ) -> None:
         state["_preview_source"] = None
         state["_preview_url"] = url
@@ -637,6 +685,8 @@ def _build_ui(host: tk.Tk) -> None:
         radial = normalize_bio_radial_mask(radial_mask)
         state["_radial_saved"] = radial
         _apply_radial_vars(radial)
+        _apply_menu_gradient_vars(menu_gradient)
+        state["_menu_gradient_saved"] = normalize_bio_menu_gradient(menu_gradient)
         try:
             with urlopen(url, timeout=20) as resp:
                 raw = resp.read()
@@ -669,6 +719,7 @@ def _build_ui(host: tk.Tk) -> None:
         overlay_pct: int = DEFAULT_BIO_OVERLAY_PCT,
         cover_scale: bool = DEFAULT_BIO_COVER_SCALE,
         radial_mask: dict[str, Any] | None = None,
+        menu_gradient: str = DEFAULT_BIO_MENU_GRADIENT,
     ) -> None:
         state["_thumb_ref"] = None
         if not url:
@@ -683,6 +734,8 @@ def _build_ui(host: tk.Tk) -> None:
             state["_cover_scale_saved"] = DEFAULT_BIO_COVER_SCALE
             state["_radial_saved"] = dict(DEFAULT_BIO_RADIAL_MASK)
             _apply_radial_vars(DEFAULT_BIO_RADIAL_MASK)
+            _apply_menu_gradient_vars(DEFAULT_BIO_MENU_GRADIENT)
+            state["_menu_gradient_saved"] = DEFAULT_BIO_MENU_GRADIENT
             _set_position_controls(False)
             _render_preview()
             return
@@ -693,6 +746,7 @@ def _build_ui(host: tk.Tk) -> None:
             overlay_pct=overlay_pct,
             cover_scale=cover_scale,
             radial_mask=radial_mask,
+            menu_gradient=menu_gradient,
         )
 
     def _set_buttons(enabled: bool, *, has_bg: bool = False) -> None:
@@ -726,6 +780,7 @@ def _build_ui(host: tk.Tk) -> None:
         overlay_pct = normalize_bio_overlay_pct(row.get("background_overlay_pct"))
         cover_scale = normalize_bio_cover_scale(row.get("background_cover_scale"))
         radial_mask = normalize_bio_radial_mask(row.get("background_radial_mask"))
+        menu_gradient = normalize_bio_menu_gradient(row.get("background_menu_gradient"))
         if url:
             status_var.set("Tło przypisane do tej kolekcji.")
             _set_preview(
@@ -734,6 +789,7 @@ def _build_ui(host: tk.Tk) -> None:
                 overlay_pct=overlay_pct,
                 cover_scale=cover_scale,
                 radial_mask=radial_mask,
+                menu_gradient=menu_gradient,
             )
         else:
             status_var.set("Brak tła — sekcja BIO użyje domyślnego tła z motywu.")
@@ -792,6 +848,7 @@ def _build_ui(host: tk.Tk) -> None:
         overlay_pct = _effective_overlay_pct()
         cover_scale = normalize_bio_cover_scale(cover_scale_var.get())
         radial_mask = _current_radial_mask()
+        menu_gradient = _current_menu_gradient()
         upload_btn.configure(state="disabled")
         progress_var.set(f"Upload: {path.name}…")
 
@@ -805,6 +862,7 @@ def _build_ui(host: tk.Tk) -> None:
                 overlay_pct=overlay_pct,
                 cover_scale=cover_scale,
                 radial_mask=radial_mask,
+                menu_gradient=menu_gradient,
             )
 
             def done() -> None:
@@ -824,6 +882,9 @@ def _build_ui(host: tk.Tk) -> None:
                 saved_radial = normalize_bio_radial_mask(
                     result.get("background_radial_mask", radial_mask)
                 )
+                saved_menu_gradient = normalize_bio_menu_gradient(
+                    result.get("background_menu_gradient", menu_gradient)
+                )
                 for r in state["rows"]:
                     if r.get("handle") == handle:
                         r["background_url"] = url
@@ -831,6 +892,7 @@ def _build_ui(host: tk.Tk) -> None:
                         r["background_overlay_pct"] = saved_overlay
                         r["background_cover_scale"] = saved_cover_scale
                         r["background_radial_mask"] = saved_radial
+                        r["background_menu_gradient"] = saved_menu_gradient
                         r["has_background"] = True
                         r["status"] = "tak"
                         break
@@ -838,8 +900,19 @@ def _build_ui(host: tk.Tk) -> None:
                 state["_overlay_saved"] = saved_overlay
                 state["_cover_scale_saved"] = saved_cover_scale
                 state["_radial_saved"] = saved_radial
+                state["_menu_gradient_saved"] = saved_menu_gradient
+                _apply_menu_gradient_vars(saved_menu_gradient)
                 progress_var.set(f"Zapisano tło dla {handle}.")
                 show_toast(host, "Tło BIO zapisane.")
+                warn = str(result.get("warn_sharpness") or "").strip()
+                if warn:
+                    show_toast(host, warn, duration_ms=6500)
+                if result.get("resized_for_shopify"):
+                    show_toast(
+                        host,
+                        "Plik był większy niż limit Shopify (4472 px) — zmniejszono przed wysłaniem.",
+                        duration_ms=6500,
+                    )
                 _refresh_tree(keep_handle=handle)
 
             host.after(0, done)
@@ -905,6 +978,7 @@ def _build_ui(host: tk.Tk) -> None:
         overlay_pct = _effective_overlay_pct()
         cover_scale = normalize_bio_cover_scale(cover_scale_var.get())
         radial_mask = _current_radial_mask()
+        menu_gradient = _current_menu_gradient()
         save_settings_btn.configure(state="disabled")
         progress_var.set(f"Zapisuję ustawienia tła: {handle}…")
 
@@ -916,6 +990,7 @@ def _build_ui(host: tk.Tk) -> None:
                 overlay_pct=overlay_pct,
                 cover_scale=cover_scale,
                 radial_mask=radial_mask,
+                menu_gradient=menu_gradient,
             )
 
             def done() -> None:
@@ -934,16 +1009,22 @@ def _build_ui(host: tk.Tk) -> None:
                 saved_radial = normalize_bio_radial_mask(
                     result.get("background_radial_mask", radial_mask)
                 )
+                saved_menu_gradient = normalize_bio_menu_gradient(
+                    result.get("background_menu_gradient", menu_gradient)
+                )
                 state["_pos_saved"] = saved_pos
                 state["_overlay_saved"] = saved_overlay
                 state["_cover_scale_saved"] = saved_cover_scale
                 state["_radial_saved"] = saved_radial
+                state["_menu_gradient_saved"] = saved_menu_gradient
+                _apply_menu_gradient_vars(saved_menu_gradient)
                 for r in state["rows"]:
                     if r.get("handle") == handle:
                         r["background_pos_x"] = saved_pos
                         r["background_overlay_pct"] = saved_overlay
                         r["background_cover_scale"] = saved_cover_scale
                         r["background_radial_mask"] = saved_radial
+                        r["background_menu_gradient"] = saved_menu_gradient
                         break
                 progress_var.set(f"Zapisano ustawienia tła dla {handle}.")
                 show_toast(host, "Ustawienia tła zapisane.")
@@ -1008,6 +1089,34 @@ def _build_ui(host: tk.Tk) -> None:
 
     def _on_canvas_release(_event: tk.Event) -> None:  # type: ignore[type-arg]
         state["_drag_x"] = None
+
+    state["_menu_gradient_value"] = DEFAULT_BIO_MENU_GRADIENT
+
+    gradient_menu = tk.Menu(host, tearoff=0)
+    gradient_menu.add_command(
+        label=_MENU_GRADIENT_LABELS[BIO_MENU_GRADIENT_NONE],
+        command=lambda: _set_menu_gradient(BIO_MENU_GRADIENT_NONE),
+    )
+    gradient_menu.add_command(
+        label=_MENU_GRADIENT_LABELS[BIO_MENU_GRADIENT_NARROW],
+        command=lambda: _set_menu_gradient(BIO_MENU_GRADIENT_NARROW),
+    )
+    gradient_menu.add_command(
+        label=_MENU_GRADIENT_LABELS[BIO_MENU_GRADIENT_WIDE],
+        command=lambda: _set_menu_gradient(BIO_MENU_GRADIENT_WIDE),
+    )
+
+    def _open_gradient_menu() -> None:
+        if not state.get("selected", {}).get("has_background"):
+            return
+        try:
+            x = gradient_btn.winfo_rootx()
+            y = gradient_btn.winfo_rooty() + gradient_btn.winfo_height()
+            gradient_menu.tk_popup(x, y)
+        finally:
+            gradient_menu.grab_release()
+
+    gradient_btn.configure(command=_open_gradient_menu)
 
     pos_var.trace_add("write", _on_pos_change)
     overlay_pct_var.trace_add("write", _on_overlay_pct_change)

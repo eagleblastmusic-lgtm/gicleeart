@@ -17,6 +17,11 @@ METAFIELD_KEY_POS_X = "bio_background_pos_x"
 METAFIELD_KEY_OVERLAY_PCT = "bio_background_overlay_pct"
 METAFIELD_KEY_COVER_SCALE = "bio_background_cover_scale"
 METAFIELD_KEY_RADIAL_MASK = "bio_background_radial_mask"
+METAFIELD_KEY_MENU_GRADIENT = "bio_background_menu_gradient"
+BIO_MENU_GRADIENT_NONE = "none"
+BIO_MENU_GRADIENT_NARROW = "narrow"
+BIO_MENU_GRADIENT_WIDE = "wide"
+DEFAULT_BIO_MENU_GRADIENT = BIO_MENU_GRADIENT_WIDE
 DEFAULT_BIO_POS_X = 50
 DEFAULT_BIO_OVERLAY_PCT = 100
 DEFAULT_BIO_COVER_SCALE = False
@@ -34,6 +39,9 @@ BIO_POS_X_MAX = 100
 BIO_OVERLAY_PCT_MIN = 0
 BIO_OVERLAY_PCT_MAX = 100
 ALLOWED_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
+SHOPIFY_FILE_MAX_PX = 4472
+BIO_BG_RECOMMENDED_MIN_WIDTH = 2560
+BIO_BG_DISPLAY_WIDTH = 3840
 
 _COMPONENT_DIR = Path(__file__).resolve().parent
 _DATA_DIR = _COMPONENT_DIR / "data"
@@ -45,6 +53,7 @@ _DEFINITION_POS_ENSURED = False
 _DEFINITION_OVERLAY_ENSURED = False
 _DEFINITION_COVER_SCALE_ENSURED = False
 _DEFINITION_RADIAL_MASK_ENSURED = False
+_DEFINITION_MENU_GRADIENT_ENSURED = False
 
 
 def bio_plain_from_html(html: str, *, max_len: int = 320) -> str:
@@ -75,6 +84,32 @@ def normalize_bio_overlay_pct(raw: Any) -> int:
     except (TypeError, ValueError):
         value = DEFAULT_BIO_OVERLAY_PCT
     return max(BIO_OVERLAY_PCT_MIN, min(BIO_OVERLAY_PCT_MAX, value))
+
+
+def normalize_bio_menu_gradient(raw: Any) -> str:
+    if raw is None or raw == "":
+        return DEFAULT_BIO_MENU_GRADIENT
+    text = str(raw).strip().lower()
+    if text in {"none", "off", "0", "false", "nie", "bez", "bez gradientu"}:
+        return BIO_MENU_GRADIENT_NONE
+    if text in {
+        "wide",
+        "szeroki",
+        "gradient szeroki",
+        "1",
+        "true",
+        "on",
+    }:
+        return BIO_MENU_GRADIENT_WIDE
+    if text in {
+        "narrow",
+        "waski",
+        "wąski",
+        "gradient wąski",
+        "was",
+    }:
+        return BIO_MENU_GRADIENT_NARROW
+    return DEFAULT_BIO_MENU_GRADIENT
 
 
 def normalize_bio_cover_scale(raw: Any) -> bool:
@@ -173,6 +208,82 @@ def save_local_cache(data: dict[str, Any]) -> None:
 
 def is_allowed_image(path: Path) -> bool:
     return path.suffix.lower() in ALLOWED_SUFFIXES
+
+
+def bio_background_display_url(url: str, *, width: int = BIO_BG_DISPLAY_WIDTH) -> str:
+    """URL tła BIO na storefront — pełniejsza rozdzielczość z CDN Shopify."""
+    text = str(url or "").strip()
+    if not text:
+        return ""
+    if "cdn.shopify.com" not in text and "/cdn/" not in text:
+        return text
+    if re.search(r"[?&]width=\d+", text, flags=re.I):
+        return text
+    sep = "&" if "?" in text else "?"
+    return f"{text}{sep}width={int(width)}"
+
+
+def inspect_bio_upload_image(path: Path) -> dict[str, Any]:
+    """Wymiary pliku + ewentualne ostrzeżenie o ostrości (bez modyfikacji pliku)."""
+    from PIL import Image
+
+    with Image.open(path) as im:
+        im.load()
+        width, height = im.size
+    warn = ""
+    if width < BIO_BG_RECOMMENDED_MIN_WIDTH:
+        warn = (
+            f"Szerokość {width}px — na dużym ekranie tło może wyglądać miękko. "
+            f"Zalecane min. {BIO_BG_RECOMMENDED_MIN_WIDTH}px (PNG lub wysokiej jakości JPG)."
+        )
+    return {
+        "width": width,
+        "height": height,
+        "warn_sharpness": warn,
+        "exceeds_shopify_max": max(width, height) > SHOPIFY_FILE_MAX_PX,
+    }
+
+
+def prepare_bio_upload_path(path: Path) -> tuple[Path, dict[str, Any], Path | None]:
+    """Przygotuj plik do uploadu: tylko skaluj gdy przekracza limit Shopify (4472 px)."""
+    from PIL import Image
+
+    info = inspect_bio_upload_image(path)
+    width = int(info["width"])
+    height = int(info["height"])
+    if not info["exceeds_shopify_max"]:
+        return path, info, None
+
+    max_side = max(width, height)
+    ratio = SHOPIFY_FILE_MAX_PX / max_side
+    new_w = max(1, int(round(width * ratio)))
+    new_h = max(1, int(round(height * ratio)))
+    suffix = path.suffix.lower()
+    temp_path = path.with_name(f"{path.stem}.bio-upload{suffix}")
+    counter = 0
+    while temp_path.exists():
+        counter += 1
+        temp_path = path.with_name(f"{path.stem}.bio-upload-{counter}{suffix}")
+
+    with Image.open(path) as im:
+        im.load()
+        resized = im.resize((new_w, new_h), Image.Resampling.LANCZOS)
+        if suffix in {".jpg", ".jpeg"}:
+            resized.save(temp_path, format="JPEG", quality=95, optimize=True, progressive=True)
+        elif suffix == ".webp":
+            resized.save(temp_path, format="WEBP", quality=95, method=6)
+        else:
+            resized.save(temp_path, format="PNG", optimize=True)
+
+    info = {
+        **info,
+        "width": new_w,
+        "height": new_h,
+        "resized_for_shopify": True,
+        "source_width": width,
+        "source_height": height,
+    }
+    return temp_path, info, temp_path
 
 
 def ensure_bio_background_metafield_definition(*, logger: Logger | None = None) -> None:
@@ -405,6 +516,52 @@ def ensure_bio_background_radial_mask_metafield_definition(*, logger: Logger | N
     _log(logger, "[Tło do Bio] Metafield custom.bio_background_radial_mask (COLLECTION, storefront).")
 
 
+def ensure_bio_background_menu_gradient_metafield_definition(*, logger: Logger | None = None) -> None:
+    global _DEFINITION_MENU_GRADIENT_ENSURED  # noqa: PLW0603
+    if _DEFINITION_MENU_GRADIENT_ENSURED:
+        return
+    shop, token = sc.load_session()
+    check = """
+    query {
+      metafieldDefinitions(first: 1, ownerType: COLLECTION, namespace: "custom", key: "bio_background_menu_gradient") {
+        nodes { id }
+      }
+    }
+    """
+    existing = sc.graphql(shop, token, check, {})
+    nodes = ((existing or {}).get("metafieldDefinitions") or {}).get("nodes") or []
+    if nodes:
+        _DEFINITION_MENU_GRADIENT_ENSURED = True
+        return
+    create = """
+    mutation metafieldDefinitionCreate($definition: MetafieldDefinitionInput!) {
+      metafieldDefinitionCreate(definition: $definition) {
+        createdDefinition { id }
+        userErrors { field message code }
+      }
+    }
+    """
+    payload = {
+        "definition": {
+            "name": "Gradient u góry tła BIO (menu)",
+            "namespace": METAFIELD_NAMESPACE,
+            "key": METAFIELD_KEY_MENU_GRADIENT,
+            "type": "single_line_text_field",
+            "ownerType": "COLLECTION",
+            "access": {"storefront": "PUBLIC_READ"},
+        }
+    }
+    res = sc.graphql(shop, token, create, payload)
+    block = (res or {}).get("metafieldDefinitionCreate") or {}
+    errors = block.get("userErrors") or []
+    if errors:
+        codes = {str(e.get("code") or "") for e in errors}
+        if not codes.intersection({"TAKEN", "ALREADY_EXISTS"}):
+            raise sc.ShopifyError(f"metafieldDefinitionCreate: {errors}")
+    _DEFINITION_MENU_GRADIENT_ENSURED = True
+    _log(logger, "[Tło do Bio] Metafield custom.bio_background_menu_gradient (COLLECTION, storefront).")
+
+
 _COLLECTIONS_LIST_GQL = """
 query CollectionsList($first: Int!, $after: String) {
   collections(first: $first, after: $after) {
@@ -432,6 +589,7 @@ query CollectionsBio($first: Int!, $after: String) {
       bioOverlayPct: metafield(namespace: "custom", key: "bio_background_overlay_pct") { value }
       bioCoverScale: metafield(namespace: "custom", key: "bio_background_cover_scale") { value }
       bioRadialMask: metafield(namespace: "custom", key: "bio_background_radial_mask") { value }
+      bioMenuGradient: metafield(namespace: "custom", key: "bio_background_menu_gradient") { value }
     }
   }
 }
@@ -531,6 +689,8 @@ def _fetch_collection_rows_with_bio_graphql(
         cover_scale = normalize_bio_cover_scale(cover_scale_mf.get("value"))
         radial_mf = node.get("bioRadialMask") or {}
         radial_mask = normalize_bio_radial_mask(radial_mf.get("value"))
+        menu_gradient_mf = node.get("bioMenuGradient") or {}
+        menu_gradient = normalize_bio_menu_gradient(menu_gradient_mf.get("value"))
         description_html = str(node.get("descriptionHtml") or "")
         bio_preview = bio_plain_from_html(description_html)
         rows.append(
@@ -541,6 +701,7 @@ def _fetch_collection_rows_with_bio_graphql(
                 "background_overlay_pct": overlay_pct,
                 "background_cover_scale": cover_scale,
                 "background_radial_mask": radial_mask,
+                "background_menu_gradient": menu_gradient,
                 "description_html": description_html,
                 "bio_preview": bio_preview,
                 "has_background": bool(url),
@@ -681,6 +842,7 @@ def sync_local_from_shopify(rows: list[dict[str, Any]]) -> dict[str, Any]:
         overlay_pct = normalize_bio_overlay_pct(col.get("background_overlay_pct"))
         cover_scale = normalize_bio_cover_scale(col.get("background_cover_scale"))
         radial_mask = normalize_bio_radial_mask(col.get("background_radial_mask"))
+        menu_gradient = normalize_bio_menu_gradient(col.get("background_menu_gradient"))
         catalog.append(
             {
                 "id": col.get("id"),
@@ -692,6 +854,7 @@ def sync_local_from_shopify(rows: list[dict[str, Any]]) -> dict[str, Any]:
                 "background_overlay_pct": overlay_pct,
                 "background_cover_scale": cover_scale,
                 "background_radial_mask": radial_mask,
+                "background_menu_gradient": menu_gradient,
                 "bio_preview": col.get("bio_preview") or "",
                 "has_background": bool(url),
                 "status": "tak" if url else "—",
@@ -707,6 +870,7 @@ def sync_local_from_shopify(rows: list[dict[str, Any]]) -> dict[str, Any]:
                 "overlay_pct": overlay_pct,
                 "cover_scale": cover_scale,
                 "radial_mask": radial_mask,
+                "menu_gradient": menu_gradient,
                 "updated_at": backgrounds.get(handle, {}).get("updated_at") or _now_iso(),
             }
         elif handle in backgrounds:
@@ -760,6 +924,7 @@ def upload_bio_background(
     overlay_pct: int | None = None,
     cover_scale: bool | None = None,
     radial_mask: dict[str, Any] | None = None,
+    menu_gradient: str | None = None,
     logger: Logger | None = None,
 ) -> dict[str, Any]:
     path = Path(image_path)
@@ -775,6 +940,7 @@ def upload_bio_background(
     ensure_bio_background_overlay_metafield_definition(logger=logger)
     ensure_bio_background_cover_scale_metafield_definition(logger=logger)
     ensure_bio_background_radial_mask_metafield_definition(logger=logger)
+    ensure_bio_background_menu_gradient_metafield_definition(logger=logger)
     shop, token = sc.load_session()
     cid = int(collection_id)
     h = str(handle or "").strip()
@@ -790,55 +956,83 @@ def upload_bio_background(
     radial = normalize_bio_radial_mask(
         radial_mask if radial_mask is not None else DEFAULT_BIO_RADIAL_MASK
     )
+    menu_grad = normalize_bio_menu_gradient(
+        menu_gradient if menu_gradient is not None else DEFAULT_BIO_MENU_GRADIENT
+    )
+    upload_path, upload_info, temp_path = prepare_bio_upload_path(path)
     try:
-        url = sc.upload_file_to_shopify_files(path, alt=f"Tło BIO — {title or h}")
-        upsert_collection_metafield(
-            shop,
-            token,
-            cid,
-            namespace=METAFIELD_NAMESPACE,
-            key=METAFIELD_KEY,
-            value=url,
-            ftype="url",
-        )
-        upsert_collection_metafield(
-            shop,
-            token,
-            cid,
-            namespace=METAFIELD_NAMESPACE,
-            key=METAFIELD_KEY_POS_X,
-            value=str(pos),
-            ftype="number_integer",
-        )
-        upsert_collection_metafield(
-            shop,
-            token,
-            cid,
-            namespace=METAFIELD_NAMESPACE,
-            key=METAFIELD_KEY_OVERLAY_PCT,
-            value=str(overlay),
-            ftype="number_integer",
-        )
-        upsert_collection_metafield(
-            shop,
-            token,
-            cid,
-            namespace=METAFIELD_NAMESPACE,
-            key=METAFIELD_KEY_COVER_SCALE,
-            value="true" if scale_cover else "false",
-            ftype="boolean",
-        )
-        upsert_collection_metafield(
-            shop,
-            token,
-            cid,
-            namespace=METAFIELD_NAMESPACE,
-            key=METAFIELD_KEY_RADIAL_MASK,
-            value=bio_radial_mask_json(radial),
-            ftype="json",
-        )
-    except sc.ShopifyError as exc:
-        return {"ok": False, "error": str(exc)}
+        try:
+            url = sc.upload_file_to_shopify_files(
+                upload_path,
+                alt=f"Tło BIO — {title or h}",
+                preserve_original_bytes=True,
+            )
+            url = bio_background_display_url(url)
+        except sc.ShopifyError as exc:
+            return {"ok": False, "error": str(exc)}
+        try:
+            upsert_collection_metafield(
+                shop,
+                token,
+                cid,
+                namespace=METAFIELD_NAMESPACE,
+                key=METAFIELD_KEY,
+                value=url,
+                ftype="url",
+            )
+            upsert_collection_metafield(
+                shop,
+                token,
+                cid,
+                namespace=METAFIELD_NAMESPACE,
+                key=METAFIELD_KEY_POS_X,
+                value=str(pos),
+                ftype="number_integer",
+            )
+            upsert_collection_metafield(
+                shop,
+                token,
+                cid,
+                namespace=METAFIELD_NAMESPACE,
+                key=METAFIELD_KEY_OVERLAY_PCT,
+                value=str(overlay),
+                ftype="number_integer",
+            )
+            upsert_collection_metafield(
+                shop,
+                token,
+                cid,
+                namespace=METAFIELD_NAMESPACE,
+                key=METAFIELD_KEY_COVER_SCALE,
+                value="true" if scale_cover else "false",
+                ftype="boolean",
+            )
+            upsert_collection_metafield(
+                shop,
+                token,
+                cid,
+                namespace=METAFIELD_NAMESPACE,
+                key=METAFIELD_KEY_RADIAL_MASK,
+                value=bio_radial_mask_json(radial),
+                ftype="json",
+            )
+            upsert_collection_metafield(
+                shop,
+                token,
+                cid,
+                namespace=METAFIELD_NAMESPACE,
+                key=METAFIELD_KEY_MENU_GRADIENT,
+                value=menu_grad,
+                ftype="single_line_text_field",
+            )
+        except sc.ShopifyError as exc:
+            return {"ok": False, "error": str(exc)}
+    finally:
+        if temp_path and temp_path.is_file():
+            try:
+                temp_path.unlink()
+            except OSError:
+                pass
     cache = load_local_cache()
     cache.setdefault("backgrounds", {})[h] = {
         "collection_id": cid,
@@ -849,6 +1043,7 @@ def upload_bio_background(
         "overlay_pct": overlay,
         "cover_scale": scale_cover,
         "radial_mask": radial,
+        "menu_gradient": menu_grad,
         "updated_at": _now_iso(),
     }
     _patch_cached_row(
@@ -859,6 +1054,7 @@ def upload_bio_background(
         background_overlay_pct=overlay,
         background_cover_scale=scale_cover,
         background_radial_mask=radial,
+        background_menu_gradient=menu_grad,
         has_background=True,
         status="tak",
     )
@@ -872,6 +1068,11 @@ def upload_bio_background(
         "background_overlay_pct": overlay,
         "background_cover_scale": scale_cover,
         "background_radial_mask": radial,
+        "background_menu_gradient": menu_grad,
+        "upload_width": upload_info.get("width"),
+        "upload_height": upload_info.get("height"),
+        "warn_sharpness": upload_info.get("warn_sharpness") or "",
+        "resized_for_shopify": bool(upload_info.get("resized_for_shopify")),
     }
 
 
@@ -883,12 +1084,14 @@ def save_bio_background_display_settings(
     overlay_pct: int,
     cover_scale: bool,
     radial_mask: dict[str, Any] | None = None,
+    menu_gradient: str | None = None,
     logger: Logger | None = None,
 ) -> dict[str, Any]:
     ensure_bio_background_pos_metafield_definition(logger=logger)
     ensure_bio_background_overlay_metafield_definition(logger=logger)
     ensure_bio_background_cover_scale_metafield_definition(logger=logger)
     ensure_bio_background_radial_mask_metafield_definition(logger=logger)
+    ensure_bio_background_menu_gradient_metafield_definition(logger=logger)
     shop, token = sc.load_session()
     cid = int(collection_id)
     h = str(handle or "").strip()
@@ -899,6 +1102,9 @@ def save_bio_background_display_settings(
     scale_cover = normalize_bio_cover_scale(cover_scale)
     radial = normalize_bio_radial_mask(
         radial_mask if radial_mask is not None else DEFAULT_BIO_RADIAL_MASK
+    )
+    menu_grad = normalize_bio_menu_gradient(
+        menu_gradient if menu_gradient is not None else DEFAULT_BIO_MENU_GRADIENT
     )
     try:
         upsert_collection_metafield(
@@ -937,6 +1143,15 @@ def save_bio_background_display_settings(
             value=bio_radial_mask_json(radial),
             ftype="json",
         )
+        upsert_collection_metafield(
+            shop,
+            token,
+            cid,
+            namespace=METAFIELD_NAMESPACE,
+            key=METAFIELD_KEY_MENU_GRADIENT,
+            value=menu_grad,
+            ftype="single_line_text_field",
+        )
     except sc.ShopifyError as exc:
         return {"ok": False, "error": str(exc)}
     cache = load_local_cache()
@@ -946,6 +1161,7 @@ def save_bio_background_display_settings(
         bg["overlay_pct"] = overlay
         bg["cover_scale"] = scale_cover
         bg["radial_mask"] = radial
+        bg["menu_gradient"] = menu_grad
     _patch_cached_row(
         h,
         cache=cache,
@@ -953,11 +1169,12 @@ def save_bio_background_display_settings(
         background_overlay_pct=overlay,
         background_cover_scale=scale_cover,
         background_radial_mask=radial,
+        background_menu_gradient=menu_grad,
     )
     save_local_cache(cache)
     _log(
         logger,
-        f"[Tło do Bio] Ustawienia tła {h}: pozycja {pos}%, overlay {overlay}%, scale {scale_cover}, radial {radial.get('enabled')}.",
+        f"[Tło do Bio] Ustawienia tła {h}: pozycja {pos}%, overlay {overlay}%, scale {scale_cover}, radial {radial.get('enabled')}, menu gradient {menu_grad}.",
     )
     return {
         "ok": True,
@@ -966,6 +1183,7 @@ def save_bio_background_display_settings(
         "background_overlay_pct": overlay,
         "background_cover_scale": scale_cover,
         "background_radial_mask": radial,
+        "background_menu_gradient": menu_grad,
     }
 
 
@@ -1046,6 +1264,13 @@ def clear_bio_background(
             namespace=METAFIELD_NAMESPACE,
             key=METAFIELD_KEY_RADIAL_MASK,
         )
+        delete_collection_metafield(
+            shop,
+            token,
+            cid,
+            namespace=METAFIELD_NAMESPACE,
+            key=METAFIELD_KEY_MENU_GRADIENT,
+        )
     except sc.ShopifyError as exc:
         return {"ok": False, "error": str(exc)}
     cache = load_local_cache()
@@ -1060,6 +1285,7 @@ def clear_bio_background(
         background_overlay_pct=DEFAULT_BIO_OVERLAY_PCT,
         background_cover_scale=DEFAULT_BIO_COVER_SCALE,
         background_radial_mask=dict(DEFAULT_BIO_RADIAL_MASK),
+        background_menu_gradient=DEFAULT_BIO_MENU_GRADIENT,
         has_background=False,
         status="—",
     )

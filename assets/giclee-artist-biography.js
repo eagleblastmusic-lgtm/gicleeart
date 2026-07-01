@@ -120,6 +120,23 @@
     this.resetLayoutLock();
     this.bindVisibility();
     this.bindState();
+    var section = this.getBioSection();
+    if (section && this.root.getAttribute("data-gab-menu-gradient")) {
+      applyBioMenuGradientShell(
+        section,
+        this.root.getAttribute("data-gab-menu-gradient")
+      );
+    }
+    if (section && this.root.getAttribute("data-gab-has-custom-bg") === "true") {
+      syncBioSchemeBackground(section, true);
+      var heroImg = section.querySelector("[data-gab-bg-image]:not([hidden])");
+      if (
+        heroImg &&
+        section.classList.contains("giclee-artist-biography-section--bg-pending")
+      ) {
+        revealBioBgWhenReady(section, heroImg);
+      }
+    }
   }
 
   GicleeArtistBiography.prototype.bindState = function () {
@@ -140,6 +157,9 @@
       }
       self.state = window.GicleeActiveAuthor;
       self.unsub = self.state.subscribe(self.onChange);
+      window.requestAnimationFrame(function () {
+        self.syncInitialBioBackground();
+      });
     }
 
     attach();
@@ -425,6 +445,7 @@
 
     this.root.setAttribute("data-gab-handle", artist.handle || "");
     this.applyBackground(artist);
+    this.syncBioBackgroundShell();
     this.resetLayoutLock();
   };
 
@@ -495,6 +516,131 @@
     return { stack: stack, active: active, incoming: incoming };
   };
 
+  function normalizeBioBgUrl(url) {
+    if (!url) return "";
+    try {
+      var anchor = document.createElement("a");
+      anchor.href = String(url).trim();
+      return anchor.href;
+    } catch (_err) {
+      return String(url).trim();
+    }
+  }
+
+  function shopifyBioBgBaseUrl(url) {
+    if (!url) return "";
+    try {
+      var parsed = new URL(String(url).trim(), window.location.origin);
+      parsed.searchParams.delete("width");
+      parsed.searchParams.delete("height");
+      parsed.searchParams.delete("crop");
+      return parsed.toString();
+    } catch (_err) {
+      return String(url).trim();
+    }
+  }
+
+  function bioBackgroundDisplayUrl(url) {
+    var base = shopifyBioBgBaseUrl(url);
+    if (!base) return "";
+    if (base.indexOf("cdn.shopify.com") === -1 && base.indexOf("/cdn/") === -1) {
+      return base;
+    }
+    if (/[?&]width=\d+/i.test(base)) return base;
+    var sep = base.indexOf("?") === -1 ? "?" : "&";
+    return base + sep + "width=3840";
+  }
+
+  function normalizeBioMenuGradient(raw) {
+    if (raw == null || raw === "") return "wide";
+    var text = String(raw).trim().toLowerCase();
+    if (
+      text === "none" ||
+      text === "off" ||
+      text === "0" ||
+      text === "false" ||
+      text === "nie" ||
+      text === "bez gradientu"
+    ) {
+      return "none";
+    }
+    if (
+      text === "narrow" ||
+      text === "waski" ||
+      text === "wąski" ||
+      text === "gradient wąski" ||
+      text === "was"
+    ) {
+      return "narrow";
+    }
+    return "wide";
+  }
+
+  function applyBioMenuGradientShell(section, value) {
+    if (!section) return;
+    var normalized = normalizeBioMenuGradient(value);
+    var targets = [];
+    var inner = section.querySelector(".section");
+    if (inner) targets.push(inner);
+    if (targets.indexOf(section) === -1) targets.push(section);
+    targets.forEach(function (el) {
+      el.classList.remove("giclee-artist-biography-section--menu-gradient-wide");
+      el.classList.remove("giclee-artist-biography-section--menu-gradient-narrow");
+      if (normalized === "wide") {
+        el.classList.add("giclee-artist-biography-section--menu-gradient-wide");
+      } else if (normalized === "narrow") {
+        el.classList.add("giclee-artist-biography-section--menu-gradient-narrow");
+      }
+    });
+  }
+
+  function syncBioSchemeBackground(section, hasCustomBg) {
+    if (!section) return;
+    var schemeBg = section.querySelector(":scope > .section-background");
+    if (schemeBg) schemeBg.hidden = !!hasCustomBg;
+    var innerSection = section.querySelector(":scope > .section");
+    if (innerSection) {
+      innerSection.classList.toggle(
+        "giclee-artist-biography-section--custom-bg",
+        !!hasCustomBg
+      );
+    }
+  }
+
+  function setBioBgPending(section, pending) {
+    if (!section) return;
+    var innerSection = section.querySelector(":scope > .section");
+    section.classList.toggle("giclee-artist-biography-section--bg-pending", !!pending);
+    if (innerSection) {
+      innerSection.classList.toggle("giclee-artist-biography-section--bg-pending", !!pending);
+    }
+    if (!pending) {
+      section.classList.add("giclee-artist-biography-section--bg-ready");
+      if (innerSection) {
+        innerSection.classList.add("giclee-artist-biography-section--bg-ready");
+      }
+    }
+  }
+
+  function revealBioBgWhenReady(section, img) {
+    if (!section) return;
+    function ready() {
+      setBioBgPending(section, false);
+    }
+    if (!img || !img.getAttribute("src") || img.hidden) {
+      ready();
+      return;
+    }
+    if (img.complete && img.naturalWidth > 0) {
+      ready();
+      return;
+    }
+    setBioBgPending(section, true);
+    img.addEventListener("load", ready, { once: true });
+    img.addEventListener("error", ready, { once: true });
+    window.setTimeout(ready, 6000);
+  }
+
   GicleeArtistBiography.prototype.parseBackgroundMeta = function (artist) {
     var url =
       artist && artist.bioBackgroundUrl
@@ -535,12 +681,17 @@
       artist && artist.bioBackgroundRadialMask
     );
 
+    var menuGradient = normalizeBioMenuGradient(
+      artist && artist.bioBackgroundMenuGradient
+    );
+
     return {
       url: url,
       posX: posX,
       overlayPct: overlayPct,
       coverScale: coverScale,
       radialMask: radialMask,
+      menuGradient: menuGradient,
     };
   };
 
@@ -613,6 +764,7 @@
     if (!wrap) return false;
 
     var meta = this.parseBackgroundMeta(artist);
+    applyBioMenuGradientShell(section, meta.menuGradient);
     var customBg = wrap.querySelector("[data-gab-custom-bg]");
     var defaultBg = wrap.querySelector("[data-gab-default-bg]");
     var overlayEl = customBg
@@ -624,6 +776,7 @@
 
     if (meta.url) {
       section.classList.add("giclee-artist-biography-section--custom-bg");
+      syncBioSchemeBackground(section, true);
       section.style.setProperty(
         "--gab-bg-overlay-opacity",
         String(meta.overlayPct / 100)
@@ -638,6 +791,7 @@
     }
 
     section.classList.remove("giclee-artist-biography-section--custom-bg");
+    syncBioSchemeBackground(section, false);
     if (customBg) customBg.hidden = true;
     if (radialEl) radialEl.hidden = true;
     if (defaultBg) defaultBg.hidden = false;
@@ -659,23 +813,89 @@
     img.classList.toggle("giclee-artist-bio-bg__image--cover-scale", meta.coverScale);
     img.setAttribute("data-gab-cover-scale", meta.coverScale ? "true" : "false");
 
-    if (img.getAttribute("src") === meta.url) return;
+    var nextUrl = bioBackgroundDisplayUrl(meta.url);
+    var currentBase = shopifyBioBgBaseUrl(img.getAttribute("src") || img.src || "");
+    var nextBase = shopifyBioBgBaseUrl(nextUrl);
 
-    if (opts.instant) {
-      img.setAttribute("src", meta.url);
+    function finishSwap() {
+      img.classList.remove("is-swapping");
+      img.onload = null;
+      img.onerror = null;
+    }
+
+    if (currentBase && nextBase && currentBase === nextBase) {
+      finishSwap();
+      revealBioBgWhenReady(this.getBioSection(), img);
       return;
     }
 
+    var section = this.getBioSection();
+
+    if (opts.instant) {
+      finishSwap();
+      img.setAttribute("src", nextUrl);
+      revealBioBgWhenReady(section, img);
+      return;
+    }
+
+    var finalized = false;
+    var done = function () {
+      if (finalized) return;
+      finalized = true;
+      finishSwap();
+      revealBioBgWhenReady(section, img);
+    };
+
+    setBioBgPending(section, true);
     img.classList.add("is-swapping");
-    img.onload = function () {
-      img.classList.remove("is-swapping");
-      img.onload = null;
-    };
-    img.onerror = function () {
-      img.classList.remove("is-swapping");
-      img.onerror = null;
-    };
-    img.setAttribute("src", meta.url);
+    img.onload = done;
+    img.onerror = done;
+    img.setAttribute("src", nextUrl);
+    if (img.complete) {
+      done();
+    } else {
+      window.setTimeout(done, 4000);
+    }
+  };
+
+  GicleeArtistBiography.prototype.syncBioBackgroundShell = function () {
+    var section = this.getBioSection();
+    if (!section || !section.classList.contains("giclee-artist-biography-section--custom-bg")) {
+      return;
+    }
+
+    var wrap = section.querySelector("[data-gab-bg-wrap]");
+    var heroHeight = this.root ? this.root.offsetHeight : 0;
+    if (wrap && heroHeight > 0) {
+      wrap.style.minHeight = heroHeight + "px";
+    }
+
+    if (this.bgStack) {
+      this.bgStack.customBg.classList.remove("is-bg-crossfading");
+      this.bgStack.layers.forEach(function (layer, index) {
+        layer.classList.remove("is-bg-outgoing", "is-bg-incoming");
+        if (index !== this.bgStack.activeIndex) {
+          layer.hidden = true;
+          layer.classList.add("is-bg-inactive");
+        }
+      }, this);
+      this.syncBgLayerState(section);
+    }
+
+    var activeImg = section.querySelector("[data-gab-bg-image]");
+    if (activeImg) {
+      activeImg.classList.remove("is-swapping");
+    }
+  };
+
+  GicleeArtistBiography.prototype.syncInitialBioBackground = function () {
+    if (!this.state || !this.state.activeAuthor) return;
+    var artist = this.state.activeAuthor;
+    if (!artist || !artist.bioBackgroundUrl) return;
+    if (this.root.getAttribute("data-gab-handle") !== artist.handle) return;
+
+    this.applyBackground(artist, { forceActiveLayer: true, instant: true });
+    this.syncBioBackgroundShell();
   };
 
   GicleeArtistBiography.prototype.syncBgLayerState = function (section) {
@@ -754,7 +974,7 @@
     var pair = this.getBgLayerPair(section);
     if (!pair) return;
 
-    this.applyBackgroundLayer(pair.active, artist);
+    this.applyBackgroundLayer(pair.active, artist, opts);
     this.syncBgLayerState(section);
   };
 

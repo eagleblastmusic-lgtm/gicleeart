@@ -1408,7 +1408,11 @@ def _poll_file_node_url(shop: str, token: str, file_id: str) -> str | None:
     query = """
     query FileUrl($id: ID!) {
       node(id: $id) {
-        ... on MediaImage { fileStatus image { url } }
+        ... on MediaImage {
+          fileStatus
+          image { url }
+          originalSource { url }
+        }
         ... on GenericFile { fileStatus url }
       }
     }
@@ -1417,12 +1421,19 @@ def _poll_file_node_url(shop: str, token: str, file_id: str) -> str | None:
     node = (node_data or {}).get("node") or {}
     if (node.get("fileStatus") or "").upper() != "READY":
         return None
+    original = node.get("originalSource") or {}
+    original_url = (original.get("url") or "").strip()
     img = node.get("image") or {}
-    return (img.get("url") or node.get("url") or "").strip() or None
+    image_url = (img.get("url") or "").strip()
+    generic_url = (node.get("url") or "").strip()
+    return generic_url or image_url or original_url or None
 
 
 def upload_file_to_shopify_files(
-    local_path: Path, *, alt: str | None = None
+    local_path: Path,
+    *,
+    alt: str | None = None,
+    preserve_original_bytes: bool = False,
 ) -> str:
     """Uploaduje lokalny plik do Shopify Files i zwraca publiczny CDN URL.
 
@@ -1494,6 +1505,13 @@ def upload_file_to_shopify_files(
         upload_url, b"".join(parts), f"multipart/form-data; boundary={boundary}"
     )
 
+    file_input: dict[str, Any] = {
+        "alt": alt or filename,
+        "originalSource": resource_url,
+    }
+    if preserve_original_bytes:
+        file_input["contentType"] = "FILE"
+
     file_create = """
     mutation fileCreate($files: [FileCreateInput!]!) {
       fileCreate(files: $files) {
@@ -1506,11 +1524,21 @@ def upload_file_to_shopify_files(
         shop,
         token,
         file_create,
-        {"files": [{"alt": alt or filename, "originalSource": resource_url}]},
+        {"files": [file_input]},
     )
     fc_res = (fc or {}).get("fileCreate") or {}
-    if fc_res.get("userErrors"):
-        raise ShopifyError(f"fileCreate errors: {fc_res['userErrors']}")
+    errors = fc_res.get("userErrors") or []
+    if errors and preserve_original_bytes:
+        fc = graphql(
+            shop,
+            token,
+            file_create,
+            {"files": [{"alt": alt or filename, "originalSource": resource_url}]},
+        )
+        fc_res = (fc or {}).get("fileCreate") or {}
+        errors = fc_res.get("userErrors") or []
+    if errors:
+        raise ShopifyError(f"fileCreate errors: {errors}")
     files = fc_res.get("files") or []
     if not files:
         raise ShopifyError("fileCreate: brak files w odpowiedzi.")

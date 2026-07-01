@@ -7,8 +7,12 @@ from typing import Any
 from PIL import Image
 
 from .service import (
+    BIO_MENU_GRADIENT_NARROW,
+    BIO_MENU_GRADIENT_NONE,
+    BIO_MENU_GRADIENT_WIDE,
     DEFAULT_BIO_RADIAL_MASK,
     normalize_bio_cover_scale,
+    normalize_bio_menu_gradient,
     normalize_bio_overlay_pct,
     normalize_bio_pos_x,
     normalize_bio_radial_mask,
@@ -123,6 +127,52 @@ def apply_site_bio_radial_mask(img: Image.Image, mask: dict[str, Any] | None) ->
     return Image.alpha_composite(base, overlay)
 
 
+def _menu_gradient_alpha_wide(ty: float) -> float:
+    """linear-gradient(180deg, #000 0% … transparent 100%) — pas szeroki pod menu."""
+    stops: tuple[tuple[float, float], ...] = (
+        (0.0, 1.0),
+        (0.12, 1.0),
+        (0.30, 0.94),
+        (0.52, 0.72),
+        (0.78, 0.28),
+        (1.0, 0.0),
+    )
+    return _lerp_stops(ty, stops)
+
+
+def _menu_gradient_alpha_narrow(ty: float) -> float:
+    """Krótszy pas — szybsze przejście do przezroczystości."""
+    stops: tuple[tuple[float, float], ...] = (
+        (0.0, 1.0),
+        (0.22, 1.0),
+        (0.58, 0.82),
+        (1.0, 0.0),
+    )
+    return _lerp_stops(ty, stops)
+
+
+def apply_site_menu_gradient(img: Image.Image, *, menu_gradient: str) -> Image.Image:
+    mode = normalize_bio_menu_gradient(menu_gradient)
+    if mode == BIO_MENU_GRADIENT_NONE:
+        return img
+    w, h = img.size
+    if mode == BIO_MENU_GRADIENT_NARROW:
+        fade_h = max(1, int(round(h * (64 / 600.0))))
+        alpha_fn = _menu_gradient_alpha_narrow
+    else:
+        fade_h = max(1, int(round(min(h * 0.28, h * (108 / 600.0)))))
+        alpha_fn = _menu_gradient_alpha_wide
+    base = img.convert("RGBA")
+    overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = overlay.load()
+    for y in range(min(fade_h, h)):
+        ty = y / max(fade_h - 1, 1)
+        alpha = alpha_fn(ty)
+        for x in range(w):
+            px[x, y] = (0, 0, 0, int(max(0.0, min(1.0, alpha)) * 255))
+    return Image.alpha_composite(base, overlay)
+
+
 def cover_crop_bio_image(
     img: Image.Image,
     box_w: int,
@@ -164,9 +214,14 @@ def compose_site_bio_background(
     overlay_pct: int,
     cover_scale: bool = False,
     radial_mask: dict[str, Any] | None = None,
+    menu_gradient: str | None = None,
 ) -> Image.Image:
     cropped = cover_crop_bio_image(img, box_w, box_h, pos_x)
     if normalize_bio_cover_scale(cover_scale):
         cropped = apply_cover_scale_bio_image(cropped, box_w, box_h)
     composed = apply_site_bio_overlay(cropped, overlay_pct=overlay_pct)
-    return apply_site_bio_radial_mask(composed, radial_mask)
+    composed = apply_site_bio_radial_mask(composed, radial_mask)
+    return apply_site_menu_gradient(
+        composed,
+        menu_gradient=menu_gradient or "",
+    )
