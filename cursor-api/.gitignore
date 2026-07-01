@@ -48,6 +48,9 @@ Komponenty/blog/data/preview.html
 # zadania - signals_cache to snapshot Shopify (moze byc duzy, nie trzymamy w repo)
 Komponenty/zadania/data/signals_cache.json
 
+# stronyzobrazami - cache CSV/JSON z NGA, Walters, Wikidata (pobierany lokalnie, duzy)
+Komponenty/stronyzobrazami/data/cache/
+
 # PyInstaller (python -m PyInstaller giclee_app.spec)
 /build/
 /dist/
