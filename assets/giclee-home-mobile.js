@@ -1,0 +1,1 @@
+window.GICLEE_HOME_MOBILE_SLIDES = ["MALE_ORG.webp"];

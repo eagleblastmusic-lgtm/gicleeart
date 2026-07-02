@@ -69,14 +69,14 @@
 {%- unless show_section -%}
   {%- comment -%} Brak grafiki «przed» (metafield) i «po» (Full) — sekcja niewidoczna {%- endcomment -%}
 {%- else -%}
-  {%- unless template.suffix == 'szablon-produktu-v2' -%}
+  {%- unless template.suffix == 'szablon-produktu-v2' or template.suffix == 'szablon-produktu-v3' -%}
     <link
       rel="stylesheet"
       href="{{ 'giclee-product-before-after-compare.css' | asset_url }}?v=20260627"
     >
     <script src="{{ 'giclee-product-before-after-compare.js' | asset_url }}?v=20260627" defer></script>
   {%- endunless -%}
-  {%- if template.suffix == 'szablon-produktu-v2' -%}
+  {%- if template.suffix == 'szablon-produktu-v2' or template.suffix == 'szablon-produktu-v3' -%}
     {%- comment -%}
       PDP v2: markup trafia do ukrytego źródła (sekcja pierwsza w order JSON),
       a product-information-content przenosi go nad proces produkcji.

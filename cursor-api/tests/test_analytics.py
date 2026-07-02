@@ -38,7 +38,7 @@ def test_classify_source_organic() -> None:
 
 
 def test_parse_utm() -> None:
-    u = parse_utm_from_url("https://gicleeart.eu/pl-pl?utm_source=instagram&utm_campaign=spring")
+    u = parse_utm_from_url("https://gicleeart.eu?utm_source=instagram&utm_campaign=spring")
     assert u["utm_source"] == "instagram"
     assert u["utm_campaign"] == "spring"
 

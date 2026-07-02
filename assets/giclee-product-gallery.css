@@ -423,25 +423,25 @@
 
 /* --- Dostepnosc / reduced motion ---------------------------------------- */
 @media screen and (max-width: 749px) {
-  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .giclee-gallery {
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2'], [data-template='product.szablon-produktu-v3']) .giclee-gallery {
     padding-bottom: 1.25rem;
     margin-bottom: 1.25rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   }
 
-  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .giclee-gallery__stage {
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2'], [data-template='product.szablon-produktu-v3']) .giclee-gallery__stage {
     min-height: 200px;
     max-height: min(68vh, 600px);
     transition: aspect-ratio 0.35s ease;
   }
 
-  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .giclee-gallery__slide {
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2'], [data-template='product.szablon-produktu-v3']) .giclee-gallery__slide {
     padding: 4px;
     align-items: stretch;
     justify-content: stretch;
   }
 
-  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .giclee-gallery__img {
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2'], [data-template='product.szablon-produktu-v3']) .giclee-gallery__img {
     width: 100%;
     height: 100%;
     max-width: 100%;
@@ -458,7 +458,7 @@
     transform: none !important;
   }
 
-  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .giclee-gallery__stage {
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2'], [data-template='product.szablon-produktu-v3']) .giclee-gallery__stage {
     transition: none;
   }
 }

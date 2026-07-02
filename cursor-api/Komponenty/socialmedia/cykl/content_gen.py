@@ -94,7 +94,7 @@ def build_week_prompt(
 
 {channels_block}
 
-- Storefront PL: https://gicleeart.eu/pl-pl
+- Storefront PL: https://gicleeart.eu
 - Storefront EN: https://gicleeart.eu/en-eu
 
 ## Twoje zadanie

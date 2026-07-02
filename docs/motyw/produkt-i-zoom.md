@@ -56,6 +56,7 @@ Zoom jest podpięty pod szablony Giclee PDP: **`product.nowy-szblon-produktu`** 
 - Panel sterowania (`pinToolbar`): `position: absolute`, wyśrodkowany w widocznej części viewera; na mobile `z-index` poniżej `#header-component` — przy scrollu chowa się pod sticky header; po 2 s bez dotyku R2 fade out (także w fullscreen), dotknięcie przywraca panel.
 - Desktop i inne szablony: `fitHorizontally` (pełna szerokość dzieła).
 - Reset / double-click / resize (poza fullscreen) wraca do tego samego trybu.
+- Poza samą górą strony (`scrollY > 0`): wheel na viewerze przewija stronę **natywnie** (`scrollToZoom: false`, bez `scrollBy`). Na górze — zoom kółkiem (ciągły, wg `deltaY`); przy max oddaleniu scroll w dół przechodzi na stronę. W fullscreen — domyślny zoom OSD.
 
 ---
 

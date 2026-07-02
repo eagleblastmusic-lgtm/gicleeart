@@ -15,6 +15,7 @@ Folder kodu: `cursor-api/Komponenty/`
 | `aktualizujopis` | Aktualizuj opis | [`aktualizujopis.md`](aktualizujopis.md) | skrót |
 | `zmienceny` | Zmień ceny | [`zmienceny.md`](zmienceny.md) | skrót |
 | `wyborszablonu` | Wybór szablonu produktu | [`wyborszablonu.md`](wyborszablonu.md) | skrót |
+| `wzorzecszablonu` | Wzorzec szablonu | [`wzorzecszablonu.md`](wzorzecszablonu.md) | pełny |
 | `zmietytuly` | Zmień tytuły | [`zmietytuly.md`](zmietytuly.md) | skrót |
 | `tytulyai` | Tytuły AI (Gemini) | [`tytulyai.md`](tytulyai.md) | skrót |
 | `nazwijobraz` | Nazwij obraz | [`nazwijobraz.md`](nazwijobraz.md) | skrót |
@@ -24,6 +25,8 @@ Folder kodu: `cursor-api/Komponenty/`
 | `print_optimize` | Optymalizacja druku | [`print_optimize.md`](print_optimize.md) | pełny |
 | `infoplikow` | Informacje o plikach | [`infoplikow.md`](infoplikow.md) | skrót |
 | `przedpo` | Przed/Po | [`przedpo.md`](przedpo.md) | skrót |
+| `stronaproduktu` | Strona produktu | [`stronaproduktu.md`](stronaproduktu.md) | pełny |
+| `stronaglowna` | Strona główna | [`stronaglowna.md`](stronaglowna.md) | pełny |
 | `obrazy` | Obrazy | [`obrazy.md`](obrazy.md) | skrót |
 | `produkcja` | Produkcja | [`produkcja.md`](produkcja.md) | pełny |
 | `passepartout` | Passe-partout | [`passepartout.md`](passepartout.md) | skrót |

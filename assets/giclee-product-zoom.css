@@ -18,6 +18,50 @@
   border-radius: 0;
 }
 
+/* ------------------------------------------------------------------ */
+/* PDP v3 — immersive zoom: przyblizenie R2 chowa menu i powieksza     */
+/* viewer do pelnego viewportu (klasa na <html> z giclee-product-zoom.js) */
+/* ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: no-preference) {
+  body:has(main[data-template='product.szablon-produktu-v3']) #header-group {
+    transition:
+      margin-top 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.4s ease;
+  }
+
+  main[data-template='product.szablon-produktu-v3'] .giclee-product-zoom__viewer {
+    transition:
+      height 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+      border-radius 0.6s ease;
+  }
+}
+
+/* Ujemny margines zwija miejsce headera (cala strona podjezdza w gore),
+   viewer rosnie do 100vh — R2 wypelnia caly viewport, sekcja opisu
+   zjezdza pod dolna krawedz ekranu. --pdp-v3-header-h mierzone w JS. */
+html.pdp-v3-zoom-immersive #header-group {
+  margin-top: calc(-1 * var(--pdp-v3-header-h, 96px));
+  opacity: 0;
+  pointer-events: none;
+}
+
+html.pdp-v3-zoom-immersive
+  main[data-template='product.szablon-produktu-v3']
+  .giclee-product-zoom__viewer {
+  height: 100vh;
+  max-height: none;
+  border-radius: 0;
+}
+
+/* PDP v3 — rozmycie R2 wraz z wjazdem sekcji opisu (var z
+   giclee-product-story.js, ciagle 0..10px) */
+main[data-template='product.szablon-produktu-v3']
+  .giclee-product-zoom
+  .giclee-product-zoom__viewer:not(:fullscreen) {
+  filter: blur(var(--pdp-v3-r2-blur, 0px));
+}
+
 .giclee-product-zoom__viewer:fullscreen {
   width: 100%;
   height: 100%;
@@ -105,7 +149,7 @@
 }
 
 @media screen and (max-width: 749px) {
-  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .giclee-product-zoom__viewer {
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2'], [data-template='product.szablon-produktu-v3']) .giclee-product-zoom__viewer {
     height: min(58vh, 640px);
     min-height: min(42vh, 360px);
     max-height: min(65vh, 720px);
@@ -117,13 +161,13 @@
     max-height: min(36vh, 360px);
   }
 
-  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .gz-toolbar {
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2'], [data-template='product.szablon-produktu-v3']) .gz-toolbar {
     z-index: calc(var(--layer-sticky, 8) - 1);
     transition: opacity 0.7s ease-out;
   }
 
-  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .gz-toolbar.gz-toolbar--idle,
-  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .gz-toolbar.gz-toolbar--clip-hidden {
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2'], [data-template='product.szablon-produktu-v3']) .gz-toolbar.gz-toolbar--idle,
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2'], [data-template='product.szablon-produktu-v3']) .gz-toolbar.gz-toolbar--clip-hidden {
     opacity: 0;
     pointer-events: none;
   }

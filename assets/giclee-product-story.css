@@ -1,0 +1,849 @@
+/* Stronicowany opis produktu — szablon product.szablon-produktu-v3 */
+
+/* Ukryte zrodlo danych (klasyczny opis) */
+.product-description-below--story-source {
+  display: none !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* Scroll-over: bloki PDP v3 przesuwaja sie nad sticky header         */
+/* ------------------------------------------------------------------ */
+
+main[data-template='product.szablon-produktu-v3'] {
+  --pdp-v3-header-z: 10;
+  --pdp-v3-main-z: 15;
+  --pdp-v3-r2-z: 12;
+  --pdp-v3-story-z: 20;
+  --pdp-v3-grid-z: 25;
+  --pdp-v3-before-after-z: 30;
+  --pdp-v3-process-z: 35;
+  --pdp-v3-trust-z: 40;
+  overflow-x: clip;
+}
+
+main[data-template='product.szablon-produktu-v3'] #header-group,
+main[data-template='product.szablon-produktu-v3'] .header-section,
+main[data-template='product.szablon-produktu-v3']
+  .header-section:has(> #header-component[sticky='always']),
+main[data-template='product.szablon-produktu-v3']
+  .header-section:has(> #header-component[sticky='scroll-up'][data-sticky-state='active']),
+main[data-template='product.szablon-produktu-v3'] #header-component {
+  z-index: var(--pdp-v3-header-z) !important;
+}
+
+main[data-template='product.szablon-produktu-v3'] #MainContent.content-for-layout {
+  position: relative;
+  z-index: var(--pdp-v3-main-z);
+  overflow: visible;
+}
+
+/* R2 sticky — sekcja opisu najeżdża przy scrollu (warstwa ponizej opisu) */
+main[data-template='product.szablon-produktu-v3'] .giclee-product-zoom {
+  position: sticky;
+  top: 0;
+  z-index: var(--pdp-v3-r2-z);
+  isolation: isolate;
+}
+
+/* Caly kontener PDP nad R2 (z 14 > 12). Czarne tlo pod szczelinami daje
+   KURTYNA doczepiona do opisu (.giclee-product-story::after nizej) — nie
+   ::before shellu przelaczane klasa: kompozytor przewija sticky o klatke
+   przed rAF-em JS i przy szybkim scrollu czarny pas wjezdzal nad opis. */
+main[data-template='product.szablon-produktu-v3'] .product-information {
+  position: relative;
+  overflow: visible;
+  z-index: 14;
+}
+
+/* Opis sticky — przypina sie DOLNA krawedzia do dolu ekranu (nie wjezdza pod
+   sam top). top = max(0, viewportH - storyH), liczony w JS (--pdp-v3-story-top);
+   nad opisem zostaje widoczny pasek R2. */
+main[data-template='product.szablon-produktu-v3'] .product-information .giclee-product-story {
+  position: sticky;
+  top: var(--pdp-v3-story-top, 0px);
+  z-index: var(--pdp-v3-story-z);
+  background-color: var(--color-background, #0a0a0a);
+  isolation: isolate;
+}
+
+/* Kurtyna tla: czarny pas od GORNEJ krawedzi opisu w dol, na wysokosc reszty
+   shellu (--pdp-v3-curtain-h z JS, liczona z layoutu — nie per frame).
+   Jedzie razem ze sticky opisem na kompozytorze, wiec nigdy nie wystaje nad
+   opis (pasek R2 zostaje widoczny) i bez opoznienia kryje hold/szczeliny pod
+   spodem. Po zadokowaniu wylaczona — opis (relative) odjezdza w gore, a
+   kurtyna o tej samej wysokosci nadal zakrywalaby caly viewport. */
+main[data-template='product.szablon-produktu-v3'] .product-information .giclee-product-story::after {
+  content: '';
+  position: absolute;
+  z-index: -2;
+  top: 0;
+  left: 50%;
+  width: 100vw;
+  height: var(--pdp-v3-curtain-h, 100vh);
+  transform: translateX(-50%);
+  background-color: var(--color-background, #0a0a0a);
+  pointer-events: none;
+}
+
+main[data-template='product.szablon-produktu-v3']
+  .product-information.is-grid-docked
+  .giclee-product-story::after,
+main[data-template='product.szablon-produktu-v3']
+  .product-information.is-scroll-normal
+  .giclee-product-story::after {
+  display: none;
+}
+
+main[data-template='product.szablon-produktu-v3'] .product-information .product-information__grid {
+  position: sticky;
+  top: 0;
+  z-index: var(--pdp-v3-grid-z);
+  isolation: isolate;
+  padding-top: var(--pdp-v3-grid-space-top, clamp(2.25rem, 5vw, 4.5rem));
+  background-color: var(--color-background, #0a0a0a);
+  box-sizing: border-box;
+}
+
+/* Konfigurator krotszy niz viewport: tlo (pdp-v3-config-bg, inset:0) konczylo
+   sie na wysokosci tresci — na dole ekranu zostawal waski pasek bez grafiki.
+   min-height w fazie aktywnej/docku = caly widok pokryty tlem. */
+main[data-template='product.szablon-produktu-v3']
+  .product-information
+  .product-information__grid.is-grid-slide-active,
+main[data-template='product.szablon-produktu-v3']
+  .product-information.is-grid-docked
+  .product-information__grid {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Opakowanie: sticky grid + hold-tail (pusty scroll bez fixed/scrollTo) */
+.giclee-grid-slide-pin {
+  position: relative;
+}
+
+.giclee-grid-slot-spacer,
+.giclee-grid-hold-tail {
+  height: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  main[data-template='product.szablon-produktu-v3'] .product-information .product-information__grid {
+    transform: translateX(var(--pdp-v3-grid-slide-x, 100%));
+    will-change: transform;
+  }
+
+  main[data-template='product.szablon-produktu-v3']
+    .product-information
+    .product-information__grid.is-grid-slide-hidden {
+    visibility: hidden;
+  }
+
+  /* Wjazd: fixed u gory — TYLKO ruch poziomy (bez skosu).
+     Szerokosc z clientWidth (JS var) — 100vw z paskiem przewijania dawalo
+     poziomy skok przy przejsciu fixed -> sticky. */
+  main[data-template='product.szablon-produktu-v3']
+    .product-information
+    .product-information__grid.is-grid-slide-fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--pdp-v3-grid-w, 100vw);
+    max-width: none;
+    margin: 0;
+    padding-left: var(--pdp-v3-grid-pad-left, 0);
+    padding-right: var(--pdp-v3-grid-pad-right, 0);
+    box-sizing: border-box;
+    z-index: var(--pdp-v3-grid-z);
+  }
+
+  /* Kurtyna slidera: czarne przedluzenie grida w dol podczas wjazdu i strefy
+     histerezy — pasek ponizej grida nie pokazuje opisu (wjezdza razem z
+     gridem, po pelnym docku przejmuje kurtyna opisu — kolor ten sam) */
+  main[data-template='product.szablon-produktu-v3']
+    .product-information
+    .product-information__grid.is-grid-slide-fixed::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 100vh;
+    background-color: var(--color-background, #0a0a0a);
+    pointer-events: none;
+  }
+
+  /* Hold + sticky: pelna szerokosc + czarne marginesy jak w opisie */
+  main[data-template='product.szablon-produktu-v3']
+    .product-information
+    .product-information__grid.is-grid-slide-active:not(.is-grid-slide-fixed) {
+    width: var(--pdp-v3-grid-w, 100vw);
+    max-width: none;
+    margin-left: var(--pdp-v3-grid-ml, calc(50% - 50vw));
+    padding-left: var(--pdp-v3-grid-pad-left, 0);
+    padding-right: var(--pdp-v3-grid-pad-right, 0);
+    box-sizing: border-box;
+  }
+}
+
+main[data-template='product.szablon-produktu-v3'] .product-information .giclee-before-after {
+  position: relative;
+  z-index: var(--pdp-v3-before-after-z);
+  background-color: var(--color-background, #0a0a0a);
+}
+
+/* Proces: klei sie do dolnej krawedzi grida naturalnie w flow (tuz pod
+   pinWrap) — dojezdza do niej w fazie hold, potem scrolluja razem.
+   z-index > opis (20): kurtyna story::after wystaje poza box opisu i bez
+   tego zakrywa proces (stacking context opisu). */
+main[data-template='product.szablon-produktu-v3'] .product-information .giclee-process {
+  position: relative;
+  z-index: var(--pdp-v3-process-z);
+  background-color: var(--color-background, #0a0a0a);
+}
+
+/* Grid zadokowany — opis zwalnia sticky; nic nie przeswituje w szczelinach
+   pod gridem (hold, marginesy separatorow) */
+main[data-template='product.szablon-produktu-v3']
+  .product-information.is-grid-docked
+  .giclee-product-story {
+  position: relative;
+}
+
+main[data-template='product.szablon-produktu-v3'] .product-information .giclee-trust {
+  position: relative;
+  z-index: var(--pdp-v3-trust-z);
+  background-color: var(--color-background, #0a0a0a);
+}
+
+/* Tryb normalny (galeria juz odklejona) — zwolnij sticky opisu i grida */
+main[data-template='product.szablon-produktu-v3']
+  .product-information.is-scroll-normal
+  .giclee-product-story,
+main[data-template='product.szablon-produktu-v3']
+  .product-information.is-scroll-normal
+  .product-information__grid {
+  position: relative;
+}
+
+main[data-template='product.szablon-produktu-v3'] .product-information .giclee-product-story::before,
+main[data-template='product.szablon-produktu-v3'] .product-information .giclee-before-after::before,
+main[data-template='product.szablon-produktu-v3'] .product-information .giclee-process::before,
+main[data-template='product.szablon-produktu-v3'] .product-information .giclee-trust::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  background-color: inherit;
+  box-shadow: inset 0 2px 0 var(--color-background, #0a0a0a);
+  pointer-events: none;
+}
+
+.giclee-product-story {
+  position: relative;
+  width: 100%;
+  padding: clamp(1.5rem, 3vw, 2.75rem) 0 clamp(1.25rem, 2.5vw, 2rem);
+}
+
+.giclee-story__inner {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 46%) minmax(0, 54%);
+  gap: clamp(2rem, 4.5vw, 4rem);
+  align-items: stretch;
+  height: var(--giclee-story-locked-height, auto);
+}
+
+/* ------------------------------------------------------------------ */
+/* Lewa kolumna — tekst                                                */
+/* ------------------------------------------------------------------ */
+
+.giclee-story__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.giclee-story__counter {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
+  font-weight: 300;
+  letter-spacing: 0.28em;
+  color: rgb(var(--color-foreground-rgb, 255 255 255) / 0.6);
+  padding-bottom: 0.85rem;
+  margin-bottom: clamp(1.25rem, 2.5vw, 1.9rem);
+  border-bottom: 1px solid rgb(var(--color-foreground-rgb, 255 255 255) / 0.16);
+}
+
+.giclee-story__header {
+  margin-bottom: clamp(1.1rem, 2vw, 1.6rem);
+}
+
+.giclee-story__title {
+  margin: 0 0 0.9rem;
+  font-family: 'Bodoni Moda', Georgia, serif;
+  font-weight: 500;
+  font-size: clamp(1.55rem, 2.6vw, 2.3rem);
+  line-height: 1.22;
+  letter-spacing: 0.01em;
+  color: rgb(var(--color-foreground-rgb, 255 255 255) / 0.96);
+  text-wrap: balance;
+}
+
+.giclee-story__artist {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgb(198 168 120 / 0.92);
+  margin-bottom: 0.35rem;
+}
+
+.giclee-story__dates {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(0.78rem, 0.95vw, 0.88rem);
+  font-weight: 300;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgb(var(--color-foreground-rgb, 255 255 255) / 0.5);
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid rgb(var(--color-foreground-rgb, 255 255 255) / 0.16);
+}
+
+/* Strony — wysokosc sekcji zablokowana wg strony SZCZEGOLY (JS) */
+.giclee-story__pages {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-bottom: clamp(1.5rem, 3vw, 2.25rem);
+}
+
+.giclee-story__page {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(0.7rem);
+  transition:
+    opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0.5s;
+}
+
+.giclee-story__page.is-active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition:
+    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.12s,
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.12s,
+    visibility 0s;
+}
+
+.giclee-story__paragraph {
+  margin: 0 0 1.1em;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 300;
+  font-size: clamp(1rem, 1.25vw, 1.12rem);
+  line-height: 1.72;
+  letter-spacing: 0.01em;
+  color: rgb(var(--color-foreground-rgb, 255 255 255) / 0.82);
+}
+
+.giclee-story__paragraph:last-child {
+  margin-bottom: 0;
+}
+
+/* Inicjal na pierwszej stronie */
+.giclee-story__page--first .giclee-story__paragraph:first-child::first-letter {
+  float: left;
+  font-family: 'Bodoni Moda', Georgia, serif;
+  font-weight: 500;
+  font-size: 3.1em;
+  line-height: 0.82;
+  padding: 0.08em 0.14em 0 0;
+  color: rgb(var(--color-foreground-rgb, 255 255 255) / 0.95);
+}
+
+/* Strona SZCZEGOLY */
+.giclee-story__details-heading {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(0.82rem, 1vw, 0.92rem);
+  font-weight: 500;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: rgb(198 168 120 / 0.92);
+  padding-bottom: 0.85rem;
+  margin-bottom: clamp(1.25rem, 2.5vw, 1.6rem);
+  border-bottom: 1px solid rgb(var(--color-foreground-rgb, 255 255 255) / 0.16);
+}
+
+.giclee-story__details-list {
+  margin: 0;
+}
+
+.giclee-story__details-row {
+  display: grid;
+  grid-template-columns: minmax(9rem, 38%) 1fr;
+  gap: 1.25rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid rgb(var(--color-foreground-rgb, 255 255 255) / 0.09);
+}
+
+.giclee-story__details-row:last-child {
+  border-bottom: 0;
+}
+
+.giclee-story__details-label {
+  margin: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(0.78rem, 0.95vw, 0.86rem);
+  font-weight: 300;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(var(--color-foreground-rgb, 255 255 255) / 0.52);
+}
+
+.giclee-story__details-value {
+  margin: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(0.95rem, 1.15vw, 1.05rem);
+  font-weight: 300;
+  line-height: 1.5;
+  color: rgb(var(--color-foreground-rgb, 255 255 255) / 0.88);
+}
+
+.giclee-story__details-raw {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 300;
+  font-size: clamp(0.95rem, 1.15vw, 1.05rem);
+  line-height: 1.7;
+  color: rgb(var(--color-foreground-rgb, 255 255 255) / 0.85);
+}
+
+/* Szewrony po bokach sekcji */
+.giclee-story__chevron {
+  position: absolute;
+  top: var(--giclee-story-chevron-top, 50%);
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(3rem, 5vw, 4.5rem);
+  height: clamp(3rem, 5vw, 4.5rem);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgb(var(--color-foreground-rgb, 255 255 255) / 0.55);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(-50%);
+  transition:
+    opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.3s ease,
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.giclee-product-story.is-revealed .giclee-story__chevron:not(.is-hidden) {
+  opacity: 1;
+}
+
+/* Poza kontenerem — przy krawedziach ekranu (sekcja jest wysrodkowana) */
+.giclee-story__chevron--prev {
+  left: calc(50% - 50vw + clamp(2rem, 5vw, 5.25rem));
+}
+
+.giclee-story__chevron--next {
+  right: calc(50% - 50vw + clamp(2rem, 5vw, 5.25rem));
+}
+
+.giclee-story__chevron svg {
+  width: clamp(2.4rem, 3.6vw, 3.4rem);
+  height: clamp(2.4rem, 3.6vw, 3.4rem);
+}
+
+.giclee-story__chevron:hover {
+  color: rgb(214 188 146 / 1);
+}
+
+.giclee-story__chevron--prev:hover:not(.is-hidden) {
+  transform: translateY(-50%) translateX(-4px);
+}
+
+.giclee-story__chevron--next:hover:not(.is-hidden) {
+  transform: translateY(-50%) translateX(4px);
+}
+
+.giclee-story__chevron:focus-visible {
+  outline: none;
+  color: rgb(214 188 146 / 1);
+}
+
+/* Ukrycie, gdy brak dalszych stron — z eleganckim odsunieciem */
+.giclee-story__chevron.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.giclee-story__chevron--prev.is-hidden {
+  transform: translateY(-50%) translateX(-10px);
+}
+
+.giclee-story__chevron--next.is-hidden {
+  transform: translateY(-50%) translateX(10px);
+}
+
+/* Subtelny, ciagly ruch grotu — przyciaga wzrok bez natrectwa */
+@media (prefers-reduced-motion: no-preference) {
+  .giclee-story__chevron:not(.is-hidden) svg {
+    animation: giclee-chevron-drift-next 3.2s ease-in-out infinite;
+  }
+
+  .giclee-story__chevron--prev:not(.is-hidden) svg {
+    animation-name: giclee-chevron-drift-prev;
+  }
+
+  .giclee-story__chevron:hover svg {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes giclee-chevron-drift-next {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes giclee-chevron-drift-prev {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-3px);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Prawa kolumna — grafika                                             */
+/* ------------------------------------------------------------------ */
+
+.giclee-story__media {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.giclee-story__frame {
+  position: relative;
+  display: grid;
+  grid-template: 1fr / 1fr;
+  width: 100%;
+  aspect-ratio: 4 / 3.4;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgb(0 0 0 / 0.35);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.04) inset,
+    0 24px 64px rgb(0 0 0 / 0.42),
+    0 0 48px rgb(255 255 255 / 0.03);
+}
+
+.giclee-story__image {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transform: scale(1.025);
+  transition:
+    opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.giclee-story__image.is-active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.giclee-story__dots {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: center;
+  margin-top: 1.1rem;
+}
+
+.giclee-story__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(var(--color-foreground-rgb, 255 255 255) / 0.22);
+  cursor: pointer;
+  transition: background-color 0.25s ease, transform 0.25s ease;
+}
+
+.giclee-story__dot:hover {
+  background: rgb(var(--color-foreground-rgb, 255 255 255) / 0.45);
+}
+
+.giclee-story__dot.is-active {
+  background: rgb(198 168 120 / 0.95);
+  transform: scale(1.15);
+}
+
+/* ------------------------------------------------------------------ */
+/* Reveal przy scrollu                                                 */
+/* ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: no-preference) {
+  .giclee-product-story:not(.is-revealed) .giclee-story__inner {
+    opacity: 0;
+    transform: translateY(1.1rem);
+  }
+
+  .giclee-product-story.is-revealed .giclee-story__inner {
+    animation: giclee-story-reveal 0.72s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes giclee-story-reveal {
+    from {
+      opacity: 0;
+      transform: translateY(1.1rem);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Tlo konfiguratora — obraz jak w karuzeli + subtelny mouse parallax  */
+/* (element wstrzykiwany w giclee-product-story.js, ustawienia z       */
+/* window.__PDP_V3_EFFECTS__.config_bg)                                */
+/* ------------------------------------------------------------------ */
+
+main[data-template='product.szablon-produktu-v3']
+  .product-information
+  .product-information__grid
+  .pdp-v3-config-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.pdp-v3-config-bg__layers {
+  position: absolute;
+  inset: 0;
+  filter: blur(var(--pdp-v3-cbg-blur, 11px)) brightness(var(--pdp-v3-cbg-brightness, 1));
+  transform: scale(1.08)
+    translate3d(var(--pdp-v3-cbg-px, 0px), var(--pdp-v3-cbg-py, 0px), 0);
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.pdp-v3-config-bg__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+}
+
+/* Nakladki z zapasem -4px: obraz pod spodem jest na wlasnej warstwie
+   kompozytora (filter + will-change transform) i przy ulamkowych pozycjach
+   grida (sticky/translateX) rastrowal sie o piksel szerzej niz nakladka —
+   z lewej robil sie jasny, nieprzyciemniony pasek. Zapas i tak przycina
+   overflow: hidden kontenera. */
+.pdp-v3-config-bg__overlay {
+  position: absolute;
+  inset: -4px;
+  z-index: 1;
+  background: rgba(0, 0, 0, 0.52);
+}
+
+.pdp-v3-config-bg__gradient {
+  position: absolute;
+  inset: -4px;
+  z-index: 2;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.58) 0%,
+    rgba(0, 0, 0, 0.2) 42%,
+    rgba(0, 0, 0, 0.66) 100%
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pdp-v3-config-bg__layers {
+    transform: scale(1.02) !important;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Wspolne tlo graficzne sekcji proces + trust (jeden obraz na obie,   */
+/* wrapper w product-information-content.liquid; blur/jasnosc z        */
+/* metafielda przez inline CSS vars)                                   */
+/* ------------------------------------------------------------------ */
+
+main[data-template='product.szablon-produktu-v3'] .pdp-v3-pt-wrap {
+  position: relative;
+  isolation: isolate;
+  /* Caly wrap nad opisem (20): bez tego z-index dzieci (process 35) jest
+     zamkniety w kontekscie wrapu na auto/0 i kurtyna story::after przykrywa
+     proces mimo z-index na .giclee-process. */
+  z-index: var(--pdp-v3-process-z);
+}
+
+/* Separator po wrapperze — te same odstepy co po .giclee-trust */
+.pdp-v3-pt-wrap + .product-description-trailing-separator {
+  margin-top: 0.25em;
+  margin-bottom: 0.5em;
+}
+
+main[data-template='product.szablon-produktu-v3'] .pdp-v3-pt-wrap.has-bg::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%) scale(1.03);
+  background-image: var(--pdp-v3-pt-image);
+  background-size: cover;
+  background-position: center;
+  filter: blur(var(--pdp-v3-pt-blur, 0px)) brightness(var(--pdp-v3-pt-brightness, 1));
+  pointer-events: none;
+}
+
+/* Przyciemnienie dla czytelnosci tresci nad grafika.
+   Ten sam scale(1.03) co grafika w ::before — bez niego obraz wystawal
+   gora i dolem poza nakladke (przeswit nieprzyciemnionej grafiki). */
+main[data-template='product.szablon-produktu-v3'] .pdp-v3-pt-wrap.has-bg::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%) scale(1.03);
+  background: rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+/* Czarne tla sekcji zwalniaja miejsce dla grafiki (::before dziedziczy
+   background-color, inset box-shadow rysowalby czarna linie) */
+main[data-template='product.szablon-produktu-v3'] .pdp-v3-pt-wrap.has-bg .giclee-process,
+main[data-template='product.szablon-produktu-v3'] .pdp-v3-pt-wrap.has-bg .giclee-trust {
+  background-color: transparent;
+}
+
+main[data-template='product.szablon-produktu-v3'] .pdp-v3-pt-wrap.has-bg .giclee-process::before,
+main[data-template='product.szablon-produktu-v3'] .pdp-v3-pt-wrap.has-bg .giclee-trust::before {
+  box-shadow: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Warianty: niedostepne opcje z prawdziwa ramka                       */
+/* ------------------------------------------------------------------ */
+
+/* Motyw rysuje ramke niedostepnego przycisku pseudo-elementem na inset:0
+   pod overflow:clip (border-width:0 na labelu). Na gridzie v3 (transform +
+   will-change + sticky) przy ulamkowych pozycjach rastra gorna 1px linia
+   wypadala poza krawedz clipa i znikala. Prawdziwa ramka na elemencie jest
+   czescia jego boxa — nie podlega clipowi ani zaokragleniom pseudo. Pill
+   w niedostepnych opcjach i tak sie nie renderuje (variant-main-picker),
+   wiec ramka nic nie zaslania. */
+main[data-template='product.szablon-produktu-v3']
+  .variant-option__button-label:not(.variant-option__button-label--has-swatch):has(
+    [data-option-available='false']
+  ) {
+  border-width: var(--options-border-width);
+}
+
+main[data-template='product.szablon-produktu-v3']
+  .variant-option__button-label:not(.variant-option__button-label--has-swatch):has(
+    [data-option-available='false']
+  )::before,
+main[data-template='product.szablon-produktu-v3']
+  .variant-option__button-label:not(.variant-option__button-label--has-swatch):has(
+    [data-option-available='false']
+  )::after {
+  border-color: transparent;
+}
+
+/* ------------------------------------------------------------------ */
+/* Mobile                                                              */
+/* ------------------------------------------------------------------ */
+
+@media screen and (max-width: 749px) {
+  .giclee-story__inner {
+    grid-template-columns: 1fr;
+    gap: 1.6rem;
+  }
+
+  /* Grafika nad tekstem */
+  .giclee-story__media {
+    order: 0;
+  }
+
+  .giclee-story__text {
+    order: 1;
+  }
+
+  .giclee-story__frame {
+    aspect-ratio: 4 / 3;
+    border-radius: 12px;
+  }
+
+  .giclee-story__pages {
+    margin-bottom: 1.4rem;
+  }
+
+  .giclee-story__chevron--prev {
+    left: calc(50% - 50vw + 1.6rem);
+  }
+
+  .giclee-story__chevron--next {
+    right: calc(50% - 50vw + 1.6rem);
+  }
+
+  .giclee-story__chevron {
+    width: clamp(2.4rem, 9vw, 3.2rem);
+  }
+
+  .giclee-story__chevron svg {
+    width: clamp(2rem, 7vw, 2.8rem);
+    height: clamp(2rem, 7vw, 2.8rem);
+  }
+
+  .giclee-story__details-row {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+    padding: 0.65rem 0;
+  }
+}

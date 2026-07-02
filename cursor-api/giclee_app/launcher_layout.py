@@ -19,6 +19,7 @@ DEFAULT_SECTIONS: list[tuple[str, list[str]]] = [
             "nazwijobraz", "pobierzobraz", "squoosh", "print_optimize", "mockup", "infoplikow", "przedpo",
         ],
     ),
+    ("Administracja strony", ["wzorzecszablonu", "stronaproduktu", "karuzela", "tldobio", "stronaglowna"]),
     ("Zamowienia", ["obrazy", "produkcja", "passepartout"]),
     ("Finanse", ["finanse", "kalkulacja"]),
     ("Marketing", ["blog", "socialmedia", "zadania", "cenyMarketing", "analytics"]),

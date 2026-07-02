@@ -14,8 +14,10 @@ Warstwa **pusty** (sklep front). Hub: [`../README.md`](../README.md) · polityka
 | [`koszyk-faktura.md`](koszyk-faktura.md) | Prośba o fakturę w koszyku (osoba prywatna / firma) |
 | [`produkt-i-zoom.md`](produkt-i-zoom.md) | Zoom HD na karcie reprodukcji (OpenSeadragon + R2) |
 | [`szablony-i-strony.md`](szablony-i-strony.md) | Szablony custom: fotografia, PDP, menu |
+| [`pdp-v3-pusty-scroll.md`](pdp-v3-pusty-scroll.md) | **Wzorzec:** scroll choreography, pusty scroll, sticky-over (uniwersalny + referencja PDP v3) |
 | [`troubleshooting.md`](troubleshooting.md) | Layout, deploy, UI mockupu |
 | [`kolekcja-autora-showcase.md`](kolekcja-autora-showcase.md) | Galeria 3D / editorial kolekcji autora |
+| [`strona-glowna.md`](strona-glowna.md) | Landing page — sekcje, hero, suwaki przed/po |
 | [`losuj-obraz.md`](losuj-obraz.md) | „Losuj Obraz” — scena WebGL (Three.js) + fallback CSS |
 | [`tlumaczenia-tresci.md`](tlumaczenia-tresci.md) | Treści motywu po PL — klucze `giclee.*`, locale, JS |
 

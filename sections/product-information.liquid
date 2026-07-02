@@ -6,12 +6,12 @@
 
 {%- liquid
   assign giclee_pdp_template = false
-  if template.suffix == 'nowy-szblon-produktu' or template.suffix == 'szablon-produktu-v2' or template.suffix == 'szablon-wlasna-fotografia'
+  if template.suffix == 'nowy-szblon-produktu' or template.suffix == 'szablon-produktu-v2' or template.suffix == 'szablon-produktu-v3' or template.suffix == 'szablon-wlasna-fotografia'
     assign giclee_pdp_template = true
   endif
 
   assign show_sticky_add_to_cart = section.settings.enable_sticky_add_to_cart
-  if template.suffix == 'szablon-wlasna-fotografia' or template.suffix == 'szablon-produktu-v2'
+  if template.suffix == 'szablon-wlasna-fotografia' or template.suffix == 'szablon-produktu-v2' or template.suffix == 'szablon-produktu-v3'
     assign show_sticky_add_to_cart = false
   endif
 -%}
@@ -42,18 +42,48 @@
 {%- endif -%}
 
 {%- comment -%} Zoom HD (R2) tylko na szablonach Giclee PDP {%- endcomment -%}
-{%- if template.suffix == 'nowy-szblon-produktu' or template.suffix == 'szablon-produktu-v2' -%}
+{%- if template.suffix == 'nowy-szblon-produktu' or template.suffix == 'szablon-produktu-v2' or template.suffix == 'szablon-produktu-v3' -%}
   <link rel="stylesheet" href="{{ 'giclee-product-scroll-reveal.css' | asset_url }}?v=scroll-reveal-split-20260605">
-  <script src="{{ 'giclee-product-scroll-reveal.js' | asset_url }}?v=scroll-reveal-split-20260605" defer></script>
+  <script src="{{ 'giclee-product-scroll-reveal.js' | asset_url }}?v=scroll-reveal-v3-grid-slide-20260702" defer></script>
 {%- endif -%}
 
-{%- if template.suffix == 'szablon-produktu-v2' -%}
+{%- if template.suffix == 'szablon-produktu-v2' or template.suffix == 'szablon-produktu-v3' -%}
   <link rel="stylesheet" href="{{ 'giclee-product-before-after-compare.css' | asset_url }}?v=20260627">
   <script src="{{ 'giclee-product-before-after-compare.js' | asset_url }}?v=20260627" defer></script>
 {%- endif -%}
 
+{%- comment -%} v3: stronicowany opis produktu (mini strony) {%- endcomment -%}
+{%- if template.suffix == 'szablon-produktu-v3' -%}
+  <link rel="stylesheet" href="{{ 'giclee-product-story.css' | asset_url }}?v=story-20260702-grid-minh">
+  <script src="{{ 'giclee-product-story.js' | asset_url }}?v=story-20260702-curtain-hysteresis" defer></script>
+
+  {%- comment -%}
+    Ustawienia efektow PDP v3 (metafield shop custom.pdp_v3_effects, JSON):
+    zoom_immersive, r2_blur, config_bg{enabled,image,parallax,blur,brightness},
+    pt_bg{enabled,image,blur,brightness}. Zarzadzane przez GicleeApp
+    (komponent stronaproduktu -> Ustawienia efektow). Brak metafielda =
+    wszystkie efekty wlaczone; tlo konfiguratora = zdjecie glowne produktu.
+  {%- endcomment -%}
+  {%- liquid
+    assign pdp_fx = shop.metafields.custom.pdp_v3_effects.value
+    assign pdp_cbg_image = ''
+    if pdp_fx.config_bg.image != blank
+      assign pdp_cbg_image = pdp_fx.config_bg.image
+    elsif closest.product.featured_image
+      assign pdp_cbg_image = closest.product.featured_image | image_url: width: 1800
+    endif
+  -%}
+  <script>
+    window.__PDP_V3_EFFECTS__ = {{ pdp_fx | json }} || {};
+    window.__PDP_V3_EFFECTS__.config_bg = window.__PDP_V3_EFFECTS__.config_bg || {};
+    if (!window.__PDP_V3_EFFECTS__.config_bg.image) {
+      window.__PDP_V3_EFFECTS__.config_bg.image = {{ pdp_cbg_image | json }};
+    }
+  </script>
+{%- endif -%}
+
 {%- if giclee_pdp_template -%}
-  <link rel="stylesheet" href="{{ 'giclee-product-zoom.css' | asset_url }}?v=zoom-top-visible-20260605">
+  <link rel="stylesheet" href="{{ 'giclee-product-zoom.css' | asset_url }}?v=zoom-effects-20260702">
   {% render 'giclee-product-zoom', product: closest.product %}
   <link rel="stylesheet" href="{{ 'giclee-product-gallery.css' | asset_url }}?v=mobile-gallery-sep-20260605">
   <link rel="stylesheet" href="{{ 'giclee-product-trust.css' | asset_url }}?v=20260603">

@@ -54,21 +54,26 @@
   }
 }
 
+html.giclee-home-intro-run .shopify-section[data-giclee-home='intro'] > .section-background,
+html.giclee-home-intro-run .shopify-section[data-giclee-home='intro'] > .section,
 html.giclee-home-intro-run .shopify-section[id*='section_ThWw4Q'] > .section-background,
 html.giclee-home-intro-run .shopify-section[id*='section_ThWw4Q'] > .section {
   animation: giclee-home-intro-in 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+html.giclee-home-intro-run .shopify-section[data-giclee-home='intro'] > .section,
 html.giclee-home-intro-run .shopify-section[id*='section_ThWw4Q'] > .section {
   animation-delay: 0.1s;
 }
 
+.shopify-section[data-giclee-home='intro'] > .scroll-reveal,
 .shopify-section[id*='section_ThWw4Q'] > .scroll-reveal {
   opacity: 1 !important;
   transform: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html.giclee-home-intro-run .shopify-section[data-giclee-home='intro'] > *,
   html.giclee-home-intro-run .shopify-section[id*='section_ThWw4Q'] > * {
     animation: none !important;
     transform: none !important;
@@ -77,33 +82,42 @@ html.giclee-home-intro-run .shopify-section[id*='section_ThWw4Q'] > .section {
 
 /* Homepage intro — mobile: tekst przed obrazem */
 @media (max-width: 749px) {
+  .shopify-section[data-giclee-home='intro'] .group-block-content.mobile-column > .image-block,
   .shopify-section[id*='section_ThWw4Q'] .group-block-content.mobile-column > .image-block {
     order: 2;
   }
 
+  .shopify-section[data-giclee-home='intro'] .group-block-content.mobile-column > .text-block,
   .shopify-section[id*='section_ThWw4Q'] .group-block-content.mobile-column > .text-block {
     order: 1;
   }
 
   /* Korekcja kolorystyczna — mobile: tekst przed sliderem PRZED/PO */
+  .shopify-section[data-giclee-home='color-correction'] .section-content-wrapper.mobile-column > comparison-slider-component,
   .shopify-section[id*='section_bj9cY3'] .section-content-wrapper.mobile-column > comparison-slider-component {
     order: 2;
   }
 
+  .shopify-section[data-giclee-home='color-correction'] .section-content-wrapper.mobile-column > .group-block,
   .shopify-section[id*='section_bj9cY3'] .section-content-wrapper.mobile-column > .group-block {
     order: 1;
   }
 
   /* Zobacz różnicę — mobile: tekst przed sliderami */
+  .shopify-section[data-giclee-home='see-difference'] .section-content-wrapper.mobile-column > .group-block,
   .shopify-section[id*='section_P9LgB3'] .section-content-wrapper.mobile-column > .group-block {
     order: 1;
   }
 
+  .shopify-section[data-giclee-home='see-difference'] .section-content-wrapper.mobile-column > comparison-slider-component,
   .shopify-section[id*='section_P9LgB3'] .section-content-wrapper.mobile-column > comparison-slider-component {
     order: 2;
   }
 
   /* Zobacz różnicę — mobile: ukryj drugi slider PRZED/PO na końcu sekcji */
+  .shopify-section[data-giclee-home='see-difference']
+    .section-content-wrapper.mobile-column
+    > comparison-slider-component:last-of-type,
   .shopify-section[id*='section_P9LgB3']
     .section-content-wrapper.mobile-column
     > comparison-slider-component:last-of-type {
@@ -111,40 +125,40 @@ html.giclee-home-intro-run .shopify-section[id*='section_ThWw4Q'] > .section {
   }
 
   /* PDP nowy-szblon-produktu: SZCZEGÓŁY pod opisem (nie obok) */
-  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .product-description-below table,
-  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .product-description-below table tbody,
-  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .product-description-below table tr {
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2'], [data-template='product.szablon-produktu-v3']) .product-description-below table,
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2'], [data-template='product.szablon-produktu-v3']) .product-description-below table tbody,
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2'], [data-template='product.szablon-produktu-v3']) .product-description-below table tr {
     display: block;
     width: 100%;
   }
 
-  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .product-description-below table td {
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2'], [data-template='product.szablon-produktu-v3']) .product-description-below table td {
     display: block;
     width: 100% !important;
     max-width: 100%;
     box-sizing: border-box;
   }
 
-  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .product-description-below table tbody tr:last-child > td:nth-child(2) {
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2'], [data-template='product.szablon-produktu-v3']) .product-description-below table tbody tr:last-child > td:nth-child(2) {
     display: none !important;
   }
 
-  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .product-description-below table tbody tr:last-child > td:first-child {
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2'], [data-template='product.szablon-produktu-v3']) .product-description-below table tbody tr:last-child > td:first-child {
     padding-right: 0 !important;
     padding-bottom: 1.25rem;
   }
 
-  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .product-description-below table tbody tr:last-child > td:last-child {
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2'], [data-template='product.szablon-produktu-v3']) .product-description-below table tbody tr:last-child > td:last-child {
     padding-left: 0 !important;
     padding-top: 1.25rem !important;
     border-top: 1px solid rgba(255, 255, 255, 0.12);
   }
 
-  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .product-description-below table tbody tr:last-child > td:last-child > strong:first-child {
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2'], [data-template='product.szablon-produktu-v3']) .product-description-below table tbody tr:last-child > td:last-child > strong:first-child {
     text-align: center;
   }
 
-  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .product-description-below table tbody tr:last-child > td:last-child > strong:first-child::after {
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2'], [data-template='product.szablon-produktu-v3']) .product-description-below table tbody tr:last-child > td:last-child > strong:first-child::after {
     left: 50%;
     transform: translateX(-50%);
   }
@@ -181,15 +195,15 @@ html.giclee-home-intro-run .shopify-section[id*='section_ThWw4Q'] > .section {
 
 /* PDP nowy-szblon-produktu: SZCZEGÓŁY wyśrodkowane na desktopie */
 @media screen and (min-width: 750px) {
-  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .product-description-below table tbody tr:last-child > td:last-child {
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2'], [data-template='product.szablon-produktu-v3']) .product-description-below table tbody tr:last-child > td:last-child {
     text-align: center;
   }
 
-  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .product-description-below table tbody tr:last-child > td:last-child > strong:first-child {
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2'], [data-template='product.szablon-produktu-v3']) .product-description-below table tbody tr:last-child > td:last-child > strong:first-child {
     text-align: center;
   }
 
-  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2']) .product-description-below table tbody tr:last-child > td:last-child > strong:first-child::after {
+  main:is([data-template='product.nowy-szblon-produktu'], [data-template='product.szablon-produktu-v2'], [data-template='product.szablon-produktu-v3']) .product-description-below table tbody tr:last-child > td:last-child > strong:first-child::after {
     left: 50%;
     transform: translateX(-50%);
   }

@@ -67,6 +67,7 @@
       constrainDuringPan: true,
       gestureSettingsMouse: {
         dblClickToZoom: false,
+        scrollToZoom: false,
       },
       tileSources: {
         width: width,
@@ -93,7 +94,8 @@
       return (
         window.matchMedia('(max-width: 749px)').matches &&
         (template === 'product.nowy-szblon-produktu' ||
-          template === 'product.szablon-produktu-v2')
+          template === 'product.szablon-produktu-v2' ||
+          template === 'product.szablon-produktu-v3')
       );
     }
 
@@ -424,6 +426,7 @@
       const fullscreen = isFullscreenMode();
       const wasFullscreen = viewerEl.classList.contains('is-fullscreen');
       viewerEl.classList.toggle('is-fullscreen', fullscreen);
+      syncWheelZoomMode();
       pinToolbar();
       if (isNowySzblonMobile() && fullscreen !== wasFullscreen) {
         bumpToolbarActivity();
@@ -450,6 +453,106 @@
         setButtonIcon('fill', fullscreenFill ? 'contain' : 'fill');
       }
     }
+
+    function isAtMinZoom() {
+      const zoom = viewer.viewport.getZoom(true);
+      const minZoom = viewer.viewport.getMinZoom(true);
+      return zoom <= minZoom * 1.001 + 0.0001;
+    }
+
+    function isPageAtTop() {
+      return (window.scrollY || window.pageYOffset || 0) <= 1;
+    }
+
+    function syncWheelZoomMode() {
+      viewer.gestureSettingsMouse.scrollToZoom = isFullscreenMode();
+    }
+
+    /* ---- Immersive zoom (PDP v3): przyblizenie chowa menu i powieksza R2 --- */
+
+    function pdpV3Effects() {
+      return (typeof window !== 'undefined' && window.__PDP_V3_EFFECTS__) || {};
+    }
+
+    function immersiveEnabled() {
+      return (
+        getProductTemplate() === 'product.szablon-produktu-v3' &&
+        pdpV3Effects().zoom_immersive !== false &&
+        !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      );
+    }
+
+    function syncImmersive() {
+      if (!immersiveEnabled()) return;
+      var docEl = document.documentElement;
+      var on = !isFullscreenMode() && isPageAtTop() && !isAtMinZoom();
+      if (on === docEl.classList.contains('pdp-v3-zoom-immersive')) return;
+      if (on) {
+        /* Wysokosc headera mierzona przy wejsciu (gdy jeszcze widoczny) —
+           ujemny margines zwija jego miejsce, strona podjezdza w gore. */
+        var headerGroup = document.getElementById('header-group');
+        if (headerGroup) {
+          docEl.style.setProperty('--pdp-v3-header-h', headerGroup.offsetHeight + 'px');
+        }
+      }
+      docEl.classList.toggle('pdp-v3-zoom-immersive', on);
+    }
+
+    viewer.addHandler('zoom', syncImmersive);
+    window.addEventListener('scroll', syncImmersive, { passive: true });
+
+    function isWheelOverViewer(event) {
+      const rect = viewerEl.getBoundingClientRect();
+      return (
+        event.clientX >= rect.left &&
+        event.clientX <= rect.right &&
+        event.clientY >= rect.top &&
+        event.clientY <= rect.bottom
+      );
+    }
+
+    function wantsPageScrollPassthrough(event) {
+      if (!isPageAtTop()) return true;
+      return isAtMinZoom() && event.deltaY > 0;
+    }
+
+    /*
+     * OSD przechwytuje wheel nawet przy scrollToZoom:false — poza fullscreen
+     * obslugujemy wheel na document (capture). Passthrough: canvas-scroll z
+     * preventDefault:false → natywny scroll. Zoom: reczny zoomBy. Pan zostaje
+     * wlaczony (nie wylaczamy setMouseNavEnabled).
+     */
+    viewer.addHandler('canvas-scroll', function (event) {
+      if (isFullscreenMode()) return;
+      var original = event.originalEvent;
+      if (!original || typeof original.deltaY !== 'number') return;
+
+      if (wantsPageScrollPassthrough(original)) {
+        event.preventDefaultAction = true;
+        event.preventDefault = false;
+      }
+    });
+
+    document.addEventListener(
+      'wheel',
+      function (event) {
+        if (!viewer.isOpen() || isFullscreenMode() || !isWheelOverViewer(event)) {
+          return;
+        }
+
+        if (wantsPageScrollPassthrough(event)) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        var factor = Math.exp(-event.deltaY * 0.0018);
+        if (Math.abs(factor - 1) < 0.0001) return;
+        viewer.viewport.zoomBy(factor);
+        viewer.viewport.applyConstraints();
+      },
+      { capture: true, passive: false }
+    );
 
     viewer.addOnceHandler('open', function () {
       resetToDefaultView(true);

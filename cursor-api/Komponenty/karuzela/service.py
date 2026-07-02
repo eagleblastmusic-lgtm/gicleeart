@@ -18,8 +18,10 @@ _THEME_CONFIG_FILE = _THEME_ASSETS_DIR / "giclee-carousel-config.js"
 DEFAULT_PREVIEW_URL = "https://gicleeart.eu/collections/jacob-van-ruisdael"
 DEFAULT_VERSION: CarouselVersion = "Karuzela1"
 DEFAULT_SHOWCASE_LOOK: ShowcaseLook = "V2"
+DEFAULT_HOVER_BLUR = True
 STORAGE_KEY = "giclee-carousel-version"
 SHOWCASE_LOOK_STORAGE_KEY = "giclee-showcase-look"
+HOVER_BLUR_STORAGE_KEY = "giclee-karuzela-hover-blur"
 
 
 def load_settings() -> dict:
@@ -54,6 +56,11 @@ def get_showcase_look() -> ShowcaseLook:
     return DEFAULT_SHOWCASE_LOOK
 
 
+def get_hover_blur() -> bool:
+    value = load_settings().get("hover_blur_enabled", DEFAULT_HOVER_BLUR)
+    return bool(value)
+
+
 def set_carousel_version(version: CarouselVersion) -> None:
     data = load_settings()
     data["carousel_version"] = version
@@ -68,16 +75,26 @@ def set_showcase_look(look: ShowcaseLook) -> None:
     write_theme_config()
 
 
+def set_hover_blur(enabled: bool) -> None:
+    data = load_settings()
+    data["hover_blur_enabled"] = bool(enabled)
+    save_settings(data)
+    write_theme_config()
+
+
 def save_karuzela_settings(
     version: CarouselVersion,
     showcase_look: ShowcaseLook,
     preview_url: str | None = None,
+    hover_blur: bool | None = None,
 ) -> None:
     data = load_settings()
     data["carousel_version"] = version
     data["showcase_look"] = showcase_look
     if preview_url is not None:
         data["preview_url"] = preview_url.strip() or DEFAULT_PREVIEW_URL
+    if hover_blur is not None:
+        data["hover_blur_enabled"] = bool(hover_blur)
     save_settings(data)
     write_theme_config()
 
@@ -86,15 +103,18 @@ def write_theme_config() -> Path:
     """Zapis domyślnych ustawień karuzeli w pliku motywu (wymaga deploy na sklep)."""
     version = get_carousel_version()
     look = get_showcase_look()
+    hover_blur = get_hover_blur()
     if version not in ("Karuzela1", "Karuzela2"):
         version = DEFAULT_VERSION
     if look not in SHOWCASE_LOOKS:
         look = DEFAULT_SHOWCASE_LOOK
     _THEME_ASSETS_DIR.mkdir(parents=True, exist_ok=True)
+    hover_blur_js = "true" if hover_blur else "false"
     content = (
         "/** Domyślne ustawienia sekcji «Wybrane dzieła» (GicleeApp → Karuzela). */\n"
         f'window.__GICLEE_CAROUSEL_DEFAULT = "{version}";\n'
         f'window.__GICLEE_SHOWCASE_LOOK_DEFAULT = "{look}";\n'
+        f"window.__GICLEE_HOVER_BLUR_ENABLED = {hover_blur_js};\n"
         "(function (d) {\n"
         "  try {\n"
         '    var look = window.__GICLEE_SHOWCASE_LOOK_DEFAULT;\n'
@@ -122,20 +142,24 @@ def set_preview_url(url: str) -> None:
 def build_preview_url(
     version: CarouselVersion | None = None,
     showcase_look: ShowcaseLook | None = None,
+    hover_blur: bool | None = None,
 ) -> str:
     from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
     base = get_preview_url()
     ver = version or get_carousel_version()
     look = showcase_look or get_showcase_look()
+    hover = get_hover_blur() if hover_blur is None else bool(hover_blur)
     parsed = urlparse(base)
     query = [
         (k, v)
         for k, v in parse_qsl(parsed.query, keep_blank_values=True)
-        if k not in ("giclee_karuzela", "giclee_showcase_look")
+        if k
+        not in ("giclee_karuzela", "giclee_showcase_look", "giclee_hover_blur")
     ]
     query.append(("giclee_karuzela", ver))
     query.append(("giclee_showcase_look", look))
+    query.append(("giclee_hover_blur", "on" if hover else "off"))
     return urlunparse(
         (
             parsed.scheme,

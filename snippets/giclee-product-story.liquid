@@ -1,0 +1,22 @@
+{%- comment -%}
+  Stronicowany opis produktu (PDP v3) — „mini strony": tekst po lewej, grafika po prawej.
+
+  Zrodlo tresci: ukryty .product-description-below (naglowek + akapity + SZCZEGOLY).
+  Podzial stron + grafiki: metafield custom.story_pages (JSON):
+    { "pages": [ { "paragraphs": 2, "image": "https://..." }, ... ], "details_image": "https://..." }
+  Fallback bez metafielda: auto-podzial wg dlugosci tekstu, grafika = featured image.
+
+  Assety (podpiete w sections/product-information.liquid): giclee-product-story.css / .js
+{%- endcomment -%}
+{%- if product.description != blank -%}
+  {%- assign story_mf = product.metafields.custom.story_pages -%}
+  <section
+    class="giclee-product-story"
+    data-giclee-story
+    {%- if story_mf != blank %}
+    data-giclee-story-config='{{ story_mf.value | json }}'
+    {%- endif %}
+    data-giclee-story-fallback-image="{{ product.featured_image | image_url: width: 1400 }}"
+    aria-label="{{ product.title | escape }}"
+  ></section>
+{%- endif -%}

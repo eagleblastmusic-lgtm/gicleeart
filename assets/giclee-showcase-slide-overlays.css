@@ -39,6 +39,44 @@
   display: none;
 }
 
+/* Koniec scrollu strony — meta, potem cytat (sekwencyjny fade-in) */
+
+.giclee-showcase-overlay.is-gacs-end-slide-pending .giclee-showcase-overlay__meta,
+.giclee-showcase-overlay.is-gacs-end-slide-pending .carousel-quote,
+.giclee-showcase-overlay.is-gacs-end-slide-meta-in:not(.is-gacs-end-slide-quote-in) .carousel-quote {
+  opacity: 0 !important;
+  filter: blur(4px);
+  transition: none !important;
+  pointer-events: none;
+}
+
+.giclee-showcase-overlay.is-gacs-end-slide-meta-in .giclee-showcase-overlay__meta {
+  opacity: 0.82 !important;
+  filter: blur(0);
+  transition:
+    opacity 1.05s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 1.05s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+.giclee-showcase-overlay.is-gacs-end-slide-quote-in .carousel-quote {
+  opacity: 1 !important;
+  filter: blur(0);
+  transition:
+    opacity 1.05s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 1.05s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+/* Po meta-in/quote-in — wygaszenie przy scrollu w górę musi wygrać nad stanem widocznym */
+.giclee-showcase-overlay.is-gacs-end-scroll-hide-armed .giclee-showcase-overlay__meta,
+.giclee-showcase-overlay.is-gacs-end-scroll-hide-armed .carousel-quote {
+  opacity: 0 !important;
+  filter: blur(5px);
+  transition:
+    opacity 0.68s cubic-bezier(0.45, 0, 0.55, 1),
+    filter 0.68s cubic-bezier(0.45, 0, 0.55, 1) !important;
+  pointer-events: none;
+}
+
 /* Animacja zmiany autora — fade off przy nowym tle (Karuzela2), fade on po podmianie galerii (JS) */
 
 .giclee-showcase-overlay__meta,
@@ -175,5 +213,10 @@
   .is-gacs-overlay-reveal-armed .carousel-quote {
     opacity: 1 !important;
     filter: blur(0) !important;
+  }
+
+  .is-gacs-end-scroll-hide-armed .giclee-showcase-overlay__meta,
+  .is-gacs-end-scroll-hide-armed .carousel-quote {
+    transition: none !important;
   }
 }

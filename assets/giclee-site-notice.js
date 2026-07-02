@@ -2,6 +2,11 @@
   var root = document.getElementById('giclee-site-notice');
   if (!root) return;
 
+  try {
+    var skip = new URLSearchParams(window.location.search).get('giclee_skip_notice');
+    if (skip === '1') return;
+  } catch (e) {}
+
   var btn = root.querySelector('[data-giclee-site-notice-accept]');
   var isClosing = false;
   var isOpen = false;

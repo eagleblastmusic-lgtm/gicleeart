@@ -1,6 +1,7 @@
 /** Domyślne ustawienia sekcji «Wybrane dzieła» (GicleeApp → Karuzela). */
 window.__GICLEE_CAROUSEL_DEFAULT = "Karuzela2";
 window.__GICLEE_SHOWCASE_LOOK_DEFAULT = "V2";
+window.__GICLEE_HOVER_BLUR_ENABLED = false;
 (function (d) {
   try {
     var look = window.__GICLEE_SHOWCASE_LOOK_DEFAULT;

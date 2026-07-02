@@ -1,13 +1,16 @@
 # Karuzela (GicleeApp)
 
-Ustawienia sekcji **Wybrane dzieła** na sklepie — dwa niezależne wymiary:
+Ustawienia sekcji **Wybrane dzieła** na sklepie — niezależne wymiary:
 
 | Wymiar | Opcje | Co zmienia |
 |--------|-------|------------|
 | **Zachowanie karuzeli** | Karuzela1 / Karuzela2 | JS karuzeli, dynamiczne tło produktu (Karuzela2) |
 | **Wygląd sekcji** | V1 / V2 / V3 | Tylko tło sekcji: gradient, kontrast, tekstura, overlay Karuzela2 |
+| **Rozmycie tła (hover)** | wł. / wył. | Blur tła sekcji po najechaniu na obraz karuzeli (tylko Karuzela2) |
 
 Hub: [`README.md`](README.md) · Motyw: [`docs/motyw/kolekcja-autora-showcase.md`](../../../docs/motyw/kolekcja-autora-showcase.md)
+
+Sekcja launchera GicleeApp: **Administracja strony** (kafelek «Karuzela»).
 
 ---
 
@@ -16,10 +19,10 @@ Hub: [`README.md`](README.md) · Motyw: [`docs/motyw/kolekcja-autora-showcase.md
 | Plik | Rola |
 |------|------|
 | `Komponenty/karuzela/gui.py` | Panel — radio Karuzela1/2 + V1/V2/V3, podgląd, przycisk **Cytaty** |
-| `Komponenty/karuzela/quotes_gui.py` | Okno cytatów — lista kolekcji, edycja tekstu |
+| `Komponenty/karuzela/quotes_gui.py` | Widok cytatów — lista kolekcji, edycja tekstu (przejście w tym samym oknie) |
 | `Komponenty/karuzela/quotes_service.py` | Metafield + cache lokalny |
 | `Komponenty/karuzela/service.py` | `settings.json`, `assets/giclee-carousel-config.js` |
-| `Komponenty/karuzela/settings.json` | `carousel_version`, `showcase_look`, URL podglądu |
+| `Komponenty/karuzela/settings.json` | `carousel_version`, `showcase_look`, `hover_blur_enabled`, URL podglądu |
 | `assets/giclee-karuzela.js` | Router + `data-giclee-showcase-look` na `<html>` |
 | `assets/giclee-carousel-config.js` | Domyślne wartości po deploy motywu |
 | `assets/giclee-artist-collection-showcase.css` | V2 = domyślne tokeny; V1/V3 = override `[data-giclee-showcase-look]` |
@@ -34,7 +37,7 @@ Hub: [`README.md`](README.md) · Motyw: [`docs/motyw/kolekcja-autora-showcase.md
 3. **Wygląd sekcji:** V1 (ciemniejsze, sprzed korekty), V2 (jaśniejsze z teksturą) lub **V3** (spokojniejsze, mniej kontrastu — karuzela na pierwszym planie).
 4. **Zapisz** — `settings.json` + `giclee-carousel-config.js`.
 5. **Otwórz podgląd** — URL z `?giclee_karuzela=` i `?giclee_showcase_look=` (+ localStorage).
-6. **Cytaty…** — wiele cytatów per kolekcja (Shopify metafield `custom.collection_quotes`); na storefront losowy cytat przy wejściu na autora.
+6. **Cytaty…** — przejście do widoku cytatów w tym samym oknie (wiele cytatów per kolekcja, metafield `custom.collection_quotes`); na storefront losowy cytat przy wejściu na autora.
 
 Domyślny URL podglądu: `https://gicleeart.eu/collections/jacob-van-ruisdael`.
 
@@ -70,7 +73,9 @@ Przy pierwszym zapisie komponent tworzy definicję metafield (GraphQL). Wzorzec 
 | V2 | Jaśniejsze tło z większą teksturą (domyślne) |
 | V3 | Widoczne tło, ~12% mniej kontrastu/nasycenia — uspokojone względem karuzeli |
 
-**API w przeglądarce:** `GicleeKaruzela.setVersion('Karuzela2')`, `GicleeKaruzela.setShowcaseLook('V3')` — przeładowuje stronę.
+**Rozmycie tła (hover):** URL `?giclee_hover_blur=on|off` → `localStorage` `giclee-karuzela-hover-blur` → `__GICLEE_HOVER_BLUR_ENABLED` → domyślnie wł. Storefront: klasa `is-gac-k2-hover-blur` na sekcji przy hoverze obrazu (blur 6px); wyłączone na touch i `prefers-reduced-motion`.
+
+**API w przeglądarce:** `GicleeKaruzela.setVersion('Karuzela2')`, `GicleeKaruzela.setShowcaseLook('V3')`, `GicleeKaruzela.setHoverBlur(true)` — przeładowuje stronę.
 
 ---
 

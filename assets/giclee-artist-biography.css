@@ -8,6 +8,7 @@
   --gab-hero-height: clamp(560px, 56svh, 640px);
   --gab-menu-fade-height: clamp(88px, calc(var(--header-group-height, 72px) + 36px), 168px);
   --gab-menu-fade-height-narrow: clamp(52px, calc(var(--header-group-height, 72px) + 4px), 96px);
+  --gab-menu-fade-height-wide-v3: calc(var(--gab-menu-fade-height) * 0.6);
 }
 
 .giclee-artist-biography-section .giclee-artist-bio.layout-panel-flex {
@@ -21,6 +22,137 @@
 
 .giclee-artist-bio {
   --gab-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Scroll-shift: napisy — lewo/prawo od pierwszego scrollu do końca strony; tło statyczne */
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host {
+  --gab-scroll-title-x: 0px;
+  --gab-scroll-body-x: 0px;
+  --gab-scroll-shift-blur: 0px;
+  --gab-scroll-shift-opacity: 1;
+  --gab-scroll-bg-scale: 1;
+  --gab-scroll-bg-stack-scale: 1;
+}
+
+/* cover-scale 1.04 — baseline stacku = ten sam kadr co przed scroll-shift (bez skoku) */
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host:has(
+    [data-gab-custom-bg] .giclee-artist-bio-bg__image--cover-scale
+  ) {
+  --gab-scroll-bg-stack-scale: 1.04;
+}
+
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host:not(:has(.giclee-artist-bio.is-transitioning))
+  [data-gab-scroll="left"],
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host:not(:has(.giclee-artist-bio.is-transitioning))
+  .giclee-artist-bio__title,
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host:not(:has(.giclee-artist-bio.is-transitioning))
+  .giclee-artist-bio__body-inner
+  h4,
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host:not(:has(.giclee-artist-bio.is-transitioning))
+  .giclee-artist-bio--legacy
+  h1 {
+  transform: translate3d(var(--gab-scroll-title-x), 0, 0);
+  filter: blur(var(--gab-scroll-shift-blur, 0px));
+  opacity: var(--gab-scroll-shift-opacity, 1);
+}
+
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host:not(:has(.giclee-artist-bio.is-transitioning))
+  [data-gab-scroll="right"] {
+  transform: translate3d(var(--gab-scroll-body-x), 0, 0);
+  filter: blur(var(--gab-scroll-shift-blur, 0px));
+  opacity: var(--gab-scroll-shift-opacity, 1);
+}
+
+/* Tytuł + daty (h4) — lewo; portret + akapity — prawo; bez przycinania przy transform */
+body:has(.giclee-artist-collection-showcase-section)
+  .shopify-section.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host {
+  overflow: visible;
+}
+
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host .custom-section-content,
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host .giclee-artist-bio.layout-panel-flex {
+  overflow: visible !important;
+}
+
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host .giclee-artist-bio__body,
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host .giclee-artist-bio__body-inner {
+  overflow: visible;
+}
+
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host [data-gab-scroll="left"],
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host .giclee-artist-bio__title,
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host .giclee-artist-bio__body-inner h4,
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host .giclee-artist-bio--legacy h1,
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host [data-gab-scroll="right"] {
+  will-change: transform, filter, opacity;
+  backface-visibility: hidden;
+}
+
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host:not(:has(.giclee-artist-bio.is-transitioning))
+  [data-gab-scroll="left"],
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host:not(:has(.giclee-artist-bio.is-transitioning))
+  .giclee-artist-bio__title,
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host:not(:has(.giclee-artist-bio.is-transitioning))
+  .giclee-artist-bio__body-inner
+  h4,
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host:not(:has(.giclee-artist-bio.is-transitioning))
+  .giclee-artist-bio--legacy
+  h1,
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host:not(:has(.giclee-artist-bio.is-transitioning))
+  [data-gab-scroll="right"],
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host:not(:has(.giclee-artist-bio.is-transitioning))
+  .giclee-artist-bio--legacy
+  rte-formatter
+  > div {
+  transition: none;
+}
+
+/* Tło bio: zoom stacku + fade-out całej warstwy */
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host:not(:has(.giclee-artist-bio.is-transitioning))
+  [data-gab-custom-bg]:not(.is-bg-crossfading) {
+  opacity: var(--gab-scroll-shift-opacity, 1);
+  transition: none !important;
+}
+
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host:not(:has(.giclee-artist-bio.is-transitioning))
+  [data-gab-custom-bg]:not(.is-bg-crossfading)
+  [data-gab-bg-stack] {
+  transform: scale(var(--gab-scroll-bg-stack-scale, var(--gab-scroll-bg-scale, 1)));
+  transform-origin: center center;
+  transition: none !important;
+  will-change: transform;
+}
+
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host:not(:has(.giclee-artist-bio.is-transitioning))
+  [data-gab-custom-bg]:not(.is-bg-crossfading)
+  .giclee-artist-bio-bg__image--cover-scale {
+  transform: none !important;
+}
+
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host:not(:has(.giclee-artist-bio.is-transitioning))
+  .background-image-container {
+  opacity: var(--gab-scroll-shift-opacity, 1);
+  transform: scale(var(--gab-scroll-bg-scale, 1));
+  transform-origin: center center;
+  transition: none !important;
+  will-change: transform, opacity;
+}
+
+.giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host:not(:has(.giclee-artist-bio.is-transitioning))
+  .background-image-container
+  img {
+  transition: none !important;
+}
+
+@media screen and (max-width: 749px) {
+  .giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host {
+    --gab-scroll-title-x: 0px;
+    --gab-scroll-body-x: 0px;
+    --gab-scroll-shift-blur: 0px;
+    --gab-scroll-shift-opacity: 1;
+    --gab-scroll-bg-scale: 1;
+    --gab-scroll-bg-stack-scale: 1;
+  }
 }
 
 .giclee-artist-bio__title,
@@ -143,6 +275,15 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .giclee-artist-biography-section.giclee-artist-bio--scroll-shift-host {
+    --gab-scroll-title-x: 0px !important;
+    --gab-scroll-body-x: 0px !important;
+    --gab-scroll-shift-blur: 0px !important;
+    --gab-scroll-shift-opacity: 1 !important;
+    --gab-scroll-bg-scale: 1 !important;
+    --gab-scroll-bg-stack-scale: 1 !important;
+  }
+
   .giclee-artist-bio__body-inner,
   .giclee-artist-bio__body-inner img,
   .giclee-artist-bio__title,
@@ -205,6 +346,7 @@
 .giclee-artist-biography-section.giclee-artist-biography-section--custom-bg .custom-section-background {
   background-color: #000;
   overflow: hidden;
+  box-shadow: inset 0 2px 0 #000, inset 0 -3px 0 #000;
 }
 
 .giclee-artist-biography-section .giclee-artist-bio-bg {
@@ -212,12 +354,6 @@
   inset: 0;
   z-index: 0;
   overflow: hidden;
-}
-
-.giclee-artist-biography-section--custom-bg .giclee-artist-bio-bg,
-.giclee-artist-biography-section--custom-bg .giclee-artist-bio-bg__stack {
-  top: -2px;
-  bottom: -4px;
 }
 
 .giclee-artist-biography-section .giclee-artist-bio-bg__stack {
@@ -398,6 +534,134 @@ body:has(.giclee-artist-collection-showcase-section)
     rgba(0, 0, 0, 0.94) 30%,
     rgba(0, 0, 0, 0.72) 52%,
     rgba(0, 0, 0, 0.28) 78%,
+    transparent 100%
+  );
+}
+
+body:has(.giclee-artist-collection-showcase-section)
+  .giclee-artist-biography-section--menu-gradient-wide-bottom
+  .custom-section-background::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  height: var(--gab-menu-fade-height);
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    #000 0%,
+    #000 12%,
+    rgba(0, 0, 0, 0.94) 30%,
+    rgba(0, 0, 0, 0.72) 52%,
+    rgba(0, 0, 0, 0.28) 78%,
+    transparent 100%
+  );
+}
+
+body:has(.giclee-artist-collection-showcase-section)
+  .giclee-artist-biography-section--menu-gradient-wide-bottom
+  .custom-section-background::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  height: var(--gab-menu-fade-height);
+  pointer-events: none;
+  background: linear-gradient(
+    0deg,
+    #000 0%,
+    #000 12%,
+    rgba(0, 0, 0, 0.94) 30%,
+    rgba(0, 0, 0, 0.72) 52%,
+    rgba(0, 0, 0, 0.28) 78%,
+    transparent 100%
+  );
+}
+
+body:has(.giclee-artist-collection-showcase-section)
+  .giclee-artist-biography-section--menu-gradient-wide-v2
+  .custom-section-background::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  height: var(--gab-menu-fade-height);
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 0.94) 20%,
+    rgba(0, 0, 0, 0.72) 45%,
+    rgba(0, 0, 0, 0.28) 75%,
+    transparent 100%
+  );
+}
+
+body:has(.giclee-artist-collection-showcase-section)
+  .giclee-artist-biography-section--menu-gradient-wide-v3
+  .custom-section-background::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  height: var(--gab-menu-fade-height-wide-v3);
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 0.94) 20%,
+    rgba(0, 0, 0, 0.72) 45%,
+    rgba(0, 0, 0, 0.28) 75%,
+    transparent 100%
+  );
+}
+
+body:has(.giclee-artist-collection-showcase-section)
+  .giclee-artist-biography-section--menu-gradient-wide-v3-bottom
+  .custom-section-background::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  height: var(--gab-menu-fade-height-wide-v3);
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 0.94) 20%,
+    rgba(0, 0, 0, 0.72) 45%,
+    rgba(0, 0, 0, 0.28) 75%,
+    transparent 100%
+  );
+}
+
+body:has(.giclee-artist-collection-showcase-section)
+  .giclee-artist-biography-section--menu-gradient-wide-v3-bottom
+  .custom-section-background::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  height: var(--gab-menu-fade-height-wide-v3);
+  pointer-events: none;
+  background: linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 0.94) 20%,
+    rgba(0, 0, 0, 0.72) 45%,
+    rgba(0, 0, 0, 0.28) 75%,
     transparent 100%
   );
 }

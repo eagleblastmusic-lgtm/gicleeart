@@ -32,7 +32,7 @@ CHANNELS: dict[str, Channel] = {
         code="fb_pl", label="Facebook PL", icon="F", color="#1877f2",
         language="pl", platform="fb",
         page_url="https://www.facebook.com/518592191330579",
-        store_url="https://gicleeart.eu/pl-pl",
+        store_url="https://gicleeart.eu",
     ),
     "fb_en": Channel(
         code="fb_en", label="Facebook EN", icon="F", color="#1877f2",
@@ -44,7 +44,7 @@ CHANNELS: dict[str, Channel] = {
         code="ig_pl", label="Instagram PL", icon="I", color="#e1306c",
         language="pl", platform="ig",
         page_url="https://www.instagram.com/gicleeart.polska/",
-        store_url="https://gicleeart.eu/pl-pl",
+        store_url="https://gicleeart.eu",
     ),
     "ig_en": Channel(
         code="ig_en", label="Instagram EN", icon="I", color="#e1306c",

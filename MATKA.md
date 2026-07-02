@@ -1,6 +1,7 @@
-# MATKA — wklej na start rozmowy
+# MATKA — skrót startowy (agent czyta automatycznie)
 
-> Skrót startowy. **Szczegóły, scenariusze, ID:** [`docs/README.md`](docs/README.md) · **diagnoza:** [`docs/zaleznosci.md`](docs/zaleznosci.md) · **konta:** [`USLUGI.md`](USLUGI.md)
+> Agent wczytuje ten plik na starcie rozmowy (reguła `.cursor/rules/dokumentacja.mdc`). Wklejka opcjonalna — tylko jedna linia z modułem, np. „Warstwa: motyw, moduł: karuzela showcase”.  
+> **Szczegóły, scenariusze, ID:** [`docs/README.md`](docs/README.md) · **diagnoza:** [`docs/zaleznosci.md`](docs/zaleznosci.md) · **konta:** [`USLUGI.md`](USLUGI.md)
 
 ---
 

@@ -1605,6 +1605,247 @@
     }
   };
 
+  var K2_BG_BLUR_MAX = 11;
+
+  function easeK2BgSharpness(t) {
+    return Math.pow(clamp(t, 0, 1), 1.35);
+  }
+
+  function getK2BgBlurMaxPx() {
+    if (
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return 0;
+    }
+    var mq = window.matchMedia && window.matchMedia("(max-width: 749px)");
+    if (mq && mq.matches) return 0;
+    return K2_BG_BLUR_MAX;
+  }
+
+  function getPageScrollProgress() {
+    var scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    var vh = window.innerHeight || document.documentElement.clientHeight || 800;
+    var docHeight = Math.max(
+      document.documentElement.scrollHeight || 0,
+      document.body ? document.body.scrollHeight : 0
+    );
+    return clamp(scrollY / Math.max(docHeight - vh, 1), 0, 1);
+  }
+
+  function applyKaruzela2BgBlur(root, progress) {
+    if (!root || !root.classList.contains("giclee-karuzela2-active")) return;
+    var maxBlur = getK2BgBlurMaxPx();
+    if (maxBlur <= 0) {
+      root.style.setProperty("--gac-k2-bg-blur", "0px");
+      return;
+    }
+    var blur = maxBlur * (1 - easeK2BgSharpness(progress));
+    root.style.setProperty("--gac-k2-bg-blur", blur.toFixed(2) + "px");
+  }
+
+  function getShowcaseRevealProgress(showcase) {
+    var rect = showcase.getBoundingClientRect();
+    var vh = window.innerHeight || document.documentElement.clientHeight || 800;
+    if (rect.bottom <= 0 || rect.top >= vh) return 0;
+    var travel = Math.max(vh * 0.88, 1);
+    return clamp((travel - rect.top) / travel, 0, 1);
+  }
+
+  function getKaruzela2BgSharpnessProgress(showcase) {
+    var panel = showcase.closest("[data-gacs-scroll-panel]");
+    if (
+      panel &&
+      (panel.classList.contains("is-overlapping") ||
+        panel.classList.contains("is-pinned-top"))
+    ) {
+      var panelProgress = parseFloat(
+        panel.style.getPropertyValue("--gacs-progress") || "NaN"
+      );
+      if (!isNaN(panelProgress)) return panelProgress;
+    }
+
+    if (panel && panel.classList.contains("gacs-panel-scroll--static")) {
+      var staticRect = showcase.getBoundingClientRect();
+      var staticVh = window.innerHeight || 800;
+      if (staticRect.bottom > staticVh * 0.12 && staticRect.top < staticVh * 0.95) {
+        return getPageScrollProgress();
+      }
+      return 0;
+    }
+
+    return getShowcaseRevealProgress(showcase);
+  }
+
+  function updateKaruzela2BgSharpnessForShowcase(showcase) {
+    if (!showcase || !showcase.classList.contains("giclee-karuzela2-active")) return;
+    applyKaruzela2BgBlur(showcase, getKaruzela2BgSharpnessProgress(showcase));
+  }
+
+  var k2BgSharpnessShowcases = [];
+  var k2BgSharpnessRafPending = false;
+
+  function scheduleKaruzela2BgSharpnessUpdate() {
+    if (k2BgSharpnessRafPending) return;
+    k2BgSharpnessRafPending = true;
+    window.requestAnimationFrame(function () {
+      k2BgSharpnessRafPending = false;
+      k2BgSharpnessShowcases.forEach(updateKaruzela2BgSharpnessForShowcase);
+    });
+  }
+
+  function ensureKaruzela2BgSharpnessListeners() {
+    if (window._gacK2BgSharpnessScrollBound) return;
+    window._gacK2BgSharpnessScrollBound = true;
+    window.addEventListener("scroll", scheduleKaruzela2BgSharpnessUpdate, {
+      passive: true,
+    });
+    window.addEventListener("resize", scheduleKaruzela2BgSharpnessUpdate, {
+      passive: true,
+    });
+  }
+
+  function registerKaruzela2BgSharpness(showcase) {
+    if (!showcase || k2BgSharpnessShowcases.indexOf(showcase) !== -1) return;
+    k2BgSharpnessShowcases.push(showcase);
+    ensureKaruzela2BgSharpnessListeners();
+    scheduleKaruzela2BgSharpnessUpdate();
+  }
+
+  /* ── Subtelny parallax tła od ruchu myszy ── */
+  var K2_PARALLAX_MAX_X = 22;
+  var K2_PARALLAX_MAX_Y = 14;
+  var K2_PARALLAX_EASE = 0.075;
+  var k2ParallaxLayers = [];
+  var k2ParallaxPointerBound = false;
+  var k2ParallaxRafId = 0;
+  var k2ParallaxTargetX = 0;
+  var k2ParallaxTargetY = 0;
+  var k2ParallaxCurX = 0;
+  var k2ParallaxCurY = 0;
+
+  function k2ParallaxEnabled() {
+    return !prefersReducedMotion() && !isTouchLikeDevice();
+  }
+
+  function k2ParallaxTick() {
+    k2ParallaxRafId = 0;
+    k2ParallaxCurX += (k2ParallaxTargetX - k2ParallaxCurX) * K2_PARALLAX_EASE;
+    k2ParallaxCurY += (k2ParallaxTargetY - k2ParallaxCurY) * K2_PARALLAX_EASE;
+
+    var px = (-k2ParallaxCurX * K2_PARALLAX_MAX_X).toFixed(2) + "px";
+    var py = (-k2ParallaxCurY * K2_PARALLAX_MAX_Y).toFixed(2) + "px";
+    for (var i = 0; i < k2ParallaxLayers.length; i++) {
+      k2ParallaxLayers[i].style.setProperty("--gac-k2-px", px);
+      k2ParallaxLayers[i].style.setProperty("--gac-k2-py", py);
+    }
+
+    if (
+      Math.abs(k2ParallaxTargetX - k2ParallaxCurX) > 0.0008 ||
+      Math.abs(k2ParallaxTargetY - k2ParallaxCurY) > 0.0008
+    ) {
+      k2ParallaxRafId = window.requestAnimationFrame(k2ParallaxTick);
+    }
+  }
+
+  function startK2ParallaxLoop() {
+    if (k2ParallaxRafId) return;
+    k2ParallaxRafId = window.requestAnimationFrame(k2ParallaxTick);
+  }
+
+  function onK2ParallaxPointerMove(e) {
+    var vw = window.innerWidth || 1;
+    var vh = window.innerHeight || 1;
+    k2ParallaxTargetX = clamp((e.clientX / vw) * 2 - 1, -1, 1);
+    k2ParallaxTargetY = clamp((e.clientY / vh) * 2 - 1, -1, 1);
+    startK2ParallaxLoop();
+  }
+
+  function onK2ParallaxRecenter() {
+    k2ParallaxTargetX = 0;
+    k2ParallaxTargetY = 0;
+    startK2ParallaxLoop();
+  }
+
+  function ensureK2ParallaxPointer() {
+    if (k2ParallaxPointerBound) return;
+    k2ParallaxPointerBound = true;
+    window.addEventListener("pointermove", onK2ParallaxPointerMove, {
+      passive: true,
+    });
+    document.addEventListener("pointerleave", onK2ParallaxRecenter, {
+      passive: true,
+    });
+    window.addEventListener("blur", onK2ParallaxRecenter, { passive: true });
+  }
+
+  function registerKaruzela2Parallax(root) {
+    if (!k2ParallaxEnabled()) return;
+    var layers = root.querySelector(".giclee-karuzela2-bg__layers");
+    if (!layers || k2ParallaxLayers.indexOf(layers) !== -1) return;
+    k2ParallaxLayers.push(layers);
+    ensureK2ParallaxPointer();
+  }
+
+  /* ── Rozmycie tła po najechaniu na obraz w karuzeli ── */
+  function k2HoverBlurEnabled() {
+    return (
+      window.__GICLEE_HOVER_BLUR_ENABLED !== false &&
+      !prefersReducedMotion() &&
+      !isTouchLikeDevice()
+    );
+  }
+
+  function k2ActiveSlideCard(target) {
+    if (!target || !target.closest) return null;
+    var card = target.closest(".giclee-artist-showcase__slide-card");
+    if (!card) return null;
+    var slide = card.closest(".giclee-artist-showcase__slide");
+    if (!slide || !slide.classList.contains("is-active")) return null;
+    return card;
+  }
+
+  function registerKaruzela2HoverBlur(root) {
+    if (!k2HoverBlurEnabled()) return;
+    if (root._gacK2HoverBlurBound) return;
+    var viewport = root.querySelector(".giclee-artist-showcase__viewport");
+    if (!viewport) return;
+    root._gacK2HoverBlurBound = true;
+
+    viewport.addEventListener(
+      "pointerover",
+      function (e) {
+        if (k2ActiveSlideCard(e.target)) {
+          root.classList.add("is-gac-k2-hover-blur");
+        }
+      },
+      { passive: true }
+    );
+    viewport.addEventListener(
+      "pointerout",
+      function (e) {
+        var card = k2ActiveSlideCard(e.target);
+        if (!card) return;
+        if (e.relatedTarget && card.contains(e.relatedTarget)) return;
+        root.classList.remove("is-gac-k2-hover-blur");
+      },
+      { passive: true }
+    );
+  }
+
+  function updateKaruzela2BgSharpnessFromPanel(panel) {
+    if (!panel || !panel.root) return;
+    var showcase = panel.root.querySelector(
+      ".giclee-artist-showcase.giclee-karuzela2-active"
+    );
+    if (!showcase) {
+      showcase = panel.root.classList.contains("giclee-karuzela2-active")
+        ? panel.root
+        : null;
+    }
+    if (showcase) updateKaruzela2BgSharpnessForShowcase(showcase);
+  }
+
   GicleeArtistScrollPanel.prototype.bind = function () {
     var self = this;
 
@@ -1648,6 +1889,7 @@
     if (this.root.querySelector(".giclee-karuzela2-bg")) {
       this.layerA = this.root.querySelector(".giclee-karuzela2-bg__image--a");
       this.layerB = this.root.querySelector(".giclee-karuzela2-bg__image--b");
+      this.root.style.setProperty("--gac-k2-bg-blur", getK2BgBlurMaxPx() + "px");
       return;
     }
 
@@ -1667,6 +1909,7 @@
     this.root.classList.add("giclee-karuzela2-active");
     this.layerA = bg.querySelector(".giclee-karuzela2-bg__image--a");
     this.layerB = bg.querySelector(".giclee-karuzela2-bg__image--b");
+    this.root.style.setProperty("--gac-k2-bg-blur", getK2BgBlurMaxPx() + "px");
   };
 
   GicleeKaruzela2Background.prototype.getSlideImageSrc = function (slide) {
@@ -2045,6 +2288,9 @@
     this.showcase = showcase;
     this.preloadAllSlides(showcase);
     this.updateFromShowcase(showcase);
+    registerKaruzela2BgSharpness(this.root);
+    registerKaruzela2Parallax(this.root);
+    registerKaruzela2HoverBlur(this.root);
     if (this.root._gacsExhibition) {
       this.preloadArtistNeighbors(this.root._gacsExhibition);
     }
@@ -2128,6 +2374,7 @@
     if (this.surface) {
       this.surface.style.setProperty("box-shadow", "none", "important");
     }
+    updateKaruzela2BgSharpnessFromPanel(this);
   };
 
   function boot() {

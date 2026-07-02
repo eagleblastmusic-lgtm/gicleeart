@@ -5,6 +5,7 @@ from __future__ import annotations
 import threading
 import tkinter as tk
 import webbrowser
+from collections.abc import Callable
 from tkinter import messagebox, ttk
 from typing import Any
 
@@ -21,17 +22,22 @@ from .quotes_service import (
 APP_TITLE = "Karuzela — Cytaty kolekcji"
 
 
+def build_quotes_panel(parent: tk.Misc, *, on_back: Callable[[], None] | None = None) -> None:
+    """Panel cytatów w istniejącym kontenerze (np. przejście z głównego okna Karuzeli)."""
+    _build_ui(parent, on_back=on_back)
+
+
 def open_quotes_window(parent: tk.Misc | None = None) -> None:
     host = tk.Toplevel(parent) if parent else tk.Tk()
     host.title(APP_TITLE)
     position_toplevel_screen_center(host, 1120, 740)
     host.minsize(900, 580)
-    _build_ui(host)
+    _build_ui(host, on_back=None)
     if not parent:
         host.mainloop()
 
 
-def _build_ui(host: tk.Toplevel | tk.Tk) -> None:
+def _build_ui(host: tk.Misc, *, on_back: Callable[[], None] | None) -> None:
     state: dict[str, Any] = {
         "rows": [],
         "selected": None,
@@ -148,7 +154,19 @@ def _build_ui(host: tk.Toplevel | tk.Tk) -> None:
     bottom.pack(fill="x")
     refresh_btn = ttk.Button(bottom, text="Odśwież listę", command=lambda: None)
     refresh_btn.pack(side="left")
-    ttk.Button(bottom, text="Zamknij", command=host.destroy).pack(side="right")
+
+    def _close_panel() -> None:
+        if on_back:
+            if _confirm_discard():
+                on_back()
+        else:
+            top = host.winfo_toplevel()
+            top.destroy()
+
+    if on_back:
+        ttk.Button(bottom, text="← Wróć", command=_close_panel).pack(side="right")
+    else:
+        ttk.Button(bottom, text="Zamknij", command=_close_panel).pack(side="right")
 
     row_by_iid: dict[str, dict[str, Any]] = {}
     _syncing_editor = {"active": False}
@@ -459,6 +477,7 @@ def _build_ui(host: tk.Toplevel | tk.Tk) -> None:
     only_with_var.trace_add("write", _on_filter_change)
     only_missing_var.trace_add("write", _on_filter_change)
 
-    host.protocol("WM_DELETE_WINDOW", host.destroy)
+    if not on_back:
+        host.protocol("WM_DELETE_WINDOW", _close_panel)
 
     _reload_async()

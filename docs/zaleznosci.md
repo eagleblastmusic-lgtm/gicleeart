@@ -42,6 +42,26 @@ Szczegóły: [`motyw/produkt-i-zoom.md`](motyw/produkt-i-zoom.md) · [`../cursor
 
 ---
 
+## Przepływ: stronicowany opis (PDP v3)
+
+```
+GicleeApp → stronaproduktu → Shopify (metafield custom.story_pages + Shopify Files)
+    → motyw (giclee-product-story.js — mini strony pod zoomem R2)
+```
+
+| Krok | Warstwa | Plik |
+|------|---------|------|
+| Konfiguracja stron + upload grafik | **cursor-api** | [`Komponenty/stronaproduktu/service.py`](../cursor-api/Komponenty/stronaproduktu/service.py) |
+| Render mini stron | **pusty** | [`snippets/giclee-product-story.liquid`](../snippets/giclee-product-story.liquid), [`assets/giclee-product-story.js`](../assets/giclee-product-story.js) |
+
+Bez metafielda motyw dzieli akapity automatycznie (featured image jako grafika).
+
+**Efekty PDP v3 (globalne):** GicleeApp → stronaproduktu → **Ustawienia efektów** → metafield **shop** `custom.pdp_v3_effects` (JSON) + Shopify Files (tła) → motyw (`window.__PDP_V3_EFFECTS__` w `sections/product-information.liquid`; efekty: immersive zoom, blur R2, tło konfiguratora z parallaxem, wspólne tło proces+trust).
+
+Szczegóły: [`motyw/szablony-i-strony.md`](motyw/szablony-i-strony.md) · wzorzec scroll choreography: [`motyw/pdp-v3-pusty-scroll.md`](motyw/pdp-v3-pusty-scroll.md) · [`../cursor-api/docs/komponenty/stronaproduktu.md`](../cursor-api/docs/komponenty/stronaproduktu.md)
+
+---
+
 ## Przepływ: mockup katalogowy (CZB/CZCZ)
 
 ```

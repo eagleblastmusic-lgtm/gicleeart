@@ -21,6 +21,10 @@ METAFIELD_KEY_MENU_GRADIENT = "bio_background_menu_gradient"
 BIO_MENU_GRADIENT_NONE = "none"
 BIO_MENU_GRADIENT_NARROW = "narrow"
 BIO_MENU_GRADIENT_WIDE = "wide"
+BIO_MENU_GRADIENT_WIDE_BOTTOM = "wide_bottom"
+BIO_MENU_GRADIENT_WIDE_V2 = "wide_v2"
+BIO_MENU_GRADIENT_WIDE_V3 = "wide_v3"
+BIO_MENU_GRADIENT_WIDE_V3_BOTTOM = "wide_v3_bottom"
 DEFAULT_BIO_MENU_GRADIENT = BIO_MENU_GRADIENT_WIDE
 DEFAULT_BIO_POS_X = 50
 DEFAULT_BIO_OVERLAY_PCT = 100
@@ -92,6 +96,48 @@ def normalize_bio_menu_gradient(raw: Any) -> str:
     text = str(raw).strip().lower()
     if text in {"none", "off", "0", "false", "nie", "bez", "bez gradientu"}:
         return BIO_MENU_GRADIENT_NONE
+    if text in {
+        "wide_v3_bottom",
+        "wide-v3-bottom",
+        "widev3bottom",
+        "wide_v3_dol",
+        "wide_v3_dół",
+        "gradient szeroki v3 + dół",
+        "gradient szeroki v3 + dol",
+        "szeroki v3 + dół",
+        "szeroki v3 + dol",
+    }:
+        return BIO_MENU_GRADIENT_WIDE_V3_BOTTOM
+    if text in {
+        "wide_bottom",
+        "wide-bottom",
+        "widebottom",
+        "wide_dol",
+        "wide_dół",
+        "gradient szeroki + dół",
+        "gradient szeroki + dol",
+        "szeroki + dół",
+        "szeroki + dol",
+    }:
+        return BIO_MENU_GRADIENT_WIDE_BOTTOM
+    if text in {
+        "wide_v3",
+        "wide-v3",
+        "widev3",
+        "gradient szeroki v3",
+        "szeroki v3",
+        "szeroki v3.",
+    }:
+        return BIO_MENU_GRADIENT_WIDE_V3
+    if text in {
+        "wide_v2",
+        "wide-v2",
+        "widev2",
+        "gradient szeroki v2",
+        "szeroki v2",
+        "szeroki v2.",
+    }:
+        return BIO_MENU_GRADIENT_WIDE_V2
     if text in {
         "wide",
         "szeroki",

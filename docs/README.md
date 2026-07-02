@@ -84,6 +84,8 @@ Jeden fakt w jednym pliku modułowym. Nie duplikuj treści między `MATKA` a tym
 
 | Zoom HD pusty | [`motyw/produkt-i-zoom.md`](motyw/produkt-i-zoom.md) |
 
+| PDP v3 / scroll-over: pusty scroll, wjazd, prześwit | [`motyw/pdp-v3-pusty-scroll.md`](motyw/pdp-v3-pusty-scroll.md) (wzór uniwersalny) |
+
 | Księgowość, DNR, KPiR, faktury | [`../cursor-api/docs/komponenty/finanse.md`](../cursor-api/docs/komponenty/finanse.md) |
 
 | Limity: Resend 403 / 401 | [`../cursor-api/docs/komponenty/limity.md`](../cursor-api/docs/komponenty/limity.md) + `USLUGI.md` |

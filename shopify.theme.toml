@@ -1,10 +1,16 @@
-# Shopify Theme CLI — środowisko dev (GicleeArt)
+# Shopify Theme CLI — środowiska GicleeArt
 # Użycie: shopify theme push --environment development
 #         shopify theme dev --environment development
 
 [environments.development]
 store = "giclee-art-3.myshopify.com"
-theme = "199252410716"
+theme = "200713503068"
+# Motyw «GicleeApp dev» — dedykowana piaskownica (theme dev + push dev)
 
-# Live (tylko referencja — push wymaga --allow-live):
-# theme = "199521829212"
+[environments.unpublished]
+store = "giclee-art-3.myshopify.com"
+theme = "199521829212"
+
+[environments.live]
+store = "giclee-art-3.myshopify.com"
+theme = "197314249052"

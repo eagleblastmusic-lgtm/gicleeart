@@ -38,12 +38,31 @@
 
   function boot() {
     var main = document.querySelector(
-      'main[data-template="product.nowy-szblon-produktu"], main[data-template="product.szablon-produktu-v2"]'
+      'main[data-template="product.nowy-szblon-produktu"], main[data-template="product.szablon-produktu-v2"], main[data-template="product.szablon-produktu-v3"]'
     );
     if (!main) return;
 
+    // v3: klasyczny opis ukryty (giclee-product-story ma wlasny reveal) —
+    // pomijamy targety wewnatrz .product-description-below.
+    var isStoryTemplate =
+      main.getAttribute('data-template') === 'product.szablon-produktu-v3';
+
     var elements = [];
     TARGETS.forEach(function (target) {
+      if (
+        isStoryTemplate &&
+        target.selector.indexOf('.product-description-below') === 0
+      ) {
+        return;
+      }
+      // v3: galeria+konfigurator — wjazd z prawej (giclee-product-story.js), bez fade-up
+      if (
+        isStoryTemplate &&
+        (target.modifier === 'giclee-pdp-reveal--gallery' ||
+          target.modifier === 'giclee-pdp-reveal--configurator')
+      ) {
+        return;
+      }
       var el = main.querySelector(target.selector);
       if (!el) return;
       el.classList.add('giclee-pdp-reveal', target.modifier);

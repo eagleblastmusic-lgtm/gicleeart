@@ -27,7 +27,7 @@
       "title": "Gierymski, Aleksander",
       "url": "https://cdn.shopify.com/s/files/1/1011/0517/2828/files/ChatGPT_Image_28_cze_2026_18_27_18_b8cde0ab-23dc-47db-a601-e4adb0712217.png?v=1782666865",
       "pos_x": 0,
-      "overlay_pct": 50,
+      "overlay_pct": 0,
       "cover_scale": true,
       "radial_mask": {
         "enabled": false,
@@ -78,7 +78,7 @@
         "feather": 50,
         "exposure": 50
       },
-      "menu_gradient": "wide",
+      "menu_gradient": "wide_bottom",
       "updated_at": "2026-07-01T13:07:03Z"
     }
   },
@@ -193,7 +193,7 @@
         "feather": 50,
         "exposure": 50
       },
-      "background_menu_gradient": "wide",
+      "background_menu_gradient": "wide_bottom",
       "bio_preview": "28 Gru 1630 – 17 Lis 1708 Ludolf Bakhuizen był niemieckim malarzem i rysownikiem, który większość życia spędził w Holandii, tworząc niezwykłe pejzaże morskie. Specjalizował się w dynamicznych przedstawieniach morza – od spokojnych, lśniących w słońcu wód po wzburzone fale podczas sztormów. Podróżując po wybrzeżach i…",
       "has_background": true,
       "status": "tak"
@@ -803,7 +803,7 @@
       "kind": "collection",
       "background_url": "https://cdn.shopify.com/s/files/1/1011/0517/2828/files/ChatGPT_Image_28_cze_2026_18_27_18_b8cde0ab-23dc-47db-a601-e4adb0712217.png?v=1782666865",
       "background_pos_x": 0,
-      "background_overlay_pct": 50,
+      "background_overlay_pct": 0,
       "background_cover_scale": true,
       "background_radial_mask": {
         "enabled": false,
@@ -3465,5 +3465,5 @@
       "status": "—"
     }
   ],
-  "fetched_at": "2026-07-01T12:56:17Z"
+  "fetched_at": "2026-07-02T17:20:19Z"
 }

@@ -24,6 +24,9 @@
 </style>
 
     {%- if request.page_type == 'index' -%}
+    <script src="{{ 'giclee-home-sections.js' | asset_url }}" defer></script>
+    <script src="{{ 'giclee-home-mobile.js' | asset_url }}" defer></script>
+    <script src="{{ 'giclee-home-sections-boot.js' | asset_url }}" defer></script>
     <link
       rel="preload"
       as="image"
@@ -784,12 +787,8 @@
       }
     }
     {% if template.suffix == 'fotografia-obraz' or template.suffix == 'szablon-wlasna-fotografia' %}
-    #pm-hero {
-      --pm-lift: 0px !important;
-      transform: none !important;
-      will-change: auto !important;
-      transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1) !important;
-    }
+    /* #pm-hero transform sterowany przez pin intro (assets/giclee-photo-mockup.js, --pm-lift).
+       NIE wymuszaj tu transform:none ani transition na transform — rozmazuje pin. */
     #pm-hero-ui {
       will-change: transform;
     }
@@ -2442,9 +2441,12 @@ const interval = setInterval(function() {
     // Tylko na stronie głównej
     if (window.location.pathname !== '/') return;
 
-    var mobileImages = [
-      {{ 'MALE_ORG.webp' | asset_url | json }}
-    ];
+    var mobileAssetFallback = {{ 'MALE_ORG.webp' | asset_url | json }};
+    var mobileFilenames = window.GICLEE_HOME_MOBILE_SLIDES || ['MALE_ORG.webp'];
+    var mobileImages = mobileFilenames.map(function(name) {
+      if (name === 'MALE_ORG.webp') return mobileAssetFallback;
+      return mobileAssetFallback.replace(/[^/?#]+(?=[?#]|$)/, name);
+    });
 
      // Zatrzymaj autoodtwarzanie na mobile
     if (window.innerWidth <= 767) {
@@ -2617,11 +2619,13 @@ const interval = setInterval(function() {
           }
           document.querySelectorAll('.shopify-section').forEach(function(section, i) {
             if (section.closest('footer')) return;
+            if (section.getAttribute('data-giclee-home') === 'intro') return;
             if (section.id && section.id.indexOf('section_ThWw4Q') !== -1) return;
             if (skipAboveFold && i < 2) return;
             var children = Array.from(section.children);
             children.forEach(function(el, j) {
               if (shouldSkipReveal(el)) return;
+              if (el.closest('[data-giclee-home="intro"]')) return;
               if (el.closest('[id*="section_ThWw4Q"]')) return;
               el.classList.add('scroll-reveal');
               el.style.transitionDelay = (j * 0.1) + 's';
@@ -2944,6 +2948,17 @@ const interval = setInterval(function() {
         document.documentElement.classList.remove('splash-pending');
         return;
       }
+
+      try {
+        if (new URLSearchParams(window.location.search).get('giclee_skip_splash') === '1') {
+          if (splash) splash.style.display = 'none';
+          document.documentElement.classList.remove('splash-pending', 'splash-reveal', 'splash-reveal-active');
+          document.documentElement.classList.add('giclee-home-intro-run');
+          window.dispatchEvent(new CustomEvent('giclee:splash-done'));
+          if (window.gicleeInitScrollReveal) window.gicleeInitScrollReveal();
+          return;
+        }
+      } catch (e) {}
 
       function pauseSlideshow() {
         var slideshow = document.querySelector('slideshow-component');

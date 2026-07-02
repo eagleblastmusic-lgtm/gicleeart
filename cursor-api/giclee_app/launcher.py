@@ -1539,6 +1539,13 @@ lub strzalke, zeby zwinac / rozwinac sekcje — latwiej nawigowac przy wielu kaf
 - **Informacje o plikach** (`infoplikow`) - podglad grafik produktu w Shopify (plik CDN, alt, rola preview/Full/mockup).
 - **Przed/Po** (`przedpo`) - upload grafiki «przed obróbką» (metafield); «po» = obraz Full z galerii; sekcja PDP v2.
 
+### Administracja strony
+- **Wzorzec szablonu** (`wzorzecszablonu`) - przypisanie szablonu motywu (template_suffix) do produktow; lista z repo + Shopify.
+- **Strona produktu** (`stronaproduktu`) - podzial opisu na mini strony PDP v3 (metafield story_pages) + ustawienia efektow.
+- **Karuzela** (`karuzela`) - sekcja «Wybrane dziela»: Karuzela1/2, wyglad V1/V2/V3, cytaty per kolekcja.
+- **Tlo do Bio** (`tldobio`) - tlo sekcji biografii autora per kolekcja (upload + metafield Shopify).
+- **Strona glowna** (`stronaglowna`) - landing page: hero, intro, suwaki przed/po, teksty sekcji (index.json).
+
 ### Zamowienia
 - **Obrazy** (`obrazy`) - szybki dostep do folderow z reprodukcjami i obrazami klientow.
 - **Produkcja** (`produkcja`) - status zamowien (wydruk + ramka + utwardzanie + wysylka).

@@ -10,6 +10,10 @@ from .service import (
     BIO_MENU_GRADIENT_NARROW,
     BIO_MENU_GRADIENT_NONE,
     BIO_MENU_GRADIENT_WIDE,
+    BIO_MENU_GRADIENT_WIDE_BOTTOM,
+    BIO_MENU_GRADIENT_WIDE_V2,
+    BIO_MENU_GRADIENT_WIDE_V3,
+    BIO_MENU_GRADIENT_WIDE_V3_BOTTOM,
     DEFAULT_BIO_RADIAL_MASK,
     normalize_bio_cover_scale,
     normalize_bio_menu_gradient,
@@ -140,6 +144,18 @@ def _menu_gradient_alpha_wide(ty: float) -> float:
     return _lerp_stops(ty, stops)
 
 
+def _menu_gradient_alpha_wide_v2(ty: float) -> float:
+    """Jak szeroki, ale bez płaskiego pasu #000 u góry — gradient od pierwszego piksela."""
+    stops: tuple[tuple[float, float], ...] = (
+        (0.0, 1.0),
+        (0.2045, 0.94),
+        (0.4545, 0.72),
+        (0.75, 0.28),
+        (1.0, 0.0),
+    )
+    return _lerp_stops(ty, stops)
+
+
 def _menu_gradient_alpha_narrow(ty: float) -> float:
     """Krótszy pas — szybsze przejście do przezroczystości."""
     stops: tuple[tuple[float, float], ...] = (
@@ -151,25 +167,52 @@ def _menu_gradient_alpha_narrow(ty: float) -> float:
     return _lerp_stops(ty, stops)
 
 
+def _paint_menu_gradient_band(
+    px: Any,
+    *,
+    w: int,
+    h: int,
+    fade_h: int,
+    alpha_fn: Any,
+    top: bool,
+) -> None:
+    band = min(fade_h, h)
+    for i in range(band):
+        ty = i / max(band - 1, 1)
+        alpha = max(0.0, min(1.0, alpha_fn(ty)))
+        a = int(alpha * 255)
+        y = i if top else h - 1 - i
+        for x in range(w):
+            existing = px[x, y][3]
+            if a > existing:
+                px[x, y] = (0, 0, 0, a)
+
+
 def apply_site_menu_gradient(img: Image.Image, *, menu_gradient: str) -> Image.Image:
     mode = normalize_bio_menu_gradient(menu_gradient)
     if mode == BIO_MENU_GRADIENT_NONE:
         return img
     w, h = img.size
+    bottom = mode in (BIO_MENU_GRADIENT_WIDE_BOTTOM, BIO_MENU_GRADIENT_WIDE_V3_BOTTOM)
     if mode == BIO_MENU_GRADIENT_NARROW:
         fade_h = max(1, int(round(h * (64 / 600.0))))
         alpha_fn = _menu_gradient_alpha_narrow
+        bottom = False
     else:
         fade_h = max(1, int(round(min(h * 0.28, h * (108 / 600.0)))))
-        alpha_fn = _menu_gradient_alpha_wide
+        if mode in (BIO_MENU_GRADIENT_WIDE_V3, BIO_MENU_GRADIENT_WIDE_V3_BOTTOM):
+            fade_h = max(1, int(round(fade_h * 0.6)))
+            alpha_fn = _menu_gradient_alpha_wide_v2
+        elif mode == BIO_MENU_GRADIENT_WIDE_V2:
+            alpha_fn = _menu_gradient_alpha_wide_v2
+        else:
+            alpha_fn = _menu_gradient_alpha_wide
     base = img.convert("RGBA")
     overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     px = overlay.load()
-    for y in range(min(fade_h, h)):
-        ty = y / max(fade_h - 1, 1)
-        alpha = alpha_fn(ty)
-        for x in range(w):
-            px[x, y] = (0, 0, 0, int(max(0.0, min(1.0, alpha)) * 255))
+    _paint_menu_gradient_band(px, w=w, h=h, fade_h=fade_h, alpha_fn=alpha_fn, top=True)
+    if bottom:
+        _paint_menu_gradient_band(px, w=w, h=h, fade_h=fade_h, alpha_fn=alpha_fn, top=False)
     return Image.alpha_composite(base, overlay)
 
 

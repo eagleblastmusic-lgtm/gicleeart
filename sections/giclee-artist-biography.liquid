@@ -72,6 +72,14 @@
         assign bio_bg_menu_gradient = 'none'
       elsif bio_menu_gradient_raw == 'narrow' or bio_menu_gradient_raw == 'waski' or bio_menu_gradient_raw == 'wąski' or bio_menu_gradient_raw == 'gradient wąski' or bio_menu_gradient_raw == 'was'
         assign bio_bg_menu_gradient = 'narrow'
+      elsif bio_menu_gradient_raw == 'wide_v2' or bio_menu_gradient_raw == 'wide-v2' or bio_menu_gradient_raw == 'widev2' or bio_menu_gradient_raw == 'gradient szeroki v2' or bio_menu_gradient_raw == 'szeroki v2'
+        assign bio_bg_menu_gradient = 'wide_v2'
+      elsif bio_menu_gradient_raw == 'wide_v3' or bio_menu_gradient_raw == 'wide-v3' or bio_menu_gradient_raw == 'widev3' or bio_menu_gradient_raw == 'gradient szeroki v3' or bio_menu_gradient_raw == 'szeroki v3'
+        assign bio_bg_menu_gradient = 'wide_v3'
+      elsif bio_menu_gradient_raw == 'wide_v3_bottom' or bio_menu_gradient_raw == 'wide-v3-bottom' or bio_menu_gradient_raw == 'widev3bottom' or bio_menu_gradient_raw == 'gradient szeroki v3 + dół' or bio_menu_gradient_raw == 'gradient szeroki v3 + dol' or bio_menu_gradient_raw == 'szeroki v3 + dół' or bio_menu_gradient_raw == 'szeroki v3 + dol'
+        assign bio_bg_menu_gradient = 'wide_v3_bottom'
+      elsif bio_menu_gradient_raw == 'wide_bottom' or bio_menu_gradient_raw == 'wide-bottom' or bio_menu_gradient_raw == 'widebottom' or bio_menu_gradient_raw == 'gradient szeroki + dół' or bio_menu_gradient_raw == 'gradient szeroki + dol' or bio_menu_gradient_raw == 'szeroki + dół' or bio_menu_gradient_raw == 'szeroki + dol'
+        assign bio_bg_menu_gradient = 'wide_bottom'
       elsif bio_menu_gradient_raw == 'wide' or bio_menu_gradient_raw == 'szeroki' or bio_menu_gradient_raw == 'gradient szeroki' or bio_menu_gradient_raw == '1' or bio_menu_gradient_raw == 'true'
         assign bio_bg_menu_gradient = 'wide'
       endif
@@ -204,19 +212,18 @@
   .giclee-artist-biography-section.giclee-artist-biography-section--custom-bg .custom-section-background {
     background-color: #000;
     overflow: hidden;
-  }
-
-  .giclee-artist-biography-section--custom-bg .giclee-artist-bio-bg,
-  .giclee-artist-biography-section--custom-bg .giclee-artist-bio-bg__stack {
-    top: -2px;
-    bottom: -4px;
+    box-shadow: inset 0 2px 0 #000, inset 0 -3px 0 #000;
   }
 {% endstyle %}
 
 <link
   rel="stylesheet"
-  href="{{ 'giclee-artist-biography.css' | asset_url }}&gab=gab-seam-fix-20260701"
+  href="{{ 'giclee-artist-biography.css' | asset_url }}&gab=gab-scroll-shift-v39-20260701"
 >
+<script
+  src="{{ 'giclee-artist-biography.js' | asset_url }}?v=gab-scroll-shift-v39-20260701"
+  defer
+></script>
 
 {%- if bio_bg_url != blank -%}
   <link rel="preload" as="image" href="{{ bio_bg_display_url | escape }}" fetchpriority="high">
@@ -224,7 +231,7 @@
 
 <div class="section-background color-{{ section.settings.color_scheme }}"{% if bio_bg_url != blank %} hidden{% endif %}></div>
 <div
-  class="section section--{{ section.settings.section_width }} color-{{ section.settings.color_scheme }}{% if bio_bg_url != blank %} giclee-artist-biography-section--custom-bg giclee-artist-biography-section--bg-pending{% endif %}{% if bio_bg_menu_gradient == 'wide' %} giclee-artist-biography-section--menu-gradient-wide{% elsif bio_bg_menu_gradient == 'narrow' %} giclee-artist-biography-section--menu-gradient-narrow{% endif %}"
+  class="section section--{{ section.settings.section_width }} color-{{ section.settings.color_scheme }}{% if bio_bg_url != blank %} giclee-artist-biography-section--custom-bg giclee-artist-biography-section--bg-pending{% endif %}{% if bio_bg_menu_gradient == 'wide' %} giclee-artist-biography-section--menu-gradient-wide{% elsif bio_bg_menu_gradient == 'wide_bottom' %} giclee-artist-biography-section--menu-gradient-wide-bottom{% elsif bio_bg_menu_gradient == 'wide_v2' %} giclee-artist-biography-section--menu-gradient-wide-v2{% elsif bio_bg_menu_gradient == 'wide_v3' %} giclee-artist-biography-section--menu-gradient-wide-v3{% elsif bio_bg_menu_gradient == 'wide_v3_bottom' %} giclee-artist-biography-section--menu-gradient-wide-v3-bottom{% elsif bio_bg_menu_gradient == 'narrow' %} giclee-artist-biography-section--menu-gradient-narrow{% endif %}"
   {{ section.shopify_attributes }}
 >
   <div class="custom-section-background" data-gab-bg-wrap>
@@ -358,7 +365,7 @@
       "
     >
       {%- if artist_title != blank -%}
-        <h1 class="giclee-artist-bio__title h2" data-gab-field="title">{{ artist_title | escape }}</h1>
+        <h1 class="giclee-artist-bio__title h2" data-gab-field="title" data-gab-scroll="left">{{ artist_title | escape }}</h1>
       {%- endif -%}
 
       <div class="giclee-artist-bio__body rte" data-gab-field="body">

@@ -15,11 +15,24 @@
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
+  filter: blur(var(--gac-k2-hover-blur, 0px));
+  transition: filter 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: filter;
+}
+
+.giclee-artist-showcase.giclee-karuzela2-active.is-gac-k2-hover-blur
+  .giclee-karuzela2-bg {
+  --gac-k2-hover-blur: 6px;
 }
 
 .giclee-karuzela2-bg__layers {
   position: absolute;
   inset: 0;
+  filter: blur(var(--gac-k2-bg-blur, 11px));
+  transform: scale(1.08)
+    translate3d(var(--gac-k2-px, 0px), var(--gac-k2-py, 0px), 0);
+  will-change: filter, transform;
+  backface-visibility: hidden;
 }
 
 .giclee-karuzela2-bg__image {
@@ -199,5 +212,17 @@ html[data-giclee-showcase-look="V3"] .giclee-karuzela2-bg__vignette {
       rgba(0, 0, 0, 0.32) 40%,
       rgba(0, 0, 0, 0.84) 100%
     );
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giclee-karuzela2-bg__layers {
+    filter: none !important;
+    transform: scale(1.02) !important;
+  }
+
+  .giclee-karuzela2-bg {
+    filter: none !important;
+    transition: none !important;
   }
 }

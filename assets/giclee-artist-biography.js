@@ -8,6 +8,285 @@
   var GAB_SHOWCASE_ENTER_MAX_AGE = 800;
   var panelRegistry = [];
   var showcaseTextEnterBound = false;
+  var scrollShiftRegistry = [];
+  var scrollShiftRafPending = false;
+  var scrollShiftListenersBound = false;
+
+  function getScrollShiftMaxPx() {
+    var w = window.innerWidth || document.documentElement.clientWidth || 0;
+    if (w <= 749) return 0;
+    if (w < 990) return 96;
+    return 160;
+  }
+
+  function getScrollShiftMaxBlur() {
+    var w = window.innerWidth || document.documentElement.clientWidth || 0;
+    if (w <= 749) return 0;
+    if (w < 990) return 3;
+    return 5.5;
+  }
+
+  function getScrollBgMaxZoom() {
+    var w = window.innerWidth || document.documentElement.clientWidth || 0;
+    if (w <= 749) return 0;
+    if (w < 990) return 0.08;
+    return 0.12;
+  }
+
+  function getScrollBgCoverBaseline(sectionHost) {
+    if (
+      sectionHost &&
+      sectionHost.querySelector(
+        "[data-gab-custom-bg] .giclee-artist-bio-bg__image--cover-scale"
+      )
+    ) {
+      return 1.04;
+    }
+    return 1;
+  }
+
+  function getScrollBgStackScale(progress, sectionHost) {
+    var baseline = getScrollBgCoverBaseline(sectionHost);
+    return baseline * (1 + getScrollBgMaxZoom() * progress);
+  }
+
+  function scheduleScrollShiftUpdate() {
+    if (scrollShiftRafPending) return;
+    scrollShiftRafPending = true;
+    window.requestAnimationFrame(function () {
+      scrollShiftRafPending = false;
+      scrollShiftRegistry.forEach(function (inst) {
+        inst.tick();
+      });
+      updateHeaderScrollFade();
+    });
+  }
+
+  function isArtistCollectionPage() {
+    return (
+      document.querySelector(".giclee-artist-biography-section") &&
+      document.querySelector(".giclee-artist-collection-showcase-section")
+    );
+  }
+
+  function getHeaderFadeRange() {
+    var raw = getComputedStyle(document.body).getPropertyValue("--header-group-height");
+    var h = parseFloat(raw) || 72;
+    return Math.max(Math.round(h * 1.08), 64);
+  }
+
+  function getHeaderFadeTarget() {
+    return document.getElementById("header-component");
+  }
+
+  function getHeaderFadeAnchorScroll() {
+    var vh = window.innerHeight || document.documentElement.clientHeight || 800;
+    return Math.max(Math.round(vh * 0.06), Math.round(getHeaderFadeRange() * 0.85), 48);
+  }
+
+  function stabilizeCollectionHeaderSticky(header, scrollY) {
+    if (!header || header.getAttribute("sticky") !== "scroll-up") return;
+    if (scrollY <= 1) {
+      header.dataset.stickyState = "inactive";
+      header.dataset.scrollDirection = "none";
+      return;
+    }
+    if (header.dataset.stickyState === "idle") {
+      header.dataset.stickyState = "active";
+      header.dataset.scrollDirection = "none";
+    }
+  }
+
+  function getHeaderFadeOpacity(scrollY) {
+    var DIMMED = 0.1;
+    if (scrollY <= 0) return 1;
+
+    var anchor = getHeaderFadeAnchorScroll();
+    var t = Math.min(1, scrollY / anchor);
+    t = Math.pow(t, 0.35);
+
+    if (scrollY <= anchor) {
+      return 1 - (1 - DIMMED) * t;
+    }
+
+    var tailRange = Math.max(getHeaderFadeRange() * 0.32, 28);
+    var beyond = scrollY - anchor;
+    return Math.max(0, DIMMED * (1 - Math.min(1, beyond / tailRange)));
+  }
+
+  function updateHeaderScrollFade() {
+    var header = getHeaderFadeTarget();
+    if (!header || !isArtistCollectionPage()) return;
+
+    if (prefersReducedMotion()) {
+      header.classList.remove("giclee-header-scroll-fade");
+      header.style.removeProperty("--gab-header-fade-opacity");
+      header.style.removeProperty("pointer-events");
+      return;
+    }
+
+    var scrollY = window.scrollY || window.pageYOffset || 0;
+    stabilizeCollectionHeaderSticky(header, scrollY);
+    var opacity = getHeaderFadeOpacity(scrollY);
+
+    header.classList.add("giclee-header-scroll-fade");
+    header.style.setProperty("--gab-header-fade-opacity", opacity.toFixed(3));
+    header.style.pointerEvents = opacity < 0.12 ? "none" : "";
+  }
+
+  function initCollectionPageScrollChrome() {
+    if (!isArtistCollectionPage()) return;
+    bindScrollShiftListeners();
+    scheduleScrollShiftUpdate();
+  }
+
+  function bindScrollShiftListeners() {
+    if (scrollShiftListenersBound) return;
+    scrollShiftListenersBound = true;
+    window.addEventListener("scroll", scheduleScrollShiftUpdate, { passive: true });
+    window.addEventListener("resize", scheduleScrollShiftUpdate, { passive: true });
+    if (window.matchMedia) {
+      var motionMq = window.matchMedia("(prefers-reduced-motion: reduce)");
+      if (motionMq.addEventListener) {
+        motionMq.addEventListener("change", scheduleScrollShiftUpdate);
+      } else if (motionMq.addListener) {
+        motionMq.addListener(scheduleScrollShiftUpdate);
+      }
+    }
+  }
+
+  function getPageScrollRange() {
+    var docEl = document.documentElement;
+    var body = document.body;
+    var scrollHeight = Math.max(
+      docEl.scrollHeight || 0,
+      body ? body.scrollHeight : 0
+    );
+    var vh = window.innerHeight || docEl.clientHeight || 1;
+    return Math.max(scrollHeight - vh, 1);
+  }
+
+  function easeScrollShiftProgress(linear) {
+    var t = Math.min(1, Math.max(0, linear));
+    return Math.pow(t, 1.4);
+  }
+
+  function GicleeArtistBioScrollShift(panel) {
+    this.panel = panel;
+    this.bioRoot = panel.root;
+    this.sectionHost =
+      panel.root.closest(".giclee-artist-biography-section") ||
+      panel.root.closest(".shopify-section");
+
+    if (!this.sectionHost || !this.bioRoot) return;
+
+    this.sectionHost.classList.add("giclee-artist-bio--scroll-shift-host");
+    this.resetShifts();
+    bindScrollShiftListeners();
+    scheduleScrollShiftUpdate();
+  }
+
+  GicleeArtistBioScrollShift.prototype.getProgress = function () {
+    var scrollY = window.scrollY || window.pageYOffset || 0;
+    if (scrollY <= 0) return 0;
+    return Math.min(1, scrollY / getPageScrollRange());
+  };
+
+  GicleeArtistBioScrollShift.prototype.resetShifts = function () {
+    if (!this.sectionHost) return;
+    var bgBaseline = getScrollBgCoverBaseline(this.sectionHost);
+    this.sectionHost.style.setProperty("--gab-scroll-title-x", "0px");
+    this.sectionHost.style.setProperty("--gab-scroll-body-x", "0px");
+    this.sectionHost.style.setProperty("--gab-scroll-shift-blur", "0px");
+    this.sectionHost.style.setProperty("--gab-scroll-shift-opacity", "1");
+    this.sectionHost.style.setProperty("--gab-scroll-bg-scale", "1");
+    this.sectionHost.style.setProperty("--gab-scroll-bg-stack-scale", bgBaseline.toFixed(4));
+  };
+
+  GicleeArtistBioScrollShift.prototype.tick = function () {
+    if (!this.sectionHost) return;
+
+    var maxPx = getScrollShiftMaxPx();
+
+    if (
+      maxPx <= 0 ||
+      prefersReducedMotion() ||
+      (this.panel && this.panel.root && this.panel.root.classList.contains("is-transitioning"))
+    ) {
+      this.resetShifts();
+      return;
+    }
+
+    var progress = easeScrollShiftProgress(this.getProgress());
+    if (progress <= 0) {
+      this.resetShifts();
+      return;
+    }
+
+    var left = -maxPx * progress;
+    var right = maxPx * progress;
+    var blurPx = getScrollShiftMaxBlur() * progress;
+    var opacity = Math.max(0, 1 - progress);
+    var bgStackScale = getScrollBgStackScale(progress, this.sectionHost);
+
+    this.sectionHost.style.setProperty("--gab-scroll-title-x", left.toFixed(2) + "px");
+    this.sectionHost.style.setProperty("--gab-scroll-body-x", right.toFixed(2) + "px");
+    this.sectionHost.style.setProperty("--gab-scroll-shift-blur", blurPx.toFixed(2) + "px");
+    this.sectionHost.style.setProperty("--gab-scroll-shift-opacity", opacity.toFixed(3));
+    this.sectionHost.style.setProperty(
+      "--gab-scroll-bg-scale",
+      (1 + getScrollBgMaxZoom() * progress).toFixed(4)
+    );
+    this.sectionHost.style.setProperty("--gab-scroll-bg-stack-scale", bgStackScale.toFixed(4));
+  };
+
+  GicleeArtistBioScrollShift.prototype.destroy = function () {
+    if (this.sectionHost) {
+      this.sectionHost.classList.remove("giclee-artist-bio--scroll-shift-host");
+      this.resetShifts();
+    }
+  };
+
+  function markBioScrollTargets(root) {
+    if (!root) return;
+    var bodyInner = root.querySelector(".giclee-artist-bio__body-inner");
+    if (!bodyInner) return;
+
+    bodyInner.removeAttribute("data-gab-scroll");
+    bodyInner.querySelectorAll("[data-gab-scroll]").forEach(function (el) {
+      el.removeAttribute("data-gab-scroll");
+    });
+
+    /* Szablon kolekcji (GicleeApp): h4 = daty życia — lewo; img = portret — prawo */
+    bodyInner.querySelectorAll("h4").forEach(function (el) {
+      el.setAttribute("data-gab-scroll", "left");
+    });
+    bodyInner.querySelectorAll("img").forEach(function (img) {
+      img.setAttribute("data-gab-scroll", "right");
+    });
+    bodyInner
+      .querySelectorAll("p, ul, ol, blockquote, h2, h3, h5, h6, table, pre, dl")
+      .forEach(function (el) {
+        el.setAttribute("data-gab-scroll", "right");
+      });
+  }
+
+  function attachScrollShift(panel, instance) {
+    if (!panel || !panel.root || !instance || !instance.bodyEl) return;
+    var host =
+      panel.root.closest(".giclee-artist-biography-section") ||
+      panel.root.closest(".shopify-section");
+    if (!host) return;
+
+    for (var i = 0; i < scrollShiftRegistry.length; i++) {
+      if (scrollShiftRegistry[i].sectionHost === host) return;
+    }
+
+    var shift = new GicleeArtistBioScrollShift(instance);
+    if (shift.sectionHost) {
+      scrollShiftRegistry.push(shift);
+    }
+  }
 
   function getExhibitionRoot() {
     return document.querySelector("[data-gacs-exhibition]");
@@ -137,6 +416,7 @@
         revealBioBgWhenReady(section, heroImg);
       }
     }
+    markBioScrollTargets(this.root);
   }
 
   GicleeArtistBiography.prototype.bindState = function () {
@@ -281,6 +561,7 @@
       this.bodyInner = this.bodyEl.querySelector(".giclee-artist-bio__body-inner");
     }
 
+    markBioScrollTargets(this.root);
     this.root.setAttribute("data-gab-handle", artist.handle || "");
     this.resetLayoutLock();
   };
@@ -443,6 +724,7 @@
       this.bodyInner = this.bodyEl.querySelector(".giclee-artist-bio__body-inner");
     }
 
+    markBioScrollTargets(this.root);
     this.root.setAttribute("data-gab-handle", artist.handle || "");
     this.applyBackground(artist);
     this.syncBioBackgroundShell();
@@ -573,6 +855,50 @@
     ) {
       return "narrow";
     }
+    if (
+      text === "wide_v2" ||
+      text === "wide-v2" ||
+      text === "widev2" ||
+      text === "gradient szeroki v2" ||
+      text === "szeroki v2"
+    ) {
+      return "wide_v2";
+    }
+    if (
+      text === "wide_v3" ||
+      text === "wide-v3" ||
+      text === "widev3" ||
+      text === "gradient szeroki v3" ||
+      text === "szeroki v3"
+    ) {
+      return "wide_v3";
+    }
+    if (
+      text === "wide_v3_bottom" ||
+      text === "wide-v3-bottom" ||
+      text === "widev3bottom" ||
+      text === "wide_v3_dol" ||
+      text === "wide_v3_dół" ||
+      text === "gradient szeroki v3 + dół" ||
+      text === "gradient szeroki v3 + dol" ||
+      text === "szeroki v3 + dół" ||
+      text === "szeroki v3 + dol"
+    ) {
+      return "wide_v3_bottom";
+    }
+    if (
+      text === "wide_bottom" ||
+      text === "wide-bottom" ||
+      text === "widebottom" ||
+      text === "wide_dol" ||
+      text === "wide_dół" ||
+      text === "gradient szeroki + dół" ||
+      text === "gradient szeroki + dol" ||
+      text === "szeroki + dół" ||
+      text === "szeroki + dol"
+    ) {
+      return "wide_bottom";
+    }
     return "wide";
   }
 
@@ -585,8 +911,20 @@
     if (targets.indexOf(section) === -1) targets.push(section);
     targets.forEach(function (el) {
       el.classList.remove("giclee-artist-biography-section--menu-gradient-wide");
+      el.classList.remove("giclee-artist-biography-section--menu-gradient-wide-bottom");
+      el.classList.remove("giclee-artist-biography-section--menu-gradient-wide-v2");
+      el.classList.remove("giclee-artist-biography-section--menu-gradient-wide-v3");
+      el.classList.remove("giclee-artist-biography-section--menu-gradient-wide-v3-bottom");
       el.classList.remove("giclee-artist-biography-section--menu-gradient-narrow");
-      if (normalized === "wide") {
+      if (normalized === "wide_v3_bottom") {
+        el.classList.add("giclee-artist-biography-section--menu-gradient-wide-v3-bottom");
+      } else if (normalized === "wide_v3") {
+        el.classList.add("giclee-artist-biography-section--menu-gradient-wide-v3");
+      } else if (normalized === "wide_v2") {
+        el.classList.add("giclee-artist-biography-section--menu-gradient-wide-v2");
+      } else if (normalized === "wide_bottom") {
+        el.classList.add("giclee-artist-biography-section--menu-gradient-wide-bottom");
+      } else if (normalized === "wide") {
         el.classList.add("giclee-artist-biography-section--menu-gradient-wide");
       } else if (normalized === "narrow") {
         el.classList.add("giclee-artist-biography-section--menu-gradient-narrow");
@@ -1104,6 +1442,12 @@
     this.pendingTextEnterSeq = null;
     if (this.unsub) this.unsub();
     if (this.io) this.io.disconnect();
+    for (var i = scrollShiftRegistry.length - 1; i >= 0; i--) {
+      if (scrollShiftRegistry[i].panel === this) {
+        scrollShiftRegistry[i].destroy();
+        scrollShiftRegistry.splice(i, 1);
+      }
+    }
   };
 
   function boot() {
@@ -1127,8 +1471,11 @@
       var instance = new GicleeArtistBiography(panelConfig);
       if (instance.bodyEl) {
         panelRegistry.push(instance);
+        attachScrollShift(panelConfig, instance);
       }
     });
+
+    initCollectionPageScrollChrome();
   }
 
   window.GicleeArtistBiographyBoot = boot;

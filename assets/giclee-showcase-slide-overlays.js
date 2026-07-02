@@ -392,6 +392,188 @@
   }
 
   var OVERLAY_HIDE_MS = 680;
+  var END_SCROLL_META_REVEAL_MS = 1050;
+  var END_SCROLL_QUOTE_STAGGER_MS = 380;
+  var END_SCROLL_HIDE_MS = 680;
+  var END_SCROLL_REVEAL_AT = 0.9;
+  var endScrollRevealRoots = [];
+  var endScrollRevealRafPending = false;
+
+  function getPageScrollEndProgress() {
+    var scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    var vh = window.innerHeight || document.documentElement.clientHeight || 800;
+    var docHeight = Math.max(
+      document.documentElement.scrollHeight || 0,
+      document.body ? document.body.scrollHeight : 0
+    );
+    return Math.min(1, Math.max(0, scrollY / Math.max(docHeight - vh, 1)));
+  }
+
+  function isShowcaseInViewport(root) {
+    if (!root || !root.getBoundingClientRect) return false;
+    var rect = root.getBoundingClientRect();
+    var vh = window.innerHeight || document.documentElement.clientHeight || 800;
+    return rect.bottom > vh * 0.12 && rect.top < vh * 0.92;
+  }
+
+  function isPageScrollAtEnd(root) {
+    return isShowcaseInViewport(root) && getPageScrollEndProgress() >= END_SCROLL_REVEAL_AT;
+  }
+
+  function clearEndScrollRevealTimers(root) {
+    if (root._gacsEndScrollMetaTimer) {
+      window.clearTimeout(root._gacsEndScrollMetaTimer);
+      root._gacsEndScrollMetaTimer = 0;
+    }
+    if (root._gacsEndScrollQuoteTimer) {
+      window.clearTimeout(root._gacsEndScrollQuoteTimer);
+      root._gacsEndScrollQuoteTimer = 0;
+    }
+  }
+
+  function clearEndScrollHideTimer(root) {
+    if (root._gacsEndScrollHideTimer) {
+      window.clearTimeout(root._gacsEndScrollHideTimer);
+      root._gacsEndScrollHideTimer = 0;
+    }
+    root._gacsEndScrollHideInProgress = false;
+  }
+
+  function resetEndScrollReveal(overlay) {
+    if (!overlay) return;
+    overlay.classList.remove(
+      "is-gacs-end-slide-meta-in",
+      "is-gacs-end-slide-quote-in",
+      "is-gacs-end-scroll-hide-armed"
+    );
+    overlay.classList.add("is-gacs-end-slide-pending");
+  }
+
+  function finishEndScrollHide(root, overlay) {
+    clearEndScrollHideTimer(root);
+    if (!overlay) return;
+    overlay.classList.remove("is-gacs-end-scroll-hide-armed");
+    resetEndScrollReveal(overlay);
+  }
+
+  function beginEndScrollHide(root, overlay) {
+    if (
+      !overlay.classList.contains("is-gacs-end-slide-meta-in") &&
+      !overlay.classList.contains("is-gacs-end-slide-quote-in")
+    ) {
+      resetEndScrollReveal(overlay);
+      return;
+    }
+
+    if (overlay.classList.contains("is-gacs-end-scroll-hide-armed")) return;
+    if (root._gacsEndScrollHideInProgress) return;
+
+    clearEndScrollRevealTimers(root);
+    root._gacsEndScrollHideInProgress = true;
+    overlay.classList.remove("is-gacs-end-slide-pending");
+
+    void overlay.offsetHeight;
+
+    window.requestAnimationFrame(function () {
+      overlay.classList.add("is-gacs-end-scroll-hide-armed");
+      root._gacsEndScrollHideTimer = window.setTimeout(function () {
+        finishEndScrollHide(root, overlay);
+      }, END_SCROLL_HIDE_MS);
+    });
+  }
+
+  function cancelEndScrollHide(root, overlay) {
+    if (!root._gacsEndScrollHideInProgress && !overlay.classList.contains("is-gacs-end-scroll-hide-armed")) {
+      return;
+    }
+    finishEndScrollHide(root, overlay);
+  }
+
+  function updateEndScrollReveal(root, overlay) {
+    if (!overlay) return;
+    if (
+      isArtistTransitioning(root) ||
+      root._gacsOverlayHideInProgress ||
+      root._gacsOverlayRevealQueued ||
+      overlay.classList.contains("is-gacs-overlay-hide-armed") ||
+      overlay.classList.contains("is-gacs-overlay-reveal-armed")
+    ) {
+      return;
+    }
+
+    if (isPageScrollAtEnd(root) && root._gacsEndScrollHideInProgress) {
+      cancelEndScrollHide(root, overlay);
+    }
+
+    if (root._gacsEndScrollHideInProgress || overlay.classList.contains("is-gacs-end-scroll-hide-armed")) {
+      if (!isPageScrollAtEnd(root)) return;
+    }
+
+    var meta = overlay.querySelector("[data-gacs-overlay-meta]");
+    var quote = overlay.querySelector("[data-gacs-overlay-quote]");
+    var showMeta = meta && !meta.hidden;
+    var showQuote = quote && !quote.hidden;
+    if (!showMeta && !showQuote) {
+      clearEndScrollRevealTimers(root);
+      resetEndScrollReveal(overlay);
+      return;
+    }
+
+    if (!isPageScrollAtEnd(root)) {
+      clearEndScrollRevealTimers(root);
+      if (prefersReducedMotion()) {
+        clearEndScrollHideTimer(root);
+        resetEndScrollReveal(overlay);
+      } else {
+        beginEndScrollHide(root, overlay);
+      }
+      return;
+    }
+
+    if (prefersReducedMotion()) {
+      clearEndScrollRevealTimers(root);
+      overlay.classList.remove("is-gacs-end-slide-pending");
+      overlay.classList.add("is-gacs-end-slide-meta-in", "is-gacs-end-slide-quote-in");
+      return;
+    }
+
+    if (overlay.classList.contains("is-gacs-end-slide-meta-in")) return;
+
+    clearEndScrollRevealTimers(root);
+    overlay.classList.remove("is-gacs-end-slide-meta-in", "is-gacs-end-slide-quote-in");
+    overlay.classList.add("is-gacs-end-slide-pending");
+
+    void overlay.offsetHeight;
+
+    window.requestAnimationFrame(function () {
+      overlay.classList.remove("is-gacs-end-slide-pending");
+      overlay.classList.add("is-gacs-end-slide-meta-in");
+
+      root._gacsEndScrollQuoteTimer = window.setTimeout(function () {
+        root._gacsEndScrollQuoteTimer = 0;
+        overlay.classList.add("is-gacs-end-slide-quote-in");
+      }, END_SCROLL_META_REVEAL_MS + END_SCROLL_QUOTE_STAGGER_MS);
+    });
+  }
+
+  function scheduleEndScrollRevealUpdate() {
+    if (endScrollRevealRafPending) return;
+    endScrollRevealRafPending = true;
+    window.requestAnimationFrame(function () {
+      endScrollRevealRafPending = false;
+      endScrollRevealRoots.forEach(function (root) {
+        var overlay = root.querySelector("[data-gacs-showcase-overlay]");
+        if (overlay) updateEndScrollReveal(root, overlay);
+      });
+    });
+  }
+
+  function bindEndScrollRevealListener() {
+    if (window._gacsEndScrollRevealScrollBound) return;
+    window._gacsEndScrollRevealScrollBound = true;
+    window.addEventListener("scroll", scheduleEndScrollRevealUpdate, { passive: true });
+    window.addEventListener("resize", scheduleEndScrollRevealUpdate, { passive: true });
+  }
 
   function prefersReducedMotion() {
     return (
@@ -442,6 +624,9 @@
     }
 
     root._gacsOverlayHideInProgress = true;
+    clearEndScrollRevealTimers(root);
+    clearEndScrollHideTimer(root);
+    resetEndScrollReveal(overlay);
     overlay.classList.add("is-gacs-overlay-hide-armed");
 
     window.setTimeout(function () {
@@ -539,6 +724,7 @@
 
     overlay.classList.remove("is-gacs-overlay-hide-armed");
     overlay.classList.add("is-gacs-overlay-reveal-armed");
+    resetEndScrollReveal(overlay);
     syncOverlay(root);
 
     void overlay.offsetHeight;
@@ -575,6 +761,7 @@
     var showMeta = meta && !meta.hidden;
     var showQuote = quote && !quote.hidden;
     overlay.hidden = !(showMeta || showQuote);
+    updateEndScrollReveal(root, overlay);
   }
 
   function bind(root) {
@@ -637,6 +824,16 @@
       attributes: true,
       attributeFilter: ["class"],
     });
+
+    bindEndScrollRevealListener();
+    if (endScrollRevealRoots.indexOf(root) === -1) {
+      endScrollRevealRoots.push(root);
+    }
+
+    var overlay = root.querySelector("[data-gacs-showcase-overlay]");
+    if (overlay) {
+      resetEndScrollReveal(overlay);
+    }
 
     handleArtistTransitionClasses(root);
     syncOverlay(root);

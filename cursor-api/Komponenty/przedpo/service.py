@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Callable
 
+from Komponenty._shared.storefront_urls import product_storefront_url
 from Komponenty.dodajobraz import shopify_client as sc
 from Komponenty.dodajobraz.create import PRODUCT_TYPE
 from Komponenty.dodajobraz.description_update import load_product_catalog_rows
@@ -207,7 +208,7 @@ def load_product_before_after(
         "after": full,
         "has_after": full is not None,
         "admin_url": f"https://{store}.myshopify.com/admin/products/{pid}",
-        "storefront_url": f"https://gicleeart.eu/pl-pl/products/{handle}" if handle else "",
+        "storefront_url": product_storefront_url(handle),
     }
 
 

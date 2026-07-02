@@ -37,6 +37,7 @@ Mobile (`≤749px`): opis produktu na pełną szerokość — `assets/custom.css
 |---------|-----------|--------|
 | Nowy PDP | `templates/product.nowy-szblon-produktu.json` | Reprodukcje z zoom HD, galeria, trust |
 | PDP v2 | `templates/product.szablon-produktu-v2.json` | Kopia `nowy-szblon-produktu` + sekcja porównania przed/po; **bez** sticky paska «Dodaj do koszyka» |
+| PDP v3 | `templates/product.szablon-produktu-v3.json` | Jak v2 + **stronicowany opis** («mini strony») zamiast klasycznego opisu; bez przycisku «Podgląd obrazu» |
 
 Mobile (`≤749px`):
 
@@ -51,10 +52,20 @@ Powiązane snippety:
 - `snippets/giclee-product-zoom.liquid`
 - `snippets/giclee-product-trust.liquid`
 - `snippets/giclee-product-process.liquid`
-- `snippets/giclee-product-before-after-compare.liquid` — markup suwaka przed/po (tylko `szablon-produktu-v2`)
+- `snippets/giclee-product-before-after-compare.liquid` — markup suwaka przed/po (`szablon-produktu-v2`, `szablon-produktu-v3`)
 - `sections/product-before-after-compare.liquid` — ustawienia w edytorze (`image_before`, `image_after`, teksty)
 
-**Porównanie przed/po (v2):** sekcja `before_after_compare` w `product.szablon-produktu-v2.json` (pierwsza w `order`). Markup trafia do slotu nad `giclee-product-process` przez synchroniczny przenos w `product-information-content.liquid`. **Grafika «przed»:** metafield `custom.before_retouch_url` (GicleeApp → **Przed/Po**). **«Po»:** obraz Full z galerii produktu. Bez obu warstw sekcja się nie renderuje. Assety: `giclee-product-before-after-compare.css` / `.js`. Teksty (eyebrow, tytuł, opis) — ustawienia sekcji w edytorze motywu.
+**Stronicowany opis (tylko v3):** sekcja «mini stron» pod zoomem R2. Scroll-over: R2 → opis → wjazd galerii → pusty scroll → proces + trust. **Wzorzec scroll choreography (uniwersalny + ta implementacja):** [`pdp-v3-pusty-scroll.md`](pdp-v3-pusty-scroll.md).
+
+**Efekty PDP v3 (metafield shop `custom.pdp_v3_effects`, GicleeApp → Strona produktu → Ustawienia efektów):**
+
+- **Immersive zoom** (`zoom_immersive`) — przybliżenie R2 (poza min zoom, strona u góry) chowa `#header-group` (ujemny `margin-top` = zmierzona wysokość, klasa `pdp-v3-zoom-immersive` na `<html>`) i powiększa viewer do `100vh`; oddalenie do min przywraca. `giclee-product-zoom.js/.css`.
+- **Blur R2 przy wjeździe opisu** (`r2_blur`) — `--pdp-v3-r2-blur` 0→10px gdy górna krawędź opisu wjeżdża od dolnej krawędzi R2 do pozycji przypięcia (`stickyTop`); na starcie (opis tuż pod R2) blur = 0. Liczony w `update()` `giclee-product-story.js`; filtr na `.giclee-product-zoom__viewer`.
+- **Tło konfiguratora** (`config_bg`) — element `.pdp-v3-config-bg` (z-index −1 w gridzie, jak `giclee-karuzela2-bg`): obraz (domyślnie featured image produktu), blur 11px, brightness, overlay+gradient, subtelny mouse-parallax (`±22/±14px`, ease 0.075). Wstrzykiwany w `initConfigBg()` (`giclee-product-story.js`).
+- **Wspólne tło proces+trust** (`pt_bg`) — wrapper `.pdp-v3-pt-wrap` w `product-information-content.liquid` obejmuje `giclee-product-process` + separator + `giclee-product-trust`; przy `has-bg` jeden obraz (`::before`, cover, blur/brightness z inline CSS vars) pod oboma sekcjami, ich czarne tła przechodzą w transparent.
+- Ustawienia wstrzykiwane jako `window.__PDP_V3_EFFECTS__` w `sections/product-information.liquid` (brak pola = efekt włączony). Szczegóły metafielda: `cursor-api/docs/komponenty/stronaproduktu.md`.
+
+**Porównanie przed/po (v2/v3):** sekcja `before_after_compare` w `product.szablon-produktu-v2.json` / `product.szablon-produktu-v3.json` (pierwsza w `order`). Markup trafia do slotu nad `giclee-product-process` przez synchroniczny przenos w `product-information-content.liquid`. **Grafika «przed»:** metafield `custom.before_retouch_url` (GicleeApp → **Przed/Po**). **«Po»:** obraz Full z galerii produktu. Bez obu warstw sekcja się nie renderuje. Assety: `giclee-product-before-after-compare.css` / `.js`. Teksty (eyebrow, tytuł, opis) — ustawienia sekcji w edytorze motywu.
 
 Szczegóły zoom: [`produkt-i-zoom.md`](produkt-i-zoom.md)
 

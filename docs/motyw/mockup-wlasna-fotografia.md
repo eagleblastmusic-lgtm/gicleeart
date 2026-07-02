@@ -51,14 +51,22 @@ Cache-bust JS/CSS (2026-06): `?v=mobile-cart-fix-20260605` w `giclee-photo-mocku
 
 ---
 
-## Sticky pin — intro (strona standalone)
+## Pin intro (PDP + opcjonalnie strona fotografii)
 
-Na stronie `pages/fotografia-obraz`, przed uploadem, sekcja mockupu ma miekki efekt „pin”: gdy grafika dochodzi do srodka ekranu, `#pm-hero` przykleja sie (natywny CSS `position: sticky`), a przewijanie ~jednego ekranu napedza istniejaca animacje tekstu `#pm-hero-ui` do srodka grafiki (`tickUiSmooth`). Po przejsciu dystansu toru strona plynnie jedzie dalej.
+**Glowny kontekst:** produkt `szablon-wlasna-fotografia` (np. `/products/twoje-zdjecie-jako-wydruk-giclee-...`) — mockup w `.product-wlasna-fotografia-mockup`. Opcjonalnie tez `pages/fotografia-obraz`.
 
-- **Markup:** `#pm-hero` owiniete w `.pm-pin-track` (`snippets/giclee-photo-mockup.liquid`). Domyslnie tor to `display: contents` (inertny).
-- **CSS** (`assets/giclee-photo-mockup.css`): tylko `@media (min-width: 981px) and (prefers-reduced-motion: no-preference)` + selektor standalone `:not(:has(.product-wlasna-fotografia-mockup))` + `.pm-pin-track:not(:has(#pm-hero.loaded))` — tor dostaje `height: calc(100vh + var(--pm-pin-distance, 85vh))`, a `#pm-hero` `position: sticky; top: 0; min-height: 100vh` (stage wysrodkowany w pionie). Dystans pinu regulowany zmienna `--pm-pin-distance`.
-- **JS** (`assets/giclee-photo-mockup.js`): `pmPinActive()` (gate: standalone + desktop MQ + not `loaded`), `getPinProgress()` liczy postep z rect toru; gdy pin aktywny `tickUiSmooth` bierze `targetP` z progresu zamiast z `accum`. `scrollLift` zeruje `--pm-lift` na czas pinu.
-- **Wylaczone dla:** PDP (`product-wlasna-fotografia-mockup`), mobile/tablet (<981px), po uploadzie (`.loaded` zwija tor), `prefers-reduced-motion`.
+Przed uploadem, na desktopie: tekst dojezdza do srodka otworu ramki podczas scrolla; gdy grafika + tekst sa na miejscu — scroll robi sie **„sticky”**: przez chwile przewijanie NIE zmienia pozycji (pasek scrolla ZOSTAJE, layout bez zmian), po ~1,4 s lub przebiciu kolkiem puszcza i strona jedzie dalej.
+
+**Mechanizm:** zamrozenie w biezacej pozycji przez `window.scrollTo(0, lockY)` (lockY = scrollY w chwili zaskoczenia — zero skoku) + `preventDefault` na `wheel` w dol. **NIE** `position:fixed` (chowal pasek, przesuwal layout, powodowal petle skokow) ani CSS `sticky`. Wyzwalanie tylko przy scrollu W DOL; re-arm gdy user wroci w gore.
+
+- **Markup:** `.pm-pin-track` z `data-pm-intro-pin="1"` gdy `template` = `page.fotografia-obraz` **lub** `product.szablon-wlasna-fotografia` (`snippets/giclee-photo-mockup.liquid`).
+- **JS pin:** `assets/giclee-photo-mockup-pin.js` (osobny plik, niezalezny od init glownego mockupu). `canLock()` = `data-pm-intro-pin` + desktop + `!loaded`. Diag: `window.__pmPinDiag()`.
+- **JS mockup:** `assets/giclee-photo-mockup.js` — `pmPinActive()` = `isIntroPin` (ten sam atrybut) + desktop + `!loaded`; `getPinProgress()` / `tickUiSmooth` animuja tekst.
+- **Wylaczone dla:** mobile/tablet (<981px), po uploadzie (`.loaded`), `prefers-reduced-motion: reduce` (animacja tekstu; pin ma wlasny gate w pin.js).
+
+> **Uwaga (blokada, ktora psula transform-pin):** `layout/theme.liquid` mial dla szablonu `fotografia-obraz`/`szablon-wlasna-fotografia` regule `#pm-hero { transform: none !important; --pm-lift: 0px !important }`. Zerowala transform hero — dlatego kontr-scroll nie ruszal. **Usunieto.** (Obecny scroll-lock nie zalezy od transformu hero, ale nie przywracaj tej reguly.)
+>
+> **Push na live:** publikowany motyw to **#197314249052** („Kopia Giclee Art Br", CDN `t/26`). `199521829212` to NIEopublikowana kopia — push tam nie zmienia tego, co widzi klient.
 
 ## Auto-centrowanie mockupu (scroll strony)
 

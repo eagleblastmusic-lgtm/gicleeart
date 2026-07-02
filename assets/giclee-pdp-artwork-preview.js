@@ -8,6 +8,7 @@
   }
 
   function boot() {
+    // v3 wykluczony: opis stronicowany (giclee-product-story) bez przycisku podgladu.
     var main = document.querySelector(
       'main[data-template="product.nowy-szblon-produktu"], main[data-template="product.szablon-produktu-v2"]'
     );

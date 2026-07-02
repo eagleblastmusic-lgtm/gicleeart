@@ -2,6 +2,7 @@
   "version": 1,
   "section_order": [
     "Administracja produktu",
+    "Administracja strony",
     "Zamowienia",
     "Finanse",
     "Marketing",
@@ -175,12 +176,12 @@
       "sort_key": 29
     },
     "karuzela": {
-      "section": "Marketing",
+      "section": "Administracja strony",
       "visible": true,
       "sort_key": 30
     },
     "tldobio": {
-      "section": "Marketing",
+      "section": "Administracja strony",
       "visible": true,
       "sort_key": 31
     },

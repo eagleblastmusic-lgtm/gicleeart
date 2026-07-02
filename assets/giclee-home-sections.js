@@ -1,0 +1,8 @@
+window.GICLEE_HOME_SECTIONS = {
+  "hero": "slideshow_4LMfx7",
+  "intro": "section_ThWw4Q",
+  "restoration": "section_XwRNDp",
+  "color-correction": "section_bj9cY3",
+  "potential": "section_p9Kcm6",
+  "see-difference": "section_P9LgB3"
+};

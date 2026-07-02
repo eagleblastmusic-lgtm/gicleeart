@@ -54,6 +54,12 @@
       "label": "Nowoczesna stolarnia",
       "text": "Realistic editorial fashion photograph of modern carpentry shop, created for social media. Use a 50mm lens at f/2.8. Framing is a fashion-style medium close-up / upper-body portrait, centered composition, subtle negative space, cinematic editorial mood, Vogue / Dazed / i-D inspired realism. Lighting is natural diffused daylight at 5600K, soft frontal-left direction, with gentle shadows. No text, no CGI, no illustration, no people. realistic depth of field, RAW fashion photo feeling, aspect ratio 16:9.",
       "sort_key": 8
+    },
+    {
+      "id": "1b6f459cad98",
+      "label": "Do wprowadzenia kiedyś w Fable 5",
+      "text": "1. Immersive zoom R2 nie działa prawidłowo. Kiedy widok jest maksymalnie oddalony (tak jak przy załadowaniu strony) po przybliżeniu robi się zoom i dolna sekcja upisu się chowa, górne menu z kolei cały czas jest widoczne. Zaś po oddaleniu oddala ponad szerokość obrazu w r2. Powinno być tak że kiedy jest maksymalnie oddalone, czyli tak jak  przy pierwotnym ładowaniu strony, kiedy się scrolluje, to płynnie",
+      "sort_key": 9
     }
   ]
 }

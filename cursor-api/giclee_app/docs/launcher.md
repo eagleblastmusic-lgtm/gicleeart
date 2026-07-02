@@ -21,7 +21,8 @@ Kolejność w launcherze **nie** pochodzi z pola `order` w `component.json` — 
 
 | Sekcja | Komponenty |
 |--------|------------|
-| Administracja produktu | dodajobraz, aktualizujopis, zmienceny, wyborszablonu, zmietytuly, tytulyai, nazwijobraz, pobierzobraz, squoosh, print_optimize, mockup, infoplikow |
+| Administracja produktu | dodajobraz, aktualizujopis, zmienceny, wyborszablonu, zmietytuly, tytulyai, nazwijobraz, pobierzobraz, squoosh, print_optimize, mockup, infoplikow, przedpo |
+| Administracja strony | wzorzecszablonu, stronaproduktu, karuzela, tldobio, stronaglowna |
 | Zamówienia | obrazy, produkcja, passepartout |
 | Finanse | finanse — kafelek **Księgowość**; kalkulacja (Kalkulator kosztów); kpir, dnr, dokumentysprzedazy ukryte — otwierane z panelu Księgowość |
 | Marketing | blog, socialmedia, zadania, cenyMarketing |

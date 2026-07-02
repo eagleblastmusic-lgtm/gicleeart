@@ -1,0 +1,7 @@
+{
+  "name": "Wzorzec szablonu",
+  "description": "Lista produktów — przypisz szablon motywu (PDP) z listy lub hurtowo do wielu pozycji.",
+  "icon": "📄",
+  "color": "#1565c0",
+  "order": 36
+}

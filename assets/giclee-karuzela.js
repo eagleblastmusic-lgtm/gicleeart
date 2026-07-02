@@ -10,14 +10,24 @@
 
   var STORAGE_KEY = "giclee-carousel-version";
   var LOOK_STORAGE_KEY = "giclee-showcase-look";
+  var HOVER_BLUR_STORAGE_KEY = "giclee-karuzela-hover-blur";
   var VALID = { Karuzela1: true, Karuzela2: true };
   var LOOK_VALID = { V1: true, V2: true, V3: true };
+
+  function parseBoolish(value) {
+    if (value == null) return null;
+    var v = String(value).trim().toLowerCase();
+    if (v === "1" || v === "on" || v === "true" || v === "yes") return true;
+    if (v === "0" || v === "off" || v === "false" || v === "no") return false;
+    return null;
+  }
 
   function readUrlParams() {
     try {
       var params = new URLSearchParams(window.location.search);
       var version = params.get("giclee_karuzela");
       var look = params.get("giclee_showcase_look");
+      var hoverBlur = parseBoolish(params.get("giclee_hover_blur"));
       var changed = false;
 
       if (VALID[version]) {
@@ -36,6 +46,14 @@
         changed = true;
       }
 
+      if (hoverBlur !== null) {
+        try {
+          localStorage.setItem(HOVER_BLUR_STORAGE_KEY, hoverBlur ? "1" : "0");
+        } catch (_e) {}
+        params.delete("giclee_hover_blur");
+        changed = true;
+      }
+
       if (changed) {
         var qs = params.toString();
         var clean =
@@ -48,9 +66,10 @@
       return {
         version: VALID[version] ? version : null,
         look: LOOK_VALID[look] ? look : null,
+        hoverBlur: hoverBlur,
       };
     } catch (_e) {
-      return { version: null, look: null };
+      return { version: null, look: null, hoverBlur: null };
     }
   }
 
@@ -68,6 +87,31 @@
       if (LOOK_VALID[fromConfig]) return fromConfig;
     } catch (_e) {}
     return null;
+  }
+
+  function readHoverBlurConfigDefault() {
+    try {
+      if (typeof window.__GICLEE_HOVER_BLUR_ENABLED === "boolean") {
+        return window.__GICLEE_HOVER_BLUR_ENABLED;
+      }
+    } catch (_e) {}
+    return null;
+  }
+
+  function readStoredHoverBlur() {
+    try {
+      return parseBoolish(localStorage.getItem(HOVER_BLUR_STORAGE_KEY));
+    } catch (_e) {}
+    return null;
+  }
+
+  function resolveHoverBlur(fromUrl) {
+    if (fromUrl !== null && fromUrl !== undefined) return fromUrl;
+    var fromStorage = readStoredHoverBlur();
+    if (fromStorage !== null) return fromStorage;
+    var fromConfig = readHoverBlurConfigDefault();
+    if (fromConfig !== null) return fromConfig;
+    return true;
   }
 
   function readStoredVersion() {
@@ -128,8 +172,8 @@
     if (existing) return;
     var bust =
       href.indexOf("?") === -1
-        ? "?v=karuzela2-css-nozoom-20260628"
-        : "&v=karuzela2-css-nozoom-20260628";
+        ? "?v=karuzela2-css-hover-blur-20260701"
+        : "&v=karuzela2-css-hover-blur-20260701";
     var link = document.createElement("link");
     link.rel = "stylesheet";
     link.href = href + bust;
@@ -140,8 +184,8 @@
   function loadScript(src, onLoad) {
     var bust =
       src.indexOf("?") === -1
-        ? "?v=karuzela2-text-header-sync-20260628"
-        : "&v=karuzela2-text-header-sync-20260628";
+        ? "?v=karuzela2-bg-hover-blur-v2-active-slide-20260701"
+        : "&v=karuzela2-bg-hover-blur-v2-active-slide-20260701";
     var script = document.createElement("script");
     script.src = src + bust;
     script.defer = true;
@@ -157,6 +201,7 @@
   var urlParams = readUrlParams();
   var version = resolveVersion(urlParams.version);
   var showcaseLook = resolveShowcaseLook(urlParams.look);
+  var hoverBlur = resolveHoverBlur(urlParams.hoverBlur);
   var assets = assetConfig();
 
   try {
@@ -167,15 +212,20 @@
 
   window.__GICLEE_KARUZELA_VERSION = version;
   window.__GICLEE_SHOWCASE_LOOK = showcaseLook;
+  window.__GICLEE_HOVER_BLUR_ENABLED = hoverBlur;
 
   window.GicleeKaruzela = {
     STORAGE_KEY: STORAGE_KEY,
     LOOK_STORAGE_KEY: LOOK_STORAGE_KEY,
+    HOVER_BLUR_STORAGE_KEY: HOVER_BLUR_STORAGE_KEY,
     getVersion: function () {
       return window.__GICLEE_KARUZELA_VERSION || resolveVersion(null);
     },
     getShowcaseLook: function () {
       return window.__GICLEE_SHOWCASE_LOOK || resolveShowcaseLook(null);
+    },
+    getHoverBlur: function () {
+      return window.__GICLEE_HOVER_BLUR_ENABLED !== false;
     },
     setVersion: function (next) {
       if (!VALID[next]) return;
@@ -188,6 +238,12 @@
       if (!LOOK_VALID[next]) return;
       try {
         localStorage.setItem(LOOK_STORAGE_KEY, next);
+      } catch (_e) {}
+      window.location.reload();
+    },
+    setHoverBlur: function (next) {
+      try {
+        localStorage.setItem(HOVER_BLUR_STORAGE_KEY, next ? "1" : "0");
       } catch (_e) {}
       window.location.reload();
     },

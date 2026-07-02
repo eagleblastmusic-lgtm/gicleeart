@@ -6,6 +6,7 @@ import re
 from typing import Any
 from urllib.parse import unquote
 
+from Komponenty._shared.storefront_urls import product_storefront_url
 from Komponenty.dodajobraz import shopify_client as sc
 from Komponenty.dodajobraz.parser import (
     IMAGE_ROLE_FULL,
@@ -17,7 +18,6 @@ from Komponenty.dodajobraz.parser import (
 )
 
 _IMG_SRC_RE = re.compile(r"""<img[^>]+src=["']([^"']+)["']""", re.IGNORECASE)
-_STOREFRONT_BASE = "https://gicleeart.eu/pl-pl/products"
 
 
 def filename_from_url(url: str) -> str:
@@ -118,7 +118,7 @@ def load_product_file_info(shop: str, token: str, product_id: int) -> dict[str, 
         "admin_url": (
             f"https://{shop.replace('.myshopify.com', '')}.myshopify.com/admin/products/{pid}"
         ),
-        "storefront_url": f"{_STOREFRONT_BASE}/{handle}" if handle else "",
+        "storefront_url": product_storefront_url(handle),
         "featured_image_id": featured_id,
         "featured_filename": filename_from_url((featured.get("src") or "").strip()),
         "image_count": len(rows),

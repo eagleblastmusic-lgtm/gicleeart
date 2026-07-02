@@ -8,38 +8,65 @@
     }
 
     const embedHost = hero.closest(".product-wlasna-fotografia-mockup");
+    const isIntroPin = !!hero.closest('[data-pm-intro-pin="1"]');
     const isPdpEmbed = !!embedHost;
     const host = embedHost || hero.closest(".shopify-section");
     const PM_REST_SCALE = 0.9;
 
-    /* ── Sticky pin (intro) — desktop, strona standalone, przed uploadem ── */
+    /* ── Pin intro — JS-sterowany kontr-scroll (transform #pm-hero) ──
+       Grafika wizualnie stoi przez ~jeden ekran przewijania; strona przewija sie
+       (tor .pm-pin-track daje dodatkowa wysokosc), a #pm-hero jest przesuwany
+       w dol przez --pm-lift o tyle, ile strona sie przewinela. */
     const pinTrackEl = hero.closest(".pm-pin-track");
     const PM_PIN_MQ =
+      window.matchMedia && window.matchMedia("(min-width: 981px)");
+    const PM_PIN_REDUCE_MQ =
       window.matchMedia &&
-      window.matchMedia(
-        "(min-width: 981px) and (prefers-reduced-motion: no-preference)"
-      );
-    /** Ile poczatku dystansu toru przypada na animacje tekstu (reszta = trzymanie). */
+      window.matchMedia("(prefers-reduced-motion: reduce)");
+    /** Dystans DOJAZDU tekstu przed trzymaniem (× wysokosc ekranu):
+       tekst animuje sie gdy grafika wjezdza i osiada w centrum ZANIM zacznie sie freeze. */
     const PM_PIN_ANIM_PART = 0.7;
+    /** Ulamek wysokosci ekranu = dystans "trzymania" (dodatkowy scroll). */
+    const PM_PIN_DISTANCE_RATIO = 0.85;
 
     function pmPinActive() {
       return (
-        !isPdpEmbed &&
+        isIntroPin &&
         !!pinTrackEl &&
         !!PM_PIN_MQ &&
         PM_PIN_MQ.matches &&
+        !(PM_PIN_REDUCE_MQ && PM_PIN_REDUCE_MQ.matches) &&
         !hero.classList.contains("loaded")
       );
     }
 
-    function getPinProgress() {
-      if (!pinTrackEl) return 0;
-      var rect = pinTrackEl.getBoundingClientRect();
+    function pmPinDistancePx() {
       var vh = window.innerHeight || 1;
-      var span = rect.height - vh;
-      if (span <= 0) return 0;
-      var t = Math.max(0, Math.min(1, -rect.top / span));
-      var p = Math.min(1, t / PM_PIN_ANIM_PART);
+      return Math.round(vh * PM_PIN_DISTANCE_RATIO);
+    }
+
+    /* Pauza intro realizowana przez TWARDY scroll-lock (pmScrollLock), nie kontr-scroll.
+       Tor pinu pozostaje inertny (display: contents); utrzymujemy --pm-lift = 0. */
+    function updatePinLayout() {
+      if (!pinTrackEl) return;
+      pinTrackEl.classList.remove("pm-pin-track--on");
+      pinTrackEl.style.height = "";
+      if (!isPdpEmbed) hero.style.setProperty("--pm-lift", "0px");
+    }
+
+    function drivePinLift() {}
+
+    /* Postep animacji tekstu 0..1 wg POZYCJI grafiki (#pm-wrapper) wzgledem srodka ekranu:
+       - grafika ponizej srodka (distBelow > 0): 0..1 gdy sie zbliza (swobodny scroll);
+       - tekst osiada w centrum ramki DOKLADNIE gdy grafika wysrodkowana (distBelow <= 0);
+       - nizej/pod lockiem: 1 (tekst zamrozony). Freeze widoku robi pmScrollLock. */
+    function getPinProgress() {
+      var vh = window.innerHeight || 1;
+      var distBelow = getFrameWindowCenterClient().y - vh / 2;
+      if (distBelow <= 0) return 1;
+      var approachPx = vh * PM_PIN_ANIM_PART;
+      if (approachPx <= 0 || distBelow >= approachPx) return 0;
+      var p = 1 - distBelow / approachPx;
       return p * p * (3 - 2 * p);
     }
 
@@ -102,16 +129,10 @@
       var ticking = false;
 
       function update() {
-        if (pmPinActive()) {
-          hero.style.setProperty("--pm-lift", "0px");
-          return;
-        }
-        var r = section.getBoundingClientRect();
-        var vh = window.innerHeight || 1;
-        var start = vh * travel;
-        var t = 1 - Math.min(1, Math.max(0, r.top / start));
-        t = t * t * (3 - 2 * t);
-        hero.style.setProperty("--pm-lift", ((1 - t) * maxPx).toFixed(2) + "px");
+        // Pin intro (loopUi -> drivePinLift) w pelni steruje --pm-lift na standalone.
+        // Gdy pin nieaktywny (np. po uploadzie), trzymamy 0 — bez starego entrance-lift.
+        if (pmPinActive()) return;
+        hero.style.setProperty("--pm-lift", "0px");
       }
 
       function onScroll() {
@@ -1740,6 +1761,7 @@
         .then(function (source) {
           img = source;
           hero.classList.add("loaded");
+          updatePinLayout();
           const isLandscape = sourcePixelWidth() >= sourcePixelHeight();
           setFrame(isLandscape ? "landscape" : "portrait");
           fitImage();
@@ -1779,9 +1801,13 @@
 
     function getFrameWindowCenterClient() {
       var wr = wrapper.getBoundingClientRect();
+      var f = frames[mode];
+      var win = getWindow();
+      var sx = wr.width / f.rendered.w;
+      var sy = wr.height / f.rendered.h;
       return {
-        x: wr.left + wr.width / 2,
-        y: wr.top + wr.height / 2,
+        x: wr.left + (win.x + win.w / 2) * sx,
+        y: wr.top + (win.y + win.h / 2) * sy,
       };
     }
 
@@ -1824,6 +1850,7 @@
     }
 
     function loopUi() {
+      drivePinLift();
       tickUiSmooth();
       requestAnimationFrame(loopUi);
     }
@@ -1884,6 +1911,12 @@
       lastTx = lastTy = 0;
       if (uiWrap) uiWrap.style.transform = "";
     });
+
+    window.addEventListener("resize", updatePinLayout);
+    if (PM_PIN_MQ && PM_PIN_MQ.addEventListener) {
+      PM_PIN_MQ.addEventListener("change", updatePinLayout);
+    }
+    updatePinLayout();
 
     loopUi();
 

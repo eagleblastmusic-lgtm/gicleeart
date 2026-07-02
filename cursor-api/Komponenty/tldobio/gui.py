@@ -33,6 +33,10 @@ from .service import (
     BIO_MENU_GRADIENT_NARROW,
     BIO_MENU_GRADIENT_NONE,
     BIO_MENU_GRADIENT_WIDE,
+    BIO_MENU_GRADIENT_WIDE_BOTTOM,
+    BIO_MENU_GRADIENT_WIDE_V2,
+    BIO_MENU_GRADIENT_WIDE_V3,
+    BIO_MENU_GRADIENT_WIDE_V3_BOTTOM,
     DEFAULT_BIO_COVER_SCALE,
     DEFAULT_BIO_MENU_GRADIENT,
     DEFAULT_BIO_OVERLAY_PCT,
@@ -56,6 +60,10 @@ _MENU_GRADIENT_LABELS = {
     BIO_MENU_GRADIENT_NONE: "Bez gradientu",
     BIO_MENU_GRADIENT_NARROW: "Gradient wąski",
     BIO_MENU_GRADIENT_WIDE: "Gradient szeroki",
+    BIO_MENU_GRADIENT_WIDE_BOTTOM: "Gradient szeroki + dół",
+    BIO_MENU_GRADIENT_WIDE_V2: "Gradient szeroki v2",
+    BIO_MENU_GRADIENT_WIDE_V3: "Gradient szeroki v3",
+    BIO_MENU_GRADIENT_WIDE_V3_BOTTOM: "Gradient szeroki v3 + dół",
 }
 
 APP_TITLE = "Tło do Bio — sekcja biografii autora"
@@ -1104,6 +1112,22 @@ def _build_ui(host: tk.Tk) -> None:
     gradient_menu.add_command(
         label=_MENU_GRADIENT_LABELS[BIO_MENU_GRADIENT_WIDE],
         command=lambda: _set_menu_gradient(BIO_MENU_GRADIENT_WIDE),
+    )
+    gradient_menu.add_command(
+        label=_MENU_GRADIENT_LABELS[BIO_MENU_GRADIENT_WIDE_BOTTOM],
+        command=lambda: _set_menu_gradient(BIO_MENU_GRADIENT_WIDE_BOTTOM),
+    )
+    gradient_menu.add_command(
+        label=_MENU_GRADIENT_LABELS[BIO_MENU_GRADIENT_WIDE_V2],
+        command=lambda: _set_menu_gradient(BIO_MENU_GRADIENT_WIDE_V2),
+    )
+    gradient_menu.add_command(
+        label=_MENU_GRADIENT_LABELS[BIO_MENU_GRADIENT_WIDE_V3],
+        command=lambda: _set_menu_gradient(BIO_MENU_GRADIENT_WIDE_V3),
+    )
+    gradient_menu.add_command(
+        label=_MENU_GRADIENT_LABELS[BIO_MENU_GRADIENT_WIDE_V3_BOTTOM],
+        command=lambda: _set_menu_gradient(BIO_MENU_GRADIENT_WIDE_V3_BOTTOM),
     )
 
     def _open_gradient_menu() -> None:

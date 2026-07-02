@@ -98,7 +98,7 @@
 
   {%- liquid
     assign giclee_pdp_template = false
-    if template.suffix == 'nowy-szblon-produktu' or template.suffix == 'szablon-produktu-v2' or template.suffix == 'szablon-wlasna-fotografia'
+    if template.suffix == 'nowy-szblon-produktu' or template.suffix == 'szablon-produktu-v2' or template.suffix == 'szablon-produktu-v3' or template.suffix == 'szablon-wlasna-fotografia'
       assign giclee_pdp_template = true
     endif
   -%}
@@ -113,10 +113,14 @@
   {%- endif -%}
 
   {%- capture product_description_below -%}
-    <div class="product-description-below{% if template.suffix == 'szablon-wlasna-fotografia' %} product-description-below--wlasna-no-details{% endif %}">
+    <div class="product-description-below{% if template.suffix == 'szablon-wlasna-fotografia' %} product-description-below--wlasna-no-details{% endif %}{% if template.suffix == 'szablon-produktu-v3' %} product-description-below--story-source{% endif %}">
       {{ product.description }}
     </div>
-    {%- if description_first -%}
+    {%- if template.suffix == 'szablon-produktu-v3' -%}
+      {%- comment -%} v3: stronicowany opis (mini strony) — klasyczny opis wyzej zostaje jako ukryte zrodlo danych {%- endcomment -%}
+      {% render 'giclee-product-story', product: product %}
+    {%- endif -%}
+    {%- if description_first and template.suffix != 'szablon-produktu-v3' -%}
       <div class="product-description-trailing-separator" role="presentation" aria-hidden="true"></div>
     {%- endif -%}
   {%- endcapture -%}
@@ -153,8 +157,10 @@
   </div>
 
   {%- if description_first -%}
-    <div class="product-description-trailing-separator" role="presentation" aria-hidden="true"></div>
-    {%- if template.suffix == 'szablon-produktu-v2' -%}
+    {%- unless template.suffix == 'szablon-produktu-v3' -%}
+      <div class="product-description-trailing-separator" role="presentation" aria-hidden="true"></div>
+    {%- endunless -%}
+    {%- if template.suffix == 'szablon-produktu-v2' or template.suffix == 'szablon-produktu-v3' -%}
       <div class="giclee-before-after-target" data-giclee-before-after-target></div>
       <script>
         (function () {
@@ -167,9 +173,37 @@
         })();
       </script>
     {%- endif -%}
+    {%- if template.suffix == 'szablon-produktu-v3' -%}
+      {%- comment -%}
+        Wspolne tlo graficzne proces+trust (metafield shop custom.pdp_v3_effects,
+        pt_bg: {enabled, image, blur, brightness}) — jeden obraz pod oboma
+        sekcjami; blur/jasnosc jako inline CSS vars.
+      {%- endcomment -%}
+      {%- liquid
+        assign pdp_pt_fx = shop.metafields.custom.pdp_v3_effects.value.pt_bg
+        assign pdp_pt_image = ''
+        if pdp_pt_fx.enabled != false and pdp_pt_fx.image != blank
+          assign pdp_pt_image = pdp_pt_fx.image
+        endif
+        assign pdp_pt_blur = 0
+        if pdp_pt_fx.blur == true
+          assign pdp_pt_blur = 14
+        endif
+        assign pdp_pt_brightness = pdp_pt_fx.brightness | default: 100
+      -%}
+      <div
+        class="pdp-v3-pt-wrap{% if pdp_pt_image != '' %} has-bg{% endif %}"
+        {% if pdp_pt_image != '' %}
+          style="--pdp-v3-pt-image: url('{{ pdp_pt_image }}'); --pdp-v3-pt-blur: {{ pdp_pt_blur }}px; --pdp-v3-pt-brightness: {{ pdp_pt_brightness | divided_by: 100.0 }};"
+        {% endif %}
+      >
+    {%- endif -%}
     {% render 'giclee-product-process' %}
     <div class="product-description-trailing-separator" role="presentation" aria-hidden="true"></div>
     {% render 'giclee-product-trust' %}
+    {%- if template.suffix == 'szablon-produktu-v3' -%}
+      </div>
+    {%- endif -%}
     <div class="product-description-trailing-separator" role="presentation" aria-hidden="true"></div>
   {%- endif -%}
 

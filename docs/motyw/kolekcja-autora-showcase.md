@@ -35,7 +35,7 @@ Sekcja ładuje `assets/giclee-karuzela.js`, który wybiera implementację JS **o
 | Wersja JS | Plik | Opis |
 |--------|------|------|
 | **Karuzela1** (domyślna) | `giclee-karuzela1.js` | Oryginał — ciemne tło gradient, bez obrazu produktu w tle |
-| **Karuzela2** | `giclee-karuzela2.js` + `giclee-karuzela2.css` | Cinematic hero — tło = obraz aktywnego slajdu (crossfade ~780 ms), overlay + gradient + vignette; **zmiana autora** używa tego samego crossfade (bez resetu warstw), preload pierwszego slajdu w fazie wyjścia |
+| **Karuzela2** | `giclee-karuzela2.js` + `giclee-karuzela2.css` | Cinematic hero — tło = obraz aktywnego slajdu (crossfade ~780 ms), overlay + gradient + vignette; **scroll-stack:** tło z blur → ostrość (`--gacs-progress`); **zmiana autora** używa tego samego crossfade (bez resetu warstw), preload pierwszego slajdu w fazie wyjścia |
 
 | Wygląd | CSS | Opis |
 |--------|-----|------|
@@ -87,15 +87,15 @@ Jeden stan `GicleeActiveAuthor` (`assets/giclee-active-author.js`) kontroluje:
 
 Dane biograficzne każdego autora są w JSON galerii (`bioHtml`, `bioBackgroundUrl`, `bioBackgroundPosX`, `seoTitle`, `seoDescription` w `giclee-artist-showcase-artist-json.liquid`).
 
-**Tło BIO per kolekcja (GicleeApp → Tło do Bio):** metafield kolekcji `custom.bio_background_url` (URL z Shopify Files) + opcjonalnie `custom.bio_background_pos_x` (0–100, przesunięcie poziome kadru), `custom.bio_background_overlay_pct`, `custom.bio_background_cover_scale`, `custom.bio_background_radial_mask` (JSON: maska radialna ekspozycji obok gradientu pod tekst), `custom.bio_background_menu_gradient` (`none` \| `narrow` \| `wide` — gradient u góry hero do czerni pod menu; domyślnie `wide` gdy brak metafield). SSR w `giclee-artist-biography.liquid`; przy przełączaniu autorów `giclee-artist-biography.js` → `applyBackground()` ustawia `object-position`, parametry overlay i klasę `giclee-artist-biography-section--menu-gradient-wide` lub `--menu-gradient-narrow`. Warstwy: obraz (`cover`) + asymetryczny overlay (`.giclee-artist-bio-bg__overlay`) + opcjonalna maska radialna (`.giclee-artist-bio-bg__radial-mask`) + opcjonalnie u góry gradient do `#000` (`.custom-section-background::before`, wysokość od `--header-group-height`) pod czarne menu. Przy `--custom-bg` ukrywany jest `.section-background` (scheme motywu), żeby nie prześwitywał jasna obwódka przy pierwszym załadowaniu. **Fallback:** brak metafield → tło z Theme Editor. Admin: [`tldobio.md`](../../cursor-api/docs/komponenty/tldobio.md).
+**Tło BIO per kolekcja (GicleeApp → Tło do Bio):** metafield kolekcji `custom.bio_background_url` (URL z Shopify Files) + opcjonalnie `custom.bio_background_pos_x` (0–100, przesunięcie poziome kadru), `custom.bio_background_overlay_pct`, `custom.bio_background_cover_scale`, `custom.bio_background_radial_mask` (JSON: maska radialna ekspozycji obok gradientu pod tekst), `custom.bio_background_menu_gradient` (`none` \| `narrow` \| `wide` \| `wide_bottom` \| `wide_v2` \| `wide_v3` \| `wide_v3_bottom` — gradient u góry hero do czerni pod menu; domyślnie `wide` gdy brak metafield; `wide_bottom` jak szeroki + ten sam pas u dołu; `wide_v2` bez płaskiego pasu #000 u góry; `wide_v3` jak v2, wysokość pasu 60%; `wide_v3_bottom` jak v3 + dół). SSR w `giclee-artist-biography.liquid`; przy przełączaniu autorów `giclee-artist-biography.js` → `applyBackground()` ustawia `object-position`, parametry overlay i klasę `giclee-artist-biography-section--menu-gradient-wide` lub `--menu-gradient-narrow`. Warstwy: obraz (`cover`) + asymetryczny overlay (`.giclee-artist-bio-bg__overlay`) + opcjonalna maska radialna (`.giclee-artist-bio-bg__radial-mask`) + opcjonalnie u góry gradient do `#000` (`.custom-section-background::before`, wysokość od `--header-group-height`) pod czarne menu. Przy `--custom-bg` ukrywany jest `.section-background` (scheme motywu), żeby nie prześwitywał jasna obwódka przy pierwszym załadowaniu. **Fallback:** brak metafield → tło z Theme Editor. Admin: [`tldobio.md`](../../cursor-api/docs/komponenty/tldobio.md).
 
 **Linki do produktów po zmianie handle:** JSON w HTML może mieć stare `product.url` (cache strony). `GicleeArtistExhibition` przy starcie i przy przełączeniu autora pobiera świeże produkty z `GET /collections/{handle}/products.json` i buduje URL z `handle`. Przy zmianie handle w Admin API (`update_product` w `shopify_client.py`) tworzony jest redirect `/products/{stary}` → `/products/{nowy}`; backfill: `cursor-api/scripts/backfill_product_handle_redirects.py`.
 
-**Animacje biografii:** tło — crossfade w fazie wyjścia (0.88s); **tekst i portret** — zsynchronizowane z nagłówkiem karuzeli (`giclee:artist-showcase-enter` w `swapAndEnter`, ta sama animacja wejścia 0.88s). `prefers-reduced-motion` wyłącza efekt.
+**Animacje biografii:** tło — crossfade w fazie wyjścia (0.88s); **tekst i portret** — zsynchronizowane z nagłówkiem karuzeli (`giclee:artist-showcase-enter` w `swapAndEnter`, ta sama animacja wejścia 0.88s). **Scroll-shift (editorial):** od pierwszego piksela scrollu nazwa + portret w lewo, akapity opisu w prawo — progress `scrollY / (wysokość strony − viewport)` z ease-in (`t^1.4`); rozmycie + fade-out (`opacity` → 0) zsynchronizowane z przesunięciem; **tło** — zoom stacku + fade-out całej warstwy tła (`--gab-scroll-bg-stack-scale`, `--gab-scroll-shift-opacity` na `[data-gab-custom-bg]`); desktop max ~160px, tablet ~96px, mobile wyłączone. `prefers-reduced-motion` wyłącza też crossfade i przejścia tekstu.
 
-**Stabilność layoutu przy zmianie autora:** overlay-audit (grid, tło `inset:0`); stała wysokość **`.giclee-artist-bio`** w CSS (`--gab-hero-height: clamp(560px, 56svh, 640px)` — pas bio na desktopie; mobile v49: `height:auto`). **Scroll-overlap BIO → galeria:** `assets/giclee-bio-collection-scroll-stack.css` — BIO `sticky` (`z-index: 20`), galeria `relative` (`z-index: 30`), header obniżony do `10`; ładowane gdy włączone **Panel scroll** w sekcji galerii (`enable_scroll_panel`, domyślnie tak). Bez sztucznych spacerów ani listenerów scroll.
+**Stabilność layoutu przy zmianie autora:** overlay-audit (grid, tło `inset:0`); stała wysokość **`.giclee-artist-bio`** w CSS (`--gab-hero-height: clamp(560px, 56svh, 640px)` — pas bio na desktopie; mobile v49: `height:auto`). **Scroll-overlap BIO → galeria:** `assets/giclee-bio-collection-scroll-stack.css` — BIO `sticky` (`z-index: 20`), galeria `relative` (`z-index: 30`), header obniżony do `10`; ładowane gdy włączone **Panel scroll** w sekcji galerii (`enable_scroll_panel`, domyślnie tak). Galeria bez fade-in przy scrollu (pełna widoczność nagłówka, stage, kropek).
 
-**Skrypty stanu** (`giclee-active-author.js`, `giclee-artist-biography.js`) ładują się **tylko z sekcji galerii**. Cache-bust: `&v=` (nie `?v=`).
+**Skrypty stanu** (`giclee-active-author.js`, `giclee-artist-biography.js`) ładują się z sekcji galerii; `giclee-artist-biography.js` ładuje się też z sekcji biografii (scroll-shift na stronach bez galerii). Cache-bust: `&v=` / `?v=` na assetach biography.
 
 **Biografia (Collection heading / Biografia autora):** `giclee-artist-biography.js` subskrybuje `GicleeActiveAuthor`. Boot biografii **po** `GicleeActiveAuthor.init()` w galerii.
 
@@ -103,7 +103,7 @@ Dane biograficzne każdego autora są w JSON galerii (`bioHtml`, `bioBackgroundU
 
 **Mobile galeria (≤749px):** mniejsze slajdy coverflow (`--gacs-slide-w/h`), padding `__inner` z `--page-margin`, nagłówek pełna szerokość, nawigacja autorów prev|next w jednym wierszu pod nagłówkiem, karuzela: viewport pełna szerokość + strzałki w drugim rzędzie stage. Na urządzeniach dotykowych autoplay karuzeli jest wyłączony, żeby slajd nie przestawiał się sam podczas oglądania; swipe działa także po rozpoczęciu gestu na linkowanej karcie.
 
-**Warstwa tekstowa (overlay):** absolutnie pozycjonowane napisy — lewy dół: data / technika / gatunek aktywnego slajdu (SZCZEGÓŁY w `product.description`); prawy dół: cytat z listy `custom.collection_quotes` (GicleeApp → Cytaty; fallback `custom.collection_quote`). **Priorytet:** cytaty jeszcze nieobejrzane przez użytkownika (`localStorage`), potem los z pozostałych; po obejrzeniu wszystkich — cykl od początku. Przy zmianie autora wybór utrzymywany do kolejnej zmiany autora. Pliki: `assets/giclee-showcase-slide-overlays.{css,js}`. Przy zmianie autora: **fade off** dopiero gdy pojawia się nowe tło Karuzela2 (`giclee:karuzela2-artist-bg-enter`, ~680 ms), **fade on** po podmianie tracku galerii. Kolejka reveal nie jest kasowana przed końcem fade off (overlay JS v13-unseen). Desktop/tablet; na mobile ukryte.
+**Warstwa tekstowa (overlay):** absolutnie pozycjonowane napisy — lewy dół: data / technika / gatunek aktywnego slajdu; prawy dół: cytat z listy `custom.collection_quotes`. **Fade-in na końcu scrollu strony:** meta (gdy `scrollY` ≥ ~90% zakresu dokumentu i galeria w viewportcie) → po ~1.05 s cytat (`is-gacs-end-slide-*` w overlay JS).
 
 ---
 
@@ -187,7 +187,103 @@ Podczas overlapu widać cienką jasną linię nad nagłówkiem galerii (subpixel
 3. **`::before`** na `__surface` — 8px przedłużenie `--gacs-bg` w górę przy overlap/pin.
 4. **JS `seamCover: 2px`** — dodatkowy `translateY` w `GicleeArtistScrollPanel.update()`.
 
-**v49 (2026-07-01):** jasna obwódka przy własnym tle BIO (pierwsze załadowanie / upload) — inna przyczyna niż sam `.section-background`: (1) `scroll-stack` ustawiał `background-color: var(--color-background)` na `.custom-section-background`; (2) subpixel przy `sticky` + `translateZ(0)` na szwie góra/dół hero; (3) inline script szukał `.giclee-artist-biography-section` wewnątrz hosta (`querySelector` bez matcha na samym `#shopify-section`). Fix: `#000` przy `--custom-bg`, bleed tła `top:-2px` / `bottom:-4px`, `visibility:hidden` na `[data-gab-custom-bg]` do `img.onload`, poprawiony inline script (`host` = sekcja).
+**v68a (2026-07-01):** hover-blur zawężony — trigger tylko nad kartą **aktywnego** slajdu (`.giclee-artist-showcase__slide.is-active .giclee-artist-showcase__slide-card`, delegacja `pointerover/out`), nie cały viewport. Cache: `karuzela2-bg-hover-blur-v2-active-slide-20260701` / `karuzela-router-v15`.
+
+**v68 (2026-07-01):** Karuzela2 — rozmycie tła po najechaniu na obraz karuzeli (blur 6px na `.giclee-karuzela2-bg`, klasa `is-gac-k2-hover-blur`); przełącznik w aplikacji Karuzela (`window.__GICLEE_HOVER_BLUR_ENABLED`, localStorage `giclee-karuzela-hover-blur`, URL `?giclee_hover_blur=on|off`, API `GicleeKaruzela.setHoverBlur`); wyłączone na touch/`prefers-reduced-motion`. Cache: `karuzela2-bg-hover-blur-20260701` / `karuzela2-css-hover-blur-20260701` / `karuzela-config-v2` / `karuzela-router-v14`.
+
+**v67 (2026-07-01):** Karuzela2 — subtelny mouse parallax tła (warstwa `__layers`, overscan `scale(1.08)`, przesunięcie ±22px/±14px, lerp `pointermove`, recenter przy `pointerleave`/`blur`); wyłączony na touch i `prefers-reduced-motion`. Cache: `karuzela2-bg-parallax-20260701` / `karuzela2-css-bg-parallax-20260701`.
+
+**v66 (2026-07-01):** Karuzela2 blur→ostrość — fix: progress z pozycji showcase w viewportcie (CSS scroll-stack bez `data-gacs-scroll-panel`); osobny listener scroll. Cache: `karuzela2-bg-blur-scroll-v2-20260701`.
+
+**v65 (2026-07-01):** overlay — fix fade-out przy scrollu w górę (reguły `is-gacs-end-scroll-hide-armed` po `meta-in`/`quote-in`; rAF przed klasą hide). Cache: `gacs-overlay-v18-end-scroll-hide-fix-20260701`.
+
+**v64 (2026-07-01):** Karuzela2 — tło slajdu startuje rozmyte (`blur` ~11px), nabiera ostrości wraz ze scroll-stackiem (`--gacs-progress`, ease `t^1.35`); mobile i `prefers-reduced-motion`: bez blur. Cache: `karuzela2-bg-blur-scroll-20260701` / `karuzela2-css-bg-blur-scroll-20260701`.
+
+**v63 (2026-07-01):** overlay — fade-out meta + cytat przy scrollu w górę (animacja ~680 ms). Cache: `gacs-overlay-v17-end-scroll-out-20260701`.
+
+**v62 (2026-07-01):** overlay — fade-in przy scrollu do końca strony
+
+**v61 (2026-07-01):** overlay karuzeli — fade-in meta + cytat sekwencyjnie (trigger: ostatni slajd — cofnięte w v62)
+
+**v60 (2026-07-01):** fix skoku zoomu tła przy 1. scrollu — baseline stacku `1.04` gdy włączone cover-scale (metafield). Cache: `gab-scroll-shift-v39-20260701`.
+
+**v59 (2026-07-01):** scroll-shift — przywrócony zoom tła z fade-out (stack + cała warstwa). Cache: `gab-scroll-shift-v38-20260701`.
+
+**v58 (2026-07-01):** scroll-shift — wyłączony zoom tła (zostaje fade-out). Cache: `gab-scroll-shift-v37-20260701`.
+
+**v57 (2026-07-01):** fix zoom + fade-out tła — scale na `[data-gab-bg-stack]`, fade na `[data-gab-custom-bg]` (overlay nie maskuje zaniku). Cache: `gab-scroll-shift-v36-20260701`.
+
+**v56 (2026-07-01):** scroll-shift — fade-out tła bio zsynchronizowany z zoomem (`--gab-scroll-shift-opacity` na grafice). Cache: `gab-scroll-shift-v35-20260701`.
+
+**v55 (2026-07-01):** scroll-shift — zoom tła bio przy scrollu (`--gab-scroll-bg-scale`, zsynchronizowany z progress). Cache: `gab-scroll-shift-v34-20260701`.
+
+**v54 (2026-07-01):** scroll-shift — przywrócony fade-out (`--gab-scroll-shift-opacity` → 0). Cache: `gab-scroll-shift-v33-20260701`.
+
+**v53 (2026-07-01):** scroll-shift — wyłączony fade-out (`opacity` stałe 1); zostaje lewo/prawo + blur. Cache: `gab-scroll-shift-v32-20260701`.
+
+**v52 (2026-07-01):** wyłączony fade-in galerii przy scrollu (nagłówek, stage, kropki — stała widoczność). Cache: `bio-scroll-stack-v7-20260701`, `gab-scroll-shift-v31-20260701`.
+
+**v51c (2026-07-01):** fade-in galerii — opacity startuje od 0 (kalibracja `revealStart` przy górze strony; domyślne `0` w CSS). Cache: `gacs-scroll-fade-v6-20260701`, `gab-scroll-shift-v30-20260701`.
+
+**v51b (2026-07-01):** fade-in galerii — także `__header-row` (Wybrane dzieła + prev/next autor). Cache: `gacs-scroll-fade-v5-20260701`, `gab-scroll-shift-v29-20260701`.
+
+**v51a (2026-07-01):** fade-in galerii — fix: cel `__stage` + `__dots` (nie `__exhibition-content`), opacity od viewportu. Cache: `gacs-scroll-fade-v4-20260701`, `gab-scroll-shift-v28-20260701`.
+
+**v51 (2026-07-01):** scroll-shift — fade-out (`--gab-scroll-shift-opacity` → 0) zsynchronizowany z lewo/prawo + blur. Cache: `gab-scroll-shift-v27-20260701`.
+
+**v50z (2026-07-01):** fade-in galerii — fix widoczności: opacity od `scrollY` (0 na górze), `__exhibition-content` domyślnie ukryte. Cache: `gacs-scroll-fade-v3-20260701`, `gab-scroll-shift-v26-20260701`.
+
+**v50y (2026-07-01):** scroll-shift — blur (`--gab-scroll-shift-blur`) zsynchronizowany z przesunięciem lewo/prawo. Cache: `gab-scroll-shift-v25-20260701`.
+
+**v50x (2026-07-01):** fade-in galerii — fix: tylko `__stage` (nie cała sekcja), bez transition 0.88s podczas scrollu, nagłówek pełna widoczność. Cache: `gacs-scroll-fade-v2-20260701`, `gab-scroll-shift-v24-20260701`.
+
+**v50w (2026-07-01):** scroll-shift — cofnięcie o krok: dystans ~160px / ~96px, krzywa `t^1.4` (bez mieszanki liniowej). Cache: `gab-scroll-shift-v23-20260701`.
+
+**v50v (2026-07-01):** galeria / karuzela — fade-in przy scrollu (`--gacs-scroll-fade-opacity`, ease-out quad). Cache: `gacs-scroll-fade-v1-20260701`, `gab-scroll-shift-v22-20260701`.
+
+**v50u (2026-07-01):** scroll-shift — cofnięcie dystansu do ~220px / ~128px (desktop / tablet). Cache: `gab-scroll-shift-v21-20260701`.
+
+**v50t (2026-07-01):** scroll-shift — większy dystans końcowy (desktop ~280px, tablet ~160px). Cache: `gab-scroll-shift-v20-20260701`.
+
+**v50s (2026-07-01):** scroll-shift — większy dystans końcowy (desktop ~220px, tablet ~128px)
+
+**v50r (2026-07-01):** scroll-shift — jeszcze szybszy start (`0.38·t + 0.62·t^1.55`). Cache: `gab-scroll-shift-v18-20260701`.
+
+**v50q (2026-07-01):** fade menu — jeszcze szybsze znikanie (~6% viewportu + tail ~28px, łącznie ~80px). Cache: `bio-header-fade-v8-20260701`, `gab-scroll-shift-v17-20260701`.
+
+**v50p (2026-07-01):** scroll-shift — szybszy start ease-in (`t^1.4` zamiast `t²`). Cache: `gab-scroll-shift-v16-20260701`.
+
+**v50o (2026-07-01):** fade menu — jeszcze szybsze pełne znikanie (~9% viewportu + krótszy tail). Cache: `bio-header-fade-v7-20260701`, `gab-scroll-shift-v15-20260701`.
+
+**v50n (2026-07-01):** scroll-shift — ease-in (`progress²`), przyspieszenie przesunięcia wraz ze scrollem. Cache: `gab-scroll-shift-v14-20260701`.
+
+**v50m (2026-07-01):** fade menu — szybsze pełne znikanie (krótszy tail ~0.95× wys. menu). Cache: `bio-header-fade-v6-20260701`, `gab-scroll-shift-v13-20260701`.
+
+**v50l (2026-07-01):** fade menu — fix unoszenia przy scrollu (wyłączenie `scroll-up` idle Horizon, sticky `top:0`); szybszy fade (~14% viewportu, krzywa √). Cache: `bio-header-fade-v5-20260701`, `gab-scroll-shift-v12-20260701`.
+
+**v50k (2026-07-01):** fade menu — fix: pełna widoczność na `scrollY=0`; ściemnienie ~90% dopiero po ~25% wys. bio / ~32% viewportu scrollu. Cache: `bio-header-fade-v4-20260701`, `gab-scroll-shift-v11-20260701`.
+
+**v50j (2026-07-01):** fade menu — kalibracja do widoku bio + „Wybrane dzieła” u dołu: ~90% ściemnienia (`opacity≈0.1`) gdy góra kolekcji jest w pasie ~82% viewportu; dalszy scroll do zera. Cache: `bio-header-fade-v3-20260701`, `gab-scroll-shift-v10-20260701`.
+
+**v50i (2026-07-01):** scroll-shift — jeszcze większy dystans (desktop max ~160px, tablet ~96px). Cache: `gab-scroll-shift-v9-20260701`.
+
+**v50h (2026-07-01):** scroll-shift — większy dystans lewo/prawo (desktop max ~96px, tablet ~56px). Cache: `gab-scroll-shift-v8-20260701`.
+
+**v50g (2026-07-01):** fix fade menu — cel `#header-component` (nie `#header-group` z `display:contents`), `--gab-header-fade-opacity`. Cache: `gab-scroll-shift-v7-20260701`, `bio-header-fade-v2-20260701`.
+
+**v50f (2026-07-01):** scroll-shift — daty (`h4`) w lewo, portret (`img`) w prawo (zgodnie ze szablonem bio kolekcji). Cache: `gab-scroll-shift-v6-20260701`.
+
+**v50e (2026-07-01):** fade-out menu (`#header-group`) na stronie kolekcji autora — opacity od 1. px scrollu (`scrollY / --header-group-height`), przywraca przy powrocie na górę. Cache: `gab-scroll-shift-v5-20260701`, `bio-header-fade-20260701`.
+
+**v50d (2026-07-01):** scroll-shift — portret `data-gab-scroll=left` (nie na kontenerze body), overflow visible na treści (fix przycinania tytułu). Cache: `gab-scroll-shift-v4-20260701`.
+
+**v50c (2026-07-01):** scroll-shift — start od 1. px scrollu (`scrollY / zakres strony`), tło statyczne, napisy lewo/prawo do końca dokumentu; portret jak tytuł (lewo), akapity osobno (prawo). Cache: `gab-scroll-shift-v3-20260701`.
+
+**v50b (2026-07-01):** scroll-shift — fix zatrzymywania przy sticky BIO: progress od pin-scroll przez cały overlap z galerią (travel ~78% wysokości showcase), bez resetu IO przy sticky; transform bez transition 0.88s. Cache: `gab-scroll-shift-v2-20260701`.
+
+**v50 (2026-07-01):** scroll-shift biografii — editorial drift przy scrollu (nazwa + tło/portret w lewo, opis w prawo); `data-gab-scroll` na title/body/bg; wyłączone na mobile ≤749px i przy `prefers-reduced-motion`. Cache: `gab-scroll-shift-20260701`.
+
+**v49 (2026-07-01):** jasna obwódka przy własnym tle BIO (pierwsze załadowanie / upload) — inna przyczyna niż sam `.section-background`: (1) `scroll-stack` ustawiał `background-color: var(--color-background)` na `.custom-section-background`; (2) subpixel przy `sticky` + `translateZ(0)` na szwie góra/dół hero; (3) inline script szukał `.giclee-artist-biography-section` wewnątrz hosta (`querySelector` bez matcha na samym `#shopify-section`). Fix: `#000` przy `--custom-bg`, `inset box-shadow` na kontenerze tła (bez przesunięcia kadru `object-fit`), `visibility:hidden` na `[data-gab-custom-bg]` do `img.onload`, poprawiony inline script (`host` = sekcja).
 
 **Cache:** `gab-seam-fix-20260701` (biography CSS/liquid), `bio-seam-fix-20260701` (scroll-stack CSS).
 
