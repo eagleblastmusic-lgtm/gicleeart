@@ -7,7 +7,7 @@
 | `gui.py` | Lista produktów, edytor stron (liczba akapitów, podgląd tekstu, upload grafik), okno «Ustawienia efektów (PDP v3)…» |
 | `service.py` | Metafieldy `custom.story_pages` (produkt) i `custom.pdp_v3_effects` (sklep), Shopify Files, parsowanie akapitów z `body_html` |
 
-Tryb: `subprocess`. Sekcja launchera: **Administracja strony** (kafelek «Strona produktu»).
+Tryb: `inline` (w launcherze — «← Powrót»). Sekcja: **Administracja strony** (kafelek «Strona produktu»).
 
 ## Metafield `custom.story_pages` (JSON)
 

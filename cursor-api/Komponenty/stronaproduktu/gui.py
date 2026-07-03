@@ -56,7 +56,7 @@ def main() -> None:
     root.mainloop()
 
 
-def _build_ui(host: tk.Tk) -> None:
+def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
     state: dict[str, Any] = {
         "rows": [],
         "detail": None,

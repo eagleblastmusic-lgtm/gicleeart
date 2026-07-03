@@ -18,11 +18,12 @@ Tryb: `subprocess`. Sekcja launchera: **Narzędzia pomocnicze**.
 3. Podgląd promptu z podstawionymi wartościami.
 4. **Kopiuj prompt** — tekst w schowku; okno pomocnicze z **Kopiuj grafikę** (Gemini: tekst i obraz osobno).
 5. Placeholdery: `[autor]`, `[tytuł]`, `[tytul]`, `[Autor]`, `[title]`, `[artist]` (wielkość liter dowolna).
-6. **Ctrl+klik** / PPM «Kopiuj szablon (surowy)» — bez wyboru produktu.
+6. **Kontekst** — opcjonalne notatki per prompt (przycisk «Kontekst» / PPM); widoczne w podglądzie, **nie** trafiają do schowka przy «Kopiuj prompt».
+7. **Ctrl+klik** / PPM «Kopiuj szablon (surowy)» — sam szablon, bez wyboru produktu i bez kontekstu.
 
 ## Dane
 
-- `data/prompts.json` — szablony promptów
+- `data/prompts.json` — szablony promptów (`text`, opcjonalnie `context`)
 - Katalog produktów — jak w «Aktualizuj opis» / «Tytuły AI» (`load_product_catalog_rows`)
 
 → [`README.md`](README.md)

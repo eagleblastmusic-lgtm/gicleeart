@@ -1429,6 +1429,159 @@ def _poll_file_node_url(shop: str, token: str, file_id: str) -> str | None:
     return generic_url or image_url or original_url or None
 
 
+def _poll_file_node_ready(shop: str, token: str, file_id: str) -> bool:
+    query = """
+    query FileReady($id: ID!) {
+      node(id: $id) {
+        ... on MediaImage { fileStatus }
+        ... on GenericFile { fileStatus }
+        ... on Video { fileStatus }
+      }
+    }
+    """
+    node_data = graphql(shop, token, query, {"id": file_id})
+    node = (node_data or {}).get("node") or {}
+    return (node.get("fileStatus") or "").upper() == "READY"
+
+
+def video_gid_to_shopify_ref(file_id: str) -> str:
+    """Konwertuje gid://shopify/Video/… na shopify://files/videos/… (format theme JSON)."""
+    gid = (file_id or "").strip()
+    if not gid.startswith("gid://shopify/Video/"):
+        raise ShopifyError(f"Nieprawidłowy GID wideo: {gid!r}")
+    shop, token = load_session()
+    query = """
+    query VideoFilename($id: ID!) {
+      node(id: $id) {
+        ... on Video { filename }
+      }
+    }
+    """
+    data = graphql(shop, token, query, {"id": gid})
+    node = (data or {}).get("node") or {}
+    filename = str(node.get("filename") or "").strip()
+    if not filename:
+        raise ShopifyError(f"Brak filename dla wideo {gid}.")
+    return f"shopify://files/videos/{filename}"
+
+
+def upload_video_to_shopify_files(
+    local_path: Path,
+    *,
+    alt: str | None = None,
+) -> str:
+    """Upload wideo do Shopify Files (resource VIDEO). Zwraca shopify://files/videos/… do theme JSON."""
+    local_path = Path(local_path)
+    if not local_path.is_file():
+        raise ShopifyError(f"Plik nie istnieje: {local_path}")
+    shop, token = load_session()
+    raw = local_path.read_bytes()
+    size = len(raw)
+    ext = local_path.suffix.lower()
+    mime_map = {
+        ".mp4": "video/mp4",
+        ".webm": "video/webm",
+        ".mov": "video/quicktime",
+    }
+    mime = mime_map.get(ext) or mimetypes.guess_type(local_path.name)[0] or "video/mp4"
+    filename = local_path.name
+
+    staged = """
+    mutation stagedUploadsCreate($input: [StagedUploadInput!]!) {
+      stagedUploadsCreate(input: $input) {
+        stagedTargets { url resourceUrl parameters { name value } }
+        userErrors { field message }
+      }
+    }
+    """
+    data = graphql(
+        shop,
+        token,
+        staged,
+        {
+            "input": [
+                {
+                    "resource": "VIDEO",
+                    "filename": filename,
+                    "mimeType": mime,
+                    "httpMethod": "POST",
+                    "fileSize": str(size),
+                }
+            ]
+        },
+    )
+    res = (data or {}).get("stagedUploadsCreate") or {}
+    if res.get("userErrors"):
+        raise ShopifyError(f"stagedUploadsCreate errors: {res['userErrors']}")
+    targets = res.get("stagedTargets") or []
+    if not targets:
+        raise ShopifyError("stagedUploadsCreate: brak targets.")
+    t = targets[0]
+    upload_url = t.get("url")
+    resource_url = t.get("resourceUrl")
+    params = {p["name"]: p["value"] for p in (t.get("parameters") or [])}
+
+    boundary = "----gicleeart-" + uuid.uuid4().hex
+    parts: list[bytes] = []
+    for name, value in params.items():
+        parts.append(f"--{boundary}\r\n".encode("utf-8"))
+        parts.append(
+            f'Content-Disposition: form-data; name="{name}"\r\n\r\n'.encode("utf-8")
+        )
+        parts.append(f"{value}\r\n".encode("utf-8"))
+    parts.append(f"--{boundary}\r\n".encode("utf-8"))
+    parts.append(
+        f'Content-Disposition: form-data; name="file"; filename="{filename}"\r\n'.encode(
+            "utf-8"
+        )
+    )
+    parts.append(f"Content-Type: {mime}\r\n\r\n".encode("utf-8"))
+    parts.append(raw)
+    parts.append(f"\r\n--{boundary}--\r\n".encode("utf-8"))
+    _http_post_multipart(
+        upload_url, b"".join(parts), f"multipart/form-data; boundary={boundary}"
+    )
+
+    file_create = """
+    mutation fileCreate($files: [FileCreateInput!]!) {
+      fileCreate(files: $files) {
+        files { id fileStatus ... on Video { id } }
+        userErrors { field message }
+      }
+    }
+    """
+    fc = graphql(
+        shop,
+        token,
+        file_create,
+        {
+            "files": [
+                {
+                    "alt": alt or filename,
+                    "originalSource": resource_url,
+                    "contentType": "VIDEO",
+                }
+            ]
+        },
+    )
+    fc_res = (fc or {}).get("fileCreate") or {}
+    errors = fc_res.get("userErrors") or []
+    if errors:
+        raise ShopifyError(f"fileCreate errors: {errors}")
+    files = fc_res.get("files") or []
+    if not files:
+        raise ShopifyError("fileCreate: brak files w odpowiedzi.")
+    file_id = str(files[0].get("id") or "")
+    if not file_id:
+        raise ShopifyError("fileCreate: brak id w odpowiedzi.")
+
+    for _ in range(60):
+        if _poll_file_node_ready(shop, token, file_id):
+            return video_gid_to_shopify_ref(file_id)
+        time.sleep(1)
+    raise ShopifyError(f"Shopify Video {file_id} nie bylo gotowe po 60s.")
+
+
 def upload_file_to_shopify_files(
     local_path: Path,
     *,

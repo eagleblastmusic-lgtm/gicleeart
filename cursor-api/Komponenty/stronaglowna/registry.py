@@ -7,7 +7,10 @@ from typing import Any, Literal
 
 FieldKind = Literal[
     "shopify_image",
+    "shopify_video",
     "theme_asset",
+    "media_type",
+    "video_collage",
     "heading",
     "body",
     "text",
@@ -55,10 +58,44 @@ HOME_ZONES: tuple[HomeZone, ...] = (
         section_key="slideshow_4LMfx7",
         fields=(
             HomeField(
+                "hero_media_type",
+                "Typ slajdu desktop",
+                "media_type",
+                _s("slideshow_4LMfx7", "blocks", "slide_NPidVp", "settings", "media_type_1"),
+                hint="Grafika, pojedynczy film lub kolaż wielu filmów z przejściami.",
+            ),
+            HomeField(
                 "hero_desktop",
-                "Slajd desktop (Shopify Files)",
+                "Slajd desktop — grafika (Shopify Files)",
                 "shopify_image",
                 _s("slideshow_4LMfx7", "blocks", "slide_NPidVp", "settings", "image_1"),
+            ),
+            HomeField(
+                "hero_desktop_video",
+                "Slajd desktop — film (Shopify Files)",
+                "shopify_video",
+                _s("slideshow_4LMfx7", "blocks", "slide_NPidVp", "settings", "video_1"),
+                hint="MP4, WebM lub MOV. Odtwarzany bez dźwięku (jak w motywie).",
+            ),
+            HomeField(
+                "hero_video_boomerang",
+                "Film — odtwarzanie do przodu i w tył",
+                "bool",
+                _s("slideshow_4LMfx7", "blocks", "slide_NPidVp", "settings", "video_boomerang"),
+                hint="Przy zapisie GicleeApp generuje jeden plik MP4 (do przodu + w tył) — odtwarzany w zwykłej pętli, bez mignięcia.",
+            ),
+            HomeField(
+                "hero_desktop_video_reversed",
+                "Film — pętla tam i z powrotem (auto)",
+                "shopify_video",
+                _s("slideshow_4LMfx7", "blocks", "slide_NPidVp", "settings", "video_1_reversed"),
+            ),
+            HomeField(
+                "hero_video_collage",
+                "Kolaż wideo",
+                "video_collage",
+                _s("slideshow_4LMfx7", "blocks", "slide_NPidVp", "settings", "video_collage_json"),
+                hint="Wiele klipów MP4/WebM/MOV z przejściami (fade, crossfade, dip, push).",
             ),
             HomeField(
                 "hero_mobile",

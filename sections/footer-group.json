@@ -194,13 +194,12 @@
         "footer_policy_list_VCdnpa",
         "social_links_Ew63Kq"
       ],
-      "disabled": true,
       "name": "t:names.utilities",
       "settings": {
         "section_width": "page-width",
         "gap": 24,
         "divider_thickness": 0,
-        "color_scheme": "",
+        "color_scheme": "scheme-1",
         "padding-block-start": 20,
         "padding-block-end": 48
       }

@@ -1,0 +1,7 @@
+{
+  "name": "Strony do użycia",
+  "description": "Zapisane linki do stron (sklep, admin, narzędzia) z opisem co na nich można robić.",
+  "icon": "🔗",
+  "color": "#00897b",
+  "order": 43
+}

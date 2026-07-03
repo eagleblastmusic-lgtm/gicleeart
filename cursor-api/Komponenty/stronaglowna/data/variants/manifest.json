@@ -1,0 +1,13 @@
+{
+  "active": "home2",
+  "variants": [
+    {
+      "id": "home1",
+      "label": "Strona Główna 1"
+    },
+    {
+      "id": "home2",
+      "label": "Strona Główna 2"
+    }
+  ]
+}

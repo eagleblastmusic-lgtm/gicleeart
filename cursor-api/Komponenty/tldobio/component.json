@@ -3,5 +3,10 @@
   "description": "Tło sekcji biografii autora — per kolekcja (upload + metafield Shopify).",
   "icon": "🖼",
   "color": "#5d4037",
-  "order": 39
+  "order": 39,
+  "mode": "inline",
+  "inline_width": 1180,
+  "inline_height": 960,
+  "inline_min_width": 920,
+  "inline_min_height": 780
 }

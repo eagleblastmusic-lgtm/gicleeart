@@ -16,12 +16,14 @@ from .registry import HOME_ZONES, SECTION_NAME_HINTS
 from .service import (
     _backups_dir,
     index_template_path,
+    kill_process_listening_on_port,
     load_zone_values,
     mobile_hero_path,
     path_get,
     settings_data_path,
     shopify_cli_popen,
     shopify_ref_label,
+    theme_dev_http_ready,
     theme_dev_port_open,
     theme_root,
     validate_template_paths,
@@ -104,7 +106,7 @@ class ValidationIssue:
 def _field_category(kind: str, field_id: str) -> str:
     if field_id.startswith("sn_"):
         return "site_notice"
-    if kind in ("shopify_image", "theme_asset"):
+    if kind in ("shopify_image", "shopify_video", "theme_asset"):
         return "image"
     if kind == "heading":
         return "heading"
@@ -187,7 +189,7 @@ def validate_homepage(
             issues.append(ValidationIssue("error", zone.label, "Sekcja widoczna, ale brak nagłówka i treści."))
 
         for fld in zone.fields:
-            if fld.kind not in ("shopify_image", "theme_asset"):
+            if fld.kind not in ("shopify_image", "shopify_video", "theme_asset"):
                 continue
             ref = str(vals.get(fld.field_id) or path_get(template, fld.path or ()) or "")
             if fld.kind == "theme_asset":
@@ -199,10 +201,48 @@ def validate_homepage(
                             "Brak pliku mobile hero — wgraj slajd mobile lub zapisz assets.",
                         )
                     )
+            elif zone.zone_id == "hero" and fld.field_id in ("hero_desktop", "hero_desktop_video"):
+                media = str(vals.get("hero_media_type") or "image").strip().lower()
+                if media == "collage":
+                    continue
+                if fld.field_id == "hero_desktop_video" and media != "video":
+                    continue
+                if fld.field_id == "hero_desktop" and media != "image":
+                    continue
+                if media == "video":
+                    if not ref.startswith("shopify://files/videos/"):
+                        if ref.startswith("gid://shopify/Video/"):
+                            issues.append(
+                                ValidationIssue(
+                                    "error",
+                                    zone.label,
+                                    "Film hero: zapisz ponownie (stary format GID) lub wgraj film jeszcze raz.",
+                                )
+                            )
+                        else:
+                            issues.append(ValidationIssue("error", zone.label, "Brak filmu hero (desktop)."))
+                    elif bool(vals.get("hero_video_boomerang")):
+                        rev = str(vals.get("hero_desktop_video_reversed") or "").strip()
+                        if not rev.startswith("shopify://files/videos/"):
+                            issues.append(
+                                ValidationIssue(
+                                    "error",
+                                    zone.label,
+                                    "Brak pliku pętli boomerang — zapisz ponownie (wymaga ffmpeg).",
+                                )
+                            )
+                elif not ref.startswith("shopify://"):
+                    issues.append(ValidationIssue("error", zone.label, "Brak slajdu hero (desktop)."))
             elif ("before" in fld.field_id or "after" in fld.field_id) and not ref.startswith("shopify://"):
                 issues.append(ValidationIssue("error", zone.label, f"{fld.label}: brak obrazu."))
-            elif fld.field_id == "hero_desktop" and not ref.startswith("shopify://"):
-                issues.append(ValidationIssue("error", zone.label, "Brak slajdu hero (desktop)."))
+
+        if zone.zone_id == "hero":
+            media = str(vals.get("hero_media_type") or "image").strip().lower()
+            if media == "collage":
+                from .video_collage import parse_collage, validate_collage
+
+                for msg in validate_collage(parse_collage(vals.get("hero_video_collage"))):
+                    issues.append(ValidationIssue("error", zone.label, msg))
 
         for fld in zone.fields:
             if fld.kind != "body":
@@ -343,18 +383,40 @@ def scan_section_keys(template: dict[str, Any]) -> list[SectionScanResult]:
 
 def preview_url(*, local: bool = False) -> str:
     base = THEME_DEV_URL if local else HOMEPAGE_URL
-    return f"{base}?{PREVIEW_QUERY}"
+    return f"{base.rstrip('/')}/?{PREVIEW_QUERY}"
 
 
-def theme_dev_running() -> bool:
+def theme_dev_running(*, require_http: bool = False) -> bool:
     if _theme_dev_proc is not None and _theme_dev_proc.poll() is None:
-        return True
-    return theme_dev_port_open()
+        if not require_http:
+            return True
+        return theme_dev_http_ready(url=preview_url(local=True))
+    if not theme_dev_port_open():
+        return False
+    if require_http:
+        return theme_dev_http_ready(url=preview_url(local=True))
+    return True
 
 
-def start_theme_dev(*, on_line: Callable[[str], None] | None = None) -> None:
+def restart_theme_dev_port(*, on_line: Callable[[str], None] | None = None) -> None:
+    """Zatrzymaj theme dev i zwolnij port 9292 (zawieszone połączenia CLOSE_WAIT)."""
+    stop_theme_dev()
+    killed = kill_process_listening_on_port()
+    if killed and on_line:
+        on_line(f"Zatrzymano proces(y) na porcie 9292: {', '.join(str(p) for p in killed)}")
+
+
+def start_theme_dev(*, on_line: Callable[[str], None] | None = None, force_restart: bool = False) -> None:
     global _theme_dev_proc
-    if theme_dev_running():
+    if force_restart:
+        restart_theme_dev_port(on_line=on_line)
+    elif theme_dev_running(require_http=True):
+        return
+    elif theme_dev_port_open() and not theme_dev_http_ready(url=preview_url(local=True)):
+        if on_line:
+            on_line("Port 9292 otwarty, ale serwer nie odpowiada — restartuję theme dev…")
+        restart_theme_dev_port(on_line=on_line)
+    elif theme_dev_running():
         return
     proc = shopify_cli_popen(["theme", "dev", "--environment", "development"], cwd=theme_root())
     _theme_dev_proc = proc
@@ -372,14 +434,14 @@ def start_theme_dev(*, on_line: Callable[[str], None] | None = None) -> None:
 
 def stop_theme_dev() -> None:
     global _theme_dev_proc
-    if _theme_dev_proc is None:
-        return
-    _theme_dev_proc.terminate()
-    try:
-        _theme_dev_proc.wait(timeout=8)
-    except subprocess.TimeoutExpired:
-        _theme_dev_proc.kill()
-    _theme_dev_proc = None
+    if _theme_dev_proc is not None:
+        _theme_dev_proc.terminate()
+        try:
+            _theme_dev_proc.wait(timeout=8)
+        except subprocess.TimeoutExpired:
+            _theme_dev_proc.kill()
+        _theme_dev_proc = None
+    kill_process_listening_on_port()
 
 
 def write_home_assets(
@@ -408,3 +470,26 @@ def write_home_assets(
             section_map[hook] = zone.section_key
     sections_js = "window.GICLEE_HOME_SECTIONS = " + json.dumps(section_map, ensure_ascii=False) + ";\n"
     (assets_dir / "giclee-home-sections.js").write_text(sections_js, encoding="utf-8")
+
+    from .video_collage import empty_collage, parse_collage, write_collage_asset
+
+    collage_path = (
+        "sections",
+        "slideshow_4LMfx7",
+        "blocks",
+        "slide_NPidVp",
+        "settings",
+        "video_collage_json",
+    )
+    media_type = str(
+        path_get(
+            template,
+            ("sections", "slideshow_4LMfx7", "blocks", "slide_NPidVp", "settings", "media_type_1"),
+        )
+        or ""
+    )
+    raw_collage = path_get(template, collage_path)
+    if media_type == "collage":
+        write_collage_asset(parse_collage(raw_collage or ""), assets_dir)
+    else:
+        write_collage_asset(empty_collage(), assets_dir)

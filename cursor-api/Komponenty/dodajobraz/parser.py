@@ -254,6 +254,42 @@ def mockup_alt_text(artist: str, base_title: str, *, name_suffix: str = "") -> s
     return f"{artist} - {base_title} (mockup)"
 
 
+MOCKUP_DISPLAY_ORIGINAL = "original"
+MOCKUP_DISPLAY_TRANSPARENT = "transparent"
+
+_TRANSPARENT_MARKERS = ("(przezroczysty)", "(transparent)")
+
+
+def alt_is_mockup_transparent(ref: str | None) -> bool:
+    """True gdy alt lub URL wskazuje na wersje przezroczysta mockupu."""
+    low = (ref or "").lower()
+    return any(marker in low for marker in _TRANSPARENT_MARKERS)
+
+
+def mockup_transparent_alt_text(artist: str, base_title: str, *, name_suffix: str = "") -> str:
+    sfx = (name_suffix or "").strip().upper()
+    if sfx:
+        return f"{artist} - {base_title} - (mockup) - {sfx} - (przezroczysty)"
+    return f"{artist} - {base_title} - (mockup) - (przezroczysty)"
+
+
+def mockup_variant_from_ref(
+    ref: str | None,
+    *,
+    variants: tuple[str, ...] = _MOCKUP_VARIANTS,
+) -> str:
+    """Wariant mockupu (CZB/CZCZ) z altu lub URL; pusty gdy brak dopasowania."""
+    found = mockup_suffixes_in_image_refs([ref], variants=variants)
+    if not found:
+        return ""
+    return sorted(found, key=len, reverse=True)[0]
+
+
+def mockup_ref_is_original(ref: str | None) -> bool:
+    """Mockup bez sufiksu przezroczystosci."""
+    return image_ref_is_mockup(ref) and not alt_is_mockup_transparent(ref)
+
+
 def installment_alt_text(artist: str, base_title: str, index: int) -> str:
     return f"{artist} - {base_title} (I{index})"
 

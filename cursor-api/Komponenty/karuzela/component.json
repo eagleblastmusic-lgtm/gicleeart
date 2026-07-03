@@ -3,5 +3,10 @@
   "description": "Sekcja «Wybrane dzieła»: Karuzela1/2, wygląd V1/V2/V3, cytaty per kolekcja.",
   "icon": "🎠",
   "color": "#8d6e3a",
-  "order": 38
+  "order": 38,
+  "mode": "inline",
+  "inline_width": 1120,
+  "inline_height": 740,
+  "inline_min_width": 900,
+  "inline_min_height": 580
 }

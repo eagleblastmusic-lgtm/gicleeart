@@ -24,6 +24,7 @@ from Komponenty._shared.window_geometry import position_toplevel_screen_center
 from PIL import Image, ImageTk
 
 from .audit_dialog import open_missing_mockups_dialog
+from .transparent_dialog import open_transparent_mockups_dialog
 from .publish import (
     is_image_path,
     mockup_plan,
@@ -59,7 +60,11 @@ Produkt musi juz istniec w Shopify (utworzony przez **Dodaj obraz** z plikiem Fu
    folderu, bez wysylki do Shopify (`Artysta - Tytul - (mockup) - CZB.webp`).
 4. **Braki na stronie** — skanuje Shopify i pokazuje produkty bez mockupow (CZB/CZCZ);
    mozesz dograc brakujace warianty jednym kliknieciem (z obrazu preview w galerii).
-5. Kliknij **Generuj i wyslij** dopiero po sprawdzeniu podgladu:
+5. **Przezroczyste...** — lista produktow z mockupami; zaznacz oryginalny mockup,
+   kliknij **Dodaj wersje przezroczysta...** i wybierz plik z dysku (ramka + grafika z alfa,
+   bez bialego passe-partout). Ustaw wersje na stronie (`custom.mockup_display`).
+   Mozesz usunac mockupy z galerii.
+6. Kliknij **Generuj i wyslij** dopiero po sprawdzeniu podgladu:
    - pionowy obraz -> szablon pionowy, poziomy -> poziomy,
    - obraz wstawiany jest w pole A4 (cover, wycentrowany),
    - plik trafia do Shopify jako `Artysta - Tytul - (mockup) - CZB.webp` (bialy pp)
@@ -169,6 +174,9 @@ class MockupApp:
             side="left", padx=(6, 0)
         )
         ttk.Button(toolbar, text="Braki na stronie...", command=self._on_missing_mockups).pack(
+            side="left", padx=(6, 0)
+        )
+        ttk.Button(toolbar, text="Przezroczyste...", command=self._on_transparent_mockups).pack(
             side="left", padx=(6, 0)
         )
         ttk.Label(toolbar, textvariable=self.status_var, foreground="#666").pack(side="right")
@@ -285,6 +293,9 @@ class MockupApp:
 
     def _on_missing_mockups(self) -> None:
         open_missing_mockups_dialog(self.root, enqueue_log=self._enqueue_log)
+
+    def _on_transparent_mockups(self) -> None:
+        open_transparent_mockups_dialog(self.root, enqueue_log=self._enqueue_log)
 
     def _enqueue_log(self, msg: str) -> None:
         self._log_queue.put(msg)

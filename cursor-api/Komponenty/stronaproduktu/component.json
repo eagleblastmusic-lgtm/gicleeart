@@ -3,5 +3,10 @@
   "description": "Podział opisu produktu na mini strony (PDP v3) — liczba akapitów i grafika per strona.",
   "icon": "📖",
   "color": "#00695c",
-  "order": 38
+  "order": 38,
+  "mode": "inline",
+  "inline_width": 1360,
+  "inline_height": 920,
+  "inline_min_width": 1060,
+  "inline_min_height": 720
 }

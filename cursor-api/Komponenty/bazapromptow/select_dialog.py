@@ -218,11 +218,7 @@ def open_product_select_dialog(
         if row:
             artist = str(row.get("artist") or "").strip()
             title = painting_label(row)
-            text = apply_prompt_placeholders(
-                entry.text,
-                artist=artist,
-                title=title,
-            )
+            text = apply_prompt_placeholders(entry.text, artist=artist, title=title)
             preview.insert("1.0", text)
         preview.configure(state="disabled")
 

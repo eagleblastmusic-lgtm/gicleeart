@@ -43,7 +43,7 @@ Mobile (`≤749px`):
 
 - panel **SZCZEGÓŁY** w opisie produktu pod akapitami (nie obok) na mobile; na desktopie kolumna SZCZEGÓŁY wyśrodkowana — `assets/custom.css`, selektor `main[data-giclee-repro-pdp='true']` (ustawiane w `layout/theme.liquid` dla `nowy-szblon-produktu` i `szablon-produktu-v2`);
 - zoom R2: stały kontener (`58vh`) + `fitArtworkCover` na starcie — `assets/giclee-product-zoom.js` + `assets/giclee-product-zoom.css`;
-- galeria mockupów: scena dopasowuje proporcje do aktywnego zdjęcia, obraz wypełnia więcej miejsca; separator pod galerią — `assets/giclee-product-gallery.js` + `.css`;
+- galeria mockupów: scena dopasowuje proporcje do aktywnego zdjęcia, obraz wypełnia więcej miejsca; **Białe/Czarne passe-partout** przełącza slajd `(mockup) - CZB` / `(mockup) - CZCZ`; separator pod galerią — `assets/giclee-product-gallery.js` + `.css`;
 - scroll reveal (mobile + desktop): nagłówek (tytuł/autor/daty) → opis → SZCZEGÓŁY → galeria → konfigurator — osobne animacje, `assets/giclee-product-scroll-reveal.js` + `.css`.
 
 Powiązane snippety:

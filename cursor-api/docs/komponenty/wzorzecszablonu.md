@@ -14,7 +14,7 @@
 | `Komponenty/wzorzecszablonu/service.py` | Shopify REST (`template_suffix`), skan `templates/product*.json` |
 | `Komponenty/wzorzecszablonu/component.json` | Metadane kafelka launchera |
 
-Tryb: `subprocess`. Sekcja launchera: **Administracja strony** (kafelek «Wzorzec szablonu»).
+Tryb: `inline` (w launcherze — «← Powrót»). Sekcja: **Administracja strony** (kafelek «Wzorzec szablonu»).
 
 ---
 

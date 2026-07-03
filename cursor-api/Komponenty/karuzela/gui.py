@@ -39,7 +39,7 @@ def main() -> None:
     root.mainloop()
 
 
-def _build_ui(host: tk.Tk) -> None:
+def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
     settings_view = ttk.Frame(host)
     settings_view.pack(fill="both", expand=True)
     quotes_view = ttk.Frame(host)
@@ -47,9 +47,10 @@ def _build_ui(host: tk.Tk) -> None:
     def _show_settings() -> None:
         quotes_view.pack_forget()
         settings_view.pack(fill="both", expand=True)
-        host.title(APP_TITLE)
-        host.minsize(*_SETTINGS_MINSIZE)
-        position_toplevel_screen_center(host, *_SETTINGS_SIZE)
+        if not inline:
+            host.title(APP_TITLE)
+            host.minsize(*_SETTINGS_MINSIZE)
+            position_toplevel_screen_center(host, *_SETTINGS_SIZE)
 
     def _show_quotes() -> None:
         nonlocal quotes_initialized
@@ -58,13 +59,15 @@ def _build_ui(host: tk.Tk) -> None:
         if not quotes_initialized:
             build_quotes_panel(quotes_view, on_back=_show_settings)
             quotes_initialized = True
-        host.title(QUOTES_TITLE)
-        host.minsize(*_QUOTES_MINSIZE)
-        position_toplevel_screen_center(host, *_QUOTES_SIZE)
+        if not inline:
+            host.title(QUOTES_TITLE)
+            host.minsize(*_QUOTES_MINSIZE)
+            position_toplevel_screen_center(host, *_QUOTES_SIZE)
 
     quotes_initialized = False
-    _build_settings_panel(settings_view, host=host, on_open_quotes=_show_quotes)
-    host.protocol("WM_DELETE_WINDOW", host.destroy)
+    _build_settings_panel(settings_view, host=host, on_open_quotes=_show_quotes, inline=inline)
+    if not inline:
+        host.protocol("WM_DELETE_WINDOW", host.destroy)
 
 
 def _build_settings_panel(
@@ -72,6 +75,7 @@ def _build_settings_panel(
     *,
     host: tk.Misc,
     on_open_quotes: Callable[[], None],
+    inline: bool = False,
 ) -> None:
     version_var = tk.StringVar(value=get_carousel_version())
     look_var = tk.StringVar(value=get_showcase_look())
@@ -231,4 +235,5 @@ def _build_settings_panel(
     ttk.Button(right_btns, text="Otwórz podgląd w przeglądarce", command=_open_preview).pack(
         side="left", padx=(0, 6)
     )
-    ttk.Button(right_btns, text="Zamknij", command=host.winfo_toplevel().destroy).pack(side="left")
+    if not inline:
+        ttk.Button(right_btns, text="Zamknij", command=host.winfo_toplevel().destroy).pack(side="left")

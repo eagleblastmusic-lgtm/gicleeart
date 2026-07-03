@@ -4,6 +4,17 @@
  * Bez zaleznosci zewnetrznych.
  */
 (function () {
+  function passepartoutToMockupVariant(value) {
+    const norm =
+      (window.GICLEE_PASSEPARTOUT && window.GICLEE_PASSEPARTOUT.normalize(value)) ||
+      String(value || '').trim();
+    return norm === 'Czarne' ? 'CZCZ' : 'CZB';
+  }
+
+  function mockupVariantToPassepartout(variant) {
+    return String(variant || '').toUpperCase() === 'CZCZ' ? 'Czarne' : 'Białe';
+  }
+
   class GicleeGallery extends HTMLElement {
     connectedCallback() {
       this.index = 0;
@@ -14,6 +25,12 @@
       this.count = this.slides.length;
       this.lightbox = this.querySelector('[data-gg-lightbox]');
       this.stage = this.querySelector('[data-gg-stage]');
+      this._passepartoutHandler = (event) => {
+        const detail = event.detail || {};
+        const variant =
+          detail.mockupVariant || passepartoutToMockupVariant(detail.value);
+        this.goToMockupVariant(variant, { syncPassepartout: false });
+      };
 
       if (this.count === 0) return;
 
@@ -64,20 +81,70 @@
       }
 
       this.initSwipe(this.stage);
+
+      const initialIndex = this.findSlideIndexForVariant('CZB');
+      if (initialIndex >= 0) {
+        this.index = initialIndex;
+      }
+
+      document.addEventListener('giclee:passepartout-change', this._passepartoutHandler);
       this.sync(true);
+    }
+
+    disconnectedCallback() {
+      if (this._passepartoutHandler) {
+        document.removeEventListener('giclee:passepartout-change', this._passepartoutHandler);
+      }
+    }
+
+    findSlideIndexForVariant(variant) {
+      const target = String(variant || '').toUpperCase();
+      if (!target) return -1;
+      return this.slides.findIndex(
+        (slide) => String(slide.dataset.ggMockupVariant || '').toUpperCase() === target
+      );
+    }
+
+    goToMockupVariant(variant, options = {}) {
+      const idx = this.findSlideIndexForVariant(variant);
+      if (idx < 0) return;
+      this.goTo(idx, options);
+    }
+
+    syncPassepartoutFromActiveSlide() {
+      const activeSlide = this.slides[this.index];
+      if (!activeSlide) return;
+      const variant = activeSlide.dataset.ggMockupVariant;
+      if (!variant) return;
+
+      const target = mockupVariantToPassepartout(variant);
+      document.querySelectorAll('[data-giclee-passepartout-picker]').forEach((root) => {
+        const radios = root.querySelectorAll('input[data-giclee-pp-value]');
+        radios.forEach((radio) => {
+          const label = radio.getAttribute('data-giclee-pp-value') || radio.value;
+          const norm =
+            (window.GICLEE_PASSEPARTOUT && window.GICLEE_PASSEPARTOUT.normalize(label)) ||
+            String(label || '').trim();
+          if (norm === target && !radio.checked) {
+            radio.checked = true;
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        });
+      });
     }
 
     step(delta) {
       this.goTo(this.index + delta);
     }
 
-    goTo(i) {
+    goTo(i, options = {}) {
+      const syncPassepartout = options.syncPassepartout !== false;
       if (this.count <= 0) return;
       this.index = ((i % this.count) + this.count) % this.count;
-      this.sync();
+      this.sync(undefined, syncPassepartout);
     }
 
-    sync(immediate) {
+    sync(immediate, syncPassepartout = true) {
       this.slides.forEach((s, idx) => s.classList.toggle('is-active', idx === this.index));
       this.lbSlides.forEach((s, idx) => s.classList.toggle('is-active', idx === this.index));
       this.thumbs.forEach((t, idx) => {
@@ -92,6 +159,9 @@
         c.textContent = String(this.index + 1);
       });
       this.syncStageRatio();
+      if (syncPassepartout && !immediate) {
+        this.syncPassepartoutFromActiveSlide();
+      }
     }
 
     syncStageRatio() {

@@ -27,6 +27,7 @@ Separatory: bloki `divider` między sekcjami.
 |---------|------|
 | Splash + scroll reveal | `layout/theme.liquid` |
 | Mobile hero (lista z JS, nie hardcode) | `assets/giclee-home-mobile.js`, `layout/theme.liquid` |
+| Hero kolaż wideo | `blocks/_slide.liquid`, `assets/giclee-hero-video-collage*.js`, `collage_gui.py` |
 | Hooki sekcji `data-giclee-home` | `assets/giclee-home-sections.js`, `giclee-home-sections-boot.js` |
 | Animacja intro sekcji Giclée Art | `assets/custom.css` (`data-giclee-home="intro"`) |
 | Układ mobile sekcji | `assets/custom.css` |

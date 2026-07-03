@@ -1,11 +1,30 @@
 <!doctype html>
+{%- liquid
+  assign giclee_skip_splash = false
+  if request.query_string contains 'giclee_skip_splash=1'
+    assign giclee_skip_splash = true
+  endif
+-%}
 <html
-  {% if request.design_mode %}
-    class="shopify-design-mode"
-  {% endif %}
+  class="{%- if request.design_mode -%}shopify-design-mode {%- endif -%}{%- if giclee_skip_splash -%} giclee-home-intro-run{%- endif -%}"
   lang="{{ request.locale.iso_code }}"
+  {%- if giclee_skip_splash -%} data-giclee-skip-splash="1"{%- endif -%}
 >
   <head>
+    {%- if request.page_type == 'index' and request.design_mode == false -%}
+    <script>
+      (function() {
+        try {
+          if (new URLSearchParams(window.location.search).get('giclee_skip_splash') === '1') {
+            document.documentElement.dataset.gicleeSkipSplash = '1';
+            document.documentElement.classList.add('giclee-home-intro-run');
+            return;
+          }
+        } catch (e) {}
+        document.documentElement.classList.add('splash-pending');
+      })();
+    </script>
+    {%- endif -%}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=Cormorant+Garamond:wght@300&display=swap" rel="stylesheet">
@@ -27,6 +46,9 @@
     <script src="{{ 'giclee-home-sections.js' | asset_url }}" defer></script>
     <script src="{{ 'giclee-home-mobile.js' | asset_url }}" defer></script>
     <script src="{{ 'giclee-home-sections-boot.js' | asset_url }}" defer></script>
+    <script src="{{ 'giclee-hero-video-collage.js' | asset_url }}" defer></script>
+    <script src="{{ 'giclee-hero-video-collage-player.js' | asset_url }}" defer></script>
+    {{ 'giclee-hero-video-collage.css' | asset_url | stylesheet_tag }}
     <link
       rel="preload"
       as="image"
@@ -90,8 +112,10 @@
         overflow: hidden;
         max-height: 100vh;
       }
+      html[data-giclee-skip-splash="1"] #splash-screen {
+        display: none !important;
+      }
     </style>
-    <script>document.documentElement.classList.add('splash-pending');</script>
     {%- endif -%}
 
     {%- if settings.favicon != blank -%}
@@ -104,15 +128,19 @@
 
     {% comment %} This a way to wait for main content to load when navigating to a new page so that the view transitions can work consistently {% endcomment %}
     {% if settings.transition_to_main_product or settings.page_transition_enabled %}
+      {% unless giclee_skip_splash %}
       <link
         rel="expect"
         href="#MainContent"
-        blocking="render"
         id="view-transition-render-blocker"
       >
+      {% endunless %}
     {% endif %}
     <script>
       try {
+        if (new URLSearchParams(window.location.search).get('giclee_skip_splash') === '1') {
+          document.getElementById('view-transition-render-blocker')?.remove();
+        }
         if (sessionStorage.getItem('giclee-curtain-nav') === '1') {
           document.documentElement.classList.add('curtain-pending');
           document.getElementById('view-transition-render-blocker')?.remove();
@@ -347,6 +375,8 @@
   </div>
 
   {% unless request.page_type == 'index' %}<style>#splash-screen{display:none!important}</style>{% endunless %}
+  {% if giclee_skip_splash %}<style>#splash-screen{display:none!important}</style>{% endif %}
+  {% unless giclee_skip_splash %}
   <div id="splash-screen" style="position:fixed;inset:0;background:#000;z-index:99999;display:flex;align-items:center;justify-content:center;opacity:1;visibility:visible;">
     <div class="splash-content">
       <p class="splash-title">Giclée Art</p>
@@ -354,6 +384,7 @@
       <p class="splash-sub">{{ 'giclee.ui.splash_subtitle' | t }}</p>
     </div>
   </div>
+  {% endunless %}
 
   <style>
     #page-transition {
@@ -1702,7 +1733,7 @@
       {{ content_for_layout }}
     </main>
 
-    {% unless template.suffix == 'fotografia-obraz' %}
+    {% unless request.page_type == 'product' %}
     <footer>
       {% sections 'footer-group' %}
     </footer>
@@ -2952,8 +2983,14 @@ const interval = setInterval(function() {
       try {
         if (new URLSearchParams(window.location.search).get('giclee_skip_splash') === '1') {
           if (splash) splash.style.display = 'none';
-          document.documentElement.classList.remove('splash-pending', 'splash-reveal', 'splash-reveal-active');
-          document.documentElement.classList.add('giclee-home-intro-run');
+          var root = document.documentElement;
+          root.classList.remove('splash-pending', 'splash-reveal', 'splash-reveal-active');
+          root.dataset.gicleeSkipSplash = '1';
+          root.classList.add('giclee-home-intro-run');
+          root.style.background = '';
+          document.body.style.background = '';
+          document.body.style.paddingRight = '';
+          document.body.style.overflow = '';
           window.dispatchEvent(new CustomEvent('giclee:splash-done'));
           if (window.gicleeInitScrollReveal) window.gicleeInitScrollReveal();
           return;

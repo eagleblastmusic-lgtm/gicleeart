@@ -3,5 +3,10 @@
   "description": "Landing page: hero, intro, przed/po, treści sekcji — grafiki i teksty w templates/index.json.",
   "icon": "🏠",
   "color": "#4527a0",
-  "order": 37
+  "order": 37,
+  "mode": "inline",
+  "inline_width": 1280,
+  "inline_height": 860,
+  "inline_min_width": 980,
+  "inline_min_height": 640
 }

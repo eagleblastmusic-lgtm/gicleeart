@@ -1,0 +1,42 @@
+.giclee-video-collage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.giclee-collage__stage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.giclee-collage__stage[data-giclee-collage-booting="1"] .giclee-collage__video {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.giclee-collage__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  z-index: 1;
+}
+
+.giclee-collage__video--top {
+  z-index: 2;
+}
+
+.giclee-collage__dip {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  opacity: 0;
+  pointer-events: none;
+}

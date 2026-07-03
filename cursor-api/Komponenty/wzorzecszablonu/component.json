@@ -3,5 +3,10 @@
   "description": "Lista produktów — przypisz szablon motywu (PDP) z listy lub hurtowo do wielu pozycji.",
   "icon": "📄",
   "color": "#1565c0",
-  "order": 36
+  "order": 36,
+  "mode": "inline",
+  "inline_width": 1280,
+  "inline_height": 820,
+  "inline_min_width": 980,
+  "inline_min_height": 620
 }

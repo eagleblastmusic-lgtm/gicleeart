@@ -14,6 +14,8 @@
 {%- endcomment -%}
 {%- liquid
   assign gg_media = '' | split: ','
+  assign gg_display_prefs = product.metafields.custom.mockup_display.value
+
   for media in product.media
     assign alt_l = media.alt | downcase
     assign src_l = ''
@@ -29,12 +31,59 @@
     unless is_mockup
       continue
     endunless
+
+    assign is_transparent = false
+    if alt_l contains '(przezroczysty)' or alt_l contains '(transparent)'
+      assign is_transparent = true
+    elsif src_l contains 'przezroczysty' or src_l contains 'transparent'
+      assign is_transparent = true
+    endif
+
+    assign gg_variant = ''
+    if alt_l contains 'czcz' or src_l contains 'czcz'
+      assign gg_variant = 'CZCZ'
+    elsif alt_l contains 'czb' or src_l contains 'czb'
+      assign gg_variant = 'CZB'
+    endif
+
+    assign gg_want_transparent = false
+    if gg_display_prefs != blank and gg_variant == 'CZB' and gg_display_prefs.CZB == 'transparent'
+      assign gg_want_transparent = true
+    elsif gg_display_prefs != blank and gg_variant == 'CZCZ' and gg_display_prefs.CZCZ == 'transparent'
+      assign gg_want_transparent = true
+    endif
+
+    if gg_want_transparent and is_transparent == false
+      continue
+    endif
+    if gg_want_transparent == false and is_transparent
+      continue
+    endif
+
     assign chunk = product.media | where: 'id', media.id
     assign gg_media = gg_media | concat: chunk
   endfor
+
+  assign gg_initial_index = 0
+  for media in gg_media
+    assign alt_l = media.alt | downcase
+    assign src_l = ''
+    if media.preview_image.src != blank
+      assign src_l = media.preview_image.src | downcase
+    endif
+    if alt_l contains 'czcz' or src_l contains 'czcz'
+      continue
+    endif
+    if alt_l contains 'czb' or src_l contains 'czb'
+      assign gg_initial_index = forloop.index0
+      break
+    endif
+  endfor
+
   assign gg_first_ratio = 1.0
   if gg_media.size > 0
-    assign gg_first_ratio = gg_media.first.preview_image.aspect_ratio | default: 1.0
+    assign gg_initial_media = gg_media[gg_initial_index]
+    assign gg_first_ratio = gg_initial_media.preview_image.aspect_ratio | default: 1.0
   endif
 -%}
 
@@ -52,12 +101,32 @@
       {%- if gg_media.size > 1 -%}
         <div class="giclee-gallery__rail" role="tablist" aria-label="Miniatury zdjec produktu">
           {%- for media in gg_media -%}
+            {%- liquid
+              assign gg_alt_l = media.alt | downcase
+              assign gg_src_l = ''
+              if media.preview_image.src != blank
+                assign gg_src_l = media.preview_image.src | downcase
+              endif
+              assign gg_slide_transparent = false
+              if gg_alt_l contains '(przezroczysty)' or gg_alt_l contains '(transparent)'
+                assign gg_slide_transparent = true
+              elsif gg_src_l contains 'przezroczysty' or gg_src_l contains 'transparent'
+                assign gg_slide_transparent = true
+              endif
+              assign gg_mockup_variant = ''
+              if gg_alt_l contains 'czcz' or gg_src_l contains 'czcz'
+                assign gg_mockup_variant = 'CZCZ'
+              elsif gg_alt_l contains 'czb' or gg_src_l contains 'czb'
+                assign gg_mockup_variant = 'CZB'
+              endif
+            -%}
             <button
               type="button"
-              class="giclee-gallery__thumb{% if forloop.first %} is-active{% endif %}"
+              class="giclee-gallery__thumb{% if forloop.index0 == gg_initial_index %} is-active{% endif %}{% if gg_slide_transparent %} giclee-gallery__thumb--transparent{% endif %}"
               role="tab"
               data-gg-thumb="{{ forloop.index0 }}"
-              aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+              {% if gg_mockup_variant != blank %}data-gg-mockup-variant="{{ gg_mockup_variant }}"{% endif %}
+              aria-selected="{% if forloop.index0 == gg_initial_index %}true{% else %}false{% endif %}"
               aria-label="Zdjecie {{ forloop.index }} z {{ gg_media.size }}"
             >
               {{
@@ -82,17 +151,35 @@
         <div class="giclee-gallery__frames" data-gg-track>
           {%- for media in gg_media -%}
             {%- liquid
-              if forloop.first
+              if forloop.index0 == gg_initial_index
                 assign gg_loading = 'eager'
                 assign gg_priority = 'high'
               else
                 assign gg_loading = 'lazy'
                 assign gg_priority = 'auto'
               endif
+              assign gg_alt_l = media.alt | downcase
+              assign gg_src_l = ''
+              if media.preview_image.src != blank
+                assign gg_src_l = media.preview_image.src | downcase
+              endif
+              assign gg_slide_transparent = false
+              if gg_alt_l contains '(przezroczysty)' or gg_alt_l contains '(transparent)'
+                assign gg_slide_transparent = true
+              elsif gg_src_l contains 'przezroczysty' or gg_src_l contains 'transparent'
+                assign gg_slide_transparent = true
+              endif
+              assign gg_mockup_variant = ''
+              if gg_alt_l contains 'czcz' or gg_src_l contains 'czcz'
+                assign gg_mockup_variant = 'CZCZ'
+              elsif gg_alt_l contains 'czb' or gg_src_l contains 'czb'
+                assign gg_mockup_variant = 'CZB'
+              endif
             -%}
             <figure
-              class="giclee-gallery__slide{% if forloop.first %} is-active{% endif %}"
+              class="giclee-gallery__slide{% if forloop.index0 == gg_initial_index %} is-active{% endif %}{% if gg_slide_transparent %} giclee-gallery__slide--transparent{% endif %}"
               data-gg-slide="{{ forloop.index0 }}"
+              {% if gg_mockup_variant != blank %}data-gg-mockup-variant="{{ gg_mockup_variant }}"{% endif %}
               style="--gg-ratio: {{ media.preview_image.aspect_ratio | default: 1.0 }};"
             >
               {{
@@ -139,7 +226,26 @@
 
       <div class="giclee-gallery__lb-frames" data-gg-lb-track>
         {%- for media in gg_media -%}
-          <figure class="giclee-gallery__lb-slide{% if forloop.first %} is-active{% endif %}" data-gg-lb-slide="{{ forloop.index0 }}">
+          {%- liquid
+            assign gg_alt_l = media.alt | downcase
+            assign gg_src_l = ''
+            if media.preview_image.src != blank
+              assign gg_src_l = media.preview_image.src | downcase
+            endif
+            assign gg_slide_transparent = false
+            if gg_alt_l contains '(przezroczysty)' or gg_alt_l contains '(transparent)'
+              assign gg_slide_transparent = true
+            elsif gg_src_l contains 'przezroczysty' or gg_src_l contains 'transparent'
+              assign gg_slide_transparent = true
+            endif
+            assign gg_mockup_variant = ''
+            if gg_alt_l contains 'czcz' or gg_src_l contains 'czcz'
+              assign gg_mockup_variant = 'CZCZ'
+            elsif gg_alt_l contains 'czb' or gg_src_l contains 'czb'
+              assign gg_mockup_variant = 'CZB'
+            endif
+          -%}
+          <figure class="giclee-gallery__lb-slide{% if forloop.index0 == gg_initial_index %} is-active{% endif %}{% if gg_slide_transparent %} giclee-gallery__lb-slide--transparent{% endif %}" data-gg-lb-slide="{{ forloop.index0 }}"{% if gg_mockup_variant != blank %} data-gg-mockup-variant="{{ gg_mockup_variant }}"{% endif %}>
             {{
               media.preview_image
               | image_url: width: 2400

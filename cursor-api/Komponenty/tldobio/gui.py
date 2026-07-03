@@ -20,6 +20,7 @@ except ImportError:
     _HAS_DND = False
 
 from Komponenty._shared.toast import show_toast
+from Komponenty._shared.tk_scroll import bind_mousewheel_to_canvas
 from Komponenty._shared.window_geometry import position_toplevel_screen_center
 from PIL import Image, ImageDraw, ImageFont, ImageTk
 
@@ -265,7 +266,7 @@ def main() -> None:
     root.mainloop()
 
 
-def _build_ui(host: tk.Tk) -> None:
+def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
     state: dict[str, Any] = {
         "rows": [],
         "selected": None,
@@ -371,7 +372,29 @@ def _build_ui(host: tk.Tk) -> None:
     )
     preview_canvas.pack(fill="both", expand=True)
 
-    pos_frame = ttk.Frame(right)
+    right_scroll_wrap = ttk.Frame(right)
+    right_scroll_wrap.pack(fill="both", expand=True)
+    right_scroll = ttk.Scrollbar(right_scroll_wrap, orient="vertical")
+    right_canvas = tk.Canvas(right_scroll_wrap, highlightthickness=0, bd=0)
+    right_scroll.config(command=right_canvas.yview)
+    right_canvas.config(yscrollcommand=right_scroll.set)
+    right_scroll.pack(side="right", fill="y")
+    right_canvas.pack(side="left", fill="both", expand=True)
+    right_inner = ttk.Frame(right_canvas)
+    _right_canvas_win = right_canvas.create_window((0, 0), window=right_inner, anchor="nw")
+
+    def _right_scroll_region(_evt: object = None) -> None:
+        right_canvas.configure(scrollregion=right_canvas.bbox("all"))
+
+    right_inner.bind("<Configure>", _right_scroll_region)
+
+    def _right_canvas_width(evt: tk.Event) -> None:
+        right_canvas.itemconfigure(_right_canvas_win, width=evt.width)
+
+    right_canvas.bind("<Configure>", _right_canvas_width)
+    bind_mousewheel_to_canvas(right_canvas, right_inner)
+
+    pos_frame = ttk.Frame(right_inner)
     pos_frame.pack(fill="x", pady=(0, 8))
     pos_var = tk.IntVar(value=DEFAULT_BIO_POS_X)
     pos_saved_var = tk.StringVar(value="")
@@ -403,7 +426,7 @@ def _build_ui(host: tk.Tk) -> None:
         variable=show_text_var,
     ).pack(anchor="w", pady=(6, 0))
 
-    overlay_frame = ttk.Frame(right)
+    overlay_frame = ttk.Frame(right_inner)
     overlay_frame.pack(fill="x", pady=(0, 8))
     overlay_off_var = tk.BooleanVar(value=False)
     overlay_pct_var = tk.IntVar(value=DEFAULT_BIO_OVERLAY_PCT)
@@ -436,7 +459,7 @@ def _build_ui(host: tk.Tk) -> None:
     )
     cover_scale_check.pack(anchor="w", pady=(6, 0))
 
-    gradient_frame = ttk.Frame(right)
+    gradient_frame = ttk.Frame(right_inner)
     gradient_frame.pack(fill="x", pady=(0, 8))
     menu_gradient_var = tk.StringVar(value=_MENU_GRADIENT_LABELS[DEFAULT_BIO_MENU_GRADIENT])
     ttk.Label(gradient_frame, text="Gradient u góry (pod menu):").pack(anchor="w")
@@ -448,7 +471,7 @@ def _build_ui(host: tk.Tk) -> None:
         side="left", padx=(8, 0)
     )
 
-    radial_frame = ttk.LabelFrame(right, text="Maska radialna (ekspozycja)", padding=(8, 6))
+    radial_frame = ttk.LabelFrame(right_inner, text="Maska radialna (ekspozycja)", padding=(8, 6))
     radial_frame.pack(fill="x", pady=(0, 8))
     radial_enabled_var = tk.BooleanVar(value=False)
     radial_cx_var = tk.IntVar(value=DEFAULT_BIO_RADIAL_MASK["cx"])
@@ -487,9 +510,9 @@ def _build_ui(host: tk.Tk) -> None:
         anchor="w", pady=(4, 0)
     )
 
-    ttk.Label(right, textvariable=status_var, wraplength=360).pack(anchor="w", pady=(0, 8))
+    ttk.Label(right_inner, textvariable=status_var, wraplength=360).pack(anchor="w", pady=(0, 8))
 
-    btn_row = ttk.Frame(right)
+    btn_row = ttk.Frame(right_inner)
     btn_row.pack(fill="x", pady=(4, 0))
     upload_btn = ttk.Button(btn_row, text="Wgraj tło…", state="disabled")
     upload_btn.pack(side="left", padx=(0, 6))

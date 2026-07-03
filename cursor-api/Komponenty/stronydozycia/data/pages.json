@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "categories": [
+    "Sklep",
+    "Shopify Admin",
+    "GicleeApp",
+    "Narzedzia",
+    "Inne"
+  ],
+  "pages": [
+    {
+      "id": "e8568dc6ae5b",
+      "title": "Photoroom",
+      "url": "https://app.photoroom.com/",
+      "description": "Robi przeźroczystość",
+      "category": "Sklep",
+      "sort_key": 0
+    }
+  ]
+}

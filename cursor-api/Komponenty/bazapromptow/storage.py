@@ -19,14 +19,18 @@ class PromptEntry:
     label: str
     text: str
     sort_key: int = 0
+    context: str = ""
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        row: dict[str, Any] = {
             "id": self.id,
             "label": self.label,
             "text": self.text,
             "sort_key": self.sort_key,
         }
+        if self.context.strip():
+            row["context"] = self.context
+        return row
 
     @classmethod
     def from_dict(cls, row: dict[str, Any]) -> PromptEntry:
@@ -35,6 +39,7 @@ class PromptEntry:
             label=str(row.get("label") or "").strip(),
             text=str(row.get("text") or ""),
             sort_key=int(row.get("sort_key") or 0),
+            context=str(row.get("context") or ""),
         )
 
 

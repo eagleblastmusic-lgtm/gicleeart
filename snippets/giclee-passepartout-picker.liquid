@@ -37,6 +37,7 @@
         name="giclee-passepartout-{{ section.id }}"
         value="Białe"
         data-giclee-pp-value="Białe"
+        data-giclee-mockup-variant="CZB"
         data-input-index="0"
         data-current-checked="true"
         aria-label="{{ pp_white }}"
@@ -51,6 +52,7 @@
         name="giclee-passepartout-{{ section.id }}"
         value="Czarne"
         data-giclee-pp-value="Czarne"
+        data-giclee-mockup-variant="CZCZ"
         data-input-index="1"
         data-current-checked="false"
         aria-label="{{ pp_black }}"
@@ -66,5 +68,5 @@
       {% endstyle %}
     {%- endif -%}
   </fieldset>
-  <script src="{{ 'giclee-passepartout-picker.js' | asset_url }}" defer></script>
+  <script src="{{ 'giclee-passepartout-picker.js' | asset_url }}?v=mockup-passepartout-sync-20260703" defer></script>
 {%- endunless -%}

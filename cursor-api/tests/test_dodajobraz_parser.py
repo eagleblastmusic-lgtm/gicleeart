@@ -144,6 +144,18 @@ class TestMockupImageRefs:
         ]
         assert mockup_suffixes_in_product_images(images) == {"CZB", "CZCZ"}
 
+    def test_mockup_transparent_alt(self) -> None:
+        from Komponenty.dodajobraz.parser import (
+            alt_is_mockup_transparent,
+            mockup_transparent_alt_text,
+            mockup_variant_from_ref,
+        )
+
+        alt = mockup_transparent_alt_text("Van Gogh", "Starry Night", name_suffix="CZB")
+        assert alt == "Van Gogh - Starry Night - (mockup) - CZB - (przezroczysty)"
+        assert alt_is_mockup_transparent(alt)
+        assert mockup_variant_from_ref(alt) == "CZB"
+
     def test_installment_suffix(self) -> None:
         from Komponenty.dodajobraz.parser import FOLLOW_UP_KIND_I, parse_title_metadata
 

@@ -195,6 +195,38 @@
     drop-shadow(0 4px 10px rgb(0 0 0 / 0.28));
 }
 
+/* Przezroczysty mockup: ramka + grafika bez bialego passe-partout — tlo sceny przeswituje */
+.giclee-gallery__slide--transparent {
+  padding: clamp(2px, 0.6%, 10px);
+}
+
+.giclee-gallery__slide--transparent .giclee-gallery__img {
+  border-radius: 0;
+  filter: drop-shadow(0 20px 32px rgb(0 0 0 / 0.44))
+    drop-shadow(0 6px 14px rgb(0 0 0 / 0.24));
+}
+
+.giclee-gallery__stage:has(.giclee-gallery__slide--transparent.is-active) .giclee-gallery__wall {
+  background:
+    radial-gradient(125% 90% at 50% -10%, rgb(var(--gg-fg) / 0.05), transparent 58%),
+    radial-gradient(140% 120% at 50% 120%, rgb(var(--gg-fg) / 0.06), transparent 55%),
+    transparent;
+}
+
+.giclee-gallery__stage:has(.giclee-gallery__slide--transparent.is-active) .giclee-gallery__wall::after {
+  opacity: 0.35;
+}
+
+.giclee-gallery__thumb--transparent .giclee-gallery__thumb-img {
+  object-fit: contain;
+  background: rgb(var(--gg-fg) / 0.06);
+}
+
+.giclee-gallery__lb-slide--transparent .giclee-gallery__lb-img {
+  border-radius: 0;
+  filter: drop-shadow(0 26px 48px rgb(0 0 0 / 0.55));
+}
+
 /* --- Strzalki nawigacji -------------------------------------------------- */
 .giclee-gallery__nav {
   position: absolute;

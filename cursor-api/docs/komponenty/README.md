@@ -50,6 +50,7 @@ Folder kodu: `cursor-api/Komponenty/`
 | `notatnik` | Notatnik | [`notatnik.md`](notatnik.md) | skrót |
 | `bazapromptow` | Baza Promptów | [`bazapromptow.md`](bazapromptow.md) | skrót |
 | `stronyzobrazami` | Strony z obrazami | [`stronyzobrazami.md`](stronyzobrazami.md) | skrót |
+| `stronydozycia` | Strony do użycia | [`stronydozycia.md`](stronydozycia.md) | skrót |
 | `poczta` | Poczta firmowa | [`poczta.md`](poczta.md) | pełny |
 | `sklep` | Giclee Art Sklep | — | tylko URL (mode=url) |
 

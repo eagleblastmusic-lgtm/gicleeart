@@ -8,6 +8,7 @@ Komponent GicleeApp: upload tła sekcji **Biografia autora** per kolekcja Shopif
 - Lista kolekcji (filtr, tylko z/bez tła)
 - **Przeciągnij grafikę** na podgląd lub **Wgraj tło…**; suwak / strzałki / przeciągnięcie — kadr poziomy; suwak **Przyciemnienie** 0–100% + **Wyłącz przyciemnienie**; checkbox **Lekkie powiększenie kadru (scale 1.04)**; przycisk **Gradient** (menu: **Bez gradientu** / **Gradient wąski** / **Gradient szeroki** / **Gradient szeroki + dół** / **Gradient szeroki v2** / **Gradient szeroki v3** / **Gradient szeroki v3 + dół**); sekcja **Maska radialna (ekspozycja)** — włącz/wyłącz, środek (X/Y, podwójne kliknięcie podglądu), rozmiar elipsy, wtapianie, ekspozycja; **Zapisz ustawienia tła**
 - Podgląd **z tekstem BIO** (nagłówek + fragment opisu kolekcji); proporcje i overlay jak sekcja BIO na desktopie (`preview_render.py` = ten sam compositing co CSS motywu)
+- Panel ustawień pod podglądem ma **przewijanie pionowe** (pasek + kółko myszy) — maska radialna i przyciski na dole nie giną przy niższym oknie
 - Usuń tło, otwórz stronę kolekcji
 - Wymaga `tkinterdnd2` (`pip install tkinterdnd2`) — bez pakietu działa tylko wybór pliku z dysku
 

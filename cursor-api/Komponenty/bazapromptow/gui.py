@@ -27,7 +27,7 @@ class BazaPromptowApp:
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
         self.root.title(APP_TITLE)
-        position_toplevel_screen_center(self.root, 920, 640)
+        position_toplevel_screen_center(self.root, 920, 720)
         self.root.minsize(640, 420)
 
         self._store = load_prompts()
@@ -46,6 +46,7 @@ class BazaPromptowApp:
         ttk.Label(toolbar, text=APP_TITLE, font=("Segoe UI", 16, "bold")).pack(side="left")
         ttk.Button(toolbar, text="+ Dodaj prompt", command=self._add_prompt).pack(side="right", padx=(6, 0))
         ttk.Button(toolbar, text="Edytuj", command=self._edit_selected).pack(side="right", padx=(6, 0))
+        ttk.Button(toolbar, text="Kontekst", command=self._edit_context_selected).pack(side="right", padx=(6, 0))
         ttk.Button(toolbar, text="Usun", command=self._delete_selected).pack(side="right", padx=(6, 0))
         ttk.Button(toolbar, text="Odswiez prompty", command=self._reload).pack(side="right", padx=(6, 0))
         ttk.Button(toolbar, text="Odswiez katalog", command=self._load_catalog_async).pack(side="right", padx=(6, 0))
@@ -82,7 +83,7 @@ class BazaPromptowApp:
         self._canvas.bind_all("<MouseWheel>", self._on_mousewheel, add="+")
 
         preview_frame = ttk.LabelFrame(self.root, text="Podglad szablonu (placeholdery)", padding=8)
-        preview_frame.pack(fill="x", padx=12, pady=(0, 12))
+        preview_frame.pack(fill="x", padx=12, pady=(0, 6))
         self.preview_text = tk.Text(
             preview_frame,
             height=4,
@@ -93,6 +94,20 @@ class BazaPromptowApp:
             background="#f8f8f8",
         )
         self.preview_text.pack(fill="x")
+
+        context_frame = ttk.LabelFrame(self.root, text="Kontekst (notatki — nie idzie do schowka przy «Kopiuj prompt»)", padding=8)
+        context_frame.pack(fill="x", padx=12, pady=(0, 12))
+        self.context_preview = tk.Text(
+            context_frame,
+            height=3,
+            wrap="word",
+            font=("Segoe UI", 10),
+            state="disabled",
+            relief="flat",
+            background="#f4f6f8",
+            foreground="#333",
+        )
+        self.context_preview.pack(fill="x")
 
     def _on_frame_configure(self, _event: tk.Event | None = None) -> None:
         self._canvas.configure(scrollregion=self._canvas.bbox("all"))
@@ -215,12 +230,22 @@ class BazaPromptowApp:
     def _update_preview(self, entry: PromptEntry | None) -> None:
         self.preview_text.configure(state="normal")
         self.preview_text.delete("1.0", "end")
+        self.context_preview.configure(state="normal")
+        self.context_preview.delete("1.0", "end")
         if entry and entry.text.strip():
             preview = entry.text.strip()
             if len(preview) > 600:
                 preview = preview[:600] + "..."
             self.preview_text.insert("1.0", preview)
+        if entry and entry.context.strip():
+            ctx = entry.context.strip()
+            if len(ctx) > 400:
+                ctx = ctx[:400] + "..."
+            self.context_preview.insert("1.0", ctx)
+        else:
+            self.context_preview.insert("1.0", "(brak — użyj «Kontekst», aby wkleić notatki lub dane wejściowe)")
         self.preview_text.configure(state="disabled")
+        self.context_preview.configure(state="disabled")
 
     def _use_prompt(self, entry: PromptEntry) -> None:
         self._select(entry.id)
@@ -263,6 +288,7 @@ class BazaPromptowApp:
         menu.add_command(label="Wybierz obraz i kopiuj...", command=lambda: self._use_prompt(entry))
         menu.add_command(label="Kopiuj szablon (surowy)", command=lambda: self._copy_raw(entry))
         menu.add_command(label="Edytuj...", command=lambda: self._edit_prompt(entry))
+        menu.add_command(label="Kontekst...", command=lambda: self._edit_context(entry))
         menu.add_separator()
         menu.add_command(label="Przesun w gore", command=lambda: self._move(entry.id, -1))
         menu.add_command(label="Przesun w dol", command=lambda: self._move(entry.id, 1))
@@ -373,6 +399,72 @@ class BazaPromptowApp:
         self._render_buttons()
         self._update_preview(entry)
         self.status_var.set(f"Zapisano: {label}")
+
+    def _edit_context_selected(self) -> None:
+        if not self._selected_id:
+            messagebox.showinfo(APP_TITLE, "Zaznacz prompt (kliknij przycisk).", parent=self.root)
+            return
+        entry = self._find(self._selected_id)
+        if entry:
+            self._edit_context(entry)
+
+    def _edit_context(self, entry: PromptEntry) -> None:
+        self._select(entry.id)
+        win = tk.Toplevel(self.root)
+        win.title(f"Kontekst — {entry.label}")
+        win.transient(self.root)
+        win.grab_set()
+        position_toplevel_screen_center(win, 680, 520)
+        win.minsize(520, 360)
+
+        body = ttk.Frame(win, padding=12)
+        body.pack(fill="both", expand=True)
+
+        ttk.Label(
+            body,
+            text=(
+                "Notatki i dane wejsciowe zwiazane z tym promptem (tylko podglad w aplikacji).\n"
+                "Przy «Kopiuj prompt» do schowka trafia wylacznie szablon promptu.\n"
+                "Mozesz uzyc [autor] i [tytuł] — podmiana dziala w podgladzie kontekstu."
+            ),
+            wraplength=620,
+            foreground="#555",
+        ).pack(anchor="w", pady=(0, 8))
+
+        text_box = tk.Text(body, wrap="word", font=("Segoe UI", 10), height=16)
+        text_box.pack(fill="both", expand=True, pady=(0, 10))
+        if entry.context:
+            text_box.insert("1.0", entry.context)
+        text_box.focus_set()
+
+        result: dict[str, bool] = {"saved": False}
+
+        def _save() -> None:
+            entry.context = text_box.get("1.0", "end-1c")
+            save_prompts(self._store)
+            self._update_preview(entry)
+            n = len(entry.context.strip())
+            self.status_var.set(
+                f"Kontekst zapisany: {entry.label}" + (f" ({n} znakow)" if n else " (pusty)"),
+            )
+            result["saved"] = True
+            win.destroy()
+
+        def _cancel() -> None:
+            win.destroy()
+
+        btns = ttk.Frame(body)
+        btns.pack(fill="x")
+        ttk.Button(btns, text="Anuluj", command=_cancel).pack(side="right")
+        ttk.Button(btns, text="Zapisz", command=_save).pack(side="right", padx=(0, 8))
+        ttk.Button(btns, text="Wyczysc", command=lambda: text_box.delete("1.0", "end")).pack(side="left")
+        win.bind("<Escape>", lambda _e: _cancel())
+        win.bind("<Control-Return>", lambda _e: _save())
+        win.protocol("WM_DELETE_WINDOW", _cancel)
+
+        self.root.wait_window(win)
+        if result["saved"]:
+            show_toast(self.root, f"Kontekst: {entry.label}", duration_ms=1200)
 
     def _delete_selected(self) -> None:
         if not self._selected_id:

@@ -1593,7 +1593,12 @@ def main() -> None:
         except ImportError:
             pass
 
-    root = tk.Tk()
+    try:
+        from tkinterdnd2 import TkinterDnD  # type: ignore
+
+        root = TkinterDnD.Tk()
+    except ImportError:
+        root = tk.Tk()
     root.withdraw()
 
     def _show_main() -> None:

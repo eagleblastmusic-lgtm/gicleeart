@@ -139,7 +139,14 @@
         root.dispatchEvent(
           new CustomEvent("giclee:passepartout-change", {
             bubbles: true,
-            detail: { value: window.GICLEE_PASSEPARTOUT.normalize(label) },
+            detail: {
+              value: window.GICLEE_PASSEPARTOUT.normalize(label),
+              mockupVariant:
+                radio.getAttribute("data-giclee-mockup-variant") ||
+                (window.GICLEE_PASSEPARTOUT.normalize(label) === "Czarne"
+                  ? "CZCZ"
+                  : "CZB"),
+            },
           })
         );
       });

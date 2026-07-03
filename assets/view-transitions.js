@@ -1,5 +1,13 @@
 (function () {
   const viewTransitionRenderBlocker = document.getElementById('view-transition-render-blocker');
+
+  try {
+    if (new URLSearchParams(window.location.search).get('giclee_skip_splash') === '1') {
+      viewTransitionRenderBlocker?.remove();
+      return;
+    }
+  } catch (e) {}
+
   // Remove the view transition render blocker if the user has reduced motion enabled or is on a low power device.
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || isLowPowerDevice()) {
     viewTransitionRenderBlocker?.remove();

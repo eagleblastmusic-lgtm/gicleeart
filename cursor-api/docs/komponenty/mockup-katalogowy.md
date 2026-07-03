@@ -25,7 +25,23 @@ Hub: [`README.md`](README.md)
 | `compositor.py` | PIL: cover w polu A4, wykrywanie slotu |
 | `publish.py` | Render, `save_mockup_to_disk`, `add_follow_up_image` (Shopify) |
 | `templates.py` | `data/templates.json` + `assets/*.png` |
-| `data/templates.json` | Definicje szablonów CZB/CZCZ |
+| `transparent.py` | Wersje przezroczyste mockupow + metafield `custom.mockup_display` |
+| `transparent_dialog.py` | GUI: lista produktow, upload z dysku, wybor wersji, usuwanie |
+| `data/templates.json` | Definicje szablonow CZB/CZCZ |
+
+---
+
+## Przezroczyste mockupy (PDP)
+
+Przycisk **Przezroczyste...** w toolbarze:
+
+1. Lista produktow typu Obraz (Shopify).
+2. Po wyborze produktu — mockupy z galerii (oryginalny / przezroczysty).
+3. **Dodaj wersje przezroczysta...** — zaznacz oryginalny mockup, wybierz plik z dysku (ramka + grafika z alfa, bez bialego passe-partout). Alt: `… - (mockup) - CZB - (przezroczysty)`. Gdy wersja juz istnieje — pytanie o zastapienie.
+4. **Wyswietlaj na stronie** — zapis metafieldu JSON `custom.mockup_display`, np. `{"CZB":"transparent","CZCZ":"original"}`.
+5. **Usun zaznaczone mockupy** — usuwa pliki z galerii Shopify.
+
+Motyw: `snippets/giclee-product-gallery.liquid` — dla kazdego wariantu pokazuje tylko wybrana wersje (domyslnie oryginalna). Slajdy `--transparent` maja lzejsza scene i mniejszy padding.
 
 ---
 

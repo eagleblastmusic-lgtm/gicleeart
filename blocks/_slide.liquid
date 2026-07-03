@@ -63,8 +63,10 @@
           | image_url: width: 3840
           | image_tag: height: height, sizes: sizes, widths: widths, class: 'slide__image', loading: loading, fetchpriority: fetchpriority
         }}
+      {%- elsif block_settings.media_type_1 == 'collage' -%}
+        <div class="giclee-video-collage slide__video" data-giclee-video-collage></div>
       {%- else -%}
-        {%- if block_settings.video_1.preview_image -%}
+        {%- if block_settings.video_1.preview_image and block_settings.video_boomerang == false -%}
 
           {{
             block_settings.video_1.preview_image
@@ -78,10 +80,59 @@
               fetchpriority: fetchpriority
           }}
         {%- endif -%}
-        {{
-          block_settings.video_1
-          | video_tag: poster: nil, autoplay: true, loop: true, controls: false, muted: true, class: 'slide__video'
-        }}
+        {%- if block_settings.video_boomerang -%}
+          {%- liquid
+            assign loop_mp4 = nil
+            if block_settings.video_1_reversed != blank
+              for source in block_settings.video_1_reversed.sources
+                if source.mime_type == 'video/mp4' or source.format == 'mp4'
+                  assign loop_mp4 = source.url
+                endif
+              endfor
+            endif
+          -%}
+          {%- if loop_mp4 != blank -%}
+            <video
+              class="slide__video slide__video--boomerang-loop"
+              autoplay
+              muted
+              loop
+              playsinline
+              preload="auto"
+              src="{{ loop_mp4 }}"
+            ></video>
+          {%- else -%}
+            {%- liquid
+              assign forward_mp4 = nil
+              for source in block_settings.video_1.sources
+                if source.mime_type == 'video/mp4' or source.format == 'mp4'
+                  assign forward_mp4 = source.url
+                endif
+              endfor
+            -%}
+            {%- if forward_mp4 != blank -%}
+              <video
+                class="slide__video"
+                autoplay
+                muted
+                loop
+                playsinline
+                preload="auto"
+                src="{{ forward_mp4 }}"
+              ></video>
+            {%- else -%}
+              {{
+                block_settings.video_1
+                | video_tag: poster: nil, autoplay: true, loop: true, controls: false, muted: true, class: 'slide__video'
+              }}
+            {%- endif -%}
+          {%- endif -%}
+        {%- else -%}
+          {{
+            block_settings.video_1
+            | video_tag: poster: nil, autoplay: true, loop: true, controls: false, muted: true, class: 'slide__video'
+          }}
+        {%- endif -%}
       {%- endif -%}
     {%- else -%}
       {%- liquid
@@ -233,6 +284,10 @@
         {
           "value": "video",
           "label": "t:options.video"
+        },
+        {
+          "value": "collage",
+          "label": "Kolaż wideo"
         }
       ],
       "default": "image"
@@ -248,6 +303,27 @@
       "id": "video_1",
       "label": "t:settings.video",
       "visible_if": "{{ block.settings.media_type_1 == 'video' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "video_boomerang",
+      "label": "Odtwarzanie do przodu i w tył",
+      "default": false,
+      "visible_if": "{{ block.settings.media_type_1 == 'video' }}"
+    },
+    {
+      "type": "video",
+      "id": "video_1_reversed",
+      "label": "Film — pętla tam i z powrotem",
+      "info": "Jeden plik MP4 (do przodu + w tył), generowany przez GicleeApp.",
+      "visible_if": "{{ block.settings.media_type_1 == 'video' and block.settings.video_boomerang }}"
+    },
+    {
+      "type": "textarea",
+      "id": "video_collage_json",
+      "label": "Kolaż wideo (JSON)",
+      "info": "Edytuj w GicleeApp → Strona główna. Lista klipów i przejść.",
+      "visible_if": "{{ block.settings.media_type_1 == 'collage' }}"
     },
     {
       "type": "header",
