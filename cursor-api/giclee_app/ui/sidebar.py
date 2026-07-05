@@ -96,6 +96,8 @@ class Sidebar(ctk.CTkFrame):
         self._highlight("dashboard")
 
     def _select(self, category_id: str) -> None:
+        if category_id == self._active_id:
+            return
         self._highlight(category_id)
         self._on_select(category_id)
 

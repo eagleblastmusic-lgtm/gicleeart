@@ -73,6 +73,7 @@ def test_launcher_studio_does_not_import_launcher_module() -> None:
     assert "giclee_app.launcher" not in text
     assert "from .launcher" not in text
     assert "StudioComponentIndex" in text
+    assert "_view_cache" in text
 
 
 def test_launcher_delegate_does_not_import_launcher_module() -> None:

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import customtkinter as ctk
 
 from giclee_app import __version__
@@ -30,6 +32,7 @@ class GicleeAppStudio(ctk.CTk):
 
         self._status_var = ctk.StringVar(value="")
         self._current_category = "dashboard"
+        self._view_cache: dict[str, ctk.CTkBaseClass] = {}
 
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(1, weight=1)
@@ -48,9 +51,6 @@ class GicleeAppStudio(ctk.CTk):
         self._content.grid(row=1, column=1, sticky="nsew")
         self._content.grid_columnconfigure(0, weight=1)
         self._content.grid_rowconfigure(0, weight=1)
-
-        self._dashboard: DashboardView | None = None
-        self._hub: ComponentHubView | None = None
 
         self._status_bar = ctk.CTkLabel(
             self,
@@ -72,36 +72,52 @@ class GicleeAppStudio(ctk.CTk):
     def _set_status(self, msg: str) -> None:
         self._status_var.set(msg)
 
-    def _clear_content(self) -> None:
-        for child in self._content.winfo_children():
-            child.destroy()
-        self._dashboard = None
-        self._hub = None
+    def _show_view(self, key: str, factory: Callable[[], ctk.CTkBaseClass]) -> None:
+        for view in self._view_cache.values():
+            if hasattr(view, "on_hide"):
+                view.on_hide()
+            view.grid_remove()
+
+        if key not in self._view_cache:
+            self._view_cache[key] = factory()
+
+        view = self._view_cache[key]
+        view.grid(row=0, column=0, sticky="nsew")
+        if hasattr(view, "on_show"):
+            view.on_show()
+        self._content.update_idletasks()
 
     def _show_dashboard(self) -> None:
-        self._clear_content()
         self._current_category = "dashboard"
         self._topbar.set_breadcrumb("Dashboard")
-        self._dashboard = DashboardView(
-            self._content,
-            component_index=self._component_index,
+        self._sidebar.set_active("dashboard")
+        self._show_view(
+            "dashboard",
+            lambda: DashboardView(
+                self._content,
+                component_index=self._component_index,
+            ),
         )
-        self._dashboard.grid(row=0, column=0, sticky="nsew")
 
     def _show_hub(self, category_id: str) -> None:
-        self._clear_content()
         self._current_category = category_id
         label = category_label(category_id)
         self._topbar.set_breadcrumb(label)
-        self._hub = ComponentHubView(
-            self._content,
-            category_id=category_id,
-            component_index=self._component_index,
-            on_status=self._set_status,
+        self._sidebar.set_active(category_id)
+        key = f"hub:{category_id}"
+        self._show_view(
+            key,
+            lambda cid=category_id: ComponentHubView(
+                self._content,
+                category_id=cid,
+                component_index=self._component_index,
+                on_status=self._set_status,
+            ),
         )
-        self._hub.grid(row=0, column=0, sticky="nsew")
 
     def _on_nav(self, category_id: str) -> None:
+        if category_id == self._current_category:
+            return
         if category_id == "dashboard":
             self._show_dashboard()
         else:

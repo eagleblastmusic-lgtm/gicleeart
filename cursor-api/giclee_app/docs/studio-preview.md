@@ -44,6 +44,14 @@ Zainstaluj zależności dev: pip install -r requirements-dev.txt
 
 ---
 
+## F1.2 — szybsze przełączanie zakładek
+
+- **Cache widoków** — dashboard i huby kategorii są tworzone raz, potem `grid()` / `grid_remove()` zamiast destroy/create.
+- **Lazy render kart** — pierwsze wejście w kategorię buduje karty partiami (`after(1)`), z komunikatem „Ładowanie komponentów…”.
+- **Card cache** — wyszukiwarka filtruje istniejące karty przez `grid()` / `grid_remove()`, bez ponownego tworzenia widgetów.
+
+---
+
 ## Ograniczenia
 
 - Nie używać Studio jako jedynego okna do pracy produkcyjnej dopóki F4 nie zapewni parity pollingów.
