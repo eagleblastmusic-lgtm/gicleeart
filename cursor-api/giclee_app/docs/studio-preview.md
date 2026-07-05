@@ -87,6 +87,7 @@ Checklista ręczna w Studio Preview — nie w CI.
 - **F3.1** — sanitized errors, `inspect.signature`, resize z `inline_width`/`inline_height`
 - **F3.2** — cross-nav stack, `inline_min_*`, breadcrumb polish
 - **F3.2.1** — powrót z inline do huba bez pustego contentu (lifecycle hub cache)
+- **F3.2.1.1** — CTk: nie wołać `self.minsize()` bez argów (czyta `tk.Misc.minsize`); `_safe_geometry` przed resize/restore
 
 ---
 

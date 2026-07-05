@@ -27,6 +27,17 @@ def test_show_view_does_not_hide_target_before_on_show() -> None:
     assert "except_key=key" in show_view or "_hide_cached_views(except_key=" in show_view
 
 
+def test_inline_geometry_does_not_call_ctk_minsize_getter() -> None:
+    path = Path(__file__).resolve().parents[1] / "giclee_app" / "launcher_studio.py"
+    text = path.read_text(encoding="utf-8")
+    apply_block = text.split("def _apply_inline_window_size")[1].split("\n    def ")[0]
+    restore_block = text.split("def _restore_window_geometry")[1].split("\n    def ")[0]
+    assert "_read_window_minsize" in apply_block
+    assert "_safe_geometry" in apply_block
+    assert "self.minsize()" not in apply_block
+    assert "_safe_geometry" in restore_block
+
+
 @pytest.mark.skipif(
     not __import__("os").environ.get("DISPLAY") and sys.platform != "win32",
     reason="needs display",
@@ -77,5 +88,51 @@ def test_return_from_inline_restores_hub_tiles() -> None:
     assert app._status_var.get() == "Wrócono do huba"
     assert hub._cards_fully_built  # noqa: SLF001
     assert len(hub._cards) > 0  # noqa: SLF001
+
+    app.destroy()
+
+
+@pytest.mark.skipif(
+    not __import__("os").environ.get("DISPLAY") and sys.platform != "win32",
+    reason="needs display",
+)
+def test_return_from_inline_with_inline_resize_restores_hub() -> None:
+    import customtkinter as ctk
+
+    from giclee_app.launcher_studio import GicleeAppStudio
+
+    ctk.set_appearance_mode("dark")
+    app = GicleeAppStudio()
+    app.update_idletasks()
+    app.update()
+
+    app._show_hub("theme")
+    hub = app._view_cache["hub:theme"]
+    comp = app._component_index.by_folder["gicleeframe"]
+
+    deadline = __import__("time").time() + 8.0
+    while __import__("time").time() < deadline:  # noqa: SLF001
+        app.update_idletasks()
+        app.update()
+        if hub._cards_fully_built and any(c.winfo_ismapped() for c in hub._cards.values()):  # noqa: SLF001
+            break
+
+    app._show_inline_component(comp, "theme")
+    app.update_idletasks()
+    app.update()
+    assert app._inline_host is not None
+
+    app._return_from_inline()
+    deadline = __import__("time").time() + 8.0
+    while __import__("time").time() < deadline:  # noqa: SLF001
+        app.update_idletasks()
+        app.update()
+        if any(c.winfo_ismapped() for c in hub._cards.values()):  # noqa: SLF001
+            break
+
+    assert app._inline_host is None
+    assert app._topbar._breadcrumb.cget("text") == "Strona / Motyw"  # noqa: SLF001
+    assert app._status_var.get() == "Wrócono do huba"
+    assert any(c.winfo_ismapped() for c in hub._cards.values())  # noqa: SLF001
 
     app.destroy()

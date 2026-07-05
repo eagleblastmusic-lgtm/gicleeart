@@ -100,6 +100,36 @@ class GicleeAppStudio(ctk.CTk):
     def _set_status(self, msg: str) -> None:
         self._status_var.set(msg)
 
+    def _read_window_minsize(self) -> tuple[int, int]:
+        """Odczyt minsize — CTk.minsize() bez argumentów zeruje _min_width/_min_height."""
+        try:
+            raw = self.tk.call("wm", "minsize", self._w)
+            w_i, h_i = (int(v) for v in self.tk.splitlist(raw))
+            if w_i > 0 and h_i > 0:
+                return w_i, h_i
+        except (tk.TclError, TypeError, ValueError):
+            pass
+        return theme.WindowMin
+
+    def _ensure_ctk_geometry_state(self) -> None:
+        """CTk.geometry() wymaga ustawionych _min/_max width/height."""
+        if getattr(self, "_min_width", None) is None or getattr(self, "_min_height", None) is None:
+            w, h = self._read_window_minsize()
+            self._min_width = w
+            self._min_height = h
+        if getattr(self, "_max_width", None) is None or getattr(self, "_max_height", None) is None:
+            sw, sh = self.winfo_screenwidth(), self.winfo_screenheight()
+            self._max_width = max(int(sw), theme.WindowMin[0])
+            self._max_height = max(int(sh), theme.WindowMin[1])
+
+    def _safe_geometry(self, geometry_string: str) -> None:
+        self._ensure_ctk_geometry_state()
+        self.geometry(geometry_string)
+
+    def _safe_minsize(self, width: int, height: int) -> None:
+        self._ensure_ctk_geometry_state()
+        self.minsize(width, height)
+
     def _hide_cached_views(self, *, except_key: str | None = None) -> None:
         for key, view in self._view_cache.items():
             if except_key is not None and key == except_key:
@@ -111,13 +141,19 @@ class GicleeAppStudio(ctk.CTk):
     def _restore_window_geometry(self) -> None:
         if not self._geometry_before_inline:
             return
-        self.geometry(self._geometry_before_inline)
+        target = self._geometry_before_inline
+        prior = self._minsize_before_inline or theme.WindowMin
         self._geometry_before_inline = None
-        if self._minsize_before_inline:
-            self.minsize(*self._minsize_before_inline)
-            self._minsize_before_inline = None
-        else:
-            self.minsize(*theme.WindowMin)
+        self._minsize_before_inline = None
+        try:
+            self._safe_minsize(*prior)
+            self._safe_geometry(target)
+        except (TypeError, tk.TclError):
+            try:
+                self._safe_minsize(*theme.WindowMin)
+                self._safe_geometry(target)
+            except (TypeError, tk.TclError):
+                pass
 
     def _apply_inline_window_size(self, comp: Component) -> None:
         """Opcjonalny resize okna z component.json extras — tylko bezpieczny zakres."""
@@ -135,7 +171,7 @@ class GicleeAppStudio(ctk.CTk):
 
         if self._geometry_before_inline is None:
             self._geometry_before_inline = self.geometry()
-            self._minsize_before_inline = self.minsize()
+            self._minsize_before_inline = self._read_window_minsize()
 
         self.update_idletasks()
         sw, sh = self.winfo_screenwidth(), self.winfo_screenheight()
@@ -143,8 +179,8 @@ class GicleeAppStudio(ctk.CTk):
         h = min(h, max(theme.WindowMin[1], sh - 80))
         x = max(0, (sw - w) // 2)
         y = max(0, (sh - h) // 2)
-        self.geometry(f"{w}x{h}+{x}+{y}")
-        self.minsize(min_w, min_h)
+        self._safe_geometry(f"{w}x{h}+{x}+{y}")
+        self._safe_minsize(min_w, min_h)
 
     def _destroy_inline_host(self, *, restore_geometry: bool = True) -> None:
         if self._inline_host is None:
@@ -155,7 +191,11 @@ class GicleeAppStudio(ctk.CTk):
         self._inline_host.destroy()
         self._inline_host = None
         if restore_geometry:
-            self._restore_window_geometry()
+            try:
+                self._restore_window_geometry()
+            except (TypeError, tk.TclError):
+                self._geometry_before_inline = None
+                self._minsize_before_inline = None
 
     def _bind_inline_escape(self) -> None:
         self.bind("<Escape>", self._on_escape_back)
