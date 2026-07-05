@@ -4,6 +4,8 @@ Hub GicleeApp: [`README.md`](README.md)
 
 Plik: `cursor-api/giclee_app/launcher.py`
 
+**Studio Preview (F1):** nowy shell CustomTkinter w [`studio-preview.md`](studio-preview.md) — `python -m giclee_app.studio_preview`. Ten plik (`launcher.py`) pozostaje **fallbackiem** z pollingiem Shopify, backupami i widokami inline.
+
 ---
 
 ## Co robi

@@ -14,6 +14,10 @@ python -m pytest tests/ -v
 - `test_produkcja.py` - logika countdown utwardzania, overdue, profit summary,
   detekcja wariantow ramek, detekcja kraju (PL/zagranica).
 - `test_auth.py` - hashowanie hasla pbkdf2, salt, weryfikacja, reset.
+- `test_studio_categories.py` - mapa kategorii Studio vs foldery komponentów.
+- `test_status_providers.py` - statusy read-only, brak crashy przy braku plików.
+- `test_launcher_delegate.py` - argv subprocess, blokada inline, bez Popen.
+- `test_studio_imports.py` - brak importów sync/backup/publisher/launcher.
 
 ## Konwencje
 
