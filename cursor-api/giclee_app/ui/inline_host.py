@@ -59,9 +59,10 @@ def _invoke_build_view(
     builder: Callable[..., Any],
     parent: tk.Widget,
     on_back: Callable[[], None],
+    on_open_component: Callable[[str], None] | None = None,
 ) -> Any:
     if _supports_on_open_component(builder):
-        return builder(parent, on_back, on_open_component=None)
+        return builder(parent, on_back, on_open_component=on_open_component)
     return builder(parent, on_back)
 
 
@@ -76,12 +77,16 @@ class InlineHostView(ctk.CTkFrame):
         on_back: Callable[[], None],
         on_status: Callable[[str], None] | None = None,
         on_opened: Callable[[Component], None] | None = None,
+        on_open_component: Callable[[str], None] | None = None,
+        back_label: str = "Wróć do huba",
     ) -> None:
         super().__init__(master, fg_color=theme.AppBg, corner_radius=0)
         self._comp = comp
         self._on_back = on_back
         self._on_status = on_status
         self._on_opened = on_opened
+        self._on_open_component = on_open_component
+        self._back_label = back_label
         self._tk_mount: tk.Frame | None = None
         self._load_ok = False
         self._build_shell()
@@ -90,6 +95,10 @@ class InlineHostView(ctk.CTkFrame):
     @property
     def load_ok(self) -> bool:
         return self._load_ok
+
+    @property
+    def comp(self) -> Component:
+        return self._comp
 
     def _build_shell(self) -> None:
         header = ctk.CTkFrame(self, fg_color=theme.PanelBg, corner_radius=0)
@@ -105,14 +114,14 @@ class InlineHostView(ctk.CTkFrame):
         ).pack(fill="x")
         ctk.CTkLabel(
             left,
-            text=f"{self._comp.folder_name}  ·  Inline Studio / F3",
+            text=f"{self._comp.folder_name}  ·  Inline Studio",
             font=theme.get_font(11),
             text_color=theme.TextMuted,
             anchor="w",
         ).pack(fill="x", pady=(2, 0))
         ctk.CTkButton(
             header,
-            text="Wróć do huba",
+            text=self._back_label,
             width=120,
             height=32,
             fg_color=theme.AppBg,
@@ -182,7 +191,12 @@ class InlineHostView(ctk.CTkFrame):
         self._tk_mount.grid(row=0, column=0, sticky="nsew")
 
         try:
-            view = _invoke_build_view(builder, self._tk_mount, self._on_back)
+            view = _invoke_build_view(
+                builder,
+                self._tk_mount,
+                self._on_back,
+                self._on_open_component,
+            )
         except Exception as exc:  # noqa: BLE001
             err = _short_error(exc)
             self._append_log(f"build_view failed: {err}")

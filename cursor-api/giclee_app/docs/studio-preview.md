@@ -1,4 +1,4 @@
-# GicleeApp Studio Preview (F3)
+# GicleeApp Studio Preview (F3.2)
 
 Hub: [`README.md`](README.md) · plan: [`../../docs/UI_REDESIGN_PLAN.md`](../../docs/UI_REDESIGN_PLAN.md)
 
@@ -23,12 +23,25 @@ python -m giclee_app
 
 ---
 
-## F3 — inline embed + local Git/GPT (scope)
+## F3.2 — inline polish (scope)
+
+| Element | Stan |
+|---------|------|
+| Cross-nav `on_open_component` | callback z `InlineHostView` → `launcher_studio` |
+| Stack powrotu | poprzedni inline albo hub źródłowy |
+| `Esc` | back tylko poza polami tekstowymi |
+| `inline_min_width/height` | bezpieczny zakres + restore minsize |
+| Breadcrumb | `Kategoria / Komponent` lub `Kategoria / … / Aktualny` |
+| Header | „Inline Studio” (bez etykiety F3 w UI) |
+
+---
+
+## F3 — inline embed + local Git/GPT (zachowane)
 
 | Element | Stan |
 |---------|------|
 | Inline host (`ui/inline_host.py`) | `build_view(parent, on_back)` przez `tk.Frame` bridge |
-| Routing inline | hub → `InlineHostView`, breadcrumb, „Wróć do huba” |
+| Routing inline | hub → `InlineHostView`, breadcrumb, back |
 | Recent dla inline | tylko po udanym `build_view` |
 | Error state | krótki komunikat w UI, bez traceback; log: typ + krótki opis |
 | Launch subprocess / url | przez `launcher_delegate` (bez zmian F2) |
@@ -36,6 +49,25 @@ python -m giclee_app
 | GPT status | local-only: `Komponenty/integracjagpt/` + `.gpt_mirror/` (bez odczytu config) |
 | Polling / sync / backup / deploy | **brak** (F4) |
 | GitHub API / network / tokeny | **brak** |
+
+---
+
+## F3.2 inline smoke matrix (manual)
+
+Checklista ręczna w Studio Preview — nie w CI.
+
+| folder | mode | build_view | inline dims | result | notes |
+|--------|------|------------|-------------|--------|-------|
+| faq | inline | 2-arg | 1100×720 | pending | lekki |
+| katalog | inline | 2-arg | 1100×720 | pending | lekki |
+| kontakt | inline | 2-arg | 1100×720 | pending | lekki |
+| losujobraz | inline | 2-arg | — | pending | lekki |
+| filozofiamarki | inline | 2-arg | 1180×780 | pending | lekki |
+| finanse | inline | 3-arg + cross-nav | — | pending | kpir/dnr via callback |
+| stronaglowna | inline | 2-arg | — | pending | ciężki — theme editor |
+| planer | inline | 2-arg | — | pending | ciężki |
+
+**Known limitations:** crash w `Komponenty/*/view.py` = osobny micro-fix, nie F3.2.
 
 ---
 
@@ -51,8 +83,9 @@ python -m giclee_app
 
 - `discover_components()` — **1×** przy starcie
 - Hub cache — bez regresji po wejściu/wyjściu z inline
-- Inline host — **bez cache** (nowy host per wejście F3 Minimal)
-- **F3.1** — sanitized error messages, `inspect.signature` dla `build_view`, opcjonalny resize z `inline_width`/`inline_height`
+- Inline host — **bez cache** (transient per wejście)
+- **F3.1** — sanitized errors, `inspect.signature`, resize z `inline_width`/`inline_height`
+- **F3.2** — cross-nav stack, `inline_min_*`, breadcrumb polish
 
 ---
 
@@ -69,8 +102,8 @@ python -m giclee_app
 
 | Plik | Rola |
 |------|------|
-| `ui/inline_host.py` | host inline + error states |
-| `launcher_studio.py` | routing inline, transient host |
+| `ui/inline_host.py` | host inline + error states + cross-nav callback |
+| `launcher_studio.py` | routing inline, stack, resize, Esc |
 | `launcher_delegate.py` | subprocess/url only |
 | `studio/status_providers.py` | local Git/GPT |
 | `studio/state.py` | recent + pinned |

@@ -1,6 +1,6 @@
 # GicleeApp UI Redesign Plan
 
-**Status:** Faza 3.1 — F3 polish (safer inline, opcjonalny resize).
+**Status:** Faza 3.2 — inline polish (cross-nav, stack, min resize).
 
 ## Goal
 
@@ -59,7 +59,10 @@ Not in **`eagleblastmusic-lgtm/gicleeart-gpt`** (theme snapshot only).
 | F2 | Dashboard read-only, recent/pinned, hub sort/filter, safe quick actions | done |
 | F2.1 | Polish: pin eviction, hub sort batch, dashboard refresh | done |
 | F3 | Inline embed Studio, local-only Git/GPT status | done |
-| F3.1 | Safer inline errors, build_view signature, optional resize | **current** |
+| F3.1 | Safer inline errors, build_view signature, optional resize | done |
+| F3.1.1 | Bearer sanitizer, geometry restore polish | done |
+| CI | GitHub Actions studio + security tests | done |
+| F3.2 | Cross-nav, inline stack, inline_min_*, breadcrumb | **current** |
 | F4 | Background parity (sync, backup, cykl) | planned |
 | F5 | Przełącznik domyślny (`GICLEE_STUDIO_UI`) | planned |
 | F6 | PyInstaller + CustomTkinter w `.exe` | planned |

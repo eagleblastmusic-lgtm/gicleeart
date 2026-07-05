@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import tkinter as tk
 from collections.abc import Callable
 
 import customtkinter as ctk
 
 from giclee_app import __version__
 from giclee_app.component_loader import Component
+from giclee_app.launcher_delegate import LaunchOutcome, launch
 from giclee_app.studio.categories import category_label
 from giclee_app.studio.component_index import StudioComponentIndex
 from giclee_app.studio.state import StudioState
@@ -18,6 +20,21 @@ from .ui.inline_host import InlineHostView
 from .ui.sidebar import Sidebar
 from .ui.topbar import Topbar
 from .ui import theme
+
+_INLINE_W_MIN, _INLINE_W_MAX = 900, 1800
+_INLINE_H_MIN, _INLINE_H_MAX = 650, 1200
+_INLINE_MIN_W_LO, _INLINE_MIN_W_HI = 600, 1800
+_INLINE_MIN_H_LO, _INLINE_MIN_H_HI = 400, 1200
+
+
+def _safe_int(value: object, lo: int, hi: int, default: int = 0) -> int:
+    try:
+        n = int(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return default
+    if n <= 0:
+        return default
+    return max(lo, min(hi, n))
 
 
 class GicleeAppStudio(ctk.CTk):
@@ -40,8 +57,10 @@ class GicleeAppStudio(ctk.CTk):
         self._current_category = "dashboard"
         self._view_cache: dict[str, ctk.CTkBaseClass] = {}
         self._inline_host: InlineHostView | None = None
+        self._inline_stack: list[tuple[Component, str]] = []
         self._inline_return_category = "products"
         self._geometry_before_inline: str | None = None
+        self._minsize_before_inline: tuple[int, int] | None = None
 
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(1, weight=1)
@@ -92,18 +111,30 @@ class GicleeAppStudio(ctk.CTk):
             return
         self.geometry(self._geometry_before_inline)
         self._geometry_before_inline = None
-        self.minsize(*theme.WindowMin)
+        if self._minsize_before_inline:
+            self.minsize(*self._minsize_before_inline)
+            self._minsize_before_inline = None
+        else:
+            self.minsize(*theme.WindowMin)
 
     def _apply_inline_window_size(self, comp: Component) -> None:
         """Opcjonalny resize okna z component.json extras — tylko bezpieczny zakres."""
-        try:
-            w = int(comp.extras.get("inline_width") or 0)
-            h = int(comp.extras.get("inline_height") or 0)
-        except (TypeError, ValueError):
+        w = _safe_int(comp.extras.get("inline_width"), _INLINE_W_MIN, _INLINE_W_MAX)
+        h = _safe_int(comp.extras.get("inline_height"), _INLINE_H_MIN, _INLINE_H_MAX)
+        if w <= 0 or h <= 0:
             return
-        if not (900 <= w <= 1800 and 650 <= h <= 1200):
-            return
-        self._geometry_before_inline = self.geometry()
+
+        min_w = _safe_int(comp.extras.get("inline_min_width"), _INLINE_MIN_W_LO, _INLINE_MIN_W_HI, w)
+        min_h = _safe_int(comp.extras.get("inline_min_height"), _INLINE_MIN_H_LO, _INLINE_MIN_H_HI, h)
+        min_w = min(min_w, w)
+        min_h = min(min_h, h)
+        min_w = max(theme.WindowMin[0], min_w)
+        min_h = max(theme.WindowMin[1], min_h)
+
+        if self._geometry_before_inline is None:
+            self._geometry_before_inline = self.geometry()
+            self._minsize_before_inline = self.minsize()
+
         self.update_idletasks()
         sw, sh = self.winfo_screenwidth(), self.winfo_screenheight()
         w = min(w, max(theme.WindowMin[0], sw - 40))
@@ -111,18 +142,106 @@ class GicleeAppStudio(ctk.CTk):
         x = max(0, (sw - w) // 2)
         y = max(0, (sh - h) // 2)
         self.geometry(f"{w}x{h}+{x}+{y}")
+        self.minsize(min_w, min_h)
 
-    def _destroy_inline_host(self) -> None:
+    def _destroy_inline_host(self, *, restore_geometry: bool = True) -> None:
         if self._inline_host is None:
             return
+        self._unbind_inline_escape()
         if hasattr(self._inline_host, "on_hide"):
             self._inline_host.on_hide()
         self._inline_host.destroy()
         self._inline_host = None
-        self._restore_window_geometry()
+        if restore_geometry:
+            self._restore_window_geometry()
+
+    def _bind_inline_escape(self) -> None:
+        self.bind("<Escape>", self._on_escape_back)
+
+    def _unbind_inline_escape(self) -> None:
+        self.unbind("<Escape>")
+
+    def _escape_blocked_by_focus(self) -> bool:
+        focus = self.focus_get()
+        if focus is None:
+            return False
+        widget: tk.Misc | None = focus
+        for _ in range(10):
+            if widget is None:
+                break
+            try:
+                cls = widget.winfo_class().lower()
+            except tk.TclError:
+                break
+            if "entry" in cls or "text" in cls or "combobox" in cls:
+                return True
+            try:
+                widget = widget.master
+            except (AttributeError, tk.TclError):
+                break
+        return False
+
+    def _on_escape_back(self, _event: tk.Event | None = None) -> None:
+        if self._inline_host is None:
+            return
+        if self._escape_blocked_by_focus():
+            return
+        self._return_from_inline()
+
+    def _inline_breadcrumb(self, comp: Component) -> str:
+        cat = category_label(self._inline_return_category)
+        if self._inline_stack:
+            prev = " / ".join(c.name for c, _ in self._inline_stack)
+            return f"{cat} / {prev} / {comp.name}"
+        return f"{cat} / {comp.name}"
+
+    def _present_inline(self, comp: Component, return_category_id: str) -> None:
+        self._inline_return_category = return_category_id
+        self._current_category = return_category_id
+        self._topbar.set_breadcrumb(self._inline_breadcrumb(comp))
+        self._sidebar.set_active(return_category_id)
+
+        back_label = "Wróć" if self._inline_stack else "Wróć do huba"
+        self._inline_host = InlineHostView(
+            self._content,
+            comp,
+            on_back=self._return_from_inline,
+            on_status=self._set_status,
+            on_opened=self._on_inline_opened,
+            on_open_component=self._on_open_component_from_inline,
+            back_label=back_label,
+        )
+        self._inline_host.grid(row=0, column=0, sticky="nsew")
+        self._content.update_idletasks()
+        self._apply_inline_window_size(comp)
+        self._bind_inline_escape()
+
+    def _on_open_component_from_inline(self, folder_name: str) -> None:
+        key = (folder_name or "").strip()
+        if not key:
+            self._set_status("Brak nazwy komponentu do otwarcia.")
+            return
+
+        comp = self._component_index.by_folder.get(key)
+        if comp is None:
+            self._set_status(f"Nie znaleziono komponentu: {key}")
+            return
+
+        if comp.mode == "inline":
+            self._show_inline_component(
+                comp,
+                self._inline_return_category,
+                cross_nav=True,
+            )
+            return
+
+        result = launch(comp, on_status=self._set_status)
+        if result.outcome != LaunchOutcome.OK:
+            self._set_status(result.message or f"Nie udało się otworzyć: {comp.name}")
 
     def _show_view(self, key: str, factory: Callable[[], ctk.CTkBaseClass]) -> None:
         self._destroy_inline_host()
+        self._inline_stack.clear()
         self._hide_cached_views()
 
         if key not in self._view_cache:
@@ -139,28 +258,35 @@ class GicleeAppStudio(ctk.CTk):
         self._studio_state.save()
 
     def _return_from_inline(self) -> None:
-        self._destroy_inline_host()
-        self._show_hub(self._inline_return_category)
+        if self._inline_stack:
+            comp, cat = self._inline_stack.pop()
+            self._destroy_inline_host(restore_geometry=False)
+            self._present_inline(comp, cat)
+            return
+        category = self._inline_return_category
+        self._destroy_inline_host(restore_geometry=True)
+        self._inline_stack.clear()
+        self._show_hub(category)
 
-    def _show_inline_component(self, comp: Component, return_category_id: str) -> None:
+    def _show_inline_component(
+        self,
+        comp: Component,
+        return_category_id: str,
+        *,
+        cross_nav: bool = False,
+    ) -> None:
+        if cross_nav:
+            if self._inline_host is not None:
+                self._inline_stack.append((self._inline_host.comp, self._inline_return_category))
+            self._destroy_inline_host(restore_geometry=False)
+            self._present_inline(comp, self._inline_return_category)
+            return
+
         self._inline_return_category = return_category_id
-        self._current_category = return_category_id
+        self._inline_stack.clear()
         self._hide_cached_views()
-        self._destroy_inline_host()
-
-        self._topbar.set_breadcrumb(f"Inline / {comp.name}")
-        self._sidebar.set_active(return_category_id)
-
-        self._inline_host = InlineHostView(
-            self._content,
-            comp,
-            on_back=self._return_from_inline,
-            on_status=self._set_status,
-            on_opened=self._on_inline_opened,
-        )
-        self._inline_host.grid(row=0, column=0, sticky="nsew")
-        self._content.update_idletasks()
-        self._apply_inline_window_size(comp)
+        self._destroy_inline_host(restore_geometry=True)
+        self._present_inline(comp, return_category_id)
 
     def _show_dashboard(self) -> None:
         self._current_category = "dashboard"
@@ -199,6 +325,7 @@ class GicleeAppStudio(ctk.CTk):
         if category_id == self._current_category and self._inline_host is None:
             return
         if self._inline_host is not None:
+            self._inline_stack.clear()
             self._destroy_inline_host()
         if category_id == "dashboard":
             self._show_dashboard()

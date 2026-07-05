@@ -72,11 +72,15 @@ def test_import_studio_modules() -> None:
 
 def test_launcher_studio_does_not_import_launcher_module() -> None:
     path = Path(__file__).resolve().parents[1] / "giclee_app" / "launcher_studio.py"
+    imports = _imports_in_file(path)
+    for imp in imports:
+        for forbidden in FORBIDDEN_IMPORT_PREFIXES:
+            assert not (imp == forbidden or imp.startswith(forbidden + "."))
     text = path.read_text(encoding="utf-8")
-    assert "giclee_app.launcher" not in text
     assert "from .launcher" not in text
     assert "StudioComponentIndex" in text
     assert "_view_cache" in text
+    assert "_inline_stack" in text
 
 
 def test_launcher_delegate_does_not_import_launcher_module() -> None:

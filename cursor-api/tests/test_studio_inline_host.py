@@ -117,32 +117,81 @@ def test_invoke_build_view_three_kw() -> None:
     ctk.set_appearance_mode("dark")
     root = ctk.CTk()
     root.withdraw()
-    calls: list[str] = []
+    calls: list[str | None] = []
 
     def builder(parent, on_back, on_open_component=None):  # noqa: ANN001
         calls.append("3")
+        calls.append(on_open_component)
         return tk.Frame(parent)
 
     mount = tk.Frame(root)
-    _invoke_build_view(builder, mount, lambda: None)
-    assert calls == ["3"]
+    cb = lambda f: None
+    _invoke_build_view(builder, mount, lambda: None, on_open_component=cb)
+    assert calls[0] == "3"
+    assert calls[1] is cb
     root.destroy()
 
 
-def test_invoke_build_view_kwargs() -> None:
+def test_invoke_build_view_passes_callback_to_kwargs_builder() -> None:
     import customtkinter as ctk
 
     ctk.set_appearance_mode("dark")
     root = ctk.CTk()
     root.withdraw()
+    seen: list[object] = []
+
+    def builder(parent, on_back, **kwargs):  # noqa: ANN001
+        seen.append(kwargs.get("on_open_component"))
+        return tk.Frame(parent)
+
+    mount = tk.Frame(root)
+    cb = lambda f: None
+    _invoke_build_view(builder, mount, lambda: None, on_open_component=cb)
+    assert seen == [cb]
+    root.destroy()
+
+
+def test_invoke_build_view_kwargs() -> None:
+    root = tk.Tk()
+    root.withdraw()
 
     def builder(parent, on_back, **kwargs):  # noqa: ANN001
         assert "on_open_component" in kwargs
+        assert kwargs["on_open_component"] is None
         return tk.Frame(parent)
 
     mount = tk.Frame(root)
     _invoke_build_view(builder, mount, lambda: None)
     root.destroy()
+
+
+def test_inline_host_passes_on_open_component_to_builder() -> None:
+    import customtkinter as ctk
+
+    ctk.set_appearance_mode("dark")
+    root = ctk.CTk()
+    root.withdraw()
+    comp = _make_comp()
+    seen: list[object] = []
+
+    def ok_builder(parent, on_back, on_open_component=None):  # noqa: ANN001
+        seen.append(on_open_component)
+        return tk.Frame(parent)
+
+    mod = SimpleNamespace(build_view=ok_builder)
+    cb = lambda f: None
+    try:
+        with patch("giclee_app.ui.inline_host.importlib.import_module", return_value=mod):
+            InlineHostView(
+                root,
+                comp,
+                on_back=lambda: None,
+                on_open_component=cb,
+            )
+            root.update_idletasks()
+            assert seen == [cb]
+    finally:
+        root.destroy()
 
 
 def test_inline_host_internal_typeerror_no_opened() -> None:
@@ -258,5 +307,18 @@ def test_restore_geometry_only_when_inline_resized() -> None:
     restore_block = text.split("def _restore_window_geometry")[1].split("\n    def ")[0]
     assert "WindowDefault" not in restore_block
     assert "_geometry_before_inline" in restore_block
+    assert "_minsize_before_inline" in restore_block
     apply_block = text.split("def _apply_inline_window_size")[1].split("\n    def ")[0]
     assert "_geometry_before_inline = self.geometry()" in apply_block
+    assert "inline_min_width" in apply_block
+    assert "inline_min_height" in apply_block
+
+
+def test_launcher_studio_inline_stack_and_cross_nav() -> None:
+    path = Path(__file__).resolve().parents[1] / "giclee_app" / "launcher_studio.py"
+    text = path.read_text(encoding="utf-8")
+    assert "_inline_stack" in text
+    assert "_on_open_component_from_inline" in text
+    assert "cross_nav=True" in text
+    assert "_on_escape_back" in text
+    assert "Inline Studio / F3" not in text
