@@ -1,0 +1,12 @@
+{
+  "name": "Własna fotografia",
+  "description": "Szablon produktu własnej fotografii — templates/product.szablon-wlasna-fotografia.json.",
+  "icon": "📷",
+  "color": "#2e7d32",
+  "order": 39,
+  "mode": "inline",
+  "inline_width": 1100,
+  "inline_height": 720,
+  "inline_min_width": 880,
+  "inline_min_height": 560
+}

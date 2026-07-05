@@ -1,0 +1,12 @@
+{
+  "name": "Kontakt",
+  "description": "Wygląd strony Kontakt — hero, formularz (templates/page.contact.json).",
+  "icon": "✉️",
+  "color": "#6a1b9a",
+  "order": 43,
+  "mode": "inline",
+  "inline_width": 1100,
+  "inline_height": 720,
+  "inline_min_width": 880,
+  "inline_min_height": 560
+}

@@ -38,6 +38,10 @@ Toolbar **Stan sesji** → [`session-status.md`](session-status.md)
 
 Komponenty inline (`blog`, `produkcja`, `limity`, `poczta`, …) wymagają `view.py`. Błąd importu — sprawdź zależności w `requirements.txt` komponentu.
 
+| Objaw | Sprawdź |
+|-------|---------|
+| Edytor strony: pusty panel „Edycja sekcji” po kliknięciu sekcji | Naprawione w v1.25.1 — `_shared/theme_page_editor/gui_shell.py` (ramka edytora musi być dzieckiem `Canvas`, nie `LabelFrame`) |
+
 ---
 
 ## Limity / Poczta

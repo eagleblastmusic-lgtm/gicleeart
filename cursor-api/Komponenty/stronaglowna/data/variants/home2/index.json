@@ -131,7 +131,7 @@
           "type": "_slide",
           "name": "t:names.slide",
           "settings": {
-            "media_type_1": "collage",
+            "media_type_1": "video",
             "image_1": "shopify://shop_images/Slide_nr_1.webp",
             "content_direction": "column",
             "vertical_on_mobile": true,
@@ -152,9 +152,9 @@
             "padding-inline-start": 48,
             "padding-inline-end": 48,
             "video_1": "shopify://files/videos/Use_the_uploaded_workshop_image_202607021817.mp4",
-            "video_boomerang": false,
-            "video_1_reversed": "",
-            "video_collage_json": "{\"loop\":true,\"clips\":[{\"video\":\"shopify://files/videos/Old_carpentry_workshop_background_202607021822.mp4\",\"transition_in\":\"fade_in\",\"transition_out\":\"fade_out\",\"transition_in_ms\":3000,\"transition_out_ms\":1500,\"cross_effect\":false,\"label\":\"Old_carpentry_workshop_background_202607021822\"},{\"video\":\"shopify://files/videos/Birch_forest_to_bark_texture_202607010119.mp4\",\"transition_in\":\"fade_in\",\"transition_out\":\"fade_out\",\"transition_in_ms\":800,\"transition_out_ms\":800,\"cross_effect\":false,\"label\":\"Birch_forest_to_bark_texture_202607010119\"}]}"
+            "video_boomerang": true,
+            "video_1_reversed": "shopify://files/videos/Use_the_uploaded_workshop_image_202607021817_boomerang.mp4",
+            "video_collage_json": "{\"loop\":true,\"clips\":[]}"
           },
           "blocks": {}
         }

@@ -2,7 +2,7 @@
 
 > Dokument kontekstowy dla Custom GPT tworzącego prompty do Cursor.  
 > Repozytorium: **GicleeArt** — sklep artystyczny (gicleeart.eu).  
-> Ostatnia analiza: 2026-07-01.
+> Ostatnia analiza: 2026-07-03.
 
 ---
 
@@ -28,6 +28,8 @@
 | **Three.js** | `assets/three.module.js` — scena WebGL („Losuj Obraz”) |
 | **OpenSeadragon** | Zoom HD reprodukcji (CDN jsDelivr) |
 | **Playwright** | Testy layoutu (devDependency w korzeniowym `package.json`) |
+
+**Animacje (stan obecny):** vanilla JS + CSS (`transform`, `opacity`, `IntersectionObserver`, `requestAnimationFrame`, CSS custom properties dla scroll progress). Moduły `giclee-*` ładowane **selektywnie** z Liquid per szablon/sekcja. Szczegóły wyboru technologii → [§ Strategia animacji](#strategia-rozwoju-animacji-i-scroll-storytellingu).
 
 ### cursor-api (backoffice)
 
@@ -64,12 +66,14 @@
 | **SerpAPI** | Google Lens w „Nazwij obraz" |
 | **Vercel** | Kalkulator GicleeLab (iframe) |
 
-### Czego **nie ma** w projekcie
+### Czego **domyślnie nie ma** w projekcie (możliwe po audycie — patrz strategia animacji)
 
-- Brak React / Vue / Next.js na froncie sklepu
+- Brak React / Vue / Next.js na froncie sklepu (nie domyślna ścieżka dla motywu Shopify)
 - Brak TypeScript (tylko JSDoc / `@ts-nocheck` w wybranych plikach)
-- Brak Tailwind CSS, styled-components, CSS Modules
+- Brak Tailwind CSS, styled-components, CSS Modules (nie domyślna ścieżka stylowania)
 - Brak centralnego routera SPA — routing obsługuje Shopify
+- Brak GSAP / ScrollTrigger w repo (stan na 2026-07-03) — **dopuszczalne** przy większym scroll storytellingu po audycie sekcji
+- Brak Framer Motion, Lenis, Locomotive Scroll — nie domyślna ścieżka dla obecnego motywu
 
 ---
 
@@ -237,6 +241,21 @@ Komponenty/<nazwa>/
 
 Discovery: `giclee_app/component_loader.py` — skanuje `Komponenty/*/`.
 
+### Moduły animacji / scroll (`assets/giclee-*`) — stan obecny
+
+| Moduł | Rola |
+|-------|------|
+| `giclee-home-stack.js` / `.css` | Scroll-over warstw homepage (wariant 3) |
+| `giclee-product-scroll-reveal.js` | Scroll reveal na PDP reprodukcji |
+| `giclee-product-story.js` / `.css` | PDP v3 — hybrid sticky, pin, hold |
+| `giclee-artist-biography.js` | Biografia autora — scroll stack, shift |
+| `giclee-artist-collection-showcase.js` | Galeria 3D — coverflow, przejścia autora |
+| `giclee-photo-mockup.js` | Mockup klienta — scroll coupling, pin |
+| `giclee-hero-video-collage.js` | Hero homepage — kolaż wideo |
+| `giclee-random-artwork-webgl.js` | Losuj obraz — Three.js + fallback CSS |
+
+Dokumentacja scen scroll: [`docs/motyw/pdp-v3-pusty-scroll.md`](docs/motyw/pdp-v3-pusty-scroll.md), [`docs/motyw/strona-glowna.md`](docs/motyw/strona-glowna.md), [`docs/motyw/kolekcja-autora-showcase.md`](docs/motyw/kolekcja-autora-showcase.md).
+
 ---
 
 ## 5. Stylowanie
@@ -262,9 +281,65 @@ Google Fonts w `layout/theme.liquid`: Bodoni Moda, Cormorant Garamond.
 
 Przy deploy JS/CSS bump parametru `?v=…` lub `&giclee_v=…` w Liquid (import map też ma wersje).
 
-### Czego nie używać
+### Czego nie używać (stylowanie — domyślnie)
 
-- Tailwind, Bootstrap, styled-components, CSS Modules, Sass (brak w projekcie)
+- Tailwind, Bootstrap, styled-components, CSS Modules, Sass (brak w projekcie; nie dodawać dla pojedynczych efektów UI)
+
+---
+
+## Strategia rozwoju animacji i scroll storytellingu {#strategia-rozwoju-animacji-i-scroll-storytellingu}
+
+Giclée Art może rozwijać się w stronę zaawansowanego, profesjonalnego scroll storytellingu (kinowe przejścia, narracja sekcji, editorial motion). **Obecny stack tego kierunku nie blokuje.** Na tym etapie projekt korzysta z własnych animacji vanilla JS/CSS; przy większych scenach narracyjnych dopuszczalne jest rozważenie **GSAP + ScrollTrigger** jako świadomej warstwy animacyjnej. Decyzja powinna wynikać ze **skali potrzeb**, a nie z pojedynczej mikroanimacji.
+
+### 1. Mikroanimacje (domyślnie preferuj)
+
+- CSS `transition` / `transform` / `opacity`
+- `IntersectionObserver` (wejście w viewport)
+- `requestAnimationFrame` + CSS custom properties (scroll progress, jak `giclee-home-stack`)
+- Vanilla JS bez nowych bibliotek
+- Zawsze: `prefers-reduced-motion: reduce` — wyłączenie lub uproszczenie efektu
+
+**Przykłady w projekcie:** `draw-line` w `assets/base.css`, fade header homepage, `scaleX` separatorów stack, opacity/blur warstw.
+
+### 2. Średnie animacje editorialne
+
+- **Najpierw** sprawdź istniejące moduły `giclee-*` (tabela w §4) — rozszerz zamiast duplikować
+- Rozważ wspólny lekki helper (scroll progress, smoothstep, reduced-motion gate) tylko gdy ≥3 miejsca powtarzają ten sam wzorzec
+- Unikaj wielu równoległych mechanizmów scroll progress w jednym szablonie
+- Ładuj assety **selektywnie** z Liquid (`{% if template %}` / sekcja), nie globalnie w `theme.liquid` bez uzasadnienia
+
+### 3. Duży scroll storytelling (rozważ po audycie)
+
+**GSAP + ScrollTrigger** może mieć sens, gdy:
+
+- vanilla JS staje się zbyt złożony (timeline, wiele elementów zsynchronizowanych)
+- potrzebny pinning z scrub, sekwencja scen narracyjnych, choreografia wielu warstw
+- sekcja wymaga kinowego przejścia trudnego do utrzymania w rAF + CSS
+
+**Warunki dopuszczenia:**
+
+1. Audyt konkretnej sekcji/szablonu (performance mobile, długość strony, sticky już obecne)
+2. Ładowanie **selektywnie** per template/sekcja — nie globalnie na cały sklep
+3. `prefers-reduced-motion` — fallback statyczny lub uproszczony
+4. Uzasadnienie kosztu: rozmiar bundla, wpływ na LCP/INP, test iOS Safari
+5. Dokumentacja w `docs/motyw/<moduł>.md` — kiedy GSAP jest użyty i dlaczego
+
+### 4. Technologie zmieniające architekturę (nie domyślna ścieżka)
+
+| Technologia | Domyślnie | Kiedy rozważyć |
+|-------------|-----------|----------------|
+| **React / Next.js** | Nie na froncie motywu Shopify | Osobna aplikacja, iframe, osobna decyzja architektoniczna |
+| **Framer Motion** | Nie w motywie Liquid | Tylko przy migracji do React — poza obecnym modelem |
+| **Tailwind** | Nie | Konflikt z Horizon CSS + `custom.css`; nie dla pojedynczych efektów |
+| **Lenis / Locomotive Scroll** | Nie | Smooth-scroll globalny koliduje ze sticky stackiem i natywnym scroll; tylko po analizie całej strony |
+
+### Zasady ochrony projektu (animacje)
+
+- **Domyślnie preferuj** vanilla — **dopuść po audycie** bibliotekę animacyjną przy większej skali
+- **Nie instaluj** paczek npm w motywie dla jednego hovera, jednej linii dividera ani prostego fade-in
+- **Nie duplikuj** kolejnego scroll engine obok `giclee-home-stack` / `giclee-product-story` bez uzasadnienia
+- **Uzasadnij** koszt i wpływ na performance przed dodaniem GSAP lub zmianą architektury scrolla
+- Szczegóły implementacji scen → docs modułowe; wzorzec PDP v3 → [`docs/motyw/pdp-v3-pusty-scroll.md`](docs/motyw/pdp-v3-pusty-scroll.md)
 
 ---
 
@@ -520,7 +595,7 @@ Uruchamianie komponentu: `python -m Komponenty.<nazwa>` z katalogu `cursor-api/`
 - **Nie przepisywać całej aplikacji** bez wyraźnej prośby — minimalny, ukierunkowany diff
 - **Nie usuwać istniejących funkcji** bez potwierdzenia — sklep produkcyjny (gicleeart.eu)
 - **Nie zmieniać routingu / szablonów** bez powodu — URL Shopify są powiązane z marketingiem i SEO
-- **Nie dodawać bibliotek** (npm/pip) bez uzasadnienia — projekt celowo używa vanilla JS i stdlib Python
+- **Nie dodawać bibliotek** (npm/pip) bez uzasadnienia — domyślnie vanilla JS; wyjątki wg [§ Strategia animacji](#strategia-rozwoju-animacji-i-scroll-storytellingu) (GSAP po audycie dużej sceny, nie dla mikroefektów)
 - **Nie duplikować komponentów** — szukaj istniejącego modułu przed tworzeniem nowego
 - **Zachować konwencje** — prefiks `giclee-`, struktura `Komponenty/`, import map `@theme/*`
 - **Zmiany etapowo** — deploy selektywny (`--only`), test na theme dev przed live
@@ -566,7 +641,7 @@ cd cursor-api && pythonw -m giclee_app
 2. **Wklej kontekst** — `MATKA.md` + odpowiedni plik z `docs/motyw/` lub `cursor-api/docs/komponenty/`
 3. **Podaj ścieżki plików** — konkretne pliki do edycji, nie „cały projekt"
 4. **Ogranicz scope** — `--only` przy deploy, lista plików do zmiany
-5. **Zabraniaj** — refactor całości, nowe biblioteki, zmiany checkout/faktur bez analizy docs
+5. **Zabraniaj** — refactor całości, nowe biblioteki bez audytu (patrz § Strategia animacji), zmiany checkout/faktur bez analizy docs
 6. **Wymagaj docs** — „po zmianie zaktualizuj `<moduł>.md`"
 7. **Przypomnij o cache bust** — bump `?v=` / `giclee_v` po JS/CSS
 
@@ -578,7 +653,7 @@ Cel: [konkretna zmiana]
 Pliki: [lista ścieżek]
 Docs do przeczytania: docs/motyw/[moduł].md
 Ograniczenia:
-- minimalny diff, bez nowych zależności
+- minimalny diff; nowe zależności tylko po audycie (TECH_STACK § Strategia animacji)
 - nie ruszać checkout/faktur/upload
 - zachować prefiks giclee-
 - po zmianie: zaktualizuj docs + bump cache ?v=

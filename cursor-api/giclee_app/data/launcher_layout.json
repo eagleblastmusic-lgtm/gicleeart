@@ -135,20 +135,25 @@
       "visible": true,
       "sort_key": 23
     },
-    "stronyzobrazami": {
+    "debugowanie": {
       "section": "Narzedzia pomocnicze",
       "visible": true,
       "sort_key": 24
     },
-    "poczta": {
+    "stronyzobrazami": {
       "section": "Narzedzia pomocnicze",
       "visible": true,
       "sort_key": 25
     },
-    "sklep": {
+    "poczta": {
       "section": "Narzedzia pomocnicze",
       "visible": true,
       "sort_key": 26
+    },
+    "sklep": {
+      "section": "Narzedzia pomocnicze",
+      "visible": true,
+      "sort_key": 27
     },
     "dnr": {
       "section": "Administracja produktu",

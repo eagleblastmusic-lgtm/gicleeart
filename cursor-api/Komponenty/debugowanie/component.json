@@ -1,0 +1,7 @@
+{
+  "name": "Debugowanie",
+  "description": "Polecenie do schowka, kolejne sekcje debuga, zakończenie — skopiuj zebrane sekcje.",
+  "icon": "🐛",
+  "color": "#546e7a",
+  "order": 45
+}

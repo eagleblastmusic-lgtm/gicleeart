@@ -11,8 +11,10 @@ from Komponenty._shared.toast import show_toast
 from Komponenty._shared.window_geometry import position_toplevel_screen_center
 
 from .storage import (
+    CATEGORY_INSPIRATIONS,
     PageEntry,
     PageStore,
+    description_label_for_category,
     load_pages,
     new_page_id,
     next_sort_key,
@@ -53,9 +55,10 @@ class StronyDoUzyciaApp:
         hint = ttk.Label(
             self.root,
             text=(
-                "Zapisane linki do stron sklepu, panelu Shopify, narzedzi i innych miejsc. "
+                "Zapisane linki do stron sklepu, panelu Shopify, narzedzi i inspiracji WWW. "
                 "Dwuklik lub «Otworz» — przegladarka. "
-                "Pole «Co mozna robic» — opis zadan dostepnych na danej stronie."
+                "Kategoria «Inspiracje WWW» — referencje designu/UX; opisz co jest fajnego na stronie. "
+                "Pozostale kategorie — pole «Co mozna robic» (zadania na danej stronie)."
             ),
             padding=(12, 0, 12, 8),
             foreground="#555",
@@ -113,10 +116,10 @@ class StronyDoUzyciaApp:
         self.tree.bind("<Return>", lambda _e: self._open_selected())
         self.tree.bind("<Delete>", lambda _e: self._delete_selected())
 
-        desc_frame = ttk.LabelFrame(self.root, text="Co mozna robic", padding=8)
-        desc_frame.pack(fill="x", padx=12, pady=(0, 12))
+        self._desc_frame = ttk.LabelFrame(self.root, text="Co mozna robic", padding=8)
+        self._desc_frame.pack(fill="x", padx=12, pady=(0, 12))
         self.description_text = tk.Text(
-            desc_frame,
+            self._desc_frame,
             height=5,
             wrap="word",
             font=("Segoe UI", 10),
@@ -132,6 +135,21 @@ class StronyDoUzyciaApp:
 
     def _category_filter_values(self) -> list[str]:
         return ["(wszystkie)", *self._store.categories]
+
+    def _default_category_for_new(self) -> str:
+        category = self.category_var.get().strip()
+        if category and category != "(wszystkie)" and category in self._store.categories:
+            return category
+        return "Sklep"
+
+    def _update_description_frame_label(self, page: PageEntry | None) -> None:
+        label = description_label_for_category(page.category if page else "")
+        self._desc_frame.configure(text=label)
+
+    def _description_placeholder(self, category: str) -> str:
+        if category.strip() == CATEGORY_INSPIRATIONS:
+            return "Np. ladny hero, animacja scrolla, uklad PDP, nawigacja…"
+        return ""
 
     def _refresh_list(self) -> None:
         selected = self._selected_id
@@ -183,6 +201,7 @@ class StronyDoUzyciaApp:
         self._show_description(self._selected_page())
 
     def _show_description(self, page: PageEntry | None) -> None:
+        self._update_description_frame_label(page)
         self.description_text.delete("1.0", "end")
         if page and page.description:
             self.description_text.insert("1.0", page.description)
@@ -227,7 +246,9 @@ class StronyDoUzyciaApp:
 
         title_var = tk.StringVar(value=page.title if page else "")
         url_var = tk.StringVar(value=page.url if page else "")
-        category_var = tk.StringVar(value=page.category if page else "Sklep")
+        category_var = tk.StringVar(
+            value=page.category if page else self._default_category_for_new(),
+        )
 
         ttk.Label(frame, text="Nazwa:").grid(row=0, column=0, sticky="w", pady=(0, 6))
         title_entry = ttk.Entry(frame, textvariable=title_var, width=52)
@@ -246,11 +267,23 @@ class StronyDoUzyciaApp:
         )
         category_combo.grid(row=2, column=1, sticky="w", pady=(0, 6))
 
-        ttk.Label(frame, text="Co mozna robic:").grid(row=3, column=0, sticky="nw", pady=(0, 6))
+        desc_label = ttk.Label(frame, text="")
+        desc_label.grid(row=3, column=0, sticky="nw", pady=(0, 6))
         desc_text = tk.Text(frame, height=6, wrap="word", font=("Segoe UI", 10), width=52)
         desc_text.grid(row=3, column=1, sticky="ew", pady=(0, 6))
+        desc_hint = ttk.Label(frame, text="", foreground="#888", wraplength=380)
+        desc_hint.grid(row=4, column=1, sticky="w", pady=(0, 6))
         if page and page.description:
             desc_text.insert("1.0", page.description)
+
+        def _sync_desc_label(*_args: object) -> None:
+            category = category_var.get().strip()
+            desc_label.configure(text=f"{description_label_for_category(category)}:")
+            hint = self._description_placeholder(category)
+            desc_hint.configure(text=hint)
+
+        category_var.trace_add("write", _sync_desc_label)
+        _sync_desc_label()
 
         frame.grid_columnconfigure(1, weight=1)
 
@@ -290,7 +323,7 @@ class StronyDoUzyciaApp:
             win.destroy()
 
         btn_row = ttk.Frame(frame)
-        btn_row.grid(row=4, column=0, columnspan=2, sticky="e", pady=(12, 0))
+        btn_row.grid(row=5, column=0, columnspan=2, sticky="e", pady=(12, 0))
         ttk.Button(btn_row, text="Anuluj", command=win.destroy).pack(side="right")
         ttk.Button(btn_row, text="Zapisz", command=_submit).pack(side="right", padx=(0, 8))
 
@@ -356,7 +389,7 @@ class StronyDoUzyciaApp:
             wraplength=580,
         ).pack(anchor="w", pady=(0, 8))
 
-        category_var = tk.StringVar(value="Sklep")
+        category_var = tk.StringVar(value=self._default_category_for_new())
         cat_row = ttk.Frame(frame)
         cat_row.pack(fill="x", pady=(0, 8))
         ttk.Label(cat_row, text="Kategoria dla nowych:").pack(side="left")

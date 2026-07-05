@@ -10,7 +10,7 @@ Plik: `cursor-api/giclee_app/launcher.py`
 
 - Okno Tkinter z siatką kafelków komponentów
 - Uruchamia komponenty jako **osobne procesy** (`subprocess`) lub **inline views** w tym samym oknie
-- Toolbar: **Stan sesji**, **Dziennik akcji**, **Odśwież**
+- Toolbar: **Stan sesji**, **Theme dev…**, **Zamknij porty**, **Dziennik akcji**, **Odśwież**
 - Co 3 s skanuje `Komponenty/` w tle (nowe kafelki)
 
 ---

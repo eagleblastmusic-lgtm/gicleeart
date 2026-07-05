@@ -1,0 +1,12 @@
+{
+  "name": "Współpraca",
+  "description": "Wygląd strony Współpraca — templates/page.wspolpraca.json.",
+  "icon": "🤝",
+  "color": "#1565c0",
+  "order": 41,
+  "mode": "inline",
+  "inline_width": 1100,
+  "inline_height": 720,
+  "inline_min_width": 880,
+  "inline_min_height": 560
+}

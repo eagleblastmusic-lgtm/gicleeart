@@ -1,0 +1,1 @@
+"""Komponent: Giclée Frame."""

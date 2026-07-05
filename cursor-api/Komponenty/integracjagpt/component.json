@@ -1,0 +1,7 @@
+{
+  "name": "Integracja z GPT",
+  "description": "Sync motywu do repo GPT (GitHub), nagrania podglądu Playwright, wiadomości do Custom GPT.",
+  "icon": "🤖",
+  "color": "#5e35b1",
+  "order": 44
+}

@@ -62,6 +62,32 @@ Szczegóły: [`motyw/szablony-i-strony.md`](motyw/szablony-i-strony.md) · wzorz
 
 ---
 
+## Przepływ: strony menu (wygląd szablonów)
+
+```
+GicleeApp → <komponent strony menu> → templates/*.json (motyw lokalny)
+    → backup w Komponenty/<id>/data/backups/
+    → shopify theme push (deploy)
+```
+
+| Pozycja menu | Komponent | Szablon |
+|--------------|-----------|---------|
+| Giclée Frame | `gicleeframe` | `templates/page.giclee-frame.json` |
+| Własna fotografia | `wlasnafotografia` | `templates/product.szablon-wlasna-fotografia.json` |
+| Katalog | `katalog` (+ `dodajobraz` dla artystów) | `templates/collection.json` |
+| Współpraca | `wspolpraca` | `templates/page.wspolpraca.json` |
+| Filozofia marki | `filozofiamarki` | `templates/page.filozofia-marki.json` |
+| Kontakt | `kontakt` | `templates/page.contact.json` |
+| Blog (layout) | `stronablogu` | `templates/blog.json` |
+| FAQ | `faq` | `templates/page.faq.json` |
+| Losuj Obraz | `losujobraz` | `templates/page.losuj-produkt.json` |
+
+Wspólna warstwa: `Komponenty/_shared/theme_page_editor/`. Treści postów bloga — osobno komponent `blog` (Marketing).
+
+Szczegóły: [`../cursor-api/docs/komponenty/README.md`](../cursor-api/docs/komponenty/README.md) · wzorzec: [`stronaglowna.md`](../cursor-api/docs/komponenty/stronaglowna.md)
+
+---
+
 ## Przepływ: mockup katalogowy (CZB/CZCZ)
 
 ```

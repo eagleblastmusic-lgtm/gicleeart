@@ -1,0 +1,7 @@
+{
+  "name": "Pushe",
+  "description": "Push motywu Shopify na dev/live oraz bezpieczny push głównego monorepo gicleeart na GitHub.",
+  "icon": "🚀",
+  "color": "#1565c0",
+  "order": 6
+}

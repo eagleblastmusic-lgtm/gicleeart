@@ -1,0 +1,16 @@
+{
+  "remote_url": "https://github.com/eagleblastmusic-lgtm/gicleeart-gpt.git",
+  "branch": "main",
+  "commit_prefix": "review",
+  "prefer_local_theme_dev": true,
+  "record_scroll_seconds": 55.0,
+  "record_wait_hero_seconds": 4.0,
+  "last_push_sha": "247573fb75784dcb6e1d9bcd0116b2270b50c07b",
+  "last_push_at": "2026-07-05 16:38 UTC",
+  "knowledge_zip_name": "giclee_cursor_architect_knowledge.zip",
+  "knowledge_zip_loaded_at": "2026-07-05 16:35 UTC",
+  "obs_executable": "C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe",
+  "obs_websocket_host": "127.0.0.1",
+  "obs_websocket_port": 4455,
+  "obs_websocket_password": ""
+}

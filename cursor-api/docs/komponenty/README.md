@@ -27,6 +27,15 @@ Folder kodu: `cursor-api/Komponenty/`
 | `przedpo` | Przed/Po | [`przedpo.md`](przedpo.md) | skrót |
 | `stronaproduktu` | Strona produktu | [`stronaproduktu.md`](stronaproduktu.md) | pełny |
 | `stronaglowna` | Strona główna | [`stronaglowna.md`](stronaglowna.md) | pełny |
+| `gicleeframe` | Giclée Frame | [`gicleeframe.md`](gicleeframe.md) | skrót |
+| `wlasnafotografia` | Własna fotografia | [`wlasnafotografia.md`](wlasnafotografia.md) | skrót |
+| `katalog` | Katalog | [`katalog.md`](katalog.md) | skrót |
+| `wspolpraca` | Współpraca | [`wspolpraca.md`](wspolpraca.md) | skrót |
+| `filozofiamarki` | Filozofia marki | [`filozofiamarki.md`](filozofiamarki.md) | skrót |
+| `kontakt` | Kontakt | [`kontakt.md`](kontakt.md) | skrót |
+| `stronablogu` | Strona blogu | [`stronablogu.md`](stronablogu.md) | skrót |
+| `faq` | FAQ | [`faq.md`](faq.md) | skrót |
+| `losujobraz` | Losuj Obraz | [`losujobraz.md`](losujobraz.md) | skrót |
 | `obrazy` | Obrazy | [`obrazy.md`](obrazy.md) | skrót |
 | `produkcja` | Produkcja | [`produkcja.md`](produkcja.md) | pełny |
 | `passepartout` | Passe-partout | [`passepartout.md`](passepartout.md) | skrót |
@@ -49,6 +58,7 @@ Folder kodu: `cursor-api/Komponenty/`
 | `planer` | Planer | [`planer.md`](planer.md) | skrót |
 | `notatnik` | Notatnik | [`notatnik.md`](notatnik.md) | skrót |
 | `bazapromptow` | Baza Promptów | [`bazapromptow.md`](bazapromptow.md) | skrót |
+| `debugowanie` | Debugowanie | [`debugowanie.md`](debugowanie.md) | skrót |
 | `stronyzobrazami` | Strony z obrazami | [`stronyzobrazami.md`](stronyzobrazami.md) | skrót |
 | `stronydozycia` | Strony do użycia | [`stronydozycia.md`](stronydozycia.md) | skrót |
 | `poczta` | Poczta firmowa | [`poczta.md`](poczta.md) | pełny |

@@ -1,6 +1,6 @@
 {
   "name": "Strony do użycia",
-  "description": "Zapisane linki do stron (sklep, admin, narzędzia) z opisem co na nich można robić.",
+  "description": "Zapisane linki (sklep, admin, narzędzia, inspiracje WWW) z opisem co na stronie robić lub co jest fajnego.",
   "icon": "🔗",
   "color": "#00897b",
   "order": 43

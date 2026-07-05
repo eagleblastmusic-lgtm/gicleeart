@@ -245,13 +245,24 @@ GicleeApp (`cursor-api/`) zarządza katalogiem (dodawanie reprodukcji, mockupy k
 
 ### Animacje i interakcje
 
+**Kierunek:** strona ma rosnąć w stronę premium scroll storytellingu (editorial, kinowe przejścia, narracja sekcji). Obecny stack (vanilla JS/CSS, moduły `giclee-*`) tego nie blokuje. Zasady wyboru technologii animacji → [`TECH_STACK.md` § Strategia animacji](TECH_STACK.md#strategia-rozwoju-animacji-i-scroll-storytellingu).
+
+**Stan obecny (vanilla):**
+
 - Splash reveal (~1.2s cubic-bezier) na homepage.
 - Page transition / curtain między stronami.
-- Scroll reveal na PDP reprodukcji (nagłówek → opis → galeria).
+- Scroll reveal na PDP reprodukcji (nagłówek → opis → galeria) — `giclee-product-scroll-reveal`.
+- PDP v3 — warstwowy scroll, pin, hold — `giclee-product-story` (wzorzec w `docs/motyw/pdp-v3-pusty-scroll.md`).
+- Homepage wariant 3 — scroll-over warstw, fade treści, separatory — `giclee-home-stack`.
 - Karuzela coverflow z autoplay (~7 s) i crossfade tła (Karuzela2).
 - Comparison slider (przed/po) na homepage i PDP v2.
 - Stagger animacja listy artystów w panelu katalogu.
 - WebGL losowanie obrazu (`giclee-random-artwork`) z fallback CSS.
+- Biografia autora — scroll stack, shift editorial (`giclee-artist-biography`).
+
+**Przy większych scenach narracyjnych:** GSAP + ScrollTrigger może być rozważony po audycie sekcji (timeline, scrub, pinning wielu elementów) — ładowany selektywnie, nie globalnie; szczegóły w `TECH_STACK.md`. React, Framer Motion, Tailwind i globalny smooth-scroll (Lenis/Locomotive) **nie są** domyślną ścieżką dla motywu Shopify.
+
+**Zasada UX:** animacje subtelne, wolne tempo, zawsze z `prefers-reduced-motion`.
 
 ### Feeling / poziom premium
 
@@ -349,10 +360,10 @@ GicleeApp (`cursor-api/`) zarządza katalogiem (dodawanie reprodukcji, mockupy k
 4. **Wskazuj konkretne szablony** — np. „PDP reprodukcji = `product.nowy-szblon-produktu`", nie generyczne „product page".
 5. **Respektuj języki** — nowy tekst UI → klucz `giclee.ui.*` w `pl.json` + merge do 6 locale; nie hardcode w JS bez i18n.
 6. **Nie mieszaj mockupów** — mockup klienta (motyw) ≠ mockup katalogowy (GicleeApp `Komponenty/mockup/`).
-7. **UI premium = małe diffy** — animacje subtelne, ciemne tła galerii, złoty akcent oszczędnie.
+7. **UI premium = małe diffy** — animacje subtelne, ciemne tła galerii, złoty akcent oszczędnie; nowe biblioteki animacji tylko wg `TECH_STACK.md` § Strategia animacji.
 8. **Przy zmianach PDP** — sprawdź scroll reveal, mobile 749px, zoom manifest, variant sync (sosna→czarny).
 9. **Przy zmianach koszyka/faktury** — nie psuj atrybutów `_Invoice *` ani property `_Upload ID`.
-10. **Do stacku technicznego** — odsyłaj do `TECH_STACK.md`; ten plik to kontekst marki i UX.
+10. **Do stacku technicznego** — odsyłaj do `TECH_STACK.md` (w tym strategia animacji); ten plik to kontekst marki i UX.
 
 ### Szablon promptu (kontekst marki)
 

@@ -1,0 +1,952 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "divider_MLHKEp": {
+      "type": "divider",
+      "custom_css": [
+        ".divider__line {flex-basis: 0%; animation: draw-line 1.2s ease-out forwards !important;}"
+      ],
+      "name": "t:names.divider_section",
+      "settings": {
+        "color_scheme": "scheme-6",
+        "section_width": "full-width",
+        "thickness": 0.5,
+        "corner_radius": "square",
+        "width_percent": 100,
+        "alignment_horizontal": "center",
+        "padding-block-start": 16,
+        "padding-block-end": 16
+      }
+    },
+    "main": {
+      "type": "main-page",
+      "blocks": {
+        "heading": {
+          "type": "text",
+          "name": "Title",
+          "disabled": true,
+          "settings": {
+            "text": "<h1>{{ closest.page.title }}</h1>",
+            "width": "100%",
+            "max_width": "normal",
+            "alignment": "left",
+            "type_preset": "h2",
+            "font": "var(--font-primary--family)",
+            "font_size": "",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "color": "",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        },
+        "page-content": {
+          "type": "page-content",
+          "disabled": true,
+          "settings": {},
+          "blocks": {}
+        },
+        "text_nPizan": {
+          "type": "text",
+          "name": "t:names.text",
+          "disabled": true,
+          "settings": {
+            "text": "<h5>Jesteś fotografem lub fotografką sesyjną i chcesz współpracować z Giclée Art? Zapraszam do kontaktu.</h5><h5>W ramach współpracy otrzymujesz:</h5><h5><br/>– zniżki dla swoich klientów na produkty Giclée Art<br/>– prezentację Twoich wybranych prac na stronie Giclée Art wraz z linkiem do Twoich social mediów<br/>– promocję Twojej twórczości w mediach społecznościowych Giclée Art</h5><h5>Współpraca ma charakter partnerski — łączymy estetykę fotografii z artystycznym drukiem premium.</h5>",
+            "width": "fit-content",
+            "max_width": "normal",
+            "alignment": "left",
+            "type_preset": "rte",
+            "font": "var(--font-body--family)",
+            "font_size": "1rem",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "color": "var(--color-foreground)",
+            "background": false,
+            "background_color": "#00000012",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "heading",
+        "page-content",
+        "text_nPizan"
+      ],
+      "disabled": true,
+      "settings": {
+        "content_direction": "column",
+        "gap": 32,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 40,
+        "padding-block-end": 80
+      }
+    },
+    "media_with_content_xdDQna": {
+      "type": "media-with-content",
+      "blocks": {
+        "media": {
+          "type": "_media-without-appearance",
+          "static": true,
+          "settings": {
+            "media_type": "image",
+            "image": "shopify://shop_images/a-wall-of-painted-portraits_ps.jpg",
+            "link": "",
+            "video_loop": true,
+            "video_autoplay": false,
+            "image_position": "cover",
+            "video_position": "cover"
+          },
+          "blocks": {}
+        },
+        "content": {
+          "type": "_content-without-appearance",
+          "static": true,
+          "settings": {
+            "horizontal_alignment_flex_direction_column": "flex-start",
+            "vertical_alignment_flex_direction_column": "flex-start",
+            "gap": 24
+          },
+          "blocks": {
+            "jumbo_text_pnNRiB": {
+              "type": "jumbo-text",
+              "name": "t:names.jumbo_text",
+              "settings": {
+                "text": "GICLÉE FRAME™",
+                "font": "heading",
+                "alignment": "right",
+                "line_height": "0.8",
+                "letter_spacing": "-0.03em",
+                "case": "uppercase",
+                "text_effect": "none",
+                "animation_repeat": false
+              },
+              "blocks": {}
+            },
+            "text_GifUG3": {
+              "type": "text",
+              "name": "t:names.text",
+              "settings": {
+                "text": "<p><strong>Giclée Frame™</strong> to autorski system oprawy, który stworzyłem jako integralną część każdej realizacji powstającej w mojej pracowni.</p><p>Nie jest to standardowa rama — to przemyślana forma ekspozycji, zaprojektowana w taki sposób, aby podkreślać charakter obrazu i nadawać mu ostateczny, galeryjny wymiar.</p><p>Każdy element oprawy powstaje ręcznie, z wykorzystaniem litego drewna oraz materiałów bezkwasowych, spełniających standardy archiwalne. Konstrukcja ramy oraz sposób montażu zostały opracowane tak, aby zapewnić zarówno estetykę, jak i wieloletnią stabilność pracy.</p>",
+                "width": "fit-content",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "rte",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "wrap": "pretty",
+                "color": "var(--color-foreground)",
+                "background": false,
+                "background_color": "#00000026",
+                "corner_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "jumbo_text_pnNRiB",
+            "text_GifUG3"
+          ]
+        }
+      },
+      "name": "Edytorski: GICLEE FRAME",
+      "settings": {
+        "media_position": "right",
+        "media_width": "medium",
+        "media_height": "60svh",
+        "section_width": "page-width",
+        "extend_media": true,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 0,
+        "padding-block-end": 0
+      }
+    },
+    "divider_kmeBEA": {
+      "type": "divider",
+      "custom_css": [
+        ".divider__line {flex-basis: 0%; animation: draw-line 1.2s ease-out forwards !important;}"
+      ],
+      "name": "t:names.divider_section",
+      "settings": {
+        "color_scheme": "scheme-6",
+        "section_width": "full-width",
+        "thickness": 0.5,
+        "corner_radius": "square",
+        "width_percent": 100,
+        "alignment_horizontal": "center",
+        "padding-block-start": 16,
+        "padding-block-end": 16
+      }
+    },
+    "media_with_content_bJdEUY": {
+      "type": "media-with-content",
+      "blocks": {
+        "media": {
+          "type": "_media-without-appearance",
+          "static": true,
+          "settings": {
+            "media_type": "image",
+            "image": "shopify://shop_images/wood-curls-on-a-hand-plane_ps.jpg",
+            "link": "",
+            "video_loop": true,
+            "video_autoplay": false,
+            "image_position": "cover",
+            "video_position": "cover"
+          },
+          "blocks": {}
+        },
+        "content": {
+          "type": "_content-without-appearance",
+          "static": true,
+          "settings": {
+            "horizontal_alignment_flex_direction_column": "flex-start",
+            "vertical_alignment_flex_direction_column": "flex-start",
+            "gap": 24
+          },
+          "blocks": {
+            "jumbo_text_NBbG7x": {
+              "type": "jumbo-text",
+              "name": "t:names.jumbo_text",
+              "settings": {
+                "text": "materiały",
+                "font": "heading",
+                "alignment": "right",
+                "line_height": "0.8",
+                "letter_spacing": "-0.03em",
+                "case": "uppercase",
+                "text_effect": "none",
+                "animation_repeat": false
+              },
+              "blocks": {}
+            },
+            "text_79rJDi": {
+              "type": "text",
+              "name": "t:names.text",
+              "settings": {
+                "text": "<p>Do wykonania Giclée Frame™ wykorzystuję wyłącznie starannie dobrane materiały:</p><p><strong>— lite drewno o naturalnej strukturze<br/>— bezkwasowe passe-partout o jakości galeryjnej<br/>— komponenty archiwalne, neutralne chemicznie</strong></p><p>Dzięki temu oprawa nie tylko podkreśla walory estetyczne pracy, ale również chroni ją przed degradacją w czasie.</p>",
+                "width": "fit-content",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "rte",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "wrap": "pretty",
+                "color": "var(--color-foreground)",
+                "background": false,
+                "background_color": "#00000026",
+                "corner_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "jumbo_text_NBbG7x",
+            "text_79rJDi"
+          ]
+        }
+      },
+      "name": "Edytorski: MATERIAŁY",
+      "settings": {
+        "media_position": "left",
+        "media_width": "medium",
+        "media_height": "60svh",
+        "section_width": "page-width",
+        "extend_media": true,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 0,
+        "padding-block-end": 0
+      }
+    },
+    "divider_FRqmEM": {
+      "type": "divider",
+      "custom_css": [
+        ".divider__line {flex-basis: 0%;}"
+      ],
+      "name": "t:names.divider_section",
+      "settings": {
+        "color_scheme": "scheme-6",
+        "section_width": "full-width",
+        "thickness": 0.5,
+        "corner_radius": "square",
+        "width_percent": 100,
+        "alignment_horizontal": "center",
+        "padding-block-start": 16,
+        "padding-block-end": 16
+      }
+    },
+    "media_with_content_mEjyEw": {
+      "type": "media-with-content",
+      "blocks": {
+        "media": {
+          "type": "_media-without-appearance",
+          "static": true,
+          "settings": {
+            "media_type": "image",
+            "image": "shopify://shop_images/careful-measurements.jpg",
+            "link": "",
+            "video_loop": true,
+            "video_autoplay": false,
+            "image_position": "cover",
+            "video_position": "cover"
+          },
+          "blocks": {}
+        },
+        "content": {
+          "type": "_content-without-appearance",
+          "static": true,
+          "settings": {
+            "horizontal_alignment_flex_direction_column": "flex-start",
+            "vertical_alignment_flex_direction_column": "flex-start",
+            "gap": 24
+          },
+          "blocks": {
+            "jumbo_text_Xz3A7b": {
+              "type": "jumbo-text",
+              "name": "t:names.jumbo_text",
+              "settings": {
+                "text": "WYKOŃCZENIE DREWNA",
+                "font": "heading",
+                "alignment": "right",
+                "line_height": "0.8",
+                "letter_spacing": "-0.03em",
+                "case": "uppercase",
+                "text_effect": "none",
+                "animation_repeat": false
+              },
+              "blocks": {}
+            },
+            "text_xktcAN": {
+              "type": "text",
+              "name": "t:names.text",
+              "settings": {
+                "text": "<p>Ramy wykańczane są przy użyciu naturalnych olejowosków Rubio Monocoat, które zabezpieczają powierzchnię drewna, jednocześnie podkreślając jego strukturę i charakter.</p><p>W przypadku czarnego wykończenia stosuję dodatkowo warstwę Precolor, która pogłębia kolor i zapewnia jego równomierne, nasycone wybarwienie. </p><p>Zastosowany system nie tworzy sztucznej powłoki — drewno zachowuje swoją naturalność, a jego struktura pozostaje widoczna i wyczuwalna.</p><p>Wykorzystywane oleje oparte są na bazie naturalnych składników, w tym oleju lnianego, i charakteryzują się zerową zawartością LZO (lotnych związków organicznych). Formuła pozbawiona rozpuszczalników zapewnia bardzo niską emisję oraz bezpieczeństwo użytkowania. Potwierdzają to międzynarodowe certyfikaty, takie jak GREENGUARD Gold</p><p>Efektem jest wykończenie przyjazne zarówno dla środowiska, jak i dla przestrzeni, w której eksponowana jest praca — trwałe, naturalne i zachowujące swój charakter przez lata.</p>",
+                "width": "fit-content",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "rte",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "wrap": "pretty",
+                "color": "var(--color-foreground)",
+                "background": false,
+                "background_color": "#00000026",
+                "corner_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "jumbo_text_Xz3A7b",
+            "text_xktcAN"
+          ]
+        }
+      },
+      "name": "Edytorski: WYKOŃCZENIE",
+      "settings": {
+        "media_position": "right",
+        "media_width": "medium",
+        "media_height": "60svh",
+        "section_width": "page-width",
+        "extend_media": true,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 0,
+        "padding-block-end": 0
+      }
+    },
+    "divider_VjTW9k": {
+      "type": "divider",
+      "custom_css": [
+        ".divider__line {flex-basis: 0%;}"
+      ],
+      "name": "t:names.divider_section",
+      "settings": {
+        "color_scheme": "scheme-6",
+        "section_width": "full-width",
+        "thickness": 0.5,
+        "corner_radius": "square",
+        "width_percent": 100,
+        "alignment_horizontal": "center",
+        "padding-block-start": 16,
+        "padding-block-end": 16
+      }
+    },
+    "media_with_content_TpnJQ4": {
+      "type": "media-with-content",
+      "blocks": {
+        "media": {
+          "type": "_media-without-appearance",
+          "static": true,
+          "settings": {
+            "media_type": "image",
+            "image": "shopify://shop_images/PASSEPARTOUT_MUSEALE_BIANCO_NEUTRO.jpg",
+            "link": "",
+            "video_loop": true,
+            "video_autoplay": false,
+            "image_position": "cover",
+            "video_position": "cover"
+          },
+          "blocks": {}
+        },
+        "content": {
+          "type": "_content-without-appearance",
+          "static": true,
+          "settings": {
+            "horizontal_alignment_flex_direction_column": "flex-start",
+            "vertical_alignment_flex_direction_column": "flex-start",
+            "gap": 24
+          },
+          "blocks": {
+            "jumbo_text_WTK97H": {
+              "type": "jumbo-text",
+              "name": "t:names.jumbo_text",
+              "settings": {
+                "text": "ARCHIWALNE PASSE-PARTOUT",
+                "font": "heading",
+                "alignment": "right",
+                "line_height": "0.8",
+                "letter_spacing": "-0.03em",
+                "case": "uppercase",
+                "text_effect": "none",
+                "animation_repeat": false
+              },
+              "blocks": {}
+            },
+            "text_e9qjY6": {
+              "type": "text",
+              "name": "t:names.text",
+              "settings": {
+                "text": "<p>Passe-partout stosowane w mojej pracowni wykonywane jest z wysokiej jakości, trójwarstwowego kartonu archiwalnego, zaprojektowanego z myślą o profesjonalnej oprawie dzieł sztuki.<br/><br/>Warstwa wierzchnia powstaje z bezkwasowego, barwionego w masie papieru <strong>Fabriano Elle Erre (Bianco)</strong> — materiału o wysokiej odporności na starzenie i działanie światła, spełniającego normę ISO 9706 „Long Life”.<br/><br/>Rdzeń wykonany jest z bezkwasowej, nieżółknącej tektury o neutralnym pH, zawierającej rezerwę alkaliczną, która dodatkowo zabezpiecza pracę przed degradacją w czasie. Całość uzupełnia spodnia warstwa wysokogatunkowego papieru, stabilizująca konstrukcję.<br/><br/>Elementy łączone są przy użyciu nietoksycznych klejów wodnych, wolnych od rozpuszczalników, co zapewnia pełne bezpieczeństwo dla oprawianej pracy.</p><p>Każde passe-partout wycinane jest pod kątem 45°, tworząc charakterystyczne „okno”, które wprowadza subtelną głębię i podkreśla relację pomiędzy obrazem a jego oprawą.</p><p>W połączeniu z wydrukiem Fine stanowi integralny element systemu oprawy, nadając pracy przestrzeń, strukturę i galeryjny charakter.</p>",
+                "width": "fit-content",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "rte",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "wrap": "pretty",
+                "color": "var(--color-foreground)",
+                "background": false,
+                "background_color": "#00000026",
+                "corner_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "jumbo_text_WTK97H",
+            "text_e9qjY6"
+          ]
+        }
+      },
+      "name": "Edytorski: PASSEPARTOUT",
+      "settings": {
+        "media_position": "left",
+        "media_width": "medium",
+        "media_height": "60svh",
+        "section_width": "page-width",
+        "extend_media": true,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 0,
+        "padding-block-end": 0
+      }
+    },
+    "divider_zayCdU": {
+      "type": "divider",
+      "custom_css": [
+        ".divider__line {flex-basis: 0%;}"
+      ],
+      "name": "t:names.divider_section",
+      "settings": {
+        "color_scheme": "scheme-6",
+        "section_width": "full-width",
+        "thickness": 0.5,
+        "corner_radius": "square",
+        "width_percent": 100,
+        "alignment_horizontal": "center",
+        "padding-block-start": 16,
+        "padding-block-end": 16
+      }
+    },
+    "media_with_content_wDiVPB": {
+      "type": "media-with-content",
+      "blocks": {
+        "media": {
+          "type": "_media-without-appearance",
+          "static": true,
+          "settings": {
+            "media_type": "image",
+            "image": "shopify://shop_images/Hahnemuehle_Photo_Rag_R__Bright_White_Closeup.jpg",
+            "link": "",
+            "video_loop": true,
+            "video_autoplay": false,
+            "image_position": "cover",
+            "video_position": "cover"
+          },
+          "blocks": {}
+        },
+        "content": {
+          "type": "_content-without-appearance",
+          "static": true,
+          "settings": {
+            "horizontal_alignment_flex_direction_column": "flex-start",
+            "vertical_alignment_flex_direction_column": "flex-start",
+            "gap": 24
+          },
+          "blocks": {
+            "jumbo_text_DEGUnA": {
+              "type": "jumbo-text",
+              "name": "t:names.jumbo_text",
+              "settings": {
+                "text": "papier fine art",
+                "font": "heading",
+                "alignment": "right",
+                "line_height": "0.8",
+                "letter_spacing": "-0.03em",
+                "case": "uppercase",
+                "text_effect": "none",
+                "animation_repeat": false
+              },
+              "blocks": {}
+            },
+            "text_xyy4fN": {
+              "type": "text",
+              "name": "t:names.text",
+              "settings": {
+                "text": "<p>W procesie druku wykorzystuję wyłącznie profesjonalne papiery klasy Fine Art, które stanowią fundament jakości i trwałości finalnej pracy.</p><p>Podstawowym medium jest Hahnemühle Photo Rag 308 oraz Epson Fine Art Velvet — papiery o wyjątkowej strukturze, zaprojektowane z myślą o reprodukcji sztuki w najwyższym standardzie.</p><p>Ich powierzchnia charakteryzuje się subtelną, naturalną fakturą, która nadaje wydrukowi głębię oraz charakter zbliżony do tradycyjnych technik artystycznych. Matowe wykończenie eliminuje refleksy światła, pozwalając na pełne skupienie się na obrazie i jego tonalności.</p><p>Zastosowane nośniki są w pełni bezkwasowe i archiwalne, co zapewnia wysoką odporność na starzenie oraz stabilność barwną w długim okresie czasu. Dzięki temu praca zachowuje swoją jakość wizualną przez dekady, bez utraty detalu i głębi kolorystycznej.</p><p>Każdy wydruk wykonywany jest w technologii pigmentowej, co w połączeniu z papierem klasy Fine Art pozwala uzyskać wyjątkową rozpiętość tonalną, precyzję detalu oraz szlachetny, galeryjny charakter.</p><p>Efektem jest obraz, który nie jest jedynie reprodukcją, lecz pełnoprawnym obiektem artystycznym — przygotowanym do profesjonalnej ekspozycji i archiwalnego przechowywania.</p>",
+                "width": "fit-content",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "rte",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "wrap": "pretty",
+                "color": "var(--color-foreground)",
+                "background": false,
+                "background_color": "#00000026",
+                "corner_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "jumbo_text_DEGUnA",
+            "text_xyy4fN"
+          ]
+        }
+      },
+      "name": "Edytorski: papier fine art",
+      "settings": {
+        "media_position": "right",
+        "media_width": "medium",
+        "media_height": "60svh",
+        "section_width": "page-width",
+        "extend_media": true,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 0,
+        "padding-block-end": 0
+      }
+    },
+    "divider_eeNXD3": {
+      "type": "divider",
+      "custom_css": [
+        ".divider__line {flex-basis: 0%;}"
+      ],
+      "name": "t:names.divider_section",
+      "settings": {
+        "color_scheme": "scheme-6",
+        "section_width": "full-width",
+        "thickness": 0.5,
+        "corner_radius": "square",
+        "width_percent": 100,
+        "alignment_horizontal": "center",
+        "padding-block-start": 16,
+        "padding-block-end": 16
+      }
+    },
+    "media_with_content_8yinAT": {
+      "type": "media-with-content",
+      "blocks": {
+        "media": {
+          "type": "_media-without-appearance",
+          "static": true,
+          "settings": {
+            "media_type": "image",
+            "image": "shopify://shop_images/11mona-lisa-leonardo-da-vinci-golden-ratio-proportion-louvre-paris-09.jpg",
+            "link": "",
+            "video_loop": true,
+            "video_autoplay": false,
+            "image_position": "contain",
+            "video_position": "cover"
+          },
+          "blocks": {}
+        },
+        "content": {
+          "type": "_content-without-appearance",
+          "static": true,
+          "settings": {
+            "horizontal_alignment_flex_direction_column": "flex-start",
+            "vertical_alignment_flex_direction_column": "flex-start",
+            "gap": 24
+          },
+          "blocks": {
+            "jumbo_text_bX7tqP": {
+              "type": "jumbo-text",
+              "name": "t:names.jumbo_text",
+              "settings": {
+                "text": "PROPORCJE I ZŁOTY PODZIAŁ",
+                "font": "heading",
+                "alignment": "right",
+                "line_height": "0.8",
+                "letter_spacing": "-0.03em",
+                "case": "uppercase",
+                "text_effect": "none",
+                "animation_repeat": false
+              },
+              "blocks": {}
+            },
+            "text_KxVYV6": {
+              "type": "text",
+              "name": "t:names.text",
+              "settings": {
+                "text": "<p>W systemie Giclée Frame™ proporcje oprawy nie są przypadkowe — stanowią świadomie opracowaną relację pomiędzy obrazem, passe-partout oraz ramą.</p><p>Kluczowym założeniem jest stosowanie zasad harmonii wizualnej opartych na złotym podziale, który od wieków wykorzystywany jest w sztuce, architekturze i klasycznej estetyce jako wzorzec naturalnej równowagi.</p><p>Złoty podział (φ – „phi”) to matematyczna relacja proporcji, w której stosunek całości do większej części jest taki sam jak stosunek większej części do mniejszej. Jego wartość wynosi w przybliżeniu <strong>1,618</strong>. W praktyce oznacza to proporcję, która w sposób naturalny i intuicyjny jest odbierana jako harmonijna i stabilna dla ludzkiego oka, niezależnie od świadomości jej struktury matematycznej.</p><p>Stosunek powierzchni papieru do szerokości passe-partout oraz jego relacji z ramą jest dostosowany do wielkości produktu w 3 rozmiarach: S, L oraz XL.</p><p>Celem tego procesu nie jest dekoracja, lecz osiągnięcie wizualnej równowagi, w której obraz „oddycha” w przestrzeni oprawy i zyskuje naturalny punkt skupienia dla oka. Świadomie stoję w opozycji do współczesnego glaeryjnego trendu mówiącego, że im większe passepartout - tym lepiej</p><p>Dzięki temu każda realizacja posiada własną, wewnętrzną logikę proporcji — wynikającą nie z szablonu, lecz z zasad harmonii, które porządkują sposób odbioru obrazu.</p><p>Efektem jest kompozycja, w której wszystkie elementy współistnieją w równowadze, tworząc spójny i wyważony obiekt wizualny.</p>",
+                "width": "fit-content",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "rte",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "wrap": "pretty",
+                "color": "var(--color-foreground)",
+                "background": false,
+                "background_color": "#00000026",
+                "corner_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "jumbo_text_bX7tqP",
+            "text_KxVYV6"
+          ]
+        }
+      },
+      "name": "Edytorski: PROPORCJE I ZŁOTY PODZIAŁ",
+      "settings": {
+        "media_position": "right",
+        "media_width": "medium",
+        "media_height": "60svh",
+        "section_width": "page-width",
+        "extend_media": true,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 0,
+        "padding-block-end": 0
+      }
+    },
+    "divider_hhVg8j": {
+      "type": "divider",
+      "custom_css": [
+        ".divider__line {flex-basis: 0%;}"
+      ],
+      "name": "t:names.divider_section",
+      "settings": {
+        "color_scheme": "scheme-6",
+        "section_width": "full-width",
+        "thickness": 0.5,
+        "corner_radius": "square",
+        "width_percent": 100,
+        "alignment_horizontal": "center",
+        "padding-block-start": 16,
+        "padding-block-end": 16
+      }
+    },
+    "media_with_content_tyUaLL": {
+      "type": "media-with-content",
+      "blocks": {
+        "media": {
+          "type": "_media-without-appearance",
+          "static": true,
+          "settings": {
+            "media_type": "image",
+            "image": "shopify://shop_images/close-up-showing-six-feet-on-tape-measure.jpg",
+            "link": "",
+            "video_loop": true,
+            "video_autoplay": false,
+            "image_position": "contain",
+            "video_position": "cover"
+          },
+          "blocks": {}
+        },
+        "content": {
+          "type": "_content-without-appearance",
+          "static": true,
+          "settings": {
+            "horizontal_alignment_flex_direction_column": "flex-start",
+            "vertical_alignment_flex_direction_column": "flex-start",
+            "gap": 24
+          },
+          "blocks": {
+            "jumbo_text_txPMEr": {
+              "type": "jumbo-text",
+              "name": "t:names.jumbo_text",
+              "settings": {
+                "text": "Wymiary protuktów",
+                "font": "heading",
+                "alignment": "right",
+                "line_height": "0.8",
+                "letter_spacing": "-0.03em",
+                "case": "uppercase",
+                "text_effect": "none",
+                "animation_repeat": false
+              },
+              "blocks": {}
+            },
+            "text_LaP347": {
+              "type": "text",
+              "name": "t:names.text",
+              "settings": {
+                "text": "",
+                "width": "fit-content",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "rte",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "wrap": "pretty",
+                "color": "var(--color-foreground)",
+                "background": false,
+                "background_color": "#00000026",
+                "corner_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "jumbo_text_txPMEr",
+            "text_LaP347"
+          ]
+        }
+      },
+      "name": "Edytorski: Wymiary produktów",
+      "settings": {
+        "media_position": "left",
+        "media_width": "medium",
+        "media_height": "60svh",
+        "section_width": "page-width",
+        "extend_media": true,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 0,
+        "padding-block-end": 0
+      }
+    },
+    "divider_qPk6TD": {
+      "type": "divider",
+      "custom_css": [
+        ".divider__line {flex-basis: 0%;}"
+      ],
+      "name": "t:names.divider_section",
+      "settings": {
+        "color_scheme": "scheme-6",
+        "section_width": "full-width",
+        "thickness": 0.5,
+        "corner_radius": "square",
+        "width_percent": 100,
+        "alignment_horizontal": "center",
+        "padding-block-start": 16,
+        "padding-block-end": 16
+      }
+    },
+    "divider_DUG7kA": {
+      "type": "divider",
+      "custom_css": [
+        ".divider__line {flex-basis: 0%;}"
+      ],
+      "name": "t:names.divider_section",
+      "settings": {
+        "color_scheme": "scheme-6",
+        "section_width": "full-width",
+        "thickness": 0.5,
+        "corner_radius": "square",
+        "width_percent": 100,
+        "alignment_horizontal": "center",
+        "padding-block-start": 16,
+        "padding-block-end": 16
+      }
+    },
+    "media_with_content_RBXALc": {
+      "type": "media-with-content",
+      "blocks": {
+        "media": {
+          "type": "_media-without-appearance",
+          "static": true,
+          "settings": {
+            "media_type": "image",
+            "image": "shopify://shop_images/646274023_122174393120765418_6570827169975184517_n.jpg",
+            "link": "",
+            "video_loop": true,
+            "video_autoplay": false,
+            "image_position": "cover",
+            "video_position": "cover"
+          },
+          "blocks": {}
+        },
+        "content": {
+          "type": "_content-without-appearance",
+          "static": true,
+          "settings": {
+            "horizontal_alignment_flex_direction_column": "flex-start",
+            "vertical_alignment_flex_direction_column": "flex-start",
+            "gap": 24
+          },
+          "blocks": {
+            "jumbo_text_fABkbP": {
+              "type": "jumbo-text",
+              "name": "t:names.jumbo_text",
+              "settings": {
+                "text": "FINALNA RAMKA",
+                "font": "heading",
+                "alignment": "right",
+                "line_height": "0.8",
+                "letter_spacing": "-0.03em",
+                "case": "uppercase",
+                "text_effect": "none",
+                "animation_repeat": false
+              },
+              "blocks": {}
+            },
+            "text_d3aDXd": {
+              "type": "text",
+              "name": "t:names.text",
+              "settings": {
+                "text": "<p>Każda realizacja opuszcza pracownię jako w pełni ukończone dzieło — gotowe do natychmiastowej ekspozycji.</p><p>Nie wymaga dodatkowej oprawy ani ingerencji. Wszystkie elementy zostały zaprojektowane i wykonane jako spójna całość.</p>",
+                "width": "fit-content",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "rte",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "wrap": "pretty",
+                "color": "var(--color-foreground)",
+                "background": false,
+                "background_color": "#00000026",
+                "corner_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "jumbo_text_fABkbP",
+            "text_d3aDXd"
+          ]
+        }
+      },
+      "name": "Edytorski: FINALNA RAMKA",
+      "settings": {
+        "media_position": "right",
+        "media_width": "medium",
+        "media_height": "60svh",
+        "section_width": "page-width",
+        "extend_media": true,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 0,
+        "padding-block-end": 0
+      }
+    }
+  },
+  "order": [
+    "divider_MLHKEp",
+    "main",
+    "media_with_content_xdDQna",
+    "divider_kmeBEA",
+    "media_with_content_bJdEUY",
+    "divider_FRqmEM",
+    "media_with_content_mEjyEw",
+    "divider_VjTW9k",
+    "media_with_content_TpnJQ4",
+    "divider_zayCdU",
+    "media_with_content_wDiVPB",
+    "divider_eeNXD3",
+    "media_with_content_8yinAT",
+    "divider_hhVg8j",
+    "media_with_content_tyUaLL",
+    "divider_qPk6TD",
+    "media_with_content_RBXALc",
+    "divider_DUG7kA"
+  ]
+}

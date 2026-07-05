@@ -160,6 +160,8 @@ class GicleeApp:
         tools.pack(side="right")
         ttk.Button(tools, text="Token setup", command=self._show_token_setup).pack(side="left", padx=4)
         ttk.Button(tools, text="Stan sesji", command=self._show_session_status).pack(side="left", padx=4)
+        ttk.Button(tools, text="Theme dev…", command=self._show_theme_dev).pack(side="left", padx=4)
+        ttk.Button(tools, text="Zamknij porty", command=self._close_theme_dev_ports).pack(side="left", padx=4)
         ttk.Button(tools, text="Dziennik akcji", command=self._show_activity_log).pack(side="left", padx=4)
         ttk.Button(tools, text="Opcje", command=self._show_launcher_options).pack(side="left", padx=4)
         ttk.Button(tools, text="Instrukcja", command=self._show_help).pack(side="left", padx=4)
@@ -1469,6 +1471,38 @@ class GicleeApp:
         except ImportError:
             messagebox.showinfo("Stan sesji", text)
 
+    def _show_theme_dev(self) -> None:
+        try:
+            from Komponenty._shared.theme_dev_gui import open_theme_dev_preview
+
+            open_theme_dev_preview(
+                self.root,
+                status_var=self.status_var,
+                app_title=APP_TITLE,
+            )
+        except ImportError as exc:
+            messagebox.showerror("Theme dev", f"Nie udalo sie zaladowac modulu:\n{exc}")
+
+    def _close_theme_dev_ports(self) -> None:
+        try:
+            from Komponenty.stronaglowna import home_features as home_features_mod
+            from Komponenty.stronaglowna.service import theme_dev_port_open
+            from Komponenty._shared.toast import show_toast
+        except ImportError as exc:
+            messagebox.showerror("Zamknij porty", f"Nie udalo sie zaladowac modulu:\n{exc}")
+            return
+
+        lines: list[str] = []
+        home_features_mod.restart_theme_dev_port(on_line=lines.append)
+        if lines:
+            msg = lines[0]
+        elif theme_dev_port_open():
+            msg = "Port 9292 nadal zajęty — zamknij proces ręcznie."
+        else:
+            msg = "Port 9292 zwolniony (theme dev zatrzymany)."
+        self.status_var.set(msg)
+        show_toast(self.root, msg)
+
     def _show_activity_log(self) -> None:
         try:
             from Komponenty._shared.activity_log_ui import open_activity_log_dialog
@@ -1500,6 +1534,8 @@ procesie**, wiec ewentualny crash jednego komponentu NIE polozy launchera.
 ## Toolbar w prawym gornym rogu
 - **Token setup** - checklista OAuth Shopify + Meta (`CHECKLIST_SETUP.md`).
 - **Stan sesji** - podglad `.shopify_session.json`, cache kursow NBP, mtime / git dla `shopify.app.toml`.
+- **Theme dev…** - lokalny podglad motywu Shopify (`shopify theme dev` → http://127.0.0.1:9292).
+- **Zamknij porty** - zatrzymuje theme dev i zwalnia port 9292 (np. zawieszony proces).
 - **Dziennik akcji** - ostatnie wpisy z komponentow (np. batch w dodajobraz).
 - **Opcje** - układ kafelków: sekcja (nagłówek), widoczność, kolejność w sekcji. Zapis lokalny w `giclee_app/data/launcher_layout.json`.
 - **Instrukcja** - to okno.

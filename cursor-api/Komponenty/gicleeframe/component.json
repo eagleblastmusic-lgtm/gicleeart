@@ -1,0 +1,12 @@
+{
+  "name": "Giclée Frame",
+  "description": "Wygląd strony Giclée Frame™ — templates/page.giclee-frame.json.",
+  "icon": "🖼️",
+  "color": "#bf360c",
+  "order": 40,
+  "mode": "inline",
+  "inline_width": 1240,
+  "inline_height": 820,
+  "inline_min_width": 880,
+  "inline_min_height": 560
+}

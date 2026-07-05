@@ -1,0 +1,12 @@
+{
+  "name": "FAQ",
+  "description": "Wygląd strony FAQ — hero i accordion (templates/page.faq.json).",
+  "icon": "❓",
+  "color": "#455a64",
+  "order": 45,
+  "mode": "inline",
+  "inline_width": 1100,
+  "inline_height": 720,
+  "inline_min_width": 880,
+  "inline_min_height": 560
+}

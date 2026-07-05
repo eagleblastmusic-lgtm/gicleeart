@@ -30,6 +30,7 @@ venv/
 .env
 .env.*
 !.env.example
+.shopify-store-password.local
 
 # Artefakty audytu / tymczasowe (korzeń repo)
 _audit*

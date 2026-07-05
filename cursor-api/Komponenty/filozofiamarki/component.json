@@ -1,0 +1,12 @@
+{
+  "name": "Filozofia marki",
+  "description": "Wygląd strony Filozofia marki — templates/page.filozofia-marki.json.",
+  "icon": "✨",
+  "color": "#4e342e",
+  "order": 42,
+  "mode": "inline",
+  "inline_width": 1180,
+  "inline_height": 780,
+  "inline_min_width": 880,
+  "inline_min_height": 560
+}

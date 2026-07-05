@@ -1,0 +1,12 @@
+{
+  "name": "Losuj Obraz",
+  "description": "Wygląd strony Losuj Obraz — etykiety sekcji WebGL (templates/page.losuj-produkt.json).",
+  "icon": "🎲",
+  "color": "#5d4037",
+  "order": 46,
+  "mode": "inline",
+  "inline_width": 1100,
+  "inline_height": 720,
+  "inline_min_width": 880,
+  "inline_min_height": 560
+}

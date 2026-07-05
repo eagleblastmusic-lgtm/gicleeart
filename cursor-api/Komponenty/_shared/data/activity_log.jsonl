@@ -463,3 +463,10 @@
 {"ts": "2026-06-18T16:32:33.007496+00:00", "component": "mockup", "level": "info", "message": "Dodajobraz: Ludolf Bakhuizen - Ships in a Tempest - Full.webp -> CZB", "detail": "https://19v3bj-n0.myshopify.com/admin/products/15635509150044"}
 {"ts": "2026-06-18T16:32:37.043223+00:00", "component": "mockup", "level": "info", "message": "Dodajobraz: Ludolf Bakhuizen - Ships in a Tempest - Full.webp -> CZCZ", "detail": "https://19v3bj-n0.myshopify.com/admin/products/15635509150044"}
 {"ts": "2026-06-18T16:32:39.495278+00:00", "component": "dodajobraz", "level": "info", "message": "Batch: nowe 1, dogrania 1, bledow 0, pominieto 0."}
+{"ts": "2026-07-03T00:02:22.018400+00:00", "component": "mockup", "level": "info", "message": "Dodano przezroczysty mockup", "detail": "Sandro Botticelli - Ukrzyżowanie mistyczne (lub Mistyczne Ukrzyżowanie)"}
+{"ts": "2026-07-03T00:03:16.228112+00:00", "component": "mockup", "level": "info", "message": "Wyswietlanie mockupu: transparent", "detail": "Sandro Botticelli - Ukrzyżowanie mistyczne (lub Mistyczne Ukrzyżowanie)"}
+{"ts": "2026-07-03T00:18:10.861234+00:00", "component": "mockup", "level": "info", "message": "Usunieto mockupow: 1", "detail": "Sandro Botticelli - Ukrzyżowanie mistyczne (lub Mistyczne Ukrzyżowanie)"}
+{"ts": "2026-07-03T00:21:39.882362+00:00", "component": "mockup", "level": "info", "message": "Dodano przezroczysty mockup z dysku", "detail": "Sandro Botticelli - Ukrzyżowanie mistyczne (lub Mistyczne Ukrzyżowanie)"}
+{"ts": "2026-07-03T00:21:47.973233+00:00", "component": "mockup", "level": "info", "message": "Wyswietlanie mockupu: transparent", "detail": "Sandro Botticelli - Ukrzyżowanie mistyczne (lub Mistyczne Ukrzyżowanie)"}
+{"ts": "2026-07-03T00:30:26.227233+00:00", "component": "mockup", "level": "info", "message": "Dodano przezroczysty mockup z dysku", "detail": "Sandro Botticelli - Ukrzyżowanie mistyczne (lub Mistyczne Ukrzyżowanie)"}
+{"ts": "2026-07-03T00:30:34.817483+00:00", "component": "mockup", "level": "info", "message": "Wyswietlanie mockupu: transparent", "detail": "Sandro Botticelli - Ukrzyżowanie mistyczne (lub Mistyczne Ukrzyżowanie)"}

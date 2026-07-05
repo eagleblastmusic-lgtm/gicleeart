@@ -1,0 +1,40 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "random_artwork": {
+      "type": "giclee-random-artwork",
+      "settings": {
+        "eyebrow": "Fine Art Oracle",
+        "heading": "Niech sztuka wybierze Ciebie",
+        "subtitle": "Kliknij i odkryj losowo wybrane dzieło z naszej kolekcji — być może właśnie ono miało trafić do Twojego wnętrza.",
+        "button_label": "Losuj obraz",
+        "loading_text": "Przeszukuję kolekcję…",
+        "result_heading": "Wybrany obraz",
+        "view_label": "Zobacz obraz",
+        "replay_label": "Wylosuj ponownie",
+        "error_text": "Nie udało się wczytać kolekcji. Spróbuj ponownie.",
+        "retry_label": "Spróbuj ponownie",
+        "pool_limit": 50,
+        "fetch_full_pool": true,
+        "color_scheme": "scheme-1"
+      }
+    },
+    "main": {
+      "type": "main-page",
+      "disabled": true,
+      "settings": {}
+    }
+  },
+  "order": [
+    "random_artwork",
+    "main"
+  ]
+}

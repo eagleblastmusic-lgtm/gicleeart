@@ -1,0 +1,12 @@
+{
+  "name": "Strona blogu",
+  "description": "Wygląd listy bloga — hero i layout (templates/blog.json). Osobno od komponentu treści postów.",
+  "icon": "📰",
+  "color": "#0277bd",
+  "order": 44,
+  "mode": "inline",
+  "inline_width": 1100,
+  "inline_height": 720,
+  "inline_min_width": 880,
+  "inline_min_height": 560
+}

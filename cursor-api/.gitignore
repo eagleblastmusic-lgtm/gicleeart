@@ -82,6 +82,18 @@ Komponenty/socialmedia/data/cykl/meta_state.json
 # zdjecia lokalne - duze pliki
 Komponenty/socialmedia/data/cykl/Obrazy/
 
+# integracjagpt — lokalny clone lustra repo GPT (nie commituj)
+.gpt_mirror/
+
+# integracjagpt — ZIP wiedzy Custom GPT (lokalnie, nie w repo)
+Komponenty/integracjagpt/data/gpt_knowledge.zip
+
+# integracjagpt — lokalne nagrania wideo (duże pliki, poza lustrem GPT)
+Komponenty/integracjagpt/data/nagrania/
+
+# bazapromptow — grafiki kontekstu promptów (pliki użytkownika)
+Komponenty/bazapromptow/data/context_images/
+
 # Analiza ruchu — lokalna baza eventów
 Komponenty/analytics/dane/analytics.db
 # queue.json + generation_state.json + config.json - commitujemy (to plan cyklu)

@@ -19,11 +19,15 @@ DEFAULT_SECTIONS: list[tuple[str, list[str]]] = [
             "nazwijobraz", "pobierzobraz", "squoosh", "print_optimize", "mockup", "infoplikow", "przedpo",
         ],
     ),
-    ("Administracja strony", ["wzorzecszablonu", "stronaproduktu", "karuzela", "tldobio", "stronaglowna"]),
+    ("Administracja strony", [
+        "wzorzecszablonu", "stronaproduktu", "karuzela", "tldobio", "stronaglowna",
+        "gicleeframe", "wlasnafotografia", "katalog", "wspolpraca", "filozofiamarki",
+        "kontakt", "stronablogu", "faq", "losujobraz",
+    ]),
     ("Zamowienia", ["obrazy", "produkcja", "passepartout"]),
     ("Finanse", ["finanse", "kalkulacja"]),
     ("Marketing", ["blog", "socialmedia", "zadania", "cenyMarketing", "analytics"]),
-    ("Narzedzia pomocnicze", ["limity", "planer", "notatnik", "bazapromptow", "stronyzobrazami", "stronydozycia", "poczta", "sklep"]),
+    ("Narzedzia pomocnicze", ["limity", "planer", "notatnik", "bazapromptow", "integracjagpt", "stronyzobrazami", "stronydozycia", "poczta", "sklep"]),
 ]
 
 

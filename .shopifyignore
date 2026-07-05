@@ -13,6 +13,8 @@ _patch*
 _restore*
 _section_api.json
 *.html
+pm_live.js
+_dup_result.txt
 
 # Dokumentacja projektu (korzeń repo)
 MATKA.md

@@ -1,0 +1,12 @@
+{
+  "name": "Katalog",
+  "description": "Wygląd stron kolekcji artystów — templates/collection.json. Artyści: komponent Dodaj obraz.",
+  "icon": "📚",
+  "color": "#5d4037",
+  "order": 38,
+  "mode": "inline",
+  "inline_width": 1100,
+  "inline_height": 720,
+  "inline_min_width": 880,
+  "inline_min_height": 560
+}

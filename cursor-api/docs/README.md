@@ -49,6 +49,7 @@ Nowe zmiany → plik w [`komponenty/`](komponenty/). Czytaj sekcję SHOP tylko g
 | OAuth, sesja, R2 | [`zaleznosci-wewnetrzne.md`](zaleznosci-wewnetrzne.md) |
 | Moduły współdzielone (_shared) | [`shared.md`](shared.md) |
 | Uruchomić launcher GUI | [`../giclee_app/docs/README.md`](../giclee_app/docs/README.md) |
+| Integracja Custom GPT (lustro GitHub, nagrania) | [`komponenty/integracjagpt.md`](komponenty/integracjagpt.md) |
 | Coś nie działa | [`troubleshooting.md`](troubleshooting.md) |
 
 ---

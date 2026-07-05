@@ -12,13 +12,22 @@ from urllib.parse import urlparse
 DATA_DIR = Path(__file__).resolve().parent / "data"
 PAGES_FILE = DATA_DIR / "pages.json"
 
+CATEGORY_INSPIRATIONS = "Inspiracje WWW"
+
 DEFAULT_CATEGORIES: tuple[str, ...] = (
     "Sklep",
     "Shopify Admin",
     "GicleeApp",
     "Narzedzia",
+    CATEGORY_INSPIRATIONS,
     "Inne",
 )
+
+
+def description_label_for_category(category: str) -> str:
+    if category.strip() == CATEGORY_INSPIRATIONS:
+        return "Co jest fajnego"
+    return "Co mozna robic"
 
 
 @dataclass

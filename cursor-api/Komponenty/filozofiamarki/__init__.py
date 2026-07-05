@@ -1,0 +1,1 @@
+"""Komponent: Filozofia marki."""
