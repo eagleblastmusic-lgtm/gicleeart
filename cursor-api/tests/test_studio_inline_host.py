@@ -45,6 +45,30 @@ def test_short_error_masks_secrets() -> None:
     assert "redacted" in err.lower() or "token" in err.lower()
 
 
+def test_sanitize_error_text_masks_authorization_bearer() -> None:
+    out = _sanitize_error_text("Authorization: Bearer abc123")
+    assert "abc123" not in out
+    assert "redacted" in out.lower()
+
+
+def test_sanitize_error_text_masks_bearer_only() -> None:
+    out = _sanitize_error_text("Bearer abc123")
+    assert "abc123" not in out
+    assert "redacted" in out.lower()
+
+
+def test_short_error_masks_authorization_bearer() -> None:
+    err = _short_error(ValueError("Authorization: Bearer abc123"))
+    assert "abc123" not in err
+    assert "ValueError" in err
+
+
+def test_short_error_masks_token_equals() -> None:
+    err = _short_error(ValueError("token=abc123"))
+    assert "abc123" not in err
+    assert "ValueError" in err
+
+
 def test_sanitize_error_text_masks_common_keys() -> None:
     raw = "failed secret=xyz password=123 api_key=foo"
     out = _sanitize_error_text(raw)
@@ -226,3 +250,13 @@ def test_inline_host_success_calls_on_opened() -> None:
             opened.assert_called_once_with(comp)
     finally:
         root.destroy()
+
+
+def test_restore_geometry_only_when_inline_resized() -> None:
+    path = Path(__file__).resolve().parents[1] / "giclee_app" / "launcher_studio.py"
+    text = path.read_text(encoding="utf-8")
+    restore_block = text.split("def _restore_window_geometry")[1].split("\n    def ")[0]
+    assert "WindowDefault" not in restore_block
+    assert "_geometry_before_inline" in restore_block
+    apply_block = text.split("def _apply_inline_window_size")[1].split("\n    def ")[0]
+    assert "_geometry_before_inline = self.geometry()" in apply_block

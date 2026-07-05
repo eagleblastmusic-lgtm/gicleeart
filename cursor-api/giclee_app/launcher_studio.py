@@ -88,15 +88,10 @@ class GicleeAppStudio(ctk.CTk):
             view.grid_remove()
 
     def _restore_window_geometry(self) -> None:
-        if self._geometry_before_inline:
-            self.geometry(self._geometry_before_inline)
-            self._geometry_before_inline = None
-        else:
-            w, h = theme.WindowDefault
-            sw, sh = self.winfo_screenwidth(), self.winfo_screenheight()
-            x = max(0, (sw - w) // 2)
-            y = max(0, (sh - h) // 2)
-            self.geometry(f"{w}x{h}+{x}+{y}")
+        if not self._geometry_before_inline:
+            return
+        self.geometry(self._geometry_before_inline)
+        self._geometry_before_inline = None
         self.minsize(*theme.WindowMin)
 
     def _apply_inline_window_size(self, comp: Component) -> None:

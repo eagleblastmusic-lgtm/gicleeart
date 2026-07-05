@@ -20,16 +20,19 @@ from .widgets import SectionHeader
 
 _SECRET_KEY_PATTERN = re.compile(
     r"(token|accesstoken|secret|password|api_key|apikey|authorization|bearer)"
-    r"\s*[:=]\s*['\"]?([^'\";\s]{1,})",
+    r"\s*[:=]\s*['\"]?(\S+)",
     re.IGNORECASE,
 )
+_BEARER_PATTERN = re.compile(r"\bBearer\s+\S+", re.IGNORECASE)
 
 
 def _sanitize_error_text(text: str) -> str:
     """Maskuje potencjalne sekrety w komunikatach błędów."""
     if not text:
         return text
-    return _SECRET_KEY_PATTERN.sub(r"\1=[redacted]", text)
+    out = _BEARER_PATTERN.sub("Bearer [redacted]", text)
+    out = _SECRET_KEY_PATTERN.sub(r"\1=[redacted]", out)
+    return out
 
 
 def _short_error(exc: BaseException) -> str:
