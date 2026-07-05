@@ -100,8 +100,10 @@ class GicleeAppStudio(ctk.CTk):
     def _set_status(self, msg: str) -> None:
         self._status_var.set(msg)
 
-    def _hide_cached_views(self) -> None:
-        for view in self._view_cache.values():
+    def _hide_cached_views(self, *, except_key: str | None = None) -> None:
+        for key, view in self._view_cache.items():
+            if except_key is not None and key == except_key:
+                continue
             if hasattr(view, "on_hide"):
                 view.on_hide()
             view.grid_remove()
@@ -242,10 +244,11 @@ class GicleeAppStudio(ctk.CTk):
     def _show_view(self, key: str, factory: Callable[[], ctk.CTkBaseClass]) -> None:
         self._destroy_inline_host()
         self._inline_stack.clear()
-        self._hide_cached_views()
 
         if key not in self._view_cache:
             self._view_cache[key] = factory()
+
+        self._hide_cached_views(except_key=key)
 
         view = self._view_cache[key]
         view.grid(row=0, column=0, sticky="nsew")
@@ -266,6 +269,7 @@ class GicleeAppStudio(ctk.CTk):
         category = self._inline_return_category
         self._destroy_inline_host(restore_geometry=True)
         self._inline_stack.clear()
+        self._set_status("Wrócono do huba")
         self._show_hub(category)
 
     def _show_inline_component(

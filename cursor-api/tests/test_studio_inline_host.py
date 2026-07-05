@@ -112,10 +112,7 @@ def test_invoke_build_view_two_arg() -> None:
 
 
 def test_invoke_build_view_three_kw() -> None:
-    import customtkinter as ctk
-
-    ctk.set_appearance_mode("dark")
-    root = ctk.CTk()
+    root = tk.Tk()
     root.withdraw()
     calls: list[str | None] = []
 

@@ -183,11 +183,13 @@ class ComponentHubView(ctk.CTkScrollableFrame):
         self._cancel_pending_render()
 
     def on_show(self) -> None:
-        """Cached hub — natychmiast; nowy — skeleton + opóźnienie jednej klatki."""
+        """Cached hub — natychmiast; nowy / przerwany render — skeleton + batch."""
         if self._cards_fully_built:
             self._show_skeleton(False)
             self._show_loading(False)
             self._apply_filter_grid()
+            if self._cards and not any(c.winfo_ismapped() for c in self._cards.values()):
+                self._apply_filter_grid()
             return
         self._begin_first_paint()
 
