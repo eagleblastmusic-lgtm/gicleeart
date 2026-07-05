@@ -58,9 +58,22 @@ def test_record_launch_limit_10(tmp_path: Path) -> None:
 
 def test_toggle_pin_limit_20(tmp_path: Path) -> None:
     state = StudioState(_path=tmp_path / "s.json")
-    for i in range(25):
+    for i in range(20):
         state.toggle_pin(f"p{i}")
+    assert state.pinned == [f"p{i}" for i in range(20)]
+    state.toggle_pin("p20")
     assert len(state.pinned) == MAX_PINNED
+    assert state.pinned[0] == "p1"
+    assert state.pinned[-1] == "p20"
+    assert "p0" not in state.pinned
+
+
+def test_toggle_pin_evicts_oldest_when_full(tmp_path: Path) -> None:
+    state = StudioState(_path=tmp_path / "s.json")
+    for i in range(20):
+        state.toggle_pin(f"p{i}")
+    state.toggle_pin("p20")
+    assert state.pinned == [f"p{i}" for i in range(1, 21)]
 
 
 def test_prune_removes_stale(tmp_path: Path) -> None:

@@ -124,7 +124,7 @@ class StudioState:
             self._dirty = True
             return False
         if len(self.pinned) >= MAX_PINNED:
-            self.pinned = self.pinned[: MAX_PINNED - 1]
+            self.pinned = self.pinned[1:]
         self.pinned.append(folder)
         self._dirty = True
         return True

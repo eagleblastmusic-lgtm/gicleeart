@@ -18,6 +18,7 @@ from giclee_app.runtime import get_component_cwd
 from giclee_app.studio import status_providers
 from giclee_app.studio.component_index import StudioComponentIndex
 from giclee_app.studio.state import StudioState
+from giclee_app.studio.status_providers import StatusResult
 
 from . import theme
 from .widgets import CompactComponentChip, SectionHeader, StatCard, StatusPill
@@ -172,29 +173,28 @@ class DashboardView(ctk.CTkScrollableFrame):
         self.on_show()
 
     def on_show(self) -> None:
-        self._refresh_status_pills()
-        self._refresh_stat_cards()
+        shop = status_providers.shopify_status()
+        theme_st = self._fetch_theme_dev_status()
+        self._refresh_status_pills(shop, theme_st)
+        self._refresh_stat_cards(shop, theme_st)
         self._refresh_chip_rows()
         self.refresh_activity()
 
-    def _refresh_status_pills(self) -> None:
+    @staticmethod
+    def _fetch_theme_dev_status() -> StatusResult:
+        try:
+            return status_providers.theme_dev_status()
+        except Exception:  # noqa: BLE001
+            return StatusResult(None, "Theme Dev", "unknown")
+
+    def _refresh_status_pills(self, shop: StatusResult, theme_st: StatusResult) -> None:
         if not self._status_pills:
             return
-        shop = status_providers.shopify_status()
         self._status_pills[0].update_status(shop.ok, shop.label, shop.detail)
         if self._theme_pill is not None:
-            self.after_idle(self._refresh_theme_dev_pill)
+            self._theme_pill.update_status(theme_st.ok, theme_st.label, theme_st.detail)
 
-    def _refresh_theme_dev_pill(self) -> None:
-        if self._theme_pill is None:
-            return
-        try:
-            st = status_providers.theme_dev_status()
-            self._theme_pill.update_status(st.ok, st.label, st.detail)
-        except Exception:  # noqa: BLE001
-            self._theme_pill.update_status(None, "Theme Dev", "unknown")
-
-    def _refresh_stat_cards(self) -> None:
+    def _refresh_stat_cards(self, shop: StatusResult, theme_st: StatusResult) -> None:
         if self._component_index is not None:
             total, visible = self._component_index.component_counts()
             self._stat_cards["components"].update_value(f"{visible}/{total}")
@@ -202,16 +202,10 @@ class DashboardView(ctk.CTkScrollableFrame):
             total, visible = status_providers.component_counts()
             self._stat_cards["components"].update_value(f"{visible}/{total}")
 
-        shop = status_providers.shopify_status()
         self._stat_cards["shopify"].update_value("OK" if shop.ok else (shop.detail[:18] or "—"))
-
-        try:
-            theme_st = status_providers.theme_dev_status()
-            self._stat_cards["theme"].update_value(
-                "Aktywny" if theme_st.ok else "Offline",
-            )
-        except Exception:  # noqa: BLE001
-            self._stat_cards["theme"].update_value("—")
+        self._stat_cards["theme"].update_value(
+            "Aktywny" if theme_st.ok else "Offline",
+        )
 
         orders = status_providers.production_orders_count()
         self._stat_cards["orders"].update_value(str(orders) if orders is not None else "—")

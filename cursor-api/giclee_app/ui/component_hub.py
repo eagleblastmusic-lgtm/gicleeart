@@ -217,7 +217,15 @@ class ComponentHubView(ctk.CTkScrollableFrame):
             from giclee_app.studio.categories import components_for_category
 
             self._category_components = components_for_category(category_id, include_hidden=True)
+        self._apply_category_sort()
         self._search_var.set("")
+
+    def _apply_category_sort(self) -> None:
+        """Pinned → recent → default przed batch build i po zmianie pin."""
+        if self._studio_state is not None and self._category_components:
+            self._category_components = self._studio_state.sorted_components(
+                list(self._category_components),
+            )
 
     def _on_mode_filter_changed(self, _value: str) -> None:
         self._apply_filter_grid()
@@ -469,6 +477,7 @@ class ComponentHubView(ctk.CTkScrollableFrame):
         card = self._cards.get(comp.folder_name)
         if card is not None:
             card.set_pinned(pinned)
+        self._apply_category_sort()
         self._apply_filter_grid()
 
     def _on_card_right(self, comp: Component, event: object) -> None:
