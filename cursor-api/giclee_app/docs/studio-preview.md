@@ -52,6 +52,16 @@ Zainstaluj zależności dev: pip install -r requirements-dev.txt
 
 ---
 
+## F1.3 — skeleton first-paint
+
+- **Natychmiastowy skeleton grid** — 6 lekkich placeholderów kart przed budową prawdziwych `ComponentCard`.
+- **Opóźnienie jednej klatki** (`16 ms`) — Tk/CTk maluje skeleton zanim zacznie się kosztowna budowa kart.
+- **Mniejsze batche** (`_BATCH_SIZE = 2`) — płynniejsze pierwsze wejście w duże kategorie.
+- **Progresywne karty** — pierwszy batch ukrywa skeleton i pokazuje realne karty; reszta dochodzi partiami.
+- **Cache bez skeletonu** — powrót do odwiedzonej kategorii nadal natychmiastowy (F1.2).
+
+---
+
 ## Ograniczenia
 
 - Nie używać Studio jako jedynego okna do pracy produkcyjnej dopóki F4 nie zapewni parity pollingów.

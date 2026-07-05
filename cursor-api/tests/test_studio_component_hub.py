@@ -1,8 +1,9 @@
-"""Testy ComponentHub — debounce wyszukiwarki, card cache i lazy render."""
+"""Testy ComponentHub — debounce, card cache, lazy render, skeleton first-paint."""
 
 from __future__ import annotations
 
 import sys
+import time
 from pathlib import Path
 from unittest.mock import patch
 
@@ -11,8 +12,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from giclee_app.studio.component_index import StudioComponentIndex
 from giclee_app.ui.component_hub import (
     _BATCH_SIZE,
+    _FIRST_PAINT_DELAY_MS,
     _LOADING_TEXT,
+    _PREPARE_TEXT,
     _SEARCH_DEBOUNCE_MS,
+    _SKELETON_COUNT,
 )
 
 
@@ -61,11 +65,34 @@ def test_lazy_render_has_batching() -> None:
     path = Path(__file__).resolve().parents[1] / "giclee_app" / "ui" / "component_hub.py"
     text = path.read_text(encoding="utf-8")
     assert "_BATCH_SIZE" in text
-    assert 3 <= _BATCH_SIZE <= 4
+    assert _BATCH_SIZE == 2
     assert "_render_generation" in text
     assert "_pending_render_after_id" in text
     assert _LOADING_TEXT in text
     assert "_batch_build_cards" in text
+
+
+def test_skeleton_first_paint_constants() -> None:
+    path = Path(__file__).resolve().parents[1] / "giclee_app" / "ui" / "component_hub.py"
+    text = path.read_text(encoding="utf-8")
+    assert _FIRST_PAINT_DELAY_MS == 16
+    assert _SKELETON_COUNT == 6
+    assert _PREPARE_TEXT in text
+    assert "_make_skeleton_card" in text
+    assert "_show_skeleton" in text
+    assert "_begin_first_paint" in text
+    assert "_start_batch_render" in text
+
+
+def test_on_show_defers_card_build_via_after() -> None:
+    path = Path(__file__).resolve().parents[1] / "giclee_app" / "ui" / "component_hub.py"
+    text = path.read_text(encoding="utf-8")
+    assert "def on_show" in text
+    assert "_begin_first_paint" in text
+    assert "_FIRST_PAINT_DELAY_MS" in text
+    # on_show nie woła _batch_build_cards synchronicznie
+    on_show_block = text.split("def on_show")[1].split("\n    def ")[0]
+    assert "_batch_build_cards(" not in on_show_block
 
 
 def test_hub_cards_not_recreated_on_filter() -> None:
@@ -99,11 +126,10 @@ def test_hub_cards_not_recreated_on_filter() -> None:
             idx = StudioComponentIndex.build()
             hub = ComponentHubView(root, category_id="products", component_index=idx)
             hub.on_show()
-            for _ in range(300):
+            deadline = time.time() + 5.0
+            while not hub._cards_fully_built and time.time() < deadline:
                 root.update_idletasks()
                 root.update()
-                if hub._cards_fully_built:
-                    break
             assert hub._cards_fully_built, "cards should finish lazy batch render"
             built_count = init_count
             hub._search_var.set("obraz")
