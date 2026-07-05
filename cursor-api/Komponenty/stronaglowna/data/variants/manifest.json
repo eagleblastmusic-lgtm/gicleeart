@@ -1,5 +1,5 @@
 {
-  "active": "home2",
+  "active": "home8",
   "variants": [
     {
       "id": "home1",
@@ -8,6 +8,36 @@
     {
       "id": "home2",
       "label": "Strona Główna 2"
+    },
+    {
+      "id": "home3",
+      "label": "Strona Główna 3",
+      "home_stack": true
+    },
+    {
+      "id": "home4",
+      "label": "Strona Główna 4",
+      "home_stack": true
+    },
+    {
+      "id": "home5",
+      "label": "Strona Główna 5 - zmieniam na dynamiczny scroll",
+      "home_stack": true
+    },
+    {
+      "id": "home6",
+      "label": "Kopia Strona Główna 6 - zmieniam na dynamiczny scroll",
+      "home_stack": true
+    },
+    {
+      "id": "home7",
+      "label": "Kopia Kopia Strona Główna 7 - zmieniam na dynamiczny scroll",
+      "home_stack": true
+    },
+    {
+      "id": "home8",
+      "label": "Kopia Kopia Kopia Strona Główna 8 - zmieniam na dynamiczny scroll",
+      "home_stack": true
     }
   ]
 }

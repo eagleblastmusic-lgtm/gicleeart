@@ -10,6 +10,7 @@ import shutil
 import socket
 import subprocess
 import sys
+import copy
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Callable
@@ -126,6 +127,47 @@ def kill_process_listening_on_port(*, host: str = "127.0.0.1", port: int = 9292)
     return killed
 
 
+def storefront_password_file() -> Path:
+    return theme_root() / ".shopify-store-password.local"
+
+
+def resolve_storefront_password() -> str:
+    """Hasło password page sklepu — env, plik lokalny (gitignore) lub integracjagpt secrets."""
+    env_pw = os.environ.get("SHOPIFY_FLAG_STORE_PASSWORD", "").strip()
+    if env_pw:
+        return env_pw
+
+    path = storefront_password_file()
+    if path.is_file():
+        try:
+            line = path.read_text(encoding="utf-8").strip()
+            if line:
+                return line
+        except OSError:
+            pass
+
+    return ""
+
+
+def save_storefront_password(password: str) -> None:
+    """Zapis hasła lokalnie (poza repo / lustrem GPT)."""
+    path = storefront_password_file()
+    pw = password.strip()
+    if not pw:
+        if path.is_file():
+            path.unlink(missing_ok=True)
+        return
+    path.write_text(pw + "\n", encoding="utf-8")
+
+
+def theme_dev_cli_args() -> list[str]:
+    args = ["theme", "dev", "--environment", "development"]
+    pw = resolve_storefront_password()
+    if pw:
+        args.extend(["--store-password", pw])
+    return args
+
+
 def theme_dev_http_ready(
     *,
     url: str = "http://127.0.0.1:9292/?giclee_skip_splash=1&giclee_skip_notice=1",
@@ -137,7 +179,18 @@ def theme_dev_http_ready(
         with urlopen(url, timeout=timeout) as response:
             if response.status != 200:
                 return False
-            return len(response.read(min_bytes + 1)) >= min_bytes
+            body = response.read(min_bytes + 4096)
+            if len(body) < min_bytes:
+                return False
+            text = body.decode("utf-8", errors="replace").lower()
+            if "password" in text and (
+                "enter_password" in text
+                or "storefront-password" in text
+                or 'name="password"' in text
+                or "password-page" in text
+            ):
+                return False
+            return True
     except (URLError, OSError, TimeoutError, ValueError):
         return False
 
@@ -174,6 +227,10 @@ def resolve_shopify_cli() -> str:
 
 def shopify_cli_popen(cli_args: list[str], *, cwd: Path | str) -> subprocess.Popen[str]:
     cli = resolve_shopify_cli()
+    env = os.environ.copy()
+    pw = resolve_storefront_password()
+    if pw:
+        env["SHOPIFY_FLAG_STORE_PASSWORD"] = pw
     popen_kw: dict[str, Any] = {
         "cwd": str(cwd),
         "stdout": subprocess.PIPE,
@@ -181,6 +238,7 @@ def shopify_cli_popen(cli_args: list[str], *, cwd: Path | str) -> subprocess.Pop
         "text": True,
         "encoding": "utf-8",
         "errors": "replace",
+        "env": env,
     }
     if sys.platform == "win32" and Path(cli).suffix.lower() in {".cmd", ".bat"}:
         cmdline = subprocess.list2cmdline([cli, *cli_args])
@@ -241,17 +299,184 @@ def _block_at(template: dict[str, Any], block_path: tuple[str, ...]) -> dict[str
     return block if isinstance(block, dict) else None
 
 
+COLOR_CORRECTION_CTA_GROUP: tuple[str, ...] = (
+    "sections",
+    "section_bj9cY3",
+    "blocks",
+    "group_FCVUiD",
+    "blocks",
+    "group_PKPWxV",
+)
+
+COLOR_CORRECTION_CTA_PARENT: tuple[str, ...] = COLOR_CORRECTION_CTA_GROUP[:-1]
+
+_COLOR_CORRECTION_CTA_GROUP_CANON: dict[str, Any] = {
+    "type": "group",
+    "name": "t:names.buttons",
+    "settings": {
+        "content_direction": "row",
+        "vertical_on_mobile": False,
+        "horizontal_alignment": "center",
+        "vertical_alignment": "center",
+        "align_baseline": False,
+        "horizontal_alignment_flex_direction_column": "flex-start",
+        "vertical_alignment_flex_direction_column": "center",
+        "gap": 12,
+        "width": "fill",
+        "custom_width": 100,
+        "width_mobile": "fill",
+        "custom_width_mobile": 100,
+        "height": "fit",
+        "custom_height": 100,
+        "inherit_color_scheme": True,
+        "color_scheme": "",
+        "background_media": "none",
+        "video_position": "cover",
+        "background_image_position": "cover",
+        "border": "none",
+        "border_width": 1,
+        "border_opacity": 100,
+        "border_radius": 0,
+        "toggle_overlay": False,
+        "overlay_color": "#00000026",
+        "overlay_style": "solid",
+        "gradient_direction": "to top",
+        "link": "",
+        "open_in_new_tab": False,
+        "placeholder": "",
+        "padding-block-start": 0,
+        "padding-block-end": 0,
+        "padding-inline-start": 0,
+        "padding-inline-end": 0,
+    },
+    "blocks": {
+        "button_UgW9Kt": {
+            "type": "button",
+            "name": "t:names.button",
+            "settings": {
+                "label": "Wyświetl wszystko",
+                "link": "shopify://collections/all",
+                "open_in_new_tab": False,
+                "style_class": "button-secondary",
+                "width": "fit-content",
+                "custom_width": 34,
+                "width_mobile": "fit-content",
+                "custom_width_mobile": 34,
+            },
+            "blocks": {},
+        },
+        "button_7G6q7x": {
+            "type": "button",
+            "name": "t:names.button",
+            "settings": {
+                "label": "Kup teraz",
+                "link": "shopify://collections/all",
+                "open_in_new_tab": False,
+                "style_class": "button-secondary",
+                "width": "fit-content",
+                "custom_width": 34,
+                "width_mobile": "fit-content",
+                "custom_width_mobile": 34,
+            },
+            "blocks": {},
+        },
+    },
+    "block_order": ["button_UgW9Kt", "button_7G6q7x"],
+}
+
+
+def _merge_button_block(existing: dict[str, Any] | None, canonical: dict[str, Any]) -> dict[str, Any]:
+    out = copy.deepcopy(canonical)
+    if not isinstance(existing, dict):
+        return out
+    if existing.get("disabled"):
+        out["disabled"] = True
+    exist_settings = existing.get("settings")
+    if isinstance(exist_settings, dict):
+        for key, val in exist_settings.items():
+            out["settings"][key] = val
+    return out
+
+
+def repair_color_correction_cta_blocks(template: dict[str, Any]) -> bool:
+    """Uzupełnia brakujące pola type/name w grupie CTA sekcji korekcji kolorystycznej."""
+    parent = path_get(template, COLOR_CORRECTION_CTA_PARENT)
+    if not isinstance(parent, dict):
+        return False
+    blocks = parent.get("blocks")
+    if not isinstance(blocks, dict):
+        return False
+    existing = blocks.get("group_PKPWxV")
+    if not isinstance(existing, dict):
+        return False
+
+    changed = False
+    child_blocks = existing.get("blocks") if isinstance(existing.get("blocks"), dict) else {}
+    buttons_ok = (
+        existing.get("type") == "group"
+        and isinstance(child_blocks.get("button_UgW9Kt"), dict)
+        and child_blocks["button_UgW9Kt"].get("type") == "button"
+        and isinstance(child_blocks.get("button_7G6q7x"), dict)
+        and child_blocks["button_7G6q7x"].get("type") == "button"
+    )
+    if not buttons_ok:
+        canonical = copy.deepcopy(_COLOR_CORRECTION_CTA_GROUP_CANON)
+        canonical["blocks"]["button_UgW9Kt"] = _merge_button_block(
+            child_blocks.get("button_UgW9Kt") if isinstance(child_blocks, dict) else None,
+            canonical["blocks"]["button_UgW9Kt"],
+        )
+        canonical["blocks"]["button_7G6q7x"] = _merge_button_block(
+            child_blocks.get("button_7G6q7x") if isinstance(child_blocks, dict) else None,
+            canonical["blocks"]["button_7G6q7x"],
+        )
+        if existing.get("disabled"):
+            canonical["disabled"] = True
+        blocks["group_PKPWxV"] = canonical
+        changed = True
+
+    order = parent.get("block_order")
+    if not isinstance(order, list):
+        parent["block_order"] = ["group_AjTVRg", "group_PKPWxV"]
+        changed = True
+    elif "group_PKPWxV" not in order:
+        order.append("group_PKPWxV")
+        changed = True
+    return changed
+
+
+def _color_correction_cta_present(template: dict[str, Any]) -> bool:
+    return _block_at(template, COLOR_CORRECTION_CTA_GROUP) is not None
+
+
+def _skip_optional_color_correction_field(
+    zone_id: str, field_id: str, template: dict[str, Any]
+) -> bool:
+    if zone_id != "color_correction":
+        return False
+    if field_id not in (
+        "cc_cta_visible",
+        "cc_btn1_label",
+        "cc_btn1_link",
+        "cc_btn2_label",
+        "cc_btn2_link",
+    ):
+        return False
+    return not _color_correction_cta_present(template)
+
+
 def _read_blocks_visible(template: dict[str, Any], field: HomeField) -> bool:
     paths = field.block_paths
     if not paths:
         return True
+    found = False
     for block_path in paths:
         block = _block_at(template, block_path)
         if block is None:
             continue
+        found = True
         if block.get("disabled"):
             return False
-    return True
+    return found
 
 
 def _write_blocks_visible(template: dict[str, Any], field: HomeField, visible: bool) -> None:
@@ -278,6 +503,7 @@ def load_index_template(*, logger: Logger | None = None) -> dict[str, Any]:
 
 
 def save_index_template(template: dict[str, Any], *, logger: Logger | None = None) -> None:
+    repair_color_correction_cta_blocks(template)
     path = index_template_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     body = json.dumps(template, ensure_ascii=False, indent=2) + "\n"
@@ -673,12 +899,99 @@ def fetch_thumbnail_bytes(*, shopify_ref: str = "", local_path: Path | None = No
         return None
 
 
+DEFAULT_SECTION_OVERLAY_PCT = 100
+OVERLAY_PCT_MIN = 0
+OVERLAY_PCT_MAX = 100
+
+
+def normalize_overlay_pct(raw: Any) -> int:
+    try:
+        value = int(float(raw))
+    except (TypeError, ValueError):
+        value = 0
+    return max(OVERLAY_PCT_MIN, min(OVERLAY_PCT_MAX, value))
+
+
+def _section_bg_overlay_path(section_key: str) -> tuple[str, ...]:
+    return ("sections", section_key, "settings", "background_overlay_pct")
+
+
+def _parse_section_background(value: Any) -> dict[str, Any]:
+    overlay_pct = 0
+    if isinstance(value, dict):
+        media = str(value.get("media") or "none").strip().lower()
+        ref = str(value.get("ref") or "").strip()
+        if media not in ("image", "video"):
+            media = "video" if ref.startswith(("shopify://files/videos/", "gid://shopify/Video/")) else (
+                "image" if ref.startswith("shopify://") else "none"
+            )
+        overlay_pct = normalize_overlay_pct(value.get("overlay_pct"))
+        if media == "none" or not ref:
+            return {"media": "none", "ref": "", "overlay_pct": 0}
+        return {"media": media, "ref": ref, "overlay_pct": overlay_pct}
+    text = str(value or "").strip()
+    if text.startswith("shopify://"):
+        if "/videos/" in text or text.startswith("gid://shopify/Video/"):
+            return {"media": "video", "ref": text, "overlay_pct": 0}
+        return {"media": "image", "ref": text, "overlay_pct": 0}
+    return {"media": "none", "ref": "", "overlay_pct": 0}
+
+
+def _read_section_background(template: dict[str, Any], field: HomeField) -> dict[str, Any]:
+    section_key = field.path[1]  # type: ignore[index]
+    settings_path = ("sections", section_key, "settings")
+    overlay_raw = path_get(template, _section_bg_overlay_path(section_key))
+    overlay_pct = normalize_overlay_pct(overlay_raw) if overlay_raw is not None else 0
+    media = str(path_get(template, (*settings_path, "background_media")) or "none")
+    if media == "video":
+        ref = normalize_shopify_video_ref(str(path_get(template, (*settings_path, "video")) or ""))
+        if not ref:
+            return {"media": "none", "ref": "", "overlay_pct": 0}
+        return {"media": "video", "ref": ref, "overlay_pct": overlay_pct}
+    if media == "image":
+        ref = str(path_get(template, field.path) or "")
+        if not ref:
+            return {"media": "none", "ref": "", "overlay_pct": 0}
+        return {"media": "image", "ref": ref, "overlay_pct": overlay_pct}
+    return {"media": "none", "ref": "", "overlay_pct": 0}
+
+
+def _write_section_background(template: dict[str, Any], field: HomeField, value: Any) -> None:
+    section_key = field.path[1]  # type: ignore[index]
+    parsed = _parse_section_background(value)
+    media = parsed["media"]
+    ref = str(parsed.get("ref") or "")
+    overlay_pct = normalize_overlay_pct(parsed.get("overlay_pct"))
+    settings_path = ("sections", section_key, "settings")
+    media_path = (*settings_path, "background_media")
+    img_path = (*settings_path, "background_image")
+    vid_path = (*settings_path, "video")
+    overlay_path = _section_bg_overlay_path(section_key)
+    if media == "video" and ref:
+        path_set(template, media_path, "video")
+        path_set(template, vid_path, normalize_shopify_video_ref(ref))
+        path_set(template, img_path, "")
+        path_set(template, overlay_path, overlay_pct)
+    elif media == "image" and ref.startswith("shopify://"):
+        path_set(template, media_path, "image")
+        path_set(template, img_path, ref)
+        path_set(template, vid_path, "")
+        path_set(template, overlay_path, overlay_pct)
+    else:
+        path_set(template, media_path, "none")
+        path_set(template, img_path, "")
+        path_set(template, vid_path, "")
+        path_set(template, overlay_path, 0)
+
+
 def read_field(template: dict[str, Any], field: HomeField, *, settings: dict[str, Any] | None = None) -> Any:
     if field.kind == "theme_asset":
         path = mobile_hero_path()
         return path.name if path.is_file() else ""
     if field.kind == "blocks_visible":
         return _read_blocks_visible(template, field)
+    if field.kind == "section_background" and field.path:
+        return _read_section_background(template, field)
     if settings is not None and field.field_id in SITE_NOTICE_KEYS:
         key = SITE_NOTICE_KEYS[field.field_id]
         val = _settings_current(settings).get(key)
@@ -784,6 +1097,8 @@ def write_field(template: dict[str, Any], field: HomeField, value: Any) -> None:
         path_set(template, field.path, serialize_collage(parse_collage(value)))
     elif field.kind == "shopify_video":
         path_set(template, field.path, normalize_shopify_video_ref(str(value or "")))
+    elif field.kind == "section_background" and field.path:
+        _write_section_background(template, field, value)
     else:
         path_set(template, field.path, value)
 
@@ -814,6 +1129,8 @@ def load_zone_values(
             from .video_collage import parse_collage
 
             out[fld.field_id] = parse_collage(val)
+        elif fld.kind == "section_background":
+            out[fld.field_id] = _parse_section_background(val)
         elif fld.kind == "int":
             try:
                 out[fld.field_id] = int(val or 0)
@@ -1192,11 +1509,17 @@ def zone_summary(
         return "wyłączona"
     parts: list[str] = []
     for fld in zone.fields:
-        if fld.kind not in ("shopify_image", "shopify_video", "theme_asset"):
-            continue
-        label = shopify_ref_label(str(read_field(template, fld) or ""))
-        if label != "(brak)":
-            parts.append(label)
+        if fld.kind in ("shopify_image", "shopify_video", "theme_asset"):
+            label = shopify_ref_label(str(read_field(template, fld) or ""))
+            if label != "(brak)":
+                parts.append(label)
+        elif fld.kind == "section_background":
+            bg = read_field(template, fld)
+            if isinstance(bg, dict):
+                ref = str(bg.get("ref") or "")
+                if ref:
+                    prefix = "film: " if bg.get("media") == "video" else ""
+                    parts.append(prefix + shopify_ref_label(ref))
     if parts:
         return ", ".join(parts[:2]) + ("…" if len(parts) > 2 else "")
     for fld in zone.fields:
@@ -1231,10 +1554,19 @@ def validate_template_paths(template: dict[str, Any], *, logger: Logger | None =
         for fld in zone.fields:
             if fld.kind in ("heading", "body", "theme_asset"):
                 continue
+            if _skip_optional_color_correction_field(zone.zone_id, fld.field_id, template):
+                continue
             if fld.kind == "blocks_visible":
+                if not _color_correction_cta_present(template) and fld.field_id == "cc_cta_visible":
+                    continue
                 for block_path in fld.block_paths:
                     if _block_at(template, block_path) is None:
                         missing.append(f"{zone.label} → {fld.label}")
+                continue
+            if fld.kind == "section_background":
+                section = (template.get("sections") or {}).get(zone.section_key)
+                if not isinstance(section, dict):
+                    missing.append(f"{zone.label} → {fld.label}")
                 continue
             if not fld.path:
                 continue

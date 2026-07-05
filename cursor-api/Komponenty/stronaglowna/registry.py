@@ -9,6 +9,7 @@ FieldKind = Literal[
     "shopify_image",
     "shopify_video",
     "theme_asset",
+    "section_background",
     "media_type",
     "video_collage",
     "heading",
@@ -48,6 +49,16 @@ class HomeZone:
 
 def _s(section: str, *parts: str) -> PathKey:
     return ("sections", section, *parts)
+
+
+def _section_bg(section_key: str, field_id: str) -> HomeField:
+    return HomeField(
+        field_id,
+        "Tło sekcji",
+        "section_background",
+        _s(section_key, "settings", "background_image"),
+        hint="Grafika lub film w tle całej sekcji (Shopify Files).",
+    )
 
 
 HOME_ZONES: tuple[HomeZone, ...] = (
@@ -172,6 +183,7 @@ HOME_ZONES: tuple[HomeZone, ...] = (
                     "text",
                 ),
             ),
+            _section_bg("section_ThWw4Q", "ga_background"),
         ),
     ),
     HomeZone(
@@ -224,6 +236,7 @@ HOME_ZONES: tuple[HomeZone, ...] = (
                 "shopify_image",
                 _s("section_XwRNDp", "blocks", "comparison_slider_diQHbT", "settings", "after_image"),
             ),
+            _section_bg("section_XwRNDp", "rest_background"),
         ),
     ),
     HomeZone(
@@ -378,6 +391,7 @@ HOME_ZONES: tuple[HomeZone, ...] = (
                     "link",
                 ),
             ),
+            _section_bg("section_bj9cY3", "cc_background"),
         ),
     ),
     HomeZone(
@@ -442,6 +456,7 @@ HOME_ZONES: tuple[HomeZone, ...] = (
                 "text",
                 _s("section_p9Kcm6", "blocks", "comparison_slider_LBjinq", "settings", "after_text"),
             ),
+            _section_bg("section_p9Kcm6", "pot_background"),
         ),
     ),
     HomeZone(
@@ -506,6 +521,7 @@ HOME_ZONES: tuple[HomeZone, ...] = (
                 "shopify_image",
                 _s("section_P9LgB3", "blocks", "comparison_slider_8yNUpn", "settings", "after_image"),
             ),
+            _section_bg("section_P9LgB3", "sd_background"),
         ),
     ),
     HomeZone(

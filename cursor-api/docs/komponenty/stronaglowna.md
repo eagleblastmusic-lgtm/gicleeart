@@ -18,7 +18,7 @@
 
 | `Komponenty/stronaglowna/registry.py` | Mapowanie stref → ścieżki w szablonie / ustawieniach |
 
-| `Komponenty/stronaglowna/homepage_variants.py` | Warianty strony głównej (home1 / home2) — osobne kopie JSON |
+| `Komponenty/stronaglowna/homepage_variants.py` | Warianty strony głównej (home1–home4) — osobne kopie JSON |
 
 
 
@@ -42,7 +42,7 @@ Tryb: `inline` (w launcherze GicleeApp, sekcja **Administracja strony** — przy
 
 | Giclée Art — intro | `index.json` | Portret, **nagłówek + treść** (plain text → HTML) |
 
-| Odrestaurowywanie / korekcja / potencjał / zobacz różnicę | `index.json` | Teksty, suwaki przed/po, CTA (w korekcji: wł./wył. przyciski) |
+| Odrestaurowywanie / korekcja / potencjał / zobacz różnicę | `index.json` | Teksty, suwaki przed/po, CTA (w korekcji: wł./wył. przyciski), **Tło…** (grafika lub film + **przyciemnienie gradientem** 0–100%, jak Tło do Bio) |
 
 | **Powiadomienie modalne** | `config/settings_data.json` | Site notice: wł./wył., wersja, tytuł, treść, przycisk |
 
@@ -66,7 +66,7 @@ Tryb: `inline` (w launcherze GicleeApp, sekcja **Administracja strony** — przy
 
 2. Wybierz sekcję z listy po lewej.
 
-3. Grafiki: **Wgraj grafikę…** / **Pobierz…** (Hero) lub przeciągnij plik na miniaturę (`tkinterdnd2`).
+3. Grafiki: **Wgraj grafikę…** / **Pobierz…** (Hero) lub przeciągnij plik na miniaturę (`tkinterdnd2`). **Tło…** — osobne okno: wybór **Grafika** / **Film**, upload do Shopify Files (ustawia `background_media` + `background_image` lub `video` w `index.json`), suwak **Przyciemnienie (gradient)** 0–100% + **Wyłącz przyciemnienie** (zapis → `background_overlay_pct` w ustawieniach sekcji; domyślnie 100% przy nowym tle, 0 gdy brak tła).
 
 4. Tekst: pola **Nagłówek** i **Treść** — komponent składa HTML (`<h2>`, `<p>`).
 
@@ -74,7 +74,7 @@ Tryb: `inline` (w launcherze GicleeApp, sekcja **Administracja strony** — przy
 
 6. **Historia wersji…** — przywracanie kopii jednym kliknięciem.
 
-7. **Podgląd live** / **Theme dev…** — URL z `?giclee_skip_splash=1&giclee_skip_notice=1` (pomija splash i modal). Lokalnie: `http://127.0.0.1:9292/` + te same parametry.
+7. **Podgląd live** — URL z `?giclee_skip_splash=1&giclee_skip_notice=1` (pomija splash i modal). Lokalny podgląd motywu: **Theme dev…** w pasku narzędzi launchera (`http://127.0.0.1:9292/` + te same parametry).
 
 8. **Wdróż motyw…** — wybór celu: development / unpublished / live (`shopify.theme.toml`).
 
@@ -94,7 +94,12 @@ Przy starcie: **skan index.json** — raport, gdy sekcja ma inne ID niż w `regi
 
 
 
-Combobox u góry okna: **Strona Główna 1** (`home1`) i **Strona Główna 2** (`home2`). Każdy wariant ma własną kopię `index.json`, `settings.json` i opcjonalnie `mobile_hero.webp`.
+Combobox u góry okna wybiera wersję (domyślnie `home1`–`home4`, kolejne jako `home5`, `home6`, …). Obok comboboxa:
+
+- **Dodaj nową…** — kopiuje bieżącą wersję (w tym niezapisane zmiany w edytorze) pod nową nazwą; po utworzeniu przełącza edytor na kopię.
+- **Zmień nazwę…** — zmienia etykietę aktywnej wersji w comboboxie (ID `homeN` pozostaje bez zmian).
+
+Każdy wariant ma własną kopię `index.json`, `settings.json` i opcjonalnie `mobile_hero.webp`.
 
 
 
@@ -102,19 +107,32 @@ Combobox u góry okna: **Strona Główna 1** (`home1`) i **Strona Główna 2** (
 
 |---------|-----------|
 
-| `Komponenty/stronaglowna/data/variants/manifest.json` | Aktywny wariant + lista etykiet |
+| `Komponenty/stronaglowna/data/variants/manifest.json` | Aktywny wariant, lista etykiet, opcjonalnie `home_stack` per wariant |
 
 | `…/variants/home1/` | Dane wariantu 1 |
 
-| `…/variants/home2/` | Kopia startowa wariantu 1 (niezależna po zapisie) |
+| `…/variants/home2/` | Wariant 2 (niezależna kopia po zapisie) |
+| `…/variants/home3/` | Wariant 3 — scroll-over stack (niezależna kopia po zapisie) |
+| `…/variants/home4/` | Wariant 4 — kopia startowa home3 (niezależna po zapisie) |
+| `…/variants/homeN/` | Kolejne wersje utworzone przez «Dodaj nową…» |
 
 
 
 Przy **pierwszym uruchomieniu** komponent kopiuje bieżące pliki motywu do `home1`, a następnie duplikuje je do `home2`. Przełączenie wariantu zapisuje stan bieżącego wariantu, podmienia pliki motywu (`templates/index.json`, `config/settings_data.json`, mobile hero) i wczytuje edytor. Edycja w wariancie 2 nie zmienia danych wariancu 1.
 
-Przy starcie komponent **uzupełnia brakującą pętlę boomerang** w `home2`, jeśli ma ten sam film bazowy co `home1`, a pole `video_1_reversed` jest puste (naprawa po wcześniejszym błędzie edytora).
+Przy starcie komponent **uzupełnia brakującą pętlę boomerang** w sklonowanych wariantach (np. `home2` z `home1`), jeśli mają ten sam film bazowy, a pole `video_1_reversed` jest puste.
 
-Przy starcie **nie nadpisuje** plików motywu aktywnym wariantem — tylko wczytuje wariant do edytora. Motyw (`index.json`) zmienia się przy **przełączeniu wariantu** lub **Zapisz**. Warianty **nie synchronizują** między sobą treści hero — każdy ma własny zapis w `data/variants/`.
+Przy starcie komponent wczytuje aktywny wariant do edytora (bez automatycznego nadpisywania plików motywu). Motyw synchronizuje się przy **przełączeniu wariantu**, **Zapisz** lub **Historia → Przywróć**. Przy przełączeniu bez niezapisanych zmian poprzedni wariant nie jest zapisywany na dysk.
+
+**Scroll-over stack:** warianty z `home_stack: true` w manifeście (domyślnie `home3`/`home4`; kopia takiego wariantu dziedziczy flagę) — przy zapisie / przełączeniu komponent ustawia `window.GICLEE_HOME_STACK = true` w `assets/giclee-home-sections.js`. Motyw ładuje `giclee-home-stack.css` + `giclee-home-stack.js`: warstwy **1→6** (hero → zobacz różnicę) jadą nad menu i nad poprzednią sekcją (`sticky` + rosnący `z-index`). Separatory między warstwami mają ten sam `z-index` co następna sekcja i przewijają się razem z nią (bez ukrywania). Na touch / reduced-motion efekt wyłączony.
+
+**Ustawienia strony głównej:** przycisk **Ustawienia…** na dolnym pasku (obok «Odśwież wariant») — okno z zakładkami per wariant:
+
+- **Przejścia między sekcjami** (section-scroll): combobox **Preset** (Galeria domyślny, Editorial kontemplacyjny, Kinowy, Dynamiczny premium, Miękki editorial, **GPT** — wypełnia formularz bez auto-zapisu), kill switch (`enabled`), desktop on/off, tryb mobile (`native`/`soft`/`disabled`), czasy animacji (min/max), suwak **Dynamika ruchu** (`motionDynamics` 0–100: spokojny ↔ dynamiczny), progi gestów (wheel/touch), offsety headera i separatora, tryb reduced-motion (`instant`/`off`), debug. Ręczna edycja pola przełącza preset na „— własne —". Walidacja: min ≤ max, zakresy liczb, dozwolone tryby. Zapis: `Komponenty/stronaglowna/data/variants/<id>/scroll.json` (moduł `scroll_settings.py`, presety w `SCROLL_PRESETS`), a `write_home_assets()` eksportuje `window.GICLEE_HOME_SCROLL_CONFIG` do `assets/giclee-home-sections.js` — bez sekretów, bez auto-deployu (zmiana na sklepie po **Wdróż motyw…**). Przyciski: **Zapisz**, **Przywróć domyślne**, **Wyłącz awaryjnie** (ustawia `enabled: false` i od razu regeneruje asset), **Otwórz stronę główną**.
+- **Przejścia między sekcjami**: checkbox **Miękkie osadzenie nagłówka** (`headingSettle` w `scroll.json`) — zapis przez **Zapisz** razem z parametrami section-scroll.
+- **Efekty warstw** (scroll-over stack): wł./wył. `home_stack` w `manifest.json` wariantu → `window.GICLEE_HOME_STACK` w `assets/giclee-home-sections.js`. Przycisk **Zapisz ustawienia efektów**.
+
+Front section-scroll: `assets/giclee-home-section-scroll.js/.css` — dock z viewportu, scroll w górę z dwuetapową logiką runway, okno ciszy kierunkowe (opis: [`docs/motyw/strona-glowna.md`](../../../docs/motyw/strona-glowna.md)). Testy: `tests/test_stronaglowna_scroll.py`.
 
 
 
@@ -135,6 +153,8 @@ Przy starcie **nie nadpisuje** plików motywu aktywnym wariantem — tylko wczyt
 - CTA z etykietą bez linku, nietypowy URL
 
 - Brak pliku mobile hero w motywie
+
+- Przed zapisem `index.json` / wariantu: `repair_color_correction_cta_blocks()` uzupełnia brakujące `type`/`name` w grupie przycisków CTA sekcji korekcji kolorystycznej (`group_PKPWxV`) — zapobiega błędowi Shopify „brak pola typu” przy deployu
 
 
 
