@@ -41,6 +41,7 @@ class GicleeAppStudio(ctk.CTk):
         self._view_cache: dict[str, ctk.CTkBaseClass] = {}
         self._inline_host: InlineHostView | None = None
         self._inline_return_category = "products"
+        self._geometry_before_inline: str | None = None
 
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(1, weight=1)
@@ -86,6 +87,36 @@ class GicleeAppStudio(ctk.CTk):
                 view.on_hide()
             view.grid_remove()
 
+    def _restore_window_geometry(self) -> None:
+        if self._geometry_before_inline:
+            self.geometry(self._geometry_before_inline)
+            self._geometry_before_inline = None
+        else:
+            w, h = theme.WindowDefault
+            sw, sh = self.winfo_screenwidth(), self.winfo_screenheight()
+            x = max(0, (sw - w) // 2)
+            y = max(0, (sh - h) // 2)
+            self.geometry(f"{w}x{h}+{x}+{y}")
+        self.minsize(*theme.WindowMin)
+
+    def _apply_inline_window_size(self, comp: Component) -> None:
+        """Opcjonalny resize okna z component.json extras — tylko bezpieczny zakres."""
+        try:
+            w = int(comp.extras.get("inline_width") or 0)
+            h = int(comp.extras.get("inline_height") or 0)
+        except (TypeError, ValueError):
+            return
+        if not (900 <= w <= 1800 and 650 <= h <= 1200):
+            return
+        self._geometry_before_inline = self.geometry()
+        self.update_idletasks()
+        sw, sh = self.winfo_screenwidth(), self.winfo_screenheight()
+        w = min(w, max(theme.WindowMin[0], sw - 40))
+        h = min(h, max(theme.WindowMin[1], sh - 80))
+        x = max(0, (sw - w) // 2)
+        y = max(0, (sh - h) // 2)
+        self.geometry(f"{w}x{h}+{x}+{y}")
+
     def _destroy_inline_host(self) -> None:
         if self._inline_host is None:
             return
@@ -93,6 +124,7 @@ class GicleeAppStudio(ctk.CTk):
             self._inline_host.on_hide()
         self._inline_host.destroy()
         self._inline_host = None
+        self._restore_window_geometry()
 
     def _show_view(self, key: str, factory: Callable[[], ctk.CTkBaseClass]) -> None:
         self._destroy_inline_host()
@@ -133,6 +165,7 @@ class GicleeAppStudio(ctk.CTk):
         )
         self._inline_host.grid(row=0, column=0, sticky="nsew")
         self._content.update_idletasks()
+        self._apply_inline_window_size(comp)
 
     def _show_dashboard(self) -> None:
         self._current_category = "dashboard"

@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import importlib
+import inspect
+import re
 import tkinter as tk
 from collections.abc import Callable
 from datetime import datetime
+from typing import Any
 
 import customtkinter as ctk
 
@@ -15,13 +18,48 @@ from giclee_app.launcher_delegate import component_log_path
 from . import theme
 from .widgets import SectionHeader
 
+_SECRET_KEY_PATTERN = re.compile(
+    r"(token|accesstoken|secret|password|api_key|apikey|authorization|bearer)"
+    r"\s*[:=]\s*['\"]?([^'\";\s]{1,})",
+    re.IGNORECASE,
+)
+
+
+def _sanitize_error_text(text: str) -> str:
+    """Maskuje potencjalne sekrety w komunikatach błędów."""
+    if not text:
+        return text
+    return _SECRET_KEY_PATTERN.sub(r"\1=[redacted]", text)
+
 
 def _short_error(exc: BaseException) -> str:
     name = type(exc).__name__
-    msg = str(exc).strip().replace("\n", " ")
+    msg = _sanitize_error_text(str(exc).strip().replace("\n", " "))
     if len(msg) > 120:
         msg = msg[:117] + "…"
     return f"{name}: {msg}" if msg else name
+
+
+def _supports_on_open_component(builder: Callable[..., Any]) -> bool:
+    try:
+        sig = inspect.signature(builder)
+    except (TypeError, ValueError):
+        return False
+    if "on_open_component" in sig.parameters:
+        return True
+    return any(
+        p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
+    )
+
+
+def _invoke_build_view(
+    builder: Callable[..., Any],
+    parent: tk.Widget,
+    on_back: Callable[[], None],
+) -> Any:
+    if _supports_on_open_component(builder):
+        return builder(parent, on_back, on_open_component=None)
+    return builder(parent, on_back)
 
 
 class InlineHostView(ctk.CTkFrame):
@@ -85,6 +123,7 @@ class InlineHostView(ctk.CTkFrame):
         self._body.grid_rowconfigure(0, weight=1)
 
     def _show_error(self, title: str, detail: str) -> None:
+        safe_detail = _sanitize_error_text(detail)
         panel = ctk.CTkFrame(
             self._body,
             fg_color=theme.PanelBg,
@@ -96,7 +135,7 @@ class InlineHostView(ctk.CTkFrame):
         SectionHeader(panel, title).pack(fill="x", padx=16, pady=(16, 8))
         ctk.CTkLabel(
             panel,
-            text=detail,
+            text=safe_detail,
             font=theme.get_font(12),
             text_color=theme.TextMuted,
             anchor="nw",
@@ -110,7 +149,7 @@ class InlineHostView(ctk.CTkFrame):
             path.parent.mkdir(parents=True, exist_ok=True)
             with open(path, "a", encoding="utf-8") as f:
                 f.write(f"\n========== {datetime.now().isoformat()} studio inline ==========\n")
-                f.write(line + "\n")
+                f.write(_sanitize_error_text(line) + "\n")
         except OSError:
             pass
 
@@ -140,10 +179,7 @@ class InlineHostView(ctk.CTkFrame):
         self._tk_mount.grid(row=0, column=0, sticky="nsew")
 
         try:
-            try:
-                view = builder(self._tk_mount, self._on_back, on_open_component=None)
-            except TypeError:
-                view = builder(self._tk_mount, self._on_back)
+            view = _invoke_build_view(builder, self._tk_mount, self._on_back)
         except Exception as exc:  # noqa: BLE001
             err = _short_error(exc)
             self._append_log(f"build_view failed: {err}")

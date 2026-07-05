@@ -1,6 +1,6 @@
 # GicleeApp UI Redesign Plan
 
-**Status:** Faza 3 — inline embed + local Git/GPT (F3 Minimal, bez F4).
+**Status:** Faza 3.1 — F3 polish (safer inline, opcjonalny resize).
 
 ## Goal
 
@@ -58,7 +58,8 @@ Not in **`eagleblastmusic-lgtm/gicleeart-gpt`** (theme snapshot only).
 | F1 | CTk shell preview (`studio_preview`) — bez pollingów | done |
 | F2 | Dashboard read-only, recent/pinned, hub sort/filter, safe quick actions | done |
 | F2.1 | Polish: pin eviction, hub sort batch, dashboard refresh | done |
-| F3 | Inline embed Studio, local-only Git/GPT status | **current** |
+| F3 | Inline embed Studio, local-only Git/GPT status | done |
+| F3.1 | Safer inline errors, build_view signature, optional resize | **current** |
 | F4 | Background parity (sync, backup, cykl) | planned |
 | F5 | Przełącznik domyślny (`GICLEE_STUDIO_UI`) | planned |
 | F6 | PyInstaller + CustomTkinter w `.exe` | planned |

@@ -52,6 +52,7 @@ python -m giclee_app
 - `discover_components()` — **1×** przy starcie
 - Hub cache — bez regresji po wejściu/wyjściu z inline
 - Inline host — **bez cache** (nowy host per wejście F3 Minimal)
+- **F3.1** — sanitized error messages, `inspect.signature` dla `build_view`, opcjonalny resize z `inline_width`/`inline_height`
 
 ---
 
