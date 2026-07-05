@@ -46,12 +46,14 @@ class ComponentHubView(ctk.CTkScrollableFrame):
         component_index: StudioComponentIndex | None = None,
         studio_state: StudioState | None = None,
         on_status: Callable[[str], None] | None = None,
+        on_open_inline: Callable[[Component, str], None] | None = None,
     ) -> None:
         super().__init__(master, fg_color=theme.AppBg, corner_radius=0)
         self._category_id = category_id
         self._component_index = component_index
         self._studio_state = studio_state
         self._on_status = on_status
+        self._on_open_inline = on_open_inline
         self._search_var = tk.StringVar()
         self._mode_filter = tk.StringVar(value="all")
         self._search_debounce_id: str | None = None
@@ -420,14 +422,18 @@ class ComponentHubView(ctk.CTkScrollableFrame):
 
     def _on_card_click(self, comp: Component) -> None:
         root = self.winfo_toplevel()
+        if comp.mode == "inline":
+            if self._on_open_inline is not None:
+                self._on_open_inline(comp, self._category_id)
+            else:
+                messagebox.showinfo(comp.name, INLINE_MESSAGE, parent=root)
+            return
         result = launch(comp, on_status=self._on_status)
         if result.outcome == LaunchOutcome.OK:
             if self._studio_state is not None:
                 self._studio_state.record_launch(comp)
                 self._studio_state.save()
                 self._apply_filter_grid()
-        elif result.outcome == LaunchOutcome.BLOCKED_INLINE:
-            messagebox.showinfo(comp.name, INLINE_MESSAGE, parent=root)
         elif result.outcome in (LaunchOutcome.ERROR, LaunchOutcome.NO_PYTHON, LaunchOutcome.NO_URL):
             messagebox.showerror(comp.name, result.message, parent=root)
 
@@ -492,8 +498,17 @@ class ComponentHubView(ctk.CTkScrollableFrame):
         if comp.mode == "inline":
             menu.add_separator()
             menu.add_command(
-                label="Inline (F3)",
-                command=lambda: messagebox.showinfo(comp.name, INLINE_MESSAGE, parent=root),
+                label="Otwórz inline w Studio",
+                command=lambda: self._on_card_click(comp),
+            )
+            menu.add_command(
+                label="Inline info",
+                command=lambda: messagebox.showinfo(
+                    comp.name,
+                    f"Tryb: inline\nModuł: {comp.view_module_path}\n"
+                    "Wymaga build_view(parent, on_back) w view.py.",
+                    parent=root,
+                ),
             )
         try:
             if hasattr(event, "x_root") and hasattr(event, "y_root"):

@@ -24,11 +24,26 @@ def test_theme_dev_status_no_crash() -> None:
     assert isinstance(st, StatusResult)
 
 
-def test_github_and_gpt_mock() -> None:
+def test_github_and_gpt_local_only() -> None:
     gh = status_providers.github_status()
     gpt = status_providers.gpt_snapshot_status()
-    assert gh.ok is None
-    assert gpt.ok is None
+    assert isinstance(gh, StatusResult)
+    assert isinstance(gpt, StatusResult)
+    for st in (gh, gpt):
+        blob = f"{st.label} {st.detail}".lower()
+        assert "token" not in blob
+        assert "secret" not in blob
+        assert "accesstoken" not in blob
+        assert "password" not in blob
+
+
+def test_status_providers_source_no_network_or_gpt_config() -> None:
+    path = Path(__file__).resolve().parents[1] / "giclee_app" / "studio" / "status_providers.py"
+    text = path.read_text(encoding="utf-8")
+    assert "requests" not in text
+    assert "urllib" not in text
+    assert '["git", "status"]' not in text
+    assert "gpt_config.json" not in text
 
 
 def test_component_counts_non_negative() -> None:

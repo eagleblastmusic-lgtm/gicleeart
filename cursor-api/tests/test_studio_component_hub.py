@@ -141,6 +141,79 @@ def test_hub_cards_not_recreated_on_filter() -> None:
         root.destroy()
 
 
+def test_hub_inline_uses_callback_not_launch() -> None:
+    path = Path(__file__).resolve().parents[1] / "giclee_app" / "ui" / "component_hub.py"
+    text = path.read_text(encoding="utf-8")
+    assert "on_open_inline" in text
+    assert 'comp.mode == "inline"' in text
+
+    import customtkinter as ctk
+
+    from giclee_app.component_loader import Component
+    from giclee_app.ui.component_hub import ComponentHubView
+
+    ctk.set_appearance_mode("dark")
+    root = ctk.CTk()
+    root.withdraw()
+    inline_comp = Component(
+        folder_name="testinline",
+        package_path=Path("/fake/testinline"),
+        name="Inline Test",
+        description="",
+        mode="inline",
+    )
+    calls: list[tuple[str, str]] = []
+
+    def on_open_inline(comp: Component, cat: str) -> None:
+        calls.append((comp.folder_name, cat))
+
+    idx = StudioComponentIndex.build()
+    hub = ComponentHubView(
+        root,
+        category_id="products",
+        component_index=idx,
+        on_open_inline=on_open_inline,
+    )
+    with patch("giclee_app.ui.component_hub.launch") as mock_launch:
+        hub._on_card_click(inline_comp)
+        mock_launch.assert_not_called()
+    assert calls == [("testinline", "products")]
+    root.destroy()
+
+
+def test_hub_subprocess_still_uses_launch() -> None:
+    import customtkinter as ctk
+
+    from giclee_app.component_loader import Component
+    from giclee_app.launcher_delegate import LaunchOutcome, LaunchResult
+    from giclee_app.ui.component_hub import ComponentHubView
+
+    ctk.set_appearance_mode("dark")
+    root = ctk.CTk()
+    root.withdraw()
+    comp = Component(
+        folder_name="sub",
+        package_path=Path("/fake/sub"),
+        name="Sub",
+        description="",
+        mode="subprocess",
+    )
+    idx = StudioComponentIndex.build()
+    hub = ComponentHubView(
+        root,
+        category_id="products",
+        component_index=idx,
+        on_open_inline=lambda c, cat: None,
+    )
+    with patch(
+        "giclee_app.ui.component_hub.launch",
+        return_value=LaunchResult(LaunchOutcome.OK),
+    ) as mock_launch:
+        hub._on_card_click(comp)
+        mock_launch.assert_called_once()
+    root.destroy()
+
+
 def test_hub_has_mode_filter_and_sort() -> None:
     path = Path(__file__).resolve().parents[1] / "giclee_app" / "ui" / "component_hub.py"
     text = path.read_text(encoding="utf-8")

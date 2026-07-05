@@ -18,7 +18,9 @@ from giclee_app.runtime import get_component_cwd, resolve_python_interpreter
 _LOGS_DIR = Path(__file__).resolve().parents[1] / "logs"
 
 INLINE_MESSAGE = (
-    "Inline w Studio będzie dostępne w Fazie 2 — użyj klasycznego launchera."
+    "Ten komponent inline powinien otworzyć się w Studio. "
+    "Jeśli widzisz ten komunikat, uruchom go z Component Hub "
+    "albo użyj klasycznego launchera jako fallbacku."
 )
 
 

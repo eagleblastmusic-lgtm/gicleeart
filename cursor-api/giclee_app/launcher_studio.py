@@ -7,12 +7,14 @@ from collections.abc import Callable
 import customtkinter as ctk
 
 from giclee_app import __version__
+from giclee_app.component_loader import Component
 from giclee_app.studio.categories import category_label
 from giclee_app.studio.component_index import StudioComponentIndex
 from giclee_app.studio.state import StudioState
 
 from .ui.component_hub import ComponentHubView
 from .ui.dashboard import DashboardView
+from .ui.inline_host import InlineHostView
 from .ui.sidebar import Sidebar
 from .ui.topbar import Topbar
 from .ui import theme
@@ -37,6 +39,8 @@ class GicleeAppStudio(ctk.CTk):
         self._status_var = ctk.StringVar(value="")
         self._current_category = "dashboard"
         self._view_cache: dict[str, ctk.CTkBaseClass] = {}
+        self._inline_host: InlineHostView | None = None
+        self._inline_return_category = "products"
 
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(1, weight=1)
@@ -76,11 +80,23 @@ class GicleeAppStudio(ctk.CTk):
     def _set_status(self, msg: str) -> None:
         self._status_var.set(msg)
 
-    def _show_view(self, key: str, factory: Callable[[], ctk.CTkBaseClass]) -> None:
+    def _hide_cached_views(self) -> None:
         for view in self._view_cache.values():
             if hasattr(view, "on_hide"):
                 view.on_hide()
             view.grid_remove()
+
+    def _destroy_inline_host(self) -> None:
+        if self._inline_host is None:
+            return
+        if hasattr(self._inline_host, "on_hide"):
+            self._inline_host.on_hide()
+        self._inline_host.destroy()
+        self._inline_host = None
+
+    def _show_view(self, key: str, factory: Callable[[], ctk.CTkBaseClass]) -> None:
+        self._destroy_inline_host()
+        self._hide_cached_views()
 
         if key not in self._view_cache:
             self._view_cache[key] = factory()
@@ -89,6 +105,33 @@ class GicleeAppStudio(ctk.CTk):
         view.grid(row=0, column=0, sticky="nsew")
         if hasattr(view, "on_show"):
             view.on_show()
+        self._content.update_idletasks()
+
+    def _on_inline_opened(self, comp: Component) -> None:
+        self._studio_state.record_launch(comp)
+        self._studio_state.save()
+
+    def _return_from_inline(self) -> None:
+        self._destroy_inline_host()
+        self._show_hub(self._inline_return_category)
+
+    def _show_inline_component(self, comp: Component, return_category_id: str) -> None:
+        self._inline_return_category = return_category_id
+        self._current_category = return_category_id
+        self._hide_cached_views()
+        self._destroy_inline_host()
+
+        self._topbar.set_breadcrumb(f"Inline / {comp.name}")
+        self._sidebar.set_active(return_category_id)
+
+        self._inline_host = InlineHostView(
+            self._content,
+            comp,
+            on_back=self._return_from_inline,
+            on_status=self._set_status,
+            on_opened=self._on_inline_opened,
+        )
+        self._inline_host.grid(row=0, column=0, sticky="nsew")
         self._content.update_idletasks()
 
     def _show_dashboard(self) -> None:
@@ -102,6 +145,7 @@ class GicleeAppStudio(ctk.CTk):
                 component_index=self._component_index,
                 studio_state=self._studio_state,
                 on_status=self._set_status,
+                on_open_inline=self._show_inline_component,
             ),
         )
 
@@ -119,12 +163,15 @@ class GicleeAppStudio(ctk.CTk):
                 component_index=self._component_index,
                 studio_state=self._studio_state,
                 on_status=self._set_status,
+                on_open_inline=self._show_inline_component,
             ),
         )
 
     def _on_nav(self, category_id: str) -> None:
-        if category_id == self._current_category:
+        if category_id == self._current_category and self._inline_host is None:
             return
+        if self._inline_host is not None:
+            self._destroy_inline_host()
         if category_id == "dashboard":
             self._show_dashboard()
         else:

@@ -34,17 +34,21 @@ class DashboardView(ctk.CTkScrollableFrame):
         component_index: StudioComponentIndex | None = None,
         studio_state: StudioState | None = None,
         on_status: Callable[[str], None] | None = None,
+        on_open_inline: Callable[[Component, str], None] | None = None,
     ) -> None:
         super().__init__(master, fg_color=theme.AppBg, corner_radius=0)
         self._component_index = component_index
         self._studio_state = studio_state
         self._on_status = on_status
+        self._on_open_inline = on_open_inline
         self._activity_box: ctk.CTkTextbox | None = None
         self._status_pills: list[StatusPill] = []
         self._stat_cards: dict[str, StatCard] = {}
         self._pinned_row: ctk.CTkFrame | None = None
         self._recent_row: ctk.CTkFrame | None = None
         self._theme_pill: StatusPill | None = None
+        self._git_pill: StatusPill | None = None
+        self._gpt_pill: StatusPill | None = None
         self._build()
 
     def _build(self) -> None:
@@ -80,6 +84,12 @@ class DashboardView(ctk.CTkScrollableFrame):
         )
         studio_pill.pack(side="left", padx=(0, 8))
         self._status_pills.append(studio_pill)
+        self._git_pill = StatusPill(status_row, "Git", ok=None, detail="")
+        self._git_pill.pack(side="left", padx=(0, 8))
+        self._status_pills.append(self._git_pill)
+        self._gpt_pill = StatusPill(status_row, "GPT", ok=None, detail="")
+        self._gpt_pill.pack(side="left", padx=(0, 8))
+        self._status_pills.append(self._gpt_pill)
 
         stats_row = ctk.CTkFrame(self, fg_color="transparent")
         stats_row.pack(fill="x", padx=24, pady=(0, 16))
@@ -175,7 +185,9 @@ class DashboardView(ctk.CTkScrollableFrame):
     def on_show(self) -> None:
         shop = status_providers.shopify_status()
         theme_st = self._fetch_theme_dev_status()
-        self._refresh_status_pills(shop, theme_st)
+        git_st = status_providers.github_status()
+        gpt_st = status_providers.gpt_snapshot_status()
+        self._refresh_status_pills(shop, theme_st, git_st, gpt_st)
         self._refresh_stat_cards(shop, theme_st)
         self._refresh_chip_rows()
         self.refresh_activity()
@@ -187,12 +199,22 @@ class DashboardView(ctk.CTkScrollableFrame):
         except Exception:  # noqa: BLE001
             return StatusResult(None, "Theme Dev", "unknown")
 
-    def _refresh_status_pills(self, shop: StatusResult, theme_st: StatusResult) -> None:
+    def _refresh_status_pills(
+        self,
+        shop: StatusResult,
+        theme_st: StatusResult,
+        git_st: StatusResult,
+        gpt_st: StatusResult,
+    ) -> None:
         if not self._status_pills:
             return
         self._status_pills[0].update_status(shop.ok, shop.label, shop.detail)
         if self._theme_pill is not None:
             self._theme_pill.update_status(theme_st.ok, theme_st.label, theme_st.detail)
+        if self._git_pill is not None:
+            self._git_pill.update_status(git_st.ok, git_st.label, git_st.detail)
+        if self._gpt_pill is not None:
+            self._gpt_pill.update_status(gpt_st.ok, gpt_st.label, gpt_st.detail)
 
     def _refresh_stat_cards(self, shop: StatusResult, theme_st: StatusResult) -> None:
         if self._component_index is not None:
@@ -262,6 +284,14 @@ class DashboardView(ctk.CTkScrollableFrame):
 
     def _launch_chip(self, comp: Component) -> None:
         root = self.winfo_toplevel()
+        if comp.mode == "inline" and self._on_open_inline is not None:
+            cat = "dashboard"
+            if self._component_index is not None:
+                from giclee_app.studio.categories import category_for_folder
+
+                cat = category_for_folder(comp.folder_name)
+            self._on_open_inline(comp, cat)
+            return
         result = launch(comp, on_status=self._on_status)
         if result.outcome == LaunchOutcome.OK and self._studio_state is not None:
             self._studio_state.record_launch(comp)

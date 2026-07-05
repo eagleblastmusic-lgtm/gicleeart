@@ -58,13 +58,44 @@ def customtkinter_available() -> bool:
 
 
 def github_status() -> StatusResult:
-    """Mock F1 — placeholder."""
-    return StatusResult(None, "GitHub", "—")
+    """Local-only — bez GitHub API; bez git status dirty."""
+    root = CURSOR_API_ROOT
+    git_dir = root / ".git"
+    if not git_dir.is_dir():
+        return StatusResult(None, "Git", "—")
+    detail = "repo lokalne"
+    try:
+        import subprocess
+
+        proc = subprocess.run(  # noqa: S603
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=str(root),
+            capture_output=True,
+            text=True,
+            timeout=2,
+            check=False,
+        )
+        if proc.returncode == 0:
+            sha = (proc.stdout or "").strip()
+            if sha and len(sha) <= 12:
+                detail = f"HEAD {sha}"
+    except (OSError, Exception):  # noqa: BLE001 — timeout/subprocess errors
+        pass
+    return StatusResult(True, "Git", detail)
 
 
 def gpt_snapshot_status() -> StatusResult:
-    """Mock F1 — placeholder."""
-    return StatusResult(None, "GPT Snapshot", "—")
+    """Local-only — istnienie integracjagpt + .gpt_mirror, bez odczytu config."""
+    root = CURSOR_API_ROOT
+    integracjagpt_dir = root / "Komponenty" / "integracjagpt"
+    mirror_dir = root / ".gpt_mirror"
+    has_module = integracjagpt_dir.is_dir()
+    has_mirror = mirror_dir.is_dir()
+    if has_module and has_mirror:
+        return StatusResult(True, "GPT", "local mirror")
+    if has_module:
+        return StatusResult(None, "GPT", "mirror missing")
+    return StatusResult(None, "GPT", "local only")
 
 
 def app_version_status() -> StatusResult:
