@@ -13,6 +13,14 @@ class BackgroundCapability:
     tier: BackgroundTier
     label: str
     source_hint: str
+    inline_note: str
+
+
+_TIER_LABELS: dict[BackgroundTier, str] = {
+    "bio_workflow": "Workflow BIO (Tier 1)",
+    "section_background": "Tło sekcji (Tier 2)",
+    "theme_image_bg": "Obraz tła motywu (Tier 3)",
+}
 
 
 _CAPABILITIES: dict[str, BackgroundCapability] = {
@@ -20,13 +28,19 @@ _CAPABILITIES: dict[str, BackgroundCapability] = {
         tier="bio_workflow",
         label="Tło sekcji BIO",
         source_hint="Metafield kolekcji · upload w komponencie inline",
+        inline_note="Upload, kadr i gradient w komponencie inline · metafieldy kolekcji",
     ),
     "stronaglowna": BackgroundCapability(
         tier="section_background",
         label="Tło sekcji strony głównej",
         source_hint="5 stref section_background · edytor motywu inline",
+        inline_note="5 stref section_background w edytorze strony głównej inline",
     ),
 }
+
+
+def tier_display(tier: BackgroundTier) -> str:
+    return _TIER_LABELS.get(tier, tier)
 
 
 def capability_for(folder_name: str) -> BackgroundCapability | None:
@@ -45,4 +59,5 @@ __all__ = [
     "BackgroundTier",
     "capability_for",
     "folders_with_background",
+    "tier_display",
 ]

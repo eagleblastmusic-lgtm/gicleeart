@@ -62,6 +62,7 @@ class ComponentCard(ctk.CTkFrame):
         *,
         on_click: Callable[[Component], None],
         on_right_click: Callable[[Component, object], None] | None = None,
+        on_open_background: Callable[[Component], None] | None = None,
         pinned: bool = False,
     ) -> None:
         super().__init__(
@@ -160,7 +161,27 @@ class ComponentCard(ctk.CTkFrame):
                 height=20,
             ).pack(side="left")
 
-        for w in (self, body, title_row, badges):
+        cap = capability_for(comp.folder_name)
+        if cap is not None and on_open_background is not None:
+            self.configure(height=152)
+            actions = ctk.CTkFrame(body, fg_color="transparent")
+            actions.pack(fill="x", side="bottom", pady=(4, 0))
+            ctk.CTkButton(
+                actions,
+                text="Tło",
+                width=48,
+                height=22,
+                font=theme.get_font(10),
+                fg_color=theme.AppBg,
+                hover_color=theme.CardHover,
+                text_color=theme.AccentGoldDim,
+                border_width=1,
+                border_color=theme.BorderSubtle,
+                command=lambda c=comp: on_open_background(c),
+            ).pack(side="right")
+
+        bind_targets = [self, body, title_row, badges]
+        for w in bind_targets:
             w.bind("<Enter>", self._on_enter)
             w.bind("<Leave>", self._on_leave)
             w.bind("<Button-1>", self._handle_click)

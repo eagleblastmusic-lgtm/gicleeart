@@ -27,6 +27,7 @@ STUDIO_MODULES = [
     "giclee_app.studio.state",
     "giclee_app.ui.dashboard",
     "giclee_app.ui.component_hub",
+    "giclee_app.ui.background_panel",
     "giclee_app.ui.inline_host",
     "giclee_app.ui.topbar",
     "giclee_app.ui.sidebar",

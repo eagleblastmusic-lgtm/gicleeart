@@ -1,6 +1,6 @@
 # GicleeApp UI Redesign Plan
 
-**Status:** Faza 4.1 — background parity foundation (audit + read-only awareness).
+**Status:** Faza 4.2 — Background Panel Shell (read-only panel tła w Studio Preview).
 
 ## Goal
 
@@ -64,9 +64,12 @@ Not in **`eagleblastmusic-lgtm/gicleeart-gpt`** (theme snapshot only).
 | CI | GitHub Actions studio + security tests | done |
 | F3.2 | Cross-nav, inline stack, inline_min_*, breadcrumb | done |
 | F3.2.1.1 | CTk minsize / geometry restore po inline | done |
-| F4 | Background parity foundation: audit + read-only Studio awareness | **current** |
-| F4.2+ | Panel shell tła, akcje parity (bez zapisu w pierwszym kroku) | planned |
-| F5 | Przełącznik domyślny (`GICLEE_STUDIO_UI`) | planned |
+| F4 | Background parity foundation: audit + read-only Studio awareness | done |
+| F4.1.1 | Inline DnD fallback + local thumbnails | done |
+| F4.2 | Background Panel Shell — read-only panel tła w hubie | **current** |
+| F4.3+ | Akcje parity / edycja tła (bez zapisu w pierwszym kroku F4.3) | planned |
+| F5 | Kreator premium / asset manager UX | planned |
+| F5.1 | Przełącznik domyślny (`GICLEE_STUDIO_UI`) | planned |
 | F6 | PyInstaller + CustomTkinter w `.exe` | planned |
 | F7 | Sync / backup / cykl produkcyjny w Studio (osobna faza systemowa) | planned |
 
@@ -78,7 +81,7 @@ giclee_app/
 ├── launcher_studio.py       ← CTk shell
 ├── studio_preview.py        ← python -m giclee_app.studio_preview
 ├── launcher_delegate.py     ← subprocess/url only
-├── ui/                      ← sidebar, topbar, dashboard, hub, inline_host
+├── ui/                      ← sidebar, topbar, dashboard, hub, inline_host, background_panel
 ├── studio/                  ← categories, status_providers, state, background_capabilities
 └── data/studio_categories.json
 ```

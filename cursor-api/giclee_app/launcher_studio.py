@@ -10,10 +10,12 @@ import customtkinter as ctk
 from giclee_app import __version__
 from giclee_app.component_loader import Component
 from giclee_app.launcher_delegate import LaunchOutcome, launch
+from giclee_app.studio.background_capabilities import capability_for
 from giclee_app.studio.categories import category_label
 from giclee_app.studio.component_index import StudioComponentIndex
 from giclee_app.studio.state import StudioState
 
+from .ui.background_panel import BackgroundPanelView
 from .ui.component_hub import ComponentHubView
 from .ui.dashboard import DashboardView
 from .ui.inline_host import InlineHostView
@@ -57,8 +59,10 @@ class GicleeAppStudio(ctk.CTk):
         self._current_category = "dashboard"
         self._view_cache: dict[str, ctk.CTkBaseClass] = {}
         self._inline_host: InlineHostView | None = None
+        self._background_host: BackgroundPanelView | None = None
         self._inline_stack: list[tuple[Component, str]] = []
         self._inline_return_category = "products"
+        self._background_return_category = "theme"
         self._geometry_before_inline: str | None = None
         self._minsize_before_inline: tuple[int, int] | None = None
 
@@ -182,6 +186,15 @@ class GicleeAppStudio(ctk.CTk):
         self._safe_geometry(f"{w}x{h}+{x}+{y}")
         self._safe_minsize(min_w, min_h)
 
+    def _destroy_background_host(self) -> None:
+        if self._background_host is None:
+            return
+        self._unbind_inline_escape()
+        if hasattr(self._background_host, "on_hide"):
+            self._background_host.on_hide()
+        self._background_host.destroy()
+        self._background_host = None
+
     def _destroy_inline_host(self, *, restore_geometry: bool = True) -> None:
         if self._inline_host is None:
             return
@@ -224,6 +237,11 @@ class GicleeAppStudio(ctk.CTk):
         return False
 
     def _on_escape_back(self, _event: tk.Event | None = None) -> None:
+        if self._background_host is not None:
+            if self._escape_blocked_by_focus():
+                return
+            self._return_from_background_panel()
+            return
         if self._inline_host is None:
             return
         if self._escape_blocked_by_focus():
@@ -283,6 +301,7 @@ class GicleeAppStudio(ctk.CTk):
 
     def _show_view(self, key: str, factory: Callable[[], ctk.CTkBaseClass]) -> None:
         self._destroy_inline_host()
+        self._destroy_background_host()
         self._inline_stack.clear()
 
         if key not in self._view_cache:
@@ -299,6 +318,39 @@ class GicleeAppStudio(ctk.CTk):
     def _on_inline_opened(self, comp: Component) -> None:
         self._studio_state.record_launch(comp)
         self._studio_state.save()
+
+    def _return_from_background_panel(self) -> None:
+        category = self._background_return_category or self._current_category or "theme"
+        self._destroy_background_host()
+        self._set_status("Wrócono do huba")
+        self._show_hub(category)
+
+    def _show_background_panel(self, comp: Component, return_category_id: str) -> None:
+        cap = capability_for(comp.folder_name)
+        if cap is None:
+            return
+        category = (return_category_id or self._current_category or "theme").strip()
+        self._background_return_category = category
+        self._inline_stack.clear()
+        self._destroy_inline_host(restore_geometry=True)
+        self._hide_cached_views()
+        self._destroy_background_host()
+
+        self._current_category = category
+        cat_label = category_label(category)
+        self._topbar.set_breadcrumb(f"{cat_label} / {comp.name} / Tło")
+        self._sidebar.set_active(category)
+
+        self._background_host = BackgroundPanelView(
+            self._content,
+            comp,
+            cap,
+            on_back=self._return_from_background_panel,
+            on_status=self._set_status,
+        )
+        self._background_host.grid(row=0, column=0, sticky="nsew")
+        self._content.update_idletasks()
+        self._bind_inline_escape()
 
     def _return_from_inline(self) -> None:
         if self._inline_stack:
@@ -323,12 +375,14 @@ class GicleeAppStudio(ctk.CTk):
             if self._inline_host is not None:
                 self._inline_stack.append((self._inline_host.comp, self._inline_return_category))
             self._destroy_inline_host(restore_geometry=False)
+            self._destroy_background_host()
             self._present_inline(comp, self._inline_return_category)
             return
 
         self._inline_return_category = return_category_id
         self._inline_stack.clear()
         self._hide_cached_views()
+        self._destroy_background_host()
         self._destroy_inline_host(restore_geometry=True)
         self._present_inline(comp, return_category_id)
 
@@ -362,15 +416,21 @@ class GicleeAppStudio(ctk.CTk):
                 studio_state=self._studio_state,
                 on_status=self._set_status,
                 on_open_inline=self._show_inline_component,
+                on_open_background=self._show_background_panel,
             ),
         )
 
     def _on_nav(self, category_id: str) -> None:
-        if category_id == self._current_category and self._inline_host is None:
+        if (
+            category_id == self._current_category
+            and self._inline_host is None
+            and self._background_host is None
+        ):
             return
-        if self._inline_host is not None:
+        if self._inline_host is not None or self._background_host is not None:
             self._inline_stack.clear()
             self._destroy_inline_host()
+            self._destroy_background_host()
         if category_id == "dashboard":
             self._show_dashboard()
         else:

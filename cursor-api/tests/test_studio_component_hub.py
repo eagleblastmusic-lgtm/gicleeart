@@ -268,3 +268,40 @@ def test_pin_toggle_does_not_rebuild_card_cache() -> None:
             assert state.is_pinned(comp.folder_name)
     finally:
         root.destroy()
+
+
+def test_hub_background_click_passes_category() -> None:
+    path = Path(__file__).resolve().parents[1] / "giclee_app" / "ui" / "component_hub.py"
+    text = path.read_text(encoding="utf-8")
+    assert "on_open_background(comp, self._category_id)" in text
+
+    import customtkinter as ctk
+
+    from giclee_app.component_loader import Component
+    from giclee_app.ui.component_hub import ComponentHubView
+
+    ctk.set_appearance_mode("dark")
+    root = ctk.CTk()
+    root.withdraw()
+    bg_calls: list[tuple[str, str]] = []
+
+    def on_open_background(comp: Component, cat: str) -> None:
+        bg_calls.append((comp.folder_name, cat))
+
+    idx = StudioComponentIndex.build()
+    hub = ComponentHubView(
+        root,
+        category_id="theme",
+        component_index=idx,
+        on_open_background=on_open_background,
+    )
+    tldobio = idx.by_folder["tldobio"]
+    hub._on_background_click(tldobio)
+    assert bg_calls == [("tldobio", "theme")]
+
+    katalog = idx.by_folder.get("katalog")
+    if katalog is not None:
+        hub._on_background_click(katalog)
+        assert bg_calls == [("tldobio", "theme")]
+
+    root.destroy()

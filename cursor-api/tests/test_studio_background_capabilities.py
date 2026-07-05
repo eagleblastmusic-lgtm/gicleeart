@@ -18,6 +18,7 @@ def test_capability_for_tldobio() -> None:
     assert cap is not None
     assert cap.tier == "bio_workflow"
     assert cap.label
+    assert cap.inline_note
 
 
 def test_capability_for_stronaglowna() -> None:
@@ -33,3 +34,11 @@ def test_capability_for_katalog_is_none() -> None:
 
 def test_folders_with_background_exact_set() -> None:
     assert folders_with_background() == frozenset({"tldobio", "stronaglowna"})
+
+
+def test_tier_display_labels() -> None:
+    from giclee_app.studio.background_capabilities import tier_display
+
+    assert "Tier 1" in tier_display("bio_workflow")
+    assert "Tier 2" in tier_display("section_background")
+

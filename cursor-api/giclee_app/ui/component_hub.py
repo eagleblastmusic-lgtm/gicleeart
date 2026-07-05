@@ -48,6 +48,7 @@ class ComponentHubView(ctk.CTkScrollableFrame):
         studio_state: StudioState | None = None,
         on_status: Callable[[str], None] | None = None,
         on_open_inline: Callable[[Component, str], None] | None = None,
+        on_open_background: Callable[[Component, str], None] | None = None,
     ) -> None:
         super().__init__(master, fg_color=theme.AppBg, corner_radius=0)
         self._category_id = category_id
@@ -55,6 +56,7 @@ class ComponentHubView(ctk.CTkScrollableFrame):
         self._studio_state = studio_state
         self._on_status = on_status
         self._on_open_inline = on_open_inline
+        self._on_open_background = on_open_background
         self._search_var = tk.StringVar()
         self._mode_filter = tk.StringVar(value="all")
         self._search_debounce_id: str | None = None
@@ -326,6 +328,7 @@ class ComponentHubView(ctk.CTkScrollableFrame):
                 comp,
                 on_click=self._on_card_click,
                 on_right_click=self._on_card_right,
+                on_open_background=self._on_background_click if self._on_open_background else None,
                 pinned=self._is_pinned(comp.folder_name),
             )
             self._cards[comp.folder_name] = card
@@ -422,6 +425,12 @@ class ComponentHubView(ctk.CTkScrollableFrame):
         for folder, card in self._cards.items():
             if folder not in visible_folders:
                 card.grid_remove()
+
+    def _on_background_click(self, comp: Component) -> None:
+        if capability_for(comp.folder_name) is None:
+            return
+        if self._on_open_background is not None:
+            self._on_open_background(comp, self._category_id)
 
     def _on_card_click(self, comp: Component) -> None:
         root = self.winfo_toplevel()

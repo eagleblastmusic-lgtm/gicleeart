@@ -1,4 +1,4 @@
-# GicleeApp Studio Preview (F4.1.1)
+# GicleeApp Studio Preview (F4.2)
 
 Hub: [`README.md`](README.md) · plan: [`../../docs/UI_REDESIGN_PLAN.md`](../../docs/UI_REDESIGN_PLAN.md) · tło: [`background-parity.md`](background-parity.md)
 
@@ -61,9 +61,31 @@ python -m giclee_app
 | Badge „Tło” na karcie huba | tylko komponenty z capability |
 | Status read-only po kliknięciu | `Tło: <label> — <source_hint> (read-only)` |
 | Zapis / Shopify / sync / deploy | **brak** |
-| Panel tła / kreator | **F4.2+** (poza tym krokiem) |
+| Panel tła / kreator | **F4.2** panel shell · **F4.3+** edycja |
 
 Tier 3 (`katalog`, `kontakt`, `faq`, `stronablogu`) — udokumentowany w audycie, **bez badge w F4.1**.
+
+---
+
+## F4.2 — Background Panel Shell
+
+| Element | Stan |
+|---------|------|
+| `ui/background_panel.py` | read-only panel: typ tła, źródło, kontekst inline, status |
+| Wejście z huba | osobny przycisk **Tło** na karcie (`tldobio`, `stronaglowna`) |
+| Klik karty | nadal otwiera inline komponent (bez zmian) |
+| Badge „Tło” | dekoracyjny |
+| Powrót | **Wróć** → hub tej samej kategorii (F3.2.1.1 lifecycle) |
+| `Esc` | powrót z panelu gdy brak konfliktu z inline |
+| Zapis / Shopify / sync | **brak** |
+| F4.3+ | edycja tła / action parity — **poza F4.2** |
+
+Manual smoke F4.2:
+
+1. `python -m giclee_app.studio_preview` → Strona / Motyw
+2. `Tło do Bio` / `Strona główna`: karta → inline; przycisk **Tło** → panel read-only → **Wróć** → hub OK
+3. Katalog / Kontakt / FAQ — brak przycisku **Tło**
+4. `python -m giclee_app` — klasyczny launcher bez zmian
 
 ---
 
@@ -137,4 +159,5 @@ Checklista ręczna w Studio Preview — nie w CI.
 | `studio/status_providers.py` | local Git/GPT |
 | `studio/state.py` | recent + pinned |
 | `studio/background_capabilities.py` | read-only mapa tła (F4.1) |
+| `ui/background_panel.py` | read-only panel shell tła (F4.2) |
 | `Komponenty/_shared/tkdnd_safe.py` | safe DnD w embed Studio (F4.1.1) |

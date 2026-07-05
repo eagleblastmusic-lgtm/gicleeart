@@ -114,13 +114,24 @@ Studio Preview **nie może** (F4.1):
 - importować `Komponenty.*` z nowego modułu capabilities,
 - czytać plików danych, metafieldów, sesji Shopify,
 - zapisywać ustawień tła,
-- dodawać panelu / route tła (F4.2),
+- dodawać panelu / route tła (F4.2 — zrealizowane osobno),
 - włączać sync/backup/deploy/polling.
 
 ---
 
-## Propozycja F4.2 (poza tym krokiem)
+## F4.2 — Background Panel Shell (zrealizowane)
 
-- Lekki panel informacyjny tła w shellu Studio (inline header lub osobny widok),
-- powrót do huba bez regresji F3.2.1.1,
-- nadal bez zapisu produkcyjnego.
+| Aspekt | Szczegóły |
+|--------|-----------|
+| Moduł | `giclee_app/ui/background_panel.py` |
+| Routing | transient host w `launcher_studio.py` — bez nowego routera |
+| Wejście | przycisk **Tło** na karcie huba (`tldobio`, `stronaglowna`) |
+| Klik karty | inline bez zmian |
+| Zawartość | label, tier, source_hint, inline_note, status read-only, nota F4.3+ |
+| Powrót | `_show_hub(return_category_id)` — ta sama kategoria co hub źródłowy |
+| Poza zakresem | edycja, zapis, Shopify, sync/deploy/polling |
+
+## F4.3+ (planowane)
+
+- Action parity — pierwsze akcje edycji tła w Studio (osobna akceptacja),
+- F5+ — kreator premium / asset manager UX.
