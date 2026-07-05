@@ -35,21 +35,21 @@ class Sidebar(ctk.CTkFrame):
         ctk.CTkLabel(
             brand,
             text="GicleeApp",
-            font=ctk.CTkFont(family=theme.FontBrand[0], size=18, weight="bold"),
+            font=theme.get_font(18, "bold", brand=True),
             text_color=theme.TextPrimary,
             anchor="w",
         ).pack(fill="x")
         ctk.CTkLabel(
             brand,
             text="Studio",
-            font=ctk.CTkFont(size=11),
+            font=theme.get_font(11),
             text_color=theme.AccentGold,
             anchor="w",
         ).pack(fill="x")
         ctk.CTkLabel(
             brand,
             text=theme.PREVIEW_BADGE,
-            font=ctk.CTkFont(size=10, weight="bold"),
+            font=theme.get_font(10, "bold"),
             text_color=theme.AccentGoldDim,
             fg_color=theme.AppBg,
             corner_radius=4,
@@ -69,7 +69,7 @@ class Sidebar(ctk.CTkFrame):
                 fg_color="transparent",
                 hover_color=theme.SidebarHover,
                 text_color=theme.TextPrimary,
-                font=ctk.CTkFont(size=13),
+                font=theme.get_font(13),
                 command=lambda cid=cat_id: self._select(cid),
             )
             btn.pack(fill="x", pady=2)
@@ -80,7 +80,7 @@ class Sidebar(ctk.CTkFrame):
         ctk.CTkLabel(
             foot,
             text="Polling Shopify działa\nw klasycznym launcherze",
-            font=ctk.CTkFont(size=10),
+            font=theme.get_font(10),
             text_color=theme.TextMuted,
             justify="left",
             anchor="w",
@@ -88,7 +88,7 @@ class Sidebar(ctk.CTkFrame):
         ctk.CTkLabel(
             foot,
             text=f"v{version}",
-            font=ctk.CTkFont(size=10),
+            font=theme.get_font(10),
             text_color=theme.TextMuted,
             anchor="w",
         ).pack(fill="x", pady=(8, 0))

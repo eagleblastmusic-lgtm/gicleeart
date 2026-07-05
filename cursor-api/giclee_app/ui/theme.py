@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import customtkinter as ctk
+
 # Kolory
 AppBg = "#1a1a1c"
 PanelBg = "#252528"
@@ -34,3 +36,48 @@ FontMono = ("Consolas", "Courier New")
 
 APP_TITLE = "GicleeApp Studio"
 PREVIEW_BADGE = "PREVIEW"
+
+# --- Cache fontów CTk (reuse, bez wielokrotnego tkfont.families()) ---
+_font_cache: dict[tuple, ctk.CTkFont] = {}
+_resolved_brand_family: str | None = None
+
+
+def _resolve_brand_family() -> str:
+    global _resolved_brand_family
+    if _resolved_brand_family is not None:
+        return _resolved_brand_family
+    family = FontBrand[0]
+    try:
+        import tkinter.font as tkfont
+
+        available = {f.lower(): f for f in tkfont.families()}
+        for name in FontBrand:
+            if name.lower() in available:
+                family = available[name.lower()]
+                break
+    except Exception:  # noqa: BLE001
+        pass
+    _resolved_brand_family = family
+    return family
+
+
+def get_font(
+    size: int = 12,
+    weight: str = "normal",
+    *,
+    family: str | None = None,
+    brand: bool = False,
+) -> ctk.CTkFont:
+    """Zwraca CTkFont z cache — jedna instancja na kombinację parametrów."""
+    resolved = _resolve_brand_family() if brand else (family or FontUi[0])
+    key = (size, weight, resolved)
+    if key not in _font_cache:
+        _font_cache[key] = ctk.CTkFont(family=resolved, size=size, weight=weight)
+    return _font_cache[key]
+
+
+def clear_font_cache() -> None:
+    """Tylko dla testów."""
+    global _resolved_brand_family
+    _font_cache.clear()
+    _resolved_brand_family = None

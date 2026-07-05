@@ -3,29 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING
 
 import customtkinter as ctk
 
+from giclee_app.component_loader import Component
+
 from . import theme
-
-if TYPE_CHECKING:
-    from giclee_app.component_loader import Component
-
-
-def _brand_font(size: int, weight: str = "normal") -> ctk.CTkFont:
-    family = theme.FontBrand[0]
-    try:
-        import tkinter.font as tkfont
-
-        available = {f.lower(): f for f in tkfont.families()}
-        for name in theme.FontBrand:
-            if name.lower() in available:
-                family = available[name.lower()]
-                break
-    except Exception:  # noqa: BLE001
-        pass
-    return ctk.CTkFont(family=family, size=size, weight=weight)
 
 
 def status_color(ok: bool | None) -> str:
@@ -57,7 +40,7 @@ class StatusPill(ctk.CTkFrame):
         self._dot = ctk.CTkLabel(self, text="●", width=16, text_color=status_color(ok))
         self._dot.pack(side="left", padx=(8, 2), pady=6)
         self._title = ctk.CTkLabel(
-            self, text=title, font=ctk.CTkFont(size=12, weight="bold"),
+            self, text=title, font=theme.get_font(12, "bold"),
             text_color=theme.TextPrimary,
         )
         self._title.pack(side="left", padx=(0, 8), pady=6)
@@ -95,7 +78,7 @@ class ComponentCard(ctk.CTkFrame):
         self._hover_bg = theme.CardHover
 
         accent = ctk.CTkFrame(
-            self, width=theme.CardAccentWidth, fg_color=comp.color, corner_radius=0,
+            master=self, width=theme.CardAccentWidth, fg_color=comp.color, corner_radius=0,
         )
         accent.pack(side="left", fill="y")
         accent.pack_propagate(False)
@@ -107,12 +90,12 @@ class ComponentCard(ctk.CTkFrame):
         title_row.pack(fill="x")
         if comp.icon:
             ctk.CTkLabel(
-                title_row, text=comp.icon, font=ctk.CTkFont(size=18), width=28,
+                title_row, text=comp.icon, font=theme.get_font(18), width=28,
             ).pack(side="left")
         ctk.CTkLabel(
             title_row,
             text=comp.name,
-            font=ctk.CTkFont(size=14, weight="bold"),
+            font=theme.get_font(14, "bold"),
             text_color=theme.TextPrimary,
             anchor="w",
         ).pack(side="left", fill="x", expand=True)
@@ -123,7 +106,7 @@ class ComponentCard(ctk.CTkFrame):
         ctk.CTkLabel(
             body,
             text=desc or comp.folder_name,
-            font=ctk.CTkFont(size=11),
+            font=theme.get_font(11),
             text_color=theme.TextMuted,
             anchor="nw",
             justify="left",
@@ -135,18 +118,18 @@ class ComponentCard(ctk.CTkFrame):
         ctk.CTkLabel(
             badges,
             text=comp.mode,
-            font=ctk.CTkFont(size=10),
+            font=theme.get_font(10),
             text_color=theme.AccentGoldDim,
             fg_color=theme.AppBg,
             corner_radius=4,
             width=70,
             height=20,
         ).pack(side="left", padx=(0, 6))
-        if comp.extras.get("hidden") or _is_hidden(comp):
+        if comp.hidden:
             ctk.CTkLabel(
                 badges,
                 text="ukryty",
-                font=ctk.CTkFont(size=10),
+                font=theme.get_font(10),
                 text_color=theme.TextMuted,
                 fg_color=theme.AppBg,
                 corner_radius=4,
@@ -187,20 +170,6 @@ class ComponentCard(ctk.CTkFrame):
             self._on_right_click(self._comp, event)
 
 
-def _is_hidden(comp: Component) -> bool:
-    try:
-        import json
-        from pathlib import Path
-
-        manifest = Path(comp.package_path) / "component.json"
-        if manifest.is_file():
-            data = json.loads(manifest.read_text(encoding="utf-8"))
-            return bool(isinstance(data, dict) and data.get("hidden"))
-    except (OSError, json.JSONDecodeError, TypeError, ValueError):
-        pass
-    return False
-
-
 class StatCard(ctk.CTkFrame):
     """Kafelek statystyki na dashboardzie."""
 
@@ -222,14 +191,14 @@ class StatCard(ctk.CTkFrame):
         ctk.CTkLabel(
             self,
             text=title,
-            font=ctk.CTkFont(size=11),
+            font=theme.get_font(11),
             text_color=theme.TextMuted,
             anchor="w",
         ).pack(fill="x", padx=14, pady=(12, 0))
         ctk.CTkLabel(
             self,
             text=value,
-            font=_brand_font(22, "bold") if not muted else ctk.CTkFont(size=18),
+            font=theme.get_font(22 if not muted else 18, "bold", brand=not muted),
             text_color=theme.TextMuted if muted else theme.TextPrimary,
             anchor="w",
         ).pack(fill="x", padx=14, pady=(4, 12))
@@ -240,7 +209,7 @@ class SectionHeader(ctk.CTkLabel):
         super().__init__(
             master,
             text=text,
-            font=ctk.CTkFont(size=16, weight="bold"),
+            font=theme.get_font(16, "bold"),
             text_color=theme.TextPrimary,
             anchor="w",
         )

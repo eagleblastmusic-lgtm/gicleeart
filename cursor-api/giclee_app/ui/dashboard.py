@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from datetime import date
 
 import customtkinter as ctk
 
 from giclee_app import __version__
 from giclee_app.studio import status_providers
+from giclee_app.studio.component_index import StudioComponentIndex
 
 from . import theme
 from .widgets import SectionHeader, StatCard, StatusPill
@@ -19,10 +19,10 @@ class DashboardView(ctk.CTkScrollableFrame):
         self,
         master: ctk.CTkBaseClass,
         *,
-        on_refresh_activity: Callable[[], None] | None = None,
+        component_index: StudioComponentIndex | None = None,
     ) -> None:
         super().__init__(master, fg_color=theme.AppBg, corner_radius=0)
-        self._on_refresh_activity = on_refresh_activity
+        self._component_index = component_index
         self._activity_box: ctk.CTkTextbox | None = None
         self._status_pills: list[StatusPill] = []
         self._build()
@@ -32,14 +32,14 @@ class DashboardView(ctk.CTkScrollableFrame):
         ctk.CTkLabel(
             self,
             text="Dzień dobry",
-            font=ctk.CTkFont(size=24, weight="bold"),
+            font=theme.get_font(24, "bold"),
             text_color=theme.TextPrimary,
             anchor="w",
         ).pack(fill="x", padx=24, pady=(20, 0))
         ctk.CTkLabel(
             self,
             text=f"{today}  ·  Fine Art Control Center",
-            font=ctk.CTkFont(size=12),
+            font=theme.get_font(12),
             text_color=theme.TextMuted,
             anchor="w",
         ).pack(fill="x", padx=24, pady=(4, 16))
@@ -49,7 +49,10 @@ class DashboardView(ctk.CTkScrollableFrame):
         for i in range(4):
             stats_row.columnconfigure(i, weight=1, uniform="stat")
 
-        total, visible = status_providers.component_counts()
+        if self._component_index is not None:
+            total, visible = self._component_index.component_counts()
+        else:
+            total, visible = status_providers.component_counts()
         cards = [
             ("Komponenty", str(total), False),
             ("Widoczne", str(visible), False),
@@ -70,7 +73,7 @@ class DashboardView(ctk.CTkScrollableFrame):
         SectionHeader(left, "Ostatnie akcje").pack(fill="x", pady=(0, 8))
         self._activity_box = ctk.CTkTextbox(
             left, height=200, fg_color=theme.PanelBg, text_color=theme.TextPrimary,
-            font=ctk.CTkFont(family=theme.FontMono[0], size=11),
+            font=theme.get_font(11, family=theme.FontMono[0]),
         )
         self._activity_box.pack(fill="both", expand=True)
         ctk.CTkButton(
@@ -99,7 +102,7 @@ class DashboardView(ctk.CTkScrollableFrame):
             ctk.CTkLabel(
                 mock_frame,
                 text=line,
-                font=ctk.CTkFont(size=12),
+                font=theme.get_font(12),
                 text_color=theme.TextMuted,
                 anchor="w",
             ).pack(fill="x", padx=14, pady=6)
@@ -109,7 +112,6 @@ class DashboardView(ctk.CTkScrollableFrame):
         status_row.pack(fill="x", padx=24, pady=(0, 12))
         for fn in (
             status_providers.shopify_status,
-            status_providers.theme_dev_status,
             status_providers.github_status,
             status_providers.gpt_snapshot_status,
         ):
@@ -117,6 +119,11 @@ class DashboardView(ctk.CTkScrollableFrame):
             pill = StatusPill(status_row, st.label, ok=st.ok, detail=st.detail)
             pill.pack(side="left", padx=(0, 8))
             self._status_pills.append(pill)
+        # theme_dev lazy — nie blokuje pierwszego renderu dashboardu
+        theme_pill = StatusPill(status_row, "Theme Dev", ok=None, detail="sprawdzanie…")
+        theme_pill.pack(side="left", padx=(0, 8))
+        self._status_pills.append(theme_pill)
+        self.after_idle(self._refresh_theme_dev_pill, theme_pill)
 
         SectionHeader(self, "Szybkie akcje").pack(fill="x", padx=24, pady=(8, 8))
         actions = ctk.CTkFrame(self, fg_color="transparent")
@@ -133,6 +140,13 @@ class DashboardView(ctk.CTkScrollableFrame):
             ).pack(side="left", padx=(0, 8))
 
         self.refresh_activity()
+
+    def _refresh_theme_dev_pill(self, pill: StatusPill) -> None:
+        try:
+            st = status_providers.theme_dev_status()
+            pill.update_status(st.ok, st.label, st.detail)
+        except Exception:  # noqa: BLE001
+            pill.update_status(None, "Theme Dev", "unknown")
 
     def refresh_activity(self) -> None:
         if self._activity_box is None:

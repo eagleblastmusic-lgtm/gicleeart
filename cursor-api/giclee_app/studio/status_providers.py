@@ -69,13 +69,21 @@ def app_version_status() -> StatusResult:
         return StatusResult(None, "Wersja", "unknown")
 
 
-def component_counts() -> tuple[int, int]:
-    """(wszystkie, widoczne bez hidden)."""
+def component_counts(
+    *,
+    all_components: list | None = None,
+    visible_components: list | None = None,
+) -> tuple[int, int]:
+    """(wszystkie, widoczne bez hidden). Opcjonalnie z cache Studio — bez discover."""
+    if all_components is not None and visible_components is not None:
+        return len(all_components), len(visible_components)
     try:
         from ..component_loader import discover_components, find_components_dir
 
         root = find_components_dir()
         all_c = discover_components(root, include_hidden=True)
+        if visible_components is not None:
+            return len(all_c), len(visible_components)
         vis = discover_components(root, include_hidden=False)
         return len(all_c), len(vis)
     except Exception:  # noqa: BLE001

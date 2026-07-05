@@ -21,6 +21,7 @@ STUDIO_MODULES = [
     "giclee_app.launcher_studio",
     "giclee_app.launcher_delegate",
     "giclee_app.studio.categories",
+    "giclee_app.studio.component_index",
     "giclee_app.studio.status_providers",
     "giclee_app.ui.dashboard",
     "giclee_app.ui.component_hub",
@@ -48,6 +49,7 @@ def test_studio_source_files_no_forbidden_imports() -> None:
         root / "launcher_delegate.py",
         root / "studio_preview.py",
         root / "studio" / "categories.py",
+        root / "studio" / "component_index.py",
         root / "studio" / "status_providers.py",
     ]
     paths.extend((root / "ui").glob("*.py"))
@@ -63,6 +65,14 @@ def test_studio_source_files_no_forbidden_imports() -> None:
 def test_import_studio_modules() -> None:
     for mod in STUDIO_MODULES:
         __import__(mod)
+
+
+def test_launcher_studio_does_not_import_launcher_module() -> None:
+    path = Path(__file__).resolve().parents[1] / "giclee_app" / "launcher_studio.py"
+    text = path.read_text(encoding="utf-8")
+    assert "giclee_app.launcher" not in text
+    assert "from .launcher" not in text
+    assert "StudioComponentIndex" in text
 
 
 def test_launcher_delegate_does_not_import_launcher_module() -> None:

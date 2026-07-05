@@ -15,10 +15,13 @@ from giclee_app.launcher_delegate import (
     launch,
     open_component_folder,
 )
-from giclee_app.studio.categories import category_label, components_for_category
+from giclee_app.studio.categories import category_label
+from giclee_app.studio.component_index import StudioComponentIndex
 
 from . import theme
 from .widgets import ComponentCard, SectionHeader
+
+_SEARCH_DEBOUNCE_MS = 200
 
 
 class ComponentHubView(ctk.CTkScrollableFrame):
@@ -27,15 +30,18 @@ class ComponentHubView(ctk.CTkScrollableFrame):
         master: ctk.CTkBaseClass,
         *,
         category_id: str = "products",
+        component_index: StudioComponentIndex | None = None,
         on_status: Callable[[str], None] | None = None,
     ) -> None:
         super().__init__(master, fg_color=theme.AppBg, corner_radius=0)
         self._category_id = category_id
+        self._component_index = component_index
         self._on_status = on_status
         self._search_var = tk.StringVar()
-        self._search_var.trace_add("write", lambda *_: self._render_grid())
+        self._search_debounce_id: str | None = None
         self._grid_frame: ctk.CTkFrame | None = None
         self._header_count: ctk.CTkLabel | None = None
+        self._category_components: list[Component] = []
         self._build_shell()
         self.set_category(category_id)
 
@@ -47,7 +53,7 @@ class ComponentHubView(ctk.CTkScrollableFrame):
         self._header_count = ctk.CTkLabel(
             header,
             text="",
-            font=ctk.CTkFont(size=12),
+            font=theme.get_font(12),
             text_color=theme.TextMuted,
         )
         self._header_count.pack(side="left", padx=(12, 0), pady=4)
@@ -63,23 +69,42 @@ class ComponentHubView(ctk.CTkScrollableFrame):
             border_color=theme.BorderSubtle,
         ).pack(fill="x")
 
+        self._search_var.trace_add("write", self._on_search_changed)
+
         self._grid_frame = ctk.CTkFrame(self, fg_color="transparent")
         self._grid_frame.pack(fill="both", expand=True, padx=24, pady=(0, 16))
+
+    def _on_search_changed(self, *_args: object) -> None:
+        if self._search_debounce_id is not None:
+            try:
+                self.after_cancel(self._search_debounce_id)
+            except (tk.TclError, ValueError):
+                pass
+        self._search_debounce_id = self.after(_SEARCH_DEBOUNCE_MS, self._debounced_render)
+
+    def _debounced_render(self) -> None:
+        self._search_debounce_id = None
+        self._render_grid()
 
     def set_category(self, category_id: str) -> None:
         self._category_id = category_id
         title = category_label(category_id)
         self._section_title.configure(text=title)
+        if self._component_index is not None:
+            self._category_components = self._component_index.components_for_category(category_id)
+        else:
+            from giclee_app.studio.categories import components_for_category
+
+            self._category_components = components_for_category(category_id, include_hidden=True)
         self._search_var.set("")
         self._render_grid()
 
     def _filtered_components(self) -> list[Component]:
-        comps = components_for_category(self._category_id, include_hidden=True)
         q = self._search_var.get().strip().lower()
         if not q:
-            return comps
+            return self._category_components
         out: list[Component] = []
-        for c in comps:
+        for c in self._category_components:
             hay = f"{c.name} {c.description} {c.folder_name}".lower()
             if q in hay:
                 out.append(c)

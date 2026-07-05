@@ -46,6 +46,7 @@ class Component:
     order: int = 1000           # mniejsze = wczesniej
     mode: str = "subprocess"    # "subprocess" | "inline" | "url"
     url: str = ""               # tylko dla mode=url
+    hidden: bool = False        # z component.json — ukryty na siatce klasycznego launchera
     extras: dict = field(default_factory=dict)
 
     @property
@@ -147,6 +148,7 @@ def discover_components(components_dir: Path, *, include_hidden: bool = False) -
             order = 1000
 
         url = str(manifest.get("url") or "").strip()
+        is_hidden = bool(manifest.get("hidden"))
 
         # Extras = wszystkie pozostale pola manifestu (na przyszlosc)
         known = {"name", "description", "icon", "color", "order", "mode", "url", "hidden"}
@@ -162,6 +164,7 @@ def discover_components(components_dir: Path, *, include_hidden: bool = False) -
             order=order,
             mode=mode,
             url=url,
+            hidden=is_hidden,
             extras=extras,
         ))
 

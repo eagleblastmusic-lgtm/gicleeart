@@ -6,6 +6,7 @@ import customtkinter as ctk
 
 from giclee_app import __version__
 from giclee_app.studio.categories import category_label
+from giclee_app.studio.component_index import StudioComponentIndex
 
 from .ui.component_hub import ComponentHubView
 from .ui.dashboard import DashboardView
@@ -19,6 +20,8 @@ class GicleeAppStudio(ctk.CTk):
 
     def __init__(self) -> None:
         super().__init__()
+        self._component_index = StudioComponentIndex.build()
+
         self.title(f"{theme.APP_TITLE} · v{__version__} · {theme.PREVIEW_BADGE}")
         self.configure(fg_color=theme.AppBg)
         w, h = theme.WindowDefault
@@ -52,7 +55,7 @@ class GicleeAppStudio(ctk.CTk):
         self._status_bar = ctk.CTkLabel(
             self,
             textvariable=self._status_var,
-            font=ctk.CTkFont(size=11),
+            font=theme.get_font(11),
             text_color=theme.TextMuted,
             anchor="w",
         )
@@ -79,7 +82,10 @@ class GicleeAppStudio(ctk.CTk):
         self._clear_content()
         self._current_category = "dashboard"
         self._topbar.set_breadcrumb("Dashboard")
-        self._dashboard = DashboardView(self._content)
+        self._dashboard = DashboardView(
+            self._content,
+            component_index=self._component_index,
+        )
         self._dashboard.grid(row=0, column=0, sticky="nsew")
 
     def _show_hub(self, category_id: str) -> None:
@@ -90,6 +96,7 @@ class GicleeAppStudio(ctk.CTk):
         self._hub = ComponentHubView(
             self._content,
             category_id=category_id,
+            component_index=self._component_index,
             on_status=self._set_status,
         )
         self._hub.grid(row=0, column=0, sticky="nsew")

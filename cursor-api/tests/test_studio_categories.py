@@ -11,8 +11,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from giclee_app.component_loader import discover_components, find_components_dir
 from giclee_app.studio.categories import (
     VALID_CATEGORY_IDS,
+    _ensure_mapping_loaded,
     all_folder_mappings,
     category_for_folder,
+    clear_categories_cache,
     discover_valid_component_folders,
 )
 
@@ -67,3 +69,37 @@ def test_components_for_category_filters() -> None:
         if category_for_folder(c.folder_name) == "theme"
     ]
     assert "stronaglowna" in theme_comps
+
+
+def test_category_mapping_loaded_once() -> None:
+    clear_categories_cache()
+    _ensure_mapping_loaded()
+    from giclee_app.studio import categories as cat_mod
+
+    assert cat_mod._cached_folder_to_category is not None
+    first_ref = cat_mod._cached_folder_to_category
+
+    for _ in range(50):
+        category_for_folder("dodajobraz")
+
+    assert cat_mod._cached_folder_to_category is first_ref
+
+
+def test_category_for_folder_loop_no_reload(monkeypatch) -> None:  # noqa: ANN001
+    clear_categories_cache()
+    load_count = 0
+    original = Path.read_text
+
+    def counting_read(self: Path, *args, **kwargs):  # noqa: ANN001, ANN002
+        nonlocal load_count
+        if self.name == "studio_categories.json":
+            load_count += 1
+        return original(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", counting_read)
+    clear_categories_cache()
+
+    for _ in range(50):
+        category_for_folder("stronaglowna")
+
+    assert load_count == 1
