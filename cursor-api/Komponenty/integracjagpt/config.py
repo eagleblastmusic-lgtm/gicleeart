@@ -127,11 +127,36 @@ GICLEEAPP_SYNC_SKIP_REL_PREFIXES: tuple[str, ...] = (
     "Komponenty/integracjagpt/data/nagrania/",
     "Komponenty/bazapromptow/data/context_images/",
     "Komponenty/stronyzobrazami/data/cache/",
-    "Komponenty/print_optimize/data/test_photos/",
-    "Komponenty/print_optimize/data/ww_pairs/",
+    "Komponenty/print_optimize/data/",
     "Komponenty/socialmedia/data/cykl/Obrazy/",
+    "_czesc7_parts/",
+    "_test_out/",
     "backups/",
     "/backups/",
+)
+
+GICLEEAPP_RUNTIME_DENYLIST_PREFIXES: tuple[str, ...] = (
+    "Komponenty/dokumentysprzedazy/documents/",
+    "Komponenty/kpir/documents/",
+    "Komponenty/notatnik/notatki/",
+    "Komponenty/print_optimize/data/",
+    "Komponenty/stronaglowna/data/tmp/",
+    "_czesc7_parts/",
+    "_test_out/",
+)
+
+# Root-level scratch (fnmatch on basename only — not nested paths).
+GICLEEAPP_RUNTIME_ROOT_GLOBS: tuple[str, ...] = (
+    "_tmp_*",
+    "_test_*",
+    "_test_squoosh.jpg",
+    "_build_czesc7.py",
+    "czesc5*.json",
+    "czesc6*.json",
+    "czesc7*.json",
+    "tmp_getty*.txt",
+    "tmp_getty*.json",
+    "tmp_getty_row.json",
 )
 
 GICLEEAPP_RUNTIME_DENYLIST: frozenset[str] = frozenset({

@@ -174,9 +174,13 @@ def test_explicit_git_add_not_all(gicleeapp_env, monkeypatch) -> None:
 
         class P:
             returncode = 0
-            stdout = "abc123\n" if args[:2] == ["rev-parse", "HEAD"] else "ok\n"
+            stdout = ""
             stderr = ""
 
+        if args[:2] == ["rev-parse", "HEAD"]:
+            P.stdout = "abc123\n"
+        elif args[:3] == ["diff", "--cached", "--name-only"]:
+            P.stdout = "giclee_app/__init__.py\npackage.json\n"
         return P()
 
     monkeypatch.setattr(gap, "_run_git", fake_run_git)
@@ -198,6 +202,9 @@ def test_explicit_git_add_not_all(gicleeapp_env, monkeypatch) -> None:
     assert all("--" in c for c in add_calls)
     assert not any(c == ["add", "-A"] for c in add_calls)
     assert not any(c == ["add", "."] for c in add_calls)
+    staged_paths = [p for c in add_calls for p in c[2:]]
+    assert "giclee_app/__init__.py" in staged_paths
+    assert "package.json" in staged_paths
 
 
 def test_no_changes_detected(gicleeapp_env) -> None:
@@ -305,3 +312,92 @@ def test_dry_run_report_format(gicleeapp_env) -> None:
     report = gap.dry_run_gicleeapp_push(source_dir=source, staging_dir=staging, log=[])
     lines = report.format_report()
     assert any("audyt" in ln.lower() for ln in lines)
+
+
+def test_scratch_paths_are_runtime() -> None:
+    from Komponenty.integracjagpt import gicleeapp_push as gap
+
+    for rel in (
+        "_tmp_foo.png",
+        "_test_helper.py",
+        "_test_squoosh.jpg",
+        "_build_czesc7.py",
+        "czesc5_julien_dupre_17-20.json",
+        "czesc6_jusepe_ribera_21.json",
+        "czesc7_van_gogh_25-28.json",
+        "tmp_getty.txt",
+        "tmp_getty_row.json",
+        "_tmp_dims/original.jpg",
+        "_test_out/mockup_test.webp",
+    ):
+        assert gap._is_runtime_path(rel), rel
+
+
+def test_print_optimize_data_is_runtime() -> None:
+    from Komponenty.integracjagpt import gicleeapp_push as gap
+
+    assert gap._is_runtime_path("Komponenty/print_optimize/data/test_photos/foo.jpg")
+    assert gap._is_runtime_path("Komponenty/print_optimize/data/ww_pairs/index.json")
+
+
+def test_staged_runtime_paths_block_commit(gicleeapp_env, monkeypatch) -> None:
+    from Komponenty.integracjagpt import gicleeapp_push as gap
+
+    _, staging = gicleeapp_env
+    reset_calls: list[list[str]] = []
+
+    def fake_run_git(args, cwd, log=None):
+        if args[:2] == ["reset", "HEAD"]:
+            reset_calls.append(args)
+
+        class P:
+            returncode = 0
+            stdout = ""
+            stderr = ""
+
+        if args[:3] == ["diff", "--cached", "--name-only"]:
+            P.stdout = "Komponenty/_shared/data/activity_log.jsonl\ngiclee_app/__init__.py\n"
+        return P()
+
+    monkeypatch.setattr(gap, "_run_git", fake_run_git)
+    monkeypatch.setattr(gap, "validate_staging_repo", lambda *a, **k: None)
+    monkeypatch.setattr(
+        gap,
+        "inspect_branch_sync",
+        lambda *a, **k: gap.BranchSyncStatus(ok=True, message="main...origin/main"),
+    )
+
+    report = gap.GicleeAppAuditReport(commit_candidates=["giclee_app/__init__.py"])
+    result = gap.commit_and_push_gicleeapp(report, staging_dir=staging, log=[])
+    assert not result.ok
+    assert "niedozwolone" in result.message
+    assert reset_calls
+
+
+def test_staged_extra_paths_block_commit(gicleeapp_env, monkeypatch) -> None:
+    from Komponenty.integracjagpt import gicleeapp_push as gap
+
+    _, staging = gicleeapp_env
+
+    def fake_run_git(args, cwd, log=None):
+        class P:
+            returncode = 0
+            stdout = ""
+            stderr = ""
+
+        if args[:3] == ["diff", "--cached", "--name-only"]:
+            P.stdout = "giclee_app/__init__.py\nunexpected/evil.py\n"
+        return P()
+
+    monkeypatch.setattr(gap, "_run_git", fake_run_git)
+    monkeypatch.setattr(gap, "validate_staging_repo", lambda *a, **k: None)
+    monkeypatch.setattr(
+        gap,
+        "inspect_branch_sync",
+        lambda *a, **k: gap.BranchSyncStatus(ok=True, message="main...origin/main"),
+    )
+
+    report = gap.GicleeAppAuditReport(commit_candidates=["giclee_app/__init__.py"])
+    result = gap.commit_and_push_gicleeapp(report, staging_dir=staging, log=[])
+    assert not result.ok
+    assert "unexpected/evil.py" in result.message

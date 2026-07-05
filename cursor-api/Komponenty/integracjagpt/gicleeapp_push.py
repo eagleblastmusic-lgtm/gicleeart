@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import fnmatch
 import re
 import shutil
 import subprocess
@@ -16,6 +17,8 @@ from .config import (
     GICLEEAPP_REMOTE_URL,
     GICLEEAPP_REVIEW_ONLY_FILES,
     GICLEEAPP_RUNTIME_DENYLIST,
+    GICLEEAPP_RUNTIME_DENYLIST_PREFIXES,
+    GICLEEAPP_RUNTIME_ROOT_GLOBS,
     GICLEEAPP_STAGING_DIR,
     GICLEEAPP_SYNC_SKIP_DIR_NAMES,
     GICLEEAPP_SYNC_SKIP_FILE_NAMES,
@@ -55,6 +58,8 @@ _STAGING_JUNK_DIR_NAMES = frozenset({
     "vscode",
     "pytest_cache",
 })
+
+_GIT_ADD_BATCH_SIZE = 100
 
 
 @dataclass
@@ -217,6 +222,20 @@ def _should_skip_sync(rel: str) -> bool:
     for prefix in GICLEEAPP_SYNC_SKIP_REL_PREFIXES:
         if n.startswith(prefix.lstrip("/")) or n == prefix.rstrip("/"):
             return True
+    if _is_root_scratch_path(n):
+        return True
+    return False
+
+
+def _is_root_scratch_path(rel: str) -> bool:
+    n = _norm_rel(rel).rstrip("/")
+    if not n:
+        return False
+    parts = Path(n).parts
+    if len(parts) == 1:
+        return any(fnmatch.fnmatch(parts[0], pat) for pat in GICLEEAPP_RUNTIME_ROOT_GLOBS)
+    if fnmatch.fnmatch(parts[0], "_tmp_*") or parts[0] in ("_test_out", "_czesc7_parts"):
+        return True
     return False
 
 
@@ -436,6 +455,12 @@ def _is_runtime_path(rel: str) -> bool:
     n = _norm_rel(rel).rstrip("/")
     if n in GICLEEAPP_RUNTIME_DENYLIST:
         return True
+    for prefix in GICLEEAPP_RUNTIME_DENYLIST_PREFIXES:
+        p = prefix.rstrip("/")
+        if n == p or n.startswith(prefix):
+            return True
+    if _is_root_scratch_path(n):
+        return True
     name = Path(n).name
     if name in _ENV_TEMPLATE_NAMES or name in {"env", "env.example", "gitignore", "shopify_session.json", "graphqlrc.js", "npmrc"}:
         return True
@@ -498,6 +523,41 @@ def scan_file_secrets(path: Path, *, rel: str = "") -> list[str]:
                 continue
             hits.append(f"{rel_s}:{line_no}: {marker}")
     return hits
+
+
+def _git_add_paths(
+    staging: Path,
+    paths: list[str],
+    *,
+    log: OnLine = None,
+) -> subprocess.CompletedProcess[str] | None:
+    normalized = [_norm_rel(p) for p in paths]
+    for i in range(0, len(normalized), _GIT_ADD_BATCH_SIZE):
+        batch = normalized[i : i + _GIT_ADD_BATCH_SIZE]
+        add = _run_git(["add", "--", *batch], staging, log=log)
+        if add.returncode != 0:
+            return add
+    return None
+
+
+def _verify_staged_paths(
+    staging: Path,
+    allowed_paths: list[str],
+    *,
+    log: OnLine = None,
+) -> list[str]:
+    allowed = {_norm_rel(p) for p in allowed_paths}
+    proc = _run_git(["diff", "--cached", "--name-only"], staging, log=log)
+    staged = [_norm_rel(p) for p in (proc.stdout or "").splitlines() if p.strip()]
+    blocked: list[str] = []
+    for path in staged:
+        if _is_runtime_path(path) or path not in allowed:
+            blocked.append(path)
+    return blocked
+
+
+def _unstage_all(staging: Path, *, log: OnLine = None) -> None:
+    _run_git(["reset", "HEAD"], staging, log=log)
 
 
 def _parse_porcelain(lines: list[str]) -> tuple[list[str], list[str], list[str]]:
@@ -669,9 +729,29 @@ def commit_and_push_gicleeapp(
         return GicleeAppPushResult(ok=False, message="Brak ścieżek do git add.")
 
     for rel in paths_to_stage:
-        add = _run_git(["add", "--", rel], staging, log=log)
-        if add.returncode != 0:
-            return GicleeAppPushResult(ok=False, message=f"git add nie powiódł się: {rel}")
+        if _is_runtime_path(rel):
+            return GicleeAppPushResult(
+                ok=False,
+                message=f"Ścieżka runtime poza commitem: {_norm_rel(rel)}",
+            )
+
+    add_err = _git_add_paths(staging, paths_to_stage, log=log)
+    if add_err is not None:
+        _unstage_all(staging, log=log)
+        return GicleeAppPushResult(
+            ok=False,
+            message=f"git add nie powiódł się: {(add_err.stderr or add_err.stdout or '').strip()}",
+        )
+
+    blocked_staged = _verify_staged_paths(staging, paths_to_stage, log=log)
+    if blocked_staged:
+        _unstage_all(staging, log=log)
+        preview = ", ".join(blocked_staged[:8])
+        extra = f" (+{len(blocked_staged) - 8} więcej)" if len(blocked_staged) > 8 else ""
+        return GicleeAppPushResult(
+            ok=False,
+            message=f"Staging zawiera niedozwolone ścieżki — push przerwany: {preview}{extra}",
+        )
 
     msg = (commit_message or report.commit_message or GICLEEAPP_COMMIT_MESSAGE).strip()
     commit = _run_git(["commit", "-m", msg], staging, log=log)

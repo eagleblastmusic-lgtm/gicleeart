@@ -74,8 +74,7 @@ Komponenty/produkcja/dane/zamowienia.json
 Komponenty/produkcja/dane/notified.json
 
 # notatnik - notatki osobiste (nie techniczne)
-Komponenty/notatnik/notatki/Do Urzędu pracy/
-
+Komponenty/notatnik/notatki/
 
 # socialmedia/cykl - lokalne dane runtime (tokeny Meta API - SEKRET)
 Komponenty/socialmedia/data/cykl/meta_credentials.json
@@ -99,3 +98,24 @@ Komponenty/bazapromptow/data/context_images/
 # Analiza ruchu — lokalna baza eventów
 Komponenty/analytics/dane/analytics.db
 # queue.json + generation_state.json + config.json - commitujemy (to plan cyklu)
+
+# GicleeApp runtime / generated data
+Komponenty/_shared/data/activity_log.jsonl
+Komponenty/dokumentysprzedazy/documents/
+Komponenty/kpir/documents/
+Komponenty/print_optimize/data/
+Komponenty/stronaglowna/data/tmp/
+
+# Local test/build scratch (repo root)
+/_tmp_*
+/_test_*
+/_test_out/
+/_test_squoosh.jpg
+/_build_czesc7.py
+/_czesc7_parts/
+/czesc5*.json
+/czesc6*.json
+/czesc7*.json
+/tmp_getty*.txt
+/tmp_getty*.json
+/tmp_getty_row.json

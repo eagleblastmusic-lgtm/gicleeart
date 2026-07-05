@@ -40,15 +40,15 @@ Osobny workflow w GUI **Integracja z GPT** — sekcja **Push GicleeApp (aplikacj
 | Etap | Działanie |
 |------|-----------|
 | A — dry-run | safe sync `cursor-api` → `C:\Strona\_gicleeapp_staging`, merge `.gitignore`, `git status` / diff, skan sekretów |
-| B — push | Po potwierdzeniu: `git pull --ff-only` (jeśli behind), `git add <explicit paths>`, commit, `git push origin main` |
+| B — push | Po potwierdzeniu: `git pull --ff-only` (jeśli behind), `git add -- <explicit paths>` (batch, bez `-A`), weryfikacja `git diff --cached`, commit, `git push origin main` |
 
 **Nie dotyczy:** motywu Shopify, `.gpt_mirror/`, `gicleeart-gpt`, komponentu `pushe`.
 
 Zachowuje 8 plików review-only (m.in. `GPT_README.md`, `docs/GPT_KNOWLEDGE_PACK.md`). Nie używa `git add -A`. Przy sekrecie lub pliku runtime w kandydatach — workflow zatrzymany.
 
-Domyślny commit: `Refresh GicleeApp repository snapshot`.
+**Runtime denylist (F3.2.1.2):** m.in. `documents/`, `notatki/`, `print_optimize/data/`, `stronaglowna/data/tmp/`, scratch root (`_tmp_*`, `czesc*.json`, `tmp_getty*`) — wykluczone z sync, audytu i commita. Przed commitem: `git diff --cached --name-only` musi zgadzać się z listą zaakceptowanych plików; inaczej push **przerwany** (hard stop).
 
-**Follow-up (osobno):** `Komponenty/dokumentysprzedazy/dane/orders_sync_state.json` — ignorowany przy pushu, ale może być śledzony w indeksie z wcześniejszego commita; ewentualny `git rm --cached` poza tym workflow.
+Domyślny commit: `Refresh GicleeApp repository snapshot`.
 
 ## Repo GPT (lustro)
 
@@ -119,7 +119,7 @@ Wymaga: `npm install`, `npx playwright install chromium`, theme dev (localhost) 
 
 **Hasło password page:** sklep za hasłem wymaga `--store-password` dla CLI. W GUI **Integracja z GPT** → pole **Hasło sklepu** → Zapisz (plik `.shopify-store-password.local`, gitignore).
 
-**ZIP wiedzy + rozmowa z GPT:** **Okno rozmowy** → **Skopiuj .zip** buduje `giclee_cursor_architect_knowledge.zip` z **18 aktywnych plików** manifestu `CLEAN_PACK v35` w `{THEME_ROOT}/Pliki startowe dla GPT/` (archiwalne `.md` na dysku są pomijane), kopiuje ZIP do schowka Windows, potem **Skopiuj Wiadomość początkową** (`Wiadomość początkowa.txt`). Alternatywnie: **Załaduj zip do rozmowy** → kopia w `data/gpt_knowledge.zip`. Po **Pełnym cyklu** ZIP trafia do schowka; aktywuje się **Skopiuj prompt rozpoczęcia rozmowy**.
+**ZIP wiedzy + rozmowa z GPT:** **Okno rozmowy** → **Skopiuj .zip** buduje `giclee_cursor_architect_knowledge.zip` z **19 aktywnych plików** manifestu `CLEAN_PACK v36` w `{THEME_ROOT}/Pliki startowe dla GPT/` (archiwalne `.md` na dysku są pomijane), kopiuje ZIP do schowka Windows, potem **Skopiuj Wiadomość początkową** (`Wiadomość początkowa.txt`). **Zmień wiadomość początkową** otwiera edytor i zapisuje `Wiadomość początkowa.txt` w tym samym folderze. Alternatywnie: **Załaduj zip do rozmowy** → kopia w `data/gpt_knowledge.zip`. Po **Pełnym cyklu** ZIP trafia do schowka; aktywuje się **Skopiuj prompt rozpoczęcia rozmowy**.
 
 ## Konfiguracja
 
