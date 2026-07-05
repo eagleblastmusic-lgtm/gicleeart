@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib
 import inspect
+import os
 import re
 import tkinter as tk
 from collections.abc import Callable
@@ -24,6 +25,7 @@ _SECRET_KEY_PATTERN = re.compile(
     re.IGNORECASE,
 )
 _BEARER_PATTERN = re.compile(r"\bBearer\s+\S+", re.IGNORECASE)
+_STUDIO_INLINE_ENV = "GICLEE_STUDIO_INLINE"
 
 
 def _sanitize_error_text(text: str) -> str:
@@ -165,6 +167,12 @@ class InlineHostView(ctk.CTkFrame):
         except OSError:
             pass
 
+    def _set_studio_inline_flag(self, active: bool) -> None:
+        if active:
+            os.environ[_STUDIO_INLINE_ENV] = "1"
+        else:
+            os.environ.pop(_STUDIO_INLINE_ENV, None)
+
     def _mount_inline(self) -> None:
         try:
             mod = importlib.import_module(self._comp.view_module_path)
@@ -189,6 +197,7 @@ class InlineHostView(ctk.CTkFrame):
 
         self._tk_mount = tk.Frame(self._body, bg=theme.AppBg)
         self._tk_mount.grid(row=0, column=0, sticky="nsew")
+        self._set_studio_inline_flag(True)
 
         try:
             view = _invoke_build_view(
@@ -217,6 +226,7 @@ class InlineHostView(ctk.CTkFrame):
             self._on_status(f"Inline: {self._comp.name}")
 
     def _clear_tk_mount(self) -> None:
+        self._set_studio_inline_flag(False)
         if self._tk_mount is None:
             return
         try:

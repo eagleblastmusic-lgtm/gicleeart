@@ -20,6 +20,7 @@ try:
 except ImportError:
     _HAS_DND = False
 
+from Komponenty._shared.tkdnd_safe import dnd_files_available, register_drop_target
 from Komponenty._shared.toast import show_toast
 from Komponenty._shared.window_geometry import position_toplevel_screen_center
 from PIL import Image, ImageTk
@@ -646,12 +647,16 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
             ttk.Button(btn_row, text="Z listy…", command=_pick_from_library).pack(side="left", padx=(8, 0))
         if zone.zone_id == "hero" and fld.kind in ("shopify_image", "shopify_video", "theme_asset"):
             ttk.Button(btn_row, text="Pobierz…", command=_download_current).pack(side="left", padx=(8, 0))
-        if _HAS_DND:
-            thumb.drop_target_register(DND_FILES)
-            thumb.dnd_bind("<<Drop>>", _on_drop)
+        if register_drop_target(thumb, on_drop=_on_drop):
             ttk.Label(
                 meta,
                 text="lub przeciągnij plik na miniaturę",
+                foreground="#888",
+            ).pack(anchor="w", pady=(2, 0))
+        elif dnd_files_available():
+            ttk.Label(
+                meta,
+                text="(drag-and-drop niedostępne w tym oknie)",
                 foreground="#888",
             ).pack(anchor="w", pady=(2, 0))
         else:

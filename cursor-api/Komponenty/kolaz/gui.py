@@ -18,6 +18,7 @@ try:
 except ImportError:
     _HAS_DND = False
 
+from Komponenty._shared.tkdnd_safe import register_drop_target
 from Komponenty._shared.toast import show_toast
 from Komponenty._shared.window_geometry import position_toplevel_screen_center
 from PIL import Image, ImageTk
@@ -243,15 +244,12 @@ def _build_ui(host: tk.Tk) -> None:
             im.selected = val
         _refresh_image_tree()
 
-    if _HAS_DND:
+    def _on_drop(event) -> None:
+        paths = [p for p in _parse_dnd_files(event.data) if is_local_image(p)]
+        if paths:
+            _set_images(list(state["images"]) + load_local_images(paths), "upuszczono pliki")
 
-        def _on_drop(event) -> None:
-            paths = [p for p in _parse_dnd_files(event.data) if is_local_image(p)]
-            if paths:
-                _set_images(list(state["images"]) + load_local_images(paths), "upuszczono pliki")
-
-        img_tree.drop_target_register(DND_FILES)
-        img_tree.dnd_bind("<<Drop>>", _on_drop)
+    register_drop_target(img_tree, on_drop=_on_drop)
 
     # --- Ustawienia ---
     set_lf = ttk.LabelFrame(settings_panel, text="Płótno i układ", padding=8)

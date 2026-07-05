@@ -19,6 +19,7 @@ try:
 except ImportError:
     _HAS_DND = False
 
+from Komponenty._shared.tkdnd_safe import dnd_files_available, register_drop_target
 from Komponenty._shared.toast import show_toast
 from Komponenty._shared.tk_scroll import bind_mousewheel_to_canvas
 from Komponenty._shared.window_geometry import position_toplevel_screen_center
@@ -282,6 +283,7 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
         "_preview_title": "",
         "_preview_bio": "",
         "_drag_x": None,
+        "_dnd_ok": False,
     }
 
     intro = ttk.Frame(host, padding=(14, 12))
@@ -353,11 +355,12 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
     )
     ttk.Label(right, textvariable=selected_handle_var, foreground="#555").pack(anchor="w", pady=(2, 8))
 
-    drop_hint = (
-        "Przeciągnij grafikę tutaj\n(JPG, PNG, WEBP)"
-        if _HAS_DND
-        else "Brak podglądu\n(drag-and-drop: pip install tkinterdnd2)"
-    )
+    def _drop_hint() -> str:
+        if state.get("_dnd_ok"):
+            return "Przeciągnij grafikę tutaj\n(JPG, PNG, WEBP)"
+        if dnd_files_available():
+            return "Wgraj grafikę przyciskiem\n(JPG, PNG, WEBP)"
+        return "Wgraj grafikę przyciskiem\n(drag-and-drop: pip install tkinterdnd2)"
 
     preview_frame = tk.Frame(right, bg=_PREVIEW_BG, width=_PREVIEW_W, height=_PREVIEW_H)
     preview_frame.pack(fill="x", pady=(0, 4))
@@ -649,7 +652,7 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
             preview_canvas.create_text(
                 _PREVIEW_W // 2,
                 _PREVIEW_H // 2,
-                text=drop_hint,
+                text=_drop_hint(),
                 fill="#888",
                 justify="center",
                 width=_PREVIEW_W - 24,
@@ -1188,12 +1191,14 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
     preview_canvas.bind("<ButtonRelease-1>", _on_canvas_release)
     preview_canvas.bind("<Double-Button-1>", _on_canvas_double_click)
 
-    if _HAS_DND:
-        for widget in (preview_frame, preview_canvas):
-            widget.drop_target_register(DND_FILES)
-            widget.dnd_bind("<<Drop>>", _on_preview_drop)
-            widget.dnd_bind("<<DragEnter>>", _on_preview_drag_enter)
-            widget.dnd_bind("<<DragLeave>>", _on_preview_drag_leave)
+    for widget in (preview_frame, preview_canvas):
+        if register_drop_target(
+            widget,
+            on_drop=_on_preview_drop,
+            on_drag_enter=_on_preview_drag_enter,
+            on_drag_leave=_on_preview_drag_leave,
+        ):
+            state["_dnd_ok"] = True
 
     _render_preview()
 

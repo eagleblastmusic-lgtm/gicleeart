@@ -1,4 +1,4 @@
-# GicleeApp Studio Preview (F4.1)
+# GicleeApp Studio Preview (F4.1.1)
 
 Hub: [`README.md`](README.md) · plan: [`../../docs/UI_REDESIGN_PLAN.md`](../../docs/UI_REDESIGN_PLAN.md) · tło: [`background-parity.md`](background-parity.md)
 
@@ -67,6 +67,18 @@ Tier 3 (`katalog`, `kontakt`, `faq`, `stronablogu`) — udokumentowany w audycie
 
 ---
 
+## F4.1.1 — inline smoke fixes
+
+| Element | Stan |
+|---------|------|
+| `Komponenty/_shared/tkdnd_safe.py` | safe `register_drop_target` — brak crasha bez TkinterDnD root |
+| `GICLEE_STUDIO_INLINE` | ustawiane w `inline_host` na czas mountu komponentu |
+| Podglądy obrazów | local-first z `assets/`; w Studio bez fetch Shopify |
+| Placeholder | `brak lokalnego podglądu` gdy brak pliku lokalnego |
+| Klasyczny launcher | DnD na `TkinterDnD.Tk()` + CDN podgląd bez zmian |
+
+---
+
 ## F3.2 inline smoke matrix (manual)
 
 Checklista ręczna w Studio Preview — nie w CI.
@@ -125,3 +137,4 @@ Checklista ręczna w Studio Preview — nie w CI.
 | `studio/status_providers.py` | local Git/GPT |
 | `studio/state.py` | recent + pinned |
 | `studio/background_capabilities.py` | read-only mapa tła (F4.1) |
+| `Komponenty/_shared/tkdnd_safe.py` | safe DnD w embed Studio (F4.1.1) |

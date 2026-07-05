@@ -16,6 +16,7 @@ try:
 except ImportError:
     _HAS_DND = False
 
+from Komponenty._shared.tkdnd_safe import register_drop_target
 from Komponenty._shared.toast import show_toast
 from PIL import Image, ImageTk
 
@@ -169,15 +170,13 @@ def build_image_search_tab(parent: tk.Misc, root: tk.Misc, *, get_store: Callabl
             _set_image(Path(path))
 
     drop_label.bind("<Button-1>", lambda _e: _browse())
-    if _HAS_DND:
-        drop_label.drop_target_register(DND_FILES)  # type: ignore[attr-defined]
 
-        def _on_drop(event: tk.Event) -> None:  # type: ignore[type-arg]
-            paths = _parse_dnd_files(event.data)
-            if paths:
-                _set_image(paths[0])
+    def _on_drop(event: tk.Event) -> None:  # type: ignore[type-arg]
+        paths = _parse_dnd_files(event.data)
+        if paths:
+            _set_image(paths[0])
 
-        drop_label.dnd_bind("<<Drop>>", _on_drop)  # type: ignore[attr-defined]
+    register_drop_target(drop_label, on_drop=_on_drop)
 
     src_frame = ttk.LabelFrame(parent, text="Zrodla (z zakladek)", padding=(8, 6))
     src_frame.pack(fill="x", padx=12, pady=(0, 8))

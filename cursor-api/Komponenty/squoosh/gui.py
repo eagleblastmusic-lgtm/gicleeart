@@ -26,6 +26,7 @@ from .converter import (
     output_path_for,
 )
 from .squoosh_cli import squoosh_cli_available
+from Komponenty._shared.tkdnd_safe import register_drop_target
 from Komponenty._shared.window_geometry import position_toplevel_screen_center
 
 APP_TITLE = "Squoosh WebP — batch"
@@ -150,10 +151,8 @@ class SquooshApp:
         self.tree.pack(side="left", fill="both", expand=True, padx=(6, 0), pady=6)
         sb.pack(side="right", fill="y", pady=6, padx=(0, 6))
 
-        if _HAS_DND:
-            for w in (drop, self.tree):
-                w.drop_target_register(DND_FILES)
-                w.dnd_bind("<<Drop>>", self._on_drop)
+        for w in (drop, self.tree):
+            register_drop_target(w, on_drop=self._on_drop)
 
         settings = ttk.LabelFrame(main, text="Ustawienia WebP (jak Squoosh)")
         settings.pack(fill="x", **pad)

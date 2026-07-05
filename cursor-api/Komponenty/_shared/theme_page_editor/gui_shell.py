@@ -408,15 +408,17 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
         if not ref:
             return lbl
         try:
-            data = fetch_thumbnail_bytes(ref)
+            data = fetch_thumbnail_bytes(shopify_ref=ref)
             if data:
                 img = Image.open(io.BytesIO(data))
                 img.thumbnail(_THUMB_SIZE)
                 photo = ImageTk.PhotoImage(img)
                 state["thumb_refs"].append(photo)
                 lbl.configure(image=photo, text="")
+            else:
+                lbl.configure(text="brak lokalnego\npodglądu")
         except Exception:
-            pass
+            lbl.configure(text="brak lokalnego\npodglądu")
         return lbl
 
     def _build_field_widget(zone: TemplateZone, fld: TemplateField, row: int) -> None:

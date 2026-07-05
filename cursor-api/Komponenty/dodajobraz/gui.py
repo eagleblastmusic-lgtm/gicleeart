@@ -65,6 +65,7 @@ from .shopify_client import OperationCancelled
 from Komponenty._shared.activity_log import append_activity
 from Komponenty._shared.activity_log_ui import open_activity_log_dialog
 from Komponenty._shared.task_notify import notify_long_task_done
+from Komponenty._shared.tkdnd_safe import register_drop_target
 from Komponenty._shared.toast import show_toast
 from Komponenty._shared.window_geometry import position_toplevel_screen_center
 from Komponenty.mockup.templates import (
@@ -440,12 +441,11 @@ class App:
                 "<Button-1>",
                 lambda _e, r=role: self._browse_files(expected_role=r),
             )
-            if _HAS_DND:
-                zone.drop_target_register(DND_FILES)  # type: ignore[attr-defined]
-                zone.dnd_bind(  # type: ignore[attr-defined]
-                    "<<Drop>>",
-                    lambda e, r=role: self._on_drop_for_role(e, r),
-                )
+            if register_drop_target(
+                zone,
+                on_drop=lambda e, r=role: self._on_drop_for_role(e, r),
+            ):
+                pass
             self._drop_zones[role] = zone
             ttk.Button(
                 lf,

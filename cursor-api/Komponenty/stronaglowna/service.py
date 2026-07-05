@@ -886,9 +886,38 @@ def sync_hero_boomerang_video(
     _log(logger, f"[strona główna] Pętla boomerang → {loop_ref}")
 
 
+def resolve_local_shopify_image_path(ref: str) -> Path | None:
+    """Lokalny plik motywu dla shopify://shop_images/… (bez sieci)."""
+    text = (ref or "").strip()
+    if not text.startswith("shopify://shop_images/"):
+        return None
+    name = text.rsplit("/", 1)[-1]
+    if not name:
+        return None
+    root = theme_root()
+    for candidate in (
+        root / "assets" / name,
+        root / "assets" / "files" / name,
+    ):
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def _studio_inline_context() -> bool:
+    return os.environ.get("GICLEE_STUDIO_INLINE") == "1"
+
+
 def fetch_thumbnail_bytes(*, shopify_ref: str = "", local_path: Path | None = None) -> bytes | None:
     if local_path and local_path.is_file():
         return local_path.read_bytes()
+    ref = (shopify_ref or "").strip()
+    if ref:
+        local = resolve_local_shopify_image_path(ref)
+        if local and local.is_file():
+            return local.read_bytes()
+    if _studio_inline_context():
+        return None
     url = resolve_shopify_image_url(shopify_ref)
     if not url:
         return None

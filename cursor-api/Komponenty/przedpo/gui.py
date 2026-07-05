@@ -18,6 +18,7 @@ try:
 except ImportError:
     _HAS_DND = False
 
+from Komponenty._shared.tkdnd_safe import register_drop_target
 from Komponenty._shared.toast import show_toast
 from Komponenty._shared.window_geometry import position_toplevel_screen_center
 from Komponenty.dodajobraz.description_update import product_catalog_sort_key
@@ -426,11 +427,12 @@ def _build_ui(host: tk.Tk) -> None:
     def _on_before_drag_leave(_event: tk.Event) -> None:  # type: ignore[type-arg]
         before_canvas.configure(background=_BEFORE_DROP_BG, cursor="")
 
-    if _HAS_DND:
-        before_canvas.drop_target_register(DND_FILES)
-        before_canvas.dnd_bind("<<Drop>>", _on_before_drop)
-        before_canvas.dnd_bind("<<DragEnter>>", _on_before_drag_enter)
-        before_canvas.dnd_bind("<<DragLeave>>", _on_before_drag_leave)
+    register_drop_target(
+        before_canvas,
+        on_drop=_on_before_drop,
+        on_drag_enter=_on_before_drag_enter,
+        on_drag_leave=_on_before_drag_leave,
+    )
 
     def _clear_before() -> None:
         row = _selected_row()

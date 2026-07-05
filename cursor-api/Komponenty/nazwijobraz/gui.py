@@ -70,6 +70,7 @@ try:
 except ImportError:
     _HAS_PIL_FOR_PREVIEW = False
 
+from Komponenty._shared.tkdnd_safe import register_drop_target
 from Komponenty._shared.window_geometry import (
     position_toplevel_screen_center,
     position_toplevel_screen_center_from_reqsize,
@@ -250,9 +251,7 @@ class App:
         )
         self.drop_label.pack(fill="x", **pad)
         self.drop_label.bind("<Button-1>", lambda _e: self._browse_files())
-        if _HAS_DND:
-            self.drop_label.drop_target_register(DND_FILES)  # type: ignore[attr-defined]
-            self.drop_label.dnd_bind("<<Drop>>", self._on_drop)  # type: ignore[attr-defined]
+        register_drop_target(self.drop_label, on_drop=self._on_drop)
 
         list_frame = ttk.LabelFrame(main, text="Kolejka plikow")
         self._list_frame = list_frame

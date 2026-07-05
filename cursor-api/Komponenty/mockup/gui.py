@@ -16,6 +16,7 @@ try:
 except ImportError:
     _HAS_DND = False
 
+from Komponenty._shared.tkdnd_safe import register_drop_target
 from Komponenty._shared.activity_log import append_activity
 from Komponenty._shared.activity_log_ui import open_activity_log_dialog
 from Komponenty._shared.help_dialog import show_help
@@ -249,9 +250,7 @@ class MockupApp:
         self._preview_canvas_image_id: int | None = None
         self._preview_photo: tk.PhotoImage | None = None
 
-        if _HAS_DND:
-            self.tree.drop_target_register(DND_FILES)
-            self.tree.dnd_bind("<<Drop>>", self._on_drop)
+        register_drop_target(self.tree, on_drop=self._on_drop)
 
         prog = ttk.Frame(main)
         prog.pack(fill="x", **pad)
