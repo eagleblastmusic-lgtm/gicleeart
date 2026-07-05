@@ -1,6 +1,6 @@
 {
   "name": "cursor-api",
-  "version": "1.26.3",
+  "version": "1.28.1",
   "license": "UNLICENSED",
   "scripts": {
     "shopify": "shopify",

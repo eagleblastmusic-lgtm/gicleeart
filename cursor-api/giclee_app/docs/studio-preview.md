@@ -1,6 +1,6 @@
-# GicleeApp Studio Preview (F3.2)
+# GicleeApp Studio Preview (F4.1)
 
-Hub: [`README.md`](README.md) · plan: [`../../docs/UI_REDESIGN_PLAN.md`](../../docs/UI_REDESIGN_PLAN.md)
+Hub: [`README.md`](README.md) · plan: [`../../docs/UI_REDESIGN_PLAN.md`](../../docs/UI_REDESIGN_PLAN.md) · tło: [`background-parity.md`](background-parity.md)
 
 **Studio Preview** to ciemny shell CustomTkinter obok klasycznego launchera. Nie zastępuje `launcher.py`.
 
@@ -47,8 +47,23 @@ python -m giclee_app
 | Launch subprocess / url | przez `launcher_delegate` (bez zmian F2) |
 | Git status | local-only: `.git` w `cursor-api`, opcjonalnie `HEAD` short |
 | GPT status | local-only: `Komponenty/integracjagpt/` + `.gpt_mirror/` (bez odczytu config) |
-| Polling / sync / backup / deploy | **brak** (F4) |
+| Polling / sync / backup / deploy | **brak** (poza zakresem Studio; sync/backup = klasyczny launcher) |
 | GitHub API / network / tokeny | **brak** |
+
+---
+
+## F4 — background parity foundation (F4.0 + F4.1)
+
+| Element | Stan |
+|---------|------|
+| Audit mapa tła | [`background-parity.md`](background-parity.md) — Tier 1–4 |
+| `studio/background_capabilities.py` | statyczna mapa `tldobio`, `stronaglowna` |
+| Badge „Tło” na karcie huba | tylko komponenty z capability |
+| Status read-only po kliknięciu | `Tło: <label> — <source_hint> (read-only)` |
+| Zapis / Shopify / sync / deploy | **brak** |
+| Panel tła / kreator | **F4.2+** (poza tym krokiem) |
+
+Tier 3 (`katalog`, `kontakt`, `faq`, `stronablogu`) — udokumentowany w audycie, **bez badge w F4.1**.
 
 ---
 
@@ -109,3 +124,4 @@ Checklista ręczna w Studio Preview — nie w CI.
 | `launcher_delegate.py` | subprocess/url only |
 | `studio/status_providers.py` | local Git/GPT |
 | `studio/state.py` | recent + pinned |
+| `studio/background_capabilities.py` | read-only mapa tła (F4.1) |

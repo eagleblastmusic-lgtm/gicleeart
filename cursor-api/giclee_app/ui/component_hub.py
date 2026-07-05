@@ -17,6 +17,7 @@ from giclee_app.launcher_delegate import (
     launch,
     open_component_folder,
 )
+from giclee_app.studio.background_capabilities import capability_for
 from giclee_app.studio.categories import category_label
 from giclee_app.studio.component_index import StudioComponentIndex
 from giclee_app.studio.state import StudioState
@@ -424,6 +425,9 @@ class ComponentHubView(ctk.CTkScrollableFrame):
 
     def _on_card_click(self, comp: Component) -> None:
         root = self.winfo_toplevel()
+        cap = capability_for(comp.folder_name)
+        if cap is not None and callable(self._on_status):
+            self._on_status(f"Tło: {cap.label} — {cap.source_hint} (read-only)")
         if comp.mode == "inline":
             if self._on_open_inline is not None:
                 self._on_open_inline(comp, self._category_id)

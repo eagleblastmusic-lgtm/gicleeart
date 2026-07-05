@@ -7,6 +7,7 @@ from collections.abc import Callable
 import customtkinter as ctk
 
 from giclee_app.component_loader import Component
+from giclee_app.studio.background_capabilities import capability_for
 
 from . import theme
 
@@ -136,6 +137,17 @@ class ComponentCard(ctk.CTkFrame):
             width=70,
             height=20,
         ).pack(side="left", padx=(0, 6))
+        if capability_for(comp.folder_name) is not None:
+            ctk.CTkLabel(
+                badges,
+                text="Tło",
+                font=theme.get_font(10),
+                text_color=theme.AccentGoldDim,
+                fg_color=theme.AppBg,
+                corner_radius=4,
+                width=36,
+                height=20,
+            ).pack(side="left", padx=(0, 6))
         if comp.hidden:
             ctk.CTkLabel(
                 badges,

@@ -1,6 +1,6 @@
 # GicleeApp UI Redesign Plan
 
-**Status:** Faza 3.2 — inline polish (cross-nav, stack, min resize).
+**Status:** Faza 4.1 — background parity foundation (audit + read-only awareness).
 
 ## Goal
 
@@ -62,10 +62,13 @@ Not in **`eagleblastmusic-lgtm/gicleeart-gpt`** (theme snapshot only).
 | F3.1 | Safer inline errors, build_view signature, optional resize | done |
 | F3.1.1 | Bearer sanitizer, geometry restore polish | done |
 | CI | GitHub Actions studio + security tests | done |
-| F3.2 | Cross-nav, inline stack, inline_min_*, breadcrumb | **current** |
-| F4 | Background parity (sync, backup, cykl) | planned |
+| F3.2 | Cross-nav, inline stack, inline_min_*, breadcrumb | done |
+| F3.2.1.1 | CTk minsize / geometry restore po inline | done |
+| F4 | Background parity foundation: audit + read-only Studio awareness | **current** |
+| F4.2+ | Panel shell tła, akcje parity (bez zapisu w pierwszym kroku) | planned |
 | F5 | Przełącznik domyślny (`GICLEE_STUDIO_UI`) | planned |
 | F6 | PyInstaller + CustomTkinter w `.exe` | planned |
+| F7 | Sync / backup / cykl produkcyjny w Studio (osobna faza systemowa) | planned |
 
 ## Architektura (F1)
 
@@ -76,7 +79,7 @@ giclee_app/
 ├── studio_preview.py        ← python -m giclee_app.studio_preview
 ├── launcher_delegate.py     ← subprocess/url only
 ├── ui/                      ← sidebar, topbar, dashboard, hub, inline_host
-├── studio/                  ← categories, status_providers, state
+├── studio/                  ← categories, status_providers, state, background_capabilities
 └── data/studio_categories.json
 ```
 
