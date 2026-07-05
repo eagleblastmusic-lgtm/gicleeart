@@ -1,0 +1,27 @@
+/*
+ * Strona główna: section-scroll — style towarzyszące giclee-home-section-scroll.js.
+ * Tylko subtelne osadzenie nagłówka po zatrzymaniu (headingSettle) — bez
+ * globalnego smooth-scroll i bez zmian layoutu.
+ */
+
+/* Miękkie osadzenie headingu po docku — jeden detal, 12px, bez opacity-flash */
+html.giclee-home-section-scroll .shopify-section.giclee-snap-settle .section-content-wrapper h1,
+html.giclee-home-section-scroll .shopify-section.giclee-snap-settle .section-content-wrapper h2 {
+  animation: giclee-snap-settle-heading 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes giclee-snap-settle-heading {
+  from {
+    transform: translateY(12px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.giclee-home-section-scroll .shopify-section.giclee-snap-settle .section-content-wrapper h1,
+  html.giclee-home-section-scroll .shopify-section.giclee-snap-settle .section-content-wrapper h2 {
+    animation: none;
+  }
+}

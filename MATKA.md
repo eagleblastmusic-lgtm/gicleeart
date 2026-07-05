@@ -25,6 +25,7 @@ Archiwum (czytaj sekcje, **nie pisz**): [`THEME_KNOWLEDGE.md`](THEME_KNOWLEDGE.m
 4. **Produkcja** — [`cursor-api/docs/komponenty/produkcja.md`](cursor-api/docs/komponenty/produkcja.md)
 5. **Księgowość / finanse** — hub `finanse` → [`cursor-api/docs/komponenty/finanse.md`](cursor-api/docs/komponenty/finanse.md)
 6. **Limity / poczta / Meta** — [`cursor-api/docs/komponenty/limity.md`](cursor-api/docs/komponenty/limity.md) · [`poczta.md`](cursor-api/docs/komponenty/poczta.md)
+7. **Strony menu (wygląd)** — GicleeApp → `gicleeframe`, `wlasnafotografia`, `katalog`, `wspolpraca`, `filozofiamarki`, `kontakt`, `stronablogu`, `faq`, `losujobraz` → [`cursor-api/docs/komponenty/README.md`](cursor-api/docs/komponenty/README.md) (wzorzec: `stronaglowna`)
 
 Problem → plik: tabela w [`docs/README.md`](docs/README.md#problem--gdzie).
 

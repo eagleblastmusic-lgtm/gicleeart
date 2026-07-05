@@ -1,0 +1,24 @@
+{
+  "snapshot_type": "local_working_tree_theme_snapshot",
+  "created_at": "2026-07-05T01:42:00Z",
+  "snapshot_commit": "6f6bc116b1a36cedb00d9910e8a98619912e33ae",
+  "review_goal": "",
+  "source_note": "Snapshot is copied from local working tree and may not match main repo or live theme.",
+  "changed_files": [
+    "assets/giclee-home-section-scroll.js",
+    "MATKA.md"
+  ],
+  "routes_recorded": [
+    "/"
+  ],
+  "recordings": {
+    "desktop": "docs/review-demos/latest-desktop.webm",
+    "mobile": "docs/review-demos/latest-mobile.webm"
+  },
+  "screenshots": {
+    "desktop": "docs/review-demos/latest-desktop.png",
+    "mobile": "docs/review-demos/latest-mobile.png"
+  },
+  "console_errors": "docs/review-demos/console-errors.txt",
+  "known_issues": []
+}

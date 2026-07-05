@@ -42,42 +42,11 @@
   }
 }
 
-/* Giclée Art — wjazd przy otwarciu strony głównej (CSS, nie scroll-reveal) */
-@keyframes giclee-home-intro-in {
-  from {
-    opacity: 1;
-    transform: translateY(28px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-html.giclee-home-intro-run .shopify-section[data-giclee-home='intro'] > .section-background,
-html.giclee-home-intro-run .shopify-section[data-giclee-home='intro'] > .section,
-html.giclee-home-intro-run .shopify-section[id*='section_ThWw4Q'] > .section-background,
-html.giclee-home-intro-run .shopify-section[id*='section_ThWw4Q'] > .section {
-  animation: giclee-home-intro-in 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-html.giclee-home-intro-run .shopify-section[data-giclee-home='intro'] > .section,
-html.giclee-home-intro-run .shopify-section[id*='section_ThWw4Q'] > .section {
-  animation-delay: 0.1s;
-}
-
+/* Homepage intro — scroll-reveal wyłączony w tej sekcji (treść od razu widoczna) */
 .shopify-section[data-giclee-home='intro'] > .scroll-reveal,
 .shopify-section[id*='section_ThWw4Q'] > .scroll-reveal {
   opacity: 1 !important;
   transform: none !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html.giclee-home-intro-run .shopify-section[data-giclee-home='intro'] > *,
-  html.giclee-home-intro-run .shopify-section[id*='section_ThWw4Q'] > * {
-    animation: none !important;
-    transform: none !important;
-  }
 }
 
 /* Homepage intro — mobile: tekst przed obrazem */
@@ -375,4 +344,27 @@ html.giclee-home-intro-run .shopify-section[id*='section_ThWw4Q'] > .section {
   box-shadow:
     inset 0 0 0 var(--button-border-width) var(--button-border-color),
     0 0 14px rgb(198 169 107 / 0.28);
+}
+
+/* Strona główna — przyciemnienie tła sekcji (ten sam gradient co Tło do Bio) */
+.giclee-section-bg-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 118% 96% at 50% 50%,
+      rgba(0, 0, 0, 0) 44%,
+      rgba(0, 0, 0, 0.22) 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.66) 0%,
+      rgba(0, 0, 0, 0.66) 28%,
+      rgba(0, 0, 0, 0.4) 52%,
+      rgba(0, 0, 0, 0.34) 72%,
+      rgba(0, 0, 0, 0.5) 100%
+    ),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.16) 0%, rgba(0, 0, 0, 0.56) 100%);
 }

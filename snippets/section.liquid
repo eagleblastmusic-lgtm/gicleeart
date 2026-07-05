@@ -36,6 +36,13 @@
       background_image: section.settings.background_image,
       background_image_position: section.settings.background_image_position
     %}
+    {%- if section.settings.background_media != 'none' and section.settings.background_overlay_pct > 0 -%}
+      <div
+        class="giclee-section-bg-overlay"
+        style="opacity: {{ section.settings.background_overlay_pct | times: 0.01 }};"
+        aria-hidden="true"
+      ></div>
+    {%- endif -%}
   </div>
 
   <div
@@ -90,6 +97,7 @@
 
   .custom-section-background {
     grid-column: 1 / -1;
+    position: relative;
   }
 
   .custom-section-content {

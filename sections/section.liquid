@@ -301,6 +301,17 @@
       "visible_if": "{{ section.settings.background_media == 'image' }}"
     },
     {
+      "type": "range",
+      "id": "background_overlay_pct",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "label": "Przyciemnienie tła",
+      "default": 0,
+      "visible_if": "{{ section.settings.background_media != 'none' }}"
+    },
+    {
       "type": "select",
       "id": "border",
       "label": "t:settings.borders",

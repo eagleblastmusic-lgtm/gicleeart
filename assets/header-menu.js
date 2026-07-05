@@ -81,11 +81,29 @@ class HeaderMenu extends Component {
     this.#lastPointer.x = event.clientX;
     this.#lastPointer.y = event.clientY;
 
-    const moving = Math.abs(event.movementX) >= 1 || event.movementY >= 1;
-    activeLink.dataset.safetyBox = `${moving}`;
+    const absX = Math.abs(event.movementX);
+    const absY = Math.abs(event.movementY);
+
+    const movingTowardSubmenu =
+      event.movementY > 0 &&
+      absY >= absX &&
+      absY >= 1;
+
+    const movingHorizontallyAcrossMenu =
+      absX > absY &&
+      absX >= 1;
+
+    if (movingHorizontallyAcrossMenu) {
+      activeLink.dataset.safetyBox = 'false';
+      clearTimeout(this.#pointerIdleTimer);
+      this.#reconcilePointerTarget();
+      return;
+    }
+
+    activeLink.dataset.safetyBox = movingTowardSubmenu ? 'true' : 'false';
 
     clearTimeout(this.#pointerIdleTimer);
-    if (moving) {
+    if (movingTowardSubmenu) {
       this.#pointerIdleTimer = setTimeout(() => {
         if (this.#state.activeItem) {
           this.#state.activeItem.dataset.safetyBox = 'false';

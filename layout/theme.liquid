@@ -6,7 +6,7 @@
   endif
 -%}
 <html
-  class="{%- if request.design_mode -%}shopify-design-mode {%- endif -%}{%- if giclee_skip_splash -%} giclee-home-intro-run{%- endif -%}"
+  class="{%- if request.design_mode -%}shopify-design-mode {%- endif -%}"
   lang="{{ request.locale.iso_code }}"
   {%- if giclee_skip_splash -%} data-giclee-skip-splash="1"{%- endif -%}
 >
@@ -17,7 +17,6 @@
         try {
           if (new URLSearchParams(window.location.search).get('giclee_skip_splash') === '1') {
             document.documentElement.dataset.gicleeSkipSplash = '1';
-            document.documentElement.classList.add('giclee-home-intro-run');
             return;
           }
         } catch (e) {}
@@ -43,9 +42,14 @@
 </style>
 
     {%- if request.page_type == 'index' -%}
+    {% render 'giclee-home-stack-critical' %}
     <script src="{{ 'giclee-home-sections.js' | asset_url }}" defer></script>
     <script src="{{ 'giclee-home-mobile.js' | asset_url }}" defer></script>
     <script src="{{ 'giclee-home-sections-boot.js' | asset_url }}" defer></script>
+    {{ 'giclee-home-stack.css' | asset_url | stylesheet_tag }}
+    <script src="{{ 'giclee-home-stack.js' | asset_url }}" defer></script>
+    {{ 'giclee-home-section-scroll.css' | asset_url | stylesheet_tag }}
+    <script src="{{ 'giclee-home-section-scroll.js' | asset_url }}" defer></script>
     <script src="{{ 'giclee-hero-video-collage.js' | asset_url }}" defer></script>
     <script src="{{ 'giclee-hero-video-collage-player.js' | asset_url }}" defer></script>
     {{ 'giclee-hero-video-collage.css' | asset_url | stylesheet_tag }}
@@ -1756,6 +1760,7 @@
   }, { threshold: 0.3 });
 
   document.querySelectorAll('.divider__line').forEach(el => {
+    if (el.closest('.giclee-home-stack-divider--scroll')) return;
     el.style.flexBasis = '0%';
     observer.observe(el);
   });
@@ -2609,17 +2614,6 @@ const interval = setInterval(function() {
         style.textContent = '.scroll-reveal{opacity:0;transform:translateY(28px);transition:opacity 0.75s cubic-bezier(0.16,1,0.3,1),transform 0.75s cubic-bezier(0.16,1,0.3,1)}.scroll-reveal.is-visible{opacity:1;transform:none}';
         document.head.appendChild(style);
 
-        if (pageType === 'index' && {{ request.design_mode | json }}) {
-          function bootHomeIntro() {
-            document.documentElement.classList.add('giclee-home-intro-run');
-          }
-          if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', bootHomeIntro);
-          } else {
-            bootHomeIntro();
-          }
-        }
-
         function initScrollReveal() {
           if (window.__gicleeScrollRevealInited) return;
           window.__gicleeScrollRevealInited = true;
@@ -2986,13 +2980,11 @@ const interval = setInterval(function() {
           var root = document.documentElement;
           root.classList.remove('splash-pending', 'splash-reveal', 'splash-reveal-active');
           root.dataset.gicleeSkipSplash = '1';
-          root.classList.add('giclee-home-intro-run');
           root.style.background = '';
           document.body.style.background = '';
           document.body.style.paddingRight = '';
           document.body.style.overflow = '';
           window.dispatchEvent(new CustomEvent('giclee:splash-done'));
-          if (window.gicleeInitScrollReveal) window.gicleeInitScrollReveal();
           return;
         }
       } catch (e) {}
@@ -3002,6 +2994,22 @@ const interval = setInterval(function() {
         if (!slideshow) return;
         slideshow.removeAttribute('autoplay');
         if (typeof slideshow.pause === 'function') slideshow.pause();
+      }
+
+      function whenStackReady(cb) {
+        if (!window.GICLEE_HOME_STACK) {
+          cb();
+          return;
+        }
+        if (document.documentElement.classList.contains('giclee-home-stack-ready')) {
+          cb();
+          return;
+        }
+        var fallbackTimer = setTimeout(cb, 4000);
+        window.addEventListener('giclee:home-stack-ready', function() {
+          clearTimeout(fallbackTimer);
+          cb();
+        }, { once: true });
       }
 
       function revealSite() {
@@ -3019,16 +3027,20 @@ const interval = setInterval(function() {
           window.dispatchEvent(new CustomEvent('giclee:splash-done'));
         }
 
-        pauseSlideshow();
-        root.classList.remove('splash-pending');
-        root.classList.add('splash-reveal');
-        void root.offsetHeight;
-        requestAnimationFrame(function() {
+        function startRevealFade() {
+          pauseSlideshow();
+          root.classList.remove('splash-pending');
+          root.classList.add('splash-reveal');
+          void root.offsetHeight;
           requestAnimationFrame(function() {
-            root.classList.add('splash-reveal-active', 'giclee-home-intro-run');
-            setTimeout(finishReveal, 1300);
+            requestAnimationFrame(function() {
+              root.classList.add('splash-reveal-active');
+              setTimeout(finishReveal, 1300);
+            });
           });
-        });
+        }
+
+        whenStackReady(startRevealFade);
       }
 
       function hideSplash() {
@@ -3058,14 +3070,6 @@ const interval = setInterval(function() {
 
       compensateScrollbar();
       pauseSlideshow();
-
-      window.addEventListener('pageshow', function(e) {
-        if (!e.persisted) return;
-        var root = document.documentElement;
-        root.classList.remove('giclee-home-intro-run');
-        void root.offsetHeight;
-        root.classList.add('giclee-home-intro-run');
-      });
 
       // Splash animation finishes at 1800ms (line: 0.9s delay + 0.9s = 1.8s)
       // Small hold then fade

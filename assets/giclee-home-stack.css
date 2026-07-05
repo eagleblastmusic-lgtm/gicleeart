@@ -1,0 +1,431 @@
+/*
+ * Strona główna (home3): warstwowy scroll-overlap — sticky + z-index.
+ * Wzorzec jak BIO → kolekcja / PDP v3: header pod treścią, kolejne sekcje jadą nad poprzednimi.
+ *
+ * Warstwy: header 10 → main 15 → sekcja 1 (hero) 20 → 2:30 → 3:40 → 4:50 → 5:60 → 6:70.
+ */
+
+html.giclee-home-stack {
+  --home-stack-header-z: 10;
+  --home-stack-main-z: 15;
+  --home-stack-1-z: 20;
+  --home-stack-2-z: 30;
+  --home-stack-3-z: 40;
+  --home-stack-4-z: 50;
+  --home-stack-5-z: 60;
+  --home-stack-6-z: 70;
+  --home-stack-divider-band: 16px;
+  --home-stack-seam-height: calc(var(--home-stack-divider-band, 16px) + 1px);
+}
+
+/* Menu: fade podczas najazdu hero (opacity z JS) */
+html.giclee-home-stack .header-section:has(> #header-component[sticky]) {
+  position: sticky !important;
+  top: 0 !important;
+}
+
+html.giclee-home-stack #header-component.giclee-header-scroll-fade {
+  opacity: var(--gab-header-fade-opacity, 1) !important;
+  will-change: opacity;
+  transition: opacity 0.08s linear;
+}
+
+html.giclee-home-stack #header-component[sticky] .header[data-sticky-state] {
+  opacity: 1 !important;
+  transition: none !important;
+}
+
+html.giclee-home-stack #header-group,
+html.giclee-home-stack .header-section,
+html.giclee-home-stack .header-section:has(> #header-component[sticky='always']),
+html.giclee-home-stack
+  .header-section:has(> #header-component[sticky='scroll-up'][data-sticky-state='active']),
+html.giclee-home-stack #header-component {
+  z-index: var(--home-stack-header-z) !important;
+}
+
+html.giclee-home-stack #MainContent.content-for-layout {
+  position: relative;
+  z-index: var(--home-stack-main-z);
+  overflow: visible;
+}
+
+/* Stopka ponad warstwami stack (max z-70 w main) */
+html.giclee-home-stack footer {
+  position: relative;
+  z-index: 80;
+}
+
+/* Separatory — ta sama warstwa z-index co następna sekcja, przewijają się razem z nią */
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider[data-giclee-home-stack='2'] {
+  position: relative;
+  z-index: var(--home-stack-2-z);
+  transform: translateZ(0);
+}
+
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider[data-giclee-home-stack='3'] {
+  position: relative;
+  z-index: var(--home-stack-3-z);
+  transform: translateZ(0);
+}
+
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider[data-giclee-home-stack='4'] {
+  position: relative;
+  z-index: var(--home-stack-4-z);
+  transform: translateZ(0);
+}
+
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider[data-giclee-home-stack='5'] {
+  position: relative;
+  z-index: var(--home-stack-5-z);
+  transform: translateZ(0);
+}
+
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider[data-giclee-home-stack='6'] {
+  position: relative;
+  z-index: var(--home-stack-6-z);
+  transform: translateZ(0);
+}
+
+/* Separatory scroll — seam (pas + linia) = góra nadjeżdżającej karty */
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll > .section-background {
+  background-color: #000;
+}
+
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll > .section {
+  background-color: #000;
+  overflow: hidden;
+}
+
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll .divider.spacing-style {
+  padding-block-start: var(--home-stack-divider-band, 16px) !important;
+  padding-block-end: 0 !important;
+  align-items: flex-end;
+}
+
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll[data-giclee-home-stack='2'],
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll[data-giclee-home-stack='3'],
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll[data-giclee-home-stack='4'],
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll[data-giclee-home-stack='5'],
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll[data-giclee-home-stack='6'] {
+  position: relative;
+  transform: none;
+  background-color: #000;
+  margin: 0;
+  overflow: visible;
+  min-height: var(--home-stack-seam-height);
+  max-height: var(--home-stack-seam-height);
+}
+
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll[data-giclee-home-stack='2'] {
+  z-index: calc(var(--home-stack-2-z) + 1);
+}
+
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll[data-giclee-home-stack='3'] {
+  z-index: calc(var(--home-stack-3-z) + 1);
+}
+
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll[data-giclee-home-stack='4'] {
+  z-index: calc(var(--home-stack-4-z) + 1);
+}
+
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll[data-giclee-home-stack='5'] {
+  z-index: calc(var(--home-stack-5-z) + 1);
+}
+
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll[data-giclee-home-stack='6'] {
+  z-index: calc(var(--home-stack-6-z) + 1);
+}
+
+/* Ten sam poślizg co karta — na dzieciach, nie na wrapperze */
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll > .section-background,
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll > .section {
+  transform: translate3d(0, var(--home-stack-slip-y, 0px), 0);
+  backface-visibility: hidden;
+}
+
+/* Hero→Giclée: linia pełna od startu */
+html.giclee-home-stack .giclee-home-stack-divider--scroll[data-giclee-home-stack='2'] .divider__line {
+  --home-stack-divider-scale: 1;
+}
+
+html.giclee-home-stack .giclee-home-stack-divider--scroll .divider__line {
+  flex-basis: var(--divider-flex-basis, 100%) !important;
+  min-height: 0 !important;
+  height: var(--divider-border-thickness, 1px);
+  border: none !important;
+  background-color: var(--color-border, rgba(255, 255, 255, 0.35));
+  animation: none !important;
+  opacity: 1;
+  --home-stack-divider-scale: 0;
+  transform: scaleX(var(--home-stack-divider-scale, 0));
+  transform-origin: center center;
+  transition: none;
+}
+
+html.giclee-home-stack .giclee-home-stack-divider--scroll .divider__line::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* ── Warstwy 1–6: sticky, rosnący z-index ── */
+
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='1']:not(.giclee-home-stack-divider) {
+  position: sticky;
+  top: 0;
+  z-index: var(--home-stack-1-z);
+  overflow: hidden;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='2']:not(.giclee-home-stack-divider) {
+  position: sticky;
+  top: 0;
+  z-index: var(--home-stack-2-z);
+  overflow: hidden;
+  min-height: 100svh;
+  margin-top: calc(-1 * var(--home-stack-seam-height));
+  backface-visibility: hidden;
+}
+
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='3']:not(.giclee-home-stack-divider) {
+  position: sticky;
+  top: 0;
+  z-index: var(--home-stack-3-z);
+  overflow: hidden;
+  min-height: 100svh;
+  margin-top: calc(-1 * var(--home-stack-seam-height));
+  backface-visibility: hidden;
+}
+
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='4']:not(.giclee-home-stack-divider) {
+  position: sticky;
+  top: 0;
+  z-index: var(--home-stack-4-z);
+  overflow: hidden;
+  min-height: 100svh;
+  margin-top: calc(-1 * var(--home-stack-seam-height));
+  backface-visibility: hidden;
+}
+
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='5']:not(.giclee-home-stack-divider) {
+  position: sticky;
+  top: 0;
+  z-index: var(--home-stack-5-z);
+  overflow: hidden;
+  min-height: 100svh;
+  margin-top: calc(-1 * var(--home-stack-seam-height));
+  backface-visibility: hidden;
+}
+
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='6']:not(.giclee-home-stack-divider) {
+  position: sticky;
+  top: 0;
+  z-index: var(--home-stack-6-z);
+  overflow: hidden;
+  min-height: auto;
+  margin-top: calc(-1 * var(--home-stack-seam-height));
+  backface-visibility: hidden;
+}
+
+html.giclee-home-stack .shopify-section[data-giclee-home-stack]:not(.giclee-home-stack-divider) > .section-background {
+  z-index: 0;
+}
+
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='2']:not(.giclee-home-stack-divider) > .section,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='3']:not(.giclee-home-stack-divider) > .section,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='4']:not(.giclee-home-stack-divider) > .section,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='5']:not(.giclee-home-stack-divider) > .section,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='6']:not(.giclee-home-stack-divider) > .section {
+  padding-top: var(--home-stack-seam-height);
+  box-sizing: border-box;
+}
+
+html.giclee-home-stack .shopify-section[data-giclee-home-stack]:not(.giclee-home-stack-divider) > .section {
+  position: relative;
+  z-index: 1;
+}
+
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider > .section-background {
+  z-index: 0;
+}
+
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider > .section {
+  position: relative;
+  z-index: 1;
+}
+
+/* Poślizg kart — ten sam offset co separator (--scroll): tło schematu + treść */
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='2']:not(.giclee-home-stack-divider) > .section-background,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='2']:not(.giclee-home-stack-divider) > .section,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='3']:not(.giclee-home-stack-divider) > .section-background,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='3']:not(.giclee-home-stack-divider) > .section,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='4']:not(.giclee-home-stack-divider) > .section-background,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='4']:not(.giclee-home-stack-divider) > .section,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='5']:not(.giclee-home-stack-divider) > .section-background,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='5']:not(.giclee-home-stack-divider) > .section,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='6']:not(.giclee-home-stack-divider) > .section-background,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='6']:not(.giclee-home-stack-divider) > .section {
+  transform: translate3d(0, var(--home-stack-slip-y, 0px), 0);
+}
+
+/* Kurtyna poślizgu — wrapper bez transformu; zakrywa lukę nad przesuniętymi dziećmi */
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='2']:not(.giclee-home-stack-divider)::after,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='3']:not(.giclee-home-stack-divider)::after,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='4']:not(.giclee-home-stack-divider)::after,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='5']:not(.giclee-home-stack-divider)::after,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='6']:not(.giclee-home-stack-divider)::after,
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll[data-giclee-home-stack='2']::after,
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll[data-giclee-home-stack='3']::after,
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll[data-giclee-home-stack='4']::after,
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll[data-giclee-home-stack='5']::after,
+html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll[data-giclee-home-stack='6']::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--home-stack-slip-y, 0px);
+  background: #000;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Grafika / wideo tła — pełny bleed; pod spodem zawsze czarne > .section-background */
+html.giclee-home-stack .shopify-section[data-giclee-home-stack]:not(.giclee-home-stack-divider)
+  > .section:has(.background-image-container, video-background-component)
+  .custom-section-background {
+  position: absolute;
+  inset: 0;
+  grid-column: 1 / -1;
+  z-index: 0;
+  pointer-events: none;
+  background-color: #000;
+}
+
+/* Cień u góry warstw 2–6 — poniżej seam (pas + linia) */
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='2']:not(.giclee-home-stack-divider) > .section::before,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='3']:not(.giclee-home-stack-divider) > .section::before,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='4']:not(.giclee-home-stack-divider) > .section::before,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='5']:not(.giclee-home-stack-divider) > .section::before,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='6']:not(.giclee-home-stack-divider) > .section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: clamp(
+    12px,
+    calc(2.5vh + var(--home-stack-over-depth, 0) * 5vh),
+    40px
+  );
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, calc(0.28 + var(--home-stack-over-depth, 0) * 0.38)),
+    transparent
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Hero slideshow — pełne tło pod menu przy najezdzie */
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='1']:not(.giclee-home-stack-divider) > .section-background {
+  background-color: #000;
+}
+
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='2']:not(.giclee-home-stack-divider) > .section-background,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='3']:not(.giclee-home-stack-divider) > .section-background,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='4']:not(.giclee-home-stack-divider) > .section-background,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='5']:not(.giclee-home-stack-divider) > .section-background,
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='6']:not(.giclee-home-stack-divider) > .section-background {
+  background-color: #000;
+}
+
+/* Sekcja zakrywana — blur + fade mediów i treści; czarna baza (> .section-background) zostaje opaque */
+html.giclee-home-stack .shopify-section.is-stack-under-dim:not(.giclee-home-stack-divider) {
+  --home-stack-under-dim: 0;
+}
+
+html.giclee-home-stack .shopify-section.is-stack-under-dim:not(.giclee-home-stack-divider) > .section .background-image-container,
+html.giclee-home-stack .shopify-section.is-stack-under-dim:not(.giclee-home-stack-divider) > .section video-background-component,
+html.giclee-home-stack .shopify-section.is-stack-under-dim:not(.giclee-home-stack-divider) > .section .section-content-wrapper,
+html.giclee-home-stack .shopify-section.is-stack-under-dim:not(.giclee-home-stack-divider) > .slideshow-section slideshow-slides {
+  filter: blur(calc(var(--home-stack-under-dim, 0) * 14px));
+  opacity: calc(1 - var(--home-stack-under-dim, 0) * 0.72);
+  will-change: filter, opacity;
+  transition: none;
+}
+
+@media screen and (max-width: 749px) {
+  html.giclee-home-stack .shopify-section[data-giclee-home-stack]:not(.giclee-home-stack-divider) {
+    overflow: visible;
+  }
+
+  html.giclee-home-stack .shopify-section.is-stack-under-dim:not(.giclee-home-stack-divider) > .section .background-image-container,
+  html.giclee-home-stack .shopify-section.is-stack-under-dim:not(.giclee-home-stack-divider) > .section video-background-component,
+  html.giclee-home-stack .shopify-section.is-stack-under-dim:not(.giclee-home-stack-divider) > .section .section-content-wrapper,
+  html.giclee-home-stack .shopify-section.is-stack-under-dim:not(.giclee-home-stack-divider) > .slideshow-section slideshow-slides {
+    filter: blur(calc(var(--home-stack-under-dim, 0) * 8px));
+    opacity: calc(1 - var(--home-stack-under-dim, 0) * 0.5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.giclee-home-stack .shopify-section[data-giclee-home-stack]:not(.giclee-home-stack-divider) {
+    transform: none;
+  }
+
+  html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll {
+    transform: none;
+  }
+
+  html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll > .section-background,
+  html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll > .section,
+  html.giclee-home-stack .shopify-section[data-giclee-home-stack='2']:not(.giclee-home-stack-divider) > .section-background,
+  html.giclee-home-stack .shopify-section[data-giclee-home-stack='2']:not(.giclee-home-stack-divider) > .section,
+  html.giclee-home-stack .shopify-section[data-giclee-home-stack='3']:not(.giclee-home-stack-divider) > .section-background,
+  html.giclee-home-stack .shopify-section[data-giclee-home-stack='3']:not(.giclee-home-stack-divider) > .section,
+  html.giclee-home-stack .shopify-section[data-giclee-home-stack='4']:not(.giclee-home-stack-divider) > .section-background,
+  html.giclee-home-stack .shopify-section[data-giclee-home-stack='4']:not(.giclee-home-stack-divider) > .section,
+  html.giclee-home-stack .shopify-section[data-giclee-home-stack='5']:not(.giclee-home-stack-divider) > .section-background,
+  html.giclee-home-stack .shopify-section[data-giclee-home-stack='5']:not(.giclee-home-stack-divider) > .section,
+  html.giclee-home-stack .shopify-section[data-giclee-home-stack='6']:not(.giclee-home-stack-divider) > .section-background,
+  html.giclee-home-stack .shopify-section[data-giclee-home-stack='6']:not(.giclee-home-stack-divider) > .section {
+    transform: none;
+  }
+
+  html.giclee-home-stack .shopify-section[data-giclee-home-stack] {
+    --home-stack-slip-y: 0px;
+  }
+
+  html.giclee-home-stack .shopify-section.is-stack-under-dim:not(.giclee-home-stack-divider) > .section .background-image-container,
+  html.giclee-home-stack .shopify-section.is-stack-under-dim:not(.giclee-home-stack-divider) > .section video-background-component,
+  html.giclee-home-stack .shopify-section.is-stack-under-dim:not(.giclee-home-stack-divider) > .section .section-content-wrapper,
+  html.giclee-home-stack .shopify-section.is-stack-under-dim:not(.giclee-home-stack-divider) > .slideshow-section slideshow-slides {
+    filter: none;
+    opacity: 1;
+  }
+
+  html.giclee-home-stack .shopify-section[data-giclee-home-stack='2']:not(.giclee-home-stack-divider)::after,
+  html.giclee-home-stack .shopify-section[data-giclee-home-stack='3']:not(.giclee-home-stack-divider)::after,
+  html.giclee-home-stack .shopify-section[data-giclee-home-stack='4']:not(.giclee-home-stack-divider)::after,
+  html.giclee-home-stack .shopify-section[data-giclee-home-stack='5']:not(.giclee-home-stack-divider)::after,
+  html.giclee-home-stack .shopify-section[data-giclee-home-stack='6']:not(.giclee-home-stack-divider)::after,
+  html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll[data-giclee-home-stack='2']::after,
+  html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll[data-giclee-home-stack='3']::after,
+  html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll[data-giclee-home-stack='4']::after,
+  html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll[data-giclee-home-stack='5']::after,
+  html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll[data-giclee-home-stack='6']::after {
+    height: 0;
+  }
+
+  html.giclee-home-stack .giclee-home-stack-divider--scroll .divider__line {
+    --home-stack-divider-scale: 1;
+    transform: scaleX(1);
+  }
+
+  html.giclee-home-stack #header-component.giclee-header-scroll-fade {
+    transition: none;
+  }
+}

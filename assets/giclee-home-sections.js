@@ -1,1 +1,3 @@
 window.GICLEE_HOME_SECTIONS = {"hero": "slideshow_4LMfx7", "intro": "section_ThWw4Q", "restoration": "section_XwRNDp", "color-correction": "section_bj9cY3", "potential": "section_p9Kcm6", "see-difference": "section_P9LgB3"};
+window.GICLEE_HOME_STACK = true;
+window.GICLEE_HOME_SCROLL_CONFIG = {"enabled": true, "desktopEnabled": true, "mobileMode": "native", "minDuration": 650, "maxDuration": 1050, "wheelThreshold": 60, "touchThreshold": 48, "headerOffset": null, "headerOffsetExtra": 24, "separatorOffset": 8, "motionDynamics": 32, "reducedMotionMode": "instant", "headingSettle": true, "debug": false};

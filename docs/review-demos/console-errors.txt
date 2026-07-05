@@ -1,0 +1,9 @@
+[error] Failed to load resource: the server responded with a status of 400 ()
+[error] [shopify-account] Menu "customer-account-main-menu" not found in Storefront API. Falling back to default menu items.
+[error] Failed to load resource: the server responded with a status of 403 ()
+[error] Failed to load resource: the server responded with a status of 400 ()
+[error] [shopify-account] Menu "customer-account-main-menu" not found in Storefront API. Falling back to default menu items.
+[error] Failed to load resource: the server responded with a status of 403 ()
+[warning] The resource http://127.0.0.1:9292/cdn/shop/t/58/assets/MALE_ORG.webp?v=48313936686624236061783015727 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+[warning] The resource http://127.0.0.1:9292/cdn/shop/t/58/assets/MALE_ORG.webp?v=48313936686624236061783015727 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+[warning] The resource http://127.0.0.1:9292/cdn/shop/t/58/assets/MALE_ORG.webp?v=48313936686624236061783015727 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
