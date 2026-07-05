@@ -9,6 +9,7 @@ import customtkinter as ctk
 from giclee_app import __version__
 from giclee_app.studio.categories import category_label
 from giclee_app.studio.component_index import StudioComponentIndex
+from giclee_app.studio.state import StudioState
 
 from .ui.component_hub import ComponentHubView
 from .ui.dashboard import DashboardView
@@ -23,6 +24,9 @@ class GicleeAppStudio(ctk.CTk):
     def __init__(self) -> None:
         super().__init__()
         self._component_index = StudioComponentIndex.build()
+        self._studio_state = StudioState.load()
+        if self._studio_state.prune(self._component_index.by_folder.keys()):
+            self._studio_state.save()
 
         self.title(f"{theme.APP_TITLE} · v{__version__} · {theme.PREVIEW_BADGE}")
         self.configure(fg_color=theme.AppBg)
@@ -96,6 +100,8 @@ class GicleeAppStudio(ctk.CTk):
             lambda: DashboardView(
                 self._content,
                 component_index=self._component_index,
+                studio_state=self._studio_state,
+                on_status=self._set_status,
             ),
         )
 
@@ -111,6 +117,7 @@ class GicleeAppStudio(ctk.CTk):
                 self._content,
                 category_id=cid,
                 component_index=self._component_index,
+                studio_state=self._studio_state,
                 on_status=self._set_status,
             ),
         )

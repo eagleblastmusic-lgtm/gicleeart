@@ -1,9 +1,10 @@
-"""Centrum komponentów — wyszukiwarka i karty."""
+"""Centrum komponentów — wyszukiwarka, filtry, karty, PPM."""
 
 from __future__ import annotations
 
 import tkinter as tk
 from collections.abc import Callable
+from pathlib import Path
 from tkinter import messagebox
 
 import customtkinter as ctk
@@ -12,11 +13,13 @@ from giclee_app.component_loader import Component
 from giclee_app.launcher_delegate import (
     INLINE_MESSAGE,
     LaunchOutcome,
+    component_log_path,
     launch,
     open_component_folder,
 )
 from giclee_app.studio.categories import category_label
 from giclee_app.studio.component_index import StudioComponentIndex
+from giclee_app.studio.state import StudioState
 
 from . import theme
 from .widgets import ComponentCard, SectionHeader
@@ -28,7 +31,10 @@ _SKELETON_COUNT = 6
 _GRID_COLS = 3
 _LOADING_TEXT = "Ładowanie komponentów…"
 _PREPARE_TEXT = "Przygotowuję widok…"
-_EMPTY_TEXT = "Brak komponentów w tej kategorii."
+_EMPTY_CATEGORY_TEXT = "Brak komponentów w tej kategorii."
+_EMPTY_FILTER_TEXT = "Filtr nie znalazł komponentów."
+_MODE_FILTERS = ("all", "subprocess", "url", "inline")
+_LOG_TAIL_LINES = 40
 
 
 class ComponentHubView(ctk.CTkScrollableFrame):
@@ -38,13 +44,16 @@ class ComponentHubView(ctk.CTkScrollableFrame):
         *,
         category_id: str = "products",
         component_index: StudioComponentIndex | None = None,
+        studio_state: StudioState | None = None,
         on_status: Callable[[str], None] | None = None,
     ) -> None:
         super().__init__(master, fg_color=theme.AppBg, corner_radius=0)
         self._category_id = category_id
         self._component_index = component_index
+        self._studio_state = studio_state
         self._on_status = on_status
         self._search_var = tk.StringVar()
+        self._mode_filter = tk.StringVar(value="all")
         self._search_debounce_id: str | None = None
         self._grid_frame: ctk.CTkFrame | None = None
         self._header_count: ctk.CTkLabel | None = None
@@ -74,7 +83,7 @@ class ComponentHubView(ctk.CTkScrollableFrame):
         self._header_count.pack(side="left", padx=(12, 0), pady=4)
 
         search_row = ctk.CTkFrame(self, fg_color="transparent")
-        search_row.pack(fill="x", padx=24, pady=(0, 12))
+        search_row.pack(fill="x", padx=24, pady=(0, 8))
         ctk.CTkEntry(
             search_row,
             placeholder_text="Szukaj po nazwie, opisie, folderze…",
@@ -82,7 +91,27 @@ class ComponentHubView(ctk.CTkScrollableFrame):
             height=36,
             fg_color=theme.PanelBg,
             border_color=theme.BorderSubtle,
-        ).pack(fill="x")
+        ).pack(side="left", fill="x", expand=True, padx=(0, 8))
+
+        filter_row = ctk.CTkFrame(self, fg_color="transparent")
+        filter_row.pack(fill="x", padx=24, pady=(0, 12))
+        ctk.CTkLabel(
+            filter_row,
+            text="Tryb:",
+            font=theme.get_font(11),
+            text_color=theme.TextMuted,
+        ).pack(side="left", padx=(0, 8))
+        self._mode_menu = ctk.CTkOptionMenu(
+            filter_row,
+            values=list(_MODE_FILTERS),
+            variable=self._mode_filter,
+            width=120,
+            height=28,
+            fg_color=theme.PanelBg,
+            button_color=theme.CardHover,
+            command=self._on_mode_filter_changed,
+        )
+        self._mode_menu.pack(side="left")
 
         self._search_var.trace_add("write", self._on_search_changed)
 
@@ -97,7 +126,7 @@ class ComponentHubView(ctk.CTkScrollableFrame):
         )
         self._empty_label = ctk.CTkLabel(
             self._grid_frame,
-            text=_EMPTY_TEXT,
+            text=_EMPTY_CATEGORY_TEXT,
             text_color=theme.TextMuted,
         )
         for i in range(_GRID_COLS):
@@ -190,6 +219,9 @@ class ComponentHubView(ctk.CTkScrollableFrame):
             self._category_components = components_for_category(category_id, include_hidden=True)
         self._search_var.set("")
 
+    def _on_mode_filter_changed(self, _value: str) -> None:
+        self._apply_filter_grid()
+
     def _on_search_changed(self, *_args: object) -> None:
         if self._search_debounce_id is not None:
             try:
@@ -281,6 +313,7 @@ class ComponentHubView(ctk.CTkScrollableFrame):
                 comp,
                 on_click=self._on_card_click,
                 on_right_click=self._on_card_right,
+                pinned=self._is_pinned(comp.folder_name),
             )
             self._cards[comp.folder_name] = card
             card.grid_remove()
@@ -306,16 +339,27 @@ class ComponentHubView(ctk.CTkScrollableFrame):
         self._show_skeleton(False)
         self._apply_filter_grid(gen)
 
+    def _is_pinned(self, folder_name: str) -> bool:
+        if self._studio_state is None:
+            return False
+        return self._studio_state.is_pinned(folder_name)
+
     def _filtered_components(self) -> list[Component]:
+        comps = list(self._category_components)
+        mode = self._mode_filter.get().strip().lower()
+        if mode and mode != "all":
+            comps = [c for c in comps if c.mode == mode]
         q = self._search_var.get().strip().lower()
-        if not q:
-            return self._category_components
-        out: list[Component] = []
-        for c in self._category_components:
-            hay = f"{c.name} {c.description} {c.folder_name}".lower()
-            if q in hay:
-                out.append(c)
-        return out
+        if q:
+            out: list[Component] = []
+            for c in comps:
+                hay = f"{c.name} {c.description} {c.folder_name}".lower()
+                if q in hay:
+                    out.append(c)
+            comps = out
+        if self._studio_state is not None:
+            comps = self._studio_state.sorted_components(comps)
+        return comps
 
     def _apply_filter_grid(self, gen: int | None = None, *, partial: bool = False) -> None:
         if gen is not None and gen != self._render_generation:
@@ -343,6 +387,11 @@ class ComponentHubView(ctk.CTkScrollableFrame):
                     card.grid_remove()
                 self._show_skeleton(False)
                 self._show_empty(True)
+                if self._empty_label is not None:
+                    if not self._category_components:
+                        self._empty_label.configure(text=_EMPTY_CATEGORY_TEXT)
+                    else:
+                        self._empty_label.configure(text=_EMPTY_FILTER_TEXT)
             return
 
         self._show_empty(False)
@@ -364,10 +413,83 @@ class ComponentHubView(ctk.CTkScrollableFrame):
     def _on_card_click(self, comp: Component) -> None:
         root = self.winfo_toplevel()
         result = launch(comp, on_status=self._on_status)
-        if result.outcome == LaunchOutcome.BLOCKED_INLINE:
+        if result.outcome == LaunchOutcome.OK:
+            if self._studio_state is not None:
+                self._studio_state.record_launch(comp)
+                self._studio_state.save()
+                self._apply_filter_grid()
+        elif result.outcome == LaunchOutcome.BLOCKED_INLINE:
             messagebox.showinfo(comp.name, INLINE_MESSAGE, parent=root)
         elif result.outcome in (LaunchOutcome.ERROR, LaunchOutcome.NO_PYTHON, LaunchOutcome.NO_URL):
             messagebox.showerror(comp.name, result.message, parent=root)
 
-    def _on_card_right(self, comp: Component, _event: object) -> None:
-        open_component_folder(comp)
+    @staticmethod
+    def _read_log_tail(path: Path, max_lines: int = _LOG_TAIL_LINES) -> str:
+        if not path.is_file():
+            return "Brak pliku logu dla tego komponentu."
+        try:
+            lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+            if not lines:
+                return "(pusty log)"
+            return "\n".join(lines[-max_lines:])
+        except OSError as exc:
+            return f"Nie można odczytać logu: {exc}"
+
+    def _show_log_dialog(self, comp: Component) -> None:
+        root = self.winfo_toplevel()
+        text = self._read_log_tail(component_log_path(comp))
+        win = ctk.CTkToplevel(root)
+        win.title(f"Log — {comp.name}")
+        win.geometry("640x360")
+        box = ctk.CTkTextbox(
+            win,
+            font=theme.get_font(10, family=theme.FontMono[0]),
+            fg_color=theme.PanelBg,
+        )
+        box.pack(fill="both", expand=True, padx=12, pady=12)
+        box.insert("1.0", text)
+        box.configure(state="disabled")
+
+    def _copy_module_path(self, comp: Component) -> None:
+        root = self.winfo_toplevel()
+        module = f"Komponenty.{comp.folder_name}"
+        try:
+            root.clipboard_clear()
+            root.clipboard_append(module)
+            if callable(self._on_status):
+                self._on_status(f"Skopiowano: {module}")
+        except tk.TclError:
+            messagebox.showinfo(comp.name, module, parent=root)
+
+    def _toggle_pin(self, comp: Component) -> None:
+        if self._studio_state is None:
+            return
+        pinned = self._studio_state.toggle_pin(comp.folder_name)
+        self._studio_state.save()
+        card = self._cards.get(comp.folder_name)
+        if card is not None:
+            card.set_pinned(pinned)
+        self._apply_filter_grid()
+
+    def _on_card_right(self, comp: Component, event: object) -> None:
+        root = self.winfo_toplevel()
+        menu = tk.Menu(root, tearoff=0)
+        menu.add_command(label="Uruchom", command=lambda: self._on_card_click(comp))
+        menu.add_command(label="Otwórz folder", command=lambda: open_component_folder(comp))
+        menu.add_command(label="Pokaż log", command=lambda: self._show_log_dialog(comp))
+        menu.add_command(label="Kopiuj moduł", command=lambda: self._copy_module_path(comp))
+        pin_label = "Odepnij" if self._is_pinned(comp.folder_name) else "Przypnij"
+        menu.add_command(label=pin_label, command=lambda: self._toggle_pin(comp))
+        if comp.mode == "inline":
+            menu.add_separator()
+            menu.add_command(
+                label="Inline (F3)",
+                command=lambda: messagebox.showinfo(comp.name, INLINE_MESSAGE, parent=root),
+            )
+        try:
+            if hasattr(event, "x_root") and hasattr(event, "y_root"):
+                menu.tk_popup(int(event.x_root), int(event.y_root))  # type: ignore[attr-defined]
+            else:
+                menu.tk_popup(root.winfo_pointerx(), root.winfo_pointery())
+        finally:
+            menu.grab_release()

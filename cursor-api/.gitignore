@@ -60,6 +60,8 @@ Komponenty/stronyzobrazami/data/cache/
 
 # Logi komponentow (stdout/stderr przekierowany przez launcher)
 /logs/
+giclee_app/logs/studio_state.json
+giclee_app/logs/*.log
 
 # FX cache (regeneruje sie z NBP)
 Komponenty/_shared/data/fx_cache.json

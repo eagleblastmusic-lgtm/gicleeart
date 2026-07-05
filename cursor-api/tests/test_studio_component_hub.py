@@ -139,3 +139,59 @@ def test_hub_cards_not_recreated_on_filter() -> None:
             assert init_count == built_count
     finally:
         root.destroy()
+
+
+def test_hub_has_mode_filter_and_sort() -> None:
+    path = Path(__file__).resolve().parents[1] / "giclee_app" / "ui" / "component_hub.py"
+    text = path.read_text(encoding="utf-8")
+    assert "_mode_filter" in text
+    assert "sorted_components" in text
+    assert "_EMPTY_FILTER_TEXT" in text
+    assert "_EMPTY_CATEGORY_TEXT" in text
+
+
+def test_pin_toggle_does_not_rebuild_card_cache() -> None:
+    import customtkinter as ctk
+
+    from giclee_app.studio.state import StudioState
+    from giclee_app.ui.component_hub import ComponentHubView
+
+    ctk.set_appearance_mode("dark")
+    root = ctk.CTk()
+    root.withdraw()
+    init_count = 0
+    from giclee_app.ui import widgets
+
+    original_init = widgets.ComponentCard.__init__
+
+    def counting_init(self, *args, **kwargs):  # noqa: ANN001, ANN002
+        nonlocal init_count
+        init_count += 1
+        return original_init(self, *args, **kwargs)
+
+    try:
+        with patch.object(widgets.ComponentCard, "__init__", counting_init):
+            idx = StudioComponentIndex.build()
+            products = idx.components_for_category("products")
+            assert products
+            comp = products[0]
+            state = StudioState()
+            hub = ComponentHubView(
+                root,
+                category_id="products",
+                component_index=idx,
+                studio_state=state,
+            )
+            hub.on_show()
+            deadline = time.time() + 5.0
+            while not hub._cards_fully_built and time.time() < deadline:
+                root.update_idletasks()
+                root.update()
+            built = init_count
+            hub._toggle_pin(comp)
+            root.update_idletasks()
+            root.update()
+            assert init_count == built
+            assert state.is_pinned(comp.folder_name)
+    finally:
+        root.destroy()

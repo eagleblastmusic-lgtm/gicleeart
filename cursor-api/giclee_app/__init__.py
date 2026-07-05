@@ -6,4 +6,4 @@ w `cursor-api/Komponenty/`. Klikniecie kafelka odpala komponent jako osobny proc
 """
 
 # Trzymaj zgodne z `cursor-api/package.json` (wersja aplikacji desktop).
-__version__ = "1.26.3"
+__version__ = "1.27.0"

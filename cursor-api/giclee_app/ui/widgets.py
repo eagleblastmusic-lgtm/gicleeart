@@ -61,6 +61,7 @@ class ComponentCard(ctk.CTkFrame):
         *,
         on_click: Callable[[Component], None],
         on_right_click: Callable[[Component, object], None] | None = None,
+        pinned: bool = False,
     ) -> None:
         super().__init__(
             master,
@@ -76,6 +77,7 @@ class ComponentCard(ctk.CTkFrame):
         self._on_right_click = on_right_click
         self._normal_bg = theme.CardBg
         self._hover_bg = theme.CardHover
+        self._pin_label: ctk.CTkLabel | None = None
 
         accent = ctk.CTkFrame(
             master=self, width=theme.CardAccentWidth, fg_color=comp.color, corner_radius=0,
@@ -88,6 +90,7 @@ class ComponentCard(ctk.CTkFrame):
 
         title_row = ctk.CTkFrame(body, fg_color="transparent")
         title_row.pack(fill="x")
+        self._title_row = title_row
         if comp.icon:
             ctk.CTkLabel(
                 title_row, text=comp.icon, font=theme.get_font(18), width=28,
@@ -99,6 +102,14 @@ class ComponentCard(ctk.CTkFrame):
             text_color=theme.TextPrimary,
             anchor="w",
         ).pack(side="left", fill="x", expand=True)
+        if pinned:
+            self._pin_label = ctk.CTkLabel(
+                title_row,
+                text="📌",
+                font=theme.get_font(12),
+                width=20,
+            )
+            self._pin_label.pack(side="right")
 
         desc = (comp.description or "")[:120]
         if len(comp.description or "") > 120:
@@ -162,6 +173,19 @@ class ComponentCard(ctk.CTkFrame):
                 break
             w = w.master  # type: ignore[attr-defined]
 
+    def set_pinned(self, pinned: bool) -> None:
+        if pinned and self._pin_label is None:
+            self._pin_label = ctk.CTkLabel(
+                self._title_row,
+                text="📌",
+                font=theme.get_font(12),
+                width=20,
+            )
+            self._pin_label.pack(side="right")
+        elif not pinned and self._pin_label is not None:
+            self._pin_label.destroy()
+            self._pin_label = None
+
     def _handle_click(self, _event: object) -> None:
         self._on_click(self._comp)
 
@@ -195,13 +219,17 @@ class StatCard(ctk.CTkFrame):
             text_color=theme.TextMuted,
             anchor="w",
         ).pack(fill="x", padx=14, pady=(12, 0))
-        ctk.CTkLabel(
+        self._value_label = ctk.CTkLabel(
             self,
             text=value,
             font=theme.get_font(22 if not muted else 18, "bold", brand=not muted),
             text_color=theme.TextMuted if muted else theme.TextPrimary,
             anchor="w",
-        ).pack(fill="x", padx=14, pady=(4, 12))
+        )
+        self._value_label.pack(fill="x", padx=14, pady=(4, 12))
+
+    def update_value(self, value: str) -> None:
+        self._value_label.configure(text=value)
 
 
 class SectionHeader(ctk.CTkLabel):
@@ -213,3 +241,33 @@ class SectionHeader(ctk.CTkLabel):
             text_color=theme.TextPrimary,
             anchor="w",
         )
+
+
+class CompactComponentChip(ctk.CTkButton):
+    """Kompaktowy chip komponentu na dashboardzie."""
+
+    def __init__(
+        self,
+        master: ctk.CTkBaseClass,
+        comp: Component,
+        *,
+        on_click: Callable[[Component], None],
+    ) -> None:
+        label = comp.name if len(comp.name) <= 22 else comp.name[:20] + "…"
+        super().__init__(
+            master,
+            text=label,
+            font=theme.get_font(11),
+            fg_color=theme.PanelBg,
+            hover_color=theme.CardHover,
+            text_color=theme.TextPrimary,
+            border_width=1,
+            border_color=theme.BorderSubtle,
+            height=28,
+            width=max(80, len(label) * 8),
+            command=lambda c=comp: on_click(c),
+        )
+        self._comp = comp
+
+
+ComponentChip = CompactComponentChip

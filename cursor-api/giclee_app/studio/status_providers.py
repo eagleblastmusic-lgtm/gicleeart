@@ -48,6 +48,15 @@ def theme_dev_status() -> StatusResult:
         return StatusResult(None, "Theme Dev", "unknown")
 
 
+def customtkinter_available() -> bool:
+    try:
+        import customtkinter  # noqa: F401
+
+        return True
+    except ImportError:
+        return False
+
+
 def github_status() -> StatusResult:
     """Mock F1 — placeholder."""
     return StatusResult(None, "GitHub", "—")

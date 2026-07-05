@@ -1,6 +1,6 @@
 # GicleeApp UI Redesign Plan
 
-**Status:** Faza 1 — Studio Preview (CustomTkinter) obok klasycznego launchera.
+**Status:** Faza 2 — Studio Preview jako panel pracy (F2 Optimal, bez F3).
 
 ## Goal
 
@@ -55,9 +55,9 @@ Not in **`eagleblastmusic-lgtm/gicleeart-gpt`** (theme snapshot only).
 | Faza | Cel | Status |
 |------|-----|--------|
 | F0 | Dokumentacja, plan, mapa kategorii | done |
-| F1 | CTk shell preview (`studio_preview`) — bez pollingów | **current** |
-| F2 | Dashboard read-only rozszerzony, recent, quick actions | planned |
-| F3 | Inline embed w Studio | planned |
+| F1 | CTk shell preview (`studio_preview`) — bez pollingów | done |
+| F2 | Dashboard read-only, recent/pinned, hub sort/filter, safe quick actions | **current** |
+| F3 | Inline embed, GitHub/GPT real status | planned |
 | F4 | Background parity (sync, backup, cykl) | planned |
 | F5 | Przełącznik domyślny (`GICLEE_STUDIO_UI`) | planned |
 | F6 | PyInstaller + CustomTkinter w `.exe` | planned |
@@ -71,7 +71,7 @@ giclee_app/
 ├── studio_preview.py        ← python -m giclee_app.studio_preview
 ├── launcher_delegate.py     ← subprocess/url only
 ├── ui/                      ← sidebar, topbar, dashboard, hub
-├── studio/                  ← categories, status_providers
+├── studio/                  ← categories, status_providers, state
 └── data/studio_categories.json
 ```
 
@@ -94,4 +94,5 @@ Dashboard, Strona/Motyw, Produkty, Zamówienia, Produkcja, Finanse, Content/AI, 
 
 - Stary launcher = produkcja (polling, backup, inline).
 - Studio Preview = UI + read-only statusy + launch subprocess/url.
-- Inline komponenty w F1: komunikat „Faza 2 — użyj klasycznego launchera”.
+- Inline komponenty w Studio: komunikat „F3 — użyj klasycznego launchera”.
+- F2 state: `giclee_app/logs/studio_state.json` (gitignored).
