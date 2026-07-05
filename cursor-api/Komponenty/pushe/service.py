@@ -412,18 +412,6 @@ def audit_repo_for_github_push(
         report.blocked = True
         return report
 
-    report.branch_status = inspect_branch_sync(
-        root, branch, pull_ff_only=False, on_line=on_line
-    )
-    if not report.branch_status.ok:
-        report.error = report.branch_status.message
-        report.blocked = True
-        return report
-    if report.branch_status.diverged:
-        report.error = report.branch_status.message
-        report.blocked = True
-        return report
-
     status_proc = _run_git(["status", "--short"], cwd=root, on_line=on_line)
     porcelain = [ln for ln in (status_proc.stdout or "").splitlines() if ln.strip()]
     report.new_files, report.modified_files, report.deleted_files = _parse_porcelain(porcelain)
@@ -452,6 +440,16 @@ def audit_repo_for_github_push(
     report.deletable_files = sorted(set(report.deleted_files))
 
     if report.secret_hits:
+        report.blocked = True
+
+    report.branch_status = inspect_branch_sync(
+        root, branch, pull_ff_only=False, on_line=on_line
+    )
+    if not report.branch_status.ok:
+        report.error = report.branch_status.message
+        report.blocked = True
+    elif report.branch_status.diverged:
+        report.error = report.branch_status.message
         report.blocked = True
 
     msg = (commit_message or "").strip()
