@@ -1,4 +1,4 @@
-"""Testy Background Panel Shell (F4.2) — pure / source inspection."""
+"""Testy Background Panel Shell (F4.2) + handoff (F4.3a) — pure / source inspection."""
 
 from __future__ import annotations
 
@@ -8,7 +8,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from giclee_app.studio.background_capabilities import capability_for, tier_display
-from giclee_app.ui.background_panel import panel_rows
+from giclee_app.ui.background_panel import (
+    _HANDOFF_BUTTON_LABEL,
+    panel_rows,
+)
 
 
 def test_panel_rows_tldobio_read_only() -> None:
@@ -19,7 +22,7 @@ def test_panel_rows_tldobio_read_only() -> None:
     assert cap.label in rows["Typ tła"]
     assert tier_display("bio_workflow") in rows["Typ tła"]
     assert rows["Status"] == "read-only"
-    assert "F4.3" in rows["Co dalej"]
+    assert _HANDOFF_BUTTON_LABEL in rows["Co dalej"]
     assert cap.inline_note in rows["Kontekst inline"]
 
 
@@ -72,3 +75,26 @@ def test_escape_back_handles_background_before_inline() -> None:
     escape_block = text.split("def _on_escape_back")[1].split("\n    def ")[0]
     assert "_background_host is not None" in escape_block
     assert "_return_from_background_panel()" in escape_block
+
+
+def test_background_panel_has_handoff_callback_and_button() -> None:
+    path = Path(__file__).resolve().parents[1] / "giclee_app" / "ui" / "background_panel.py"
+    text = path.read_text(encoding="utf-8")
+    assert "on_open_inline" in text
+    assert _HANDOFF_BUTTON_LABEL in text
+    assert 'self._comp.mode == "inline"' in text
+
+
+def test_handoff_uses_show_inline_component_and_destroy_background() -> None:
+    path = Path(__file__).resolve().parents[1] / "giclee_app" / "launcher_studio.py"
+    text = path.read_text(encoding="utf-8")
+    assert "_handoff_background_to_inline" in text
+    handoff_block = text.split("def _handoff_background_to_inline")[1].split("\n    def ")[0]
+    assert "_show_inline_component(comp, category)" in handoff_block
+    assert "_background_return_category" in handoff_block
+    assert "_inline_stack" not in handoff_block
+    inline_block = text.split("def _show_inline_component")[1].split("\n    def ")[0]
+    assert "_destroy_background_host()" in inline_block
+    show_bg_block = text.split("def _show_background_panel")[1].split("\n    def ")[0]
+    assert "on_open_inline=" in show_bg_block
+    assert "_handoff_background_to_inline" in show_bg_block

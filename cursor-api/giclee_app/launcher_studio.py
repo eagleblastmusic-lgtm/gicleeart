@@ -319,6 +319,15 @@ class GicleeAppStudio(ctk.CTk):
         self._studio_state.record_launch(comp)
         self._studio_state.save()
 
+    def _handoff_background_to_inline(self, comp: Component) -> None:
+        category = self._background_return_category or self._current_category or "theme"
+        if capability_for(comp.folder_name) is None:
+            return
+        if comp.mode != "inline":
+            self._set_status(f"{comp.name}: brak inline handoff")
+            return
+        self._show_inline_component(comp, category)
+
     def _return_from_background_panel(self) -> None:
         category = self._background_return_category or self._current_category or "theme"
         self._destroy_background_host()
@@ -347,6 +356,7 @@ class GicleeAppStudio(ctk.CTk):
             cap,
             on_back=self._return_from_background_panel,
             on_status=self._set_status,
+            on_open_inline=lambda c=comp: self._handoff_background_to_inline(c),
         )
         self._background_host.grid(row=0, column=0, sticky="nsew")
         self._content.update_idletasks()

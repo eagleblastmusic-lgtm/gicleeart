@@ -129,9 +129,19 @@ Studio Preview **nie może** (F4.1):
 | Klik karty | inline bez zmian |
 | Zawartość | label, tier, source_hint, inline_note, status read-only, nota F4.3+ |
 | Powrót | `_show_hub(return_category_id)` — ta sama kategoria co hub źródłowy |
-| Poza zakresem | edycja, zapis, Shopify, sync/deploy/polling |
+| Poza zakresem | edycja w panelu, zapis, Shopify, sync/deploy/polling |
 
-## F4.3+ (planowane)
+## F4.3a — Safe handoff (zrealizowane)
 
-- Action parity — pierwsze akcje edycji tła w Studio (osobna akceptacja),
-- F5+ — kreator premium / asset manager UX.
+| Aspekt | Szczegóły |
+|--------|-----------|
+| Akcja | **Edytuj w komponencie** w panelu F4.2 |
+| Handoff | `_handoff_background_to_inline` → `_show_inline_component(comp, category)` |
+| Destroy | `_show_inline_component` woła `_destroy_background_host()` przed inline |
+| Powrót | inline → hub (nie panel) |
+| Poza zakresem | odczyt aktualnego stanu tła (**F4.3b**), edytor w Studio (**F5**) |
+
+## F4.3b / F5 (planowane)
+
+- **F4.3b** — read-only summary bieżącego stanu tła (odczyt lokalnych danych, osobna akceptacja),
+- **F5** — kreator premium / asset manager UX.

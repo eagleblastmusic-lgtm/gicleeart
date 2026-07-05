@@ -1,4 +1,4 @@
-# GicleeApp Studio Preview (F4.2)
+# GicleeApp Studio Preview (F4.3a)
 
 Hub: [`README.md`](README.md) · plan: [`../../docs/UI_REDESIGN_PLAN.md`](../../docs/UI_REDESIGN_PLAN.md) · tło: [`background-parity.md`](background-parity.md)
 
@@ -78,14 +78,26 @@ Tier 3 (`katalog`, `kontakt`, `faq`, `stronablogu`) — udokumentowany w audycie
 | Powrót | **Wróć** → hub tej samej kategorii (F3.2.1.1 lifecycle) |
 | `Esc` | powrót z panelu gdy brak konfliktu z inline |
 | Zapis / Shopify / sync | **brak** |
-| F4.3+ | edycja tła / action parity — **poza F4.2** |
+| F4.3+ | read-only state summary (F4.3b) — **poza F4.3a** |
 
-Manual smoke F4.2:
+---
 
-1. `python -m giclee_app.studio_preview` → Strona / Motyw
-2. `Tło do Bio` / `Strona główna`: karta → inline; przycisk **Tło** → panel read-only → **Wróć** → hub OK
-3. Katalog / Kontakt / FAQ — brak przycisku **Tło**
-4. `python -m giclee_app` — klasyczny launcher bez zmian
+## F4.3a — Background Safe Handoff
+
+| Element | Stan |
+|---------|------|
+| Akcja w panelu | **Edytuj w komponencie** — nawigacja do istniejącego inline |
+| Handoff | `tldobio` → Tło do Bio · `stronaglowna` → Strona główna |
+| Panel | nadal read-only; brak zapisu |
+| Powrót z inline | hub (nie panel tła) |
+| Routing | `_handoff_background_to_inline` → `_show_inline_component` (niszczy background host) |
+| F4.3b / F5 | **poza zakresem** |
+
+Manual smoke F4.3a:
+
+1. Hub → **Tło** → panel → **Edytuj w komponencie** → inline ładuje się
+2. **Wróć do huba** → kafelki OK
+3. Klik karty (bez panelu) — inline bez regresji
 
 ---
 

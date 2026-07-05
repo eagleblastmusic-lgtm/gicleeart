@@ -15,9 +15,11 @@ from giclee_app.studio.background_capabilities import (
 from . import theme
 from .widgets import SectionHeader
 
-_F4_3_NOTE = (
-    "Edycja tła będzie dostępna w F4.3+. "
-    "Ten panel pokazuje wyłącznie informacje o capability — bez zapisu."
+_HANDOFF_BUTTON_LABEL = "Edytuj w komponencie"
+
+_CO_DALEJ_NOTE = (
+    "Użyj przycisku „Edytuj w komponencie”, aby przejść do istniejącego "
+    "edytora inline. Ten panel nie zapisuje danych."
 )
 
 
@@ -33,7 +35,7 @@ def panel_rows(
         ("Źródło", cap.source_hint),
         ("Kontekst inline", cap.inline_note),
         ("Status", "read-only"),
-        ("Co dalej", _F4_3_NOTE),
+        ("Co dalej", _CO_DALEJ_NOTE),
     ]
 
 
@@ -48,12 +50,14 @@ class BackgroundPanelView(ctk.CTkFrame):
         *,
         on_back: Callable[[], None],
         on_status: Callable[[str], None] | None = None,
+        on_open_inline: Callable[[], None] | None = None,
     ) -> None:
         super().__init__(master, fg_color=theme.AppBg, corner_radius=0)
         self._comp = comp
         self._cap = cap
         self._on_back = on_back
         self._on_status = on_status
+        self._on_open_inline = on_open_inline
         self._build_shell()
         if callable(self._on_status):
             self._on_status(f"Tło: {cap.label} — read-only panel")
@@ -129,6 +133,25 @@ class BackgroundPanelView(ctk.CTkFrame):
                 justify="left",
                 wraplength=560,
             ).pack(fill="x", padx=16, pady=(0, 12))
+
+        if self._on_open_inline is not None and self._comp.mode == "inline":
+            action_row = ctk.CTkFrame(scroll, fg_color="transparent")
+            action_row.grid(
+                row=len(panel_rows(self._cap, component_name=self._comp.name)) + 1,
+                column=0,
+                sticky="ew",
+                pady=(4, 0),
+            )
+            ctk.CTkButton(
+                action_row,
+                text=_HANDOFF_BUTTON_LABEL,
+                height=36,
+                fg_color=theme.PanelBg,
+                hover_color=theme.CardHover,
+                border_width=1,
+                border_color=theme.BorderSubtle,
+                command=self._on_open_inline,
+            ).pack(anchor="w")
 
     def on_hide(self) -> None:
         pass
