@@ -27,7 +27,7 @@ F1_READ_ONLY_NOTE = (
     "F1 read-only shell — no Save, no writer, no Shopify, no upload, no deploy/sync."
 )
 
-NEXT_PHASE_NOTE = "Next: F2 bounded data map / inventory parser"
+NEXT_PHASE_NOTE = "Next: F3 local draft / dry-run (F2 data map in katalog_data_map.py)"
 
 _MAX_VARIANT_IDS = 64
 _ZONE_ID_RE = re.compile(r'zone_id="([^"]+)"')
@@ -219,4 +219,4 @@ def workflow_summary() -> str:
 
 
 def status_strip() -> str:
-    return "Read-only · F1 · no Save · no writer · no Shopify"
+    return "Read-only · F1+F2 · no Save · no writer · no Shopify"

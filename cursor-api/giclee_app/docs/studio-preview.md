@@ -126,13 +126,14 @@ F5.4b1 to pierwszy realny zapis lokalny — tylko **wyczyść tło** z backupem.
 
 | | |
 |---|---|
-| Studio | **v1.36.0** |
+| Studio | **v1.37.0** |
 | Background Builder local v1 | **done** — pełny lokalny cykl zapisu |
 | Katalog F1 | **done** — read-only shell + inventory |
+| Katalog F2 | **done** — bounded data map (legacy katalog vs tldobio) |
 | F5.5 | **not started** |
 | Next strategy | [`admin-components-strategy.md`](admin-components-strategy.md) |
 | Katalog plan | [`katalog-rebuild-plan.md`](katalog-rebuild-plan.md) |
-| Next implementacyjny | **Katalog F2** — bounded data map |
+| Next implementacyjny | **Katalog F3** — local draft state |
 
 Szczegóły freeze: [`background-builder.md`](background-builder.md) §19.
 

@@ -502,8 +502,9 @@ Uzasadnienie: Asset Lab shell (F6.2) przed F5.4-plan — zapis tła nie projektu
 |-------|--------|
 | Katalog rebuild plan | **done (docs-only)** |
 | Katalog F1 shell | **done @ 1.36.0** — read-only inventory |
+| Katalog F2 data map | **done @ 1.37.0** — bounded parser, legacy vs tldobio |
 | Katalog = parent workflow | absorbs `tldobio` |
-| Next implementation | **Katalog F2** — bounded data map |
+| Next implementation | **Katalog F3** — local draft state |
 | Writer / Shopify | not started · F5.5 deferred |
 
 ---
@@ -517,3 +518,21 @@ Uzasadnienie: Asset Lab shell (F6.2) przed F5.4-plan — zapis tła nie projektu
 | Sidebar NAV `katalog` | Without `studio_categories.json` change |
 | Hub `katalog` click | Routes to F1 shell |
 | tldobio | Absorbed subflow info only |
+
+---
+
+## 16. Katalog F2 bounded data map
+
+| Element | Status |
+|---------|--------|
+| `katalog_data_map.py` | Bounded read-only data map — legacy katalog vs tldobio |
+| `katalog_view.py` | Sekcja „Mapa danych (F2)” + badge F2 |
+| Legacy katalog | Template `collection.json` / `background_image` — `write_policy: not_defined` |
+| tldobio | Absorbed cache read — `write_policy: not_defined`, Shopify hints static only |
+| external_shopify | `out_of_scope` |
+| studio_writer | `not_started` |
+| studio_draft | `planned` (F3) |
+
+**F2 guardrails:** read-only · no Save · no writer · no Shopify API · no upload · no deploy/sync.
+
+**Next:** F3 local draft state.

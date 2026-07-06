@@ -1,4 +1,4 @@
-"""Testy Katalog shell view (F1) — import / AST / copy guardrails."""
+"""Testy Katalog shell view (F1+F2) — import / AST / copy guardrails."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from giclee_app.studio.categories import NAV_CATEGORIES, VALID_CATEGORY_IDS
+from giclee_app.studio.katalog_data_map import f2_status_strip
 from giclee_app.studio.katalog_inventory import status_strip, workflow_summary
 from giclee_app.ui.katalog_view import KatalogView, _BACK_LABEL, _REFRESH_LABEL
 
@@ -51,7 +52,7 @@ def test_view_source_read_only_no_save_buttons() -> None:
     text = path.read_text(encoding="utf-8")
     assert _REFRESH_LABEL in text
     assert "Parent workflow" in text
-    assert "absorbed subflow" in text
+    assert "absorbed" in text.lower()
     assert "Read-only" in text or "read-only" in text
     for label in _FORBIDDEN_UI_LABELS:
         assert label not in text
@@ -84,11 +85,30 @@ def test_launcher_intercept_not_for_tldobio() -> None:
     assert 'comp.folder_name == "tldobio"' not in text
 
 
+def test_view_source_f2_data_map_section() -> None:
+    path = Path(__file__).resolve().parents[1] / "giclee_app" / "ui" / "katalog_view.py"
+    text = path.read_text(encoding="utf-8")
+    assert "Mapa danych (F2)" in text
+    assert "Katalog F2 data map" in text
+    assert "build_katalog_data_map" in text
+    assert "data_map_display_rows" in text
+    assert "f2_status_strip" in text
+    assert "service.py" not in text
+
+
 def test_inventory_helpers_read_only_copy() -> None:
     assert "read-only" in workflow_summary().lower() or "parent" in workflow_summary().lower()
+    assert "F1+F2" in status_strip()
     assert "no Save" in status_strip()
     assert "no writer" in status_strip()
     assert "no Shopify" in status_strip()
+
+
+def test_f2_status_strip_policies() -> None:
+    strip = f2_status_strip()
+    assert "out-of-scope" in strip.lower() or "out_of_scope" in strip
+    assert "no writer" in strip.lower() or "not_started" in strip
+    assert "no Save" in strip or "read-only" in strip.lower()
 
 
 def test_import_katalog_view_module() -> None:

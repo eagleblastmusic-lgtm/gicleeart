@@ -101,7 +101,7 @@ Strategia docs-only: [`giclee_app/docs/admin-components-strategy.md`](../giclee_
 | **Frozen reference** | `stronaglowna` — Background Builder local v1 complete |
 | **Adapt-first** | `wzorzecszablonu`, `stronaproduktu`, `karuzela` (+ reszta launcher wg reguły adapt-first) |
 
-**Next:** **Katalog read-only shell (F1)** — plan: [`katalog-rebuild-plan.md`](../giclee_app/docs/katalog-rebuild-plan.md)
+**Next:** **Katalog F3 local draft state** — plan: [`katalog-rebuild-plan.md`](../giclee_app/docs/katalog-rebuild-plan.md)
 
 ## Katalog rebuild plan — checkpoint
 
@@ -109,10 +109,12 @@ Strategia docs-only: [`giclee_app/docs/admin-components-strategy.md`](../giclee_
 |---|---|
 | Plan | [`katalog-rebuild-plan.md`](../giclee_app/docs/katalog-rebuild-plan.md) — **docs-only done** |
 | Katalog | parent workflow · absorbs `tldobio` |
-| Next | **Katalog read-only shell (F1)** |
-| F5.5 | deferred |
+| F1 | **done @ 1.36.0** |
+| F2 | **done @ 1.37.0** |
+| Next | **Katalog F3** — local draft state |
+| F5.5 | deferred · no writer · no Shopify |
 
-## Katalog F1 — read-only shell
+## Katalog F1 — read-only shell (@ 1.36.0)
 
 | Element | Stan |
 |---------|------|
@@ -122,7 +124,16 @@ Strategia docs-only: [`giclee_app/docs/admin-components-strategy.md`](../giclee_
 | Hub | Click `katalog` → F1 shell (legacy inline bypass) |
 | tldobio | Absorbed info only — **no** new standalone tile |
 
-**Next:** F2 bounded data map. **F5.5** deferred.
+## Katalog F2 — bounded data map (@ 1.37.0)
+
+| Element | Stan |
+|---------|------|
+| `studio/katalog_data_map.py` | Bounded parser — legacy katalog vs tldobio, dual persistence warning |
+| `ui/katalog_view.py` | Sekcja „Mapa danych (F2)” — read-only, no Save |
+| Shopify | `out_of_scope` — F5.5 deferred |
+| Writer | `not_started` — no bounded local writer |
+
+**Next:** F3 local draft state. **F5.5** deferred.
 
 ### Studio v2 redesign track (F6.x)
 
@@ -131,7 +142,7 @@ Strategia docs-only: [`giclee_app/docs/admin-components-strategy.md`](../giclee_
 | F6.0 | Component redesign audit — Keep / Merge / Legacy / Defer | done · accepted |
 | F6.1 | Studio v2 workflow navigation map (docs-only) | done |
 | F6.2 | Asset Lab shell — read-only / launch-only | done |
-| F6.3 | Katalog rebuild plan + F1 read-only shell | F1 done @ 1.36.0 · F2 next |
+| F6.3 | Katalog rebuild plan + F1 shell + F2 data map | F2 done @ 1.37.0 · F3 next |
 
 Mapa workflowów: [`giclee_app/docs/studio-v2-workflows.md`](../giclee_app/docs/studio-v2-workflows.md)
 

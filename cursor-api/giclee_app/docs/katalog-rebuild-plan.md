@@ -1,6 +1,6 @@
 # Katalog — Rebuild Plan
 
-**docs-only / plan-only** · checkpoint `56b4c9c` · Studio **v1.36.0** (F1) · after [`admin-components-strategy.md`](admin-components-strategy.md) · **F5.5 not started** · **F1 read-only shell implemented @ 1.36.0**
+**docs-only / plan-only** · checkpoint `ab7a781` · Studio **v1.37.0** (F2) · after [`admin-components-strategy.md`](admin-components-strategy.md) · **F5.5 not started** · **F1 read-only shell @ 1.36.0** · **F2 bounded data map @ 1.37.0**
 
 Hub: [`admin-components-strategy.md`](admin-components-strategy.md) · [`studio-v2-workflows.md`](studio-v2-workflows.md) · [`studio-save-pattern.md`](studio-save-pattern.md) · [`background-builder.md`](background-builder.md) §19 · [`../../docs/komponenty/katalog.md`](../../docs/komponenty/katalog.md) · [`../../docs/komponenty/tldobio.md`](../../docs/komponenty/tldobio.md)
 
@@ -166,8 +166,8 @@ Wzorzec: [`studio-save-pattern.md`](studio-save-pattern.md) · referencja Level 
 |------|-----|---------------|
 | **Katalog F0** | Plan / data map (ten dokument + doprecyzowanie mapy pól) | **done (docs)** |
 | **Katalog F1** | Read-only shell — wejście w workflow, inventory, zero write | **done @ 1.36.0** |
-| **Katalog F2** | Bounded catalog inventory parser (warianty, strefy, tldobio cache read) | **next** |
-| **Katalog F3** | Local draft state (Studio-only, nie dotyka plików) | planned |
+| **Katalog F2** | Bounded catalog inventory parser (warianty, strefy, tldobio cache read) | **done @ 1.37.0** |
+| **Katalog F3** | Local draft state (Studio-only, nie dotyka plików) | **next** |
 | **Katalog F4** | Dry-run / readiness contract | planned |
 | **Katalog F5** | Bounded local writer — **tylko jeśli potrzebny** | planned |
 | **Katalog F6** | Backup / session undo (mirror Background Builder) | planned |
@@ -257,11 +257,11 @@ Plan przyszłego smoke (po F1):
 | 5 | **Nie ruszać Shopify** — metafield/upload path wyłącznie F7 / F5.5 |
 | 6 | Background Builder local v1 jako wzorzec Level 2 **tylko dla lokalnych plików JSON** — nie dla tldobio Shopify path |
 
-**Next implementation target:** Katalog **F2 — bounded data map / inventory parser**.
+**Next implementation target:** Katalog **F3 — local draft state** (in-memory, zero filesystem write).
 
 ---
 
-## 13. F1 read-only shell (implemented)
+## 13. F1 read-only shell (implemented @ 1.36.0)
 
 | Element | Lokalizacja |
 |---------|-------------|
@@ -272,7 +272,24 @@ Plan przyszłego smoke (po F1):
 
 **F1 guardrails:** no Save · no writer · no Shopify · no upload · no deploy/sync · no `Komponenty.*` import in Studio layer.
 
-**Next:** F2 bounded data map.
+---
+
+## 14. F2 bounded data map (implemented @ 1.37.0)
+
+| Element | Lokalizacja / opis |
+|---------|-------------------|
+| Data map module | `giclee_app/studio/katalog_data_map.py` — bounded read-only parser |
+| UI sekcja | `giclee_app/ui/katalog_view.py` — „Mapa danych (F2)” obok inventory F1 |
+| Legacy katalog | `Komponenty/katalog` — template `collection.json`, `background_image`, `registry.py` zones (static scan) |
+| tldobio | `Komponenty/tldobio` — absorbed subflow; `collections.json` cache read; `service.py` static hints only |
+| Dual persistence | Ostrzeżenie gdy oba źródła istnieją — legacy JSON vs cache/metafields, bez unified write policy |
+| Shopify | `out_of_scope` — F5.5 / Level 3 only |
+| Studio writer | `not_started` — wymaga finalized data map + dry-run/readiness |
+| Studio draft | `planned` — F3+ in-memory only |
+
+**F2 guardrails:** read-only · no Save · no writer · no Shopify API · no upload · no deploy/sync · no `Komponenty.*` import · no execute/import `service.py`.
+
+**Next:** F3 local draft state.
 
 ---
 

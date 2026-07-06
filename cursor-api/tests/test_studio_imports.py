@@ -34,6 +34,7 @@ STUDIO_MODULES = [
     "giclee_app.studio.background_save_writer",
     "giclee_app.studio.asset_lab_catalog",
     "giclee_app.studio.katalog_inventory",
+    "giclee_app.studio.katalog_data_map",
     "giclee_app.studio.status_providers",
     "giclee_app.studio.state",
     "giclee_app.ui.dashboard",
@@ -79,6 +80,7 @@ def test_studio_source_files_no_forbidden_imports() -> None:
         root / "studio" / "background_save_writer.py",
         root / "studio" / "asset_lab_catalog.py",
         root / "studio" / "katalog_inventory.py",
+        root / "studio" / "katalog_data_map.py",
         root / "studio" / "status_providers.py",
         root / "studio" / "state.py",
     ]
