@@ -1,4 +1,4 @@
-"""Panel tła w Studio Preview (F4.2+) — read-only, draft F5.2, preview F5.3."""
+"""Panel tła w Studio Preview (F4.2+) — read-only, draft F5.2, preview F5.3, dry-run F5.4a."""
 
 from __future__ import annotations
 
@@ -32,6 +32,16 @@ from giclee_app.studio.background_draft_state import (
     kind_menu_options,
     zone_menu_options,
 )
+from giclee_app.studio.background_save_contract import (
+    CHECK_SAVE_LABEL,
+    DRY_RUN_BADGE,
+    F54A_DISCLAIMER,
+    SAVE_PLAN_EMPTY_COPY,
+    SAVE_PLAN_SECTION_TITLE,
+    build_background_save_dry_run,
+    format_dry_run_summary,
+    save_plan_enabled_for_folder,
+)
 from giclee_app.studio.background_state import summarize_background_state
 
 from . import theme
@@ -41,6 +51,7 @@ _HANDOFF_BUTTON_LABEL = "Edytuj w komponencie"
 _DRAFT_INSERT_AFTER = "Biblioteka / Assety"
 _DRAFT_STATUS_MSG = "Draft lokalny — niezapisany"
 _PREVIEW_STATUS_MSG = "Podgląd koncepcyjny — niezastosowany"
+_DRY_RUN_STATUS_MSG = DRY_RUN_BADGE
 
 _CO_DALEJ_NOTE = (
     "Użyj przycisku „Edytuj w komponencie”, aby przejść do istniejącego "
@@ -104,6 +115,7 @@ class BackgroundPanelView(ctk.CTkFrame):
         self._preview_placeholder_frame: ctk.CTkFrame | None = None
         self._preview_placeholder_label: ctk.CTkLabel | None = None
         self._preview_disclaimer_label: ctk.CTkLabel | None = None
+        self._save_plan_body_label: ctk.CTkLabel | None = None
         self._build_shell()
         if callable(self._on_status):
             self._on_status(f"Tło: {cap.label} — read-only panel")
@@ -173,6 +185,9 @@ class BackgroundPanelView(ctk.CTkFrame):
                 grid_row += 1
                 if preview_enabled_for_folder(self._comp.folder_name):
                     self._render_preview_section(scroll, grid_row)
+                    grid_row += 1
+                if save_plan_enabled_for_folder(self._comp.folder_name):
+                    self._render_save_plan_section(scroll, grid_row)
                     grid_row += 1
 
         if self._on_open_inline is not None and self._comp.mode == "inline":
@@ -382,6 +397,67 @@ class BackgroundPanelView(ctk.CTkFrame):
         self._preview_disclaimer_label.pack(fill="x", padx=16, pady=(0, 12))
         self._preview_disclaimer_label.pack_forget()
         self._preview_placeholder_frame.pack_forget()
+
+    def _render_save_plan_section(self, parent: ctk.CTkScrollableFrame, row: int) -> None:
+        panel = ctk.CTkFrame(
+            parent,
+            fg_color=theme.PanelBg,
+            corner_radius=8,
+            border_width=1,
+            border_color=theme.BorderSubtle,
+        )
+        panel.grid(row=row, column=0, sticky="ew", pady=(0, 10))
+        panel.grid_columnconfigure(0, weight=1)
+
+        SectionHeader(panel, SAVE_PLAN_SECTION_TITLE).pack(fill="x", padx=16, pady=(12, 4))
+        ctk.CTkLabel(
+            panel,
+            text=DRY_RUN_BADGE,
+            font=theme.get_font(10),
+            text_color=theme.AccentGoldDim,
+            anchor="w",
+        ).pack(fill="x", padx=16, pady=(0, 8))
+
+        self._save_plan_body_label = ctk.CTkLabel(
+            panel,
+            text=SAVE_PLAN_EMPTY_COPY,
+            font=theme.get_font(12),
+            text_color=theme.TextMuted,
+            anchor="nw",
+            justify="left",
+            wraplength=560,
+        )
+        self._save_plan_body_label.pack(fill="x", padx=16, pady=(0, 8))
+
+        ctk.CTkLabel(
+            panel,
+            text=F54A_DISCLAIMER,
+            font=theme.get_font(11),
+            text_color=theme.TextMuted,
+            anchor="nw",
+            justify="left",
+            wraplength=560,
+        ).pack(fill="x", padx=16, pady=(0, 8))
+
+        ctk.CTkButton(
+            panel,
+            text=CHECK_SAVE_LABEL,
+            height=32,
+            fg_color=theme.AppBg,
+            hover_color=theme.CardHover,
+            border_width=1,
+            border_color=theme.BorderSubtle,
+            command=self._run_save_dry_run,
+        ).pack(anchor="w", padx=16, pady=(0, 12))
+
+    def _run_save_dry_run(self) -> None:
+        dry_run = build_background_save_dry_run(self._draft, self._comp.package_path)
+        summary = format_dry_run_summary(dry_run)
+        if self._save_plan_body_label is not None:
+            color = theme.TextPrimary if dry_run.ok else theme.TextMuted
+            self._save_plan_body_label.configure(text=summary, text_color=color)
+        if callable(self._on_status):
+            self._on_status(_DRY_RUN_STATUS_MSG)
 
     def _on_zone_selected(self, label: str) -> None:
         field_id = self._zone_map.get(label)

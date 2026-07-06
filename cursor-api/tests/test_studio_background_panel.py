@@ -14,6 +14,12 @@ from giclee_app.studio.background_draft_state import (
     DRAFT_SECTION_TITLE,
     draft_enabled_for_folder,
 )
+from giclee_app.studio.background_save_contract import (
+    CHECK_SAVE_LABEL,
+    DRY_RUN_BADGE,
+    SAVE_PLAN_SECTION_TITLE,
+    save_plan_enabled_for_folder,
+)
 from giclee_app.ui.background_panel import (
     _HANDOFF_BUTTON_LABEL,
     panel_rows,
@@ -117,6 +123,7 @@ def test_panel_rows_stronaglowna_no_draft_in_readonly_rows(tmp_path: Path) -> No
     )
     assert DRAFT_SECTION_TITLE not in rows
     assert PREVIEW_SECTION_TITLE not in rows
+    assert SAVE_PLAN_SECTION_TITLE not in rows
     assert "Draft lokalny" not in "\n".join(rows.values())
     assert "niezastosowany" not in "\n".join(rows.values())
 
@@ -128,6 +135,19 @@ def test_preview_section_only_for_stronaglowna_in_panel_source() -> None:
     assert "_render_preview_section" in text
     assert preview_enabled_for_folder("stronaglowna")
     assert not preview_enabled_for_folder("tldobio")
+
+
+def test_save_plan_section_only_for_stronaglowna_in_panel_source() -> None:
+    path = Path(__file__).resolve().parents[1] / "giclee_app" / "ui" / "background_panel.py"
+    text = path.read_text(encoding="utf-8")
+    assert "SAVE_PLAN_SECTION_TITLE" in text
+    assert "_render_save_plan_section" in text
+    assert "CHECK_SAVE_LABEL" in text
+    assert "DRY_RUN_BADGE" in text
+    assert save_plan_enabled_for_folder("stronaglowna")
+    assert not save_plan_enabled_for_folder("tldobio")
+    assert "Zapisz lokalnie" not in text
+    assert 'text="Zapisz"' not in text
 
 
 def test_draft_section_only_for_stronaglowna_in_panel_source() -> None:

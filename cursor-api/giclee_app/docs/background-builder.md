@@ -216,6 +216,28 @@ Manual smoke F5.3: patrz [`studio-preview.md`](studio-preview.md).
 
 ---
 
+## 13. F5.4a — Save contract + dry-run (zrealizowane w kodzie)
+
+| Aspekt | Szczegóły |
+|--------|-----------|
+| Moduł | `background_save_contract.py` — pure validate + dry-run |
+| UI | sekcja **Plan zapisu** — po „Podgląd draftu”, tylko `stronaglowna` |
+| Akcja | **Sprawdź zapis** — semantic diff obecny stan → draft intent |
+| Copy | `dry-run · nic nie zapisano` — **nie** „Zapisz” / „Zastosuj” |
+| Persist | **brak** — zero `write_text`, zero mutacji index.json |
+| Walidacja | image/video OK · video_collage odrzucone (poza section_background) |
+| Wersja | **1.31.0** |
+
+Roadmap zapisu:
+
+- **F5.4b** — controlled local write do aktywnego `index.json` (osobna akceptacja)
+- **F5.4c** — backup / rollback / post-save validation
+- **F5.5** — Shopify / upload / deploy / sync osobno
+
+Manual smoke F5.4a: patrz [`studio-preview.md`](studio-preview.md).
+
+---
+
 ## Powiązane dokumenty
 
 - F4 audit: [`background-parity.md`](background-parity.md)

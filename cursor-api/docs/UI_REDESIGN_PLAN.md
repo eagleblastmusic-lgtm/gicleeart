@@ -76,7 +76,9 @@ Not in **`eagleblastmusic-lgtm/gicleeart-gpt`** (theme snapshot only).
 | F5.1b | Bounded read-only asset list from active index | done |
 | F5.2 | Local draft selection (in-memory) | done |
 | F5.3 | Conceptual draft preview (panel mock) | done |
-| F5.4 | Controlled save via existing component API (`stronaglowna`) | planned — po F6.2 + F5.4-plan |
+| F5.4a | Save contract + dry-run (Plan zapisu, zero I/O) | done |
+| F5.4b | Controlled local write → aktywny index.json | planned — osobna akceptacja |
+| F5.4c | Backup / rollback / validation hardening | planned |
 | F5.5 | Shopify / sync / deploy | planned — osobna decyzja |
 | F5.6 | Przełącznik domyślny (`GICLEE_STUDIO_UI`) | planned |
 
@@ -86,7 +88,7 @@ Not in **`eagleblastmusic-lgtm/gicleeart-gpt`** (theme snapshot only).
 |------|-----|--------|
 | F6.0 | Component redesign audit — Keep / Merge / Legacy / Defer | done · accepted |
 | F6.1 | Studio v2 workflow navigation map (docs-only) | done |
-| F6.2 | Asset Lab shell — read-only / launch-only | **current** |
+| F6.2 | Asset Lab shell — read-only / launch-only | done |
 | F6.3 | Site Builder Tier 3 read-only shells | planned |
 
 Mapa workflowów: [`giclee_app/docs/studio-v2-workflows.md`](../giclee_app/docs/studio-v2-workflows.md)

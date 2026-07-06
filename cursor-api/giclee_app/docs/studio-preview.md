@@ -111,11 +111,13 @@ Kontrakt i roadmapa: [`background-builder.md`](background-builder.md).
 | F5.1b | done | Bounded lista przypisań z aktywnego wariantu |
 | F5.2 | done | Lokalny draft wyboru strefy + typu (in-memory) |
 | F5.3 | done | Conceptual draft preview — podgląd koncepcyjny · niezastosowany |
-| F5.4–F5.5 | planned | Controlled save / Shopify — **osobna akceptacja** |
+| F5.4a | done | Save contract + dry-run — **Plan zapisu**, zero I/O |
+| F5.4b–F5.4c | planned | Controlled local write / backup hardening — osobna akceptacja |
+| F5.5 | planned | Shopify / sync / deploy — osobna akceptacja |
 
-F5.3 **nie stosuje** zmian — tylko koncepcyjny mock w panelu. Realne zastosowanie = F5.4+.
+F5.4a **nie zapisuje** niczego — tylko semantic diff i walidacja draftu. Realny zapis = F5.4b+.
 
-Manual smoke F5.3: patrz sekcja poniżej.
+Manual smoke F5.4a: patrz sekcja poniżej.
 
 ---
 
@@ -131,7 +133,7 @@ Manual smoke F5.3: patrz sekcja poniżej.
 | Backend merge | **brak** — mockup/kolaz/squoosh/etc. bez zmian |
 | Shopify w Studio layer | **brak** |
 | Hub Produkty | Bez zmian — 14 kart nadal dostępne |
-| F5.4 save | **not started** |
+| F5.4 save | F5.4a done (dry-run only) · F5.4b not started |
 
 Narzędzia (kolejność UI): `nazwijobraz`, `infoplikow`, `squoosh`, `print_optimize`, `przedpo`, `kolaz`, `mockup`, `pobierzobraz`.
 
@@ -164,6 +166,32 @@ Manual smoke F5.3:
 6. Brak Zastosuj / Zapisz / Upload / file picker
 7. **Tło do Bio** — brak preview
 8. Brak zmian w `Komponenty/stronaglowna/data/*`
+
+---
+
+## F5.4a — Save contract + dry-run
+
+| Element | Stan |
+|---------|------|
+| `background_save_contract.py` | pure: validate + dry-run + format summary |
+| `background_panel.py` | sekcja **Plan zapisu** po „Podgląd draftu” |
+| Akcja | **Sprawdź zapis** — jedyna akcja zapisu |
+| Copy | `dry-run · nic nie zapisano` — stale widoczne |
+| Zapis / apply / pliki | **brak** — zero `write_text` |
+| video_collage | odrzucone — poza section_background F5.4 |
+
+Manual smoke F5.4a:
+
+1. `python -m giclee_app.studio_preview` → **Strona główna** → **Tło**
+2. Wybierz strefę + typ (obraz lub wideo)
+3. Kliknij **Sprawdź zapis**
+4. Pojawia się `dry-run · nic nie zapisano` + semantic diff
+5. **Aktualny stan** i **Biblioteka / Assety** bez zmian
+6. Brak **Zapisz lokalnie** / **Zapisz** / **Zastosuj**
+7. Brak zmian w `Komponenty/stronaglowna/data/*`
+8. **Tło do Bio** — brak sekcji Plan zapisu
+9. **Asset Lab** — bez regresji
+10. `python -m giclee_app` — klasyczny launcher OK
 
 ---
 
@@ -261,6 +289,7 @@ Checklista ręczna w Studio Preview — nie w CI.
 | `studio/background_asset_shell.py` | read-only shell biblioteki (F5.1) |
 | `studio/background_draft_state.py` | lokalny draft wyboru (F5.2) |
 | `studio/background_draft_preview.py` | koncepcyjny podgląd draftu (F5.3) |
+| `studio/background_save_contract.py` | save contract + dry-run (F5.4a) |
 | `studio/asset_lab_catalog.py` | katalog Asset Lab — 8 narzędzi (F6.2) |
 | `ui/background_panel.py` | read-only panel shell tła (F4.2) |
 | `ui/asset_lab_view.py` | Asset Lab launch shell (F6.2) |
