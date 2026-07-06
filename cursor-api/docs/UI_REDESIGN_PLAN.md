@@ -1,6 +1,6 @@
 # GicleeApp UI Redesign Plan
 
-**Status:** Faza 6.1 — Studio v2 navigation map (docs-only).
+**Status:** Faza 6.2 — Asset Lab launch shell.
 
 ## Goal
 
@@ -85,8 +85,8 @@ Not in **`eagleblastmusic-lgtm/gicleeart-gpt`** (theme snapshot only).
 | Faza | Cel | Status |
 |------|-----|--------|
 | F6.0 | Component redesign audit — Keep / Merge / Legacy / Defer | done · accepted |
-| F6.1 | Studio v2 workflow navigation map (docs-only) | **current** |
-| F6.2 | Asset Lab shell — read-only / launch-only | planned |
+| F6.1 | Studio v2 workflow navigation map (docs-only) | done |
+| F6.2 | Asset Lab shell — read-only / launch-only | **current** |
 | F6.3 | Site Builder Tier 3 read-only shells | planned |
 
 Mapa workflowów: [`giclee_app/docs/studio-v2-workflows.md`](../giclee_app/docs/studio-v2-workflows.md)

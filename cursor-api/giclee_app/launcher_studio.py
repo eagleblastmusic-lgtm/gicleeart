@@ -15,6 +15,7 @@ from giclee_app.studio.categories import category_label
 from giclee_app.studio.component_index import StudioComponentIndex
 from giclee_app.studio.state import StudioState
 
+from .ui.asset_lab_view import AssetLabView
 from .ui.background_panel import BackgroundPanelView
 from .ui.component_hub import ComponentHubView
 from .ui.dashboard import DashboardView
@@ -411,6 +412,20 @@ class GicleeAppStudio(ctk.CTk):
             ),
         )
 
+    def _show_asset_lab(self) -> None:
+        self._current_category = "asset_lab"
+        self._topbar.set_breadcrumb("Asset Lab")
+        self._sidebar.set_active("asset_lab")
+        self._show_view(
+            "asset_lab",
+            lambda: AssetLabView(
+                self._content,
+                component_index=self._component_index,
+                studio_state=self._studio_state,
+                on_status=self._set_status,
+            ),
+        )
+
     def _show_hub(self, category_id: str) -> None:
         self._current_category = category_id
         label = category_label(category_id)
@@ -443,5 +458,7 @@ class GicleeAppStudio(ctk.CTk):
             self._destroy_background_host()
         if category_id == "dashboard":
             self._show_dashboard()
+        elif category_id == "asset_lab":
+            self._show_asset_lab()
         else:
             self._show_hub(category_id)

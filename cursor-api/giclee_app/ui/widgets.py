@@ -227,6 +227,159 @@ class ComponentCard(ctk.CTkFrame):
             self._on_right_click(self._comp, event)
 
 
+class AssetLabToolCard(ctk.CTkFrame):
+    """Karta narzędzia Asset Lab — ten sam język wizualny co ComponentCard."""
+
+    _CLICK_HINT = "kliknij, aby otworzyć"
+
+    def __init__(
+        self,
+        master: ctk.CTkBaseClass,
+        comp: Component,
+        *,
+        summary: str,
+        risk: str,
+        on_launch: Callable[[Component], None],
+        available: bool = True,
+        legacy_badge: str = "legacy backend",
+        unavailable_label: str = "niedostępny",
+    ) -> None:
+        super().__init__(
+            master,
+            fg_color=theme.CardBg,
+            corner_radius=8,
+            border_width=1,
+            border_color=theme.BorderSubtle if available else theme.TextMuted,
+            height=140,
+        )
+        self.pack_propagate(False)
+        self._comp = comp
+        self._on_launch = on_launch
+        self._available = available
+        self._normal_bg = theme.CardBg
+        self._hover_bg = theme.CardHover
+
+        accent_color = comp.color if available else theme.TextMuted
+        accent = ctk.CTkFrame(
+            master=self,
+            width=theme.CardAccentWidth,
+            fg_color=accent_color,
+            corner_radius=0,
+        )
+        accent.pack(side="left", fill="y")
+        accent.pack_propagate(False)
+
+        body = ctk.CTkFrame(self, fg_color="transparent")
+        body.pack(side="left", fill="both", expand=True, padx=(12, 12), pady=10)
+
+        title_row = ctk.CTkFrame(body, fg_color="transparent")
+        title_row.pack(fill="x")
+        if comp.icon:
+            ctk.CTkLabel(
+                title_row, text=comp.icon, font=theme.get_font(18), width=28,
+            ).pack(side="left")
+        ctk.CTkLabel(
+            title_row,
+            text=comp.name,
+            font=theme.get_font(14, "bold"),
+            text_color=theme.TextPrimary if available else theme.TextMuted,
+            anchor="w",
+        ).pack(side="left", fill="x", expand=True)
+
+        desc = (summary or "")[:120]
+        if len(summary or "") > 120:
+            desc += "…"
+        ctk.CTkLabel(
+            body,
+            text=desc or comp.folder_name,
+            font=theme.get_font(11),
+            text_color=theme.TextMuted,
+            anchor="nw",
+            justify="left",
+            wraplength=260,
+        ).pack(fill="x", pady=(6, 4))
+
+        badges = ctk.CTkFrame(body, fg_color="transparent")
+        badges.pack(fill="x", side="bottom")
+        ctk.CTkLabel(
+            badges,
+            text=comp.mode,
+            font=theme.get_font(10),
+            text_color=theme.AccentGoldDim,
+            fg_color=theme.AppBg,
+            corner_radius=4,
+            width=70,
+            height=20,
+        ).pack(side="left", padx=(0, 6))
+        ctk.CTkLabel(
+            badges,
+            text=f"ryz. {risk}",
+            font=theme.get_font(10),
+            text_color=theme.AccentGoldDim,
+            fg_color=theme.AppBg,
+            corner_radius=4,
+            width=44,
+            height=20,
+        ).pack(side="left", padx=(0, 6))
+        ctk.CTkLabel(
+            badges,
+            text=legacy_badge,
+            font=theme.get_font(10),
+            text_color=theme.TextMuted,
+            fg_color=theme.AppBg,
+            corner_radius=4,
+            width=88,
+            height=20,
+        ).pack(side="left")
+        if available:
+            ctk.CTkLabel(
+                badges,
+                text=self._CLICK_HINT,
+                font=theme.get_font(10),
+                text_color=theme.TextMuted,
+                anchor="e",
+            ).pack(side="right")
+        else:
+            ctk.CTkLabel(
+                badges,
+                text=unavailable_label,
+                font=theme.get_font(10),
+                text_color=theme.TextMuted,
+                anchor="e",
+            ).pack(side="right")
+
+        bind_targets = [self, body, title_row, badges]
+        for w in bind_targets:
+            w.bind("<Enter>", self._on_enter)
+            w.bind("<Leave>", self._on_leave)
+            if available:
+                w.bind("<Button-1>", self._handle_click)
+
+    def _handle_click(self, _event: object) -> None:
+        if self._available:
+            self._on_launch(self._comp)
+
+    @staticmethod
+    def _on_enter(event: object) -> None:
+        w = event.widget  # type: ignore[attr-defined]
+        while w is not None:
+            if isinstance(w, AssetLabToolCard):
+                w.configure(fg_color=w._hover_bg)
+                if w._available:
+                    w.configure(cursor="hand2")
+                break
+            w = w.master  # type: ignore[attr-defined]
+
+    @staticmethod
+    def _on_leave(event: object) -> None:
+        w = event.widget  # type: ignore[attr-defined]
+        while w is not None:
+            if isinstance(w, AssetLabToolCard):
+                w.configure(fg_color=w._normal_bg, cursor="")
+                break
+            w = w.master  # type: ignore[attr-defined]
+
+
 class StatCard(ctk.CTkFrame):
     """Kafelek statystyki na dashboardzie."""
 

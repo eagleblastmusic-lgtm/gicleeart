@@ -28,11 +28,13 @@ STUDIO_MODULES = [
     "giclee_app.studio.background_asset_shell",
     "giclee_app.studio.background_draft_state",
     "giclee_app.studio.background_draft_preview",
+    "giclee_app.studio.asset_lab_catalog",
     "giclee_app.studio.status_providers",
     "giclee_app.studio.state",
     "giclee_app.ui.dashboard",
     "giclee_app.ui.component_hub",
     "giclee_app.ui.background_panel",
+    "giclee_app.ui.asset_lab_view",
     "giclee_app.ui.inline_host",
     "giclee_app.ui.topbar",
     "giclee_app.ui.sidebar",
@@ -65,6 +67,7 @@ def test_studio_source_files_no_forbidden_imports() -> None:
         root / "studio" / "background_asset_shell.py",
         root / "studio" / "background_draft_state.py",
         root / "studio" / "background_draft_preview.py",
+        root / "studio" / "asset_lab_catalog.py",
         root / "studio" / "status_providers.py",
         root / "studio" / "state.py",
     ]
@@ -94,6 +97,7 @@ def test_launcher_studio_does_not_import_launcher_module() -> None:
     assert "StudioComponentIndex" in text
     assert "_view_cache" in text
     assert "_inline_stack" in text
+    assert "_show_asset_lab" in text
 
 
 def test_launcher_delegate_does_not_import_launcher_module() -> None:

@@ -1,6 +1,6 @@
-# GicleeApp Studio Preview (F5.3)
+# GicleeApp Studio Preview (F6.2)
 
-Hub: [`README.md`](README.md) · plan: [`../../docs/UI_REDESIGN_PLAN.md`](../../docs/UI_REDESIGN_PLAN.md) · tło: [`background-parity.md`](background-parity.md) · F5: [`background-builder.md`](background-builder.md)
+Hub: [`README.md`](README.md) · plan: [`../../docs/UI_REDESIGN_PLAN.md`](../../docs/UI_REDESIGN_PLAN.md) · tło: [`background-parity.md`](background-parity.md) · F5: [`background-builder.md`](background-builder.md) · v2: [`studio-v2-workflows.md`](studio-v2-workflows.md)
 
 **Studio Preview** to ciemny shell CustomTkinter obok klasycznego launchera. Nie zastępuje `launcher.py`.
 
@@ -110,10 +110,37 @@ Kontrakt i roadmapa: [`background-builder.md`](background-builder.md).
 | F5.1 | done | Read-only shell „Biblioteka / Assety” |
 | F5.1b | done | Bounded lista przypisań z aktywnego wariantu |
 | F5.2 | done | Lokalny draft wyboru strefy + typu (in-memory) |
-| F5.3 | **current** | Conceptual draft preview — podgląd koncepcyjny · niezastosowany |
+| F5.3 | done | Conceptual draft preview — podgląd koncepcyjny · niezastosowany |
 | F5.4–F5.5 | planned | Controlled save / Shopify — **osobna akceptacja** |
 
 F5.3 **nie stosuje** zmian — tylko koncepcyjny mock w panelu. Realne zastosowanie = F5.4+.
+
+Manual smoke F5.3: patrz sekcja poniżej.
+
+---
+
+## F6.2 — Asset Lab launch shell
+
+| Element | Stan |
+|---------|------|
+| `studio/asset_lab_catalog.py` | 8 narzędzi — folder, summary, ryzyko N/M/H, sort order |
+| `ui/asset_lab_view.py` | Workflow screen — klikalne karty (launch) |
+| Sidebar | Nowa pozycja **Asset Lab** (NAV, bez zmiany `studio_categories.json`) |
+| Launch | `launcher_delegate.launch(comp)` — jak hub subprocess |
+| `record_launch` | Tak — standardowy `studio_state` (nie dane `Komponenty/*`) |
+| Backend merge | **brak** — mockup/kolaz/squoosh/etc. bez zmian |
+| Shopify w Studio layer | **brak** |
+| Hub Produkty | Bez zmian — 14 kart nadal dostępne |
+| F5.4 save | **not started** |
+
+Narzędzia (kolejność UI): `nazwijobraz`, `infoplikow`, `squoosh`, `print_optimize`, `przedpo`, `kolaz`, `mockup`, `pobierzobraz`.
+
+Manual smoke F6.2:
+
+1. Sidebar → **Asset Lab** → 8 kart z opisem, badge subprocess / ryzyko / legacy backend
+2. Kliknij kartę (np. `nazwijobraz`) → subprocess lub bezpieczny błąd launch
+3. Sidebar → Produkty / Strona główna → bez regresji
+4. `python -m giclee_app` — klasyczny launcher OK
 
 ---
 
@@ -234,5 +261,7 @@ Checklista ręczna w Studio Preview — nie w CI.
 | `studio/background_asset_shell.py` | read-only shell biblioteki (F5.1) |
 | `studio/background_draft_state.py` | lokalny draft wyboru (F5.2) |
 | `studio/background_draft_preview.py` | koncepcyjny podgląd draftu (F5.3) |
+| `studio/asset_lab_catalog.py` | katalog Asset Lab — 8 narzędzi (F6.2) |
 | `ui/background_panel.py` | read-only panel shell tła (F4.2) |
+| `ui/asset_lab_view.py` | Asset Lab launch shell (F6.2) |
 | `Komponenty/_shared/tkdnd_safe.py` | safe DnD w embed Studio (F4.1.1) |

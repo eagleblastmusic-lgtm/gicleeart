@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from giclee_app.component_loader import discover_components, find_components_dir
 from giclee_app.studio.categories import (
+    NAV_CATEGORIES,
     VALID_CATEGORY_IDS,
     _ensure_mapping_loaded,
     all_folder_mappings,
@@ -47,6 +48,12 @@ def test_every_discovered_component_has_resolvable_category() -> None:
     for folder in folders:
         cat = category_for_folder(folder)
         assert cat in VALID_CATEGORY_IDS - {"dashboard"}
+
+
+def test_asset_lab_nav_category_valid() -> None:
+    assert "asset_lab" in VALID_CATEGORY_IDS
+    nav_ids = {cid for cid, _label, _icon in NAV_CATEGORIES}
+    assert "asset_lab" in nav_ids
 
 
 def test_known_product_in_products_category() -> None:
