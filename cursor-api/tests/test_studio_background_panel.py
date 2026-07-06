@@ -33,6 +33,7 @@ def test_panel_rows_tldobio_read_only(tmp_path: Path) -> None:
     assert rows["Status"] == "read-only"
     assert _HANDOFF_BUTTON_LABEL in rows["Co dalej"]
     assert cap.inline_note in rows["Kontekst inline"]
+    assert "Biblioteka / Assety" not in rows
 
 
 def test_panel_rows_stronaglowna(tmp_path: Path) -> None:
@@ -49,6 +50,8 @@ def test_panel_rows_stronaglowna(tmp_path: Path) -> None:
     assert tier_display("section_background") in rows["Typ tła"]
     assert cap.source_hint in rows["Źródło"]
     assert "Aktualny stan" in rows
+    assert "Biblioteka / Assety" in rows
+    assert "kolaż wideo" in rows["Biblioteka / Assety"]
 
 
 def test_capability_for_katalog_no_panel() -> None:

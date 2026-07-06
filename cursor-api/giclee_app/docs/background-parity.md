@@ -163,3 +163,13 @@ Kontrakt UX: [`background-builder.md`](background-builder.md).
 | F5.0 | [`background-builder.md`](background-builder.md) — docs-only, zero kodu |
 | F5.1+ | osobne commity po akceptacji raportów |
 | Poza zakresem F5.0 | UI, Python modules, bump wersji, `Komponenty/*`, Shopify, zapis |
+
+## F5.1 — Read-only asset browser shell (zrealizowane)
+
+| Aspekt | Szczegóły |
+|--------|-----------|
+| Moduły | `background_asset_types.py`, `background_asset_shell.py` |
+| UI | sekcja **Biblioteka / Assety** — tylko `stronaglowna` |
+| Typy | obraz / wideo / kolaż wideo — placeholdery, brak listowania plików |
+| `tldobio` | brak sekcji biblioteki |
+| Poza zakresem | F5.1b listowanie, F5.2+ draft/preview/save, Shopify |

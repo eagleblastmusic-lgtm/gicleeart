@@ -1,4 +1,4 @@
-# GicleeApp Studio Preview (F4.3b)
+# GicleeApp Studio Preview (F5.1)
 
 Hub: [`README.md`](README.md) · plan: [`../../docs/UI_REDESIGN_PLAN.md`](../../docs/UI_REDESIGN_PLAN.md) · tło: [`background-parity.md`](background-parity.md) · F5: [`background-builder.md`](background-builder.md)
 
@@ -106,13 +106,35 @@ Kontrakt i roadmapa: [`background-builder.md`](background-builder.md).
 
 | Faza | Stan | Opis |
 |------|------|------|
-| F5.0 | **current (docs)** | UX contract / audit — zero kodu UI |
-| F5.1 | planned | Read-only shell „Biblioteka / Assety” — tylko `stronaglowna` |
+| F5.0 | done (docs) | UX contract — [`background-builder.md`](background-builder.md) |
+| F5.1 | **current** | Read-only shell „Biblioteka / Assety” — tylko `stronaglowna` |
 | F5.1b | planned | Opcjonalna bounded lista assetów z aktywnego index |
 | F5.2–F5.3 | planned | Draft + preview-only — bez zapisu |
 | F5.4–F5.5 | planned | Save / Shopify — **osobna akceptacja** |
 
-F5.0 **nie zmienia** panelu, wersji ani `Komponenty/*`. F5.1 dopiero po raporcie i akceptacji F5.0.
+F5.1 **nie** listuje plików, **nie** uploaduje ani **nie** zapisuje danych komponentu.
+
+---
+
+## F5.1 — Read-only asset browser shell
+
+| Element | Stan |
+|---------|------|
+| `studio/background_asset_types.py` | deklaracja typów: obraz, wideo, kolaż wideo |
+| `studio/background_asset_shell.py` | `asset_library_rows(folder_name)` — pure, bez I/O |
+| `ui/background_panel.py` | sekcja **Biblioteka / Assety** po „Aktualny stan” — tylko `stronaglowna` |
+| `tldobio` | brak sekcji biblioteki |
+| Upload / zapis / Shopify | **brak** |
+| Handoff F4.3a | bez zmian |
+
+Manual smoke F5.1:
+
+1. Hub → **Tło** na **Strona główna** → sekcja **Biblioteka / Assety**
+2. Typy: obraz / wideo / kolaż wideo + placeholdery
+3. Brak uploadu, zapisu, wyboru pliku
+4. **Edytuj w komponencie** → inline OK; powrót do huba OK
+5. **Tło do Bio** — brak sekcji biblioteki
+6. Po zamknięciu Studio — brak zmian w `Komponenty/stronaglowna/data/*`
 
 ---
 
@@ -206,5 +228,7 @@ Checklista ręczna w Studio Preview — nie w CI.
 | `studio/state.py` | recent + pinned |
 | `studio/background_capabilities.py` | read-only mapa tła (F4.1) |
 | `studio/background_state.py` | read-only summary lokalnego stanu tła (F4.3b) |
+| `studio/background_asset_types.py` | typy assetów shell (F5.1) |
+| `studio/background_asset_shell.py` | read-only shell biblioteki (F5.1) |
 | `ui/background_panel.py` | read-only panel shell tła (F4.2) |
 | `Komponenty/_shared/tkdnd_safe.py` | safe DnD w embed Studio (F4.1.1) |

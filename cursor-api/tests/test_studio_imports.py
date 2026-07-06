@@ -24,6 +24,8 @@ STUDIO_MODULES = [
     "giclee_app.studio.component_index",
     "giclee_app.studio.background_capabilities",
     "giclee_app.studio.background_state",
+    "giclee_app.studio.background_asset_types",
+    "giclee_app.studio.background_asset_shell",
     "giclee_app.studio.status_providers",
     "giclee_app.studio.state",
     "giclee_app.ui.dashboard",
@@ -57,6 +59,8 @@ def test_studio_source_files_no_forbidden_imports() -> None:
         root / "studio" / "component_index.py",
         root / "studio" / "background_capabilities.py",
         root / "studio" / "background_state.py",
+        root / "studio" / "background_asset_types.py",
+        root / "studio" / "background_asset_shell.py",
         root / "studio" / "status_providers.py",
         root / "studio" / "state.py",
     ]

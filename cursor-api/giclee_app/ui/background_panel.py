@@ -12,6 +12,7 @@ from giclee_app.studio.background_capabilities import (
     BackgroundCapability,
     tier_display,
 )
+from giclee_app.studio.background_asset_shell import asset_library_rows
 from giclee_app.studio.background_state import summarize_background_state
 
 from . import theme
@@ -43,6 +44,7 @@ def panel_rows(
     ]
     if state_text:
         rows.append(("Aktualny stan", state_text))
+    rows.extend(asset_library_rows(folder_name))
     rows.extend([
         ("Kontekst inline", cap.inline_note),
         ("Status", "read-only"),
