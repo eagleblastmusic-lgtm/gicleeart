@@ -102,7 +102,7 @@ Manual smoke F4.3b:
 
 ## F5 — Premium Background Builder (plan)
 
-Kontrakt i roadmapa: [`background-builder.md`](background-builder.md).
+Kontrakt i roadmapa: [`background-builder.md`](background-builder.md). Wzorzec zapisu dla kolejnych komponentów: [`studio-save-pattern.md`](studio-save-pattern.md).
 
 | Faza | Stan | Opis |
 |------|------|------|

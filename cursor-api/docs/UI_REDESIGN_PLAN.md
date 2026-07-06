@@ -84,6 +84,7 @@ Not in **`eagleblastmusic-lgtm/gicleeart-gpt`** (theme snapshot only).
 | F5.4d | Asset ref selection | planned |
 | F5.5 | Shopify / sync / deploy | planned — osobna decyzja |
 | F5.6 | Przełącznik domyślny (`GICLEE_STUDIO_UI`) | planned |
+| — | **Save Pattern Playbook** — standard faz zapisu dla kolejnych workflow Studio ([`studio-save-pattern.md`](../giclee_app/docs/studio-save-pattern.md)) | done (docs) |
 
 ### Studio v2 redesign track (F6.x)
 

@@ -1,6 +1,6 @@
 # Premium Background Builder — UX contract (F5.0)
 
-Hub: [`background-parity.md`](background-parity.md) · Studio: [`studio-preview.md`](studio-preview.md) · roadmap: [`../../docs/UI_REDESIGN_PLAN.md`](../../docs/UI_REDESIGN_PLAN.md)
+Hub: [`background-parity.md`](background-parity.md) · Studio: [`studio-preview.md`](studio-preview.md) · save pattern: [`studio-save-pattern.md`](studio-save-pattern.md) · roadmap: [`../../docs/UI_REDESIGN_PLAN.md`](../../docs/UI_REDESIGN_PLAN.md)
 
 **F5.0** = dokumentacja i kontrakt UX dla przyszłego *Premium Background Builder / Asset Manager* w Studio Preview. **Bez kodu UI, bez zapisu, bez Shopify.**
 
@@ -297,4 +297,5 @@ Manual smoke F5.4c1: patrz [`studio-preview.md`](studio-preview.md).
 
 - F4 audit: [`background-parity.md`](background-parity.md)
 - Studio hub: [`studio-preview.md`](studio-preview.md)
+- **Save Pattern Playbook** (standard zapisu dla kolejnych komponentów): [`studio-save-pattern.md`](studio-save-pattern.md)
 - Roadmap: [`../../docs/UI_REDESIGN_PLAN.md`](../../docs/UI_REDESIGN_PLAN.md)
