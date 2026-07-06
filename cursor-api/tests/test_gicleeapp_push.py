@@ -374,6 +374,34 @@ def test_staged_runtime_paths_block_commit(gicleeapp_env, monkeypatch) -> None:
     assert reset_calls
 
 
+def test_known_component_runtime_paths_blocked() -> None:
+    from Komponenty.integracjagpt import gicleeapp_push as gap
+
+    blocked = (
+        "Komponenty/stronaglowna/data/variants/home8/index.json",
+        "Komponenty/stronaglowna/data/variants/home8/settings.json",
+        "Komponenty/tldobio/data/collections.json",
+        "Komponenty/tldobio/data/foo.jpg",
+        "Komponenty/tldobio/data/foo.jpeg",
+        "Komponenty/tldobio/data/foo.png",
+        "Komponenty/tldobio/data/foo.webp",
+        "Komponenty/integracjagpt/data/gpt_config.json",
+        "Komponenty/dokumentysprzedazy/dane/orders_sync_state.json",
+        "Komponenty/kpir/dane/kpir_settings.json",
+        "Komponenty/stronaglowna/data/backups/index-20260706.json",
+    )
+    for rel in blocked:
+        assert gap._is_runtime_path(rel), rel
+
+    allowed = (
+        "Komponenty/stronaglowna/service.py",
+        "Komponenty/katalog/data/variants/ka1/collection.json",
+        "giclee_app/studio/katalog_data_map.py",
+    )
+    for rel in allowed:
+        assert not gap._is_runtime_path(rel), rel
+
+
 def test_staged_extra_paths_block_commit(gicleeapp_env, monkeypatch) -> None:
     from Komponenty.integracjagpt import gicleeapp_push as gap
 

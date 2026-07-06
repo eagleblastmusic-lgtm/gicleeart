@@ -143,8 +143,20 @@ GICLEEAPP_RUNTIME_DENYLIST_PREFIXES: tuple[str, ...] = (
     "Komponenty/notatnik/notatki/",
     "Komponenty/print_optimize/data/",
     "Komponenty/stronaglowna/data/tmp/",
+    "Komponenty/stronaglowna/data/backups/",
     "_czesc7_parts/",
     "_test_out/",
+)
+
+# Ścieżki runtime/cache wykluczone z commit candidates Push GicleeApp (fnmatch na rel path).
+GICLEEAPP_RUNTIME_DENYLIST_GLOBS: tuple[str, ...] = (
+    "Komponenty/stronaglowna/data/variants/*/index.json",
+    "Komponenty/stronaglowna/data/variants/*/settings.json",
+    "Komponenty/tldobio/data/collections.json",
+    "Komponenty/tldobio/data/*.jpg",
+    "Komponenty/tldobio/data/*.jpeg",
+    "Komponenty/tldobio/data/*.png",
+    "Komponenty/tldobio/data/*.webp",
 )
 
 # Root-level scratch (fnmatch on basename only — not nested paths).

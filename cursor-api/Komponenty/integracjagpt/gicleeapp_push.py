@@ -17,6 +17,7 @@ from .config import (
     GICLEEAPP_REMOTE_URL,
     GICLEEAPP_REVIEW_ONLY_FILES,
     GICLEEAPP_RUNTIME_DENYLIST,
+    GICLEEAPP_RUNTIME_DENYLIST_GLOBS,
     GICLEEAPP_RUNTIME_DENYLIST_PREFIXES,
     GICLEEAPP_RUNTIME_ROOT_GLOBS,
     GICLEEAPP_STAGING_DIR,
@@ -458,6 +459,9 @@ def _is_runtime_path(rel: str) -> bool:
     for prefix in GICLEEAPP_RUNTIME_DENYLIST_PREFIXES:
         p = prefix.rstrip("/")
         if n == p or n.startswith(prefix):
+            return True
+    for pattern in GICLEEAPP_RUNTIME_DENYLIST_GLOBS:
+        if fnmatch.fnmatch(n, pattern):
             return True
     if _is_root_scratch_path(n):
         return True

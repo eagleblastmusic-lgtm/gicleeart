@@ -46,7 +46,13 @@ Osobny workflow w GUI **Integracja z GPT** — sekcja **Push GicleeApp (aplikacj
 
 Zachowuje 8 plików review-only (m.in. `GPT_README.md`, `docs/GPT_KNOWLEDGE_PACK.md`). Nie używa `git add -A`. Przy sekrecie lub pliku runtime w kandydatach — workflow zatrzymany.
 
-**Runtime denylist (F3.2.1.2):** m.in. `documents/`, `notatki/`, `print_optimize/data/`, `stronaglowna/data/tmp/`, scratch root (`_tmp_*`, `czesc*.json`, `tmp_getty*`) — wykluczone z sync, audytu i commita. Przed commitem: `git diff --cached --name-only` musi zgadzać się z listą zaakceptowanych plików; inaczej push **przerwany** (hard stop).
+**Runtime denylist (F3.2.1.2 + hygiene):** m.in. `documents/`, `notatki/`, `print_optimize/data/`, `stronaglowna/data/tmp/`, `stronaglowna/data/backups/`, scratch root (`_tmp_*`, `czesc*.json`, `tmp_getty*`) — wykluczone z audytu i commita. Dodatkowo jawne wykluczenia runtime/cache:
+
+- `Komponenty/stronaglowna/data/variants/*/index.json` i `*/settings.json` — lokalny runtime wariantu Shopify (nie commitować przy snapshotcie)
+- `Komponenty/tldobio/data/collections.json` oraz `Komponenty/tldobio/data/*.{jpg,jpeg,png,webp}` — cache kolekcji / obrazy
+- `Komponenty/integracjagpt/data/gpt_config.json`, `Komponenty/dokumentysprzedazy/dane/orders_sync_state.json`, `Komponenty/kpir/dane/kpir_settings.json` — local config / sync state
+
+Nie blokuje się globalnie `Komponenty/*/data/variants/` (np. seed katalogu może być dozwolony). Przed commitem: `git diff --cached --name-only` musi zgadzać się z listą zaakceptowanych plików; inaczej push **przerwany** (hard stop).
 
 Domyślny commit: `Refresh GicleeApp repository snapshot`.
 
