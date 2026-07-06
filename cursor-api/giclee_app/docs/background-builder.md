@@ -234,7 +234,7 @@ Roadmap zapisu:
 - **F5.4b1** — bounded writer + minimal backup (tylko clear)
 - **F5.4c** — rollback / post-save validation
 - **F5.4d** — asset ref selection (done · selection-only)
-- **F5.4b2** — bounded set_with_ref writer + backup
+- **F5.4b2** — bounded set_with_ref writer + backup (done)
 - **F5.5** — Shopify / upload / deploy / sync osobno
 
 Manual smoke F5.4a: patrz [`studio-preview.md`](studio-preview.md).
@@ -302,12 +302,31 @@ Manual smoke F5.4c1: patrz [`studio-preview.md`](studio-preview.md).
 | Draft | `BackgroundDraftState.selected_asset_id` — in-memory only |
 | UI | sekcja **Wybór assetu** — lista image/video, bez uploadu i file pickera |
 | Dry-run | ref-aware: `Asset draft: wybrany/brak`, semantyczna zmiana bez pełnego ref |
-| Readiness | `gotowe · F5.4b2` gdy ref kompletny — **bez** aktywnego „Zapisz lokalnie” |
-| Zakazane | write, `set_with_ref` writer, Shopify, upload, deploy |
-| Następny krok | **F5.4b2** — bounded `set_with_ref` writer + backup + undo |
+| Readiness | ref-aware — przy kompletnym ref: `gotowe` + **Zapisz lokalnie** (set_with_ref) |
+| Zakazane | Shopify, upload, file picker, deploy |
+| Następny krok | **F5.5** — Shopify / deploy |
 | Wersja | **1.34.0** |
 
 Manual smoke F5.4d: patrz [`studio-preview.md`](studio-preview.md).
+
+---
+
+## 18. F5.4b2 — Bounded set_with_ref writer (zrealizowane w kodzie)
+
+| Aspekt | Szczegóły |
+|--------|-----------|
+| Moduł | `background_save_writer.py` — `set_section_background_with_ref_backup()` |
+| Zakres | operacja **set_with_ref** z gotowością zapisu — existing refs only |
+| Patch | 4 pola: `background_media`, `background_image`, `video`, `background_overlay_pct` |
+| Overlay | preserve valid int / numeric string · fallback 0 — **bez** overlay editora |
+| Walidacja | writer ponownie buduje bounded catalog i waliduje ref przed zapisem |
+| Backup | `data/backups/index-{YYYYMMDD-HHMMSS}.json` przed zapisem |
+| UI | **Zapisz lokalnie** — clear **lub** set_with_ref ready; confirm pokazuje label, nie ref |
+| Undo | reuse `restore_section_background_from_backup` — session-only, jeden ostatni zapis |
+| Zakazane | Shopify, upload, deploy, file picker, backup picker, full restore, F5.5 |
+| Wersja | **1.35.0** |
+
+Manual smoke F5.4b2: patrz [`studio-preview.md`](studio-preview.md).
 
 ---
 

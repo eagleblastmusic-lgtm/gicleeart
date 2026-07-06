@@ -72,6 +72,7 @@ from giclee_app.studio.background_save_writer import (
     SaveWriteResult,
     clear_section_background_with_backup,
     restore_section_background_from_backup,
+    set_section_background_with_ref_backup,
 )
 from giclee_app.studio.background_state import (
     read_stronaglowna_active_variant,
@@ -155,7 +156,7 @@ class BackgroundPanelView(ctk.CTkFrame):
         self._save_local_button: ctk.CTkButton | None = None
         self._undo_button: ctk.CTkButton | None = None
         self._last_backup_label: ctk.CTkLabel | None = None
-        self._last_successful_clear: SaveWriteResult | None = None
+        self._last_successful_write: SaveWriteResult | None = None
         self._last_save_variant_id: str | None = None
         self._readonly_body_labels: dict[str, ctk.CTkLabel] = {}
         self._last_readiness: SaveReadiness | None = None
@@ -663,7 +664,7 @@ class BackgroundPanelView(ctk.CTkFrame):
             hover_color=theme.CardHover,
             border_width=1,
             border_color=theme.BorderSubtle,
-            command=self._on_save_local_clear,
+            command=self._on_save_local,
         )
         self._save_local_button.pack(anchor="w", padx=16, pady=(0, 8))
         self._save_local_button.pack_forget()
@@ -686,13 +687,13 @@ class BackgroundPanelView(ctk.CTkFrame):
             hover_color=theme.CardHover,
             border_width=1,
             border_color=theme.BorderSubtle,
-            command=self._on_undo_last_clear,
+            command=self._on_undo_last_write,
         )
         self._undo_button.pack(anchor="w", padx=16, pady=(0, 12))
         self._undo_button.pack_forget()
 
     def _clear_session_undo(self) -> None:
-        self._last_successful_clear = None
+        self._last_successful_write = None
         self._last_save_variant_id = None
         if self._undo_button is not None:
             self._undo_button.pack_forget()
@@ -701,7 +702,7 @@ class BackgroundPanelView(ctk.CTkFrame):
 
     def _set_session_undo(self, result: SaveWriteResult) -> None:
         active = read_stronaglowna_active_variant(self._comp.package_path)
-        self._last_successful_clear = result
+        self._last_successful_write = result
         self._last_save_variant_id = active[0] if active else None
         if self._last_backup_label is not None and result.backup_filename:
             self._last_backup_label.configure(
@@ -714,10 +715,13 @@ class BackgroundPanelView(ctk.CTkFrame):
     def _update_undo_visibility(self) -> None:
         if self._undo_button is None:
             return
-        if self._last_successful_clear is not None and self._last_successful_clear.ok:
-            if self._last_backup_label is not None and self._last_successful_clear.backup_filename:
+        if self._last_successful_write is not None and self._last_successful_write.ok:
+            if (
+                self._last_backup_label is not None
+                and self._last_successful_write.backup_filename
+            ):
                 self._last_backup_label.configure(
-                    text=f"{LAST_BACKUP_LABEL} {self._last_successful_clear.backup_filename}",
+                    text=f"{LAST_BACKUP_LABEL} {self._last_successful_write.backup_filename}",
                 )
                 self._last_backup_label.pack(anchor="w", padx=16, pady=(0, 8))
             self._undo_button.pack(anchor="w", padx=16, pady=(0, 12))
@@ -739,12 +743,17 @@ class BackgroundPanelView(ctk.CTkFrame):
     def _update_save_local_button(self, readiness: SaveReadiness) -> None:
         if self._save_local_button is None:
             return
-        show = (
+        show_clear = (
             self._clear_plan_intent
             and readiness.ready
             and readiness.operation == "clear"
         )
-        if show:
+        show_set_with_ref = (
+            readiness.ready
+            and readiness.operation == "set_with_ref"
+            and bool(self._draft.selected_asset_id)
+        )
+        if show_clear or show_set_with_ref:
             self._save_local_button.pack(anchor="w", padx=16, pady=(0, 12))
         else:
             self._save_local_button.pack_forget()
@@ -757,9 +766,13 @@ class BackgroundPanelView(ctk.CTkFrame):
         extra_lines: tuple[str, ...] = (),
     ) -> str:
         clear_ready = readiness.ready and readiness.operation == "clear"
+        set_with_ref_ready = (
+            readiness.ready and readiness.operation == "set_with_ref"
+        )
         readiness_block = format_readiness_block(
             readiness.summary,
             clear_ready=clear_ready,
+            set_with_ref_ready=set_with_ref_ready,
         )
         parts = [dry_run_summary, "", readiness_block]
         if extra_lines:
@@ -788,39 +801,63 @@ class BackgroundPanelView(ctk.CTkFrame):
         if callable(self._on_status):
             self._on_status(_DRY_RUN_STATUS_MSG)
 
-    def _on_save_local_clear(self) -> None:
+    def _on_save_local(self) -> None:
         self._on_clear_plan_toggled()
         readiness = evaluate_save_readiness(
             self._draft,
             self._comp.package_path,
             clear_intent=self._clear_plan_intent,
         )
-        if not (readiness.ready and readiness.operation == "clear"):
+        if not readiness.ready or readiness.operation not in ("clear", "set_with_ref"):
             if callable(self._on_status):
-                self._on_status("Zapis zablokowany — tylko operacja clear.")
+                self._on_status("Zapis zablokowany — operacja niedostępna.")
             return
 
-        zone_label = self._draft.zone_display()
-        confirmed = messagebox.askyesno(
-            "Zapis lokalny",
-            "\n".join([
-                f"Operacja: wyczyść tło w strefie {zone_label}",
-                "Dotyczy jednej sekcji section_background.",
-                "Zostanie utworzony backup index.json.",
-                "Bez Shopify · bez deploy.",
-                "",
-                "Kontynuować?",
-            ]),
-            parent=self.winfo_toplevel(),
-        )
-        if not confirmed:
-            return
+        if readiness.operation == "clear":
+            confirmed = messagebox.askyesno(
+                "Zapis lokalny",
+                "\n".join([
+                    f"Operacja: wyczyść tło w strefie {self._draft.zone_display()}",
+                    "Dotyczy jednej sekcji section_background.",
+                    "Zostanie utworzony backup index.json.",
+                    "Bez Shopify · bez deploy.",
+                    "",
+                    "Kontynuować?",
+                ]),
+                parent=self.winfo_toplevel(),
+            )
+            if not confirmed:
+                return
+            result = clear_section_background_with_backup(
+                self._draft,
+                self._comp.package_path,
+                readiness=readiness,
+            )
+        else:
+            asset_label = self._selected_asset_label() or "wybrany asset"
+            kind_pl = self._draft.kind_label_pl()
+            confirmed = messagebox.askyesno(
+                "Zapis lokalny",
+                "\n".join([
+                    f"Strefa: {self._draft.zone_display()}",
+                    f"Typ: {kind_pl}",
+                    f"Asset: {asset_label}",
+                    "Dotyczy jednej sekcji section_background.",
+                    "Zostanie utworzony backup index.json.",
+                    "Bez Shopify · bez deploy.",
+                    "",
+                    "Kontynuować?",
+                ]),
+                parent=self.winfo_toplevel(),
+            )
+            if not confirmed:
+                return
+            result = set_section_background_with_ref_backup(
+                self._draft,
+                self._comp.package_path,
+                readiness=readiness,
+            )
 
-        result = clear_section_background_with_backup(
-            self._draft,
-            self._comp.package_path,
-            readiness=readiness,
-        )
         if not result.ok:
             if callable(self._on_status):
                 self._on_status(result.message)
@@ -828,6 +865,7 @@ class BackgroundPanelView(ctk.CTkFrame):
 
         self._set_session_undo(result)
         self._refresh_readonly_sections()
+        self._refresh_asset_selection_ui()
         dry_run = build_background_save_dry_run(self._draft, self._comp.package_path)
         readiness_after = evaluate_save_readiness(
             self._draft,
@@ -852,8 +890,8 @@ class BackgroundPanelView(ctk.CTkFrame):
         if callable(self._on_status):
             self._on_status(SAVE_LOCAL_STATUS)
 
-    def _on_undo_last_clear(self) -> None:
-        saved = self._last_successful_clear
+    def _on_undo_last_write(self) -> None:
+        saved = self._last_successful_write
         if saved is None or not saved.ok or not saved.backup_filename:
             return
 

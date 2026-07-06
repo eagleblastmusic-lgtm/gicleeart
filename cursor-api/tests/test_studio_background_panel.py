@@ -209,12 +209,17 @@ def test_asset_selection_section_in_panel_source() -> None:
     assert "write_text" not in text
 
 
-def test_save_local_only_for_clear_operation() -> None:
+def test_save_local_for_clear_and_set_with_ref() -> None:
     path = Path(__file__).resolve().parents[1] / "giclee_app" / "ui" / "background_panel.py"
     text = path.read_text(encoding="utf-8")
     update_block = text.split("def _update_save_local_button")[1].split("\n    def ")[0]
     assert 'readiness.operation == "clear"' in update_block
-    assert "set_with_ref" not in update_block
+    assert 'readiness.operation == "set_with_ref"' in update_block
+    save_block = text.split("def _on_save_local")[1].split("\n    def ")[0]
+    assert "set_section_background_with_ref_backup" in save_block
+    assert "_selected_asset_label" in save_block
+    assert "SAVE_LOCAL_STATUS" in save_block
+    assert "_last_successful_write" in text
 
 
 def test_handoff_uses_show_inline_component_and_destroy_background() -> None:

@@ -117,10 +117,10 @@ Kontrakt i roadmapa: [`background-builder.md`](background-builder.md). Wzorzec z
 | F5.4c1 | done | Session-only undo restore — **Cofnij ostatni zapis** |
 | F5.4c2 | planned | Limited backup picker — defer |
 | F5.4d | done | Asset ref selection — **Wybór assetu**, zero write |
-| F5.4b2 | planned | Bounded `set_with_ref` writer + backup |
+| F5.4b2 | done | Bounded `set_with_ref` writer + backup |
 | F5.5 | planned | Shopify / sync / deploy — osobna akceptacja |
 
-F5.4b1 to pierwszy realny zapis lokalny — tylko **wyczyść tło** z backupem. F5.4c1 dodaje **session-only undo**. F5.4d dodaje **wybór istniejącego assetu** bez zapisu. Realny zapis z ref = **F5.4b2**.
+F5.4b1 to pierwszy realny zapis lokalny — tylko **wyczyść tło** z backupem. F5.4c1 dodaje **session-only undo**. F5.4d dodaje **wybór istniejącego assetu**. F5.4b2 dodaje **zapis set_with_ref** (existing refs only) z backupem i reuse undo.
 
 Manual smoke F5.4b1: patrz sekcja poniżej.
 
@@ -281,9 +281,9 @@ Manual smoke F5.4c1:
 | `background_asset_catalog.py` | bounded refs z aktywnego `index.json` (5 stref section_background) |
 | `background_draft_state.py` | `selected_asset_id` — in-memory |
 | `background_panel.py` | sekcja **Wybór assetu** — image/video, bez uploadu |
-| Dry-run / readiness | ref-aware · status `gotowe · F5.4b2` · **bez** zapisu set_with_ref |
-| Zakazane | write, Shopify, upload, file picker, deploy |
-| Następny krok | **F5.4b2** — bounded `set_with_ref` writer |
+| Dry-run / readiness | ref-aware · status `gotowe` gdy ref kompletny |
+| Zakazane | Shopify, upload, file picker, deploy |
+| Następny krok | **F5.5** — Shopify / deploy |
 
 Manual smoke F5.4d:
 
@@ -292,12 +292,39 @@ Manual smoke F5.4d:
 3. Sekcja **Wybór assetu** — lista image assets z wariantu
 4. Wybierz asset → summary pokazuje label, nie pełny ref
 5. **Sprawdź zapis** → dry-run: `Asset draft: wybrany`
-6. Readiness: `gotowe · F5.4b2` — brak aktywnego **Zapisz lokalnie** (poza clear)
+6. Readiness: `gotowe` — **Zapisz lokalnie** widoczny (set_with_ref)
 7. Zmień typ na **wideo** → selected asset wyczyszczony, lista video
 8. **video_collage** — brak pickera
 9. Clear path F5.4b1 + undo F5.4c1 nadal działają
 10. Brak mutacji `index.json` z samego wyboru assetu
 11. Runtime smoke data nie commitować
+
+---
+
+## F5.4b2 — Bounded set_with_ref writer
+
+| Element | Stan |
+|---------|------|
+| `background_save_writer.py` | `set_section_background_with_ref_backup()` — mirror clear path |
+| Patch | image/video — 4 pola; overlay preserve lub fallback 0 |
+| Walidacja | bounded catalog + kind match + writer re-validates ref |
+| Backup | przed write — `data/backups/index-*.json` |
+| UI | **Zapisz lokalnie** — dispatch clear / set_with_ref; confirm bez pełnego ref |
+| Undo | reuse F5.4c1 — `_last_successful_write` po clear i set_with_ref |
+| Zakazane | Shopify, upload, deploy, overlay editor, backup picker, F5.5 |
+
+Manual smoke F5.4b2:
+
+1. `python -m giclee_app.studio_preview` → **Strona główna** → **Tło**
+2. Wybierz strefę + typ obraz + asset z listy
+3. **Sprawdź zapis** → readiness `gotowe`
+4. **Zapisz lokalnie** → confirm (strefa, typ, label assetu) → OK
+5. **Aktualny stan** pokazuje obraz; status `zapisano lokalnie · bez Shopify`
+6. **Cofnij ostatni zapis** → stan wraca
+7. Powtórz dla wideo; powtórz image → video + ref
+8. Ten sam asset + ten sam typ → noop, brak save
+9. Clear checkbox + undo po clear nadal działają
+10. Brak Shopify/deploy; runtime index/backups nie stage’ować
 
 ---
 

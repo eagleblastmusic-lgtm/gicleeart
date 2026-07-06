@@ -351,12 +351,12 @@ def test_panel_undo_wiring() -> None:
     text = _PANEL_PATH.read_text(encoding="utf-8")
     assert "UNDO_LAST_SAVE_LABEL" in text
     assert "Cofnij ostatni zapis" in text
-    assert "_on_undo_last_clear" in text
+    assert "_on_undo_last_write" in text
     assert "restore_section_background_from_backup" in text
-    assert "_last_successful_clear" in text
+    assert "_last_successful_write" in text
     assert "_clear_session_undo" in text
     assert "UNDO_RESTORE_STATUS" in text
-    undo_block = text.split("def _on_undo_last_clear")[1].split("\n    def ")[0]
+    undo_block = text.split("def _on_undo_last_write")[1].split("\n    def ")[0]
     assert "write_text" not in undo_block
     hide_block = text.split("def on_hide")[1].split("\n    def ")[0]
     assert "_clear_session_undo" in hide_block

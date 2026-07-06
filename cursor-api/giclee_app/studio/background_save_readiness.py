@@ -1,4 +1,4 @@
-"""Save readiness + ref policy — Studio Preview (F5.4b0 / F5.4d). Pure, zero I/O zapisu."""
+"""Save readiness + ref policy — Studio Preview (F5.4b0 / F5.4d / F5.4b2). Pure, zero I/O zapisu."""
 
 from __future__ import annotations
 
@@ -25,9 +25,8 @@ from giclee_app.studio.background_state import (
 SaveOperation = Literal["noop", "clear", "set_with_ref"]
 
 READINESS_SECTION_LABEL = "Gotowość zapisu"
-F54B0_DISCLAIMER = "F5.4b1: zapis lokalny dostępny tylko dla wyczyść tło."
-F54B1_FUTURE_NOTE = "Zapis z ref (set_with_ref) wymaga F5.4b2."
-F54B2_PENDING_NOTE = "Draft kompletny — realny zapis z ref w F5.4b2."
+F54B0_DISCLAIMER = "Zapis lokalny: tylko index.json aktywnego wariantu · bez Shopify."
+F54B1_FUTURE_NOTE = "F5.5: publikacja / deploy poza zakresem lokalnego zapisu."
 SAVE_LOCAL_LABEL = "Zapisz lokalnie"
 SAVE_LOCAL_STATUS = "zapisano lokalnie · bez Shopify"
 UNDO_LAST_SAVE_LABEL = "Cofnij ostatni zapis"
@@ -38,7 +37,6 @@ CLEAR_PLAN_CHECKBOX = "Plan: wyczyść tło w strefie"
 _STATUS_READY = "gotowe"
 _STATUS_BLOCKED = "zablokowane"
 _STATUS_NOOP = "bez zmian"
-_STATUS_F54B2 = "gotowe · F5.4b2"
 
 _BLOCK_KIND_CHANGE = "Zmiana typu wymaga wyboru assetu."
 _BLOCK_BRAK_TO_KIND = "Ustawienie tła z „brak” wymaga wyboru assetu."
@@ -75,7 +73,7 @@ def evaluate_save_readiness(
             operation=None,
             block_reason=reason,
             requires_confirm=False,
-            summary=_format_summary(_STATUS_BLOCKED, reason, None),
+            summary=_format_summary(_STATUS_BLOCKED, reason, None, None),
             status_label=_STATUS_BLOCKED,
             ref_complete=False,
         )
@@ -86,7 +84,12 @@ def evaluate_save_readiness(
             operation=None,
             block_reason=VIDEO_COLLAGE_SCOPE_ERROR,
             requires_confirm=False,
-            summary=_format_summary(_STATUS_BLOCKED, VIDEO_COLLAGE_SCOPE_ERROR, None),
+            summary=_format_summary(
+                _STATUS_BLOCKED,
+                VIDEO_COLLAGE_SCOPE_ERROR,
+                None,
+                None,
+            ),
             status_label=_STATUS_BLOCKED,
             ref_complete=False,
         )
@@ -99,7 +102,7 @@ def evaluate_save_readiness(
             operation=None,
             block_reason=reason,
             requires_confirm=False,
-            summary=_format_summary(_STATUS_BLOCKED, reason, None),
+            summary=_format_summary(_STATUS_BLOCKED, reason, None, None),
             status_label=_STATUS_BLOCKED,
             ref_complete=False,
         )
@@ -122,6 +125,7 @@ def evaluate_save_readiness(
                     _STATUS_BLOCKED,
                     "Strefa nie ma tła do wyczyszczenia.",
                     None,
+                    None,
                 ),
                 status_label=_STATUS_BLOCKED,
                 ref_complete=has_valid_ref,
@@ -135,6 +139,7 @@ def evaluate_save_readiness(
                 _STATUS_READY,
                 None,
                 "Plan: wyczyść tło w strefie · użyj „Zapisz lokalnie”.",
+                "clear",
             ),
             status_label=_STATUS_READY,
             ref_complete=has_valid_ref,
@@ -150,12 +155,17 @@ def evaluate_save_readiness(
                 operation="set_with_ref",
                 block_reason=_BLOCK_BRAK_TO_KIND,
                 requires_confirm=False,
-                summary=_format_summary(_STATUS_BLOCKED, _BLOCK_BRAK_TO_KIND, None),
+                summary=_format_summary(
+                    _STATUS_BLOCKED,
+                    _BLOCK_BRAK_TO_KIND,
+                    None,
+                    "set_with_ref",
+                ),
                 status_label=_STATUS_BLOCKED,
                 ref_complete=False,
             )
-        return _pending_f54b2(
-            "Plan: ustaw tło z wybranym assetem · zapis w F5.4b2.",
+        return _ready_set_with_ref(
+            "Plan: ustaw tło z wybranym assetem · użyj „Zapisz lokalnie”.",
         )
 
     if not dry_run.type_unchanged:
@@ -165,12 +175,17 @@ def evaluate_save_readiness(
                 operation="set_with_ref",
                 block_reason=_BLOCK_KIND_CHANGE,
                 requires_confirm=False,
-                summary=_format_summary(_STATUS_BLOCKED, _BLOCK_KIND_CHANGE, None),
+                summary=_format_summary(
+                    _STATUS_BLOCKED,
+                    _BLOCK_KIND_CHANGE,
+                    None,
+                    "set_with_ref",
+                ),
                 status_label=_STATUS_BLOCKED,
                 ref_complete=False,
             )
-        return _pending_f54b2(
-            f"Plan: zmiana typu ({current} → {target}) z wybranym assetem · F5.4b2.",
+        return _ready_set_with_ref(
+            f"Plan: zmiana typu ({current} → {target}) z wybranym assetem.",
         )
 
     if current != "brak" and dry_run.type_unchanged:
@@ -197,12 +212,13 @@ def evaluate_save_readiness(
                             _STATUS_NOOP,
                             None,
                             "Ten sam typ i ten sam asset — zapis nie jest potrzebny.",
+                            "noop",
                         ),
                         status_label=_STATUS_NOOP,
                         ref_complete=True,
                     )
-            return _pending_f54b2(
-                "Plan: zamiana assetu przy tym samym typie · F5.4b2.",
+            return _ready_set_with_ref(
+                "Plan: zamiana assetu przy tym samym typie.",
             )
         return SaveReadiness(
             ready=False,
@@ -213,6 +229,7 @@ def evaluate_save_readiness(
                 _STATUS_NOOP,
                 None,
                 "Typ zgodny z obecnym stanem — zapis nie jest potrzebny.",
+                "noop",
             ),
             status_label=_STATUS_NOOP,
             ref_complete=False,
@@ -224,7 +241,12 @@ def evaluate_save_readiness(
             operation="set_with_ref",
             block_reason=_BLOCK_INVALID_REF,
             requires_confirm=False,
-            summary=_format_summary(_STATUS_BLOCKED, _BLOCK_INVALID_REF, None),
+            summary=_format_summary(
+                _STATUS_BLOCKED,
+                _BLOCK_INVALID_REF,
+                None,
+                "set_with_ref",
+            ),
             status_label=_STATUS_BLOCKED,
             ref_complete=False,
         )
@@ -234,31 +256,41 @@ def evaluate_save_readiness(
         operation="set_with_ref",
         block_reason=_BLOCK_SET_WITH_REF,
         requires_confirm=False,
-        summary=_format_summary(_STATUS_BLOCKED, _BLOCK_SET_WITH_REF, None),
+        summary=_format_summary(
+            _STATUS_BLOCKED,
+            _BLOCK_SET_WITH_REF,
+            None,
+            "set_with_ref",
+        ),
         status_label=_STATUS_BLOCKED,
         ref_complete=False,
     )
 
 
-def _pending_f54b2(detail: str) -> SaveReadiness:
+def _ready_set_with_ref(detail: str) -> SaveReadiness:
     return SaveReadiness(
-        ready=False,
+        ready=True,
         operation="set_with_ref",
         block_reason=None,
-        requires_confirm=False,
-        summary=_format_summary(_STATUS_F54B2, None, detail),
-        status_label=_STATUS_F54B2,
+        requires_confirm=True,
+        summary=_format_summary(_STATUS_READY, None, detail, "set_with_ref"),
+        status_label=_STATUS_READY,
         ref_complete=True,
     )
 
 
-def format_readiness_block(summary: str, *, clear_ready: bool = False) -> str:
+def format_readiness_block(
+    summary: str,
+    *,
+    clear_ready: bool = False,
+    set_with_ref_ready: bool = False,
+) -> str:
     """Blok gotowości do panelu — bez URL/ref/ścieżek."""
     lines = [READINESS_SECTION_LABEL, summary]
     if clear_ready:
         lines.append("Operacja clear gotowa — dostępny przycisk „Zapisz lokalnie”.")
-    elif "F5.4b2" in summary:
-        lines.append(F54B2_PENDING_NOTE)
+    elif set_with_ref_ready:
+        lines.append("Operacja set_with_ref gotowa — dostępny przycisk „Zapisz lokalnie”.")
     lines.extend(["", F54B0_DISCLAIMER, F54B1_FUTURE_NOTE])
     return "\n".join(lines)
 
@@ -267,25 +299,30 @@ def _format_summary(
     status: str,
     block_reason: str | None,
     detail: str | None,
+    operation: SaveOperation | None,
 ) -> str:
     lines = [f"Status: {status}"]
     if block_reason:
         lines.append(f"Powód: {block_reason}")
     if detail:
         lines.append(detail)
-    op_hint = _operation_hint(status, block_reason)
+    op_hint = _operation_hint(status, block_reason, operation)
     if op_hint:
         lines.append(op_hint)
     return "\n".join(lines)
 
 
-def _operation_hint(status: str, block_reason: str | None) -> str:
+def _operation_hint(
+    status: str,
+    block_reason: str | None,
+    operation: SaveOperation | None,
+) -> str:
     if status == _STATUS_NOOP:
         return "Operacja: noop — bez mutacji index.json."
-    if status == _STATUS_READY:
-        return "Operacja: clear — gotowe do zapisu lokalnego (F5.4b1)."
-    if status == _STATUS_F54B2:
-        return "Operacja: set_with_ref — draft kompletny · zapis w F5.4b2."
+    if status == _STATUS_READY and operation == "clear":
+        return "Operacja: clear — gotowe do lokalnego zapisu."
+    if status == _STATUS_READY and operation == "set_with_ref":
+        return "Operacja: set_with_ref — gotowe do lokalnego zapisu."
     if block_reason and "assetu" in block_reason.lower():
         return "Operacja: set_with_ref — wymaga wyboru assetu (F5.4d)."
     return ""
@@ -306,7 +343,6 @@ __all__ = [
     "CLEAR_PLAN_CHECKBOX",
     "F54B0_DISCLAIMER",
     "F54B1_FUTURE_NOTE",
-    "F54B2_PENDING_NOTE",
     "READINESS_SECTION_LABEL",
     "SAVE_LOCAL_LABEL",
     "SAVE_LOCAL_STATUS",

@@ -213,6 +213,7 @@ def test_missing_index_error_no_write(tmp_path: Path) -> None:
         requires_confirm=True,
         summary="ok",
         status_label="gotowe",
+        ref_complete=False,
     )
     result = clear_section_background_with_backup(draft, tmp_path, readiness=readiness)
     assert not result.ok
@@ -230,6 +231,7 @@ def test_invalid_json_error_no_write(tmp_path: Path) -> None:
         requires_confirm=True,
         summary="ok",
         status_label="gotowe",
+        ref_complete=False,
     )
     result = clear_section_background_with_backup(draft, tmp_path, readiness=readiness)
     assert not result.ok
@@ -368,19 +370,21 @@ def test_panel_has_save_local_wiring() -> None:
     text = _PANEL_PATH.read_text(encoding="utf-8")
     assert "SAVE_LOCAL_LABEL" in text
     assert "_save_local_button" in text
-    assert "_save_local_button" in text
-    assert "_on_save_local_clear" in text
+    assert "_on_save_local" in text
     assert "clear_section_background_with_backup" in text
+    assert "set_section_background_with_ref_backup" in text
     assert "messagebox.askyesno" in text
     assert "_refresh_readonly_sections" in text
-    save_block = text.split("def _on_save_local_clear")[1].split("\n    def ")[0]
+    save_block = text.split("def _on_save_local")[1].split("\n    def ")[0]
     assert "clear_section_background_with_backup" in save_block
+    assert "set_section_background_with_ref_backup" in save_block
     assert "write_text" not in save_block
 
 
-def test_panel_save_button_only_for_clear_ready() -> None:
+def test_panel_save_button_for_clear_and_set_with_ref() -> None:
     text = _PANEL_PATH.read_text(encoding="utf-8")
     update_block = text.split("def _update_save_local_button")[1].split("\n    def ")[0]
     assert 'readiness.operation == "clear"' in update_block
+    assert 'readiness.operation == "set_with_ref"' in update_block
     assert "_clear_plan_intent" in update_block
     assert "pack_forget" in update_block

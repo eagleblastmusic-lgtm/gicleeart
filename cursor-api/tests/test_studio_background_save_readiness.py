@@ -132,7 +132,7 @@ def test_clear_intent_ready_when_background_exists(tmp_path: Path) -> None:
     assert readiness.ready
     assert readiness.operation == "clear"
     assert readiness.requires_confirm
-    assert "F5.4b1" in readiness.summary
+    assert "Zapisz lokalnie" in readiness.summary
 
 
 def test_clear_intent_blocked_when_already_brak(tmp_path: Path) -> None:
@@ -201,6 +201,12 @@ def test_panel_has_readiness_and_save_local_button() -> None:
     assert "Zastosuj" not in text
 
 
+def test_format_readiness_block_set_with_ref_ready_hint() -> None:
+    block = format_readiness_block("Status: gotowe", set_with_ref_ready=True)
+    assert "Zapisz lokalnie" in block
+    assert "set_with_ref" in block
+
+
 def test_format_readiness_block_clear_ready_hint() -> None:
     block = format_readiness_block("Status: gotowe", clear_ready=True)
     assert "Zapisz lokalnie" in block
@@ -216,7 +222,7 @@ def test_panel_dry_run_includes_readiness() -> None:
     assert "write_text" not in save_block
 
 
-def test_kind_change_with_valid_ref_pending_f54b2(tmp_path: Path) -> None:
+def test_kind_change_with_valid_ref_ready(tmp_path: Path) -> None:
     z0, z1 = STRONAGLOWNA_SECTION_BGS[0], STRONAGLOWNA_SECTION_BGS[1]
     variants_dir = tmp_path / "data" / "variants" / "v1"
     variants_dir.mkdir(parents=True)
@@ -253,10 +259,11 @@ def test_kind_change_with_valid_ref_pending_f54b2(tmp_path: Path) -> None:
         selected_asset_id=video_id,
     )
     readiness = evaluate_save_readiness(draft, tmp_path)
-    assert not readiness.ready
+    assert readiness.ready
     assert readiness.operation == "set_with_ref"
     assert readiness.ref_complete
-    assert readiness.status_label == "gotowe · F5.4b2"
+    assert readiness.status_label == "gotowe"
+    assert readiness.requires_confirm
 
 
 def test_invalid_selected_asset_id_blocked(tmp_path: Path) -> None:
@@ -278,7 +285,7 @@ def test_invalid_selected_asset_id_blocked(tmp_path: Path) -> None:
     assert readiness.status_label == "zablokowane"
 
 
-def test_same_kind_different_ref_pending_f54b2(tmp_path: Path) -> None:
+def test_same_kind_different_ref_ready(tmp_path: Path) -> None:
     zone = STRONAGLOWNA_SECTION_BGS[0]
     z1 = STRONAGLOWNA_SECTION_BGS[1]
     variants_dir = tmp_path / "data" / "variants" / "v1"
@@ -318,6 +325,6 @@ def test_same_kind_different_ref_pending_f54b2(tmp_path: Path) -> None:
         selected_asset_id=other_id,
     )
     readiness = evaluate_save_readiness(draft, tmp_path)
-    assert not readiness.ready
+    assert readiness.ready
     assert readiness.operation == "set_with_ref"
-    assert readiness.status_label == "gotowe · F5.4b2"
+    assert readiness.status_label == "gotowe"
