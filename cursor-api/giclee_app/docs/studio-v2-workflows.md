@@ -491,3 +491,16 @@ Uzasadnienie: Asset Lab shell (F6.2) przed F5.4-plan — zapis tła nie projektu
 | Frozen | `stronaglowna` — Background Builder local v1 reference |
 
 **Next:** F6.3 / Katalog rebuild plan. **F5.5** deferred.
+
+---
+
+## 14. Katalog rebuild plan
+
+**Docs:** [`katalog-rebuild-plan.md`](katalog-rebuild-plan.md) (checkpoint `56b4c9c`)
+
+| Punkt | Status |
+|-------|--------|
+| Katalog rebuild plan | **done (docs-only)** |
+| Katalog = parent workflow | absorbs `tldobio` |
+| Next implementation | **Katalog read-only shell (F1)** |
+| Writer / Shopify | not started · F5.5 deferred |

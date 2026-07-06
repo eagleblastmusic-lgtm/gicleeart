@@ -17,7 +17,7 @@ Po freeze **Background Builder local v1** (`stronaglowna` → section_background
 | **Absorbed** | `tldobio` (Tło do Bio) → część workflow **Katalog** |
 | **Frozen reference** | `stronaglowna` — Background Builder local v1 complete |
 
-Strategia nie rozpoczyna implementacji komponentów. Następny krok implementacyjny: **F6.3** / **Katalog rebuild plan** (docs + read-only shell — osobna akceptacja).
+Strategia nie rozpoczyna implementacji komponentów. Plan Katalogu: [`katalog-rebuild-plan.md`](katalog-rebuild-plan.md). Następny krok implementacyjny: **Katalog read-only shell (F1)** — osobna akceptacja.
 
 ---
 
@@ -90,6 +90,8 @@ Docelowe fazy (bez implementacji w tym etapie):
 
 Katalog wchłania **Tło do Bio** i porządkuje największy obszar administracji strony.
 
+**Katalog rebuild plan:** [`katalog-rebuild-plan.md`](katalog-rebuild-plan.md) · status: **planned / docs-only** · next implementation: **Katalog read-only shell (F1)**
+
 ---
 
 ## 6. Save Pattern requirements
@@ -108,9 +110,9 @@ Rebuild komponentów **nie** portuje legacy UI 1:1 bez decyzji. Każdy nowy writ
 
 ## 7. Suggested implementation order
 
-1. **F6.3** — Site Builder / Administracja shell strategy
-2. Katalog rebuild plan (docs + data map)
-3. Katalog read-only shell
+1. **F6.3** — Site Builder / Administracja shell strategy — **Katalog rebuild plan done (docs)**
+2. Katalog rebuild plan (docs + data map) — **done** · [`katalog-rebuild-plan.md`](katalog-rebuild-plan.md)
+3. Katalog read-only shell (F1)
 4. Katalog draft / dry-run / readiness
 5. Katalog bounded writer, jeśli potrzebny
 6. Własna fotografia
@@ -144,4 +146,4 @@ Katalog powinien iść **pierwszy**, bo wchłania Tło do Bio i porządkuje najw
 - [`studio-preview.md`](studio-preview.md)
 - [`studio-v2-workflows.md`](studio-v2-workflows.md)
 - [`studio-save-pattern.md`](studio-save-pattern.md)
-- [`background-builder.md`](background-builder.md)
+- [`katalog-rebuild-plan.md`](katalog-rebuild-plan.md)

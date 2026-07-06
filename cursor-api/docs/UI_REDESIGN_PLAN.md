@@ -101,7 +101,16 @@ Strategia docs-only: [`giclee_app/docs/admin-components-strategy.md`](../giclee_
 | **Frozen reference** | `stronaglowna` — Background Builder local v1 complete |
 | **Adapt-first** | `wzorzecszablonu`, `stronaproduktu`, `karuzela` (+ reszta launcher wg reguły adapt-first) |
 
-**Next:** **F6.3** / **Katalog rebuild plan** (docs + read-only shell — bez implementacji backendu w tym etapie).
+**Next:** **Katalog read-only shell (F1)** — plan: [`katalog-rebuild-plan.md`](../giclee_app/docs/katalog-rebuild-plan.md)
+
+## Katalog rebuild plan — checkpoint
+
+| | |
+|---|---|
+| Plan | [`katalog-rebuild-plan.md`](../giclee_app/docs/katalog-rebuild-plan.md) — **docs-only done** |
+| Katalog | parent workflow · absorbs `tldobio` |
+| Next | **Katalog read-only shell (F1)** |
+| F5.5 | deferred |
 
 ### Studio v2 redesign track (F6.x)
 
@@ -110,7 +119,7 @@ Strategia docs-only: [`giclee_app/docs/admin-components-strategy.md`](../giclee_
 | F6.0 | Component redesign audit — Keep / Merge / Legacy / Defer | done · accepted |
 | F6.1 | Studio v2 workflow navigation map (docs-only) | done |
 | F6.2 | Asset Lab shell — read-only / launch-only | done |
-| F6.3 | Site Builder Tier 3 read-only shells | planned |
+| F6.3 | Katalog rebuild plan + read-only shell strategy | plan done · shell next |
 
 Mapa workflowów: [`giclee_app/docs/studio-v2-workflows.md`](../giclee_app/docs/studio-v2-workflows.md)
 

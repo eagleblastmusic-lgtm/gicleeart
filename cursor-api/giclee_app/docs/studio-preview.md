@@ -130,7 +130,8 @@ F5.4b1 to pierwszy realny zapis lokalny — tylko **wyczyść tło** z backupem.
 | Background Builder local v1 | **done** — pełny lokalny cykl zapisu |
 | F5.5 | **not started** |
 | Next strategy | [`admin-components-strategy.md`](admin-components-strategy.md) |
-| Next implementacyjny | **F6.3** / Katalog rebuild plan |
+| Katalog plan | [`katalog-rebuild-plan.md`](katalog-rebuild-plan.md) — docs-only done |
+| Next implementacyjny | **Katalog read-only shell (F1)** |
 
 Szczegóły freeze: [`background-builder.md`](background-builder.md) §19.
 
