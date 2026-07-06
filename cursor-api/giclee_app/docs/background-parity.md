@@ -191,4 +191,13 @@ Kontrakt UX: [`background-builder.md`](background-builder.md).
 | Moduł | `background_draft_state.py` |
 | UI | sekcja **Draft wyboru** — strefa + typ, tylko in-memory |
 | `tldobio` | brak draft UI |
-| Poza zakresem | preview (F5.3), zapis (F5.4), file picker, upload |
+| Poza zakresem | preview apply, zapis (F5.4), file picker |
+
+## F5.3 — Conceptual draft preview (zrealizowane)
+
+| Aspekt | Szczegóły |
+|--------|-----------|
+| Moduł | `background_draft_preview.py` |
+| UI | sekcja **Podgląd draftu** — koncepcyjny mock, nie apply |
+| `tldobio` | brak preview |
+| Poza zakresem | preview apply, miniatury z pliku, zapis (F5.4) |

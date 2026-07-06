@@ -1,4 +1,4 @@
-# GicleeApp Studio Preview (F5.2)
+# GicleeApp Studio Preview (F5.3)
 
 Hub: [`README.md`](README.md) · plan: [`../../docs/UI_REDESIGN_PLAN.md`](../../docs/UI_REDESIGN_PLAN.md) · tło: [`background-parity.md`](background-parity.md) · F5: [`background-builder.md`](background-builder.md)
 
@@ -109,34 +109,33 @@ Kontrakt i roadmapa: [`background-builder.md`](background-builder.md).
 | F5.0 | done (docs) | UX contract — [`background-builder.md`](background-builder.md) |
 | F5.1 | done | Read-only shell „Biblioteka / Assety” |
 | F5.1b | done | Bounded lista przypisań z aktywnego wariantu |
-| F5.2 | **current** | Lokalny draft wyboru strefy + typu (in-memory) |
-| F5.3 | planned | Preview-only apply — bez zapisu |
-| F5.4–F5.5 | planned | Save / Shopify — **osobna akceptacja** |
+| F5.2 | done | Lokalny draft wyboru strefy + typu (in-memory) |
+| F5.3 | **current** | Conceptual draft preview — podgląd koncepcyjny · niezastosowany |
+| F5.4–F5.5 | planned | Controlled save / Shopify — **osobna akceptacja** |
 
-F5.2 draft jest tylko w pamięci UI — **bez** zapisu, preview, file pickera ani uploadu.
+F5.3 **nie stosuje** zmian — tylko koncepcyjny mock w panelu. Realne zastosowanie = F5.4+.
 
 ---
 
-## F5.2 — Local draft selection
+## F5.3 — Conceptual draft preview
 
 | Element | Stan |
 |---------|------|
-| `background_draft_state.py` | pure draft: strefa + typ, `format_summary()`, `clear()` |
-| `background_panel.py` | sekcja **Draft wyboru** po „Biblioteka / Assety” |
-| Interakcja | OptionMenu strefa/typ · **Wyczyść draft** |
-| Persist | **brak** — `on_hide()` czyści draft w panelu |
-| `tldobio` | brak sekcji draft |
-| Zapis / preview / upload | **brak** |
+| `background_draft_preview.py` | pure: `format_preview_body()`, placeholders tekstowe |
+| `background_panel.py` | sekcja **Podgląd draftu** po „Draft wyboru” |
+| Draft pusty | „Podgląd pojawi się po wyborze strefy i typu” |
+| Draft ustawiony | badge `niezastosowany` + strefa + typ + placeholder CTkFrame |
+| Apply / zapis / pliki | **brak** |
 
-Manual smoke F5.2:
+Manual smoke F5.3:
 
 1. Hub → **Tło** → **Strona główna**
-2. **Biblioteka / Assety** bez regresji (F5.1b)
-3. **Draft wyboru** — badge „niezapisany”, wybór strefy/typu zmienia tylko copy draftu
-4. **Wyczyść draft** → „Brak draftu…”
-5. **Aktualny stan** nie zmienia się po manipulacji draftem
-6. Brak Zapisz / Upload / file picker
-7. **Tło do Bio** — brak draftu
+2. Draft pusty → preview empty copy
+3. Wybór strefy + typu → preview aktualizuje się (`niezastosowany`)
+4. **Aktualny stan** i **Biblioteka / Assety** bez zmian
+5. **Wyczyść draft** → preview wraca do empty
+6. Brak Zastosuj / Zapisz / Upload / file picker
+7. **Tło do Bio** — brak preview
 8. Brak zmian w `Komponenty/stronaglowna/data/*`
 
 ---
@@ -234,5 +233,6 @@ Checklista ręczna w Studio Preview — nie w CI.
 | `studio/background_asset_types.py` | typy assetów shell (F5.1) |
 | `studio/background_asset_shell.py` | read-only shell biblioteki (F5.1) |
 | `studio/background_draft_state.py` | lokalny draft wyboru (F5.2) |
+| `studio/background_draft_preview.py` | koncepcyjny podgląd draftu (F5.3) |
 | `ui/background_panel.py` | read-only panel shell tła (F4.2) |
 | `Komponenty/_shared/tkdnd_safe.py` | safe DnD w embed Studio (F4.1.1) |

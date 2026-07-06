@@ -66,8 +66,8 @@ Strefy `section_background` (z rejestru):
 | **F5.0** | Docs / UX contract | Ten dokument + linki w docs | brak | done |
 | **F5.1** | Read-only asset shell | Sekcja „Biblioteka / Assety”; typy obraz/wideo/kolaż | brak | done |
 | **F5.1b** | Bounded asset list | Przypisania z aktywnego `index.json` — obraz/wideo/brak per strefa | brak | done |
-| **F5.2** | Local draft selection | Wybór strefy + typu w UI; stan tylko w pamięci panelu | brak persist | **implementacja — raport** |
-| **F5.3** | Preview-only apply | Podgląd wybranego assetu bez mutacji JSON | brak | osobna |
+| **F5.2** | Local draft selection | Wybór strefy + typu w UI; stan tylko w pamięci panelu | brak persist | done |
+| **F5.3** | Conceptual draft preview | Podgląd koncepcyjny draftu w panelu — **nie** apply | brak | **implementacja — raport** |
 | **F5.4** | Controlled save | Zapis przez istniejący API komponentu / handoff z payload | tak | **osobna decyzja** |
 | **F5.5** | Shopify / sync / deploy | Upload, CDN, deploy motywu, polling | tak, sieć | **osobna decyzja produktowa** |
 | **F5.6** | Domyślny launcher Studio | Przełącznik `GICLEE_STUDIO_UI` (wcześniej myląco „F5.1” w roadmapie) | konfig | osobna, przed F6 |
@@ -198,6 +198,21 @@ Manual smoke F5.1b: patrz [`studio-preview.md`](studio-preview.md).
 | Wersja | **1.29.2** |
 
 Manual smoke F5.2: patrz [`studio-preview.md`](studio-preview.md).
+
+---
+
+## 12. F5.3 — Conceptual draft preview (zrealizowane w kodzie)
+
+| Aspekt | Szczegóły |
+|--------|-----------|
+| Moduł | `background_draft_preview.py` — pure formatowanie podglądu |
+| UI | sekcja **Podgląd draftu** — po „Draft wyboru”, tylko `stronaglowna` |
+| Copy | `podgląd koncepcyjny · niezastosowany` — **nie** „apply” |
+| Placeholder | tekstowy per typ (obraz/wideo/kolaż) — bez plików, bez miniatur |
+| Persist / apply | **brak** — F5.3 nie stosuje zmian; F5.4 = controlled save |
+| Wersja | **1.29.3** |
+
+Manual smoke F5.3: patrz [`studio-preview.md`](studio-preview.md).
 
 ---
 

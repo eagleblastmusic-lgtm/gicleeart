@@ -1,6 +1,6 @@
 # GicleeApp UI Redesign Plan
 
-**Status:** Faza 5.2 — Local draft selection.
+**Status:** Faza 5.3 — Conceptual draft preview.
 
 ## Goal
 
@@ -72,8 +72,8 @@ Not in **`eagleblastmusic-lgtm/gicleeart-gpt`** (theme snapshot only).
 | F5.0 | Background Builder UX contract / audit (docs-only) | done |
 | F5.1 | Read-only asset browser shell (`stronaglowna`) | done |
 | F5.1b | Bounded read-only asset list from active index | done |
-| F5.2 | Local draft selection (in-memory) | **current** |
-| F5.3 | Preview-only apply | planned |
+| F5.2 | Local draft selection (in-memory) | done |
+| F5.3 | Conceptual draft preview (panel mock) | **current** |
 | F5.4 | Controlled save via existing component API | planned — osobna akceptacja |
 | F5.5 | Shopify / sync / deploy | planned — osobna decyzja |
 | F5.6 | Przełącznik domyślny (`GICLEE_STUDIO_UI`) | planned |

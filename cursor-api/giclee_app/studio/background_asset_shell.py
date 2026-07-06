@@ -17,7 +17,7 @@ _FALLBACK = (
     "Nie udało się odczytać przypisań z aktywnego wariantu · "
     "edytor inline pozostaje źródłem prawdy"
 )
-_F52_NOTE = "Draft wyboru w F5.2 · Preview w F5.3 · Zapis w F5.4"
+_F52_NOTE = "Draft wyboru w F5.2 · Podgląd koncepcyjny w F5.3 · Zapis w F5.4"
 
 
 @dataclass(frozen=True)

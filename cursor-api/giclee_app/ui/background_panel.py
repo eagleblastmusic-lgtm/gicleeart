@@ -1,4 +1,4 @@
-"""Panel tła w Studio Preview (F4.2+) — read-only + lokalny draft F5.2."""
+"""Panel tła w Studio Preview (F4.2+) — read-only, draft F5.2, preview F5.3."""
 
 from __future__ import annotations
 
@@ -13,6 +13,14 @@ from giclee_app.studio.background_asset_shell import asset_library_rows
 from giclee_app.studio.background_capabilities import (
     BackgroundCapability,
     tier_display,
+)
+from giclee_app.studio.background_draft_preview import (
+    PREVIEW_BADGE,
+    PREVIEW_DISCLAIMER,
+    PREVIEW_EMPTY_COPY,
+    PREVIEW_SECTION_TITLE,
+    placeholder_label_for_kind,
+    preview_enabled_for_folder,
 )
 from giclee_app.studio.background_draft_state import (
     CLEAR_DRAFT_LABEL,
@@ -32,6 +40,7 @@ from .widgets import SectionHeader
 _HANDOFF_BUTTON_LABEL = "Edytuj w komponencie"
 _DRAFT_INSERT_AFTER = "Biblioteka / Assety"
 _DRAFT_STATUS_MSG = "Draft lokalny — niezapisany"
+_PREVIEW_STATUS_MSG = "Podgląd koncepcyjny — niezastosowany"
 
 _CO_DALEJ_NOTE = (
     "Użyj przycisku „Edytuj w komponencie”, aby przejść do istniejącego "
@@ -91,6 +100,10 @@ class BackgroundPanelView(ctk.CTkFrame):
         self._kind_menu: ctk.CTkOptionMenu | None = None
         self._zone_map: dict[str, str] = {}
         self._kind_map: dict[str, AssetKind] = {}
+        self._preview_body_label: ctk.CTkLabel | None = None
+        self._preview_placeholder_frame: ctk.CTkFrame | None = None
+        self._preview_placeholder_label: ctk.CTkLabel | None = None
+        self._preview_disclaimer_label: ctk.CTkLabel | None = None
         self._build_shell()
         if callable(self._on_status):
             self._on_status(f"Tło: {cap.label} — read-only panel")
@@ -158,6 +171,9 @@ class BackgroundPanelView(ctk.CTkFrame):
             if show_draft and title == _DRAFT_INSERT_AFTER:
                 self._render_draft_section(scroll, grid_row)
                 grid_row += 1
+                if preview_enabled_for_folder(self._comp.folder_name):
+                    self._render_preview_section(scroll, grid_row)
+                    grid_row += 1
 
         if self._on_open_inline is not None and self._comp.mode == "inline":
             action_row = ctk.CTkFrame(scroll, fg_color="transparent")
@@ -309,30 +325,120 @@ class BackgroundPanelView(ctk.CTkFrame):
             border_color=theme.BorderSubtle,
             command=self._clear_draft,
         ).pack(anchor="w", padx=16, pady=(0, 12))
+        self._refresh_draft_ui(notify=False)
+
+    def _render_preview_section(self, parent: ctk.CTkScrollableFrame, row: int) -> None:
+        panel = ctk.CTkFrame(
+            parent,
+            fg_color=theme.PanelBg,
+            corner_radius=8,
+            border_width=1,
+            border_color=theme.BorderSubtle,
+        )
+        panel.grid(row=row, column=0, sticky="ew", pady=(0, 10))
+        panel.grid_columnconfigure(0, weight=1)
+
+        SectionHeader(panel, PREVIEW_SECTION_TITLE).pack(fill="x", padx=16, pady=(12, 4))
+
+        self._preview_body_label = ctk.CTkLabel(
+            panel,
+            text=PREVIEW_EMPTY_COPY,
+            font=theme.get_font(12),
+            text_color=theme.TextMuted,
+            anchor="nw",
+            justify="left",
+            wraplength=560,
+        )
+        self._preview_body_label.pack(fill="x", padx=16, pady=(0, 8))
+
+        self._preview_placeholder_frame = ctk.CTkFrame(
+            panel,
+            fg_color=theme.AppBg,
+            corner_radius=6,
+            border_width=1,
+            border_color=theme.BorderSubtle,
+            height=80,
+        )
+        self._preview_placeholder_frame.pack(fill="x", padx=16, pady=(0, 8))
+        self._preview_placeholder_frame.pack_propagate(False)
+
+        self._preview_placeholder_label = ctk.CTkLabel(
+            self._preview_placeholder_frame,
+            text="",
+            font=theme.get_font(11),
+            text_color=theme.TextMuted,
+        )
+        self._preview_placeholder_label.place(relx=0.5, rely=0.5, anchor="center")
+
+        self._preview_disclaimer_label = ctk.CTkLabel(
+            panel,
+            text=PREVIEW_DISCLAIMER,
+            font=theme.get_font(11),
+            text_color=theme.TextMuted,
+            anchor="nw",
+            justify="left",
+            wraplength=560,
+        )
+        self._preview_disclaimer_label.pack(fill="x", padx=16, pady=(0, 12))
+        self._preview_disclaimer_label.pack_forget()
+        self._preview_placeholder_frame.pack_forget()
 
     def _on_zone_selected(self, label: str) -> None:
         field_id = self._zone_map.get(label)
         if field_id:
             self._draft.set_zone(field_id)
-            self._refresh_draft_summary()
+            self._refresh_draft_ui()
 
     def _on_kind_selected(self, label: str) -> None:
         kind = self._kind_map.get(label)
         if kind is not None:
             self._draft.set_kind(kind)
-            self._refresh_draft_summary()
+            self._refresh_draft_ui()
 
     def _clear_draft(self) -> None:
         self._draft.clear()
-        self._refresh_draft_summary(notify=False)
+        self._refresh_draft_ui(notify=False)
         if callable(self._on_status):
             self._on_status("Draft wyczyszczony — niezapisany")
 
-    def _refresh_draft_summary(self, *, notify: bool = True) -> None:
+    def _refresh_draft_ui(self, *, notify: bool = True) -> None:
         if self._draft_summary_label is not None:
             self._draft_summary_label.configure(text=self._draft.format_summary())
+        self._refresh_draft_preview()
         if notify and callable(self._on_status):
-            self._on_status(_DRAFT_STATUS_MSG)
+            if self._draft.is_empty():
+                self._on_status(_DRAFT_STATUS_MSG)
+            else:
+                self._on_status(_PREVIEW_STATUS_MSG)
+
+    def _refresh_draft_preview(self) -> None:
+        if self._preview_body_label is None:
+            return
+        if self._draft.is_empty():
+            self._preview_body_label.configure(
+                text=PREVIEW_EMPTY_COPY,
+                text_color=theme.TextMuted,
+            )
+            if self._preview_placeholder_frame is not None:
+                self._preview_placeholder_frame.pack_forget()
+            if self._preview_disclaimer_label is not None:
+                self._preview_disclaimer_label.pack_forget()
+            return
+
+        meta = "\n".join([
+            PREVIEW_BADGE,
+            f"Strefa: {self._draft.zone_display()}",
+            f"Typ: {self._draft.kind_label_pl()}",
+        ])
+        self._preview_body_label.configure(text=meta, text_color=theme.TextPrimary)
+        if self._preview_placeholder_label is not None:
+            self._preview_placeholder_label.configure(
+                text=placeholder_label_for_kind(self._draft.asset_kind),
+            )
+        if self._preview_placeholder_frame is not None:
+            self._preview_placeholder_frame.pack(fill="x", padx=16, pady=(0, 8))
+        if self._preview_disclaimer_label is not None:
+            self._preview_disclaimer_label.pack(fill="x", padx=16, pady=(0, 12))
 
     def on_hide(self) -> None:
         self._draft.clear()
