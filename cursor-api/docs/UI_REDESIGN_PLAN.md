@@ -1,6 +1,6 @@
 # GicleeApp UI Redesign Plan
 
-**Status:** Faza 5.3 — Conceptual draft preview.
+**Status:** Faza 6.1 — Studio v2 navigation map (docs-only).
 
 ## Goal
 
@@ -50,7 +50,9 @@ Future UI redesign of the GicleeApp launcher is implemented and reviewed in:
 
 Not in **`eagleblastmusic-lgtm/gicleeart-gpt`** (theme snapshot only).
 
-## Roadmap (F0–F6)
+## Roadmap (F0–F8)
+
+### Studio shell + Background Builder (F0–F5)
 
 | Faza | Cel | Status |
 |------|-----|--------|
@@ -73,12 +75,30 @@ Not in **`eagleblastmusic-lgtm/gicleeart-gpt`** (theme snapshot only).
 | F5.1 | Read-only asset browser shell (`stronaglowna`) | done |
 | F5.1b | Bounded read-only asset list from active index | done |
 | F5.2 | Local draft selection (in-memory) | done |
-| F5.3 | Conceptual draft preview (panel mock) | **current** |
-| F5.4 | Controlled save via existing component API | planned — osobna akceptacja |
+| F5.3 | Conceptual draft preview (panel mock) | done |
+| F5.4 | Controlled save via existing component API (`stronaglowna`) | planned — po F6.2 + F5.4-plan |
 | F5.5 | Shopify / sync / deploy | planned — osobna decyzja |
 | F5.6 | Przełącznik domyślny (`GICLEE_STUDIO_UI`) | planned |
-| F6 | PyInstaller + CustomTkinter w `.exe` | planned |
+
+### Studio v2 redesign track (F6.x)
+
+| Faza | Cel | Status |
+|------|-----|--------|
+| F6.0 | Component redesign audit — Keep / Merge / Legacy / Defer | done · accepted |
+| F6.1 | Studio v2 workflow navigation map (docs-only) | **current** |
+| F6.2 | Asset Lab shell — read-only / launch-only | planned |
+| F6.3 | Site Builder Tier 3 read-only shells | planned |
+
+Mapa workflowów: [`giclee_app/docs/studio-v2-workflows.md`](../giclee_app/docs/studio-v2-workflows.md)
+
+**Numeracja:** Track F6.x = Studio v2 redesign. Dawne „F6 PyInstaller” → **F8 packaging** (poniżej).
+
+### System / packaging (F7–F8)
+
+| Faza | Cel | Status |
+|------|-----|--------|
 | F7 | Sync / backup / cykl produkcyjny w Studio (osobna faza systemowa) | planned |
+| F8 | PyInstaller + CustomTkinter w `.exe` (dawne F6) | planned |
 
 ## Architektura (F1)
 
@@ -100,7 +120,9 @@ Szczegóły uruchomienia: [`giclee_app/docs/studio-preview.md`](../giclee_app/do
 
 ## Kategorie sidebaru
 
-Dashboard, Strona/Motyw, Produkty, Zamówienia, Produkcja, Finanse, Content/AI, Review/GPT, System — mapowanie w `giclee_app/data/studio_categories.json`.
+**v1 (obecny kod):** Dashboard, Strona/Motyw, Produkty, Zamówienia, Produkcja, Finanse, Content/AI, Review/GPT, System — mapowanie w `giclee_app/data/studio_categories.json`.
+
+**v2 (docelowy, F6.1 docs):** workflow-based — Site Builder, Asset Lab, Product Pipeline, Collections, Fulfillment, Content Hub, System (+ Finance Desk i Legacy Tools secondary). Szczegóły: [`studio-v2-workflows.md`](../giclee_app/docs/studio-v2-workflows.md). **Bez zmiany discovery do akceptacji implementacji F6.2+.**
 
 ## Out of scope (initial repo phase)
 
