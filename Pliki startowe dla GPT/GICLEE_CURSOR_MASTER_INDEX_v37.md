@@ -1,6 +1,6 @@
 # GICLEE CURSOR MASTER INDEX v3.7
 
-Ten plik porządkuje cały system instrukcji Giclée Cursor Architect v3.7 (dual-repo + GicleeApp Studio checkpoint v1.37.0 / Katalog F1+F2).
+Ten plik porządkuje cały system instrukcji Giclée Cursor Architect v3.7 (dual-repo + GicleeApp Studio checkpoint v1.38.0 / Katalog F1–F4).
 
 ---
 
@@ -27,9 +27,11 @@ Workflow snapshotów: `GICLEE_GITHUB_SNAPSHOT_REVIEW_WORKFLOW_v35.md`.
 
 Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` oraz `CURRENT_APP_STATE.md`.
 
-**Katalog current state:** F1 read-only shell + F2 bounded data map = done. Next = local planning layer (draft state, dry-run, readiness, UI planu zmian, zero write, zero Save).
+**Katalog current state:** F1 read-only shell + F2 bounded data map + F3+F4 local planning layer = done. Next = bounded writer / save layer — only after separate acceptance (zero Save, zero Shopify/sync/deploy).
 
 **New pacing rule:** group safe planning layers (read-only, data map, draft state, dry-run, readiness, UI change plan, docs/tests); split writer, backup/write/undo, Shopify/sync/deploy, data migrations, and large architecture decisions.
+
+**Komenda maintenance:** „Aktualizuj pliki startowe” — GPT przygotowuje prompt do Cursora aktualizujący źródła w `Pliki startowe dla GPT` (checkpoint, guardrails, workflow); ZIP = output generatora. Szczegóły: sekcja KOMENDA ROBOCZA w COMPACT v37.
 
 ---
 
@@ -47,7 +49,7 @@ Jeśli instrukcje się nakładają (po POZIOMIE 0):
 
 `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md`
 
-Wygrywa w: roli modelu, formacie odpowiedzi, promptach do Cursor, ochronie projektu, dual-repo routing, **checkpoint GicleeApp Studio v1.37.0**, **zasady testowania**, **granice Studio**, **pacing rule**.
+Wygrywa w: roli modelu, formacie odpowiedzi, promptach do Cursor, ochronie projektu, dual-repo routing, **checkpoint GicleeApp Studio v1.38.0**, **zasady testowania**, **granice Studio**, **pacing rule**.
 
 Archiwum (nie używać jako Instructions): `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_v3.md`, `*_v34.md`, `*_v35.md`, `*_v36.md`, `COMPACT_8000.md`.
 
@@ -92,7 +94,7 @@ Wygrywają markowo: ton, Fine Art, unikanie taniego e-commerce.
 ## 3. KOLEJNOŚĆ MYŚLENIA
 
 1. **Które repo?** (POZIOM 0)
-2. Czy dotyczy GicleeApp Studio / Katalog? (checkpoint v1.37.0, guardrails, pacing rule)
+2. Czy dotyczy GicleeApp Studio / Katalog? (checkpoint v1.38.0, guardrails, pacing rule)
 3. Co użytkownik chce osiągnąć?
 4. Prompt / kod / efekt / audit / debug?
 5. Czy chronić Shopify / faktury / API?
@@ -127,6 +129,17 @@ Wygrywają markowo: ton, Fine Art, unikanie taniego e-commerce.
 
 - COMPACT v37 (checkpoint, granice, pacing rule, zasady testowania) + `CURRENT_APP_STATE.md`
 
+### Maintenance paczki wiedzy / checkpoint refresh
+
+Gdy użytkownik pisze **„Aktualizuj pliki startowe”**:
+
+- COMPACT v37 — sekcja **KOMENDA ROBOCZA**
+- `CURRENT_APP_STATE.md` — aktualny checkpoint
+- `GICLEE_CURSOR_ARCHITECT_CLEAN_PACK_v37.md` — workflow maintenance i regeneracja ZIP
+- `README_GICLEE_CURSOR_ARCHITECT_UPDATE_v37.md` — instrukcja dla użytkownika / Cursor
+
+GPT przygotowuje prompt; Cursor edytuje źródła `.md`, przebudowuje ZIP, raportuje git. Nie mieszać z implementacją feature.
+
 ### Efekty premium / Awwwards
 
 - `GICLEE_AWWWARDS_MOTION_SYSTEM_v3.md`, `GICLEE_EFFECT_LIBRARY_v31.md`, `GICLEE_SIGNATURE_MOMENTS_v33.md`
@@ -153,4 +166,4 @@ Efekt piękny ale ryzykowny → bezpieczniejsza wersja. Efekt tanio → popraw m
 
 Rozwiązania: piękne, premium, bezpieczne, zgodne ze stackiem i marką, wdrażalne przez Cursor.
 
-**Motyw → `gicleeart-gpt`. Aplikacja → `gicleeapp`.** Nie myl repo. **Katalog next = local planning layer** — zero write, zero Save, bez writer/Shopify bez polecenia.
+**Motyw → `gicleeart-gpt`. Aplikacja → `gicleeapp`.** Nie myl repo. **Katalog next = bounded writer / save layer** — tylko po osobnej akceptacji, bez writer/Save/Shopify bez polecenia.

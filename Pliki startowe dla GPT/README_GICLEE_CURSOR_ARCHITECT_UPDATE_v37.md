@@ -18,6 +18,54 @@ v3.7 = checkpoint Studio v1.37.0 + Katalog F1+F2 + local planning layer next + p
 
 ---
 
+## Checkpoint refresh (post-65e862b)
+
+Bez bumpu paczki na v38 — tylko odświeżenie checkpointu w plikach v3.7:
+
+- GicleeApp Studio **v1.38.0**
+- monorepo HEAD / origin/master: **65e862b**
+- gicleeapp main: **a056bb5**
+- Katalog local planning layer F3+F4: **done**
+- Next: **bounded writer / save layer** — tylko po osobnej akceptacji
+- F5.5: not started
+
+Zaktualizowane pliki: `CURRENT_APP_STATE.md`, checkpoint block w COMPACT v37, `GICLEE_CURSOR_MASTER_INDEX_v37.md`, ten README, `Wiadomość początkowa.txt`. Przebuduj `giclee_cursor_architect_knowledge_v37.zip` z generatora projektu.
+
+---
+
+## Komenda: Aktualizuj pliki startowe
+
+Stała komenda robocza użytkownika do Custom GPT. Pełna definicja: sekcja **KOMENDA ROBOCZA** w `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md`.
+
+### Kiedy używać
+
+- po większym commicie Studio / zmianie wersji GicleeApp,
+- po zamknięciu lub rozpoczęciu fazy Katalog (F1–F5.5),
+- po nowych guardrails, pacing rules lub zmianach workflow review,
+- gdy `CURRENT_APP_STATE.md` nie odzwierciedla już HEAD / origin / gicleeapp main.
+
+### Co robi GPT vs Cursor
+
+| Krok | GPT (Custom) | Cursor |
+|------|----------------|--------|
+| 1 | Audyt stanu, lista plików do aktualizacji | — |
+| 2 | Przygotowuje precyzyjny prompt maintenance | — |
+| 3 | — | Edytuje `.md` w `Pliki startowe dla GPT` |
+| 4 | — | Przebudowuje ZIP przez generator |
+| 5 | — | Raport: `git status -sb`, `git diff --stat`, lista plików |
+
+GPT **nie implementuje** feature aplikacji. Nie miesza maintenance z writerem, Shopify/sync/deploy, Push GicleeApp ani runtime cleanupem.
+
+### Checklista (typowy prompt do Cursora)
+
+1. Zaktualizuj `CURRENT_APP_STATE.md` (checkpoint, SHA, fazy, next).
+2. Zsynchronizuj checkpoint w COMPACT v37, MASTER_INDEX, CLEAN_PACK, ten README — **bez bumpu v38**.
+3. Przebuduj `giclee_cursor_architect_knowledge_v37.zip` z generatora.
+4. Nie dotykaj runtime dirty; nie `git add -A`; nie push; nie commit bez raportu.
+5. Osobny commit docs po akceptacji raportu.
+
+---
+
 ## Co nowego
 
 1. **`GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md`** — Instructions z checkpointem v1.37.0, routingiem, granicami Studio/Katalog, pacing rule i zasadami testowania

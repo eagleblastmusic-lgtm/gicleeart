@@ -77,8 +77,9 @@ Do not treat the generated ZIP as the source of truth. Update the source files/t
 
 Repo kanoniczne: `eagleblastmusic-lgtm/gicleeapp` (monorepo `gicleeart`, branch `master`, app w `cursor-api/`)
 
-Aktualny kanoniczny HEAD / origin/master: `16febff71dd2aad397f6c35ff8b8eef896abbb49`  
-Wersja aplikacji: **GicleeApp Studio v1.37.0**
+Aktualny kanoniczny HEAD / origin/master: `65e862be05183cac9e6ca94786802035cf77b943`  
+gicleeapp main: `a056bb5`  
+Wersja aplikacji: **GicleeApp Studio v1.38.0**
 
 Zamknięte:
 - Background Builder local v1: **frozen**
@@ -86,6 +87,7 @@ Zamknięte:
 - Katalog rebuild plan: **done**
 - Katalog F1 read-only shell: **done**
 - Katalog F2 bounded data map: **done**
+- Katalog local planning layer F3+F4: **done** (draft state + dry-run + readiness + UI planu zmian)
 
 Nie rozpoczęte:
 - F5.5 Shopify / sync / deploy
@@ -93,7 +95,7 @@ Nie rozpoczęte:
 - Katalog Shopify integration
 - Katalog migration
 
-Następna rekomendowana faza: **Katalog local planning layer** (draft state + dry-run + readiness + UI planu zmian, **zero write**, **zero Save**).
+Następna rekomendowana faza: **Katalog bounded writer / save layer** — tylko po osobnej akceptacji (**zero Save**, **zero Shopify/sync/deploy**).
 
 Szczegóły guardrails: `CURRENT_APP_STATE.md`.
 
@@ -115,10 +117,32 @@ Keep separate approvals for:
 - data migrations
 - large architecture decisions
 
-For Katalog, the next phase should be one combined local planning layer:
-draft state + dry-run + readiness + UI change plan, with zero write and zero Save.
+For Katalog, the next phase is bounded writer / save layer — only after separate approval.
+Do not start writer, Save, Shopify, sync, or deploy without explicit instruction.
 
 **Nie rozdrabniaj bezpiecznych etapów na zbyt wiele mikrofaz.** Łącz read-only, data map, draft state, dry-run, readiness, UI planu zmian, docs i testy w większe etapy. Rozdzielaj osobno writer, backup/write/undo, Shopify/sync/deploy, migracje danych i duże decyzje architektoniczne.
+
+## KOMENDA ROBOCZA: Aktualizuj pliki startowe
+
+Gdy użytkownik napisze **„Aktualizuj pliki startowe”**, **nie implementujesz** funkcji aplikacji ani nie mieszasz tego z writerem, Shopify/sync/deploy, Push GicleeApp ani runtime cleanupem — chyba że użytkownik wyraźnie o to poprosi.
+
+Zamiast tego przygotuj **mały, bezpieczny prompt do Cursora** (lub wykonaj maintenance), który zaktualizuje źródłowe pliki wiedzy w:
+
+`C:\Strona\pusty\Pliki startowe dla GPT`
+
+Cel: lepsze odzwierciedlenie aktualnego checkpointu, routingu, guardrails, pacing, workflow, zasad review, znanych ryzyk i stanu repozytoriów.
+
+Po haśle **„Aktualizuj pliki startowe”** zrób to:
+
+1. **Nie zgaduj** dużych zmian — zaproponuj wąski scope.
+2. **Wskaż pliki** do aktualizacji i **dlaczego** (np. `CURRENT_APP_STATE.md`, checkpoint block w COMPACT v37, `GICLEE_CURSOR_MASTER_INDEX_v37.md`, `GICLEE_CURSOR_ARCHITECT_CLEAN_PACK_v37.md`, `README_GICLEE_CURSOR_ARCHITECT_UPDATE_v37.md`).
+3. **Pilnuj** aktualności `CURRENT_APP_STATE.md` (wersja Studio, SHA monorepo / gicleeapp, fazy Katalog, next, guardrails).
+4. W prompcie do Cursora wymagaj: źródło prawdy = pliki `.md`; **ZIP jest tylko outputem** generatora — nie traktuj ZIP-a jako źródła prawdy.
+5. Po zmianach źródeł: przebuduj `giclee_cursor_architect_knowledge_v37.zip` przez generator projektu (`build_starter_knowledge_zip`), nie ręcznie.
+6. **Nie bumpuj** paczki v37 → v38 przy samym checkpoint refresh — zmiana nazwy/wersji paczki tylko przy realnej zmianie struktury instrukcji.
+7. W prompcie do Cursora: nie `git add -A`, nie push, nie commit bez raportu, nie dotykaj runtime dirty (`gpt_config.json`, `Komponenty/*/data/`, backupy itd.).
+
+Prompt do Cursora powinien kończyć się raportem: `git status -sb`, `git diff --stat`, lista zmienionych plików, czy przebudowano ZIP.
 
 ## GICLEEAPP STUDIO — GRANICE
 
@@ -165,7 +189,7 @@ CEL · KONTEKST · NAJPIERW SPRAWDŹ (realny kod, nie założenia) · ZADANIE ·
 
 ## TRYBY
 
-„ostateczny” · „krótko” · „bardziej premium” · „bardziej cinematic” · „bardziej Awwwards” · „kod + prompt” · „sam prompt” · „debug” · „audit” · „bez CEL”.
+„ostateczny” · „krótko” · „bardziej premium” · „bardziej cinematic” · „bardziej Awwwards” · „kod + prompt” · „sam prompt” · „debug” · „audit” · „bez CEL” · **„Aktualizuj pliki startowe”** (maintenance paczki wiedzy — patrz sekcja KOMENDA ROBOCZA).
 
 ## SHOPIFY, FAKTURY, DEPLOY
 

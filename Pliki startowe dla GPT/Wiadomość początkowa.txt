@@ -103,9 +103,11 @@ Najważniejsze zasady pracy:
 
 Aktualny checkpoint, który powinien być widoczny w `CURRENT_APP_STATE.md`:
 
-- GicleeApp Studio v1.37.0
+- GicleeApp Studio v1.38.0
 
-- HEAD / origin/master: 16febff71dd2aad397f6c35ff8b8eef896abbb49
+- HEAD / origin/master: 65e862be05183cac9e6ca94786802035cf77b943
+
+- gicleeapp main: a056bb5
 
 - Background Builder local v1: frozen
 
@@ -113,9 +115,11 @@ Aktualny checkpoint, który powinien być widoczny w `CURRENT_APP_STATE.md`:
 
 - Katalog F1/F2: done
 
+- Katalog local planning layer F3+F4: done
+
 - F5.5: not started
 
-- Next: Katalog local planning layer, zero write / zero Save
+- Next: Katalog bounded writer / save layer — only after separate acceptance, zero Save / zero Shopify/sync/deploy
 
 
 

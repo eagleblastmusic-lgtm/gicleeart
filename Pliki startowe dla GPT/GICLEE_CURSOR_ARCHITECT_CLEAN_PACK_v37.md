@@ -10,13 +10,13 @@ Manifest plików wiedzy Custom GPT. **Stare pliki na dysku nie są usuwane** —
 
 | Plik | Rola |
 |------|------|
-| `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` | **Źródło do pola Instructions** (v3.7: checkpoint v1.37.0 / 16febff, Katalog F1+F2, pacing rule, routing, granice Studio) |
+| `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` | **Źródło do pola Instructions** (v3.7: checkpoint v1.38.0 / 65e862b, Katalog F1–F4, pacing rule, routing, granice Studio, komenda maintenance) |
 | `GICLEE_DUAL_REPO_REVIEW_ROUTING_v35.md` | Kanon dual-repo |
 | `GICLEE_GITHUB_SNAPSHOT_REVIEW_WORKFLOW_v35.md` | Workflow review snapshotów |
 | `GICLEE_CURSOR_MASTER_INDEX_v37.md` | Hierarchia (POZIOM 0), wskazuje COMPACT v37 |
 | `README_GICLEE_CURSOR_ARCHITECT_UPDATE_v37.md` | Instrukcja wdrożenia v3.7 |
 | `GICLEE_CURSOR_ARCHITECT_CLEAN_PACK_v37.md` | Ten manifest |
-| `CURRENT_APP_STATE.md` | Aktualny stan GicleeApp Studio v1.37.0 |
+| `CURRENT_APP_STATE.md` | Aktualny stan GicleeApp Studio v1.38.0 |
 
 ### Motion / effects / patterns (aktualne, bez nowej wersji)
 
@@ -72,7 +72,21 @@ Te pliki mogą **mieszać routing** (single-repo, stare wersje, duplikaty Instru
 
 | Plik | Uwaga |
 |------|--------|
-| `Wiadomość początkowa.txt` | **Do aktualizacji** — dual-repo routing + checkpoint Studio v1.37.0 |
+| `Wiadomość początkowa.txt` | **Do aktualizacji** — dual-repo routing + checkpoint Studio v1.38.0 |
+
+---
+
+## Maintenance paczki wiedzy
+
+**Źródło prawdy:** pliki `.md` w `C:\Strona\pusty\Pliki startowe dla GPT` (ten folder).
+
+**ZIP:** `giclee_cursor_architect_knowledge_v37.zip` to **output** generatora — nie edytuj ZIP-a ręcznie ani nie traktuj go jako źródła prawdy.
+
+**Regeneracja ZIP:** `build_starter_knowledge_zip()` w `cursor-api/Komponenty/integracjagpt/zip_knowledge.py` albo GUI Integracja z GPT → **Skopiuj .zip**.
+
+**Komenda użytkownika:** „Aktualizuj pliki startowe” — patrz sekcja KOMENDA ROBOCZA w `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md`. GPT przygotowuje prompt do Cursora; Cursor edytuje źródła, przebudowuje ZIP, raportuje git — bez mieszania z implementacją feature / writer / Shopify / Push GicleeApp.
+
+**Checkpoint refresh:** aktualizuj `CURRENT_APP_STATE.md` i powiązane metadane v37; **nie bumpuj** na v38 przy samym odświeżeniu checkpointu.
 
 ---
 
@@ -99,3 +113,5 @@ Master Index v37 traktuje je jako opcjonalne.
 ## Wersja
 
 **v3.7** = v3.6 + checkpoint Studio v1.37.0 / 16febff + Katalog F1+F2 done + local planning layer next + pacing rule (group safe layers, split writer/Shopify/migrations)
+
+**Checkpoint refresh 2026-07-06:** Studio v1.38.0 / monorepo 65e862b / gicleeapp main a056bb5 / Katalog F3+F4 done / next = bounded writer after separate acceptance. Paczka nadal v3.7 — bez bumpu na v38.
