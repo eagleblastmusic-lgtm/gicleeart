@@ -20,6 +20,10 @@ from giclee_app.studio.background_save_contract import (
     SAVE_PLAN_SECTION_TITLE,
     save_plan_enabled_for_folder,
 )
+from giclee_app.studio.background_save_readiness import (
+    F54B0_DISCLAIMER,
+    READINESS_SECTION_LABEL,
+)
 from giclee_app.ui.background_panel import (
     _HANDOFF_BUTTON_LABEL,
     panel_rows,
@@ -148,6 +152,17 @@ def test_save_plan_section_only_for_stronaglowna_in_panel_source() -> None:
     assert not save_plan_enabled_for_folder("tldobio")
     assert "Zapisz lokalnie" not in text
     assert 'text="Zapisz"' not in text
+
+
+def test_save_plan_has_readiness_ui() -> None:
+    path = Path(__file__).resolve().parents[1] / "giclee_app" / "ui" / "background_panel.py"
+    text = path.read_text(encoding="utf-8")
+    assert "evaluate_save_readiness" in text
+    assert "format_readiness_block" in text
+    assert "F54B0_DISCLAIMER" in text
+    assert "F54B1_FUTURE_NOTE" in text
+    assert "evaluate_save_readiness" in text
+    assert "Zapisz lokalnie" not in text
 
 
 def test_draft_section_only_for_stronaglowna_in_panel_source() -> None:

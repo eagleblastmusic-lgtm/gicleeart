@@ -230,11 +230,30 @@ Manual smoke F5.3: patrz [`studio-preview.md`](studio-preview.md).
 
 Roadmap zapisu:
 
-- **F5.4b** — controlled local write do aktywnego `index.json` (osobna akceptacja)
-- **F5.4c** — backup / rollback / post-save validation
+- **F5.4b0** — save readiness / ref policy (zero zapisu)
+- **F5.4b1** — bounded writer + minimal backup (tylko clear)
+- **F5.4c** — rollback / post-save validation
+- **F5.4d** — asset ref selection
 - **F5.5** — Shopify / upload / deploy / sync osobno
 
 Manual smoke F5.4a: patrz [`studio-preview.md`](studio-preview.md).
+
+---
+
+## 14. F5.4b0 — Save readiness / ref policy (zrealizowane w kodzie)
+
+| Aspekt | Szczegóły |
+|--------|-----------|
+| Moduł | `background_save_readiness.py` — `evaluate_save_readiness()`, `SaveOperation` |
+| UI | **Gotowość zapisu** w sekcji Plan zapisu — po dry-run |
+| Operacje | `noop` · `clear` (plan) · `set_with_ref` (zablokowane bez ref) |
+| Reguły | kind change bez ref → zablokowane · brak→typ bez ref → zablokowane |
+| Clear plan | checkbox „Plan: wyczyść tło…” — readiness only, **bez** writera |
+| Copy | `F5.4b0 nadal nic nie zapisuje` · realny zapis = F5.4b1 |
+| Persist | **brak** — zero `write_text`, zero backupu |
+| Wersja | **1.31.1** |
+
+Manual smoke F5.4b0: patrz [`studio-preview.md`](studio-preview.md).
 
 ---
 

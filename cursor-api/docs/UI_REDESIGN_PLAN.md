@@ -77,8 +77,10 @@ Not in **`eagleblastmusic-lgtm/gicleeart-gpt`** (theme snapshot only).
 | F5.2 | Local draft selection (in-memory) | done |
 | F5.3 | Conceptual draft preview (panel mock) | done |
 | F5.4a | Save contract + dry-run (Plan zapisu, zero I/O) | done |
-| F5.4b | Controlled local write → aktywny index.json | planned — osobna akceptacja |
+| F5.4b0 | Save readiness / ref policy (zero I/O) | done |
+| F5.4b1 | Controlled local write → aktywny index.json (clear + backup) | planned — osobna akceptacja |
 | F5.4c | Backup / rollback / validation hardening | planned |
+| F5.4d | Asset ref selection | planned |
 | F5.5 | Shopify / sync / deploy | planned — osobna decyzja |
 | F5.6 | Przełącznik domyślny (`GICLEE_STUDIO_UI`) | planned |
 

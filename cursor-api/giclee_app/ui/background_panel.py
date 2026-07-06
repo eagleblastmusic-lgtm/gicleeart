@@ -1,4 +1,4 @@
-"""Panel tła w Studio Preview (F4.2+) — read-only, draft F5.2, preview F5.3, dry-run F5.4a."""
+"""Panel tła w Studio Preview (F4.2+) — read-only, draft F5.2, preview F5.3, dry-run F5.4a, readiness F5.4b0."""
 
 from __future__ import annotations
 
@@ -35,12 +35,18 @@ from giclee_app.studio.background_draft_state import (
 from giclee_app.studio.background_save_contract import (
     CHECK_SAVE_LABEL,
     DRY_RUN_BADGE,
-    F54A_DISCLAIMER,
     SAVE_PLAN_EMPTY_COPY,
     SAVE_PLAN_SECTION_TITLE,
     build_background_save_dry_run,
     format_dry_run_summary,
     save_plan_enabled_for_folder,
+)
+from giclee_app.studio.background_save_readiness import (
+    CLEAR_PLAN_CHECKBOX,
+    F54B0_DISCLAIMER,
+    F54B1_FUTURE_NOTE,
+    evaluate_save_readiness,
+    format_readiness_block,
 )
 from giclee_app.studio.background_state import summarize_background_state
 
@@ -116,6 +122,8 @@ class BackgroundPanelView(ctk.CTkFrame):
         self._preview_placeholder_label: ctk.CTkLabel | None = None
         self._preview_disclaimer_label: ctk.CTkLabel | None = None
         self._save_plan_body_label: ctk.CTkLabel | None = None
+        self._clear_plan_intent = False
+        self._clear_plan_checkbox: ctk.CTkCheckBox | None = None
         self._build_shell()
         if callable(self._on_status):
             self._on_status(f"Tło: {cap.label} — read-only panel")
@@ -429,9 +437,31 @@ class BackgroundPanelView(ctk.CTkFrame):
         )
         self._save_plan_body_label.pack(fill="x", padx=16, pady=(0, 8))
 
+        self._clear_plan_checkbox = ctk.CTkCheckBox(
+            panel,
+            text=CLEAR_PLAN_CHECKBOX,
+            font=theme.get_font(11),
+            text_color=theme.TextMuted,
+            fg_color=theme.AppBg,
+            border_width=1,
+            border_color=theme.BorderSubtle,
+            command=self._on_clear_plan_toggled,
+        )
+        self._clear_plan_checkbox.pack(anchor="w", padx=16, pady=(0, 8))
+
         ctk.CTkLabel(
             panel,
-            text=F54A_DISCLAIMER,
+            text=F54B0_DISCLAIMER,
+            font=theme.get_font(11),
+            text_color=theme.TextMuted,
+            anchor="nw",
+            justify="left",
+            wraplength=560,
+        ).pack(fill="x", padx=16, pady=(0, 4))
+
+        ctk.CTkLabel(
+            panel,
+            text=F54B1_FUTURE_NOTE,
             font=theme.get_font(11),
             text_color=theme.TextMuted,
             anchor="nw",
@@ -450,12 +480,24 @@ class BackgroundPanelView(ctk.CTkFrame):
             command=self._run_save_dry_run,
         ).pack(anchor="w", padx=16, pady=(0, 12))
 
+    def _on_clear_plan_toggled(self) -> None:
+        if self._clear_plan_checkbox is not None:
+            self._clear_plan_intent = bool(self._clear_plan_checkbox.get())
+
     def _run_save_dry_run(self) -> None:
+        self._on_clear_plan_toggled()
         dry_run = build_background_save_dry_run(self._draft, self._comp.package_path)
+        readiness = evaluate_save_readiness(
+            self._draft,
+            self._comp.package_path,
+            clear_intent=self._clear_plan_intent,
+        )
         summary = format_dry_run_summary(dry_run)
+        readiness_block = format_readiness_block(readiness.summary)
+        full_text = f"{summary}\n\n{readiness_block}"
         if self._save_plan_body_label is not None:
             color = theme.TextPrimary if dry_run.ok else theme.TextMuted
-            self._save_plan_body_label.configure(text=summary, text_color=color)
+            self._save_plan_body_label.configure(text=full_text, text_color=color)
         if callable(self._on_status):
             self._on_status(_DRY_RUN_STATUS_MSG)
 

@@ -112,12 +112,14 @@ Kontrakt i roadmapa: [`background-builder.md`](background-builder.md).
 | F5.2 | done | Lokalny draft wyboru strefy + typu (in-memory) |
 | F5.3 | done | Conceptual draft preview — podgląd koncepcyjny · niezastosowany |
 | F5.4a | done | Save contract + dry-run — **Plan zapisu**, zero I/O |
-| F5.4b–F5.4c | planned | Controlled local write / backup hardening — osobna akceptacja |
+| F5.4b0 | done | Save readiness / ref policy — **Gotowość zapisu**, zero I/O |
+| F5.4b1–F5.4c | planned | Writer + backup / rollback — osobna akceptacja |
+| F5.4d | planned | Asset ref selection |
 | F5.5 | planned | Shopify / sync / deploy — osobna akceptacja |
 
-F5.4a **nie zapisuje** niczego — tylko semantic diff i walidacja draftu. Realny zapis = F5.4b+.
+F5.4b0 **nie zapisuje** niczego — ocena gotowości i ref policy. Realny zapis = F5.4b1+.
 
-Manual smoke F5.4a: patrz sekcja poniżej.
+Manual smoke F5.4b0: patrz sekcja poniżej.
 
 ---
 
@@ -133,7 +135,7 @@ Manual smoke F5.4a: patrz sekcja poniżej.
 | Backend merge | **brak** — mockup/kolaz/squoosh/etc. bez zmian |
 | Shopify w Studio layer | **brak** |
 | Hub Produkty | Bez zmian — 14 kart nadal dostępne |
-| F5.4 save | F5.4a done (dry-run only) · F5.4b not started |
+| F5.4 save | F5.4b0 done (readiness) · F5.4b1 not started |
 
 Narzędzia (kolejność UI): `nazwijobraz`, `infoplikow`, `squoosh`, `print_optimize`, `przedpo`, `kolaz`, `mockup`, `pobierzobraz`.
 
@@ -192,6 +194,30 @@ Manual smoke F5.4a:
 8. **Tło do Bio** — brak sekcji Plan zapisu
 9. **Asset Lab** — bez regresji
 10. `python -m giclee_app` — klasyczny launcher OK
+
+---
+
+## F5.4b0 — Save readiness / ref policy
+
+| Element | Stan |
+|---------|------|
+| `background_save_readiness.py` | pure: `evaluate_save_readiness()`, `SaveOperation` |
+| `background_panel.py` | **Gotowość zapisu** po dry-run w Plan zapisu |
+| Checkbox | Plan wyczyść tło — readiness only, bez writera |
+| Copy | `F5.4b0 nadal nic nie zapisuje` · F5.4b1 = realny zapis |
+| Zapis / backup / writer | **brak** |
+
+Manual smoke F5.4b0:
+
+1. Studio → **Strona główna** → **Tło**
+2. Wybierz strefę + typ **inny** niż obecny → **Sprawdź zapis**
+3. Gotowość: **zablokowane** / wymaga wyboru assetu
+4. Brak **Zapisz lokalnie**
+5. Wybierz typ **zgodny** z obecnym stanem → Gotowość: **bez zmian** / noop
+6. Opcjonalnie: checkbox plan clear przy istniejącym tle → gotowe (plan F5.4b1)
+7. **Aktualny stan** / **Biblioteka** bez zmian · brak mutacji `data/*`
+8. **Tło do Bio** — brak readiness
+9. Asset Lab + klasyczny launcher OK
 
 ---
 
@@ -290,6 +316,7 @@ Checklista ręczna w Studio Preview — nie w CI.
 | `studio/background_draft_state.py` | lokalny draft wyboru (F5.2) |
 | `studio/background_draft_preview.py` | koncepcyjny podgląd draftu (F5.3) |
 | `studio/background_save_contract.py` | save contract + dry-run (F5.4a) |
+| `studio/background_save_readiness.py` | save readiness / ref policy (F5.4b0) |
 | `studio/asset_lab_catalog.py` | katalog Asset Lab — 8 narzędzi (F6.2) |
 | `ui/background_panel.py` | read-only panel shell tła (F4.2) |
 | `ui/asset_lab_view.py` | Asset Lab launch shell (F6.2) |
