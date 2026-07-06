@@ -2,14 +2,17 @@
 
 GicleeApp Studio v1.38.0
 
-Monorepo origin/master:
+Monorepo project checkpoint:
 4760a295b501c5bc7fe8b1cd987ace411436e9cf
 
-Studio code checkpoint (feature Katalog planning layer):
+Studio code checkpoint:
 65e862be05183cac9e6ca94786802035cf77b943
 
-gicleeapp main:
+gicleeapp snapshot (main):
 21bc3edc2bcad13aa24040f82ca3cf84e18759d5
+
+GPT starter files:
+refreshed after Push GicleeApp (paczka v37; nie traktuj `origin/master` jako stałego SHA w docs — patrz etykiety checkpointów powyżej)
 
 Recent context:
 - Push GicleeApp denylist hotfix e844789: done + pushed

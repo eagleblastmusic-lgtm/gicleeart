@@ -25,7 +25,7 @@ Zasady:
 
 Workflow snapshotów: `GICLEE_GITHUB_SNAPSHOT_REVIEW_WORKFLOW_v35.md`.
 
-Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` oraz `CURRENT_APP_STATE.md`.
+Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` oraz `CURRENT_APP_STATE.md` (project checkpoint `4760a29` / Studio code `65e862b` / gicleeapp snapshot `21bc3ed` — **nie** jako `origin/master`).
 
 **Katalog current state:** F1–F4 done. Push GicleeApp hygiene done (`gicleeapp` main `21bc3ed`). Pliki startowe GPT v37 = monorepo only (sync skip).
 

@@ -37,9 +37,10 @@ Zaktualizowane pliki: `CURRENT_APP_STATE.md`, checkpoint block w COMPACT v37, `G
 
 Bez bumpu paczki na v38:
 
-- monorepo origin/master: **4760a29** (docs GPT v37)
+- monorepo project checkpoint: **4760a29** (pełny checkpoint projektu / plików startowych po Studio 1.38.0)
 - Studio code checkpoint: **65e862b** (Katalog planning layer feature)
-- gicleeapp main: **21bc3ed** (Push GicleeApp snapshot, hygiene OK)
+- gicleeapp snapshot (main): **21bc3ed** (Push GicleeApp, hygiene OK)
+- GPT starter files: **refreshed after Push GicleeApp** (bez wiązania z `origin/master` — unikaj pętli SHA)
 - Push GicleeApp hygiene: **done**
 - Pliki startowe GPT: **monorepo only** (sync skip do gicleeapp)
 - Primary next: **GICLÉE FRAME™** — design strony / komponent premium
@@ -56,7 +57,7 @@ Stała komenda robocza użytkownika do Custom GPT. Pełna definicja: sekcja **KO
 - po większym commicie Studio / zmianie wersji GicleeApp,
 - po zamknięciu lub rozpoczęciu fazy Katalog (F1–F5.5),
 - po nowych guardrails, pacing rules lub zmianach workflow review,
-- gdy `CURRENT_APP_STATE.md` nie odzwierciedla już HEAD / origin / gicleeapp main.
+- gdy `CURRENT_APP_STATE.md` nie odzwierciedla już checkpointów projektu / Studio / gicleeapp snapshot (nie aktualizuj docs o SHA przyszłego commita jako `origin/master`)
 
 ### Co robi GPT vs Cursor
 

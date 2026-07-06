@@ -77,9 +77,10 @@ Do not treat the generated ZIP as the source of truth. Update the source files/t
 
 Repo kanoniczne: `eagleblastmusic-lgtm/gicleeapp` (monorepo `gicleeart`, branch `master`, app w `cursor-api/`)
 
-Aktualny monorepo origin/master (docs GPT): `4760a295b501c5bc7fe8b1cd987ace411436e9cf`  
-Studio code checkpoint (feature): `65e862be05183cac9e6ca94786802035cf77b943`  
-gicleeapp main: `21bc3edc2bcad13aa24040f82ca3cf84e18759d5`  
+Monorepo project checkpoint: `4760a295b501c5bc7fe8b1cd987ace411436e9cf`  
+Studio code checkpoint: `65e862be05183cac9e6ca94786802035cf77b943`  
+gicleeapp snapshot (main): `21bc3edc2bcad13aa24040f82ca3cf84e18759d5`  
+GPT starter files: **refreshed after Push GicleeApp** (nie wiąż docs z `origin/master` — używaj etykiet checkpointów powyżej)  
 Wersja aplikacji: **GicleeApp Studio v1.38.0**
 
 Zamknięte:
