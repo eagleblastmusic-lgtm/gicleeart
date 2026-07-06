@@ -150,7 +150,7 @@ def test_save_plan_section_only_for_stronaglowna_in_panel_source() -> None:
     assert "DRY_RUN_BADGE" in text
     assert save_plan_enabled_for_folder("stronaglowna")
     assert not save_plan_enabled_for_folder("tldobio")
-    assert "Zapisz lokalnie" not in text
+    assert "SAVE_LOCAL_LABEL" in text
     assert 'text="Zapisz"' not in text
 
 
@@ -162,7 +162,8 @@ def test_save_plan_has_readiness_ui() -> None:
     assert "F54B0_DISCLAIMER" in text
     assert "F54B1_FUTURE_NOTE" in text
     assert "evaluate_save_readiness" in text
-    assert "Zapisz lokalnie" not in text
+    assert "SAVE_LOCAL_LABEL" in text
+    assert "clear_section_background_with_backup" in text
 
 
 def test_draft_section_only_for_stronaglowna_in_panel_source() -> None:

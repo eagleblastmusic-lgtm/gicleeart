@@ -1,9 +1,10 @@
-"""Panel tła w Studio Preview (F4.2+) — read-only, draft F5.2, preview F5.3, dry-run F5.4a, readiness F5.4b0."""
+"""Panel tła w Studio Preview (F4.2+) — read-only, draft F5.2, preview F5.3, dry-run F5.4a, readiness F5.4b0, writer F5.4b1."""
 
 from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
+from tkinter import messagebox
 
 import customtkinter as ctk
 
@@ -45,9 +46,13 @@ from giclee_app.studio.background_save_readiness import (
     CLEAR_PLAN_CHECKBOX,
     F54B0_DISCLAIMER,
     F54B1_FUTURE_NOTE,
+    SAVE_LOCAL_LABEL,
+    SAVE_LOCAL_STATUS,
+    SaveReadiness,
     evaluate_save_readiness,
     format_readiness_block,
 )
+from giclee_app.studio.background_save_writer import clear_section_background_with_backup
 from giclee_app.studio.background_state import summarize_background_state
 
 from . import theme
@@ -124,6 +129,9 @@ class BackgroundPanelView(ctk.CTkFrame):
         self._save_plan_body_label: ctk.CTkLabel | None = None
         self._clear_plan_intent = False
         self._clear_plan_checkbox: ctk.CTkCheckBox | None = None
+        self._save_local_button: ctk.CTkButton | None = None
+        self._readonly_body_labels: dict[str, ctk.CTkLabel] = {}
+        self._last_readiness: SaveReadiness | None = None
         self._build_shell()
         if callable(self._on_status):
             self._on_status(f"Tło: {cap.label} — read-only panel")
@@ -229,7 +237,7 @@ class BackgroundPanelView(ctk.CTkFrame):
         panel.grid(row=row, column=0, sticky="ew", pady=(0, 10))
         panel.grid_columnconfigure(0, weight=1)
         SectionHeader(panel, title).pack(fill="x", padx=16, pady=(12, 4))
-        ctk.CTkLabel(
+        body_label = ctk.CTkLabel(
             panel,
             text=body,
             font=theme.get_font(12),
@@ -237,7 +245,9 @@ class BackgroundPanelView(ctk.CTkFrame):
             anchor="nw",
             justify="left",
             wraplength=560,
-        ).pack(fill="x", padx=16, pady=(0, 12))
+        )
+        body_label.pack(fill="x", padx=16, pady=(0, 12))
+        self._readonly_body_labels[title] = body_label
 
     def _render_draft_section(self, parent: ctk.CTkScrollableFrame, row: int) -> None:
         panel = ctk.CTkFrame(
@@ -478,7 +488,62 @@ class BackgroundPanelView(ctk.CTkFrame):
             border_width=1,
             border_color=theme.BorderSubtle,
             command=self._run_save_dry_run,
-        ).pack(anchor="w", padx=16, pady=(0, 12))
+        ).pack(anchor="w", padx=16, pady=(0, 8))
+
+        self._save_local_button = ctk.CTkButton(
+            panel,
+            text=SAVE_LOCAL_LABEL,
+            height=32,
+            fg_color=theme.PanelBg,
+            hover_color=theme.CardHover,
+            border_width=1,
+            border_color=theme.BorderSubtle,
+            command=self._on_save_local_clear,
+        )
+        self._save_local_button.pack(anchor="w", padx=16, pady=(0, 12))
+        self._save_local_button.pack_forget()
+
+    def _refresh_readonly_sections(self) -> None:
+        rows = panel_rows(
+            self._cap,
+            component_name=self._comp.name,
+            folder_name=self._comp.folder_name,
+            package_path=self._comp.package_path,
+        )
+        for title, body in rows:
+            label = self._readonly_body_labels.get(title)
+            if label is not None:
+                label.configure(text=body)
+
+    def _update_save_local_button(self, readiness: SaveReadiness) -> None:
+        if self._save_local_button is None:
+            return
+        show = (
+            self._clear_plan_intent
+            and readiness.ready
+            and readiness.operation == "clear"
+        )
+        if show:
+            self._save_local_button.pack(anchor="w", padx=16, pady=(0, 12))
+        else:
+            self._save_local_button.pack_forget()
+
+    def _compose_save_plan_text(
+        self,
+        dry_run_summary: str,
+        readiness: SaveReadiness,
+        *,
+        extra_lines: tuple[str, ...] = (),
+    ) -> str:
+        clear_ready = readiness.ready and readiness.operation == "clear"
+        readiness_block = format_readiness_block(
+            readiness.summary,
+            clear_ready=clear_ready,
+        )
+        parts = [dry_run_summary, "", readiness_block]
+        if extra_lines:
+            parts.extend(["", *extra_lines])
+        return "\n".join(parts)
 
     def _on_clear_plan_toggled(self) -> None:
         if self._clear_plan_checkbox is not None:
@@ -492,14 +557,78 @@ class BackgroundPanelView(ctk.CTkFrame):
             self._comp.package_path,
             clear_intent=self._clear_plan_intent,
         )
+        self._last_readiness = readiness
         summary = format_dry_run_summary(dry_run)
-        readiness_block = format_readiness_block(readiness.summary)
-        full_text = f"{summary}\n\n{readiness_block}"
+        full_text = self._compose_save_plan_text(summary, readiness)
         if self._save_plan_body_label is not None:
             color = theme.TextPrimary if dry_run.ok else theme.TextMuted
             self._save_plan_body_label.configure(text=full_text, text_color=color)
+        self._update_save_local_button(readiness)
         if callable(self._on_status):
             self._on_status(_DRY_RUN_STATUS_MSG)
+
+    def _on_save_local_clear(self) -> None:
+        self._on_clear_plan_toggled()
+        readiness = evaluate_save_readiness(
+            self._draft,
+            self._comp.package_path,
+            clear_intent=self._clear_plan_intent,
+        )
+        if not (readiness.ready and readiness.operation == "clear"):
+            if callable(self._on_status):
+                self._on_status("Zapis zablokowany — tylko operacja clear.")
+            return
+
+        zone_label = self._draft.zone_display()
+        confirmed = messagebox.askyesno(
+            "Zapis lokalny",
+            "\n".join([
+                f"Operacja: wyczyść tło w strefie {zone_label}",
+                "Dotyczy jednej sekcji section_background.",
+                "Zostanie utworzony backup index.json.",
+                "Bez Shopify · bez deploy.",
+                "",
+                "Kontynuować?",
+            ]),
+            parent=self.winfo_toplevel(),
+        )
+        if not confirmed:
+            return
+
+        result = clear_section_background_with_backup(
+            self._draft,
+            self._comp.package_path,
+            readiness=readiness,
+        )
+        if not result.ok:
+            if callable(self._on_status):
+                self._on_status(result.message)
+            return
+
+        self._refresh_readonly_sections()
+        dry_run = build_background_save_dry_run(self._draft, self._comp.package_path)
+        readiness_after = evaluate_save_readiness(
+            self._draft,
+            self._comp.package_path,
+            clear_intent=self._clear_plan_intent,
+        )
+        self._last_readiness = readiness_after
+        extra: list[str] = [SAVE_LOCAL_STATUS]
+        if result.backup_filename:
+            extra.append(f"Backup: {result.backup_filename}")
+        full_text = self._compose_save_plan_text(
+            format_dry_run_summary(dry_run),
+            readiness_after,
+            extra_lines=tuple(extra),
+        )
+        if self._save_plan_body_label is not None:
+            self._save_plan_body_label.configure(
+                text=full_text,
+                text_color=theme.TextPrimary,
+            )
+        self._update_save_local_button(readiness_after)
+        if callable(self._on_status):
+            self._on_status(SAVE_LOCAL_STATUS)
 
     def _on_zone_selected(self, label: str) -> None:
         field_id = self._zone_map.get(label)

@@ -16,9 +16,11 @@ from giclee_app.studio.background_save_contract import (
 SaveOperation = Literal["noop", "clear", "set_with_ref"]
 
 READINESS_SECTION_LABEL = "Gotowość zapisu"
-F54B0_DISCLAIMER = "F5.4b0 nadal nic nie zapisuje."
-F54B1_FUTURE_NOTE = "Realny zapis będzie osobną fazą F5.4b1."
-CLEAR_PLAN_CHECKBOX = "Plan: wyczyść tło w strefie (F5.4b1 — bez zapisu teraz)"
+F54B0_DISCLAIMER = "F5.4b1: zapis lokalny dostępny tylko dla wyczyść tło."
+F54B1_FUTURE_NOTE = "Inne operacje (zmiana typu, nowy asset) wymagają F5.4d."
+SAVE_LOCAL_LABEL = "Zapisz lokalnie"
+SAVE_LOCAL_STATUS = "zapisano lokalnie · bez Shopify"
+CLEAR_PLAN_CHECKBOX = "Plan: wyczyść tło w strefie"
 
 _STATUS_READY = "gotowe"
 _STATUS_BLOCKED = "zablokowane"
@@ -105,7 +107,7 @@ def evaluate_save_readiness(
             summary=_format_summary(
                 _STATUS_READY,
                 None,
-                "Plan: wyczyść tło w strefie (zapis w F5.4b1).",
+                "Plan: wyczyść tło w strefie · użyj „Zapisz lokalnie”.",
             ),
             status_label=_STATUS_READY,
         )
@@ -157,9 +159,12 @@ def evaluate_save_readiness(
     )
 
 
-def format_readiness_block(summary: str) -> str:
+def format_readiness_block(summary: str, *, clear_ready: bool = False) -> str:
     """Blok gotowości do panelu — bez URL/ref/ścieżek."""
-    lines = [READINESS_SECTION_LABEL, summary, "", F54B0_DISCLAIMER, F54B1_FUTURE_NOTE]
+    lines = [READINESS_SECTION_LABEL, summary]
+    if clear_ready:
+        lines.append("Operacja clear gotowa — dostępny przycisk „Zapisz lokalnie”.")
+    lines.extend(["", F54B0_DISCLAIMER, F54B1_FUTURE_NOTE])
     return "\n".join(lines)
 
 
@@ -183,7 +188,7 @@ def _operation_hint(status: str, block_reason: str | None) -> str:
     if status == _STATUS_NOOP:
         return "Operacja: noop — bez mutacji index.json."
     if status == _STATUS_READY:
-        return "Operacja: clear — plan gotowy, zapis dopiero w F5.4b1."
+        return "Operacja: clear — gotowe do zapisu lokalnego (F5.4b1)."
     if block_reason and "assetu" in block_reason.lower():
         return "Operacja: set_with_ref — wymaga F5.4d."
     return ""
@@ -194,6 +199,8 @@ __all__ = [
     "F54B0_DISCLAIMER",
     "F54B1_FUTURE_NOTE",
     "READINESS_SECTION_LABEL",
+    "SAVE_LOCAL_LABEL",
+    "SAVE_LOCAL_STATUS",
     "SaveOperation",
     "SaveReadiness",
     "evaluate_save_readiness",

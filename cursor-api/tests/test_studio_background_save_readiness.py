@@ -180,28 +180,36 @@ def test_no_write_or_forbidden_apis() -> None:
     assert "service.py" not in text
     assert "homepage_variants" not in text
     assert "load_manifest" not in text
-    assert "shopify" not in text.lower()
+    assert "import shopify" not in text.lower()
+    assert "from shopify" not in text.lower()
     assert "glob(" not in text
     assert "rglob(" not in text
     assert "filedialog" not in text
     assert "requests" not in text
 
 
-def test_panel_has_readiness_no_save_button() -> None:
+def test_panel_has_readiness_and_save_local_button() -> None:
     text = _PANEL_PATH.read_text(encoding="utf-8")
     assert "evaluate_save_readiness" in text
     assert "format_readiness_block" in text
     assert "F54B0_DISCLAIMER" in text
     assert "CLEAR_PLAN_CHECKBOX" in text
-    assert "Zapisz lokalnie" not in text
+    assert "SAVE_LOCAL_LABEL" in text
+    assert "clear_section_background_with_backup" in text
     assert 'text="Zapisz"' not in text
     assert "Zastosuj" not in text
-    assert "background_save_writer" not in text
+
+
+def test_format_readiness_block_clear_ready_hint() -> None:
+    block = format_readiness_block("Status: gotowe", clear_ready=True)
+    assert "Zapisz lokalnie" in block
+    block_no = format_readiness_block("Status: gotowe", clear_ready=False)
+    assert "przycisk" not in block_no.lower()
 
 
 def test_panel_dry_run_includes_readiness() -> None:
     text = _PANEL_PATH.read_text(encoding="utf-8")
-    block = text.split("def _run_save_dry_run")[1].split("\n    def ")[0]
-    assert "evaluate_save_readiness" in block
-    assert "format_readiness_block" in block
-    assert "write_text" not in block
+    save_block = text.split("def _run_save_dry_run")[1].split("\n    def ")[0]
+    assert "evaluate_save_readiness" in save_block
+    assert "_compose_save_plan_text" in save_block
+    assert "write_text" not in save_block

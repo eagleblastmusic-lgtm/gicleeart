@@ -257,6 +257,25 @@ Manual smoke F5.4b0: patrz [`studio-preview.md`](studio-preview.md).
 
 ---
 
+## 15. F5.4b1 — Bounded local clear writer (zrealizowane w kodzie)
+
+| Aspekt | Szczegóły |
+|--------|-----------|
+| Moduł | `background_save_writer.py` — jedyny moduł z `write_text` + `copy2` |
+| API | `clear_section_background_with_backup()` → `SaveWriteResult` |
+| Zakres | tylko operacja **clear** z gotowością zapisu |
+| Patch | 4 pola: `background_media`, `background_image`, `video`, `background_overlay_pct` |
+| Backup | `data/backups/index-{YYYYMMDD-HHMMSS}.json` przed zapisem |
+| Plik | aktywny `data/variants/{active}/index.json` — bez manifest/settings |
+| UI | przycisk **Zapisz lokalnie** — widoczny tylko clear-ready po „Sprawdź zapis” |
+| Confirm | `messagebox.askyesno` — bez Shopify · bez deploy |
+| Po zapisie | odświeżenie read-only „Aktualny stan” / „Biblioteka / Assety” |
+| Wersja | **1.32.0** |
+
+Manual smoke F5.4b1: patrz [`studio-preview.md`](studio-preview.md).
+
+---
+
 ## Powiązane dokumenty
 
 - F4 audit: [`background-parity.md`](background-parity.md)

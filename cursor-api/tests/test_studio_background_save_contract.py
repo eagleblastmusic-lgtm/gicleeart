@@ -236,13 +236,13 @@ def test_no_write_or_forbidden_apis_in_contract_module() -> None:
     assert "requests" not in text
 
 
-def test_panel_has_dry_run_button_no_save_action() -> None:
+def test_panel_has_dry_run_and_save_local_button() -> None:
     text = _PANEL_PATH.read_text(encoding="utf-8")
     assert "CHECK_SAVE_LABEL" in text
     assert "DRY_RUN_BADGE" in text
     assert "_render_save_plan_section" in text
     assert "save_plan_enabled_for_folder" in text
-    assert "Zapisz lokalnie" not in text
+    assert "SAVE_LOCAL_LABEL" in text
     assert 'text="Zapisz"' not in text
     assert "Zastosuj" not in text
 
