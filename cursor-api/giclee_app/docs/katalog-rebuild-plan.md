@@ -167,9 +167,8 @@ Wzorzec: [`studio-save-pattern.md`](studio-save-pattern.md) · referencja Level 
 | **Katalog F0** | Plan / data map (ten dokument + doprecyzowanie mapy pól) | **done (docs)** |
 | **Katalog F1** | Read-only shell — wejście w workflow, inventory, zero write | **done @ 1.36.0** |
 | **Katalog F2** | Bounded catalog inventory parser (warianty, strefy, tldobio cache read) | **done @ 1.37.0** |
-| **Katalog F3** | Local draft state (Studio-only, nie dotyka plików) | **next** |
-| **Katalog F4** | Dry-run / readiness contract | planned |
-| **Katalog F5** | Bounded local writer — **tylko jeśli potrzebny** | planned |
+| **Katalog F3+F4** | Local planning layer — draft + dry-run + readiness (Studio-only) | **done @ 1.38.0** |
+| **Katalog F5** | Bounded local writer — **tylko jeśli potrzebny** | **next** |
 | **Katalog F6** | Backup / session undo (mirror Background Builder) | planned |
 | **Katalog F7** | Optional Shopify/sync/deploy — **Level 3, F5.5+** | deferred |
 
@@ -257,7 +256,7 @@ Plan przyszłego smoke (po F1):
 | 5 | **Nie ruszać Shopify** — metafield/upload path wyłącznie F7 / F5.5 |
 | 6 | Background Builder local v1 jako wzorzec Level 2 **tylko dla lokalnych plików JSON** — nie dla tldobio Shopify path |
 
-**Next implementation target:** Katalog **F3 — local draft state** (in-memory, zero filesystem write).
+**Next implementation target:** Katalog **F5 — bounded local writer** (only if needed).
 
 ---
 
@@ -289,7 +288,23 @@ Plan przyszłego smoke (po F1):
 
 **F2 guardrails:** read-only · no Save · no writer · no Shopify API · no upload · no deploy/sync · no `Komponenty.*` import · no execute/import `service.py`.
 
-**Next:** F3 local draft state.
+**Next:** F5 bounded local writer (if needed).
+
+---
+
+## 15. F3+F4 local planning layer (implemented @ 1.38.0)
+
+| Element | Lokalizacja / opis |
+|---------|-------------------|
+| Draft state | `giclee_app/studio/katalog_draft_state.py` — in-memory intent/variant/zone |
+| Dry-run | `giclee_app/studio/katalog_dry_run.py` — pure plan summary, zero write |
+| Readiness | `giclee_app/studio/katalog_readiness.py` — `save_ready` always False, writer `not_started` |
+| UI sekcja | `giclee_app/ui/katalog_view.py` — „Plan zmian”, „Sprawdź plan”, „Wyczyść plan” |
+| Status strip | `f3_status_strip()` — local planning only · dry-run · nic nie zapisano |
+
+**F3+F4 guardrails:** no writer · no Zapisz/Save/Zastosuj · no filesystem write · no Shopify/sync/deploy · no `Komponenty.*` import in new modules · tldobio/Shopify blocked in plan scope.
+
+**Next:** F5 bounded local writer (only if needed) · F6 backup/undo · F7 Shopify sync (F5.5+).
 
 ---
 

@@ -28,7 +28,9 @@ MAX_FILE_BYTES = 2 * 1024 * 1024
 _ZONE_ID_RE = re.compile(r'zone_id="([^"]+)"')
 _BACKGROUND_IMAGE_RE = re.compile(r"background_image", re.IGNORECASE)
 
-F2_NEXT_NOTE = "Next: F3 local draft state / dry-run plan (no writer until write policy)"
+F2_NEXT_NOTE = (
+    "F3 local planning active — dry-run + readiness · writer F5+ not started"
+)
 
 
 @dataclass(frozen=True)
@@ -376,3 +378,7 @@ def data_map_display_rows(data_map: KatalogDataMap) -> list[tuple[str, str]]:
 
 def f2_status_strip() -> str:
     return "Read-only · F2 data map · no Save · no writer · Shopify out-of-scope"
+
+
+def f3_status_strip() -> str:
+    return "local planning only · dry-run · writer: not started · nic nie zapisano"

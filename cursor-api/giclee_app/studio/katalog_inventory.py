@@ -27,7 +27,7 @@ F1_READ_ONLY_NOTE = (
     "F1 read-only shell — no Save, no writer, no Shopify, no upload, no deploy/sync."
 )
 
-NEXT_PHASE_NOTE = "Next: F3 local draft / dry-run (F2 data map in katalog_data_map.py)"
+NEXT_PHASE_NOTE = "F3 local planning layer active — see Plan zmian (dry-run, no writer)"
 
 _MAX_VARIANT_IDS = 64
 _ZONE_ID_RE = re.compile(r'zone_id="([^"]+)"')

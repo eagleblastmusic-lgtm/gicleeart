@@ -9,9 +9,16 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from giclee_app.studio.categories import NAV_CATEGORIES, VALID_CATEGORY_IDS
-from giclee_app.studio.katalog_data_map import f2_status_strip
+from giclee_app.studio.katalog_data_map import f2_status_strip, f3_status_strip
 from giclee_app.studio.katalog_inventory import status_strip, workflow_summary
 from giclee_app.ui.katalog_view import KatalogView, _BACK_LABEL, _REFRESH_LABEL
+
+_STUDIO_ROOT = Path(__file__).resolve().parents[1] / "giclee_app" / "studio"
+_NEW_PLANNING_MODULES = (
+    "katalog_draft_state.py",
+    "katalog_dry_run.py",
+    "katalog_readiness.py",
+)
 
 _FORBIDDEN_UI_LABELS = (
     "Zapisz",
@@ -114,3 +121,48 @@ def test_f2_status_strip_policies() -> None:
 def test_import_katalog_view_module() -> None:
     assert KatalogView.__name__ == "KatalogView"
     assert _BACK_LABEL == "Wróć do huba"
+
+
+def test_view_source_f3_plan_section() -> None:
+    path = Path(__file__).resolve().parents[1] / "giclee_app" / "ui" / "katalog_view.py"
+    text = path.read_text(encoding="utf-8")
+    assert "PLAN_SECTION_TITLE" in text
+    assert "CHECK_PLAN_LABEL" in text
+    assert "CLEAR_PLAN_LABEL" in text
+    assert "local planning only" in text
+    assert "DRY_RUN_BADGE" in text
+    assert "DRAFT_DISCLAIMER" in text
+    assert "F3_READINESS_DISCLAIMER" in text
+    assert "f3_status_strip" in text
+    assert "build_katalog_plan_dry_run" in text
+    assert "evaluate_katalog_plan_readiness" in text
+
+
+def test_f3_status_strip_copy() -> None:
+    strip = f3_status_strip()
+    assert "local planning only" in strip
+    assert "dry-run" in strip
+    assert "not started" in strip
+
+
+def _assert_no_writes_in_source(path: Path) -> None:
+    text = path.read_text(encoding="utf-8")
+    assert "write_text" not in text
+    assert 'open(' not in text
+    assert "shutil" not in text
+    assert "requests" not in text
+    tree = ast.parse(text)
+    imports: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                imports.add(alias.name)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            imports.add(node.module)
+    for imp in imports:
+        assert not imp.startswith("Komponenty")
+
+
+def test_planning_modules_source_guardrails() -> None:
+    for name in _NEW_PLANNING_MODULES:
+        _assert_no_writes_in_source(_STUDIO_ROOT / name)
