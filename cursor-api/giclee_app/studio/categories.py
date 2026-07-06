@@ -10,6 +10,7 @@ from ..component_loader import Component
 VALID_CATEGORY_IDS = frozenset({
     "dashboard",
     "asset_lab",
+    "katalog",
     "theme",
     "products",
     "orders",
@@ -23,6 +24,7 @@ VALID_CATEGORY_IDS = frozenset({
 NAV_CATEGORIES: list[tuple[str, str, str]] = [
     ("dashboard", "Dashboard", "◈"),
     ("asset_lab", "Asset Lab", "◇"),
+    ("katalog", "Katalog", "▤"),
     ("theme", "Strona / Motyw", "◻"),
     ("products", "Produkty", "◆"),
     ("orders", "Zamówienia", "◇"),
@@ -113,7 +115,7 @@ def components_for_category(
 
     Gdy podano ``all_components`` (z StudioComponentIndex), bez ponownego discover.
     """
-    if category_id in ("dashboard", "asset_lab"):
+    if category_id in ("dashboard", "asset_lab", "katalog"):
         return []
     if all_components is not None:
         return [c for c in all_components if category_for_folder(c.folder_name) == category_id]

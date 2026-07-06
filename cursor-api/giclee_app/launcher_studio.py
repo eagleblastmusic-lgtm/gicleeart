@@ -8,7 +8,7 @@ from collections.abc import Callable
 import customtkinter as ctk
 
 from giclee_app import __version__
-from giclee_app.component_loader import Component
+from giclee_app.component_loader import Component, find_components_dir
 from giclee_app.launcher_delegate import LaunchOutcome, launch
 from giclee_app.studio.background_capabilities import capability_for
 from giclee_app.studio.categories import category_label
@@ -20,6 +20,7 @@ from .ui.background_panel import BackgroundPanelView
 from .ui.component_hub import ComponentHubView
 from .ui.dashboard import DashboardView
 from .ui.inline_host import InlineHostView
+from .ui.katalog_view import KatalogView
 from .ui.sidebar import Sidebar
 from .ui.topbar import Topbar
 from .ui import theme
@@ -64,6 +65,7 @@ class GicleeAppStudio(ctk.CTk):
         self._inline_stack: list[tuple[Component, str]] = []
         self._inline_return_category = "products"
         self._background_return_category = "theme"
+        self._katalog_return_category: str | None = None
         self._geometry_before_inline: str | None = None
         self._minsize_before_inline: tuple[int, int] | None = None
 
@@ -375,6 +377,51 @@ class GicleeAppStudio(ctk.CTk):
         self._set_status("Wrócono do huba")
         self._show_hub(category)
 
+    def _show_katalog_shell(self, return_category_id: str | None = None) -> None:
+        """F1 read-only Katalog workflow — sidebar nav or hub handoff."""
+        self._katalog_return_category = return_category_id
+        self._inline_stack.clear()
+        self._destroy_inline_host(restore_geometry=True)
+        self._destroy_background_host()
+
+        if return_category_id:
+            cat_label = category_label(return_category_id)
+            self._current_category = return_category_id
+            self._topbar.set_breadcrumb(f"{cat_label} / Katalog")
+            self._sidebar.set_active(return_category_id)
+        else:
+            self._current_category = "katalog"
+            self._topbar.set_breadcrumb("Katalog")
+            self._sidebar.set_active("katalog")
+
+        if "katalog" in self._view_cache:
+            try:
+                self._view_cache.pop("katalog").destroy()
+            except (tk.TclError, AttributeError):
+                self._view_cache.pop("katalog", None)
+
+        self._hide_cached_views()
+        view = KatalogView(
+            self._content,
+            components_root=find_components_dir(),
+            on_status=self._set_status,
+            on_back=self._return_from_katalog if return_category_id else None,
+        )
+        self._view_cache["katalog"] = view
+        view.grid(row=0, column=0, sticky="nsew")
+        self._content.update_idletasks()
+
+    def _return_from_katalog(self) -> None:
+        category = self._katalog_return_category or "theme"
+        self._katalog_return_category = None
+        if "katalog" in self._view_cache:
+            try:
+                self._view_cache.pop("katalog").destroy()
+            except (tk.TclError, AttributeError):
+                self._view_cache.pop("katalog", None)
+        self._set_status("Wrócono do huba")
+        self._show_hub(category)
+
     def _show_inline_component(
         self,
         comp: Component,
@@ -382,6 +429,9 @@ class GicleeAppStudio(ctk.CTk):
         *,
         cross_nav: bool = False,
     ) -> None:
+        if not cross_nav and comp.folder_name == "katalog":
+            self._show_katalog_shell(return_category_id)
+            return
         if cross_nav:
             if self._inline_host is not None:
                 self._inline_stack.append((self._inline_host.comp, self._inline_return_category))
@@ -426,6 +476,9 @@ class GicleeAppStudio(ctk.CTk):
             ),
         )
 
+    def _show_katalog(self) -> None:
+        self._show_katalog_shell(None)
+
     def _show_hub(self, category_id: str) -> None:
         self._current_category = category_id
         label = category_label(category_id)
@@ -460,5 +513,7 @@ class GicleeAppStudio(ctk.CTk):
             self._show_dashboard()
         elif category_id == "asset_lab":
             self._show_asset_lab()
+        elif category_id == "katalog":
+            self._show_katalog()
         else:
             self._show_hub(category_id)

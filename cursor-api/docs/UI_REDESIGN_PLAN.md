@@ -112,6 +112,18 @@ Strategia docs-only: [`giclee_app/docs/admin-components-strategy.md`](../giclee_
 | Next | **Katalog read-only shell (F1)** |
 | F5.5 | deferred |
 
+## Katalog F1 — read-only shell
+
+| Element | Stan |
+|---------|------|
+| `studio/katalog_inventory.py` | Bounded read-only inventory (katalog + tldobio cache) |
+| `ui/katalog_view.py` | Shell — parent workflow, absorbed tldobio, no Save |
+| Sidebar | **Katalog** (NAV, bez `studio_categories.json`) |
+| Hub | Click `katalog` → F1 shell (legacy inline bypass) |
+| tldobio | Absorbed info only — **no** new standalone tile |
+
+**Next:** F2 bounded data map. **F5.5** deferred.
+
 ### Studio v2 redesign track (F6.x)
 
 | Faza | Cel | Status |
@@ -119,7 +131,7 @@ Strategia docs-only: [`giclee_app/docs/admin-components-strategy.md`](../giclee_
 | F6.0 | Component redesign audit — Keep / Merge / Legacy / Defer | done · accepted |
 | F6.1 | Studio v2 workflow navigation map (docs-only) | done |
 | F6.2 | Asset Lab shell — read-only / launch-only | done |
-| F6.3 | Katalog rebuild plan + read-only shell strategy | plan done · shell next |
+| F6.3 | Katalog rebuild plan + F1 read-only shell | F1 done @ 1.36.0 · F2 next |
 
 Mapa workflowów: [`giclee_app/docs/studio-v2-workflows.md`](../giclee_app/docs/studio-v2-workflows.md)
 

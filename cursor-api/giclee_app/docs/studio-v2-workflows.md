@@ -501,6 +501,19 @@ Uzasadnienie: Asset Lab shell (F6.2) przed F5.4-plan — zapis tła nie projektu
 | Punkt | Status |
 |-------|--------|
 | Katalog rebuild plan | **done (docs-only)** |
+| Katalog F1 shell | **done @ 1.36.0** — read-only inventory |
 | Katalog = parent workflow | absorbs `tldobio` |
-| Next implementation | **Katalog read-only shell (F1)** |
+| Next implementation | **Katalog F2** — bounded data map |
 | Writer / Shopify | not started · F5.5 deferred |
+
+---
+
+## 15. Katalog F1 read-only shell
+
+| Element | Status |
+|---------|--------|
+| `katalog_inventory.py` | Bounded read-only paths |
+| `katalog_view.py` | Shell — no Save / no writer |
+| Sidebar NAV `katalog` | Without `studio_categories.json` change |
+| Hub `katalog` click | Routes to F1 shell |
+| tldobio | Absorbed subflow info only |
