@@ -1,6 +1,6 @@
 # GICLEE CURSOR MASTER INDEX v3.7
 
-Ten plik porządkuje cały system instrukcji Giclée Cursor Architect v3.7 (dual-repo + GicleeApp Studio checkpoint v1.38.0 / Katalog F1–F4).
+Ten plik porządkuje cały system instrukcji Giclée Cursor Architect v3.7 (dual-repo + GicleeApp Studio v1.38.0 / Katalog F1–F4 / Push GicleeApp hygiene done).
 
 ---
 
@@ -27,7 +27,9 @@ Workflow snapshotów: `GICLEE_GITHUB_SNAPSHOT_REVIEW_WORKFLOW_v35.md`.
 
 Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` oraz `CURRENT_APP_STATE.md`.
 
-**Katalog current state:** F1 read-only shell + F2 bounded data map + F3+F4 local planning layer = done. Next = bounded writer / save layer — only after separate acceptance (zero Save, zero Shopify/sync/deploy).
+**Katalog current state:** F1–F4 done. Push GicleeApp hygiene done (`gicleeapp` main `21bc3ed`). Pliki startowe GPT v37 = monorepo only (sync skip).
+
+**Primary next:** GICLÉE FRAME™ — design strony / komponent premium. **Technical backlog:** Katalog bounded writer — only after separate acceptance (zero Save, zero Shopify/sync/deploy).
 
 **New pacing rule:** group safe planning layers (read-only, data map, draft state, dry-run, readiness, UI change plan, docs/tests); split writer, backup/write/undo, Shopify/sync/deploy, data migrations, and large architecture decisions.
 
@@ -166,4 +168,4 @@ Efekt piękny ale ryzykowny → bezpieczniejsza wersja. Efekt tanio → popraw m
 
 Rozwiązania: piękne, premium, bezpieczne, zgodne ze stackiem i marką, wdrażalne przez Cursor.
 
-**Motyw → `gicleeart-gpt`. Aplikacja → `gicleeapp`.** Nie myl repo. **Katalog next = bounded writer / save layer** — tylko po osobnej akceptacji, bez writer/Save/Shopify bez polecenia.
+**Motyw → `gicleeart-gpt`. Aplikacja → `gicleeapp`.** Nie myl repo. **Primary next = GICLÉE FRAME™** (design strony / komponent premium). **Katalog writer** — tylko po osobnej akceptacji, bez writer/Save/Shopify bez polecenia.

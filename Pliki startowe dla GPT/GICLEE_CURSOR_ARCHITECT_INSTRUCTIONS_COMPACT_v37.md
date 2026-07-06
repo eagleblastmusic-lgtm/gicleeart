@@ -77,8 +77,9 @@ Do not treat the generated ZIP as the source of truth. Update the source files/t
 
 Repo kanoniczne: `eagleblastmusic-lgtm/gicleeapp` (monorepo `gicleeart`, branch `master`, app w `cursor-api/`)
 
-Aktualny kanoniczny HEAD / origin/master: `65e862be05183cac9e6ca94786802035cf77b943`  
-gicleeapp main: `a056bb5`  
+Aktualny monorepo origin/master (docs GPT): `4760a295b501c5bc7fe8b1cd987ace411436e9cf`  
+Studio code checkpoint (feature): `65e862be05183cac9e6ca94786802035cf77b943`  
+gicleeapp main: `21bc3edc2bcad13aa24040f82ca3cf84e18759d5`  
 Wersja aplikacji: **GicleeApp Studio v1.38.0**
 
 Zamknięte:
@@ -88,6 +89,7 @@ Zamknięte:
 - Katalog F1 read-only shell: **done**
 - Katalog F2 bounded data map: **done**
 - Katalog local planning layer F3+F4: **done** (draft state + dry-run + readiness + UI planu zmian)
+- Push GicleeApp hygiene: **done** (runtime poza commitem)
 
 Nie rozpoczęte:
 - F5.5 Shopify / sync / deploy
@@ -95,7 +97,9 @@ Nie rozpoczęte:
 - Katalog Shopify integration
 - Katalog migration
 
-Następna rekomendowana faza: **Katalog bounded writer / save layer** — tylko po osobnej akceptacji (**zero Save**, **zero Shopify/sync/deploy**).
+Następna rekomendowana faza (primary): **GICLÉE FRAME™** — design strony / komponent premium.
+
+Backlog techniczny (tylko po osobnej akceptacji): **Katalog bounded writer / save layer** (**zero Save**, **zero Shopify/sync/deploy**).
 
 Szczegóły guardrails: `CURRENT_APP_STATE.md`.
 
@@ -117,8 +121,9 @@ Keep separate approvals for:
 - data migrations
 - large architecture decisions
 
-For Katalog, the next phase is bounded writer / save layer — only after separate approval.
-Do not start writer, Save, Shopify, sync, or deploy without explicit instruction.
+Primary next focus: **GICLÉE FRAME™** — design strony / komponent premium (motyw → `gicleeart-gpt` gdy dotyczy frontu).
+
+Katalog bounded writer / save layer — tylko po osobnej akceptacji; nie startuj writer, Save, Shopify, sync ani deploy bez wyraźnej instrukcji.
 
 **Nie rozdrabniaj bezpiecznych etapów na zbyt wiele mikrofaz.** Łącz read-only, data map, draft state, dry-run, readiness, UI planu zmian, docs i testy w większe etapy. Rozdzielaj osobno writer, backup/write/undo, Shopify/sync/deploy, migracje danych i duże decyzje architektoniczne.
 

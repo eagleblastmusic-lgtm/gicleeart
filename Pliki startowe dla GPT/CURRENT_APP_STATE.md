@@ -2,14 +2,19 @@
 
 GicleeApp Studio v1.38.0
 
-Monorepo local HEAD / origin/master:
+Monorepo origin/master:
+4760a295b501c5bc7fe8b1cd987ace411436e9cf
+
+Studio code checkpoint (feature Katalog planning layer):
 65e862be05183cac9e6ca94786802035cf77b943
 
 gicleeapp main:
-a056bb5
+21bc3edc2bcad13aa24040f82ca3cf84e18759d5
 
 Recent context:
 - Push GicleeApp denylist hotfix e844789: done + pushed
+- Push GicleeApp snapshot 21bc3ed: done — runtime_hits poza commitem (hygiene OK)
+- Pliki startowe GPT v37: monorepo only (`GICLEEAPP_SYNC_SKIP`) — nie sync do standalone gicleeapp; OK
 
 Completed:
 - Background Builder local v1: frozen
@@ -18,6 +23,7 @@ Completed:
 - Katalog F1 read-only shell: done
 - Katalog F2 bounded data map: done
 - Katalog local planning layer F3+F4: done (draft state, dry-run, readiness, UI planu zmian)
+- Push GicleeApp hygiene: done
 
 Not started:
 - F5.5 Shopify / sync / deploy
@@ -26,14 +32,17 @@ Not started:
 - Katalog migration
 
 Next recommended:
-Katalog bounded writer / save layer — only after separate acceptance:
+Primary: GICLÉE FRAME™ — design strony / komponent premium (motyw Shopify + UX/motion, repo `gicleeart-gpt` gdy dotyczy frontu).
+
+Technical backlog (only after separate acceptance):
+- Katalog bounded writer / save layer
 - zero Shopify / sync / deploy
 - zero Save / Zapisz / Zastosuj without explicit approval
 - do not mutate Komponenty/* runtime data
 
 Important guardrails:
 - Knowledge pack source folder: `C:\Strona\pusty\Pliki startowe dla GPT` (edit sources here; regenerate ZIP — do not treat ZIP as source of truth)
-- Do not start writer without separate approval.
+- Do not start Katalog writer without separate approval.
 - Do not add Save/Zapisz/Zastosuj without separate approval.
 - Do not touch Shopify/sync/deploy.
 - Do not mutate Komponenty/* runtime data.

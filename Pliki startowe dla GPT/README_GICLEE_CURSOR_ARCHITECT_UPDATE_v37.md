@@ -33,6 +33,20 @@ Zaktualizowane pliki: `CURRENT_APP_STATE.md`, checkpoint block w COMPACT v37, `G
 
 ---
 
+## Checkpoint refresh (post Push GicleeApp + GICLÉE FRAME™)
+
+Bez bumpu paczki na v38:
+
+- monorepo origin/master: **4760a29** (docs GPT v37)
+- Studio code checkpoint: **65e862b** (Katalog planning layer feature)
+- gicleeapp main: **21bc3ed** (Push GicleeApp snapshot, hygiene OK)
+- Push GicleeApp hygiene: **done**
+- Pliki startowe GPT: **monorepo only** (sync skip do gicleeapp)
+- Primary next: **GICLÉE FRAME™** — design strony / komponent premium
+- Technical backlog: Katalog bounded writer — tylko po osobnej akceptacji
+
+---
+
 ## Komenda: Aktualizuj pliki startowe
 
 Stała komenda robocza użytkownika do Custom GPT. Pełna definicja: sekcja **KOMENDA ROBOCZA** w `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md`.

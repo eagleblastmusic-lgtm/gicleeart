@@ -10,7 +10,7 @@ Manifest plików wiedzy Custom GPT. **Stare pliki na dysku nie są usuwane** —
 
 | Plik | Rola |
 |------|------|
-| `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` | **Źródło do pola Instructions** (v3.7: checkpoint v1.38.0 / 65e862b, Katalog F1–F4, pacing rule, routing, granice Studio, komenda maintenance) |
+| `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` | **Źródło do pola Instructions** (v3.7: checkpoint 4760a29 / 65e862b / 21bc3ed, GICLÉE FRAME™ next, Katalog F1–F4, komenda maintenance) |
 | `GICLEE_DUAL_REPO_REVIEW_ROUTING_v35.md` | Kanon dual-repo |
 | `GICLEE_GITHUB_SNAPSHOT_REVIEW_WORKFLOW_v35.md` | Workflow review snapshotów |
 | `GICLEE_CURSOR_MASTER_INDEX_v37.md` | Hierarchia (POZIOM 0), wskazuje COMPACT v37 |
@@ -115,3 +115,5 @@ Master Index v37 traktuje je jako opcjonalne.
 **v3.7** = v3.6 + checkpoint Studio v1.37.0 / 16febff + Katalog F1+F2 done + local planning layer next + pacing rule (group safe layers, split writer/Shopify/migrations)
 
 **Checkpoint refresh 2026-07-06:** Studio v1.38.0 / monorepo 65e862b / gicleeapp main a056bb5 / Katalog F3+F4 done / next = bounded writer after separate acceptance. Paczka nadal v3.7 — bez bumpu na v38.
+
+**Checkpoint refresh 2026-07-06 (post Push GicleeApp):** monorepo origin/master `4760a29` / Studio code `65e862b` / gicleeapp main `21bc3ed` / Push hygiene done / primary next = GICLÉE FRAME™. Paczka nadal v3.7.

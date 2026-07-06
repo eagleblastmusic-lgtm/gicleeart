@@ -105,9 +105,11 @@ Aktualny checkpoint, który powinien być widoczny w `CURRENT_APP_STATE.md`:
 
 - GicleeApp Studio v1.38.0
 
-- HEAD / origin/master: 65e862be05183cac9e6ca94786802035cf77b943
+- monorepo origin/master: 4760a295b501c5bc7fe8b1cd987ace411436e9cf
 
-- gicleeapp main: a056bb5
+- Studio code checkpoint: 65e862be05183cac9e6ca94786802035cf77b943
+
+- gicleeapp main: 21bc3edc2bcad13aa24040f82ca3cf84e18759d5
 
 - Background Builder local v1: frozen
 
@@ -117,9 +119,13 @@ Aktualny checkpoint, który powinien być widoczny w `CURRENT_APP_STATE.md`:
 
 - Katalog local planning layer F3+F4: done
 
+- Push GicleeApp hygiene: done
+
 - F5.5: not started
 
-- Next: Katalog bounded writer / save layer — only after separate acceptance, zero Save / zero Shopify/sync/deploy
+- Next (primary): GICLÉE FRAME™ — design strony / komponent premium
+
+- Technical backlog: Katalog bounded writer / save layer — only after separate acceptance, zero Save / zero Shopify/sync/deploy
 
 
 
