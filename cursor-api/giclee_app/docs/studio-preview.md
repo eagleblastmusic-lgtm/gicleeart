@@ -114,11 +114,12 @@ Kontrakt i roadmapa: [`background-builder.md`](background-builder.md).
 | F5.4a | done | Save contract + dry-run — **Plan zapisu**, zero I/O |
 | F5.4b0 | done | Save readiness / ref policy — **Gotowość zapisu**, zero I/O |
 | F5.4b1 | done | Bounded clear writer + backup — **Zapisz lokalnie** (clear only) |
-| F5.4c | planned | Rollback / post-save validation — osobna akceptacja |
+| F5.4c1 | done | Session-only undo restore — **Cofnij ostatni zapis** |
+| F5.4c2 | planned | Limited backup picker — defer |
 | F5.4d | planned | Asset ref selection |
 | F5.5 | planned | Shopify / sync / deploy — osobna akceptacja |
 
-F5.4b1 to pierwszy realny zapis lokalny — tylko **wyczyść tło** z backupem index.json. Inne operacje = F5.4d+.
+F5.4b1 to pierwszy realny zapis lokalny — tylko **wyczyść tło** z backupem. F5.4c1 dodaje **session-only undo**. Inne operacje = F5.4d+.
 
 Manual smoke F5.4b1: patrz sekcja poniżej.
 
@@ -136,7 +137,7 @@ Manual smoke F5.4b1: patrz sekcja poniżej.
 | Backend merge | **brak** — mockup/kolaz/squoosh/etc. bez zmian |
 | Shopify w Studio layer | **brak** |
 | Hub Produkty | Bez zmian — 14 kart nadal dostępne |
-| F5.4 save | F5.4b1 done (clear writer + backup) · F5.4c planned |
+| F5.4 save | F5.4c1 done (session undo) · F5.4c2 picker defer |
 
 Narzędzia (kolejność UI): `nazwijobraz`, `infoplikow`, `squoosh`, `print_optimize`, `przedpo`, `kolaz`, `mockup`, `pobierzobraz`.
 
@@ -245,6 +246,33 @@ Manual smoke F5.4b1:
 
 ---
 
+## F5.4c1 — Session-only undo restore
+
+| Element | Stan |
+|---------|------|
+| `background_save_writer.py` | `restore_section_background_from_backup()` + `validate_backup_path()` |
+| `background_panel.py` | **Cofnij ostatni zapis** — tylko po udanym clear w sesji |
+| Restore | jedna strefa · 4 pola z backupu F5.4b1 · bez glob/rglob |
+| Confirm | askyesno — bez Shopify · bez deploy |
+| Po restore | status `przywrócono lokalnie · bez Shopify` · undo znika |
+| Defer | backup picker (F5.4c2) · full index restore odrzucone |
+
+Manual smoke F5.4c1:
+
+1. Studio → **Strona główna** → **Tło**
+2. Clear flow (plan clear → Sprawdź zapis → Zapisz lokalnie) → OK
+3. Pojawia się **Cofnij ostatni zapis** + basename backupu
+4. **Cofnij ostatni zapis** → confirm → tło wraca w tej samej strefie
+5. Status `przywrócono lokalnie · bez Shopify`
+6. Undo znika; **Aktualny stan** / **Biblioteka** odświeżone
+7. Inne strefy bez zmian
+8. Nawigacja away/back → undo niewidoczne
+9. Kind-change bez ref — brak zapisu/undo
+10. **Tło do Bio** — brak undo
+11. Asset Lab + klasyczny launcher OK
+
+---
+
 ## F4.3a — Background Safe Handoff
 
 | Element | Stan |
@@ -341,7 +369,7 @@ Checklista ręczna w Studio Preview — nie w CI.
 | `studio/background_draft_preview.py` | koncepcyjny podgląd draftu (F5.3) |
 | `studio/background_save_contract.py` | save contract + dry-run (F5.4a) |
 | `studio/background_save_readiness.py` | save readiness / ref policy (F5.4b0) |
-| `studio/background_save_writer.py` | bounded clear writer + backup (F5.4b1) |
+| `studio/background_save_writer.py` | bounded clear writer + restore undo (F5.4b1 / F5.4c1) |
 | `studio/asset_lab_catalog.py` | katalog Asset Lab — 8 narzędzi (F6.2) |
 | `ui/background_panel.py` | read-only panel shell tła (F4.2) |
 | `ui/asset_lab_view.py` | Asset Lab launch shell (F6.2) |

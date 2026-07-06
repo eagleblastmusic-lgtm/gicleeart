@@ -20,6 +20,9 @@ F54B0_DISCLAIMER = "F5.4b1: zapis lokalny dostępny tylko dla wyczyść tło."
 F54B1_FUTURE_NOTE = "Inne operacje (zmiana typu, nowy asset) wymagają F5.4d."
 SAVE_LOCAL_LABEL = "Zapisz lokalnie"
 SAVE_LOCAL_STATUS = "zapisano lokalnie · bez Shopify"
+UNDO_LAST_SAVE_LABEL = "Cofnij ostatni zapis"
+UNDO_RESTORE_STATUS = "przywrócono lokalnie · bez Shopify"
+LAST_BACKUP_LABEL = "Ostatni backup:"
 CLEAR_PLAN_CHECKBOX = "Plan: wyczyść tło w strefie"
 
 _STATUS_READY = "gotowe"
@@ -201,6 +204,9 @@ __all__ = [
     "READINESS_SECTION_LABEL",
     "SAVE_LOCAL_LABEL",
     "SAVE_LOCAL_STATUS",
+    "UNDO_LAST_SAVE_LABEL",
+    "UNDO_RESTORE_STATUS",
+    "LAST_BACKUP_LABEL",
     "SaveOperation",
     "SaveReadiness",
     "evaluate_save_readiness",

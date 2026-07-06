@@ -1,4 +1,4 @@
-"""Panel tła w Studio Preview (F4.2+) — read-only, draft F5.2, preview F5.3, dry-run F5.4a, readiness F5.4b0, writer F5.4b1."""
+"""Panel tła w Studio Preview (F4.2+) — read-only, draft F5.2, preview F5.3, dry-run F5.4a, readiness F5.4b0, writer F5.4b1, undo F5.4c1."""
 
 from __future__ import annotations
 
@@ -46,14 +46,24 @@ from giclee_app.studio.background_save_readiness import (
     CLEAR_PLAN_CHECKBOX,
     F54B0_DISCLAIMER,
     F54B1_FUTURE_NOTE,
+    LAST_BACKUP_LABEL,
     SAVE_LOCAL_LABEL,
     SAVE_LOCAL_STATUS,
+    UNDO_LAST_SAVE_LABEL,
+    UNDO_RESTORE_STATUS,
     SaveReadiness,
     evaluate_save_readiness,
     format_readiness_block,
 )
-from giclee_app.studio.background_save_writer import clear_section_background_with_backup
-from giclee_app.studio.background_state import summarize_background_state
+from giclee_app.studio.background_save_writer import (
+    SaveWriteResult,
+    clear_section_background_with_backup,
+    restore_section_background_from_backup,
+)
+from giclee_app.studio.background_state import (
+    read_stronaglowna_active_variant,
+    summarize_background_state,
+)
 
 from . import theme
 from .widgets import SectionHeader
@@ -130,6 +140,10 @@ class BackgroundPanelView(ctk.CTkFrame):
         self._clear_plan_intent = False
         self._clear_plan_checkbox: ctk.CTkCheckBox | None = None
         self._save_local_button: ctk.CTkButton | None = None
+        self._undo_button: ctk.CTkButton | None = None
+        self._last_backup_label: ctk.CTkLabel | None = None
+        self._last_successful_clear: SaveWriteResult | None = None
+        self._last_save_variant_id: str | None = None
         self._readonly_body_labels: dict[str, ctk.CTkLabel] = {}
         self._last_readiness: SaveReadiness | None = None
         self._build_shell()
@@ -500,8 +514,64 @@ class BackgroundPanelView(ctk.CTkFrame):
             border_color=theme.BorderSubtle,
             command=self._on_save_local_clear,
         )
-        self._save_local_button.pack(anchor="w", padx=16, pady=(0, 12))
+        self._save_local_button.pack(anchor="w", padx=16, pady=(0, 8))
         self._save_local_button.pack_forget()
+
+        self._last_backup_label = ctk.CTkLabel(
+            panel,
+            text="",
+            font=theme.get_font(11),
+            text_color=theme.TextMuted,
+            anchor="w",
+        )
+        self._last_backup_label.pack(anchor="w", padx=16, pady=(0, 8))
+        self._last_backup_label.pack_forget()
+
+        self._undo_button = ctk.CTkButton(
+            panel,
+            text=UNDO_LAST_SAVE_LABEL,
+            height=32,
+            fg_color=theme.PanelBg,
+            hover_color=theme.CardHover,
+            border_width=1,
+            border_color=theme.BorderSubtle,
+            command=self._on_undo_last_clear,
+        )
+        self._undo_button.pack(anchor="w", padx=16, pady=(0, 12))
+        self._undo_button.pack_forget()
+
+    def _clear_session_undo(self) -> None:
+        self._last_successful_clear = None
+        self._last_save_variant_id = None
+        if self._undo_button is not None:
+            self._undo_button.pack_forget()
+        if self._last_backup_label is not None:
+            self._last_backup_label.pack_forget()
+
+    def _set_session_undo(self, result: SaveWriteResult) -> None:
+        active = read_stronaglowna_active_variant(self._comp.package_path)
+        self._last_successful_clear = result
+        self._last_save_variant_id = active[0] if active else None
+        if self._last_backup_label is not None and result.backup_filename:
+            self._last_backup_label.configure(
+                text=f"{LAST_BACKUP_LABEL} {result.backup_filename}",
+            )
+            self._last_backup_label.pack(anchor="w", padx=16, pady=(0, 8))
+        if self._undo_button is not None:
+            self._undo_button.pack(anchor="w", padx=16, pady=(0, 12))
+
+    def _update_undo_visibility(self) -> None:
+        if self._undo_button is None:
+            return
+        if self._last_successful_clear is not None and self._last_successful_clear.ok:
+            if self._last_backup_label is not None and self._last_successful_clear.backup_filename:
+                self._last_backup_label.configure(
+                    text=f"{LAST_BACKUP_LABEL} {self._last_successful_clear.backup_filename}",
+                )
+                self._last_backup_label.pack(anchor="w", padx=16, pady=(0, 8))
+            self._undo_button.pack(anchor="w", padx=16, pady=(0, 12))
+        else:
+            self._clear_session_undo()
 
     def _refresh_readonly_sections(self) -> None:
         rows = panel_rows(
@@ -605,6 +675,7 @@ class BackgroundPanelView(ctk.CTkFrame):
                 self._on_status(result.message)
             return
 
+        self._set_session_undo(result)
         self._refresh_readonly_sections()
         dry_run = build_background_save_dry_run(self._draft, self._comp.package_path)
         readiness_after = evaluate_save_readiness(
@@ -629,6 +700,70 @@ class BackgroundPanelView(ctk.CTkFrame):
         self._update_save_local_button(readiness_after)
         if callable(self._on_status):
             self._on_status(SAVE_LOCAL_STATUS)
+
+    def _on_undo_last_clear(self) -> None:
+        saved = self._last_successful_clear
+        if saved is None or not saved.ok or not saved.backup_filename:
+            return
+
+        confirmed = messagebox.askyesno(
+            "Cofnij ostatni zapis",
+            "\n".join([
+                f"Przywróci tło strefy {saved.zone_label}",
+                f"z backupu {saved.backup_filename}.",
+                "Dotyczy jednej sekcji section_background.",
+                "Bez Shopify · bez deploy.",
+                "",
+                "Kontynuować?",
+            ]),
+            parent=self.winfo_toplevel(),
+        )
+        if not confirmed:
+            return
+
+        result = restore_section_background_from_backup(
+            package_path=self._comp.package_path,
+            backup_filename=saved.backup_filename,
+            section_key=saved.section_key,
+            zone_field_id=saved.zone_field_id,
+            zone_label=saved.zone_label,
+            expected_variant_id=self._last_save_variant_id,
+        )
+        if not result.ok:
+            if callable(self._on_status):
+                self._on_status(result.message)
+            return
+
+        self._clear_session_undo()
+        try:
+            self._refresh_readonly_sections()
+        except Exception:
+            if callable(self._on_status):
+                self._on_status(
+                    f"{UNDO_RESTORE_STATUS} · odświeżenie panelu nie powiodło się",
+                )
+            return
+
+        dry_run = build_background_save_dry_run(self._draft, self._comp.package_path)
+        readiness = evaluate_save_readiness(
+            self._draft,
+            self._comp.package_path,
+            clear_intent=self._clear_plan_intent,
+        )
+        self._last_readiness = readiness
+        full_text = self._compose_save_plan_text(
+            format_dry_run_summary(dry_run),
+            readiness,
+            extra_lines=(UNDO_RESTORE_STATUS,),
+        )
+        if self._save_plan_body_label is not None:
+            self._save_plan_body_label.configure(
+                text=full_text,
+                text_color=theme.TextPrimary,
+            )
+        self._update_save_local_button(readiness)
+        if callable(self._on_status):
+            self._on_status(UNDO_RESTORE_STATUS)
 
     def _on_zone_selected(self, label: str) -> None:
         field_id = self._zone_map.get(label)
@@ -689,3 +824,4 @@ class BackgroundPanelView(ctk.CTkFrame):
 
     def on_hide(self) -> None:
         self._draft.clear()
+        self._clear_session_undo()

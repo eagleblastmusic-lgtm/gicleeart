@@ -276,6 +276,23 @@ Manual smoke F5.4b1: patrz [`studio-preview.md`](studio-preview.md).
 
 ---
 
+## 16. F5.4c1 — Session-only undo restore (zrealizowane w kodzie)
+
+| Aspekt | Szczegóły |
+|--------|-----------|
+| Moduł | `background_save_writer.py` — `restore_section_background_from_backup()` |
+| Zakres | cofnięcie **ostatniego udane clear** w sesji panelu |
+| Restore | tylko **jedna strefa**, tylko **4 pola** z backupu F5.4b1 |
+| Backup path | basename z `SaveWriteResult` — `validate_backup_path()`, bez glob/rglob |
+| UI | **Cofnij ostatni zapis** + `Ostatni backup: index-….json` |
+| Po restore | status `przywrócono lokalnie · bez Shopify`; undo znika |
+| Defer | backup picker (F5.4c2), full index restore — odrzucone |
+| Wersja | **1.33.0** |
+
+Manual smoke F5.4c1: patrz [`studio-preview.md`](studio-preview.md).
+
+---
+
 ## Powiązane dokumenty
 
 - F4 audit: [`background-parity.md`](background-parity.md)

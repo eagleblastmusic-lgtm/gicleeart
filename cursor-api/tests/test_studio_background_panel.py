@@ -164,6 +164,16 @@ def test_save_plan_has_readiness_ui() -> None:
     assert "evaluate_save_readiness" in text
     assert "SAVE_LOCAL_LABEL" in text
     assert "clear_section_background_with_backup" in text
+    assert "restore_section_background_from_backup" in text
+
+
+def test_panel_has_undo_after_save_plan() -> None:
+    path = Path(__file__).resolve().parents[1] / "giclee_app" / "ui" / "background_panel.py"
+    text = path.read_text(encoding="utf-8")
+    assert "UNDO_LAST_SAVE_LABEL" in text
+    assert "_undo_button" in text
+    assert "_set_session_undo" in text
+    assert "LAST_BACKUP_LABEL" in text
 
 
 def test_draft_section_only_for_stronaglowna_in_panel_source() -> None:
