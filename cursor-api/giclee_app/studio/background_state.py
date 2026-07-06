@@ -1,4 +1,4 @@
-"""Read-only podsumowanie lokalnego stanu tła — Studio Preview (F4.3b)."""
+"""Read-only podsumowanie lokalnego stanu tła — Studio Preview (F4.3b / F5.1b)."""
 
 from __future__ import annotations
 
@@ -77,6 +77,69 @@ def _read_json_file(path: Path) -> dict[str, Any] | None:
     return data if isinstance(data, dict) else None
 
 
+def read_stronaglowna_active_variant(package_path: Path) -> tuple[str, str] | None:
+    """Read-only aktywny wariant z manifest.json — bez load_manifest()."""
+    manifest_path = package_path / _STRONAGLOWNA_MANIFEST
+    manifest = _read_json_file(manifest_path)
+    if manifest is None:
+        return None
+    active = str(manifest.get("active") or "").strip()
+    if not active:
+        return None
+    label = active
+    variants = manifest.get("variants")
+    if isinstance(variants, list):
+        for row in variants:
+            if isinstance(row, dict) and str(row.get("id") or "") == active:
+                label = str(row.get("label") or active)
+                break
+    return active, label
+
+
+def read_stronaglowna_index_template(package_path: Path) -> dict[str, Any] | None:
+    """Read-only index.json aktywnego wariantu."""
+    active_info = read_stronaglowna_active_variant(package_path)
+    if active_info is None:
+        return None
+    index_path = package_path / _STRONAGLOWNA_VARIANT_INDEX.format(
+        variant_id=active_info[0]
+    )
+    return _read_json_file(index_path)
+
+
+def section_bg_status(template: dict[str, Any], zone: SectionBgZone) -> SectionBgStatus:
+    settings = ("sections", zone.section_key, "settings")
+    media = str(_path_get(template, (*settings, "background_media")) or "none").strip().lower()
+    if media == "video":
+        ref = str(_path_get(template, (*settings, "video")) or "").strip()
+        return "wideo" if ref else "brak"
+    if media == "image":
+        ref = str(_path_get(template, (*settings, "background_image")) or "").strip()
+        return "obraz" if ref else "brak"
+    ref = str(_path_get(template, (*settings, "background_image")) or "").strip()
+    if not ref:
+        return "brak"
+    if "/videos/" in ref or ref.startswith("gid://shopify/Video/"):
+        return "wideo"
+    if ref.startswith("shopify://") or ref.startswith("http"):
+        return "obraz"
+    return "brak"
+
+
+def stronaglowna_zone_statuses(
+    package_path: Path,
+) -> tuple[tuple[str, str] | None, list[tuple[SectionBgZone, SectionBgStatus]] | None]:
+    """Aktywny wariant + statusy stref; None w liście gdy brak index."""
+    active_info = read_stronaglowna_active_variant(package_path)
+    index_template = read_stronaglowna_index_template(package_path)
+    if index_template is None:
+        return active_info, None
+    rows = [
+        (zone, section_bg_status(index_template, zone)) for zone in STRONAGLOWNA_SECTION_BGS
+    ]
+    return active_info, rows
+
+
 def _summarize_tldobio(package_path: Path) -> BackgroundStateSummary:
     path = package_path / _TLDOBIO_COLLECTIONS
     if not path.is_file():
@@ -106,45 +169,8 @@ def _summarize_tldobio(package_path: Path) -> BackgroundStateSummary:
     return BackgroundStateSummary("\n".join(lines))
 
 
-def _read_manifest_active(package_path: Path) -> tuple[str, str] | None:
-    manifest_path = package_path / _STRONAGLOWNA_MANIFEST
-    manifest = _read_json_file(manifest_path)
-    if manifest is None:
-        return None
-    active = str(manifest.get("active") or "").strip()
-    if not active:
-        return None
-    label = active
-    variants = manifest.get("variants")
-    if isinstance(variants, list):
-        for row in variants:
-            if isinstance(row, dict) and str(row.get("id") or "") == active:
-                label = str(row.get("label") or active)
-                break
-    return active, label
-
-
-def _section_bg_status(template: dict[str, Any], zone: SectionBgZone) -> SectionBgStatus:
-    settings = ("sections", zone.section_key, "settings")
-    media = str(_path_get(template, (*settings, "background_media")) or "none").strip().lower()
-    if media == "video":
-        ref = str(_path_get(template, (*settings, "video")) or "").strip()
-        return "wideo" if ref else "brak"
-    if media == "image":
-        ref = str(_path_get(template, (*settings, "background_image")) or "").strip()
-        return "obraz" if ref else "brak"
-    ref = str(_path_get(template, (*settings, "background_image")) or "").strip()
-    if not ref:
-        return "brak"
-    if "/videos/" in ref or ref.startswith("gid://shopify/Video/"):
-        return "wideo"
-    if ref.startswith("shopify://") or ref.startswith("http"):
-        return "obraz"
-    return "brak"
-
-
 def _summarize_stronaglowna(package_path: Path) -> BackgroundStateSummary:
-    active_info = _read_manifest_active(package_path)
+    active_info, zone_rows = stronaglowna_zone_statuses(package_path)
     lines: list[str] = []
     if active_info is not None:
         active_id, active_label = active_info
@@ -156,23 +182,14 @@ def _summarize_stronaglowna(package_path: Path) -> BackgroundStateSummary:
         f"Strefy section_background: {len(STRONAGLOWNA_SECTION_BGS)} (zdefiniowane w edytorze)"
     )
 
-    index_template: dict[str, Any] | None = None
-    if active_info is not None:
-        index_path = package_path / _STRONAGLOWNA_VARIANT_INDEX.format(
-            variant_id=active_info[0]
-        )
-        index_template = _read_json_file(index_path)
-
-    if index_template is None:
+    if zone_rows is None:
         lines.append(_STRONAGLOWNA_NO_VARIANT)
         for zone in STRONAGLOWNA_SECTION_BGS:
             lines.append(f"· {zone.field_id} ({zone.label}): —")
         return BackgroundStateSummary("\n".join(lines))
 
-    statuses: list[SectionBgStatus] = []
-    for zone in STRONAGLOWNA_SECTION_BGS:
-        status = _section_bg_status(index_template, zone)
-        statuses.append(status)
+    statuses = [status for _, status in zone_rows]
+    for zone, status in zone_rows:
         lines.append(f"· {zone.field_id} ({zone.label}): {status}")
 
     set_count = sum(1 for s in statuses if s != "brak")
@@ -198,6 +215,11 @@ def summarize_background_state(folder_name: str, package_path: Path) -> Backgrou
 __all__ = [
     "BackgroundStateSummary",
     "SectionBgZone",
+    "SectionBgStatus",
     "STRONAGLOWNA_SECTION_BGS",
+    "read_stronaglowna_active_variant",
+    "read_stronaglowna_index_template",
+    "section_bg_status",
+    "stronaglowna_zone_statuses",
     "summarize_background_state",
 ]

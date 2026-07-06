@@ -51,6 +51,7 @@ def test_panel_rows_stronaglowna(tmp_path: Path) -> None:
     assert cap.source_hint in rows["Źródło"]
     assert "Aktualny stan" in rows
     assert "Biblioteka / Assety" in rows
+    assert "F5.1b · read-only" in rows["Biblioteka / Assety"]
     assert "kolaż wideo" in rows["Biblioteka / Assety"]
 
 

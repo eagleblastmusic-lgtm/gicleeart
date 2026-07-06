@@ -1,4 +1,4 @@
-# GicleeApp Studio Preview (F5.1)
+# GicleeApp Studio Preview (F5.1b)
 
 Hub: [`README.md`](README.md) · plan: [`../../docs/UI_REDESIGN_PLAN.md`](../../docs/UI_REDESIGN_PLAN.md) · tło: [`background-parity.md`](background-parity.md) · F5: [`background-builder.md`](background-builder.md)
 
@@ -107,34 +107,31 @@ Kontrakt i roadmapa: [`background-builder.md`](background-builder.md).
 | Faza | Stan | Opis |
 |------|------|------|
 | F5.0 | done (docs) | UX contract — [`background-builder.md`](background-builder.md) |
-| F5.1 | **current** | Read-only shell „Biblioteka / Assety” — tylko `stronaglowna` |
-| F5.1b | planned | Opcjonalna bounded lista assetów z aktywnego index |
+| F5.1 | done | Read-only shell „Biblioteka / Assety” |
+| F5.1b | **current** | Bounded lista przypisań z aktywnego wariantu |
 | F5.2–F5.3 | planned | Draft + preview-only — bez zapisu |
 | F5.4–F5.5 | planned | Save / Shopify — **osobna akceptacja** |
 
-F5.1 **nie** listuje plików, **nie** uploaduje ani **nie** zapisuje danych komponentu.
+F5.1b czyta tylko manifest + aktywny index — **bez** preview hint, globów, uploadu ani zapisu.
 
 ---
 
-## F5.1 — Read-only asset browser shell
+## F5.1b — Bounded read-only asset list
 
 | Element | Stan |
 |---------|------|
-| `studio/background_asset_types.py` | deklaracja typów: obraz, wideo, kolaż wideo |
-| `studio/background_asset_shell.py` | `asset_library_rows(folder_name)` — pure, bez I/O |
-| `ui/background_panel.py` | sekcja **Biblioteka / Assety** po „Aktualny stan” — tylko `stronaglowna` |
-| `tldobio` | brak sekcji biblioteki |
+| `background_state.py` | shared read: `stronaglowna_zone_statuses`, `section_bg_status` |
+| `background_asset_shell.py` | `asset_library_rows(folder, package_path)` — przypisania per strefa |
+| UI | aktywny wariant + 5 stref: obraz/wideo/brak |
+| Preview hint | **pominięty** (bez resolve ścieżek motywu) |
 | Upload / zapis / Shopify | **brak** |
-| Handoff F4.3a | bez zmian |
 
-Manual smoke F5.1:
+Manual smoke F5.1b:
 
-1. Hub → **Tło** na **Strona główna** → sekcja **Biblioteka / Assety**
-2. Typy: obraz / wideo / kolaż wideo + placeholdery
-3. Brak uploadu, zapisu, wyboru pliku
-4. **Edytuj w komponencie** → inline OK; powrót do huba OK
-5. **Tło do Bio** — brak sekcji biblioteki
-6. Po zamknięciu Studio — brak zmian w `Komponenty/stronaglowna/data/*`
+1. Hub → **Tło** → **Strona główna** → **Biblioteka / Assety** z aktywnym wariantem i 5 strefami
+2. Brak URL-i / shopify:// / ścieżek plików
+3. **Aktualny stan** bez regresji · handoff inline OK · Tło do Bio bez biblioteki
+4. Brak zmian w `Komponenty/stronaglowna/data/*`
 
 ---
 

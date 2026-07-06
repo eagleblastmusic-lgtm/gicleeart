@@ -172,4 +172,14 @@ Kontrakt UX: [`background-builder.md`](background-builder.md).
 | UI | sekcja **Biblioteka / Assety** — tylko `stronaglowna` |
 | Typy | obraz / wideo / kolaż wideo — placeholdery, brak listowania plików |
 | `tldobio` | brak sekcji biblioteki |
-| Poza zakresem | F5.1b listowanie, F5.2+ draft/preview/save, Shopify |
+| Poza zakresem | F5.2+ draft/preview/save, Shopify |
+
+## F5.1b — Bounded read-only asset list (zrealizowane)
+
+| Aspekt | Szczegóły |
+|--------|-----------|
+| Shared read | `background_state.py` — współdzielone helpery z F4.3b |
+| Shell | `background_asset_shell.py` — przypisania z aktywnego wariantu |
+| Per strefa | obraz / wideo / brak — bez URL-i, bez preview hint |
+| `tldobio` | brak biblioteki |
+| Poza zakresem | preview lokalny, F5.2+, zapis, Shopify |

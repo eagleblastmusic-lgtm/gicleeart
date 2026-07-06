@@ -44,7 +44,7 @@ def panel_rows(
     ]
     if state_text:
         rows.append(("Aktualny stan", state_text))
-    rows.extend(asset_library_rows(folder_name))
+    rows.extend(asset_library_rows(folder_name, package_path))
     rows.extend([
         ("Kontekst inline", cap.inline_note),
         ("Status", "read-only"),

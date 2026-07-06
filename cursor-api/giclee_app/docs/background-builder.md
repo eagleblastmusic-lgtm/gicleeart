@@ -64,8 +64,8 @@ Strefy `section_background` (z rejestru):
 | Faza | Nazwa | Zakres | Zapis | Akceptacja |
 |------|-------|--------|-------|------------|
 | **F5.0** | Docs / UX contract | Ten dokument + linki w docs | brak | done |
-| **F5.1** | Read-only asset shell | Sekcja „Biblioteka / Assety” w panelu; typy obraz/wideo/kolaż; placeholdery | brak | **implementacja — raport** |
-| **F5.1b** | Bounded asset list (opcja) | Lista assetów tylko z aktywnego `index.json` + bounded local resolve | brak | osobna |
+| **F5.1** | Read-only asset shell | Sekcja „Biblioteka / Assety”; typy obraz/wideo/kolaż | brak | done |
+| **F5.1b** | Bounded asset list | Przypisania z aktywnego `index.json` — obraz/wideo/brak per strefa | brak | **implementacja — raport** |
 | **F5.2** | Local draft selection | Wybór strefy + typu w UI; stan tylko w pamięci panelu | brak persist | osobna |
 | **F5.3** | Preview-only apply | Podgląd wybranego assetu bez mutacji JSON | brak | osobna |
 | **F5.4** | Controlled save | Zapis przez istniejący API komponentu / handoff z payload | tak | **osobna decyzja** |
@@ -168,6 +168,21 @@ Pliki F5.1:
 - `giclee_app/studio/background_asset_shell.py`
 - rozszerzenie `giclee_app/ui/background_panel.py`
 - `tests/test_studio_background_asset_shell.py`
+
+---
+
+## 10. F5.1b — Bounded read-only asset list (zrealizowane w kodzie)
+
+| Aspekt | Szczegóły |
+|--------|-----------|
+| Shared read | `background_state.py` — `stronaglowna_zone_statuses`, `section_bg_status` |
+| Shell | `background_asset_shell.py` — lista przypisań z manifest + index |
+| UI | **Biblioteka / Assety** — aktywny wariant + 5 stref: obraz/wideo/brak |
+| Preview hint | **pominięty** — bez resolve ścieżek motywu (F5.1c/F5.3+) |
+| Zakazy | bez URL-i, bez glob, bez preview file scan |
+| Wersja | **1.29.1** |
+
+Manual smoke F5.1b: patrz [`studio-preview.md`](studio-preview.md).
 
 ---
 
