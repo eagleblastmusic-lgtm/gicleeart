@@ -59,9 +59,9 @@ def test_return_from_inline_restores_hub_tiles() -> None:
     app.update()
 
     comp = Component(
-        folder_name="gicleeframe",
-        package_path=Path("/fake/gicleeframe"),
-        name="Giclée Frame",
+        folder_name="obrazy",
+        package_path=Path("/fake/obrazy"),
+        name="Obrazy",
         description="",
         mode="inline",
     )
@@ -108,7 +108,7 @@ def test_return_from_inline_with_inline_resize_restores_hub() -> None:
 
     app._show_hub("theme")
     hub = app._view_cache["hub:theme"]
-    comp = app._component_index.by_folder["gicleeframe"]
+    comp = app._component_index.by_folder["kontakt"]
 
     deadline = __import__("time").time() + 8.0
     while __import__("time").time() < deadline:  # noqa: SLF001

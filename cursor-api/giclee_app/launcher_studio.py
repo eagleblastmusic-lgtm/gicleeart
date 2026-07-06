@@ -20,6 +20,7 @@ from .ui.background_panel import BackgroundPanelView
 from .ui.component_hub import ComponentHubView
 from .ui.dashboard import DashboardView
 from .ui.inline_host import InlineHostView
+from .ui.gicleeframe_view import GicleeFrameView
 from .ui.katalog_view import KatalogView
 from .ui.sidebar import Sidebar
 from .ui.topbar import Topbar
@@ -66,6 +67,7 @@ class GicleeAppStudio(ctk.CTk):
         self._inline_return_category = "products"
         self._background_return_category = "theme"
         self._katalog_return_category: str | None = None
+        self._gicleeframe_return_category: str | None = None
         self._geometry_before_inline: str | None = None
         self._minsize_before_inline: tuple[int, int] | None = None
 
@@ -422,6 +424,50 @@ class GicleeAppStudio(ctk.CTk):
         self._set_status("Wrócono do huba")
         self._show_hub(category)
 
+    def _show_gicleeframe_shell(self, return_category_id: str | None = None) -> None:
+        """Planning shell GICLÉE FRAME™ — bez legacy inline writera."""
+        self._gicleeframe_return_category = return_category_id
+        self._inline_stack.clear()
+        self._destroy_inline_host(restore_geometry=True)
+        self._destroy_background_host()
+
+        if return_category_id:
+            cat_label = category_label(return_category_id)
+            self._current_category = return_category_id
+            self._topbar.set_breadcrumb(f"{cat_label} / GICLÉE FRAME™")
+            self._sidebar.set_active(return_category_id)
+        else:
+            self._current_category = "theme"
+            self._topbar.set_breadcrumb("GICLÉE FRAME™")
+            self._sidebar.set_active("theme")
+
+        if "gicleeframe" in self._view_cache:
+            try:
+                self._view_cache.pop("gicleeframe").destroy()
+            except (tk.TclError, AttributeError):
+                self._view_cache.pop("gicleeframe", None)
+
+        self._hide_cached_views()
+        view = GicleeFrameView(
+            self._content,
+            on_status=self._set_status,
+            on_back=self._return_from_gicleeframe if return_category_id else None,
+        )
+        self._view_cache["gicleeframe"] = view
+        view.grid(row=0, column=0, sticky="nsew")
+        self._content.update_idletasks()
+
+    def _return_from_gicleeframe(self) -> None:
+        category = self._gicleeframe_return_category or "theme"
+        self._gicleeframe_return_category = None
+        if "gicleeframe" in self._view_cache:
+            try:
+                self._view_cache.pop("gicleeframe").destroy()
+            except (tk.TclError, AttributeError):
+                self._view_cache.pop("gicleeframe", None)
+        self._set_status("Wrócono do huba")
+        self._show_hub(category)
+
     def _show_inline_component(
         self,
         comp: Component,
@@ -431,6 +477,9 @@ class GicleeAppStudio(ctk.CTk):
     ) -> None:
         if not cross_nav and comp.folder_name == "katalog":
             self._show_katalog_shell(return_category_id)
+            return
+        if comp.folder_name == "gicleeframe":
+            self._show_gicleeframe_shell(return_category_id)
             return
         if cross_nav:
             if self._inline_host is not None:
