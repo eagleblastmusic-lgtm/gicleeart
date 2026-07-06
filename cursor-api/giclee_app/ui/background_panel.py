@@ -1,4 +1,4 @@
-"""Read-only panel tła w Studio Preview (F4.2) — bez edycji i zapisu."""
+"""Panel tła w Studio Preview (F4.2+) — read-only + lokalny draft F5.2."""
 
 from __future__ import annotations
 
@@ -8,17 +8,30 @@ from pathlib import Path
 import customtkinter as ctk
 
 from giclee_app.component_loader import Component
+from giclee_app.studio.background_asset_types import AssetKind
+from giclee_app.studio.background_asset_shell import asset_library_rows
 from giclee_app.studio.background_capabilities import (
     BackgroundCapability,
     tier_display,
 )
-from giclee_app.studio.background_asset_shell import asset_library_rows
+from giclee_app.studio.background_draft_state import (
+    CLEAR_DRAFT_LABEL,
+    DRAFT_BADGE,
+    DRAFT_DISCLAIMER,
+    DRAFT_SECTION_TITLE,
+    BackgroundDraftState,
+    draft_enabled_for_folder,
+    kind_menu_options,
+    zone_menu_options,
+)
 from giclee_app.studio.background_state import summarize_background_state
 
 from . import theme
 from .widgets import SectionHeader
 
 _HANDOFF_BUTTON_LABEL = "Edytuj w komponencie"
+_DRAFT_INSERT_AFTER = "Biblioteka / Assety"
+_DRAFT_STATUS_MSG = "Draft lokalny — niezapisany"
 
 _CO_DALEJ_NOTE = (
     "Użyj przycisku „Edytuj w komponencie”, aby przejść do istniejącego "
@@ -33,7 +46,7 @@ def panel_rows(
     folder_name: str = "",
     package_path: Path | None = None,
 ) -> list[tuple[str, str]]:
-    """Sekcje read-only panelu — testowalne bez Tk."""
+    """Sekcje read-only panelu — testowalne bez Tk. Draft (F5.2) poza tym API."""
     _ = component_name
     state_text = ""
     if folder_name and package_path is not None:
@@ -54,7 +67,7 @@ def panel_rows(
 
 
 class BackgroundPanelView(ctk.CTkFrame):
-    """Lekki widok informacyjny tła — transient host w launcher_studio."""
+    """Widok panelu tła — transient host w launcher_studio."""
 
     def __init__(
         self,
@@ -72,6 +85,12 @@ class BackgroundPanelView(ctk.CTkFrame):
         self._on_back = on_back
         self._on_status = on_status
         self._on_open_inline = on_open_inline
+        self._draft = BackgroundDraftState()
+        self._draft_summary_label: ctk.CTkLabel | None = None
+        self._zone_menu: ctk.CTkOptionMenu | None = None
+        self._kind_menu: ctk.CTkOptionMenu | None = None
+        self._zone_map: dict[str, str] = {}
+        self._kind_map: dict[str, AssetKind] = {}
         self._build_shell()
         if callable(self._on_status):
             self._on_status(f"Tło: {cap.label} — read-only panel")
@@ -124,51 +143,25 @@ class BackgroundPanelView(ctk.CTkFrame):
             height=22,
         ).grid(row=0, column=0, sticky="w", pady=(0, 12))
 
-        for row_idx, (title, body) in enumerate(
-            panel_rows(
-                self._cap,
-                component_name=self._comp.name,
-                folder_name=self._comp.folder_name,
-                package_path=self._comp.package_path,
-            ),
-            start=1,
-        ):
-            panel = ctk.CTkFrame(
-                scroll,
-                fg_color=theme.PanelBg,
-                corner_radius=8,
-                border_width=1,
-                border_color=theme.BorderSubtle,
-            )
-            panel.grid(row=row_idx, column=0, sticky="ew", pady=(0, 10))
-            panel.grid_columnconfigure(0, weight=1)
-            SectionHeader(panel, title).pack(fill="x", padx=16, pady=(12, 4))
-            ctk.CTkLabel(
-                panel,
-                text=body,
-                font=theme.get_font(12),
-                text_color=theme.TextMuted,
-                anchor="nw",
-                justify="left",
-                wraplength=560,
-            ).pack(fill="x", padx=16, pady=(0, 12))
+        rows = panel_rows(
+            self._cap,
+            component_name=self._comp.name,
+            folder_name=self._comp.folder_name,
+            package_path=self._comp.package_path,
+        )
+        grid_row = 1
+        show_draft = draft_enabled_for_folder(self._comp.folder_name)
+
+        for title, body in rows:
+            self._render_readonly_section(scroll, grid_row, title, body)
+            grid_row += 1
+            if show_draft and title == _DRAFT_INSERT_AFTER:
+                self._render_draft_section(scroll, grid_row)
+                grid_row += 1
 
         if self._on_open_inline is not None and self._comp.mode == "inline":
             action_row = ctk.CTkFrame(scroll, fg_color="transparent")
-            action_row.grid(
-                row=len(
-                    panel_rows(
-                        self._cap,
-                        component_name=self._comp.name,
-                        folder_name=self._comp.folder_name,
-                        package_path=self._comp.package_path,
-                    )
-                )
-                + 1,
-                column=0,
-                sticky="ew",
-                pady=(4, 0),
-            )
+            action_row.grid(row=grid_row, column=0, sticky="ew", pady=(4, 0))
             ctk.CTkButton(
                 action_row,
                 text=_HANDOFF_BUTTON_LABEL,
@@ -180,5 +173,166 @@ class BackgroundPanelView(ctk.CTkFrame):
                 command=self._on_open_inline,
             ).pack(anchor="w")
 
+    def _render_readonly_section(
+        self,
+        parent: ctk.CTkScrollableFrame,
+        row: int,
+        title: str,
+        body: str,
+    ) -> None:
+        panel = ctk.CTkFrame(
+            parent,
+            fg_color=theme.PanelBg,
+            corner_radius=8,
+            border_width=1,
+            border_color=theme.BorderSubtle,
+        )
+        panel.grid(row=row, column=0, sticky="ew", pady=(0, 10))
+        panel.grid_columnconfigure(0, weight=1)
+        SectionHeader(panel, title).pack(fill="x", padx=16, pady=(12, 4))
+        ctk.CTkLabel(
+            panel,
+            text=body,
+            font=theme.get_font(12),
+            text_color=theme.TextMuted,
+            anchor="nw",
+            justify="left",
+            wraplength=560,
+        ).pack(fill="x", padx=16, pady=(0, 12))
+
+    def _render_draft_section(self, parent: ctk.CTkScrollableFrame, row: int) -> None:
+        panel = ctk.CTkFrame(
+            parent,
+            fg_color=theme.PanelBg,
+            corner_radius=8,
+            border_width=1,
+            border_color=theme.BorderSubtle,
+        )
+        panel.grid(row=row, column=0, sticky="ew", pady=(0, 10))
+        panel.grid_columnconfigure(0, weight=1)
+
+        SectionHeader(panel, DRAFT_SECTION_TITLE).pack(fill="x", padx=16, pady=(12, 4))
+        ctk.CTkLabel(
+            panel,
+            text=DRAFT_BADGE,
+            font=theme.get_font(10),
+            text_color=theme.AccentGoldDim,
+            anchor="w",
+        ).pack(fill="x", padx=16, pady=(0, 8))
+
+        zone_opts = zone_menu_options()
+        zone_labels = [label for _, label in zone_opts]
+        zone_ids = [field_id for field_id, _ in zone_opts]
+        self._zone_map = dict(zip(zone_labels, zone_ids, strict=True))
+
+        kind_opts = kind_menu_options()
+        kind_labels = [label for _, label in kind_opts]
+        kind_ids = [kind for kind, _ in kind_opts]
+        self._kind_map = dict(zip(kind_labels, kind_ids, strict=True))
+
+        zone_row = ctk.CTkFrame(panel, fg_color="transparent")
+        zone_row.pack(fill="x", padx=16, pady=(0, 8))
+        ctk.CTkLabel(
+            zone_row,
+            text="Strefa:",
+            font=theme.get_font(12),
+            text_color=theme.TextMuted,
+            width=72,
+            anchor="w",
+        ).pack(side="left")
+        self._zone_menu = ctk.CTkOptionMenu(
+            zone_row,
+            values=zone_labels,
+            command=self._on_zone_selected,
+            fg_color=theme.AppBg,
+            button_color=theme.PanelBg,
+            button_hover_color=theme.CardHover,
+            dropdown_fg_color=theme.PanelBg,
+            font=theme.get_font(12),
+            width=420,
+        )
+        self._zone_menu.set(zone_labels[0])
+        self._zone_menu.pack(side="left", fill="x", expand=True)
+
+        kind_row = ctk.CTkFrame(panel, fg_color="transparent")
+        kind_row.pack(fill="x", padx=16, pady=(0, 8))
+        ctk.CTkLabel(
+            kind_row,
+            text="Typ:",
+            font=theme.get_font(12),
+            text_color=theme.TextMuted,
+            width=72,
+            anchor="w",
+        ).pack(side="left")
+        self._kind_menu = ctk.CTkOptionMenu(
+            kind_row,
+            values=kind_labels,
+            command=self._on_kind_selected,
+            fg_color=theme.AppBg,
+            button_color=theme.PanelBg,
+            button_hover_color=theme.CardHover,
+            dropdown_fg_color=theme.PanelBg,
+            font=theme.get_font(12),
+            width=420,
+        )
+        self._kind_menu.set(kind_labels[0])
+        self._kind_menu.pack(side="left", fill="x", expand=True)
+
+        self._draft_summary_label = ctk.CTkLabel(
+            panel,
+            text=self._draft.format_summary(),
+            font=theme.get_font(12),
+            text_color=theme.TextPrimary,
+            anchor="nw",
+            justify="left",
+            wraplength=560,
+        )
+        self._draft_summary_label.pack(fill="x", padx=16, pady=(4, 8))
+
+        ctk.CTkLabel(
+            panel,
+            text=DRAFT_DISCLAIMER,
+            font=theme.get_font(11),
+            text_color=theme.TextMuted,
+            anchor="nw",
+            justify="left",
+            wraplength=560,
+        ).pack(fill="x", padx=16, pady=(0, 8))
+
+        ctk.CTkButton(
+            panel,
+            text=CLEAR_DRAFT_LABEL,
+            height=32,
+            fg_color=theme.AppBg,
+            hover_color=theme.CardHover,
+            border_width=1,
+            border_color=theme.BorderSubtle,
+            command=self._clear_draft,
+        ).pack(anchor="w", padx=16, pady=(0, 12))
+
+    def _on_zone_selected(self, label: str) -> None:
+        field_id = self._zone_map.get(label)
+        if field_id:
+            self._draft.set_zone(field_id)
+            self._refresh_draft_summary()
+
+    def _on_kind_selected(self, label: str) -> None:
+        kind = self._kind_map.get(label)
+        if kind is not None:
+            self._draft.set_kind(kind)
+            self._refresh_draft_summary()
+
+    def _clear_draft(self) -> None:
+        self._draft.clear()
+        self._refresh_draft_summary(notify=False)
+        if callable(self._on_status):
+            self._on_status("Draft wyczyszczony — niezapisany")
+
+    def _refresh_draft_summary(self, *, notify: bool = True) -> None:
+        if self._draft_summary_label is not None:
+            self._draft_summary_label.configure(text=self._draft.format_summary())
+        if notify and callable(self._on_status):
+            self._on_status(_DRAFT_STATUS_MSG)
+
     def on_hide(self) -> None:
-        pass
+        self._draft.clear()

@@ -65,8 +65,8 @@ Strefy `section_background` (z rejestru):
 |------|-------|--------|-------|------------|
 | **F5.0** | Docs / UX contract | Ten dokument + linki w docs | brak | done |
 | **F5.1** | Read-only asset shell | Sekcja „Biblioteka / Assety”; typy obraz/wideo/kolaż | brak | done |
-| **F5.1b** | Bounded asset list | Przypisania z aktywnego `index.json` — obraz/wideo/brak per strefa | brak | **implementacja — raport** |
-| **F5.2** | Local draft selection | Wybór strefy + typu w UI; stan tylko w pamięci panelu | brak persist | osobna |
+| **F5.1b** | Bounded asset list | Przypisania z aktywnego `index.json` — obraz/wideo/brak per strefa | brak | done |
+| **F5.2** | Local draft selection | Wybór strefy + typu w UI; stan tylko w pamięci panelu | brak persist | **implementacja — raport** |
 | **F5.3** | Preview-only apply | Podgląd wybranego assetu bez mutacji JSON | brak | osobna |
 | **F5.4** | Controlled save | Zapis przez istniejący API komponentu / handoff z payload | tak | **osobna decyzja** |
 | **F5.5** | Shopify / sync / deploy | Upload, CDN, deploy motywu, polling | tak, sieć | **osobna decyzja produktowa** |
@@ -183,6 +183,21 @@ Pliki F5.1:
 | Wersja | **1.29.1** |
 
 Manual smoke F5.1b: patrz [`studio-preview.md`](studio-preview.md).
+
+---
+
+## 11. F5.2 — Local draft selection (zrealizowane w kodzie)
+
+| Aspekt | Szczegóły |
+|--------|-----------|
+| Moduł | `background_draft_state.py` — pure in-memory draft |
+| UI | sekcja **Draft wyboru** — tylko `stronaglowna`, po „Biblioteka / Assety” |
+| Interakcja | wybór strefy + typ (obraz/wideo/kolaż) · **Wyczyść draft** |
+| Persist | **brak** — `on_hide()` czyści draft lokalnie w panelu |
+| Zakazy | brak Zapisz, upload, file picker, preview apply |
+| Wersja | **1.29.2** |
+
+Manual smoke F5.2: patrz [`studio-preview.md`](studio-preview.md).
 
 ---
 

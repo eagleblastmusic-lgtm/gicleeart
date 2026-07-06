@@ -1,4 +1,4 @@
-# GicleeApp Studio Preview (F5.1b)
+# GicleeApp Studio Preview (F5.2)
 
 Hub: [`README.md`](README.md) · plan: [`../../docs/UI_REDESIGN_PLAN.md`](../../docs/UI_REDESIGN_PLAN.md) · tło: [`background-parity.md`](background-parity.md) · F5: [`background-builder.md`](background-builder.md)
 
@@ -108,30 +108,36 @@ Kontrakt i roadmapa: [`background-builder.md`](background-builder.md).
 |------|------|------|
 | F5.0 | done (docs) | UX contract — [`background-builder.md`](background-builder.md) |
 | F5.1 | done | Read-only shell „Biblioteka / Assety” |
-| F5.1b | **current** | Bounded lista przypisań z aktywnego wariantu |
-| F5.2–F5.3 | planned | Draft + preview-only — bez zapisu |
+| F5.1b | done | Bounded lista przypisań z aktywnego wariantu |
+| F5.2 | **current** | Lokalny draft wyboru strefy + typu (in-memory) |
+| F5.3 | planned | Preview-only apply — bez zapisu |
 | F5.4–F5.5 | planned | Save / Shopify — **osobna akceptacja** |
 
-F5.1b czyta tylko manifest + aktywny index — **bez** preview hint, globów, uploadu ani zapisu.
+F5.2 draft jest tylko w pamięci UI — **bez** zapisu, preview, file pickera ani uploadu.
 
 ---
 
-## F5.1b — Bounded read-only asset list
+## F5.2 — Local draft selection
 
 | Element | Stan |
 |---------|------|
-| `background_state.py` | shared read: `stronaglowna_zone_statuses`, `section_bg_status` |
-| `background_asset_shell.py` | `asset_library_rows(folder, package_path)` — przypisania per strefa |
-| UI | aktywny wariant + 5 stref: obraz/wideo/brak |
-| Preview hint | **pominięty** (bez resolve ścieżek motywu) |
-| Upload / zapis / Shopify | **brak** |
+| `background_draft_state.py` | pure draft: strefa + typ, `format_summary()`, `clear()` |
+| `background_panel.py` | sekcja **Draft wyboru** po „Biblioteka / Assety” |
+| Interakcja | OptionMenu strefa/typ · **Wyczyść draft** |
+| Persist | **brak** — `on_hide()` czyści draft w panelu |
+| `tldobio` | brak sekcji draft |
+| Zapis / preview / upload | **brak** |
 
-Manual smoke F5.1b:
+Manual smoke F5.2:
 
-1. Hub → **Tło** → **Strona główna** → **Biblioteka / Assety** z aktywnym wariantem i 5 strefami
-2. Brak URL-i / shopify:// / ścieżek plików
-3. **Aktualny stan** bez regresji · handoff inline OK · Tło do Bio bez biblioteki
-4. Brak zmian w `Komponenty/stronaglowna/data/*`
+1. Hub → **Tło** → **Strona główna**
+2. **Biblioteka / Assety** bez regresji (F5.1b)
+3. **Draft wyboru** — badge „niezapisany”, wybór strefy/typu zmienia tylko copy draftu
+4. **Wyczyść draft** → „Brak draftu…”
+5. **Aktualny stan** nie zmienia się po manipulacji draftem
+6. Brak Zapisz / Upload / file picker
+7. **Tło do Bio** — brak draftu
+8. Brak zmian w `Komponenty/stronaglowna/data/*`
 
 ---
 
@@ -227,5 +233,6 @@ Checklista ręczna w Studio Preview — nie w CI.
 | `studio/background_state.py` | read-only summary lokalnego stanu tła (F4.3b) |
 | `studio/background_asset_types.py` | typy assetów shell (F5.1) |
 | `studio/background_asset_shell.py` | read-only shell biblioteki (F5.1) |
+| `studio/background_draft_state.py` | lokalny draft wyboru (F5.2) |
 | `ui/background_panel.py` | read-only panel shell tła (F4.2) |
 | `Komponenty/_shared/tkdnd_safe.py` | safe DnD w embed Studio (F4.1.1) |

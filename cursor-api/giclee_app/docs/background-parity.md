@@ -182,4 +182,13 @@ Kontrakt UX: [`background-builder.md`](background-builder.md).
 | Shell | `background_asset_shell.py` — przypisania z aktywnego wariantu |
 | Per strefa | obraz / wideo / brak — bez URL-i, bez preview hint |
 | `tldobio` | brak biblioteki |
-| Poza zakresem | preview lokalny, F5.2+, zapis, Shopify |
+| Poza zakresem | preview lokalny, F5.3+, zapis, Shopify |
+
+## F5.2 — Local draft selection (zrealizowane)
+
+| Aspekt | Szczegóły |
+|--------|-----------|
+| Moduł | `background_draft_state.py` |
+| UI | sekcja **Draft wyboru** — strefa + typ, tylko in-memory |
+| `tldobio` | brak draft UI |
+| Poza zakresem | preview (F5.3), zapis (F5.4), file picker, upload |

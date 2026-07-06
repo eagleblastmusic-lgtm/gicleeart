@@ -8,6 +8,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from giclee_app.studio.background_capabilities import capability_for, tier_display
+from giclee_app.studio.background_draft_state import (
+    CLEAR_DRAFT_LABEL,
+    DRAFT_SECTION_TITLE,
+    draft_enabled_for_folder,
+)
 from giclee_app.ui.background_panel import (
     _HANDOFF_BUTTON_LABEL,
     panel_rows,
@@ -98,12 +103,41 @@ def test_escape_back_handles_background_before_inline() -> None:
     assert "_return_from_background_panel()" in escape_block
 
 
+def test_panel_rows_stronaglowna_no_draft_in_readonly_rows(tmp_path: Path) -> None:
+    cap = capability_for("stronaglowna")
+    assert cap is not None
+    rows = dict(
+        panel_rows(
+            cap,
+            component_name="Strona główna",
+            folder_name="stronaglowna",
+            package_path=tmp_path,
+        )
+    )
+    assert DRAFT_SECTION_TITLE not in rows
+    assert "Draft lokalny" not in "\n".join(rows.values())
+
+
+def test_draft_section_only_for_stronaglowna_in_panel_source() -> None:
+    path = Path(__file__).resolve().parents[1] / "giclee_app" / "ui" / "background_panel.py"
+    text = path.read_text(encoding="utf-8")
+    assert "DRAFT_SECTION_TITLE" in text
+    assert "_render_draft_section" in text
+    assert "draft_enabled_for_folder" in text
+    assert draft_enabled_for_folder("stronaglowna")
+    assert not draft_enabled_for_folder("tldobio")
+
+
 def test_background_panel_has_handoff_callback_and_button() -> None:
     path = Path(__file__).resolve().parents[1] / "giclee_app" / "ui" / "background_panel.py"
     text = path.read_text(encoding="utf-8")
     assert "on_open_inline" in text
     assert _HANDOFF_BUTTON_LABEL in text
     assert 'self._comp.mode == "inline"' in text
+    assert "CLEAR_DRAFT_LABEL" in text
+    assert "DRAFT_DISCLAIMER" in text
+    assert "Zapisz" not in text.split("def _build_shell")[1].split("def _render_readonly_section")[0]
+    assert "Upload" not in text
 
 
 def test_handoff_uses_show_inline_component_and_destroy_background() -> None:

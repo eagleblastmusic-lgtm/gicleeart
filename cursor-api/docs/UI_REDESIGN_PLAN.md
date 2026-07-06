@@ -1,6 +1,6 @@
 # GicleeApp UI Redesign Plan
 
-**Status:** Faza 5.1b — Bounded read-only asset list.
+**Status:** Faza 5.2 — Local draft selection.
 
 ## Goal
 
@@ -71,8 +71,8 @@ Not in **`eagleblastmusic-lgtm/gicleeart-gpt`** (theme snapshot only).
 | F4.3b | Read-only current background state summary | done |
 | F5.0 | Background Builder UX contract / audit (docs-only) | done |
 | F5.1 | Read-only asset browser shell (`stronaglowna`) | done |
-| F5.1b | Bounded read-only asset list from active index | **current** |
-| F5.2 | Local draft selection (in-memory) | planned |
+| F5.1b | Bounded read-only asset list from active index | done |
+| F5.2 | Local draft selection (in-memory) | **current** |
 | F5.3 | Preview-only apply | planned |
 | F5.4 | Controlled save via existing component API | planned — osobna akceptacja |
 | F5.5 | Shopify / sync / deploy | planned — osobna decyzja |
