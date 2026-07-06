@@ -411,10 +411,10 @@ def test_build_starter_knowledge_zip_from_md_files(tmp_path, monkeypatch) -> Non
     data_dir = tmp_path / "data"
     monkeypatch.setattr(zk, "GPT_STARTER_DIR", starter)
     monkeypatch.setattr(zk, "DATA_DIR", data_dir)
-    monkeypatch.setattr(zk, "CLEAN_PACK_V35_ACTIVE_FILES", manifest)
+    monkeypatch.setattr(zk, "CLEAN_PACK_V37_ACTIVE_FILES", manifest)
 
     zip_path = zk.build_starter_knowledge_zip()
-    assert zip_path.name == "giclee_cursor_architect_knowledge.zip"
+    assert zip_path.name == "giclee_cursor_architect_knowledge_v37.zip"
     assert zip_path.is_file()
     assert data_dir.joinpath("gpt_knowledge.zip").is_file()
 
@@ -434,3 +434,16 @@ def test_read_start_message(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(zk, "GPT_STARTER_DIR", starter)
 
     assert zk.read_start_message() == "Cześć GPT"
+
+
+def test_write_start_message(tmp_path, monkeypatch) -> None:
+    from Komponenty.integracjagpt import zip_knowledge as zk
+
+    starter = tmp_path / "Pliki startowe dla GPT"
+    starter.mkdir()
+    monkeypatch.setattr(zk, "GPT_STARTER_DIR", starter)
+
+    path = zk.write_start_message("  Nowa wiadomość\n\n")
+    assert path.name == "Wiadomość początkowa.txt"
+    assert zk.read_start_message() == "Nowa wiadomość\n\n".strip()
+    assert zk.read_start_message_draft() == "Nowa wiadomość\n\n".strip()

@@ -25,11 +25,14 @@ from .zip_knowledge import (
     build_starter_knowledge_zip,
     copy_knowledge_zip_to_clipboard,
     copy_zip_path_to_clipboard,
+    gpt_starter_files_dir,
     import_knowledge_zip,
     knowledge_zip_path,
     list_starter_markdown_files,
     read_compact_instructions,
     read_start_message,
+    read_start_message_draft,
+    write_start_message,
 )
 
 APP_TITLE = "Integracja z GPT"
@@ -464,14 +467,14 @@ class IntegracjaGptApp:
     def _open_conversation_window(self) -> None:
         dlg = tk.Toplevel(self.root)
         dlg.title("Okno rozmowy — ChatGPT + ZIP")
-        position_toplevel_screen_center(dlg, 520, 240)
+        position_toplevel_screen_center(dlg, 560, 280)
         dlg.transient(self.root)
 
         ttk.Label(
             dlg,
             text=(
                 "Przygotuj rozmowę w ChatGPT (nowe okno + załącznik ZIP):\n"
-                "1. «Skopiuj .zip» — archiwum wiedzy CLEAN_PACK v35 ze schowka plików\n"
+                "1. «Skopiuj .zip» — archiwum wiedzy CLEAN_PACK v37 ze schowka plików\n"
                 "2. Wklej ZIP w ChatGPT\n"
                 "3. «Skopiuj Wiadomość początkową» — tekst startowy do wklejenia obok ZIP-a"
             ),
@@ -504,7 +507,59 @@ class IntegracjaGptApp:
         ttk.Button(btn_row, text="Skopiuj .zip", command=lambda: self._conversation_copy_zip(dlg)).pack(
             side="left"
         )
+        ttk.Button(
+            btn_row,
+            text="Zmień wiadomość początkową",
+            command=lambda: self._open_edit_start_message_window(dlg),
+        ).pack(side="left", padx=(8, 0))
         ttk.Button(btn_row, text="Zamknij", command=dlg.destroy).pack(side="right")
+
+    def _open_edit_start_message_window(self, parent: tk.Misc) -> None:
+        dlg = tk.Toplevel(parent)
+        dlg.title("Zmień Wiadomość początkową")
+        position_toplevel_screen_center(dlg, 720, 560)
+        dlg.transient(parent)
+        dlg.grab_set()
+
+        try:
+            starter_dir = gpt_starter_files_dir()
+            initial_text = read_start_message_draft()
+        except OSError as exc:
+            messagebox.showerror(APP_TITLE, str(exc), parent=dlg)
+            dlg.destroy()
+            return
+
+        ttk.Label(
+            dlg,
+            text=(
+                f"Edytuj treść pliku «Wiadomość początkowa.txt».\n"
+                f"Folder: {starter_dir}"
+            ),
+            padding=(12, 12, 12, 8),
+            wraplength=660,
+            justify="left",
+        ).pack(anchor="w")
+
+        editor = scrolledtext.ScrolledText(dlg, height=24, wrap="word", font=("Consolas", 10))
+        editor.pack(fill="both", expand=True, padx=12, pady=(0, 8))
+        if initial_text:
+            editor.insert("1.0", initial_text)
+        editor.focus_set()
+
+        btn_row = ttk.Frame(dlg, padding=(12, 4, 12, 12))
+        btn_row.pack(fill="x")
+
+        def save_message() -> None:
+            try:
+                write_start_message(editor.get("1.0", "end-1c"))
+            except (OSError, ValueError) as exc:
+                messagebox.showerror(APP_TITLE, str(exc), parent=dlg)
+                return
+            show_toast(dlg, "Zapisano Wiadomość początkową.txt")
+            dlg.destroy()
+
+        ttk.Button(btn_row, text="Zapisz", command=save_message).pack(side="left")
+        ttk.Button(btn_row, text="Anuluj", command=dlg.destroy).pack(side="right")
 
     def _conversation_copy_zip(self, parent: tk.Misc) -> None:
         try:
@@ -555,7 +610,7 @@ class IntegracjaGptApp:
     def _load_knowledge_zip(self) -> None:
         path = filedialog.askopenfilename(
             parent=self.root,
-            title="Wybierz ZIP wiedzy (CLEAN_PACK v35)",
+            title="Wybierz ZIP wiedzy (CLEAN_PACK v37)",
             filetypes=[("Archiwum ZIP", "*.zip"), ("Wszystkie pliki", "*.*")],
         )
         if not path:

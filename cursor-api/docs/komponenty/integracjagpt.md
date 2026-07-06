@@ -119,7 +119,9 @@ Wymaga: `npm install`, `npx playwright install chromium`, theme dev (localhost) 
 
 **Hasło password page:** sklep za hasłem wymaga `--store-password` dla CLI. W GUI **Integracja z GPT** → pole **Hasło sklepu** → Zapisz (plik `.shopify-store-password.local`, gitignore).
 
-**ZIP wiedzy + rozmowa z GPT:** **Okno rozmowy** → **Skopiuj .zip** buduje `giclee_cursor_architect_knowledge.zip` z **19 aktywnych plików** manifestu `CLEAN_PACK v36` w `{THEME_ROOT}/Pliki startowe dla GPT/` (archiwalne `.md` na dysku są pomijane), kopiuje ZIP do schowka Windows, potem **Skopiuj Wiadomość początkową** (`Wiadomość początkowa.txt`). **Zmień wiadomość początkową** otwiera edytor i zapisuje `Wiadomość początkowa.txt` w tym samym folderze. Alternatywnie: **Załaduj zip do rozmowy** → kopia w `data/gpt_knowledge.zip`. Po **Pełnym cyklu** ZIP trafia do schowka; aktywuje się **Skopiuj prompt rozpoczęcia rozmowy**.
+**ZIP wiedzy + rozmowa z GPT:** **Okno rozmowy** → **Skopiuj .zip** buduje `giclee_cursor_architect_knowledge_v37.zip` z **19 aktywnych plików** manifestu `CLEAN_PACK v37` w `{THEME_ROOT}/Pliki startowe dla GPT/` (archiwalne `.md` na dysku są pomijane), kopiuje ZIP do schowka Windows, potem **Skopiuj Wiadomość początkową** (`Wiadomość początkowa.txt`). **Zmień wiadomość początkową** otwiera edytor i zapisuje `Wiadomość początkowa.txt` w tym samym folderze. Alternatywnie: **Załaduj zip do rozmowy** → kopia w `data/gpt_knowledge.zip`. Po **Pełnym cyklu** ZIP trafia do schowka; aktywuje się **Skopiuj prompt rozpoczęcia rozmowy**.
+
+**Źródła paczki wiedzy (kanoniczne):** `C:\Strona\pusty\Pliki startowe dla GPT` — pliki `.md` i `Wiadomość początkowa.txt` w tym folderze są źródłem prawdy. **Wygenerowany ZIP** (`giclee_cursor_architect_knowledge_v37.zip`) to output generatora; edytuj źródła, potem przebuduj ZIP z GUI (Integracja z GPT), nie ręcznie archiwum ZIP.
 
 ## Konfiguracja
 
