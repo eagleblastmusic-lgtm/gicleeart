@@ -22,6 +22,7 @@ _STUDIO_ROOT = Path(__file__).resolve().parents[1] / "giclee_app" / "studio"
 def test_inventory_reads_active_variant() -> None:
     report = build_gicleeframe_page_inventory(find_components_dir())
     assert report.variant_id
+    assert report.live_variant_id == report.variant_id
     assert report.page_path is not None
     assert report.page_path.name == "page.giclee-frame.json"
 

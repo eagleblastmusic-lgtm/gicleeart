@@ -27,7 +27,7 @@ Strategia nie rozpoczyna implementacji komponentów. Plan Katalogu: [`katalog-re
 |-----------|--------|---------|-------|
 | Katalog | `katalog` | rebuild | Parent workflow; zawiera Tło do Bio |
 | Własna fotografia | `wlasnafotografia` | rebuild | Nowy workflow od zera |
-| Giclee Frame | `gicleeframe` | rebuild | Nowy workflow od zera |
+| Giclee Frame | `gicleeframe` | rebuild | **F2.1 ready** — referencja [`Studio Page Component Editor Pattern`](gicleeframe-planning.md#7-f21-jako-wzorzec-dla-przyszłych-edytorów-strony) |
 | Współpraca | `wspolpraca` | rebuild | Nowy workflow od zera |
 | Filozofia marki | `filozofiamarki` | rebuild | Nowy workflow od zera |
 | Kontakt | `kontakt` | rebuild | Nowy workflow od zera |

@@ -8,6 +8,11 @@ from dataclasses import dataclass, field
 from html import unescape
 from pathlib import Path
 
+from giclee_app.studio.gicleeframe_page_settings import (
+    PageSettingField,
+    page_settings_from_section,
+)
+
 GICLEEFRAME_FOLDER = "gicleeframe"
 MANIFEST_REL = "data/variants/manifest.json"
 REGISTRY_REL = "registry.py"
@@ -66,16 +71,25 @@ class PageElement:
     editable: bool
     source: str
     status: str
+    page_settings: tuple[PageSettingField, ...] = ()
+    page_fields: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True)
 class PageInventoryReport:
     components_root: Path
     variant_id: str | None
+    live_variant_id: str | None
     page_path: Path | None
     source_section_count: int
     elements: tuple[PageElement, ...]
     warnings: tuple[str, ...] = field(default_factory=lambda: (INVENTORY_READ_NOTE,))
+
+
+def _page_settings_and_fields(section: dict) -> tuple[tuple[PageSettingField, ...], tuple[tuple[str, str], ...]]:
+    page_settings = page_settings_from_section(section)
+    page_fields = tuple((field.label, field.value) for field in page_settings)
+    return page_settings, page_fields
 
 
 def _strip_shopify_json_header(raw: str) -> str:
@@ -97,19 +111,44 @@ def _load_json_dict(path: Path) -> dict | None:
     return data if isinstance(data, dict) else None
 
 
-def _read_manifest_active(manifest_path: Path) -> tuple[str | None, tuple[str, ...]]:
+def _read_manifest_env(
+    manifest_path: Path,
+) -> tuple[str | None, str | None, tuple[str, ...]]:
     data = _load_json_dict(manifest_path)
     if not data:
-        return None, ()
+        return None, None, ()
     active = data.get("active")
     active_id = str(active).strip() if active else None
+    live_raw = data.get("live")
+    live_id = str(live_raw).strip() if live_raw else active_id
     variants_raw = data.get("variants")
     ids: list[str] = []
     if isinstance(variants_raw, list):
         for row in variants_raw:
             if isinstance(row, dict) and row.get("id"):
                 ids.append(str(row["id"]).strip())
-    return active_id, tuple(ids)
+    return active_id, live_id, tuple(ids)
+
+
+def variant_environment_tag(
+    variant_id: str | None,
+    *,
+    active_id: str | None,
+    live_id: str | None,
+) -> str:
+    """dev = aktywny wariant w lokalnym workspace; live = wariant na produkcji."""
+    if not variant_id:
+        return "dev"
+    if active_id and variant_id == active_id:
+        return "dev"
+    if live_id and variant_id == live_id:
+        return "live"
+    return "dev"
+
+
+def _read_manifest_active(manifest_path: Path) -> tuple[str | None, tuple[str, ...]]:
+    active_id, _live_id, variant_ids = _read_manifest_env(manifest_path)
+    return active_id, variant_ids
 
 
 def _registry_labels(registry_path: Path) -> dict[str, str]:
@@ -181,6 +220,7 @@ def _extract_media_children(
 ) -> list[PageElement]:
     elements: list[PageElement] = []
     sec_name = str(section.get("name") or section_label)
+    section_page_settings, section_page_fields = _page_settings_and_fields(section)
 
     elements.append(
         PageElement(
@@ -198,6 +238,8 @@ def _extract_media_children(
             editable=True,
             source="variant_json",
             status="ok",
+            page_settings=section_page_settings,
+            page_fields=section_page_fields,
         )
     )
 
@@ -307,6 +349,7 @@ def _parse_page_inventory(
         narrative = _narrative_group(key, label, section_type)
 
         if section_type == "divider":
+            divider_settings, divider_fields = _page_settings_and_fields(section)
             elements.append(
                 PageElement(
                     element_id=f"{key}::divider",
@@ -323,6 +366,8 @@ def _parse_page_inventory(
                     editable=True,
                     source="variant_json",
                     status="ok",
+                    page_settings=divider_settings,
+                    page_fields=divider_fields,
                 )
             )
             element_order += 1
@@ -393,7 +438,7 @@ def build_gicleeframe_page_inventory(components_root: Path) -> PageInventoryRepo
     warnings: list[str] = [INVENTORY_READ_NOTE]
 
     manifest_path = gf_root / MANIFEST_REL
-    active_id, variant_ids = _read_manifest_active(manifest_path)
+    active_id, live_id, variant_ids = _read_manifest_env(manifest_path)
     variant_id = active_id or (variant_ids[0] if variant_ids else None)
 
     page_path: Path | None = None
@@ -420,6 +465,7 @@ def build_gicleeframe_page_inventory(components_root: Path) -> PageInventoryRepo
     return PageInventoryReport(
         components_root=root,
         variant_id=variant_id,
+        live_variant_id=live_id,
         page_path=page_path,
         source_section_count=source_section_count,
         elements=elements,

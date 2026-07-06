@@ -2,7 +2,7 @@
 
 Hub: [`admin-components-strategy.md`](admin-components-strategy.md) · [`studio-v2-workflows.md`](studio-v2-workflows.md) · [`studio-save-pattern.md`](studio-save-pattern.md) · legacy: [`../../docs/komponenty/gicleeframe.md`](../../docs/komponenty/gicleeframe.md)
 
-**Stan:** app planning component **ready** @ Studio v1.40.0 · page structure inventory **ready (F2)** · Shopify implementation **not started** · writer/save **blocked**
+**Stan:** app planning component **ready** @ Studio v1.40.1 · page editor workflow **ready (F2.1)** · Shopify implementation **not started** · writer/save **blocked**
 
 ---
 
@@ -11,6 +11,8 @@ Hub: [`admin-components-strategy.md`](admin-components-strategy.md) · [`studio-
 Panel planistyczno-preview dla premium komponentu strony **GICLÉE FRAME™** — znak technologii ramy / podpis systemu / premium label / section label / hero label.
 
 **F2:** uporządkowana mapa całej strony `/pages/giclee-frame` — sekcje, separatory, grafiki, teksty, kolejność, statusy — z edycją RAM (bez zapisu).
+
+**F2.1:** workflow edytora strony — top bar (wariant/draft), trigger sekcji w edytorze, edytor typu-aware, jawny przycisk „Uaktualnij RAM draft”, dry-run i readiness pod spodem.
 
 Nie zastępuje legacy writera (`Komponenty/gicleeframe` → `theme_page_editor`). W Studio karta `gicleeframe` otwiera **wyłącznie** ten planning shell.
 
@@ -42,8 +44,9 @@ Disclaimer F2: **„Zmiany są tylko lokalnym draftem w pamięci — nic nie zap
 | `studio/gicleeframe_readiness.py` | Status gotowości marki + strony, `save_ready` zawsze False |
 | `studio/gicleeframe_page_inventory.py` | **F2** — read-only inventory strony (rozwinięcie media → elementy) |
 | `studio/gicleeframe_page_draft.py` | **F2** — RAM patchy elementów strony |
+| `studio/gicleeframe_page_settings.py` | **F2.1** — specyfikacja pól `settings` sekcji (divider / media) |
 | `studio/gicleeframe_page_dry_run.py` | **F2** — dry-run struktury + guardrails |
-| `ui/gicleeframe_view.py` | Widok CTk: **F2 struktura strony** + F1 komponent marki |
+| `ui/gicleeframe_view.py` | Widok CTk: **F2.1 edytor strony** (top bar / trigger / edytor) + F1 komponent marki |
 | `launcher_studio.py` | Routing: `gicleeframe` → `GicleeFrameView` |
 
 ---
@@ -60,19 +63,23 @@ Disclaimer F2: **„Zmiany są tylko lokalnym draftem w pamięci — nic nie zap
 
 ## 5. Wejście użytkownika
 
-### F2 — Struktura strony (priorytet)
+### F2.1 — Edytor strony (priorytet)
 
 1. Studio → **Strona / Motyw** → karta **Giclée Frame**
-2. Sekcja **„Struktura strony GICLÉE FRAME™”** — inventory z wariantu `gf1` (aktywny w manifest)
-3. **Odśwież inventory** — ponowny bounded read (draft RAM zachowany)
-4. Klik elementu → panel edycji RAM (tytuł, tekst, alt, notatka, status, widoczność, kolejność)
-5. **Uaktualnij RAM draft** — patch w pamięci
-6. **Sprawdź strukturę (dry-run)** — liczniki, needs_review, shape writera F3 (informacyjnie)
-7. **Wyczyść wybór** — reset draftu strony w RAM
+2. **Górny pasek:** wariant źródłowy (`gf1`), plik `page.giclee-frame.json`, **wariant roboczy RAM** (`Wariant 1`, `Wariant 2`, …), licznik zmian w aktywnym wariancie, status `RAM-only · nic nie zapisano`
+3. **Wybór sekcji** — trigger w nagłówku edytora (`Separator 1 ▾`) + popup z rytmem strony; po rozwinięciu edycji dzieci sekcji media: Nagłówek, Tekst, Grafika
+4. **Edytor sekcji** (prawa kolumna) — formularz zależny od typu; patch **tylko** po „Uaktualnij RAM draft”
+5. Akcje RAM wariantów: **Dodaj wariant RAM**, **Duplikuj aktualny wariant**, **Zmień nazwę wariantu**, **Wyczyść wariant RAM**, **Odśwież inventory**
+6. **Sprawdź strukturę (dry-run)** — wariant źródłowy + aktywny wariant roboczy, zmienione elementy, „nic nie zapisano”; porównanie wariantów = przełączanie i ocena podglądu (bez diffu w aplikacji)
+7. Readiness strony pod edytorem
 
-Licznik `order[]` (np. 18 sekcji źródłowych) ≠ liczba elementów po rozwinięciu media (np. 42).
+F2.1 **nie zapisuje** do plików. Warianty robocze i patche są wyłącznie w RAM. Domyślnie `Wariant 1`; można dodać/duplikować/przełączać warianty bez zapisu do `Komponenty/*`.
 
-### F1 — Komponent marki (poniżej)
+### F2 — Inventory (pod spodem logiki F2.1)
+
+Bounded read z wariantu aktywnego w manifest. Licznik `order[]` ≠ liczba elementów po rozwinięciu media.
+
+### F1 — Komponent marki (poniżej, zwinięty domyślnie)
 
 1. Wybór wariantu koncepcyjnego + opcjonalna strefa
 2. **Sprawdź plan (dry-run)** + readiness marki
@@ -80,12 +87,52 @@ Licznik `order[]` (np. 18 sekcji źródłowych) ≠ liczba elementów po rozwini
 
 ---
 
-## 6. Backlog (nie w tej fazie)
+## 6. F2.1 — editor workflow polish
+
+| Element | Szczegół |
+|---------|----------|
+| Układ | Top bar / trigger sekcji w nagłówku edytora / edytor typu-aware |
+| RAM draft | Jeden lub wiele wariantów roboczych w pamięci; patche per wariant; przełączanie bez diffu |
+| Zablokowane | Zapis do plików, writer, synchronizacja/wdrożenie, mutacja `Komponenty/*` |
+| F3 | Lokalny zapis draftu do pliku — po akceptacji |
+| F4 | Bounded writer do `page.giclee-frame.json` — po akceptacji |
+
+---
+
+## 7. F2.1 jako wzorzec dla przyszłych edytorów strony
+
+**Decyzja produktowa (Studio v1.40.1):** workflow F2.1 GICLÉE FRAME™ ustanawia docelowy wzorzec **`Studio Page Component Editor Pattern`** dla wszystkich komponentów GicleeApp Studio związanych z budowaniem i projektowaniem strony (Kontakt, FAQ, Filozofia marki, Blog, …).
+
+**Nie migrujemy innych modułów w tej fazie** — Strona główna, Katalog, tło i pozostałe komponenty pozostają bez zmian do osobnej akceptacji.
+
+Hub strategii: [`admin-components-strategy.md`](admin-components-strategy.md) · wzorzec zapisany tutaj jako referencja implementacyjna Giclée Frame.
+
+### Studio Page Component Editor Pattern
+
+| # | Element | Zasada |
+|---|---------|--------|
+| 1 | **Wariant źródłowy (read-only)** | Aktywny wariant JSON / inventory z manifestu — zero mutacji źródła na etapie planowania |
+| 2 | **Warianty robocze RAM** | `Wariant 1`, `Wariant 2`, … — dodawanie (przycisk), duplikacja, zmiana nazwy; izolowane patche per wariant; porównanie = przełączanie wariantu + podgląd (bez diffu w UI) |
+| 3 | **Wybór sekcji / struktury** | Trigger lub lista; rytm strony od góry do dołu; separatory jako elementy; sekcje nadrzędne; tekst / grafika / nagłówek / settings jako części sekcji |
+| 4 | **Edytor typu-aware** | Osobne pola dla separatora, sekcji media, tekstu, grafiki, tła/settings — widoczność pól zależna od typu elementu |
+| 5 | **Settings jako RAM patch** | Ustawienia z JSON jako inventory; zmiany tylko do RAM (`patch.settings`); brak zapisu do pliku |
+| 6 | **Reorder jako RAM patch** | Drag/drop zmienia tylko `order` w RAM; brak zapisu do JSON |
+| 7 | **Dry-run** | Aktywny wariant roboczy, liczba zmian, podgląd tego co zmieniłby writer; komunikat: nic nie zapisano |
+| 8 | **Readiness** | RAM editor ready · local draft persistence `not_started` · writer blocked · sync/deploy blocked · runtime mutation blocked |
+| 9 | **Guardrails** | Brak Save/Zapisz/Zastosuj na etapie RAM; brak Shopify/sync/deploy; brak mutacji `Komponenty/*`; legacy writery poza Studio lub ukryte do przebudowy |
+| 10 | **Późniejsze fazy** | **F3** lokalny zapis draftu · **F4** bounded writer + backup/undo · **F5** preview/review jakości · **F5.5** Shopify/sync/deploy po osobnej akceptacji |
+
+Implementacja referencyjna: ten moduł (`gicleeframe_page_*`, `gicleeframe_view.py`). Kolejne komponenty strony powinny **adaptować ten schemat**, nie kopiować ad hoc UI z legacy writerów.
+
+---
+
+## 8. Backlog (nie w tej fazie)
 
 | Faza | Zakres |
 |------|--------|
 | **F2b** | Scale / motion / contrast / implementation spec — odłożone |
-| **F3** | Bounded writer do `data/variants/{variant}/page.giclee-frame.json` |
-| **F5.5** | Sync/deploy — osobna akceptacja produktowa |
+| **F3** | Lokalny zapis draftu RAM |
+| **F4** | Bounded writer do `data/variants/{variant}/page.giclee-frame.json` |
+| **F5.5** | Synchronizacja/wdrożenie — osobna akceptacja produktowa |
 
-**Gotowe do kolejnej fazy: po akceptacji F2.**
+**Gotowe do kolejnej fazy: po akceptacji F2.1.**

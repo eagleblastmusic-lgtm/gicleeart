@@ -88,6 +88,19 @@ def test_page_readiness_rows_include_writer_blocks() -> None:
     labels = {r.label for r in rows}
     assert "Shopify writer" in labels
     assert "Save/Zapisz/Zastosuj" in labels
+    assert "Editor workflow" in labels
+    assert "Section selection" in labels
+    assert "Local draft persistence" in labels
+
+
+def test_page_readiness_editor_workflow_ready() -> None:
+    inv = build_gicleeframe_page_inventory(find_components_dir())
+    dry = build_page_structure_dry_run(inv, GicleeFramePageDraft())
+    ready = evaluate_gicleeframe_page_readiness(inv, dry)
+    assert ready.editor_workflow_ready is True
+    assert ready.ram_draft_ready is True
+    assert ready.section_selection_ready is True
+    assert ready.local_draft_persistence_status == "not_started"
 
 
 def test_page_readiness_save_blocked_with_inventory() -> None:

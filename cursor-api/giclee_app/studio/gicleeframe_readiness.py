@@ -111,8 +111,11 @@ def evaluate_gicleeframe_readiness(
 @dataclass(frozen=True)
 class GicleeFramePageReadiness:
     page_inventory_ready: bool
+    editor_workflow_ready: bool
     ram_draft_ready: bool
+    section_selection_ready: bool
     structure_dry_run_ready: bool
+    local_draft_persistence_status: Literal["not_started"]
     shopify_writer_status: Literal["blocked"]
     save_apply_status: Literal["blocked"]
     sync_deploy_status: Literal["blocked"]
@@ -122,7 +125,7 @@ class GicleeFramePageReadiness:
     summary: str
 
 
-F2_READINESS_NOTE = "F3: bounded writer do variant JSON — po osobnej akceptacji."
+F2_READINESS_NOTE = "F3: lokalny zapis draftu · F4: bounded writer — po osobnej akceptacji."
 
 
 def readiness_page_display_rows(
@@ -136,18 +139,33 @@ def readiness_page_display_rows(
             True if r and r.page_inventory_ready else None,
         ),
         ReadinessRow(
+            "Editor workflow",
+            "ready" if r and r.editor_workflow_ready else "—",
+            True if r and r.editor_workflow_ready else None,
+        ),
+        ReadinessRow(
             "RAM draft editing",
-            "ready",
-            True,
+            "ready" if r and r.ram_draft_ready else "—",
+            True if r and r.ram_draft_ready else None,
+        ),
+        ReadinessRow(
+            "Section selection",
+            "ready" if r and r.section_selection_ready else "—",
+            True if r and r.section_selection_ready else None,
         ),
         ReadinessRow(
             "Structure dry-run",
             "ready" if r and r.structure_dry_run_ready else "oczekuje",
             True if r and r.structure_dry_run_ready else False,
         ),
+        ReadinessRow(
+            "Local draft persistence",
+            "not_started",
+            False,
+        ),
         ReadinessRow("Shopify writer", "blocked", False),
         ReadinessRow("Save/Zapisz/Zastosuj", "blocked", False),
-        ReadinessRow("Sync/deploy", "blocked", False),
+        ReadinessRow("Synchronizacja/wdrożenie", "zablokowane", False),
         ReadinessRow("Runtime mutation", "blocked", False),
     ]
 
@@ -162,8 +180,11 @@ def evaluate_gicleeframe_page_readiness(
     if not inv_ready:
         return GicleeFramePageReadiness(
             page_inventory_ready=False,
+            editor_workflow_ready=False,
             ram_draft_ready=True,
+            section_selection_ready=False,
             structure_dry_run_ready=False,
+            local_draft_persistence_status="not_started",
             shopify_writer_status=WRITER_STATUS,
             save_apply_status=WRITER_STATUS,
             sync_deploy_status=SYNC_DEPLOY_STATUS,
@@ -175,8 +196,11 @@ def evaluate_gicleeframe_page_readiness(
 
     return GicleeFramePageReadiness(
         page_inventory_ready=True,
+        editor_workflow_ready=True,
         ram_draft_ready=True,
+        section_selection_ready=True,
         structure_dry_run_ready=spec_ready,
+        local_draft_persistence_status="not_started",
         shopify_writer_status=WRITER_STATUS,
         save_apply_status=WRITER_STATUS,
         sync_deploy_status=SYNC_DEPLOY_STATUS,
@@ -192,11 +216,14 @@ def format_page_readiness_block(readiness: GicleeFramePageReadiness) -> str:
         "Status gotowości (strona)",
         f"Status: {readiness.status_label}",
         f"Page inventory: {'ready' if readiness.page_inventory_ready else 'nie'}",
-        f"RAM draft editing: ready",
+        f"Editor workflow: {'ready' if readiness.editor_workflow_ready else 'nie'}",
+        f"RAM draft editing: {'ready' if readiness.ram_draft_ready else 'nie'}",
+        f"Section selection: {'ready' if readiness.section_selection_ready else 'nie'}",
         f"Structure dry-run: {'ready' if readiness.structure_dry_run_ready else 'nie'}",
+        f"Local draft persistence: {readiness.local_draft_persistence_status}",
         f"Shopify writer: {readiness.shopify_writer_status}",
         f"Save/Zapisz/Zastosuj: {readiness.save_apply_status}",
-        f"Sync/deploy: {readiness.sync_deploy_status}",
+        f"Synchronizacja/wdrożenie: zablokowane",
         f"Runtime mutation: {readiness.runtime_mutation_status}",
         readiness.summary,
         "",
