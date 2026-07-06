@@ -67,42 +67,54 @@ Nie proś o zmiany Pythona w `gicleeart-gpt`. Nie traktuj `gicleeapp` jako motyw
 
 ## Knowledge pack source location
 
-The Custom GPT knowledge ZIP is generated from local source files located at:
+Źródło prawdy Custom GPT:
 
 `C:\Strona\pusty\Pliki startowe dla GPT`
 
-Do not treat the generated ZIP as the source of truth. Update the source files/templates in this folder, then regenerate the ZIP through the GicleeApp GPT integration.
+**Cursor aktualizuje tylko pliki źródłowe** w tym folderze (`.md`, `Wiadomość początkowa.txt`).
+
+**Cursor NIE generuje ZIP-a wiedzy** — chyba że użytkownik da **osobne, wyraźne polecenie**.
+
+ZIP wiedzy (`giclee_cursor_architect_knowledge_v37.zip`) generuje **automatycznie program użytkownika** przy wysyłce paczki przez **Okno rozmowy** (Integracja z GPT). Nie traktuj ZIP jako źródła prawdy.
+
+Cursor **nie uruchamia** bez wyraźnego polecenia:
+- `build_starter_knowledge_zip()`
+- GUI Integracja z GPT → **Skopiuj .zip**
+- żadnego ręcznego generatora / przebudowy ZIP
 
 ## AKTUALNY CHECKPOINT GICLEEAPP / STUDIO
 
 Repo kanoniczne: `eagleblastmusic-lgtm/gicleeapp` (monorepo `gicleeart`, branch `master`, app w `cursor-api/`)
 
-Monorepo project checkpoint: `4760a295b501c5bc7fe8b1cd987ace411436e9cf`  
-Studio code checkpoint: `65e862be05183cac9e6ca94786802035cf77b943`  
-gicleeapp snapshot (main): `21bc3edc2bcad13aa24040f82ca3cf84e18759d5`  
-GPT starter files: **refreshed after Push GicleeApp** (nie wiąż docs z `origin/master` — używaj etykiet checkpointów powyżej)  
-Wersja aplikacji: **GicleeApp Studio v1.38.0**
+HEAD / origin/master: `4647c1b` — feat(studio): GICLÉE FRAME F2.1 editor workflow polish  
+Poprzedni checkpoint: `46fc718` — GICLÉE FRAME page inventory RAM editor (v1.40.0)  
+Wersja aplikacji: **GicleeApp Studio v1.40.1**  
+Branch: **master synced with origin/master**
 
 Zamknięte:
 - Background Builder local v1: **frozen**
 - Administracja strony rebuild strategy: **done**
-- Katalog rebuild plan: **done**
-- Katalog F1 read-only shell: **done**
-- Katalog F2 bounded data map: **done**
-- Katalog local planning layer F3+F4: **done** (draft state + dry-run + readiness + UI planu zmian)
-- Push GicleeApp hygiene: **done** (runtime poza commitem)
+- Katalog F1–F4 (planning layer): **done**
+- Push GicleeApp hygiene: **done**
+- GICLÉE FRAME™ F2 (inventory + RAM editor): **done** (v1.40.0)
+- GICLÉE FRAME™ F2.1 (page editor workflow): **done** (v1.40.1, pushed)
+  - wariant źródłowy read-only, warianty RAM, trigger sekcji, popup + drag reorder
+  - settings/reorder jako RAM patch; brak writera / zapisu JSON
+- **Studio Page Component Editor Pattern** — udokumentowany (referencja dla przyszłych edytorów strony)
 
 Nie rozpoczęte:
-- F5.5 Shopify / sync / deploy
-- Katalog writer
-- Katalog Shopify integration
-- Katalog migration
+- GICLÉE FRAME F3 (lokalny zapis draftu RAM)
+- GICLÉE FRAME F4 (bounded writer)
+- F5 / F5.5 preview / Shopify sync-deploy
+- Katalog writer / Shopify integration / migration
 
-Następna rekomendowana faza (primary): **GICLÉE FRAME™** — design strony / komponent premium.
+Następna rekomendacja (wybierz jedną ścieżkę — **żadna nie rozpoczęta**):
+- **A.** cleanup / runtime hygiene working tree
+- **B.** GICLÉE FRAME™ F3 — lokalny zapis draftów RAM do pliku
 
-Backlog techniczny (tylko po osobnej akceptacji): **Katalog bounded writer / save layer** (**zero Save**, **zero Shopify/sync/deploy**).
+Backlog techniczny (tylko po osobnej akceptacji): Katalog bounded writer (**zero Save**, **zero Shopify/sync/deploy**).
 
-Szczegóły guardrails: `CURRENT_APP_STATE.md`.
+Szczegóły guardrails: `CURRENT_APP_STATE.md`, `gicleeframe-planning.md`.
 
 ## Current operating rhythm
 
@@ -122,7 +134,9 @@ Keep separate approvals for:
 - data migrations
 - large architecture decisions
 
-Primary next focus: **GICLÉE FRAME™** — design strony / komponent premium (motyw → `gicleeart-gpt` gdy dotyczy frontu).
+Primary next focus: **hygiene working tree (A)** lub **GICLÉE FRAME F3** (B) — dopiero po osobnej decyzji; **nie startuj F3** bez polecenia.
+
+GICLÉE FRAME F2.1 = referencyjny **Studio Page Component Editor Pattern** (nie migruj innych komponentów bez akceptacji).
 
 Katalog bounded writer / save layer — tylko po osobnej akceptacji; nie startuj writer, Save, Shopify, sync ani deploy bez wyraźnej instrukcji.
 
@@ -143,12 +157,12 @@ Po haśle **„Aktualizuj pliki startowe”** zrób to:
 1. **Nie zgaduj** dużych zmian — zaproponuj wąski scope.
 2. **Wskaż pliki** do aktualizacji i **dlaczego** (np. `CURRENT_APP_STATE.md`, checkpoint block w COMPACT v37, `GICLEE_CURSOR_MASTER_INDEX_v37.md`, `GICLEE_CURSOR_ARCHITECT_CLEAN_PACK_v37.md`, `README_GICLEE_CURSOR_ARCHITECT_UPDATE_v37.md`).
 3. **Pilnuj** aktualności `CURRENT_APP_STATE.md` (wersja Studio, SHA monorepo / gicleeapp, fazy Katalog, next, guardrails).
-4. W prompcie do Cursora wymagaj: źródło prawdy = pliki `.md`; **ZIP jest tylko outputem** generatora — nie traktuj ZIP-a jako źródła prawdy.
-5. Po zmianach źródeł: przebuduj `giclee_cursor_architect_knowledge_v37.zip` przez generator projektu (`build_starter_knowledge_zip`), nie ręcznie.
+4. W prompcie do Cursora wymagaj: źródło prawdy = pliki `.md`; **ZIP jest outputem programu użytkownika** — Cursor **nie generuje ZIP-a**.
+5. **Nie proś Cursora** o `build_starter_knowledge_zip()`, GUI **Skopiuj .zip** ani ręczną regenerację ZIP — chyba że użytkownik wyraźnie każe.
 6. **Nie bumpuj** paczki v37 → v38 przy samym checkpoint refresh — zmiana nazwy/wersji paczki tylko przy realnej zmianie struktury instrukcji.
 7. W prompcie do Cursora: nie `git add -A`, nie push, nie commit bez raportu, nie dotykaj runtime dirty (`gpt_config.json`, `Komponenty/*/data/`, backupy itd.).
 
-Prompt do Cursora powinien kończyć się raportem: `git status -sb`, `git diff --stat`, lista zmienionych plików, czy przebudowano ZIP.
+Prompt do Cursora powinien kończyć się raportem: `git status -sb`, `git diff --stat`, lista zmienionych plików źródłowych. **Bez generowania ZIP.**
 
 ## GICLEEAPP STUDIO — GRANICE
 
@@ -171,6 +185,7 @@ Nie ruszać bez osobnego polecenia:
 - sync/deploy/publisher/polling
 
 Katalog F2 jest read-only — nie dodawaj writer, Save, Zapisz, Zastosuj bez osobnego polecenia.  
+GICLÉE FRAME F2.1 jest RAM-only — nie dodawaj writera, Save, sync/deploy bez osobnego polecenia (F3/F4 = not started).  
 `tldobio` jest wchłonięty w Katalog, nie jako osobny kafelek Studio v2.  
 Background Builder local v1 = referencyjna implementacja Level 2 (frozen).
 

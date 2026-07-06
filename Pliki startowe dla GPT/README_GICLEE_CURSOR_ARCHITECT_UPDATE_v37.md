@@ -29,7 +29,7 @@ Bez bumpu paczki na v38 — tylko odświeżenie checkpointu w plikach v3.7:
 - Next: **bounded writer / save layer** — tylko po osobnej akceptacji
 - F5.5: not started
 
-Zaktualizowane pliki: `CURRENT_APP_STATE.md`, checkpoint block w COMPACT v37, `GICLEE_CURSOR_MASTER_INDEX_v37.md`, ten README, `Wiadomość początkowa.txt`. Przebuduj `giclee_cursor_architect_knowledge_v37.zip` z generatora projektu.
+Zaktualizowane pliki: `CURRENT_APP_STATE.md`, checkpoint block w COMPACT v37, `GICLEE_CURSOR_MASTER_INDEX_v37.md`, ten README, `Wiadomość początkowa.txt`. ZIP generuje użytkownik przez Okno rozmowy — Cursor nie generuje ZIP-a.
 
 ---
 
@@ -45,6 +45,31 @@ Bez bumpu paczki na v38:
 - Pliki startowe GPT: **monorepo only** (sync skip do gicleeapp)
 - Primary next: **GICLÉE FRAME™** — design strony / komponent premium
 - Technical backlog: Katalog bounded writer — tylko po osobnej akceptacji
+
+---
+
+## Checkpoint refresh (post F2.1 — v1.40.1)
+
+Bez bumpu paczki na v38:
+
+- HEAD / origin/master: **4647c1b** — GICLÉE FRAME F2.1 editor workflow polish
+- Poprzedni checkpoint: **46fc718** (v1.40.0 F2 inventory)
+- GicleeApp Studio: **v1.40.1**
+- Branch: **master synced with origin/master**
+- GICLÉE FRAME F2.1: **done** (multi-variant RAM, type-aware editor, settings/reorder RAM, dry-run, pattern doc)
+- **Studio Page Component Editor Pattern** — udokumentowany w repo
+- Next (choose one — **not started**): **(A)** cleanup / runtime hygiene · **(B)** GICLÉE FRAME F3 local draft persistence
+- F3/F4/writer/Save/Shopify: **not started**
+
+Zaktualizowane pliki: `CURRENT_APP_STATE.md`, COMPACT v37, MASTER_INDEX v37, CLEAN_PACK v37, ten README, `Wiadomość początkowa.txt`. **ZIP generuje użytkownik** przez Okno rozmowy — Cursor **nie** uruchamia generatora ZIP.
+
+---
+
+## Zasada: Cursor nie generuje ZIP
+
+- **Cursor** aktualizuje tylko pliki źródłowe w `Pliki startowe dla GPT/`.
+- **ZIP wiedzy** generuje automatycznie program użytkownika przy wysyłce przez **Okno rozmowy** (Integracja z GPT).
+- Cursor **nie** uruchamia `build_starter_knowledge_zip()`, GUI **Skopiuj .zip** ani ręcznego generatora — **chyba że użytkownik da osobne, wyraźne polecenie**.
 
 ---
 
@@ -66,8 +91,8 @@ Stała komenda robocza użytkownika do Custom GPT. Pełna definicja: sekcja **KO
 | 1 | Audyt stanu, lista plików do aktualizacji | — |
 | 2 | Przygotowuje precyzyjny prompt maintenance | — |
 | 3 | — | Edytuje `.md` w `Pliki startowe dla GPT` |
-| 4 | — | Przebudowuje ZIP przez generator |
-| 5 | — | Raport: `git status -sb`, `git diff --stat`, lista plików |
+| 4 | — | Raport git — **bez generowania ZIP** |
+| 5 | Użytkownik | Wysyła paczkę przez **Okno rozmowy** (program generuje ZIP automatycznie) |
 
 GPT **nie implementuje** feature aplikacji. Nie miesza maintenance z writerem, Shopify/sync/deploy, Push GicleeApp ani runtime cleanupem.
 
@@ -75,7 +100,7 @@ GPT **nie implementuje** feature aplikacji. Nie miesza maintenance z writerem, S
 
 1. Zaktualizuj `CURRENT_APP_STATE.md` (checkpoint, SHA, fazy, next).
 2. Zsynchronizuj checkpoint w COMPACT v37, MASTER_INDEX, CLEAN_PACK, ten README — **bez bumpu v38**.
-3. Przebuduj `giclee_cursor_architect_knowledge_v37.zip` z generatora.
+3. **Nie** uruchamiaj generatora ZIP z Cursora — ZIP robi użytkownik przez Okno rozmowy.
 4. Nie dotykaj runtime dirty; nie `git add -A`; nie push; nie commit bez raportu.
 5. Osobny commit docs po akceptacji raportu.
 

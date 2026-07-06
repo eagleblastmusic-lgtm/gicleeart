@@ -1,23 +1,22 @@
 # Current App State
 
-GicleeApp Studio v1.38.0
+GicleeApp Studio v1.40.1
 
-Monorepo project checkpoint:
-4760a295b501c5bc7fe8b1cd987ace411436e9cf
+Monorepo HEAD / origin/master:
+4647c1b feat(studio): GICLÉE FRAME F2.1 editor workflow polish (v1.40.1)
 
-Studio code checkpoint:
-65e862be05183cac9e6ca94786802035cf77b943
+Previous checkpoint:
+46fc718 feat(studio): add GICLÉE FRAME page inventory RAM editor (v1.40.0)
 
-gicleeapp snapshot (main):
-21bc3edc2bcad13aa24040f82ca3cf84e18759d5
+Branch status:
+master synced with origin/master (F2.1 pushed)
 
 GPT starter files:
-refreshed after Push GicleeApp (paczka v37; nie traktuj `origin/master` jako stałego SHA w docs — patrz etykiety checkpointów powyżej)
+refreshed after F2.1 close (paczka v37; źródło = ten folder, nie ZIP)
 
 Recent context:
-- Push GicleeApp denylist hotfix e844789: done + pushed
-- Push GicleeApp snapshot 21bc3ed: done — runtime_hits poza commitem (hygiene OK)
-- Pliki startowe GPT v37: monorepo only (`GICLEEAPP_SYNC_SKIP`) — nie sync do standalone gicleeapp; OK
+- GICLÉE FRAME™ F2.1: closed + pushed on origin/master
+- Local runtime/untracked still outside commit and remote (working tree hygiene pending)
 
 Completed:
 - Background Builder local v1: frozen
@@ -27,28 +26,44 @@ Completed:
 - Katalog F2 bounded data map: done
 - Katalog local planning layer F3+F4: done (draft state, dry-run, readiness, UI planu zmian)
 - Push GicleeApp hygiene: done
+- GICLÉE FRAME™ F2 page inventory + RAM editor foundation (v1.40.0): done
+- GICLÉE FRAME™ F2.1 page editor workflow (v1.40.1): done
+  - multi-variant RAM, type-aware editor, settings/reorder as RAM patches
+  - trigger sekcji w nagłówku edytora, popup + drag reorder
+  - dry-run, readiness accordion, F1 brand collapsed
+- Studio Page Component Editor Pattern: documented (`gicleeframe-planning.md` §7, `admin-components-strategy.md`)
 
 Not started:
-- F5.5 Shopify / sync / deploy
+- GICLÉE FRAME™ F3 — lokalny zapis draftów RAM do pliku
+- GICLÉE FRAME™ F4 — bounded writer + backup/undo
+- F5 / F5.5 preview quality / Shopify sync-deploy
 - Katalog writer
 - Katalog Shopify integration
 - Katalog migration
 
-Next recommended:
-Primary: GICLÉE FRAME™ — design strony / komponent premium (motyw Shopify + UX/motion, repo `gicleeart-gpt` gdy dotyczy frontu).
+Next recommended (choose one path — neither started):
+- **A.** cleanup / runtime hygiene working tree (local M + untracked outside commits)
+- **B.** GICLÉE FRAME™ F3 — lokalny zapis draftów RAM (no writer, no Save, no Shopify)
 
 Technical backlog (only after separate acceptance):
 - Katalog bounded writer / save layer
 - zero Shopify / sync / deploy
 - zero Save / Zapisz / Zastosuj without explicit approval
-- do not mutate Komponenty/* runtime data
+- do not mutate Komponenty/* runtime data from Studio panels
 
 Important guardrails:
-- Knowledge pack source folder: `C:\Strona\pusty\Pliki startowe dla GPT` (edit sources here; regenerate ZIP — do not treat ZIP as source of truth)
-- Do not start Katalog writer without separate approval.
-- Do not add Save/Zapisz/Zastosuj without separate approval.
-- Do not touch Shopify/sync/deploy.
-- Do not mutate Komponenty/* runtime data.
-- Katalog F2 is read-only and must remain read-only.
-- tldobio is absorbed into Katalog, not a standalone Studio v2 main tile.
-- Background Builder local v1 is the Level 2 reference implementation.
+- Knowledge pack source folder: `C:\Strona\pusty\Pliki startowe dla GPT` — **Cursor edytuje tylko pliki źródłowe `.md` / `.txt` w tym folderze**
+- **Cursor NIE generuje ZIP-a wiedzy** — bez osobnego, wyraźnego polecenia użytkownika
+- ZIP wiedzy (`giclee_cursor_architect_knowledge_v37.zip`) generuje **automatycznie program użytkownika** przy wysyłce paczki przez **Okno rozmowy** (Integracja z GPT) — nie traktuj ZIP jako źródła prawdy
+- Cursor nie uruchamia: `build_starter_knowledge_zip()`, GUI **Skopiuj .zip**, żadnego ręcznego generatora ZIP
+- GICLÉE FRAME F2.1: RAM-only — no write_text, no writer, no sync/deploy, no Komponenty/* mutation from panel
+- Do not start F3/F4/writer without separate approval
+- Do not add Save/Zapisz/Zastosuj without separate approval
+- Do not touch Shopify/sync/deploy
+- Katalog F2 remains read-only
+- tldobio absorbed into Katalog
+- Background Builder local v1 = Level 2 reference (frozen)
+
+Reference docs (repo):
+- `cursor-api/giclee_app/docs/gicleeframe-planning.md`
+- `cursor-api/giclee_app/docs/admin-components-strategy.md` (Giclee Frame = pattern reference)

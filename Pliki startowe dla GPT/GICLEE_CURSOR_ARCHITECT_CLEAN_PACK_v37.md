@@ -10,13 +10,13 @@ Manifest plików wiedzy Custom GPT. **Stare pliki na dysku nie są usuwane** —
 
 | Plik | Rola |
 |------|------|
-| `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` | **Źródło do pola Instructions** (v3.7: project checkpoint 4760a29 / Studio 65e862b / gicleeapp 21bc3ed, GICLÉE FRAME™ next, komenda maintenance) |
+| `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` | **Źródło do pola Instructions** (v3.7: Studio v1.40.1 / 4647c1b, GICLÉE FRAME F2.1 done, pattern, next A/B) |
 | `GICLEE_DUAL_REPO_REVIEW_ROUTING_v35.md` | Kanon dual-repo |
 | `GICLEE_GITHUB_SNAPSHOT_REVIEW_WORKFLOW_v35.md` | Workflow review snapshotów |
 | `GICLEE_CURSOR_MASTER_INDEX_v37.md` | Hierarchia (POZIOM 0), wskazuje COMPACT v37 |
 | `README_GICLEE_CURSOR_ARCHITECT_UPDATE_v37.md` | Instrukcja wdrożenia v3.7 |
 | `GICLEE_CURSOR_ARCHITECT_CLEAN_PACK_v37.md` | Ten manifest |
-| `CURRENT_APP_STATE.md` | Aktualny stan GicleeApp Studio v1.38.0 |
+| `CURRENT_APP_STATE.md` | Aktualny stan GicleeApp Studio v1.40.1 |
 
 ### Motion / effects / patterns (aktualne, bez nowej wersji)
 
@@ -72,7 +72,7 @@ Te pliki mogą **mieszać routing** (single-repo, stare wersje, duplikaty Instru
 
 | Plik | Uwaga |
 |------|--------|
-| `Wiadomość początkowa.txt` | **Do aktualizacji** — dual-repo routing + checkpoint Studio v1.38.0 |
+| `Wiadomość początkowa.txt` | Osobno od ZIP — checkpoint Studio v1.40.1 |
 
 ---
 
@@ -80,11 +80,11 @@ Te pliki mogą **mieszać routing** (single-repo, stare wersje, duplikaty Instru
 
 **Źródło prawdy:** pliki `.md` w `C:\Strona\pusty\Pliki startowe dla GPT` (ten folder).
 
-**ZIP:** `giclee_cursor_architect_knowledge_v37.zip` to **output** generatora — nie edytuj ZIP-a ręcznie ani nie traktuj go jako źródła prawdy.
+**ZIP:** `giclee_cursor_architect_knowledge_v37.zip` to **output programu użytkownika** — nie edytuj ZIP-a ręcznie ani nie traktuj go jako źródła prawdy.
 
-**Regeneracja ZIP:** `build_starter_knowledge_zip()` w `cursor-api/Komponenty/integracjagpt/zip_knowledge.py` albo GUI Integracja z GPT → **Skopiuj .zip**.
+**Regeneracja ZIP (tylko użytkownik):** automatycznie przy wysyłce przez **Okno rozmowy** (Integracja z GPT). Implementacja: `build_starter_knowledge_zip()` w `cursor-api/Komponenty/integracjagpt/zip_knowledge.py` — **Cursor tego nie uruchamia** bez osobnego polecenia.
 
-**Komenda użytkownika:** „Aktualizuj pliki startowe” — patrz sekcja KOMENDA ROBOCZA w `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md`. GPT przygotowuje prompt do Cursora; Cursor edytuje źródła, przebudowuje ZIP, raportuje git — bez mieszania z implementacją feature / writer / Shopify / Push GicleeApp.
+**Komenda użytkownika:** „Aktualizuj pliki startowe” — patrz COMPACT v37. GPT → prompt; Cursor → edycja źródeł + raport git. **Bez ZIP z Cursora.**
 
 **Checkpoint refresh:** aktualizuj `CURRENT_APP_STATE.md` i powiązane metadane v37; **nie bumpuj** na v38 przy samym odświeżeniu checkpointu.
 
@@ -117,3 +117,5 @@ Master Index v37 traktuje je jako opcjonalne.
 **Checkpoint refresh 2026-07-06:** Studio v1.38.0 / monorepo 65e862b / gicleeapp main a056bb5 / Katalog F3+F4 done / next = bounded writer after separate acceptance. Paczka nadal v3.7 — bez bumpu na v38.
 
 **Checkpoint refresh 2026-07-06 (post Push GicleeApp):** project checkpoint `4760a29` / Studio code `65e862b` / gicleeapp snapshot `21bc3ed` / GPT starter refreshed / primary next = GICLÉE FRAME™. Bez wiązania docs z `origin/master`. Paczka nadal v3.7.
+
+**Checkpoint refresh 2026-07-06 (post F2.1):** HEAD / origin/master `4647c1b` / GicleeApp Studio **v1.40.1** / GICLÉE FRAME F2.1 **done** + **Studio Page Component Editor Pattern** / next = **(A)** hygiene working tree **or (B)** GICLÉE FRAME F3 (not started). Paczka nadal v3.7 — bez bumpu na v38.

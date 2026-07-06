@@ -1,6 +1,6 @@
 # GICLEE CURSOR MASTER INDEX v3.7
 
-Ten plik porządkuje cały system instrukcji Giclée Cursor Architect v3.7 (dual-repo + GicleeApp Studio v1.38.0 / Katalog F1–F4 / Push GicleeApp hygiene done).
+Ten plik porządkuje cały system instrukcji Giclée Cursor Architect v3.7 (dual-repo + GicleeApp Studio v1.40.1 / GICLÉE FRAME™ F2.1 done).
 
 ---
 
@@ -25,15 +25,17 @@ Zasady:
 
 Workflow snapshotów: `GICLEE_GITHUB_SNAPSHOT_REVIEW_WORKFLOW_v35.md`.
 
-Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` oraz `CURRENT_APP_STATE.md` (project checkpoint `4760a29` / Studio code `65e862b` / gicleeapp snapshot `21bc3ed` — **nie** jako `origin/master`).
+Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` oraz `CURRENT_APP_STATE.md` (HEAD / origin/master `4647c1b` — GicleeApp Studio v1.40.1).
 
-**Katalog current state:** F1–F4 done. Push GicleeApp hygiene done (`gicleeapp` main `21bc3ed`). Pliki startowe GPT v37 = monorepo only (sync skip).
+**GICLÉE FRAME™:** F2.1 **done** (pushed). Ustanawia wzorzec **`Studio Page Component Editor Pattern`** dla przyszłych edytorów strony w Studio — patrz `gicleeframe-planning.md` §7, link w `admin-components-strategy.md`. **F3** (lokalny zapis draftu RAM) i **F4** (bounded writer): **not started**.
 
-**Primary next:** GICLÉE FRAME™ — design strony / komponent premium. **Technical backlog:** Katalog bounded writer — only after separate acceptance (zero Save, zero Shopify/sync/deploy).
+**Katalog:** F1–F4 done. Writer / Shopify: not started (osobna akceptacja).
+
+**Next (choose one — neither started):** (A) cleanup / runtime hygiene working tree · (B) GICLÉE FRAME™ F3 local draft persistence.
 
 **New pacing rule:** group safe planning layers (read-only, data map, draft state, dry-run, readiness, UI change plan, docs/tests); split writer, backup/write/undo, Shopify/sync/deploy, data migrations, and large architecture decisions.
 
-**Komenda maintenance:** „Aktualizuj pliki startowe” — GPT przygotowuje prompt do Cursora aktualizujący źródła w `Pliki startowe dla GPT` (checkpoint, guardrails, workflow); ZIP = output generatora. Szczegóły: sekcja KOMENDA ROBOCZA w COMPACT v37.
+**Komenda maintenance:** „Aktualizuj pliki startowe” — GPT przygotowuje prompt do Cursora aktualizujący **tylko źródła** w `Pliki startowe dla GPT`; ZIP generuje **program użytkownika** (Okno rozmowy). **Cursor nie generuje ZIP-a** bez osobnego polecenia. Szczegóły: COMPACT v37.
 
 ---
 
@@ -51,7 +53,7 @@ Jeśli instrukcje się nakładają (po POZIOMIE 0):
 
 `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md`
 
-Wygrywa w: roli modelu, formacie odpowiedzi, promptach do Cursor, ochronie projektu, dual-repo routing, **checkpoint GicleeApp Studio v1.38.0**, **zasady testowania**, **granice Studio**, **pacing rule**.
+Wygrywa w: roli modelu, formacie odpowiedzi, promptach do Cursor, ochronie projektu, dual-repo routing, **checkpoint GicleeApp Studio v1.40.1**, **GICLÉE FRAME F2.1**, **Studio Page Component Editor Pattern**, **zasady testowania**, **granice Studio**, **pacing rule**.
 
 Archiwum (nie używać jako Instructions): `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_v3.md`, `*_v34.md`, `*_v35.md`, `*_v36.md`, `COMPACT_8000.md`.
 
@@ -96,7 +98,7 @@ Wygrywają markowo: ton, Fine Art, unikanie taniego e-commerce.
 ## 3. KOLEJNOŚĆ MYŚLENIA
 
 1. **Które repo?** (POZIOM 0)
-2. Czy dotyczy GicleeApp Studio / Katalog? (checkpoint v1.38.0, guardrails, pacing rule)
+2. Czy dotyczy GicleeApp Studio / GICLÉE FRAME / Katalog? (checkpoint v1.40.1, guardrails, pacing rule)
 3. Co użytkownik chce osiągnąć?
 4. Prompt / kod / efekt / audit / debug?
 5. Czy chronić Shopify / faktury / API?
@@ -127,9 +129,10 @@ Wygrywają markowo: ton, Fine Art, unikanie taniego e-commerce.
 
 - COMPACT v37 + `GICLEE_PROMPT_RESPONSE_MODES_v3.md` + TECH_STACK (jeśli dostępny)
 
-### Prompt do Cursor (GicleeApp Studio / Katalog)
+### Prompt do Cursor (GicleeApp Studio / GICLÉE FRAME / Katalog)
 
 - COMPACT v37 (checkpoint, granice, pacing rule, zasady testowania) + `CURRENT_APP_STATE.md`
+- GICLÉE FRAME: `gicleeframe-planning.md` w repo (F2.1 pattern §7)
 
 ### Maintenance paczki wiedzy / checkpoint refresh
 
@@ -137,10 +140,10 @@ Gdy użytkownik pisze **„Aktualizuj pliki startowe”**:
 
 - COMPACT v37 — sekcja **KOMENDA ROBOCZA**
 - `CURRENT_APP_STATE.md` — aktualny checkpoint
-- `GICLEE_CURSOR_ARCHITECT_CLEAN_PACK_v37.md` — workflow maintenance i regeneracja ZIP
+- `GICLEE_CURSOR_ARCHITECT_CLEAN_PACK_v37.md` — manifest v3.7 + zasada: Cursor nie generuje ZIP
 - `README_GICLEE_CURSOR_ARCHITECT_UPDATE_v37.md` — instrukcja dla użytkownika / Cursor
 
-GPT przygotowuje prompt; Cursor edytuje źródła `.md`, przebudowuje ZIP, raportuje git. Nie mieszać z implementacją feature.
+GPT przygotowuje prompt; Cursor edytuje **tylko źródła `.md`**, raportuje git. **Bez generowania ZIP** (ZIP = Okno rozmowy u użytkownika). Nie mieszać z implementacją feature.
 
 ### Efekty premium / Awwwards
 
@@ -168,4 +171,4 @@ Efekt piękny ale ryzykowny → bezpieczniejsza wersja. Efekt tanio → popraw m
 
 Rozwiązania: piękne, premium, bezpieczne, zgodne ze stackiem i marką, wdrażalne przez Cursor.
 
-**Motyw → `gicleeart-gpt`. Aplikacja → `gicleeapp`.** Nie myl repo. **Primary next = GICLÉE FRAME™** (design strony / komponent premium). **Katalog writer** — tylko po osobnej akceptacji, bez writer/Save/Shopify bez polecenia.
+**Motyw → `gicleeart-gpt`. Aplikacja → `gicleeapp`.** Nie myl repo. **GICLÉE FRAME F2.1 done** — pattern dla przyszłych edytorów strony. **Next:** hygiene working tree **or** GICLÉE FRAME F3 (not started). **Katalog writer** — tylko po osobnej akceptacji, bez writer/Save/Shopify bez polecenia.

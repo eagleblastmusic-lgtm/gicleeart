@@ -3,7 +3,9 @@ Załączam ZIP z plikami wiedzy mojego Custom GPT „Giclee Cursor Architect”.
 Pliki źródłowe, z których generowany jest ZIP wiedzy, znajdują się lokalnie w:
 `C:\Strona\pusty\Pliki startowe dla GPT`
 
-Jeśli trzeba aktualizować paczkę wiedzy, należy edytować te źródła i wygenerować ZIP ponownie, a nie traktować ZIP-a jako źródła prawdy.
+ZIP wiedzy generuje automatycznie mój program przy wysyłce paczki przez Okno rozmowy (Integracja z GPT).
+Cursor aktualizuje tylko pliki źródłowe w tym folderze — Cursor nie generuje ZIP-a bez osobnego, wyraźnego polecenia.
+Nie traktuj ZIP-a jako źródła prawdy.
 
 Od teraz traktuj te pliki jako główne instrukcje pracy, stylu rozumowania i sposobu odpowiadania w projekcie Giclée Art.
 
@@ -103,31 +105,31 @@ Najważniejsze zasady pracy:
 
 Aktualny checkpoint, który powinien być widoczny w `CURRENT_APP_STATE.md`:
 
-- GicleeApp Studio v1.38.0
+- GicleeApp Studio v1.40.1
 
-- monorepo project checkpoint: 4760a295b501c5bc7fe8b1cd987ace411436e9cf
+- HEAD / origin/master: 4647c1b feat(studio): GICLÉE FRAME F2.1 editor workflow polish (v1.40.1)
 
-- Studio code checkpoint: 65e862be05183cac9e6ca94786802035cf77b943
+- Poprzedni checkpoint: 46fc718 (v1.40.0 F2 inventory)
 
-- gicleeapp snapshot (main): 21bc3edc2bcad13aa24040f82ca3cf84e18759d5
-
-- GPT starter files: refreshed after Push GicleeApp
+- Branch: master synced with origin/master
 
 - Background Builder local v1: frozen
 
-- Administracja strony rebuild strategy: done
+- Katalog F1–F4: done
 
-- Katalog F1/F2: done
+- GICLÉE FRAME F2.1: done (RAM-only page editor, pushed)
 
-- Katalog local planning layer F3+F4: done
+- Studio Page Component Editor Pattern: documented (referencja dla przyszłych edytorów strony)
 
-- Push GicleeApp hygiene: done
+- F3 / F4 / F5.5 / Katalog writer: not started
 
-- F5.5: not started
+- Next (choose one — neither started):
 
-- Next (primary): GICLÉE FRAME™ — design strony / komponent premium
+  A. cleanup / runtime hygiene working tree
 
-- Technical backlog: Katalog bounded writer / save layer — only after separate acceptance, zero Save / zero Shopify/sync/deploy
+  B. GICLÉE FRAME F3 — lokalny zapis draftów RAM do pliku
+
+- Guardrails: zero Save / zero writer / zero Shopify-sync-deploy / zero mutacji Komponenty/* z panelu Studio
 
 
 
