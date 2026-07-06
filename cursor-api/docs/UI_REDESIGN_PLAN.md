@@ -88,7 +88,20 @@ Not in **`eagleblastmusic-lgtm/gicleeart-gpt`** (theme snapshot only).
 | — | **Save Pattern Playbook** — standard faz zapisu dla kolejnych workflow Studio ([`studio-save-pattern.md`](../giclee_app/docs/studio-save-pattern.md)) | done (docs) |
 | — | **Background Builder local v1 freeze** | done (docs @ 1.35.0) |
 
-Lokalny cykl F5.4 (`stronaglowna` → section_background) jest domknięty. **Next:** Studio v2 component strategy / **F6.3**; osobno strategia „Administracja strony” (rebuild vs adapt). **F5.5** remains deferred.
+Lokalny cykl F5.4 (`stronaglowna` → section_background) jest domknięty. **F5.5** remains deferred.
+
+## Administracja strony — rebuild vs adapt strategy
+
+Strategia docs-only: [`giclee_app/docs/admin-components-strategy.md`](../giclee_app/docs/admin-components-strategy.md)
+
+| Grupa | Komponenty |
+|-------|------------|
+| **Rebuild od zera** | Katalog, Własna fotografia, Giclee Frame, Współpraca, Filozofia marki, Kontakt, Blog, FAQ, Losuj Obraz |
+| **Absorbed** | `tldobio` (Tło do Bio) → część **Katalogu**, nie osobny główny tile Studio v2 |
+| **Frozen reference** | `stronaglowna` — Background Builder local v1 complete |
+| **Adapt-first** | `wzorzecszablonu`, `stronaproduktu`, `karuzela` (+ reszta launcher wg reguły adapt-first) |
+
+**Next:** **F6.3** / **Katalog rebuild plan** (docs + read-only shell — bez implementacji backendu w tym etapie).
 
 ### Studio v2 redesign track (F6.x)
 

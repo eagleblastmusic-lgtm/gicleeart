@@ -1,8 +1,8 @@
 # Studio v2 Workflow Map
 
 **Faza:** F6.1 — docs-only navigation map  
-**Checkpoint:** `1e42e79` · v1.29.3 · F6.0 audit accepted  
-**Hub:** [`studio-preview.md`](studio-preview.md) · [`background-builder.md`](background-builder.md) · plan: [`../../docs/UI_REDESIGN_PLAN.md`](../../docs/UI_REDESIGN_PLAN.md)
+**Checkpoint:** `caabb27` · v1.35.0 · F6.0 audit accepted · Background Builder local v1 frozen  
+**Hub:** [`studio-preview.md`](studio-preview.md) · [`background-builder.md`](background-builder.md) · [`admin-components-strategy.md`](admin-components-strategy.md) · plan: [`../../docs/UI_REDESIGN_PLAN.md`](../../docs/UI_REDESIGN_PLAN.md)
 
 ---
 
@@ -21,6 +21,8 @@ Studio v2 ma być **workflow-based**, nie płaską listą 53 komponentów.
 **Stan obecny (F5.3):** Studio Preview ma dashboard, 8 kategorii sidebaru z [`studio_categories.json`](../data/studio_categories.json), inline embed, background panel (tylko `stronaglowna`, `tldobio`). To jest **v1 navigation** — ten dokument definiuje **v2 target map**.
 
 **Przyszłość (opcjonalnie, poza F6.1):** read-only `giclee_app/data/studio_workflows.json` mapujący folder → workflow. **Nie tworzyć w F6.1** bez osobnej akceptacji.
+
+**Administracja strony (post-freeze):** rebuild vs adapt — [`admin-components-strategy.md`](admin-components-strategy.md). **Katalog** = parent workflow (absorbs `tldobio`). 9 komponentów rebuild; reszta adapt-first; `stronaglowna` = frozen reference.
 
 ---
 
@@ -249,22 +251,22 @@ dodajobraz → wyborszablonu / wzorzecszablonu → tytulyai / zmietytuly → akt
 
 | Folder | Current category | Proposed workflow | Treatment | Priority | Notes |
 |--------|------------------|-------------------|-----------|----------|-------|
-| `stronaglowna` | theme | Site Builder | read_only_shell + launch | P0 | F5 Background Builder done; F5.4 next after F6.2 |
-| `tldobio` | theme | Site Builder | read_only_shell + launch | P1 | Tier 1 · H risk · after stronaglowna save |
-| `katalog` | theme | Site Builder / Collections | launch · F6.3 read-only | P1 | Strona = Site Builder; kolekcje = Collections |
-| `kontakt` | theme | Site Builder | launch · F6.3 | P2 | Tier 3 page |
-| `faq` | theme | Site Builder | launch · F6.3 | P2 | Tier 3 page |
-| `filozofiamarki` | theme | Site Builder | launch | P2 | Page variants |
-| `wspolpraca` | theme | Site Builder | launch | P2 | Page variants |
-| `stronablogu` | theme | Site Builder | launch | P2 | |
-| `karuzela` | theme | Site Builder | launch | P2 | |
-| `stronaproduktu` | theme | Site Builder | launch | P2 | |
-| `gicleeframe` | theme | Site Builder | launch | P2 | |
-| `wlasnafotografia` | theme | Site Builder | launch | P2 | |
-| `losujobraz` | theme | Collections | launch | P3 | |
+| `stronaglowna` | theme | Site Builder | read_only_shell + launch | P0 | Frozen reference · Background Builder local v1 done |
+| `tldobio` | theme | Site Builder (via Katalog) | absorbed · not standalone tile | P1 | Absorbed into `katalog` · see admin-components-strategy |
+| `katalog` | theme | Site Builder / Collections | rebuild · parent workflow | P1 | Rebuild · absorbs tldobio · F6.3 next |
+| `kontakt` | theme | Site Builder | rebuild · F6.3+ | P2 | Rebuild per admin-components-strategy |
+| `faq` | theme | Site Builder | rebuild · F6.3+ | P2 | Rebuild per admin-components-strategy |
+| `filozofiamarki` | theme | Site Builder | rebuild | P2 | Rebuild per admin-components-strategy |
+| `wspolpraca` | theme | Site Builder | rebuild | P2 | Rebuild per admin-components-strategy |
+| `stronablogu` | theme | Site Builder | rebuild | P2 | Rebuild per admin-components-strategy |
+| `karuzela` | theme | Site Builder | launch · adapt-first | P2 | Adapt-first |
+| `stronaproduktu` | theme | Site Builder | launch · adapt-first | P2 | Adapt-first |
+| `gicleeframe` | theme | Site Builder | rebuild | P2 | Rebuild per admin-components-strategy |
+| `wlasnafotografia` | theme | Site Builder | rebuild | P2 | Rebuild per admin-components-strategy |
+| `losujobraz` | theme | Collections | rebuild | P3 | Rebuild per admin-components-strategy |
 | `stronyzobrazami` | theme | Legacy Tools | legacy_only | P4 | subprocess utility |
 | `stronydozycia` | theme | Legacy Tools | legacy_only | P4 | subprocess utility |
-| `wzorzecszablonu` | theme | Product Pipeline | launch | P2 | inline szablony |
+| `wzorzecszablonu` | theme | Product Pipeline | launch · adapt-first | P2 | Adapt-first · inline szablony |
 | `mockup` | products | Asset Lab (+ Pipeline step) | launch · F6.2 shell | P1 | H risk Shopify publish |
 | `kolaz` | products | Asset Lab | launch · F6.2 shell | P1 | |
 | `squoosh` | products | Asset Lab | launch · F6.2 shell | P1 | |
@@ -474,3 +476,18 @@ Uzasadnienie: Asset Lab shell (F6.2) przed F5.4-plan — zapis tła nie projektu
 | Jasna rekomendacja next step | **F6.2 Asset Lab shell** |
 
 **Next step po akceptacji F6.1:** F6.2 — read-only Asset Lab shell (launch delegate do 8 subprocess), potem F5.4-plan dla `stronaglowna`.
+
+---
+
+## 13. Administracja strony strategy
+
+**Docs:** [`admin-components-strategy.md`](admin-components-strategy.md) (checkpoint `caabb27`)
+
+| Reguła | Opis |
+|--------|------|
+| Rebuild | 9 komponentów: `katalog`, `wlasnafotografia`, `gicleeframe`, `wspolpraca`, `filozofiamarki`, `kontakt`, `stronablogu`, `faq`, `losujobraz` |
+| Parent workflow | **Katalog** rebuild od zera — absorbs `tldobio` (Tło do Bio) |
+| Adapt-first | `wzorzecszablonu`, `stronaproduktu`, `karuzela` + reguła: poza tabelą rebuild = adapt-first |
+| Frozen | `stronaglowna` — Background Builder local v1 reference |
+
+**Next:** F6.3 / Katalog rebuild plan. **F5.5** deferred.
