@@ -116,10 +116,11 @@ Kontrakt i roadmapa: [`background-builder.md`](background-builder.md). Wzorzec z
 | F5.4b1 | done | Bounded clear writer + backup — **Zapisz lokalnie** (clear only) |
 | F5.4c1 | done | Session-only undo restore — **Cofnij ostatni zapis** |
 | F5.4c2 | planned | Limited backup picker — defer |
-| F5.4d | planned | Asset ref selection |
+| F5.4d | done | Asset ref selection — **Wybór assetu**, zero write |
+| F5.4b2 | planned | Bounded `set_with_ref` writer + backup |
 | F5.5 | planned | Shopify / sync / deploy — osobna akceptacja |
 
-F5.4b1 to pierwszy realny zapis lokalny — tylko **wyczyść tło** z backupem. F5.4c1 dodaje **session-only undo**. Inne operacje = F5.4d+.
+F5.4b1 to pierwszy realny zapis lokalny — tylko **wyczyść tło** z backupem. F5.4c1 dodaje **session-only undo**. F5.4d dodaje **wybór istniejącego assetu** bez zapisu. Realny zapis z ref = **F5.4b2**.
 
 Manual smoke F5.4b1: patrz sekcja poniżej.
 
@@ -273,6 +274,33 @@ Manual smoke F5.4c1:
 
 ---
 
+## F5.4d — Asset / ref selection
+
+| Element | Stan |
+|---------|------|
+| `background_asset_catalog.py` | bounded refs z aktywnego `index.json` (5 stref section_background) |
+| `background_draft_state.py` | `selected_asset_id` — in-memory |
+| `background_panel.py` | sekcja **Wybór assetu** — image/video, bez uploadu |
+| Dry-run / readiness | ref-aware · status `gotowe · F5.4b2` · **bez** zapisu set_with_ref |
+| Zakazane | write, Shopify, upload, file picker, deploy |
+| Następny krok | **F5.4b2** — bounded `set_with_ref` writer |
+
+Manual smoke F5.4d:
+
+1. Studio → **Strona główna** → **Tło**
+2. Draft: strefa + typ **obraz**
+3. Sekcja **Wybór assetu** — lista image assets z wariantu
+4. Wybierz asset → summary pokazuje label, nie pełny ref
+5. **Sprawdź zapis** → dry-run: `Asset draft: wybrany`
+6. Readiness: `gotowe · F5.4b2` — brak aktywnego **Zapisz lokalnie** (poza clear)
+7. Zmień typ na **wideo** → selected asset wyczyszczony, lista video
+8. **video_collage** — brak pickera
+9. Clear path F5.4b1 + undo F5.4c1 nadal działają
+10. Brak mutacji `index.json` z samego wyboru assetu
+11. Runtime smoke data nie commitować
+
+---
+
 ## F4.3a — Background Safe Handoff
 
 | Element | Stan |
@@ -368,7 +396,8 @@ Checklista ręczna w Studio Preview — nie w CI.
 | `studio/background_draft_state.py` | lokalny draft wyboru (F5.2) |
 | `studio/background_draft_preview.py` | koncepcyjny podgląd draftu (F5.3) |
 | `studio/background_save_contract.py` | save contract + dry-run (F5.4a) |
-| `studio/background_save_readiness.py` | save readiness / ref policy (F5.4b0) |
+| `studio/background_save_readiness.py` | save readiness / ref policy (F5.4b0 / F5.4d) |
+| `studio/background_asset_catalog.py` | bounded asset ref catalog (F5.4d) |
 | `studio/background_save_writer.py` | bounded clear writer + restore undo (F5.4b1 / F5.4c1) |
 | `studio/asset_lab_catalog.py` | katalog Asset Lab — 8 narzędzi (F6.2) |
 | `ui/background_panel.py` | read-only panel shell tła (F4.2) |

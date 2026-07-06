@@ -1,4 +1,4 @@
-"""Lokalny draft wyboru tła — Studio Preview (F5.2). Tylko in-memory, bez I/O."""
+"""Lokalny draft wyboru tła — Studio Preview (F5.2 / F5.4d). Tylko in-memory, bez I/O."""
 
 from __future__ import annotations
 
@@ -19,24 +19,38 @@ CLEAR_DRAFT_LABEL = "Wyczyść draft"
 
 @dataclass
 class BackgroundDraftState:
-    """Draft strefy + typu assetu — wyłącznie w pamięci UI panelu."""
+    """Draft strefy + typu assetu + wybrany ref — wyłącznie w pamięci UI panelu."""
 
     zone_field_id: str | None = None
     asset_kind: AssetKind | None = None
+    selected_asset_id: str | None = None
 
     def is_empty(self) -> bool:
         return self.zone_field_id is None or self.asset_kind is None
 
+    def has_selected_asset(self) -> bool:
+        return bool(self.selected_asset_id)
+
     def clear(self) -> None:
         self.zone_field_id = None
         self.asset_kind = None
+        self.selected_asset_id = None
+
+    def clear_selected_asset(self) -> None:
+        self.selected_asset_id = None
 
     def set_zone(self, field_id: str) -> None:
         value = (field_id or "").strip()
         self.zone_field_id = value or None
 
     def set_kind(self, kind: AssetKind) -> None:
+        if self.asset_kind != kind:
+            self.selected_asset_id = None
         self.asset_kind = kind
+
+    def set_selected_asset(self, asset_id: str) -> None:
+        value = (asset_id or "").strip()
+        self.selected_asset_id = value or None
 
     def zone_display(self) -> str:
         zone = _zone_by_field_id(self.zone_field_id)
@@ -54,12 +68,23 @@ class BackgroundDraftState:
                 return row.label_pl
         return self.asset_kind
 
-    def format_summary(self) -> str:
+    def format_summary(self, *, selected_label: str | None = None) -> str:
         if self.is_empty():
             return DRAFT_EMPTY_COPY
-        return (
+        base = (
             f"Draft lokalny: {self.zone_display()} → {self.kind_label_pl()} · niezapisany"
         )
+        if self.selected_asset_id:
+            label = selected_label or "wybrany asset"
+            return f"{base} · {label}"
+        return base
+
+
+def asset_selection_visible(draft: BackgroundDraftState) -> bool:
+    """Picker tylko dla image/video z kompletnym draftem."""
+    if draft.is_empty():
+        return False
+    return draft.asset_kind in ("image", "video")
 
 
 def draft_enabled_for_folder(folder_name: str) -> bool:
@@ -95,6 +120,7 @@ __all__ = [
     "DRAFT_DISCLAIMER",
     "DRAFT_EMPTY_COPY",
     "DRAFT_SECTION_TITLE",
+    "asset_selection_visible",
     "draft_enabled_for_folder",
     "kind_menu_options",
     "zone_menu_options",

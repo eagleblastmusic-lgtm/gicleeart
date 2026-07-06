@@ -81,7 +81,8 @@ Not in **`eagleblastmusic-lgtm/gicleeart-gpt`** (theme snapshot only).
 | F5.4b1 | Controlled local write → aktywny index.json (clear + backup) | done |
 | F5.4c1 | Session-only undo restore from backup | done |
 | F5.4c2 | Limited backup picker (defer) | planned |
-| F5.4d | Asset ref selection | planned |
+| F5.4d | Asset ref selection (selection-only, zero write) | done |
+| F5.4b2 | Bounded set_with_ref writer + backup | planned |
 | F5.5 | Shopify / sync / deploy | planned — osobna decyzja |
 | F5.6 | Przełącznik domyślny (`GICLEE_STUDIO_UI`) | planned |
 | — | **Save Pattern Playbook** — standard faz zapisu dla kolejnych workflow Studio ([`studio-save-pattern.md`](../giclee_app/docs/studio-save-pattern.md)) | done (docs) |

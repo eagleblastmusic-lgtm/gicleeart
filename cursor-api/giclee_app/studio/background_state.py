@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 SectionBgStatus = Literal["obraz", "wideo", "brak"]
+SectionBgRefKind = Literal["image", "video"]
 
 _TLDOBIO_COLLECTIONS = "data/collections.json"
 _STRONAGLOWNA_MANIFEST = "data/variants/manifest.json"
@@ -44,6 +45,14 @@ class BackgroundStateSummary:
     """Wielolinijkowy tekst sekcji „Aktualny stan”."""
 
     text: str
+
+
+@dataclass(frozen=True)
+class SectionBgCurrentRef:
+    """Aktualny ref strefy — tylko do contract/readiness, nie do UI."""
+
+    kind: SectionBgRefKind
+    ref: str
 
 
 def _strip_json_header(raw: str) -> str:
@@ -124,6 +133,26 @@ def section_bg_status(template: dict[str, Any], zone: SectionBgZone) -> SectionB
     if ref.startswith("shopify://") or ref.startswith("http"):
         return "obraz"
     return "brak"
+
+
+def section_bg_current_ref(
+    template: dict[str, Any],
+    zone: SectionBgZone,
+) -> SectionBgCurrentRef | None:
+    """Read-only kind + ref dla strefy — None gdy brak tła."""
+    status = section_bg_status(template, zone)
+    if status == "brak":
+        return None
+    settings = ("sections", zone.section_key, "settings")
+    if status == "wideo":
+        ref = str(_path_get(template, (*settings, "video")) or "").strip()
+        if not ref:
+            return None
+        return SectionBgCurrentRef(kind="video", ref=ref)
+    ref = str(_path_get(template, (*settings, "background_image")) or "").strip()
+    if not ref:
+        return None
+    return SectionBgCurrentRef(kind="image", ref=ref)
 
 
 def stronaglowna_zone_statuses(
@@ -214,11 +243,14 @@ def summarize_background_state(folder_name: str, package_path: Path) -> Backgrou
 
 __all__ = [
     "BackgroundStateSummary",
+    "SectionBgCurrentRef",
+    "SectionBgRefKind",
     "SectionBgZone",
     "SectionBgStatus",
     "STRONAGLOWNA_SECTION_BGS",
     "read_stronaglowna_active_variant",
     "read_stronaglowna_index_template",
+    "section_bg_current_ref",
     "section_bg_status",
     "stronaglowna_zone_statuses",
     "summarize_background_state",

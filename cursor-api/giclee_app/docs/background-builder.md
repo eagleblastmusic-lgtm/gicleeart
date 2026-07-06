@@ -233,7 +233,8 @@ Roadmap zapisu:
 - **F5.4b0** — save readiness / ref policy (zero zapisu)
 - **F5.4b1** — bounded writer + minimal backup (tylko clear)
 - **F5.4c** — rollback / post-save validation
-- **F5.4d** — asset ref selection
+- **F5.4d** — asset ref selection (done · selection-only)
+- **F5.4b2** — bounded set_with_ref writer + backup
 - **F5.5** — Shopify / upload / deploy / sync osobno
 
 Manual smoke F5.4a: patrz [`studio-preview.md`](studio-preview.md).
@@ -290,6 +291,23 @@ Manual smoke F5.4b1: patrz [`studio-preview.md`](studio-preview.md).
 | Wersja | **1.33.0** |
 
 Manual smoke F5.4c1: patrz [`studio-preview.md`](studio-preview.md).
+
+---
+
+## 17. F5.4d — Asset / ref selection (zrealizowane w kodzie)
+
+| Aspekt | Szczegóły |
+|--------|-----------|
+| Moduł | `background_asset_catalog.py` — bounded lista refs z aktywnego `index.json` |
+| Draft | `BackgroundDraftState.selected_asset_id` — in-memory only |
+| UI | sekcja **Wybór assetu** — lista image/video, bez uploadu i file pickera |
+| Dry-run | ref-aware: `Asset draft: wybrany/brak`, semantyczna zmiana bez pełnego ref |
+| Readiness | `gotowe · F5.4b2` gdy ref kompletny — **bez** aktywnego „Zapisz lokalnie” |
+| Zakazane | write, `set_with_ref` writer, Shopify, upload, deploy |
+| Następny krok | **F5.4b2** — bounded `set_with_ref` writer + backup + undo |
+| Wersja | **1.34.0** |
+
+Manual smoke F5.4d: patrz [`studio-preview.md`](studio-preview.md).
 
 ---
 

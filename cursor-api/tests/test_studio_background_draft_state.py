@@ -45,10 +45,31 @@ def test_draft_zone_and_kind_summary() -> None:
 
 
 def test_clear_resets_draft() -> None:
-    draft = BackgroundDraftState(zone_field_id="ga_background", asset_kind="image")
+    draft = BackgroundDraftState(
+        zone_field_id="ga_background",
+        asset_kind="image",
+        selected_asset_id="img:0",
+    )
     draft.clear()
     assert draft.is_empty()
+    assert draft.selected_asset_id is None
     assert draft.format_summary() == DRAFT_EMPTY_COPY
+
+
+def test_set_kind_clears_selected_asset() -> None:
+    draft = BackgroundDraftState(zone_field_id="ga_background", asset_kind="image")
+    draft.set_selected_asset("img:0")
+    draft.set_kind("video")
+    assert draft.asset_kind == "video"
+    assert draft.selected_asset_id is None
+
+
+def test_set_selected_asset_and_summary_label() -> None:
+    draft = BackgroundDraftState(zone_field_id="ga_background", asset_kind="image")
+    draft.set_selected_asset("img:0")
+    summary = draft.format_summary(selected_label="hero.webp")
+    assert "hero.webp" in summary
+    assert "shopify://" not in summary
 
 
 def test_unknown_zone_defensive_display() -> None:

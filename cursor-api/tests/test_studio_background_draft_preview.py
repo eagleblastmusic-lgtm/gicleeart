@@ -45,6 +45,15 @@ def test_draft_preview_contains_zone_type_and_not_applied() -> None:
     assert "http" not in body.lower()
 
 
+def test_draft_preview_shows_selected_asset_label() -> None:
+    draft = BackgroundDraftState(zone_field_id="ga_background", asset_kind="image")
+    draft.set_selected_asset("img:0")
+    body = format_preview_body(draft, selected_label="hero.webp")
+    assert "hero.webp" in body
+    assert "placeholder obrazu" not in body
+    assert "shopify://" not in body
+
+
 def test_placeholder_labels_per_kind() -> None:
     assert placeholder_label_for_kind("image") == "placeholder obrazu"
     assert placeholder_label_for_kind("video") == "placeholder wideo"

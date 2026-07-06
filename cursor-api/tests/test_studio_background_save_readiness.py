@@ -9,6 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from giclee_app.studio.background_asset_catalog import build_background_asset_catalog
 from giclee_app.studio.background_draft_state import BackgroundDraftState
 from giclee_app.studio.background_save_readiness import (
     CLEAR_PLAN_CHECKBOX,
@@ -102,7 +103,7 @@ def test_same_kind_existing_background_ready_noop(tmp_path: Path) -> None:
     )
     draft = BackgroundDraftState(zone_field_id=zone.field_id, asset_kind="video")
     readiness = evaluate_save_readiness(draft, tmp_path)
-    assert readiness.ready
+    assert not readiness.ready
     assert readiness.operation == "noop"
     assert readiness.status_label == "bez zmian"
     assert "nie jest potrzebny" in readiness.summary
@@ -213,3 +214,110 @@ def test_panel_dry_run_includes_readiness() -> None:
     assert "evaluate_save_readiness" in save_block
     assert "_compose_save_plan_text" in save_block
     assert "write_text" not in save_block
+
+
+def test_kind_change_with_valid_ref_pending_f54b2(tmp_path: Path) -> None:
+    z0, z1 = STRONAGLOWNA_SECTION_BGS[0], STRONAGLOWNA_SECTION_BGS[1]
+    variants_dir = tmp_path / "data" / "variants" / "v1"
+    variants_dir.mkdir(parents=True)
+    (tmp_path / "data" / "variants" / "manifest.json").write_text(
+        json.dumps({"active": "v1", "variants": []}),
+        encoding="utf-8",
+    )
+    (variants_dir / "index.json").write_text(
+        json.dumps(
+            {
+                "sections": {
+                    z0.section_key: {
+                        "settings": {
+                            "background_media": "image",
+                            "background_image": "shopify://shop_images/a.jpg",
+                        }
+                    },
+                    z1.section_key: {
+                        "settings": {
+                            "background_media": "video",
+                            "video": "shopify://files/videos/b.mp4",
+                        }
+                    },
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    catalog = build_background_asset_catalog(tmp_path)
+    video_id = next(e.asset_id for e in catalog.entries if e.kind == "video")
+    draft = BackgroundDraftState(
+        zone_field_id=z0.field_id,
+        asset_kind="video",
+        selected_asset_id=video_id,
+    )
+    readiness = evaluate_save_readiness(draft, tmp_path)
+    assert not readiness.ready
+    assert readiness.operation == "set_with_ref"
+    assert readiness.ref_complete
+    assert readiness.status_label == "gotowe · F5.4b2"
+
+
+def test_invalid_selected_asset_id_blocked(tmp_path: Path) -> None:
+    zone = STRONAGLOWNA_SECTION_BGS[0]
+    _write_fixture(
+        tmp_path,
+        {
+            "background_media": "image",
+            "background_image": "shopify://shop_images/x.jpg",
+        },
+    )
+    draft = BackgroundDraftState(
+        zone_field_id=zone.field_id,
+        asset_kind="image",
+        selected_asset_id="img:99",
+    )
+    readiness = evaluate_save_readiness(draft, tmp_path)
+    assert not readiness.ready
+    assert readiness.status_label == "zablokowane"
+
+
+def test_same_kind_different_ref_pending_f54b2(tmp_path: Path) -> None:
+    zone = STRONAGLOWNA_SECTION_BGS[0]
+    z1 = STRONAGLOWNA_SECTION_BGS[1]
+    variants_dir = tmp_path / "data" / "variants" / "v1"
+    variants_dir.mkdir(parents=True)
+    (tmp_path / "data" / "variants" / "manifest.json").write_text(
+        json.dumps({"active": "v1", "variants": []}),
+        encoding="utf-8",
+    )
+    (variants_dir / "index.json").write_text(
+        json.dumps(
+            {
+                "sections": {
+                    zone.section_key: {
+                        "settings": {
+                            "background_media": "image",
+                            "background_image": "shopify://shop_images/current.jpg",
+                        }
+                    },
+                    z1.section_key: {
+                        "settings": {
+                            "background_media": "image",
+                            "background_image": "shopify://shop_images/other.jpg",
+                        }
+                    },
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    catalog = build_background_asset_catalog(tmp_path)
+    other_id = next(
+        e.asset_id for e in catalog.entries if e.display_label == "other.jpg"
+    )
+    draft = BackgroundDraftState(
+        zone_field_id=zone.field_id,
+        asset_kind="image",
+        selected_asset_id=other_id,
+    )
+    readiness = evaluate_save_readiness(draft, tmp_path)
+    assert not readiness.ready
+    assert readiness.operation == "set_with_ref"
+    assert readiness.status_label == "gotowe · F5.4b2"

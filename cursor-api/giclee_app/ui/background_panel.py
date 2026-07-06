@@ -1,4 +1,4 @@
-"""Panel tła w Studio Preview (F4.2+) — read-only, draft F5.2, preview F5.3, dry-run F5.4a, readiness F5.4b0, writer F5.4b1, undo F5.4c1."""
+"""Panel tła w Studio Preview (F4.2+) — … F5.4d asset ref selection."""
 
 from __future__ import annotations
 
@@ -9,8 +9,19 @@ from tkinter import messagebox
 import customtkinter as ctk
 
 from giclee_app.component_loader import Component
-from giclee_app.studio.background_asset_types import AssetKind
+from giclee_app.studio.background_asset_catalog import (
+    ASSET_SELECTION_BADGE,
+    ASSET_SELECTION_EMPTY,
+    ASSET_SELECTION_HINT,
+    ASSET_SELECTION_SECTION_TITLE,
+    BackgroundAssetEntry,
+    build_background_asset_catalog,
+    catalog_enabled_for_folder,
+    filter_entries_for_draft_kind,
+    find_entry_by_id,
+)
 from giclee_app.studio.background_asset_shell import asset_library_rows
+from giclee_app.studio.background_asset_types import AssetKind
 from giclee_app.studio.background_capabilities import (
     BackgroundCapability,
     tier_display,
@@ -20,6 +31,7 @@ from giclee_app.studio.background_draft_preview import (
     PREVIEW_DISCLAIMER,
     PREVIEW_EMPTY_COPY,
     PREVIEW_SECTION_TITLE,
+    format_preview_body,
     placeholder_label_for_kind,
     preview_enabled_for_folder,
 )
@@ -29,6 +41,7 @@ from giclee_app.studio.background_draft_state import (
     DRAFT_DISCLAIMER,
     DRAFT_SECTION_TITLE,
     BackgroundDraftState,
+    asset_selection_visible,
     draft_enabled_for_folder,
     kind_menu_options,
     zone_menu_options,
@@ -146,6 +159,10 @@ class BackgroundPanelView(ctk.CTkFrame):
         self._last_save_variant_id: str | None = None
         self._readonly_body_labels: dict[str, ctk.CTkLabel] = {}
         self._last_readiness: SaveReadiness | None = None
+        self._asset_selection_panel: ctk.CTkFrame | None = None
+        self._asset_selection_body: ctk.CTkFrame | None = None
+        self._asset_selection_summary: ctk.CTkLabel | None = None
+        self._asset_buttons: dict[str, ctk.CTkButton] = {}
         self._build_shell()
         if callable(self._on_status):
             self._on_status(f"Tło: {cap.label} — read-only panel")
@@ -213,6 +230,9 @@ class BackgroundPanelView(ctk.CTkFrame):
             if show_draft and title == _DRAFT_INSERT_AFTER:
                 self._render_draft_section(scroll, grid_row)
                 grid_row += 1
+                if catalog_enabled_for_folder(self._comp.folder_name):
+                    self._render_asset_selection_section(scroll, grid_row)
+                    grid_row += 1
                 if preview_enabled_for_folder(self._comp.folder_name):
                     self._render_preview_section(scroll, grid_row)
                     grid_row += 1
@@ -373,6 +393,137 @@ class BackgroundPanelView(ctk.CTkFrame):
             command=self._clear_draft,
         ).pack(anchor="w", padx=16, pady=(0, 12))
         self._refresh_draft_ui(notify=False)
+
+    def _render_asset_selection_section(
+        self,
+        parent: ctk.CTkScrollableFrame,
+        row: int,
+    ) -> None:
+        panel = ctk.CTkFrame(
+            parent,
+            fg_color=theme.PanelBg,
+            corner_radius=8,
+            border_width=1,
+            border_color=theme.BorderSubtle,
+        )
+        panel.grid(row=row, column=0, sticky="ew", pady=(0, 10))
+        panel.grid_columnconfigure(0, weight=1)
+        self._asset_selection_panel = panel
+
+        SectionHeader(panel, ASSET_SELECTION_SECTION_TITLE).pack(
+            fill="x", padx=16, pady=(12, 4)
+        )
+        ctk.CTkLabel(
+            panel,
+            text=ASSET_SELECTION_BADGE,
+            font=theme.get_font(10),
+            text_color=theme.AccentGoldDim,
+            anchor="w",
+        ).pack(fill="x", padx=16, pady=(0, 8))
+
+        self._asset_selection_body = ctk.CTkFrame(panel, fg_color="transparent")
+        self._asset_selection_body.pack(fill="x", padx=16, pady=(0, 8))
+
+        self._asset_selection_summary = ctk.CTkLabel(
+            panel,
+            text="",
+            font=theme.get_font(12),
+            text_color=theme.TextPrimary,
+            anchor="nw",
+            justify="left",
+            wraplength=560,
+        )
+        self._asset_selection_summary.pack(fill="x", padx=16, pady=(0, 4))
+
+        ctk.CTkLabel(
+            panel,
+            text=ASSET_SELECTION_HINT,
+            font=theme.get_font(11),
+            text_color=theme.TextMuted,
+            anchor="nw",
+            justify="left",
+            wraplength=560,
+        ).pack(fill="x", padx=16, pady=(0, 12))
+
+        self._refresh_asset_selection_ui()
+
+    def _selected_asset_label(self) -> str | None:
+        if not self._draft.selected_asset_id:
+            return None
+        catalog = build_background_asset_catalog(self._comp.package_path)
+        entry = find_entry_by_id(catalog, self._draft.selected_asset_id)
+        if entry is None:
+            return None
+        return entry.display_label
+
+    def _refresh_asset_selection_ui(self) -> None:
+        if self._asset_selection_panel is None or self._asset_selection_body is None:
+            return
+
+        for child in self._asset_selection_body.winfo_children():
+            child.destroy()
+        self._asset_buttons.clear()
+
+        visible = asset_selection_visible(self._draft)
+        if visible:
+            self._asset_selection_panel.grid()
+        else:
+            self._asset_selection_panel.grid_remove()
+            return
+
+        catalog = build_background_asset_catalog(self._comp.package_path)
+        entries = filter_entries_for_draft_kind(catalog, self._draft.asset_kind)
+
+        if not entries:
+            ctk.CTkLabel(
+                self._asset_selection_body,
+                text=ASSET_SELECTION_EMPTY,
+                font=theme.get_font(12),
+                text_color=theme.TextMuted,
+                anchor="w",
+                justify="left",
+                wraplength=540,
+            ).pack(fill="x", pady=(0, 4))
+        else:
+            for entry in entries:
+                self._add_asset_button(entry)
+
+        if self._asset_selection_summary is not None:
+            if self._draft.selected_asset_id:
+                label = self._selected_asset_label() or "wybrany asset"
+                kind = self._draft.kind_label_pl()
+                self._asset_selection_summary.configure(
+                    text=f"Wybrany asset: {label} · {kind}",
+                )
+            else:
+                self._asset_selection_summary.configure(text="Nie wybrano assetu")
+
+    def _add_asset_button(self, entry: BackgroundAssetEntry) -> None:
+        if self._asset_selection_body is None:
+            return
+        selected = self._draft.selected_asset_id == entry.asset_id
+        kind_badge = "obraz" if entry.kind == "image" else "wideo"
+        text = f"{entry.display_label} · {kind_badge}"
+        if selected:
+            text = f"✓ {text}"
+        btn = ctk.CTkButton(
+            self._asset_selection_body,
+            text=text,
+            height=30,
+            anchor="w",
+            fg_color=theme.AccentGoldDim if selected else theme.AppBg,
+            hover_color=theme.CardHover,
+            border_width=1,
+            border_color=theme.BorderSubtle,
+            font=theme.get_font(12),
+            command=lambda asset_id=entry.asset_id: self._on_asset_selected(asset_id),
+        )
+        btn.pack(fill="x", pady=(0, 4))
+        self._asset_buttons[entry.asset_id] = btn
+
+    def _on_asset_selected(self, asset_id: str) -> None:
+        self._draft.set_selected_asset(asset_id)
+        self._refresh_draft_ui()
 
     def _render_preview_section(self, parent: ctk.CTkScrollableFrame, row: int) -> None:
         panel = ctk.CTkFrame(
@@ -784,8 +935,12 @@ class BackgroundPanelView(ctk.CTkFrame):
             self._on_status("Draft wyczyszczony — niezapisany")
 
     def _refresh_draft_ui(self, *, notify: bool = True) -> None:
+        selected_label = self._selected_asset_label()
         if self._draft_summary_label is not None:
-            self._draft_summary_label.configure(text=self._draft.format_summary())
+            self._draft_summary_label.configure(
+                text=self._draft.format_summary(selected_label=selected_label),
+            )
+        self._refresh_asset_selection_ui()
         self._refresh_draft_preview()
         if notify and callable(self._on_status):
             if self._draft.is_empty():
@@ -807,16 +962,18 @@ class BackgroundPanelView(ctk.CTkFrame):
                 self._preview_disclaimer_label.pack_forget()
             return
 
-        meta = "\n".join([
-            PREVIEW_BADGE,
-            f"Strefa: {self._draft.zone_display()}",
-            f"Typ: {self._draft.kind_label_pl()}",
-        ])
-        self._preview_body_label.configure(text=meta, text_color=theme.TextPrimary)
+        self._preview_body_label.configure(
+            text=format_preview_body(
+                self._draft,
+                selected_label=self._selected_asset_label(),
+            ),
+            text_color=theme.TextPrimary,
+        )
         if self._preview_placeholder_label is not None:
-            self._preview_placeholder_label.configure(
-                text=placeholder_label_for_kind(self._draft.asset_kind),
-            )
+            placeholder = self._selected_asset_label()
+            if placeholder is None:
+                placeholder = placeholder_label_for_kind(self._draft.asset_kind)
+            self._preview_placeholder_label.configure(text=placeholder)
         if self._preview_placeholder_frame is not None:
             self._preview_placeholder_frame.pack(fill="x", padx=16, pady=(0, 8))
         if self._preview_disclaimer_label is not None:

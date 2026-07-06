@@ -1,4 +1,4 @@
-"""Koncepcyjny podgląd draftu tła — Studio Preview (F5.3). Pure, bez apply i bez I/O."""
+"""Koncepcyjny podgląd draftu tła — Studio Preview (F5.3 / F5.4d). Pure, bez apply i bez I/O."""
 
 from __future__ import annotations
 
@@ -32,15 +32,22 @@ def placeholder_label_for_kind(kind: AssetKind | None) -> str:
     return _PLACEHOLDERS.get(kind, kind)
 
 
-def format_preview_body(draft: BackgroundDraftState) -> str:
+def format_preview_body(
+    draft: BackgroundDraftState,
+    *,
+    selected_label: str | None = None,
+) -> str:
     """Wielolinijkowy tekst podglądu — testowalny bez Tk."""
     if draft.is_empty():
         return PREVIEW_EMPTY_COPY
+    asset_line = placeholder_label_for_kind(draft.asset_kind)
+    if draft.has_selected_asset():
+        asset_line = selected_label or "wybrany asset"
     lines = [
         PREVIEW_BADGE,
         f"Strefa: {draft.zone_display()}",
         f"Typ: {draft.kind_label_pl()}",
-        placeholder_label_for_kind(draft.asset_kind),
+        f"Asset: {asset_line}",
         PREVIEW_DISCLAIMER,
     ]
     return "\n".join(lines)

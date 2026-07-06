@@ -9,10 +9,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from giclee_app.studio.background_asset_catalog import build_background_asset_catalog
 from giclee_app.studio.background_draft_state import BackgroundDraftState
 from giclee_app.studio.background_save_contract import (
     DRY_RUN_BADGE,
     F54A_DISCLAIMER,
+    F54D_DISCLAIMER,
     VIDEO_COLLAGE_SCOPE_ERROR,
     build_background_save_dry_run,
     format_dry_run_summary,
@@ -191,12 +193,49 @@ def test_dry_run_summary_no_sensitive_data(tmp_path: Path) -> None:
     draft = BackgroundDraftState(zone_field_id=zone.field_id, asset_kind="video")
     summary = format_dry_run_summary(build_background_save_dry_run(draft, tmp_path))
     assert DRY_RUN_BADGE in summary
-    assert F54A_DISCLAIMER in summary
+    assert F54D_DISCLAIMER in summary
     assert "shopify://" not in summary
     assert "secret" not in summary
     assert "http" not in summary.lower()
     assert str(tmp_path) not in summary
-    assert "background_image" in summary  # nazwa pola OK, nie wartość ref
+    assert "background_overlay_pct" in summary  # nazwa pola OK, nie wartość ref
+
+
+def test_dry_run_with_selected_ref(tmp_path: Path) -> None:
+    z0, z1 = STRONAGLOWNA_SECTION_BGS[0], STRONAGLOWNA_SECTION_BGS[1]
+    _write_stronaglowna_fixture(
+        tmp_path,
+        index={
+            "sections": {
+                z0.section_key: {
+                    "settings": {
+                        "background_media": "image",
+                        "background_image": "shopify://shop_images/a.jpg",
+                    }
+                },
+                z1.section_key: {
+                    "settings": {
+                        "background_media": "video",
+                        "video": "shopify://files/videos/b.mp4",
+                    }
+                },
+            }
+        },
+    )
+    catalog = build_background_asset_catalog(tmp_path)
+    video_id = next(e.asset_id for e in catalog.entries if e.kind == "video")
+    draft = BackgroundDraftState(
+        zone_field_id=z0.field_id,
+        asset_kind="video",
+        selected_asset_id=video_id,
+    )
+    dry_run = build_background_save_dry_run(draft, tmp_path)
+    assert dry_run.ok
+    assert dry_run.has_selected_ref
+    assert dry_run.asset_draft_summary == "Asset draft: wybrany"
+    summary = format_dry_run_summary(dry_run)
+    assert "wybranym assetem" in dry_run.change_summary or "wideo" in dry_run.change_summary
+    assert "shopify://" not in summary
 
 
 def test_format_dry_run_error_includes_badge(tmp_path: Path) -> None:
