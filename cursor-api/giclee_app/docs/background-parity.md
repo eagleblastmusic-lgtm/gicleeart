@@ -152,6 +152,14 @@ Studio Preview **nie może** (F4.1):
 | Parser | defensywny — fallback zamiast crasha przy nieoczekiwanej strukturze |
 | Zakazy | brak `load_manifest()`, `service.py`, backupów, zapisu, Shopify client |
 
-## F5 (planowane)
+## F5 — Premium Background Builder (plan)
 
-- **F5** — kreator premium / asset manager UX.
+Kontrakt UX: [`background-builder.md`](background-builder.md).
+
+| Aspekt | Szczegóły |
+|--------|-----------|
+| Cel | Premium asset manager UX w panelu tła — po F4 |
+| Start | tylko `stronaglowna` / `section_background` |
+| F5.0 | [`background-builder.md`](background-builder.md) — docs-only, zero kodu |
+| F5.1+ | osobne commity po akceptacji raportów |
+| Poza zakresem F5.0 | UI, Python modules, bump wersji, `Komponenty/*`, Shopify, zapis |

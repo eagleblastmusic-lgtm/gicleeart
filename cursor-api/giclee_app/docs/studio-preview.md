@@ -1,6 +1,6 @@
 # GicleeApp Studio Preview (F4.3b)
 
-Hub: [`README.md`](README.md) · plan: [`../../docs/UI_REDESIGN_PLAN.md`](../../docs/UI_REDESIGN_PLAN.md) · tło: [`background-parity.md`](background-parity.md)
+Hub: [`README.md`](README.md) · plan: [`../../docs/UI_REDESIGN_PLAN.md`](../../docs/UI_REDESIGN_PLAN.md) · tło: [`background-parity.md`](background-parity.md) · F5: [`background-builder.md`](background-builder.md)
 
 **Studio Preview** to ciemny shell CustomTkinter obok klasycznego launchera. Nie zastępuje `launcher.py`.
 
@@ -97,6 +97,22 @@ Manual smoke F4.3b:
 1. Hub → **Tło** (`tldobio` / `stronaglowna`) → sekcja **Aktualny stan** widoczna
 2. **Edytuj w komponencie** — handoff F4.3a bez regresji
 3. **Wróć** → hub OK
+
+---
+
+## F5 — Premium Background Builder (plan)
+
+Kontrakt i roadmapa: [`background-builder.md`](background-builder.md).
+
+| Faza | Stan | Opis |
+|------|------|------|
+| F5.0 | **current (docs)** | UX contract / audit — zero kodu UI |
+| F5.1 | planned | Read-only shell „Biblioteka / Assety” — tylko `stronaglowna` |
+| F5.1b | planned | Opcjonalna bounded lista assetów z aktywnego index |
+| F5.2–F5.3 | planned | Draft + preview-only — bez zapisu |
+| F5.4–F5.5 | planned | Save / Shopify — **osobna akceptacja** |
+
+F5.0 **nie zmienia** panelu, wersji ani `Komponenty/*`. F5.1 dopiero po raporcie i akceptacji F5.0.
 
 ---
 

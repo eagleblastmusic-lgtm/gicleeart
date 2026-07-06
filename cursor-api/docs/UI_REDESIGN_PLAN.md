@@ -1,6 +1,6 @@
 # GicleeApp UI Redesign Plan
 
-**Status:** Faza 4.3b — Read-only background state summary.
+**Status:** Faza 5.0 — Background Builder UX contract (docs-only).
 
 ## Goal
 
@@ -68,9 +68,15 @@ Not in **`eagleblastmusic-lgtm/gicleeart-gpt`** (theme snapshot only).
 | F4.1.1 | Inline DnD fallback + local thumbnails | done |
 | F4.2 | Background Panel Shell — read-only panel tła w hubie | done |
 | F4.3a | Safe handoff panel → existing inline editor | done |
-| F4.3b | Read-only current background state summary | **current** |
-| F5 | Kreator premium / asset manager UX | planned |
-| F5.1 | Przełącznik domyślny (`GICLEE_STUDIO_UI`) | planned |
+| F4.3b | Read-only current background state summary | done |
+| F5.0 | Background Builder UX contract / audit (docs-only) | **current** |
+| F5.1 | Read-only asset browser shell (`stronaglowna`) | planned |
+| F5.1b | Optional bounded asset list from active index | planned |
+| F5.2 | Local draft selection (in-memory) | planned |
+| F5.3 | Preview-only apply | planned |
+| F5.4 | Controlled save via existing component API | planned — osobna akceptacja |
+| F5.5 | Shopify / sync / deploy | planned — osobna decyzja |
+| F5.6 | Przełącznik domyślny (`GICLEE_STUDIO_UI`) | planned |
 | F6 | PyInstaller + CustomTkinter w `.exe` | planned |
 | F7 | Sync / backup / cykl produkcyjny w Studio (osobna faza systemowa) | planned |
 
@@ -83,7 +89,7 @@ giclee_app/
 ├── studio_preview.py        ← python -m giclee_app.studio_preview
 ├── launcher_delegate.py     ← subprocess/url only
 ├── ui/                      ← sidebar, topbar, dashboard, hub, inline_host, background_panel
-├── studio/                  ← categories, status_providers, state, background_capabilities
+├── studio/                  ← categories, status_providers, state, background_capabilities, background_state
 └── data/studio_categories.json
 ```
 
