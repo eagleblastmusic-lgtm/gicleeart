@@ -1,4 +1,4 @@
-# GicleeApp Studio Preview (F4.3a)
+# GicleeApp Studio Preview (F4.3b)
 
 Hub: [`README.md`](README.md) · plan: [`../../docs/UI_REDESIGN_PLAN.md`](../../docs/UI_REDESIGN_PLAN.md) · tło: [`background-parity.md`](background-parity.md)
 
@@ -71,14 +71,32 @@ Tier 3 (`katalog`, `kontakt`, `faq`, `stronablogu`) — udokumentowany w audycie
 
 | Element | Stan |
 |---------|------|
-| `ui/background_panel.py` | read-only panel: typ tła, źródło, kontekst inline, status |
+| `ui/background_panel.py` | read-only panel: typ tła, źródło, **Aktualny stan**, kontekst inline, status |
 | Wejście z huba | osobny przycisk **Tło** na karcie (`tldobio`, `stronaglowna`) |
 | Klik karty | nadal otwiera inline komponent (bez zmian) |
 | Badge „Tło” | dekoracyjny |
 | Powrót | **Wróć** → hub tej samej kategorii (F3.2.1.1 lifecycle) |
 | `Esc` | powrót z panelu gdy brak konfliktu z inline |
 | Zapis / Shopify / sync | **brak** |
-| F4.3+ | read-only state summary (F4.3b) — **poza F4.3a** |
+
+---
+
+## F4.3b — Read-only background state summary
+
+| Element | Stan |
+|---------|------|
+| Moduł | `studio/background_state.py` — `summarize_background_state(folder, package_path)` |
+| Importy | **zero** `Komponenty.*`; tylko `Path.read_text` + `json.loads` |
+| `tldobio` | cache `collections.json` — N kolekcji, M z tłem; bez URL-i w UI |
+| `stronaglowna` | manifest + aktywny `index.json` — 5 stref, X/5 ustawione, obraz/wideo/brak |
+| Fallback | nieczytelny JSON / brak pliku → komunikat zamiast crasha |
+| Backup / write | **brak** — nie czyta `data/backups/*`, nie woła `load_manifest()` |
+
+Manual smoke F4.3b:
+
+1. Hub → **Tło** (`tldobio` / `stronaglowna`) → sekcja **Aktualny stan** widoczna
+2. **Edytuj w komponencie** — handoff F4.3a bez regresji
+3. **Wróć** → hub OK
 
 ---
 
@@ -91,7 +109,7 @@ Tier 3 (`katalog`, `kontakt`, `faq`, `stronablogu`) — udokumentowany w audycie
 | Panel | nadal read-only; brak zapisu |
 | Powrót z inline | hub (nie panel tła) |
 | Routing | `_handoff_background_to_inline` → `_show_inline_component` (niszczy background host) |
-| F4.3b / F5 | **poza zakresem** |
+| F4.3b / F5 | edytor w Studio (**F5**) — **poza F4.3b** |
 
 Manual smoke F4.3a:
 
@@ -171,5 +189,6 @@ Checklista ręczna w Studio Preview — nie w CI.
 | `studio/status_providers.py` | local Git/GPT |
 | `studio/state.py` | recent + pinned |
 | `studio/background_capabilities.py` | read-only mapa tła (F4.1) |
+| `studio/background_state.py` | read-only summary lokalnego stanu tła (F4.3b) |
 | `ui/background_panel.py` | read-only panel shell tła (F4.2) |
 | `Komponenty/_shared/tkdnd_safe.py` | safe DnD w embed Studio (F4.1.1) |

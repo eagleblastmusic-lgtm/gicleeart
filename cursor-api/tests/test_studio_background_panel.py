@@ -14,24 +14,41 @@ from giclee_app.ui.background_panel import (
 )
 
 
-def test_panel_rows_tldobio_read_only() -> None:
+def test_panel_rows_tldobio_read_only(tmp_path: Path) -> None:
     cap = capability_for("tldobio")
     assert cap is not None
-    rows = dict(panel_rows(cap, component_name="Tło do Bio"))
+    rows = dict(
+        panel_rows(
+            cap,
+            component_name="Tło do Bio",
+            folder_name="tldobio",
+            package_path=tmp_path,
+        )
+    )
     assert "Typ tła" in rows
     assert cap.label in rows["Typ tła"]
     assert tier_display("bio_workflow") in rows["Typ tła"]
+    assert "Aktualny stan" in rows
+    assert "Brak lokalnego cache" in rows["Aktualny stan"]
     assert rows["Status"] == "read-only"
     assert _HANDOFF_BUTTON_LABEL in rows["Co dalej"]
     assert cap.inline_note in rows["Kontekst inline"]
 
 
-def test_panel_rows_stronaglowna() -> None:
+def test_panel_rows_stronaglowna(tmp_path: Path) -> None:
     cap = capability_for("stronaglowna")
     assert cap is not None
-    rows = dict(panel_rows(cap, component_name="Strona główna"))
+    rows = dict(
+        panel_rows(
+            cap,
+            component_name="Strona główna",
+            folder_name="stronaglowna",
+            package_path=tmp_path,
+        )
+    )
     assert tier_display("section_background") in rows["Typ tła"]
     assert cap.source_hint in rows["Źródło"]
+    assert "Aktualny stan" in rows
 
 
 def test_capability_for_katalog_no_panel() -> None:

@@ -127,7 +127,7 @@ Studio Preview **nie może** (F4.1):
 | Routing | transient host w `launcher_studio.py` — bez nowego routera |
 | Wejście | przycisk **Tło** na karcie huba (`tldobio`, `stronaglowna`) |
 | Klik karty | inline bez zmian |
-| Zawartość | label, tier, source_hint, inline_note, status read-only, nota F4.3+ |
+| Zawartość | label, tier, source_hint, **Aktualny stan** (F4.3b), inline_note, status read-only |
 | Powrót | `_show_hub(return_category_id)` — ta sama kategoria co hub źródłowy |
 | Poza zakresem | edycja w panelu, zapis, Shopify, sync/deploy/polling |
 
@@ -139,9 +139,19 @@ Studio Preview **nie może** (F4.1):
 | Handoff | `_handoff_background_to_inline` → `_show_inline_component(comp, category)` |
 | Destroy | `_show_inline_component` woła `_destroy_background_host()` przed inline |
 | Powrót | inline → hub (nie panel) |
-| Poza zakresem | odczyt aktualnego stanu tła (**F4.3b**), edytor w Studio (**F5**) |
+| Poza zakresem | edytor w Studio (**F5**) |
 
-## F4.3b / F5 (planowane)
+## F4.3b — Read-only current state (zrealizowane)
 
-- **F4.3b** — read-only summary bieżącego stanu tła (odczyt lokalnych danych, osobna akceptacja),
+| Aspekt | Szczegóły |
+|--------|-----------|
+| Moduł | `giclee_app/studio/background_state.py` — pure read-only, **zero importów `Komponenty.*`** |
+| UI | sekcja **Aktualny stan** w `background_panel.py` |
+| `tldobio` | `data/collections.json` — liczba kolekcji + wpisy z tłem; bez URL-i |
+| `stronaglowna` | `manifest.json` + `{active}/index.json` — 5 stref, status obraz/wideo/brak |
+| Parser | defensywny — fallback zamiast crasha przy nieoczekiwanej strukturze |
+| Zakazy | brak `load_manifest()`, `service.py`, backupów, zapisu, Shopify client |
+
+## F5 (planowane)
+
 - **F5** — kreator premium / asset manager UX.

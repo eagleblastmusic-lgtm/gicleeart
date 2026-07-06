@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from pathlib import Path
 
 import customtkinter as ctk
 
@@ -11,6 +12,7 @@ from giclee_app.studio.background_capabilities import (
     BackgroundCapability,
     tier_display,
 )
+from giclee_app.studio.background_state import summarize_background_state
 
 from . import theme
 from .widgets import SectionHeader
@@ -27,16 +29,26 @@ def panel_rows(
     cap: BackgroundCapability,
     *,
     component_name: str,
+    folder_name: str = "",
+    package_path: Path | None = None,
 ) -> list[tuple[str, str]]:
     """Sekcje read-only panelu — testowalne bez Tk."""
     _ = component_name
-    return [
+    state_text = ""
+    if folder_name and package_path is not None:
+        state_text = summarize_background_state(folder_name, package_path).text
+    rows: list[tuple[str, str]] = [
         ("Typ tła", f"{cap.label}\n{tier_display(cap.tier)}"),
         ("Źródło", cap.source_hint),
+    ]
+    if state_text:
+        rows.append(("Aktualny stan", state_text))
+    rows.extend([
         ("Kontekst inline", cap.inline_note),
         ("Status", "read-only"),
         ("Co dalej", _CO_DALEJ_NOTE),
-    ]
+    ])
+    return rows
 
 
 class BackgroundPanelView(ctk.CTkFrame):
@@ -111,7 +123,12 @@ class BackgroundPanelView(ctk.CTkFrame):
         ).grid(row=0, column=0, sticky="w", pady=(0, 12))
 
         for row_idx, (title, body) in enumerate(
-            panel_rows(self._cap, component_name=self._comp.name),
+            panel_rows(
+                self._cap,
+                component_name=self._comp.name,
+                folder_name=self._comp.folder_name,
+                package_path=self._comp.package_path,
+            ),
             start=1,
         ):
             panel = ctk.CTkFrame(
@@ -137,7 +154,15 @@ class BackgroundPanelView(ctk.CTkFrame):
         if self._on_open_inline is not None and self._comp.mode == "inline":
             action_row = ctk.CTkFrame(scroll, fg_color="transparent")
             action_row.grid(
-                row=len(panel_rows(self._cap, component_name=self._comp.name)) + 1,
+                row=len(
+                    panel_rows(
+                        self._cap,
+                        component_name=self._comp.name,
+                        folder_name=self._comp.folder_name,
+                        package_path=self._comp.package_path,
+                    )
+                )
+                + 1,
                 column=0,
                 sticky="ew",
                 pady=(4, 0),

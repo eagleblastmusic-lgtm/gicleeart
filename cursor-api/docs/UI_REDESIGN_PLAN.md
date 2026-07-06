@@ -1,6 +1,6 @@
 # GicleeApp UI Redesign Plan
 
-**Status:** Faza 4.3a — Background Safe Handoff (panel → inline).
+**Status:** Faza 4.3b — Read-only background state summary.
 
 ## Goal
 
@@ -67,8 +67,8 @@ Not in **`eagleblastmusic-lgtm/gicleeart-gpt`** (theme snapshot only).
 | F4 | Background parity foundation: audit + read-only Studio awareness | done |
 | F4.1.1 | Inline DnD fallback + local thumbnails | done |
 | F4.2 | Background Panel Shell — read-only panel tła w hubie | done |
-| F4.3a | Safe handoff panel → existing inline editor | **current** |
-| F4.3b | Read-only current background state summary | planned |
+| F4.3a | Safe handoff panel → existing inline editor | done |
+| F4.3b | Read-only current background state summary | **current** |
 | F5 | Kreator premium / asset manager UX | planned |
 | F5.1 | Przełącznik domyślny (`GICLEE_STUDIO_UI`) | planned |
 | F6 | PyInstaller + CustomTkinter w `.exe` | planned |
