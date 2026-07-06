@@ -8,13 +8,20 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from giclee_app.component_loader import find_components_dir
 from giclee_app.studio.gicleeframe_draft_state import GicleeFrameDraftState
 from giclee_app.studio.gicleeframe_dry_run import build_gicleeframe_plan_dry_run
+from giclee_app.studio.gicleeframe_page_draft import GicleeFramePageDraft
+from giclee_app.studio.gicleeframe_page_dry_run import build_page_structure_dry_run
+from giclee_app.studio.gicleeframe_page_inventory import build_gicleeframe_page_inventory
 from giclee_app.studio.gicleeframe_readiness import (
     WRITER_STATUS,
+    evaluate_gicleeframe_page_readiness,
     evaluate_gicleeframe_readiness,
+    format_page_readiness_block,
     format_readiness_block,
     readiness_display_rows,
+    readiness_page_display_rows,
 )
 
 _STUDIO_ROOT = Path(__file__).resolve().parents[1] / "giclee_app" / "studio"
@@ -74,3 +81,20 @@ def test_readiness_module_allows_save_ready_field_name() -> None:
             imports.add(node.module)
     for imp in imports:
         assert not imp.startswith("Komponenty")
+
+
+def test_page_readiness_rows_include_writer_blocks() -> None:
+    rows = readiness_page_display_rows()
+    labels = {r.label for r in rows}
+    assert "Shopify writer" in labels
+    assert "Save/Zapisz/Zastosuj" in labels
+
+
+def test_page_readiness_save_blocked_with_inventory() -> None:
+    inv = build_gicleeframe_page_inventory(find_components_dir())
+    dry = build_page_structure_dry_run(inv, GicleeFramePageDraft())
+    ready = evaluate_gicleeframe_page_readiness(inv, dry)
+    assert ready.save_ready is False
+    assert ready.structure_dry_run_ready is True
+    block = format_page_readiness_block(ready)
+    assert "struktura" in block.lower() or "inventory" in block.lower()

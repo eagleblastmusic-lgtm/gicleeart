@@ -12,6 +12,8 @@ from giclee_app.studio.gicleeframe_dry_run import (
     GicleeFramePlanDryRun,
     SHOPIFY_SCOPE_NOTE,
 )
+from giclee_app.studio.gicleeframe_page_dry_run import PageStructureDryRun
+from giclee_app.studio.gicleeframe_page_inventory import PageInventoryReport
 
 READINESS_SECTION_LABEL = "Status gotowości"
 WRITER_STATUS: Literal["blocked"] = "blocked"
@@ -104,6 +106,106 @@ def evaluate_gicleeframe_readiness(
         status_label=_STATUS_PLAN_READY,
         summary="Dry-run OK — plan informacyjny gotowy. Zapis nadal zablokowany.",
     )
+
+
+@dataclass(frozen=True)
+class GicleeFramePageReadiness:
+    page_inventory_ready: bool
+    ram_draft_ready: bool
+    structure_dry_run_ready: bool
+    shopify_writer_status: Literal["blocked"]
+    save_apply_status: Literal["blocked"]
+    sync_deploy_status: Literal["blocked"]
+    runtime_mutation_status: Literal["blocked"]
+    save_ready: bool
+    status_label: str
+    summary: str
+
+
+F2_READINESS_NOTE = "F3: bounded writer do variant JSON — po osobnej akceptacji."
+
+
+def readiness_page_display_rows(
+    readiness: GicleeFramePageReadiness | None = None,
+) -> list[ReadinessRow]:
+    r = readiness
+    return [
+        ReadinessRow(
+            "Page inventory",
+            "ready" if r and r.page_inventory_ready else "—",
+            True if r and r.page_inventory_ready else None,
+        ),
+        ReadinessRow(
+            "RAM draft editing",
+            "ready",
+            True,
+        ),
+        ReadinessRow(
+            "Structure dry-run",
+            "ready" if r and r.structure_dry_run_ready else "oczekuje",
+            True if r and r.structure_dry_run_ready else False,
+        ),
+        ReadinessRow("Shopify writer", "blocked", False),
+        ReadinessRow("Save/Zapisz/Zastosuj", "blocked", False),
+        ReadinessRow("Sync/deploy", "blocked", False),
+        ReadinessRow("Runtime mutation", "blocked", False),
+    ]
+
+
+def evaluate_gicleeframe_page_readiness(
+    inventory: PageInventoryReport,
+    dry_run: PageStructureDryRun,
+) -> GicleeFramePageReadiness:
+    inv_ready = inventory.source_section_count > 0 and len(inventory.elements) > 0
+    spec_ready = dry_run.ok and inv_ready
+
+    if not inv_ready:
+        return GicleeFramePageReadiness(
+            page_inventory_ready=False,
+            ram_draft_ready=True,
+            structure_dry_run_ready=False,
+            shopify_writer_status=WRITER_STATUS,
+            save_apply_status=WRITER_STATUS,
+            sync_deploy_status=SYNC_DEPLOY_STATUS,
+            runtime_mutation_status=WRITER_STATUS,
+            save_ready=False,
+            status_label="brak inventory",
+            summary="Odśwież inventory lub sprawdź ścieżkę wariantu.",
+        )
+
+    return GicleeFramePageReadiness(
+        page_inventory_ready=True,
+        ram_draft_ready=True,
+        structure_dry_run_ready=spec_ready,
+        shopify_writer_status=WRITER_STATUS,
+        save_apply_status=WRITER_STATUS,
+        sync_deploy_status=SYNC_DEPLOY_STATUS,
+        runtime_mutation_status=WRITER_STATUS,
+        save_ready=False,
+        status_label="struktura gotowa (bez zapisu)" if spec_ready else "zablokowane",
+        summary="Structure dry-run OK — spec informacyjny. Zapis nadal zablokowany.",
+    )
+
+
+def format_page_readiness_block(readiness: GicleeFramePageReadiness) -> str:
+    lines = [
+        "Status gotowości (strona)",
+        f"Status: {readiness.status_label}",
+        f"Page inventory: {'ready' if readiness.page_inventory_ready else 'nie'}",
+        f"RAM draft editing: ready",
+        f"Structure dry-run: {'ready' if readiness.structure_dry_run_ready else 'nie'}",
+        f"Shopify writer: {readiness.shopify_writer_status}",
+        f"Save/Zapisz/Zastosuj: {readiness.save_apply_status}",
+        f"Sync/deploy: {readiness.sync_deploy_status}",
+        f"Runtime mutation: {readiness.runtime_mutation_status}",
+        readiness.summary,
+        "",
+        F3_READINESS_DISCLAIMER,
+        SHOPIFY_SCOPE_NOTE,
+        F2_READINESS_NOTE,
+        NEXT_PHASE_NOTE,
+    ]
+    return "\n".join(lines)
 
 
 def format_readiness_block(readiness: GicleeFrameReadiness) -> str:

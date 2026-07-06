@@ -17,6 +17,9 @@ _NEW_PLANNING_MODULES = (
     "gicleeframe_draft_state.py",
     "gicleeframe_dry_run.py",
     "gicleeframe_readiness.py",
+    "gicleeframe_page_inventory.py",
+    "gicleeframe_page_draft.py",
+    "gicleeframe_page_dry_run.py",
 )
 
 _FORBIDDEN_UI_LABELS = (
@@ -99,7 +102,11 @@ def test_view_source_plan_section() -> None:
     assert "CLEAR_PLAN_LABEL" in text
     assert "build_gicleeframe_plan_dry_run" in text
     assert "evaluate_gicleeframe_readiness" in text
-    assert "Status gotowości" in text
+    assert "READINESS_SECTION_LABEL" in text
+    assert "Struktura strony GICLÉE FRAME" in text
+    assert "REFRESH_INVENTORY_LABEL" in text
+    assert "CHECK_STRUCTURE_LABEL" in text
+    assert "DRAFT_RAM_DISCLAIMER" in text
 
 
 def _assert_no_writes_in_source(path: Path) -> None:

@@ -14,7 +14,7 @@ Tryb: `inline` (sekcja **Administracja strony**). Uruchomienie: `python -m Kompo
 
 **Strefy:** 8 sekcji editorial (media-with-content) + 9 separatorów + legacy main-page — kolejność jak na stronie live.
 
-**Studio planning (F1):** [`giclee_app/docs/gicleeframe-planning.md`](../../giclee_app/docs/gicleeframe-planning.md) — panel planistyczny w GicleeApp Studio (dry-run, readiness, bez writera). W Studio karta `gicleeframe` **nie** otwiera tego legacy edytora.
+**Studio planning (F1 + F2):** [`giclee_app/docs/gicleeframe-planning.md`](../../giclee_app/docs/gicleeframe-planning.md) — panel planistyczny w GicleeApp Studio: inventory strony (F2), dry-run, RAM draft, readiness, bez writera. W Studio karta `gicleeframe` **nie** otwiera tego legacy edytora.
 
 **Warianty:** domyślnie jedna wersja (`gf1`); **Dodaj nową…** kopiuje bieżącą.
 
