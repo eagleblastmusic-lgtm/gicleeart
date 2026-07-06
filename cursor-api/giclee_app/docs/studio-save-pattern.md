@@ -2,7 +2,7 @@
 
 Hub: [`background-builder.md`](background-builder.md) · [`studio-preview.md`](studio-preview.md) · [`../../docs/UI_REDESIGN_PLAN.md`](../../docs/UI_REDESIGN_PLAN.md)
 
-**Checkpoint:** v1.33.0 · reference implementation: `stronaglowna` background (F5.4a → F5.4c1)
+**Checkpoint:** v1.35.0 · reference implementation: `stronaglowna` background (F5.4a → F5.4b2) · **Background Builder local v1 complete**
 
 Ten dokument jest **standardem pracy** dla przyszłych komponentów Studio z lokalnym zapisem — nie tylko historią `stronaglowna`. Każdy nowy workflow zapisu powinien przejść przez te fazy w tej kolejności, chyba że sekcja „When to stop” mówi inaczej.
 
@@ -350,10 +350,13 @@ Każdy etap dla nowego komponentu — osobna akceptacja:
 | F5.4b1 | done | `background_save_writer.py` — clear + backup, Zapisz lokalnie |
 | F5.4c1 | done | restore w writerze — Cofnij ostatni zapis (session-only) |
 | F5.4c2 | planned | limited backup picker (defer) |
-| F5.4d | planned | asset ref selection, `set_with_ref` |
+| F5.4d | done | `background_asset_catalog.py` — asset/ref selection |
+| F5.4b2 | done | `background_save_writer.py` — set_with_ref + backup |
 | F5.5 | planned | Shopify / sync / deploy — osobna decyzja |
 
-Szczegóły faz: [`background-builder.md`](background-builder.md) §13–16 · smoke: [`studio-preview.md`](studio-preview.md) § F5.4.
+F5.4b2 completed the local write cycle (`set_with_ref`). **Background Builder local v1** is the reference implementation for Save Pattern Playbook **Level 2** (bounded writer + backup + session undo).
+
+Szczegóły faz i freeze: [`background-builder.md`](background-builder.md) §13–19 · smoke: [`studio-preview.md`](studio-preview.md) § F5.4.
 
 **Lekcje ze smoke F5.4b1/c1:**
 

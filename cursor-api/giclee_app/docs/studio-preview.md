@@ -122,6 +122,17 @@ Kontrakt i roadmapa: [`background-builder.md`](background-builder.md). Wzorzec z
 
 F5.4b1 to pierwszy realny zapis lokalny — tylko **wyczyść tło** z backupem. F5.4c1 dodaje **session-only undo**. F5.4d dodaje **wybór istniejącego assetu**. F5.4b2 dodaje **zapis set_with_ref** (existing refs only) z backupem i reuse undo.
 
+### Background Builder local v1 — checkpoint
+
+| | |
+|---|---|
+| Studio | **v1.35.0** |
+| Background Builder local v1 | **done** — pełny lokalny cykl zapisu |
+| F5.5 | **not started** |
+| Next recommended | Administracja strony strategy / **F6.3** |
+
+Szczegóły freeze: [`background-builder.md`](background-builder.md) §19.
+
 Manual smoke F5.4b1: patrz sekcja poniżej.
 
 ---

@@ -86,6 +86,9 @@ Not in **`eagleblastmusic-lgtm/gicleeart-gpt`** (theme snapshot only).
 | F5.5 | Shopify / sync / deploy | planned — osobna decyzja |
 | F5.6 | Przełącznik domyślny (`GICLEE_STUDIO_UI`) | planned |
 | — | **Save Pattern Playbook** — standard faz zapisu dla kolejnych workflow Studio ([`studio-save-pattern.md`](../giclee_app/docs/studio-save-pattern.md)) | done (docs) |
+| — | **Background Builder local v1 freeze** | done (docs @ 1.35.0) |
+
+Lokalny cykl F5.4 (`stronaglowna` → section_background) jest domknięty. **Next:** Studio v2 component strategy / **F6.3**; osobno strategia „Administracja strony” (rebuild vs adapt). **F5.5** remains deferred.
 
 ### Studio v2 redesign track (F6.x)
 

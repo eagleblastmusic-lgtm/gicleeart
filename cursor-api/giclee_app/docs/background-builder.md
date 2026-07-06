@@ -330,6 +330,45 @@ Manual smoke F5.4b2: patrz [`studio-preview.md`](studio-preview.md).
 
 ---
 
+## 19. Background Builder local v1 freeze
+
+Lokalny cykl zapisu dla **`stronaglowna` → `section_background`** jest domknięty w Studio v1.35.0. Pełny przepływ użytkownika:
+
+1. **Wybór strefy** — draft lokalny (F5.2)
+2. **Wybór typu** — image / video (bez video_collage w zapisie)
+3. **Wybór istniejącego assetu/ref** — bounded catalog z aktywnego wariantu (F5.4d)
+4. **Dry-run** — Plan zapisu, **Sprawdź zapis** (F5.4a)
+5. **Readiness** — Gotowość zapisu, ref policy (F5.4b0)
+6. **Zapisz lokalnie** — clear (F5.4b1) lub set_with_ref (F5.4b2)
+7. **Backup before write** — `data/backups/index-{YYYYMMDD-HHMMSS}.json`
+8. **Bounded write** — tylko aktywny `index.json`, jedna strefa, 4 pola
+9. **Session undo / restore** — Cofnij ostatni zapis z backupu sesji (F5.4c1)
+
+**Poza zakresem local v1 (defer):**
+
+- Shopify · upload · deploy / sync / polling
+- overlay editor · backup picker (F5.4c2) · full index restore
+
+| Faza | Status |
+|------|--------|
+| F5.4a dry-run contract | done |
+| F5.4b0 readiness / ref policy | done |
+| F5.4b1 clear writer + backup | done |
+| F5.4c1 session undo restore | done |
+| F5.4d asset/ref selection | done |
+| F5.4b2 set_with_ref writer | done |
+| F5.5 Shopify / sync / deploy | not started |
+
+Background Builder local v1 is complete. Further work should avoid expanding this component unless it is F5.5 or a clearly scoped follow-up.
+
+| Metadane | Wartość |
+|----------|---------|
+| Freeze version | **1.35.0** |
+| Freeze SHA | `3d23e43` |
+| Reference implementation | [`studio-save-pattern.md`](studio-save-pattern.md) — Level 2 bounded writer |
+
+---
+
 ## Powiązane dokumenty
 
 - F4 audit: [`background-parity.md`](background-parity.md)
