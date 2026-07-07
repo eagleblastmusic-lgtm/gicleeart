@@ -37,6 +37,24 @@ _FORBIDDEN_BUTTON_PATTERNS = (
 )
 
 
+def _self_method_calls(source: str, method: str) -> list[ast.Call]:
+    """Active `self.<method>(...)` calls — AST ignores commented-out lines."""
+    tree = ast.parse(source)
+    hits: list[ast.Call] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        func = node.func
+        if (
+            isinstance(func, ast.Attribute)
+            and func.attr == method
+            and isinstance(func.value, ast.Name)
+            and func.value.id == "self"
+        ):
+            hits.append(node)
+    return hits
+
+
 def test_view_source_no_komponenty_imports() -> None:
     tree = ast.parse(_VIEW_PATH.read_text(encoding="utf-8"))
     imports: set[str] = set()
@@ -84,6 +102,129 @@ def test_view_source_f21_editor_labels() -> None:
     assert "_structure_dry_run_btn" in text
     assert "_toggle_page_readiness" in text
     assert "_PAGE_READINESS_TITLE" in text
+    assert "_build_control_column" in text
+    assert "_build_safety_card" in text
+    assert "SECTION_LIST_TITLE" in text
+    assert "APPLY_RAM_MICROCOPY" in text
+    assert "PANEL_STATUS_UNSAVED" in text
+    assert "_make_primary_button" in text
+    assert "STRUCTURE_EMPTY_STATE" in text
+    assert "_build_setting_group_card" in text
+    assert "divider_setting_groups" in text
+    assert "_make_empty_state" in text
+    assert "_build_command_bar" in text
+    assert "_build_section_identity_card" in text
+    assert "_build_action_dock" in text
+    assert "_PREVIEW_SETTINGS_CAPTION" in text
+    assert "_build_safety_row" in text
+    assert "_pack_field_vertical" in text
+    assert "_update_section_preview" in text
+
+
+def test_view_source_f222_premium_copy() -> None:
+    from giclee_app.studio.gicleeframe_page_draft import (
+        APPLY_RAM_DRAFT_LABEL,
+        APPLY_RAM_MICROCOPY,
+    )
+
+    text = _VIEW_PATH.read_text(encoding="utf-8")
+    assert "APPLY_RAM_DRAFT_LABEL" in text
+    assert APPLY_RAM_DRAFT_LABEL == "Uaktualnij wariant RAM"
+    assert "APPLY_RAM_MICROCOPY" in text
+    assert "Tylko pamięć" in APPLY_RAM_MICROCOPY
+    assert "_PREVIEW_SETTINGS_CAPTION" in text
+    assert "Podgląd ustawień" in text
+    assert "RAM-only" in text
+    assert "Brak zapisu motywu" in text
+    assert "Widoczna" in text
+    for pattern in _FORBIDDEN_BUTTON_PATTERNS:
+        assert not re.search(pattern, text), f"Forbidden button pattern found: {pattern}"
+
+
+def test_view_source_f223_first_screen_composition() -> None:
+    text = _VIEW_PATH.read_text(encoding="utf-8")
+    assert "_ellipsize" in text
+    assert "_SECTION_LIST_WIDTH = 320" in text
+    assert "_EDITOR_HERO_PREVIEW_HEIGHT" in text
+    assert "_SECTION_ROW_HEIGHT" in text
+    assert "RAM preview" in text
+    assert "APPLY_RAM_DRAFT_LABEL" in text
+    assert "_build_section_identity_card" in text
+    assert "_build_action_dock" in text
+    assert "F2.2.3" in text
+    assert _self_method_calls(text, "_build_action_dock") == []
+
+
+def test_view_source_f224_visual_tokens() -> None:
+    text = _VIEW_PATH.read_text(encoding="utf-8")
+    assert "F2.2.4" in text
+    assert "_GF_PREVIEW_PAPER" in text
+    assert "_make_gf_card" in text
+    assert "_section_kind_copy" in text
+    assert "APPLY_RAM_DRAFT_LABEL" in text
+    assert "write_text" not in text
+    assert _self_method_calls(text, "_build_action_dock") == []
+    for pattern in _FORBIDDEN_BUTTON_PATTERNS:
+        assert not re.search(pattern, text), f"Forbidden button pattern found: {pattern}"
+
+
+def test_view_source_f225_section_workbench() -> None:
+    from giclee_app.studio.gicleeframe_page_draft import APPLY_RAM_DRAFT_LABEL
+
+    text = _VIEW_PATH.read_text(encoding="utf-8")
+    assert "F2.2.5" in text
+    assert "_section_preview_canvas" in text
+    assert "_section_preview_badge" in text
+    assert "_build_media_section_preview_structure" in text
+    assert "_build_divider_preview_structure" in text
+    assert "_build_legacy_preview_structure" in text
+    assert "_build_text_preview_structure" in text
+    assert "Warstwy sekcji" in text
+    assert "Kliknij, aby edytować" in text
+    assert "Workbench sekcji" in text
+    assert "APPLY_RAM_DRAFT_LABEL" in text
+    assert APPLY_RAM_DRAFT_LABEL == "Uaktualnij wariant RAM"
+    assert '"Komponenty"' not in text
+    assert "write_text" not in text
+    for pattern in _FORBIDDEN_BUTTON_PATTERNS:
+        assert not re.search(pattern, text), f"Forbidden button pattern found: {pattern}"
+
+
+def test_view_source_f226_child_layer_and_color() -> None:
+    from giclee_app.studio.gicleeframe_page_draft import APPLY_RAM_DRAFT_LABEL
+
+    text = _VIEW_PATH.read_text(encoding="utf-8")
+    assert "F2.2.6" in text
+    assert "_LAYER_NAV_TITLE" in text
+    assert "_IMAGE_SOURCE_TITLE" in text
+    assert "_layer_nav_frame" in text
+    assert "_update_layer_nav" in text
+    assert "_parent_row_for_element" in text
+    assert "_selected_layer_items" in text
+    assert "_build_image_preview_structure" in text
+    assert "_image_ref_label" in text
+    assert '_GF_PANEL = "#1e1e21"' in text
+    assert '_GF_GOLD = "#b8a878"' in text
+    assert "panel_deep" in text
+    assert "Grafika sekcji" in text
+    assert "Źródło grafiki" in text
+    assert "Warstwy sekcji" in text
+    assert "Workbench sekcji" in text
+    assert "APPLY_RAM_DRAFT_LABEL" in text
+    assert APPLY_RAM_DRAFT_LABEL == "Uaktualnij wariant RAM"
+    assert "write_text" not in text
+    for pattern in _FORBIDDEN_BUTTON_PATTERNS:
+        assert not re.search(pattern, text), f"Forbidden button pattern found: {pattern}"
+
+
+def test_view_source_f221_setting_groups() -> None:
+    from giclee_app.studio.gicleeframe_page_settings import divider_setting_groups
+
+    text = _VIEW_PATH.read_text(encoding="utf-8")
+    assert "divider_setting_groups" in text
+    group_titles = [title for title, _keys in divider_setting_groups()]
+    for group in ("Linia", "Układ", "Styl"):
+        assert group in group_titles
 
 
 def test_view_source_allows_informational_sync_blocked_text() -> None:

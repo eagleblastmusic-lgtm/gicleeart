@@ -100,10 +100,12 @@ def test_component_hub_wires_background_callback() -> None:
 def test_component_card_has_separate_tlo_button() -> None:
     path = Path(__file__).resolve().parents[1] / "giclee_app" / "ui" / "widgets.py"
     text = path.read_text(encoding="utf-8")
-    card_block = text.split("class ComponentCard")[1].split("\nclass ")[0]
+    card_block = text.split("class ComponentCard(", 1)[1].split("\nclass ", 1)[0]
+    helper_block = text.split("def _card_build_background_action", 1)[1].split("\ndef ", 1)[0]
+    assert "_card_build_background_action" in card_block
     assert "on_open_background" in card_block
-    assert 'text="Tło"' in card_block
-    assert "command=lambda c=comp: on_open_background(c)" in card_block
+    assert 'text="Tło"' in helper_block
+    assert "command=lambda c=comp: on_open_background(c)" in helper_block
 
 
 def test_escape_back_handles_background_before_inline() -> None:

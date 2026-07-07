@@ -17,7 +17,21 @@ def _studio_app() -> GicleeAppStudio:
     app = GicleeAppStudio()
     app.withdraw()
     app.update_idletasks()
+    app.update()
     return app
+
+
+def _flush_view_mounts(app: GicleeAppStudio, *, key: str | None = None) -> None:
+    import time
+
+    deadline = time.time() + 5.0
+    while time.time() < deadline:
+        app.update_idletasks()
+        app.update()
+        if key is None or key in app._view_cache:
+            return
+    if key is not None and key not in app._view_cache:
+        raise AssertionError(f"View {key!r} not mounted after deferred factory")
 
 
 def test_view_cache_reuses_dashboard() -> None:
@@ -37,8 +51,10 @@ def test_view_cache_reuses_hub_per_category() -> None:
     app = _studio_app()
     try:
         app._show_hub("products")
+        _flush_view_mounts(app, key="hub:products")
         first = app._view_cache["hub:products"]
         app._show_hub("theme")
+        _flush_view_mounts(app, key="hub:theme")
         app._show_hub("products")
         second = app._view_cache["hub:products"]
         assert first is second

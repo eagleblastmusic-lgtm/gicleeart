@@ -2,7 +2,7 @@
 
 Hub: [`admin-components-strategy.md`](admin-components-strategy.md) · [`studio-v2-workflows.md`](studio-v2-workflows.md) · [`studio-save-pattern.md`](studio-save-pattern.md) · legacy: [`../../docs/komponenty/gicleeframe.md`](../../docs/komponenty/gicleeframe.md)
 
-**Stan:** app planning component **ready** @ Studio v1.40.1 · page editor workflow **ready (F2.1)** · Shopify implementation **not started** · writer/save **blocked**
+**Stan:** app planning component **ready** @ Studio v1.40.8 · page editor workflow **ready (F2.1)** · **F2.2 layout polish** · **F2.2.1 visual hierarchy** · **F2.2.2 premium visual workbench** · **F2.2.3 first-screen composition** · **F2.2.4 premium visual language** · **F2.2.5 section workbench** · **F2.2.6 child layer navigation** · Shopify **not started** · writer/save **blocked**
 
 ---
 
@@ -87,7 +87,94 @@ Bounded read z wariantu aktywnego w manifest. Licznik `order[]` ≠ liczba eleme
 
 ---
 
-## 6. F2.1 — editor workflow polish
+---
+
+## 6. F2.2 — Studio cockpit layout polish (v1.40.2)
+
+| Element | Szczegół |
+|---------|----------|
+| Układ | 3-kolumnowy desktop: **Sekcje strony** · **Edytor sekcji** · **Kontrola** (podgląd struktury, readiness, bezpieczeństwo) |
+| Kontekst | Pasek u góry: tytuł, chip RAM-only, źródło `gf1 (dev) · page.giclee-frame.json`, wariant roboczy, licznik zmian, status „Nic nie zapisano” |
+| Primary | Jedyna akcja accent: **Uaktualnij wariant RAM** + microcopy „Tylko pamięć · nic nie zapisuje” |
+| RAM-only | Bez writera, bez zapisu do pliku, bez F3/F4/Shopify |
+| Responsive | Desktop 3-kolumnowy; wąski fallback — osobny F2.2.1 jeśli potrzebny |
+
+---
+
+## 7. F2.2.1 — visual hierarchy pass (v1.40.3)
+
+| Element | Szczegół |
+|---------|----------|
+| Workbench | Edytor środkowy: grupy ustawień w kartach (`Linia`, `Układ`, `Styl`, `Notatka`) w siatce 2-kolumnowej; max szerokość formularza ~680 px |
+| Kontekst | Jeden kompaktowy pasek (chip RAM, źródło, wariant, zmiany, status) — bez powielania tytułu z breadcrumb |
+| Command bar | Jedna powierzchnia operacji zamiast ramek w ramkach |
+| Kontrola | Empty state dry-run, badge readiness, checklista bezpieczeństwa |
+| RAM-only | Bez writera, F3/F4, Shopify — tylko polish UI |
+
+---
+
+## 7b. F2.2.2 — premium visual workbench pass (v1.40.4)
+
+| Element | Szczegół |
+|---------|----------|
+| Identity card | Karta sekcji z mini podglądem separatora (`Podgląd ustawień`) |
+| Karty ustawień | `CardBg`, bez ramek; pola w układzie pionowym |
+| Action dock | `Uaktualnij wariant RAM` + microcopy w jednej powierzchni |
+| Nawigacja | Lista sekcji z pill badges; mniej ramek w całym panelu |
+| Status stack | Prawa kolumna: struktura + readiness pill + checklista bezpieczeństwa |
+| RAM-only | Bez writera, F3/F4, Shopify — tylko polish UI |
+
+---
+
+## 7c. F2.2.3 — first-screen premium composition fix (v1.40.5)
+
+| Element | Szczegół |
+|---------|----------|
+| First screen | Główna akcja RAM w identity card (above the fold) |
+| Nawigacja | Szersza lista sekcji (320 px), ellipsize długich nazw |
+| Hero preview | Podgląd separatora z pill „RAM preview”, feedback width/thickness |
+| Formularz | Jaśniejsze menu (`CardBg`), większy oddech w gridzie ustawień |
+| RAM-only | Bez writera, F3/F4, Shopify — tylko polish UI |
+
+---
+
+## 7d. F2.2.4 — premium visual language pass (v1.40.6)
+
+| Element | Szczegół |
+|---------|----------|
+| Visual tokens | Lokalne tokeny `_GF_*` tylko dla GICLÉE FRAME |
+| Preview | Mini artboard z papierem/matą i linią separatora |
+| Nawigacja | Numerowane rowy sekcji + subtelny typ sekcji |
+| Forms | Cieplejsze pola i setting cards |
+| RAM-only | Bez writera, F3/F4, Shopify — tylko UI polish |
+
+---
+
+## 7e. F2.2.5 — section workbench / component tiles pass (v1.40.7)
+
+| Element | Szczegół |
+|---------|----------|
+| Preview | Typ-zależny preview: divider / media section / legacy / child |
+| Warstwy | Duże kafle dzieci sekcji zamiast małych przycisków |
+| Workbench | Środkowy edytor bardziej jak narzędzie projektowe |
+| Notes | Notatka mniej dominuje pierwszy ekran |
+| RAM-only | Bez writera, F3/F4, Shopify — tylko UI polish |
+
+---
+
+## 7f. F2.2.6 — child editor / layer navigation + premium color polish (v1.40.8)
+
+| Element | Szczegół |
+|---------|----------|
+| Layer nav | Stała nawigacja warstw sekcji także po wejściu w dziecko |
+| Image child | Preview grafiki jako obiekt edytorski |
+| Color | Cieplejsza lokalna paleta atelier `_GF_*` |
+| Forms | `Źródło grafiki`, cieplejsze pola i mniej techniczny kontrast |
+| RAM-only | Bez writera, F3/F4, Shopify — tylko UI polish |
+
+---
+
+## 8. F2.1 — editor workflow polish
 
 | Element | Szczegół |
 |---------|----------|
@@ -99,7 +186,7 @@ Bounded read z wariantu aktywnego w manifest. Licznik `order[]` ≠ liczba eleme
 
 ---
 
-## 7. F2.1 jako wzorzec dla przyszłych edytorów strony
+## 9. F2.1 jako wzorzec dla przyszłych edytorów strony
 
 **Decyzja produktowa (Studio v1.40.1):** workflow F2.1 GICLÉE FRAME™ ustanawia docelowy wzorzec **`Studio Page Component Editor Pattern`** dla wszystkich komponentów GicleeApp Studio związanych z budowaniem i projektowaniem strony (Kontakt, FAQ, Filozofia marki, Blog, …).
 
@@ -126,7 +213,7 @@ Implementacja referencyjna: ten moduł (`gicleeframe_page_*`, `gicleeframe_view.
 
 ---
 
-## 8. Backlog (nie w tej fazie)
+## 10. Backlog (nie w tej fazie)
 
 | Faza | Zakres |
 |------|--------|
@@ -136,3 +223,21 @@ Implementacja referencyjna: ten moduł (`gicleeframe_page_*`, `gicleeframe_view.
 | **F5.5** | Synchronizacja/wdrożenie — osobna akceptacja produktowa |
 
 **Gotowe do kolejnej fazy: po akceptacji F2.1.**
+
+---
+
+## 11. Performance — responsive section selection (Studio v1.41.1)
+
+Wybór sekcji w `gicleeframe_view.py` jest dwuetapowy:
+
+| Etap | Opóźnienie | Zachowanie |
+|------|------------|------------|
+| **Immediate** | 0 ms | highlight wiersza, trigger, subtitle „Ładowanie: …”, anulowanie poprzednich jobów |
+| **Deferred populate** | 16 ms (`_GF_SELECT_POPULATE_DEFER_MS`) | pełny `_populate_editor()` z guardem `_selection_generation` |
+| **Stable page context** | 140 ms (`_GF_PAGE_CONTEXT_STABLE_DEFER_MS`) | `_populate_page_context_progressive` tylko gdy wybór się ustabilizował |
+
+Lista sekcji **domyślnie nie zwija się** po kliknięciu wiersza (szybkie przechodzenie po strukturze). Legacy/debug: `$env:GICLEE_GF_COLLAPSE_SECTION_LIST_ON_CLICK="1"`.
+
+Dropdown sekcji reużywa istniejących wierszy (`section_dropdown.rows_reused`) zamiast przebudowywać listę przy każdym otwarciu.
+
+Logi perf (`GICLEE_STUDIO_PERF=1`): `select_element.immediate_ready`, `populate_editor.deferred`, `populate_editor.deferred_stale`, `page_context.stable_defer_stale`.

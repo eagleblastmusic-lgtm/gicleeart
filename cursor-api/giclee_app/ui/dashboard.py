@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import subprocess
 import sys
+import time
+import tkinter as tk
 from collections.abc import Callable
 from datetime import date
 from pathlib import Path
@@ -17,6 +19,7 @@ from giclee_app.launcher_delegate import LaunchOutcome, launch
 from giclee_app.runtime import get_component_cwd
 from giclee_app.studio import status_providers
 from giclee_app.studio.component_index import StudioComponentIndex
+from giclee_app.studio.perf import log_event, span
 from giclee_app.studio.state import StudioState
 from giclee_app.studio.status_providers import StatusResult
 
@@ -24,9 +27,14 @@ from . import theme
 from .widgets import CompactComponentChip, SectionHeader, StatCard, StatusPill
 
 _DOCS_PATH = Path(__file__).resolve().parents[1] / "docs" / "studio-preview.md"
+_DASHBOARD_INITIAL_REFRESH_DELAY_MS = 50
+_THEME_STATUS_DELAY_MS = 400
+_GIT_STATUS_DELAY_MS = 480
 
 
 class DashboardView(ctk.CTkScrollableFrame):
+    uses_async_first_paint = True
+
     def __init__(
         self,
         master: ctk.CTkBaseClass,
@@ -49,9 +57,73 @@ class DashboardView(ctk.CTkScrollableFrame):
         self._theme_pill: StatusPill | None = None
         self._git_pill: StatusPill | None = None
         self._gpt_pill: StatusPill | None = None
-        self._build()
+        self._build_after_ids: list[str] = []
+        self._refresh_after_ids: list[str] = []
+        self._last_shop_status: StatusResult | None = None
+        self._last_theme_status: StatusResult | None = None
+        self._last_git_status: StatusResult | None = None
+        self._last_gpt_status: StatusResult | None = None
+        self._deferred_sections_built = False
+        self._visual_enter_mono = time.perf_counter()
+        self._visual_skeleton_logged = False
+        self._visual_visible_logged = False
+        self._visual_full_logged = False
+        self._visible_lane_ready = False
+        self._pending_on_show = False
+        self._safe_after_build(0, self._build_critical_shell)
 
-    def _build(self) -> None:
+    def _since_visual_enter_ms(self) -> float:
+        return round((time.perf_counter() - self._visual_enter_mono) * 1000, 2)
+
+    def _mark_visual_skeleton_ready(self) -> None:
+        if self._visual_skeleton_logged:
+            return
+        self._visual_skeleton_logged = True
+        log_event(
+            "studio.dashboard.visual.skeleton_ready",
+            since_enter_ms=self._since_visual_enter_ms(),
+        )
+
+    def _mark_visual_visible_ready(self) -> None:
+        if self._visual_visible_logged:
+            return
+        self._visual_visible_logged = True
+        log_event(
+            "studio.dashboard.visual.visible_ready",
+            since_enter_ms=self._since_visual_enter_ms(),
+        )
+
+    def _mark_visual_full_ready(self) -> None:
+        if self._visual_full_logged:
+            return
+        self._visual_full_logged = True
+        log_event(
+            "studio.dashboard.visual.full_ready",
+            since_enter_ms=self._since_visual_enter_ms(),
+        )
+
+    def _build_critical_shell(self) -> None:
+        with span("studio.dashboard.build.critical"):
+            self._build_critical_header()
+        self._mark_visual_skeleton_ready()
+        self._safe_after_build(0, self._build_visible_lane)
+
+    def _build_visible_lane(self) -> None:
+        with span("studio.dashboard.build.visible"):
+            self._build_status_row()
+            self._build_stats_row()
+        self._visible_lane_ready = True
+        self._mark_visual_visible_ready()
+        self._safe_after_build(30, self._build_deferred_chip_sections)
+        self._safe_after_build(60, self._build_deferred_activity_section)
+        self._safe_after_build(90, self._build_deferred_actions_section)
+        if self._pending_on_show:
+            self._pending_on_show = False
+            self._run_on_show_body()
+        else:
+            self._schedule_initial_refresh()
+
+    def _build_critical_header(self) -> None:
         today = date.today().strftime("%A, %d.%m.%Y")
         ctk.CTkLabel(
             self,
@@ -68,6 +140,7 @@ class DashboardView(ctk.CTkScrollableFrame):
             anchor="w",
         ).pack(fill="x", padx=24, pady=(4, 12))
 
+    def _build_status_row(self) -> None:
         status_row = ctk.CTkFrame(self, fg_color="transparent")
         status_row.pack(fill="x", padx=24, pady=(0, 12))
         shop_pill = StatusPill(status_row, "Shopify", ok=None, detail="")
@@ -91,6 +164,7 @@ class DashboardView(ctk.CTkScrollableFrame):
         self._gpt_pill.pack(side="left", padx=(0, 8))
         self._status_pills.append(self._gpt_pill)
 
+    def _build_stats_row(self) -> None:
         stats_row = ctk.CTkFrame(self, fg_color="transparent")
         stats_row.pack(fill="x", padx=24, pady=(0, 16))
         for i in range(4):
@@ -106,91 +180,198 @@ class DashboardView(ctk.CTkScrollableFrame):
             card.grid(row=0, column=i, padx=(0 if i == 0 else 6, 0), sticky="nsew")
             self._stat_cards[key] = card
 
-        SectionHeader(self, "Przypięte").pack(fill="x", padx=24, pady=(0, 6))
-        self._pinned_row = ctk.CTkFrame(self, fg_color="transparent")
-        self._pinned_row.pack(fill="x", padx=24, pady=(0, 12))
+    def _build_deferred_chip_sections(self) -> None:
+        with span("studio.dashboard.build.deferred_chips"):
+            SectionHeader(self, "Przypięte").pack(fill="x", padx=24, pady=(0, 6))
+            self._pinned_row = ctk.CTkFrame(self, fg_color="transparent")
+            self._pinned_row.pack(fill="x", padx=24, pady=(0, 12))
 
-        SectionHeader(self, "Ostatnio używane").pack(fill="x", padx=24, pady=(0, 6))
-        self._recent_row = ctk.CTkFrame(self, fg_color="transparent")
-        self._recent_row.pack(fill="x", padx=24, pady=(0, 16))
+            SectionHeader(self, "Ostatnio używane").pack(fill="x", padx=24, pady=(0, 6))
+            self._recent_row = ctk.CTkFrame(self, fg_color="transparent")
+            self._recent_row.pack(fill="x", padx=24, pady=(0, 16))
+            self._deferred_sections_built = True
+            self._refresh_chip_rows()
 
-        columns = ctk.CTkFrame(self, fg_color="transparent")
-        columns.pack(fill="both", expand=True, padx=24, pady=(0, 12))
-        columns.columnconfigure(0, weight=1)
+    def _build_deferred_activity_section(self) -> None:
+        with span("studio.dashboard.build.deferred_activity"):
+            columns = ctk.CTkFrame(self, fg_color="transparent")
+            columns.pack(fill="both", expand=True, padx=24, pady=(0, 12))
+            columns.columnconfigure(0, weight=1)
 
-        left = ctk.CTkFrame(columns, fg_color="transparent")
-        left.grid(row=0, column=0, sticky="nsew")
-        SectionHeader(left, "Ostatnie akcje").pack(fill="x", pady=(0, 8))
-        self._activity_box = ctk.CTkTextbox(
-            left,
-            height=180,
-            fg_color=theme.PanelBg,
-            text_color=theme.TextPrimary,
-            font=theme.get_font(11, family=theme.FontMono[0]),
-        )
-        self._activity_box.pack(fill="both", expand=True)
+            left = ctk.CTkFrame(columns, fg_color="transparent")
+            left.grid(row=0, column=0, sticky="nsew")
+            SectionHeader(left, "Ostatnie akcje").pack(fill="x", pady=(0, 8))
+            self._activity_box = ctk.CTkTextbox(
+                left,
+                height=180,
+                fg_color=theme.PanelBg,
+                text_color=theme.TextPrimary,
+                font=theme.get_font(11, family=theme.FontMono[0]),
+            )
+            self._activity_box.pack(fill="both", expand=True)
+            self.refresh_activity()
 
-        SectionHeader(self, "Szybkie akcje").pack(fill="x", padx=24, pady=(8, 8))
-        actions = ctk.CTkFrame(self, fg_color="transparent")
-        actions.pack(fill="x", padx=24, pady=(0, 24))
-        ctk.CTkButton(
-            actions,
-            text="Odśwież dashboard",
-            width=140,
-            height=32,
-            fg_color=theme.PanelBg,
-            hover_color=theme.CardHover,
-            command=self.on_show,
-        ).pack(side="left", padx=(0, 8))
-        ctk.CTkButton(
-            actions,
-            text="Dokumentacja Studio",
-            width=150,
-            height=32,
-            fg_color=theme.PanelBg,
-            hover_color=theme.CardHover,
-            command=self._open_studio_docs,
-        ).pack(side="left", padx=(0, 8))
-        ctk.CTkButton(
-            actions,
-            text="Klasyczny launcher",
-            width=140,
-            height=32,
-            fg_color=theme.PanelBg,
-            hover_color=theme.CardHover,
-            command=self._open_classic_launcher,
-        ).pack(side="left", padx=(0, 8))
-        ctk.CTkButton(
-            actions,
-            text="Folder Komponenty",
-            width=140,
-            height=32,
-            fg_color=theme.PanelBg,
-            hover_color=theme.CardHover,
-            command=self._open_components_folder,
-        ).pack(side="left", padx=(0, 8))
-        for label in ("Theme dev…", "Token setup", "Deploy / sync"):
+    def _build_deferred_actions_section(self) -> None:
+        with span("studio.dashboard.build.deferred_actions"):
+            SectionHeader(self, "Szybkie akcje").pack(fill="x", padx=24, pady=(8, 8))
+            actions = ctk.CTkFrame(self, fg_color="transparent")
+            actions.pack(fill="x", padx=24, pady=(0, 24))
             ctk.CTkButton(
                 actions,
-                text=label,
-                state="disabled",
-                fg_color=theme.PanelBg,
-                text_color=theme.TextMuted,
-                width=110,
+                text="Odśwież dashboard",
+                width=140,
                 height=32,
+                fg_color=theme.PanelBg,
+                hover_color=theme.CardHover,
+                command=self.on_show,
             ).pack(side="left", padx=(0, 8))
+            ctk.CTkButton(
+                actions,
+                text="Dokumentacja Studio",
+                width=150,
+                height=32,
+                fg_color=theme.PanelBg,
+                hover_color=theme.CardHover,
+                command=self._open_studio_docs,
+            ).pack(side="left", padx=(0, 8))
+            ctk.CTkButton(
+                actions,
+                text="Klasyczny launcher",
+                width=140,
+                height=32,
+                fg_color=theme.PanelBg,
+                hover_color=theme.CardHover,
+                command=self._open_classic_launcher,
+            ).pack(side="left", padx=(0, 8))
+            ctk.CTkButton(
+                actions,
+                text="Folder Komponenty",
+                width=140,
+                height=32,
+                fg_color=theme.PanelBg,
+                hover_color=theme.CardHover,
+                command=self._open_components_folder,
+            ).pack(side="left", padx=(0, 8))
+            for label in ("Theme dev…", "Token setup", "Deploy / sync"):
+                ctk.CTkButton(
+                    actions,
+                    text=label,
+                    state="disabled",
+                    fg_color=theme.PanelBg,
+                    text_color=theme.TextMuted,
+                    width=110,
+                    height=32,
+                ).pack(side="left", padx=(0, 8))
 
-        self.on_show()
+        self._mark_visual_full_ready()
+
+    def _schedule_initial_refresh(self) -> None:
+        self._safe_after_refresh(_DASHBOARD_INITIAL_REFRESH_DELAY_MS, self._run_on_show_body)
+
+    def _safe_after_build(self, delay_ms: int, callback: Callable[[], None]) -> None:
+        self._schedule_after(delay_ms, callback, self._build_after_ids)
+
+    def _safe_after_refresh(self, delay_ms: int, callback: Callable[[], None]) -> None:
+        self._schedule_after(delay_ms, callback, self._refresh_after_ids)
+
+    def _schedule_after(
+        self,
+        delay_ms: int,
+        callback: Callable[[], None],
+        bucket: list[str],
+    ) -> None:
+        try:
+            after_id = self.after(delay_ms, lambda: self._run_if_alive(callback))
+            bucket.append(after_id)
+        except tk.TclError:
+            pass
+
+    def _run_if_alive(self, callback: Callable[[], None]) -> None:
+        try:
+            if not self.winfo_exists():
+                return
+        except tk.TclError:
+            return
+        callback()
+
+    def _cancel_after_bucket(self, bucket: list[str]) -> None:
+        while bucket:
+            after_id = bucket.pop()
+            try:
+                self.after_cancel(after_id)
+            except tk.TclError:
+                pass
+
+    def _cancel_deferred_refresh_jobs(self) -> None:
+        self._cancel_after_bucket(self._refresh_after_ids)
+
+    def _cancel_deferred_build_jobs(self) -> None:
+        self._cancel_after_bucket(self._build_after_ids)
+
+    def on_hide(self) -> None:
+        self._cancel_deferred_refresh_jobs()
+
+    def destroy(self) -> None:
+        self._cancel_deferred_refresh_jobs()
+        self._cancel_deferred_build_jobs()
+        super().destroy()
 
     def on_show(self) -> None:
-        shop = status_providers.shopify_status()
-        theme_st = self._fetch_theme_dev_status()
-        git_st = status_providers.github_status()
-        gpt_st = status_providers.gpt_snapshot_status()
-        self._refresh_status_pills(shop, theme_st, git_st, gpt_st)
-        self._refresh_stat_cards(shop, theme_st)
-        self._refresh_chip_rows()
-        self.refresh_activity()
+        if not self._visible_lane_ready:
+            self._pending_on_show = True
+            return
+        self._cancel_deferred_refresh_jobs()
+        self._run_on_show_body()
+
+    def _run_on_show_body(self) -> None:
+        with span("studio.dashboard.on_show.fast"):
+            shop = status_providers.shopify_status()
+            gpt_st = status_providers.gpt_snapshot_status()
+
+            theme_pending = StatusResult(None, "Theme Dev", "sprawdzanie…")
+            git_pending = StatusResult(None, "Git", "sprawdzanie…")
+
+            self._last_shop_status = shop
+            self._last_theme_status = theme_pending
+            self._last_git_status = git_pending
+            self._last_gpt_status = gpt_st
+
+            self._refresh_status_pills(shop, theme_pending, git_pending, gpt_st)
+            self._refresh_stat_cards(shop, theme_pending)
+            self._refresh_chip_rows()
+            self.refresh_activity()
+
+        self._schedule_theme_status_check()
+        self._safe_after_refresh(_GIT_STATUS_DELAY_MS, self._refresh_git_status_deferred)
+
+    def _schedule_theme_status_check(self) -> None:
+        log_event(
+            "studio.dashboard.status.theme_dev.scheduled",
+            delay_ms=_THEME_STATUS_DELAY_MS,
+        )
+        self._safe_after_refresh(_THEME_STATUS_DELAY_MS, self._refresh_theme_status_deferred)
+
+    def _refresh_theme_status_deferred(self) -> None:
+        with span("studio.dashboard.status.theme_dev.deferred"):
+            theme_st = self._fetch_theme_dev_status()
+        self._last_theme_status = theme_st
+
+        if self._theme_pill is not None:
+            self._theme_pill.update_status(theme_st.ok, theme_st.label, theme_st.detail)
+
+        if "theme" in self._stat_cards:
+            self._stat_cards["theme"].update_value(
+                "Aktywny" if theme_st.ok else "Offline",
+            )
+        log_event("studio.dashboard.status.theme_dev.done")
+
+    def _refresh_git_status_deferred(self) -> None:
+        with span("studio.dashboard.status.git.deferred"):
+            git_st = status_providers.github_status()
+        self._last_git_status = git_st
+
+        if self._git_pill is not None:
+            self._git_pill.update_status(git_st.ok, git_st.label, git_st.detail)
 
     @staticmethod
     def _fetch_theme_dev_status() -> StatusResult:

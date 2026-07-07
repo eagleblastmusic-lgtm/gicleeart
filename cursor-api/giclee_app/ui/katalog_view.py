@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import time
+import tkinter as tk
 from collections.abc import Callable
 from pathlib import Path
 
 import customtkinter as ctk
+
+from giclee_app.studio.perf import log_event, span
 
 from giclee_app.studio.katalog_data_map import (
     F2_NEXT_NOTE,
@@ -57,9 +61,14 @@ _BACK_LABEL = "Wróć do huba"
 _INTENT_PLACEHOLDER = "— wybierz intencję —"
 _VARIANT_PLACEHOLDER = "— wybierz wariant —"
 _ZONE_PLACEHOLDER = "— wybierz strefę —"
+_KATALOG_INITIAL_REFRESH_DELAY_MS = 50
+_KATALOG_ROW_BATCH_SIZE = 8
+_KATALOG_ROW_BATCH_DELAY_MS = 0
 
 
 class KatalogView(ctk.CTkScrollableFrame):
+    uses_async_first_paint = True
+
     def __init__(
         self,
         master: ctk.CTkBaseClass,
@@ -72,9 +81,16 @@ class KatalogView(ctk.CTkScrollableFrame):
         self._components_root = Path(components_root)
         self._on_status = on_status
         self._on_back = on_back
+        self._back_button: ctk.CTkButton | None = None
         self._draft = KatalogDraftState()
         self._last_inventory: KatalogInventoryReport | None = None
         self._last_data_map: KatalogDataMap | None = None
+        self._pending_inventory: KatalogInventoryReport | None = None
+        self._pending_data_map: KatalogDataMap | None = None
+        self._data_loaded = False
+        self._refresh_in_progress = False
+        self._refresh_scheduled = False
+        self._katalog_after_ids: list[str] = []
         self._inventory_frame: ctk.CTkFrame | None = None
         self._datamap_frame: ctk.CTkFrame | None = None
         self._intent_menu: ctk.CTkOptionMenu | None = None
@@ -85,7 +101,87 @@ class KatalogView(ctk.CTkScrollableFrame):
         self._zone_map: dict[str, str] = {}
         self._draft_summary_label: ctk.CTkLabel | None = None
         self._plan_body_label: ctk.CTkLabel | None = None
-        self._build_shell()
+        with span("studio.katalog.build_shell"):
+            self._build_shell()
+        log_event("studio.katalog.shell.visible")
+        self._schedule_initial_refresh()
+
+    def set_navigation(self, *, on_back: Callable[[], None] | None = None) -> None:
+        """Update cached view navigation without rebuilding the shell."""
+        self._on_back = on_back
+        if self._back_button is None:
+            return
+        if on_back is None:
+            self._back_button.pack_forget()
+            return
+        if not self._back_button.winfo_manager():
+            self._back_button.pack(side="right")
+
+    def _safe_after(self, delay_ms: int, callback: Callable[[], None]) -> None:
+        try:
+            after_id = self.after(delay_ms, lambda: self._run_if_alive(callback))
+            self._katalog_after_ids.append(after_id)
+        except tk.TclError:
+            pass
+
+    def _run_if_alive(self, callback: Callable[[], None]) -> None:
+        try:
+            if not self.winfo_exists():
+                return
+        except tk.TclError:
+            return
+        callback()
+
+    def _cancel_deferred_katalog_jobs(self) -> None:
+        while self._katalog_after_ids:
+            after_id = self._katalog_after_ids.pop()
+            try:
+                self.after_cancel(after_id)
+            except tk.TclError:
+                pass
+        self._reset_refresh_pipeline_state()
+
+    def _reset_refresh_pipeline_state(self) -> None:
+        self._refresh_in_progress = False
+        self._pending_inventory = None
+        self._pending_data_map = None
+
+    def on_hide(self) -> None:
+        self._cancel_deferred_katalog_jobs()
+
+    def destroy(self) -> None:
+        self._cancel_deferred_katalog_jobs()
+        super().destroy()
+
+    def on_show(self, *, cache_hit: bool = False) -> None:
+        log_event(
+            "studio.katalog.on_show.cache_hit",
+            cache_hit=cache_hit,
+            data_loaded=self._data_loaded,
+        )
+        log_event(
+            "studio.katalog.on_show",
+            cache_hit=cache_hit,
+            data_loaded=self._data_loaded,
+        )
+        if cache_hit and self._data_loaded:
+            log_event("studio.katalog.refresh.skipped_cache_fresh")
+            log_event("studio.katalog.visual.ready", cache_hit=True, data_loaded=True)
+            return
+        if not self._data_loaded and not self._refresh_scheduled:
+            log_event("studio.katalog.refresh.deferred_start")
+            self._schedule_initial_refresh()
+
+    def _schedule_initial_refresh(self) -> None:
+        if self._refresh_scheduled or self._data_loaded:
+            return
+        self._refresh_scheduled = True
+        self._safe_after(_KATALOG_INITIAL_REFRESH_DELAY_MS, self._deferred_initial_refresh)
+
+    def _deferred_initial_refresh(self) -> None:
+        self._refresh_scheduled = False
+        if self._data_loaded:
+            return
         self._refresh_all()
 
     def _build_shell(self) -> None:
@@ -93,7 +189,7 @@ class KatalogView(ctk.CTkScrollableFrame):
         header.pack(fill="x", padx=24, pady=(16, 8))
         SectionHeader(header, "Katalog").pack(fill="x", side="left")
         if self._on_back is not None:
-            ctk.CTkButton(
+            self._back_button = ctk.CTkButton(
                 header,
                 text=_BACK_LABEL,
                 width=120,
@@ -101,7 +197,8 @@ class KatalogView(ctk.CTkScrollableFrame):
                 fg_color=theme.PanelBg,
                 hover_color=theme.CardHover,
                 command=self._on_back,
-            ).pack(side="right")
+            )
+            self._back_button.pack(side="right")
 
         ctk.CTkLabel(
             self,
@@ -420,12 +517,29 @@ class KatalogView(ctk.CTkScrollableFrame):
             self._on_status("Plan wyczyszczony · draft lokalny · nic nie zapisano")
 
     def _run_plan_dry_run(self) -> None:
+        if self._refresh_in_progress:
+            log_event("studio.katalog.plan_dry_run.deferred_refresh_in_progress")
+            if self._plan_body_label is not None:
+                self._plan_body_label.configure(
+                    text="Dane Katalogu są jeszcze odświeżane. Uruchom ponownie po zakończeniu.",
+                    text_color=theme.TextMuted,
+                )
+            if self._on_status is not None:
+                self._on_status("Katalog: dane jeszcze się odświeżają — spróbuj za chwilę")
+            return
         if self._last_inventory is None or self._last_data_map is None:
+            log_event("studio.katalog.plan_dry_run.waiting_for_data")
             self._refresh_all()
+            if self._plan_body_label is not None:
+                self._plan_body_label.configure(
+                    text="Dane Katalogu są jeszcze odświeżane. Uruchom ponownie po zakończeniu.",
+                    text_color=theme.TextMuted,
+                )
+            if self._on_status is not None:
+                self._on_status("Katalog: dane jeszcze się odświeżają — spróbuj za chwilę")
+            return
         inventory = self._last_inventory
         data_map = self._last_data_map
-        if inventory is None or data_map is None:
-            return
 
         dry_run = build_katalog_plan_dry_run(self._draft, inventory, data_map)
         readiness = evaluate_katalog_plan_readiness(self._draft, dry_run)
@@ -440,40 +554,199 @@ class KatalogView(ctk.CTkScrollableFrame):
             self._on_status(DRY_RUN_BADGE)
 
     @staticmethod
+    def _append_display_row(parent: ctk.CTkFrame, label: str, value: str) -> None:
+        row = ctk.CTkFrame(parent, fg_color="transparent")
+        row.pack(fill="x", pady=2)
+        ctk.CTkLabel(
+            row,
+            text=label,
+            font=theme.get_font(11),
+            text_color=theme.TextMuted,
+            anchor="w",
+            width=220,
+        ).pack(side="left", anchor="nw")
+        ctk.CTkLabel(
+            row,
+            text=value,
+            font=theme.get_font(11),
+            text_color=theme.TextPrimary,
+            anchor="w",
+            justify="left",
+            wraplength=480,
+        ).pack(side="left", fill="x", expand=True)
+
+    @staticmethod
     def _fill_rows(parent: ctk.CTkFrame, rows: list[tuple[str, str]]) -> None:
         for child in parent.winfo_children():
             child.destroy()
         for label, value in rows:
-            row = ctk.CTkFrame(parent, fg_color="transparent")
-            row.pack(fill="x", pady=2)
-            ctk.CTkLabel(
-                row,
-                text=label,
-                font=theme.get_font(11),
-                text_color=theme.TextMuted,
-                anchor="w",
-                width=220,
-            ).pack(side="left", anchor="nw")
-            ctk.CTkLabel(
-                row,
-                text=value,
-                font=theme.get_font(11),
-                text_color=theme.TextPrimary,
-                anchor="w",
-                justify="left",
-                wraplength=480,
-            ).pack(side="left", fill="x", expand=True)
+            KatalogView._append_display_row(parent, label, value)
+
+    def _start_fill_rows_stage(
+        self,
+        kind: str,
+        parent: ctk.CTkFrame,
+        rows: list[tuple[str, str]],
+        next_callback: Callable[[], None],
+    ) -> None:
+        self._fill_rows_batch(kind, parent, rows, 0, next_callback)
+
+    def _fill_rows_batch(
+        self,
+        kind: str,
+        parent: ctk.CTkFrame,
+        rows: list[tuple[str, str]],
+        start: int,
+        next_callback: Callable[[], None],
+    ) -> None:
+        if self._refresh_abort_if_gone():
+            return
+        event_prefix = f"studio.katalog.refresh.{kind}_rows"
+        total = len(rows)
+        try:
+            t0 = time.perf_counter()
+            if start == 0:
+                for child in parent.winfo_children():
+                    child.destroy()
+            end = min(start + _KATALOG_ROW_BATCH_SIZE, total)
+            created = 0
+            for label, value in rows[start:end]:
+                self._append_display_row(parent, label, value)
+                created += 1
+            elapsed_ms = (time.perf_counter() - t0) * 1000
+            log_event(
+                f"{event_prefix}.batch",
+                start=start,
+                end=end,
+                total=total,
+                created=created,
+                elapsed_ms=elapsed_ms,
+            )
+            if end < total:
+                self._safe_after(
+                    _KATALOG_ROW_BATCH_DELAY_MS,
+                    lambda: self._fill_rows_batch(kind, parent, rows, end, next_callback),
+                )
+                return
+            log_event(f"{event_prefix}.done", total=total)
+            next_callback()
+        except Exception as exc:  # noqa: BLE001
+            self._refresh_pipeline_error(exc)
+
+    def _refresh_abort_if_gone(self) -> bool:
+        try:
+            if not self.winfo_exists():
+                self._reset_refresh_pipeline_state()
+                return True
+        except tk.TclError:
+            self._reset_refresh_pipeline_state()
+            return True
+        return False
+
+    def _refresh_pipeline_error(self, exc: BaseException) -> None:
+        self._reset_refresh_pipeline_state()
+        log_event("studio.katalog.refresh_pipeline.error", error_type=type(exc).__name__)
+        if self._on_status is not None:
+            self._on_status("Katalog: odświeżanie przerwane — sprawdź log")
 
     def _refresh_all(self) -> None:
-        inv = build_katalog_inventory(self._components_root)
-        dm = build_katalog_data_map(self._components_root)
-        self._last_inventory = inv
-        self._last_data_map = dm
-        if self._inventory_frame is not None:
-            self._fill_rows(self._inventory_frame, inventory_display_rows(inv))
-        if self._datamap_frame is not None:
-            self._fill_rows(self._datamap_frame, data_map_display_rows(dm))
-        self._update_variant_menu(inv)
-        self._refresh_draft_summary()
+        if self._refresh_in_progress:
+            log_event("studio.katalog.refresh.skipped_in_progress")
+            if self._on_status is not None:
+                self._on_status("Katalog: odświeżanie już trwa")
+            return
+        self._refresh_in_progress = True
+        self._pending_inventory = None
+        self._pending_data_map = None
         if self._on_status is not None:
-            self._on_status("Katalog inventory + mapa danych odświeżone (read-only)")
+            self._on_status("Katalog: odświeżam inventory…")
+        log_event("studio.katalog.refresh_pipeline.start")
+        self._safe_after(0, self._refresh_inventory_stage)
+
+    def _refresh_inventory_stage(self) -> None:
+        if self._refresh_abort_if_gone():
+            return
+        try:
+            with span("studio.katalog.refresh.inventory"):
+                self._pending_inventory = build_katalog_inventory(self._components_root)
+            if self._on_status is not None:
+                self._on_status("Katalog: odświeżam mapę danych…")
+            self._safe_after(0, self._refresh_data_map_stage)
+        except Exception as exc:  # noqa: BLE001 — soft-fail UI refresh pipeline
+            self._refresh_pipeline_error(exc)
+
+    def _refresh_data_map_stage(self) -> None:
+        if self._refresh_abort_if_gone():
+            return
+        try:
+            with span("studio.katalog.refresh.data_map"):
+                self._pending_data_map = build_katalog_data_map(self._components_root)
+            if self._on_status is not None:
+                self._on_status("Katalog: wypełniam inventory…")
+            self._safe_after(0, self._refresh_inventory_rows_stage)
+        except Exception as exc:  # noqa: BLE001
+            self._refresh_pipeline_error(exc)
+
+    def _refresh_inventory_rows_stage(self) -> None:
+        if self._refresh_abort_if_gone():
+            return
+        inv = self._pending_inventory
+        if inv is not None and self._inventory_frame is not None:
+            self._start_fill_rows_stage(
+                "inventory",
+                self._inventory_frame,
+                inventory_display_rows(inv),
+                self._after_inventory_rows_stage,
+            )
+            return
+        self._after_inventory_rows_stage()
+
+    def _after_inventory_rows_stage(self) -> None:
+        if self._refresh_abort_if_gone():
+            return
+        if self._on_status is not None:
+            self._on_status("Katalog: wypełniam mapę danych…")
+        self._safe_after(0, self._refresh_data_map_rows_stage)
+
+    def _refresh_data_map_rows_stage(self) -> None:
+        if self._refresh_abort_if_gone():
+            return
+        dm = self._pending_data_map
+        if dm is not None and self._datamap_frame is not None:
+            self._start_fill_rows_stage(
+                "data_map",
+                self._datamap_frame,
+                data_map_display_rows(dm),
+                self._after_data_map_rows_stage,
+            )
+            return
+        self._after_data_map_rows_stage()
+
+    def _after_data_map_rows_stage(self) -> None:
+        if self._refresh_abort_if_gone():
+            return
+        self._safe_after(0, self._refresh_finalize_stage)
+
+    def _refresh_finalize_stage(self) -> None:
+        if self._refresh_abort_if_gone():
+            return
+        try:
+            with span("studio.katalog.refresh.finalize"):
+                inv = self._pending_inventory
+                dm = self._pending_data_map
+                self._last_inventory = inv
+                self._last_data_map = dm
+                self._pending_inventory = None
+                self._pending_data_map = None
+                if inv is not None:
+                    self._update_variant_menu(inv)
+                self._refresh_draft_summary()
+            self._data_loaded = True
+            self._refresh_in_progress = False
+            log_event("studio.katalog.visual.ready", cache_hit=False, data_loaded=True)
+            log_event("studio.katalog.refresh_pipeline.done")
+            log_event("studio.katalog.refresh.deferred_done")
+            if self._on_status is not None:
+                self._on_status("Katalog inventory + mapa danych odświeżone (read-only)")
+        except Exception as exc:  # noqa: BLE001
+            self._refresh_pipeline_error(exc)

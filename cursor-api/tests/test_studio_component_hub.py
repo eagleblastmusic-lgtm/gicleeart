@@ -11,8 +11,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from giclee_app.studio.component_index import StudioComponentIndex
 from giclee_app.ui.component_hub import (
-    _BATCH_SIZE,
     _FIRST_PAINT_DELAY_MS,
+    _FIRST_VISIBLE_CARD_COUNT,
+    _IDLE_BATCH_SIZE,
     _LOADING_TEXT,
     _PREPARE_TEXT,
     _SEARCH_DEBOUNCE_MS,
@@ -64,12 +65,22 @@ def test_component_hub_accepts_component_index() -> None:
 def test_lazy_render_has_batching() -> None:
     path = Path(__file__).resolve().parents[1] / "giclee_app" / "ui" / "component_hub.py"
     text = path.read_text(encoding="utf-8")
-    assert "_BATCH_SIZE" in text
-    assert _BATCH_SIZE == 2
+    assert "_FIRST_VISIBLE_CARD_COUNT" in text
+    assert "_IDLE_BATCH_SIZE" in text
+    assert _FIRST_VISIBLE_CARD_COUNT == 2
+    assert _IDLE_BATCH_SIZE == 3
+    assert "_CARDS_PER_TICK" in text
+    assert "_IDLE_TICK_BUDGET_MS" in text
+    assert "_batch_size_for_start" in text
     assert "_render_generation" in text
     assert "_pending_render_after_id" in text
     assert _LOADING_TEXT in text
     assert "_batch_build_cards" in text
+    assert "_append_cards_to_grid" in text
+    assert "_sync_skeleton_slots" in text
+    assert "_FIRST_VISIBLE_BUDGET_MS" in text
+    assert "ComponentCardShell" in text
+    assert "_hydrate_queue" in text
 
 
 def test_skeleton_first_paint_constants() -> None:
@@ -112,7 +123,7 @@ def test_hub_cards_not_recreated_on_filter() -> None:
 
     from giclee_app.ui import widgets
 
-    original_init = widgets.ComponentCard.__init__
+    original_init = widgets.ComponentCardShell.__init__
 
     def counting_init(self, *args, **kwargs):  # noqa: ANN001, ANN002
         nonlocal init_count
@@ -120,7 +131,7 @@ def test_hub_cards_not_recreated_on_filter() -> None:
         return original_init(self, *args, **kwargs)
 
     try:
-        with patch.object(widgets.ComponentCard, "__init__", counting_init):
+        with patch.object(widgets.ComponentCardShell, "__init__", counting_init):
             from giclee_app.ui.component_hub import ComponentHubView
 
             idx = StudioComponentIndex.build()
@@ -235,7 +246,7 @@ def test_pin_toggle_does_not_rebuild_card_cache() -> None:
     init_count = 0
     from giclee_app.ui import widgets
 
-    original_init = widgets.ComponentCard.__init__
+    original_init = widgets.ComponentCardShell.__init__
 
     def counting_init(self, *args, **kwargs):  # noqa: ANN001, ANN002
         nonlocal init_count
@@ -243,7 +254,7 @@ def test_pin_toggle_does_not_rebuild_card_cache() -> None:
         return original_init(self, *args, **kwargs)
 
     try:
-        with patch.object(widgets.ComponentCard, "__init__", counting_init):
+        with patch.object(widgets.ComponentCardShell, "__init__", counting_init):
             idx = StudioComponentIndex.build()
             products = idx.components_for_category("products")
             assert products
@@ -304,4 +315,27 @@ def test_hub_background_click_passes_category() -> None:
         hub._on_background_click(katalog)
         assert bg_calls == [("tldobio", "theme")]
 
+    root.destroy()
+
+
+def test_hub_search_during_partial_render() -> None:
+    import customtkinter as ctk
+
+    from giclee_app.ui.component_hub import ComponentHubView
+
+    ctk.set_appearance_mode("dark")
+    root = ctk.CTk()
+    root.withdraw()
+    idx = StudioComponentIndex.build()
+    hub = ComponentHubView(root, category_id="theme", component_index=idx)
+    hub.on_show(cache_hit=False)
+    hub._search_var.set("giclee")
+    hub._debounced_filter()
+    deadline = time.time() + 10.0
+    while not hub._cards_fully_built and time.time() < deadline:
+        root.update_idletasks()
+        root.update()
+    assert hub._cards_fully_built
+    mapped = [folder for folder, card in hub._cards.items() if card.winfo_ismapped()]
+    assert mapped == ["gicleeframe"]
     root.destroy()

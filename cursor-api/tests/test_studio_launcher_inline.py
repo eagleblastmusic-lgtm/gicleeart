@@ -24,7 +24,9 @@ def test_show_view_does_not_hide_target_before_on_show() -> None:
     path = Path(__file__).resolve().parents[1] / "giclee_app" / "launcher_studio.py"
     text = path.read_text(encoding="utf-8")
     show_view = text.split("def _show_view")[1].split("\n    def ")[0]
-    assert "except_key=key" in show_view or "_hide_cached_views(except_key=" in show_view
+    mount_lane = text.split("def _mount_view_lane")[1].split("\n    def ")[0]
+    assert "_mount_view_lane" in show_view or "except_key=key" in show_view
+    assert "except_key=key" in mount_lane
 
 
 def test_inline_geometry_does_not_call_ctk_minsize_getter() -> None:
@@ -54,9 +56,9 @@ def test_return_from_inline_restores_hub_tiles() -> None:
 
     hub_key = "hub:theme"
     app._show_hub("theme")
-    hub = app._view_cache[hub_key]
     app.update_idletasks()
     app.update()
+    hub = app._view_cache[hub_key]
 
     comp = Component(
         folder_name="obrazy",
@@ -107,6 +109,8 @@ def test_return_from_inline_with_inline_resize_restores_hub() -> None:
     app.update()
 
     app._show_hub("theme")
+    app.update_idletasks()
+    app.update()
     hub = app._view_cache["hub:theme"]
     comp = app._component_index.by_folder["kontakt"]
 
