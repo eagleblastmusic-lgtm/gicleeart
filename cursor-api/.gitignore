@@ -119,3 +119,6 @@ Komponenty/stronaglowna/data/tmp/
 /tmp_getty*.txt
 /tmp_getty*.json
 /tmp_getty_row.json
+
+# Performance Agent — generated audit bundles (PA-1A+)
+reports/performance/
