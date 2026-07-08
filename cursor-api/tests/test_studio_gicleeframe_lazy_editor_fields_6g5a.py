@@ -15,7 +15,9 @@ def _view_text() -> str:
 
 
 def _method_body(text: str, method_name: str) -> str:
-    marker = f"def {method_name}"
+    marker = f"def {method_name}(\n"
+    if marker not in text:
+        marker = f"def {method_name}("
     block = text.split(marker, 1)[1]
     return block.split("\n    def ", 1)[0]
 
@@ -49,10 +51,10 @@ def test_lazy_editor_row_helpers_exist() -> None:
 
 def test_populate_editor_ensures_lazy_rows() -> None:
     text = _view_text()
-    body = _method_body(text, "_populate_editor(self, m:")
+    body = _method_body(text, "_populate_editor")
     assert "fields = editor_field_visibility(etype)" in body
     fields_idx = body.index("fields = editor_field_visibility(etype)")
-    ensure_idx = body.index("_ensure_editor_rows_for_fields(fields)")
+    ensure_idx = body.index("_ensure_minimal_editor_rows_for_fields(fields)")
     assert ensure_idx > fields_idx
 
 

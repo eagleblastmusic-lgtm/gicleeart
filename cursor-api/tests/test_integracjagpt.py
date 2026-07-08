@@ -282,6 +282,19 @@ def test_build_conversation_start_prompt_gicleeapp(tmp_path, monkeypatch) -> Non
     assert "gicleeapp" in msg
 
 
+def test_build_confirmation_checklist_message() -> None:
+    from Komponenty.integracjagpt.handoff import build_confirmation_checklist_message
+
+    msg = build_confirmation_checklist_message()
+    assert "GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS" not in msg
+    assert "CURRENT_APP_STATE.md" in msg
+    assert "GICLEE_ANALYST_*_v1.md" in msg
+    assert "GICLEE_SHOPIFY_MODE_*_v1.md" in msg
+    assert "GitHub connectora" in msg
+    assert msg.strip().startswith("1.")
+    assert "7. potwierdź" in msg
+
+
 def test_find_newest_obs_recording(tmp_path) -> None:
     from Komponenty.integracjagpt.obs_record import find_newest_recording
     import os

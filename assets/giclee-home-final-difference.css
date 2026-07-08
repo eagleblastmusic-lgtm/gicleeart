@@ -1,0 +1,260 @@
+/* ==========================================================================
+   Final homepage difference — hover/focus (see-difference section)
+   Scope: .giclee-home-final-difference only. Desktop + fine pointer.
+   Normal: hover/focus on central copy (.giclee-final-difference__copy).
+   Reverse (--reverse): domyślnie stan aktywny; hover/focus na grafikach = powrót.
+   Parametry: window.GICLEE_HOME_FINAL_DIFFERENCE_CONFIG (GicleeApp → Animacja…).
+   ========================================================================== */
+
+.giclee-home-final-difference {
+  --gfd-copy-scale: 1.062;
+  --gfd-copy-translate-y: -8px;
+  --gfd-media-offset-x: 24px;
+  --gfd-media-scale: 0.965;
+  --gfd-media-brightness: 0.82;
+  --gfd-bg-brightness: 0.78;
+  --gfd-bg-veil: 0.16;
+  --gfd-duration: 850ms;
+  --gfd-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.giclee-home-final-difference .giclee-final-difference__copy {
+  position: relative;
+  z-index: 1;
+  outline: none;
+  cursor: default;
+}
+
+.giclee-home-final-difference .giclee-final-difference__copy:focus-visible {
+  outline: 1px solid rgba(255, 255, 255, 0.35);
+  outline-offset: 6px;
+}
+
+/* Subtle glow halo behind central copy (final homepage difference hover focus) */
+.giclee-home-final-difference.giclee-home-final-difference--glow .giclee-final-difference__copy::before {
+  content: '';
+  position: absolute;
+  inset: -28% -18%;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 50%;
+  opacity: 0;
+  background: radial-gradient(
+    ellipse 70% 55% at 50% 58%,
+    rgba(255, 252, 245, 0.14) 0%,
+    rgba(255, 252, 245, 0.05) 42%,
+    transparent 72%
+  );
+}
+
+.giclee-home-final-difference .giclee-final-difference__media--left,
+.giclee-home-final-difference .giclee-final-difference__media--right {
+  transform-origin: center center;
+}
+
+.giclee-home-final-difference .giclee-final-difference__bg .background-image-container,
+.giclee-home-final-difference .giclee-final-difference__bg .background-image-container img,
+.giclee-home-final-difference .giclee-final-difference__bg video-background-component video {
+  transform-origin: center center;
+}
+
+/* Final homepage difference hover focus — extra dim veil over studio background */
+.giclee-home-final-difference .giclee-final-difference__bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0);
+}
+
+/* Final homepage difference hover focus — motion on desktop only */
+@media screen and (min-width: 750px) and (prefers-reduced-motion: no-preference) {
+  .giclee-home-final-difference.giclee-home-final-difference--motion .giclee-final-difference__copy {
+    transition:
+      transform var(--gfd-duration) var(--gfd-ease),
+      z-index 0s linear 0s;
+  }
+
+  .giclee-home-final-difference.giclee-home-final-difference--glow .giclee-final-difference__copy::before {
+    transition: opacity var(--gfd-duration) var(--gfd-ease);
+  }
+
+  .giclee-home-final-difference.giclee-home-final-difference--motion .giclee-final-difference__media--left,
+  .giclee-home-final-difference.giclee-home-final-difference--motion .giclee-final-difference__media--right {
+    transition:
+      transform var(--gfd-duration) var(--gfd-ease),
+      filter var(--gfd-duration) var(--gfd-ease);
+  }
+
+  .giclee-home-final-difference.giclee-home-final-difference--motion .giclee-final-difference__bg .background-image-container,
+  .giclee-home-final-difference.giclee-home-final-difference--motion .giclee-final-difference__bg .background-image-container img,
+  .giclee-home-final-difference.giclee-home-final-difference--motion .giclee-final-difference__bg video-background-component video {
+    transition: filter var(--gfd-duration) var(--gfd-ease);
+  }
+
+  .giclee-home-final-difference.giclee-home-final-difference--motion .giclee-final-difference__bg::after {
+    transition: background-color var(--gfd-duration) var(--gfd-ease);
+  }
+
+  /* Central copy comes forward (normal mode — hover on copy) */
+  .giclee-home-final-difference.giclee-home-final-difference--motion:not(.giclee-home-final-difference--reverse):has(.giclee-final-difference__copy:hover) .giclee-final-difference__copy,
+  .giclee-home-final-difference.giclee-home-final-difference--motion:not(.giclee-home-final-difference--reverse):has(.giclee-final-difference__copy:focus-within) .giclee-final-difference__copy {
+    transform: translateY(var(--gfd-copy-translate-y)) scale(var(--gfd-copy-scale));
+    z-index: 3;
+  }
+
+  .giclee-home-final-difference.giclee-home-final-difference--glow:not(.giclee-home-final-difference--reverse):has(.giclee-final-difference__copy:hover) .giclee-final-difference__copy::before,
+  .giclee-home-final-difference.giclee-home-final-difference--glow:not(.giclee-home-final-difference--reverse):has(.giclee-final-difference__copy:focus-within) .giclee-final-difference__copy::before {
+    opacity: 1;
+  }
+
+  /* Side graphics recede (normal mode) */
+  .giclee-home-final-difference.giclee-home-final-difference--motion:not(.giclee-home-final-difference--reverse):has(.giclee-final-difference__copy:hover) .giclee-final-difference__media--left,
+  .giclee-home-final-difference.giclee-home-final-difference--motion:not(.giclee-home-final-difference--reverse):has(.giclee-final-difference__copy:focus-within) .giclee-final-difference__media--left {
+    transform: translateX(calc(-1 * var(--gfd-media-offset-x))) scale(var(--gfd-media-scale));
+    filter: brightness(var(--gfd-media-brightness));
+  }
+
+  .giclee-home-final-difference.giclee-home-final-difference--motion:not(.giclee-home-final-difference--reverse):has(.giclee-final-difference__copy:hover) .giclee-final-difference__media--right,
+  .giclee-home-final-difference.giclee-home-final-difference--motion:not(.giclee-home-final-difference--reverse):has(.giclee-final-difference__copy:focus-within) .giclee-final-difference__media--right {
+    transform: translateX(var(--gfd-media-offset-x)) scale(var(--gfd-media-scale));
+    filter: brightness(var(--gfd-media-brightness));
+  }
+
+  /* Studio background dims (normal mode) */
+  .giclee-home-final-difference.giclee-home-final-difference--motion:not(.giclee-home-final-difference--reverse):has(.giclee-final-difference__copy:hover) .giclee-final-difference__bg .background-image-container img,
+  .giclee-home-final-difference.giclee-home-final-difference--motion:not(.giclee-home-final-difference--reverse):has(.giclee-final-difference__copy:focus-within) .giclee-final-difference__bg .background-image-container img,
+  .giclee-home-final-difference.giclee-home-final-difference--motion:not(.giclee-home-final-difference--reverse):has(.giclee-final-difference__copy:hover) .giclee-final-difference__bg video-background-component video,
+  .giclee-home-final-difference.giclee-home-final-difference--motion:not(.giclee-home-final-difference--reverse):has(.giclee-final-difference__copy:focus-within) .giclee-final-difference__bg video-background-component video {
+    filter: brightness(var(--gfd-bg-brightness));
+  }
+
+  .giclee-home-final-difference.giclee-home-final-difference--motion:not(.giclee-home-final-difference--reverse):has(.giclee-final-difference__copy:hover) .giclee-final-difference__bg::after,
+  .giclee-home-final-difference.giclee-home-final-difference--motion:not(.giclee-home-final-difference--reverse):has(.giclee-final-difference__copy:focus-within) .giclee-final-difference__bg::after {
+    background-color: rgba(0, 0, 0, var(--gfd-bg-veil));
+  }
+
+  /* Reverse mode — default: copy forward, graphics receded */
+  .giclee-home-final-difference.giclee-home-final-difference--motion.giclee-home-final-difference--reverse .giclee-final-difference__copy {
+    transform: translateY(var(--gfd-copy-translate-y)) scale(var(--gfd-copy-scale));
+    z-index: 3;
+  }
+
+  .giclee-home-final-difference.giclee-home-final-difference--glow.giclee-home-final-difference--reverse .giclee-final-difference__copy::before {
+    opacity: 1;
+  }
+
+  .giclee-home-final-difference.giclee-home-final-difference--motion.giclee-home-final-difference--reverse .giclee-final-difference__media--left {
+    transform: translateX(calc(-1 * var(--gfd-media-offset-x))) scale(var(--gfd-media-scale));
+    filter: brightness(var(--gfd-media-brightness));
+  }
+
+  .giclee-home-final-difference.giclee-home-final-difference--motion.giclee-home-final-difference--reverse .giclee-final-difference__media--right {
+    transform: translateX(var(--gfd-media-offset-x)) scale(var(--gfd-media-scale));
+    filter: brightness(var(--gfd-media-brightness));
+  }
+
+  .giclee-home-final-difference.giclee-home-final-difference--motion.giclee-home-final-difference--reverse .giclee-final-difference__bg .background-image-container img,
+  .giclee-home-final-difference.giclee-home-final-difference--motion.giclee-home-final-difference--reverse .giclee-final-difference__bg video-background-component video {
+    filter: brightness(var(--gfd-bg-brightness));
+  }
+
+  .giclee-home-final-difference.giclee-home-final-difference--motion.giclee-home-final-difference--reverse .giclee-final-difference__bg::after {
+    background-color: rgba(0, 0, 0, var(--gfd-bg-veil));
+  }
+
+  /* Reverse mode — hover/focus on side graphics: neutral layout */
+  .giclee-home-final-difference.giclee-home-final-difference--motion.giclee-home-final-difference--reverse:has(
+    .giclee-final-difference__media--left:hover,
+    .giclee-final-difference__media--right:hover,
+    .giclee-final-difference__media--left:focus-within,
+    .giclee-final-difference__media--right:focus-within
+  ) .giclee-final-difference__copy {
+    transform: none;
+    z-index: 1;
+  }
+
+  .giclee-home-final-difference.giclee-home-final-difference--glow.giclee-home-final-difference--reverse:has(
+    .giclee-final-difference__media--left:hover,
+    .giclee-final-difference__media--right:hover,
+    .giclee-final-difference__media--left:focus-within,
+    .giclee-final-difference__media--right:focus-within
+  ) .giclee-final-difference__copy::before {
+    opacity: 0;
+  }
+
+  .giclee-home-final-difference.giclee-home-final-difference--motion.giclee-home-final-difference--reverse:has(
+    .giclee-final-difference__media--left:hover,
+    .giclee-final-difference__media--right:hover,
+    .giclee-final-difference__media--left:focus-within,
+    .giclee-final-difference__media--right:focus-within
+  ) .giclee-final-difference__media--left,
+  .giclee-home-final-difference.giclee-home-final-difference--motion.giclee-home-final-difference--reverse:has(
+    .giclee-final-difference__media--left:hover,
+    .giclee-final-difference__media--right:hover,
+    .giclee-final-difference__media--left:focus-within,
+    .giclee-final-difference__media--right:focus-within
+  ) .giclee-final-difference__media--right {
+    transform: none;
+    filter: none;
+  }
+
+  .giclee-home-final-difference.giclee-home-final-difference--motion.giclee-home-final-difference--reverse:has(
+    .giclee-final-difference__media--left:hover,
+    .giclee-final-difference__media--right:hover,
+    .giclee-final-difference__media--left:focus-within,
+    .giclee-final-difference__media--right:focus-within
+  ) .giclee-final-difference__bg .background-image-container img,
+  .giclee-home-final-difference.giclee-home-final-difference--motion.giclee-home-final-difference--reverse:has(
+    .giclee-final-difference__media--left:hover,
+    .giclee-final-difference__media--right:hover,
+    .giclee-final-difference__media--left:focus-within,
+    .giclee-final-difference__media--right:focus-within
+  ) .giclee-final-difference__bg video-background-component video {
+    filter: none;
+  }
+
+  .giclee-home-final-difference.giclee-home-final-difference--motion.giclee-home-final-difference--reverse:has(
+    .giclee-final-difference__media--left:hover,
+    .giclee-final-difference__media--right:hover,
+    .giclee-final-difference__media--left:focus-within,
+    .giclee-final-difference__media--right:focus-within
+  ) .giclee-final-difference__bg::after {
+    background-color: rgba(0, 0, 0, 0);
+  }
+}
+
+/* Final homepage difference hover focus — mobile: no graphic shift */
+@media screen and (max-width: 749px) {
+  .giclee-home-final-difference .giclee-final-difference__media--left,
+  .giclee-home-final-difference .giclee-final-difference__media--right {
+    transform: none !important;
+    filter: none !important;
+  }
+
+  .giclee-home-final-difference .giclee-final-difference__copy::before {
+    display: none;
+  }
+}
+
+/* Final homepage difference hover focus — reduced motion: static layout */
+@media (prefers-reduced-motion: reduce) {
+  .giclee-home-final-difference .giclee-final-difference__copy,
+  .giclee-home-final-difference .giclee-final-difference__copy::before,
+  .giclee-home-final-difference .giclee-final-difference__media--left,
+  .giclee-home-final-difference .giclee-final-difference__media--right,
+  .giclee-home-final-difference .giclee-final-difference__bg .background-image-container,
+  .giclee-home-final-difference .giclee-final-difference__bg .background-image-container img,
+  .giclee-home-final-difference .giclee-final-difference__bg video-background-component video,
+  .giclee-home-final-difference .giclee-final-difference__bg::after {
+    transition: none !important;
+    transform: none !important;
+    filter: none !important;
+    background-color: transparent !important;
+  }
+
+  .giclee-home-final-difference .giclee-final-difference__copy::before {
+    opacity: 0 !important;
+  }
+}

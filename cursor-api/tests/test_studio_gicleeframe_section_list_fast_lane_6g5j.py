@@ -62,10 +62,17 @@ def test_section_list_fast_lane_preserves_late_defer_constants() -> None:
 def test_section_list_subsequent_batches_still_use_batch_delay() -> None:
     text = _view_text()
 
-    start = text.index("def _render_section_list_batch")
-    end = text.index("def _create_section_list_row", start)
+    start = text.index("def _schedule_section_list_batch_continuation")
+    end = text.index("def _end_selection_priority_window", start)
     body = text[start:end]
 
     assert "_GF_SECTION_BATCH_DELAY_MS" in body
-    assert "_GF_SECTION_FIRST_BATCH_SIZE" in body
-    assert "_GF_SECTION_BATCH_SIZE" in body
+    assert "_render_section_list_batch(options, end)" in body
+
+    batch_start = text.index("def _render_section_list_batch")
+    batch_end = text.index("def _create_section_list_row", batch_start)
+    batch_body = text[batch_start:batch_end]
+
+    assert "_GF_SECTION_FIRST_BATCH_SIZE" in batch_body
+    assert "_GF_SECTION_BATCH_SIZE" in batch_body
+    assert "_schedule_section_list_batch_continuation(options, end)" in batch_body

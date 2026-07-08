@@ -84,6 +84,40 @@ def build_plan_evaluation_message() -> str:
 Po Twojej ocenie skonfiguruję Custom GPT z konektorem GitHub na repo lustra."""
 
 
+def build_zip_read_github_followup_message() -> str:
+    """Druga wiadomość w Oknie rozmowy — po Wiadomości początkowej (ZIP + GitHub)."""
+    return (
+        "1. przeczytaj wszystkie pliki które są w zip. Co do jednego i potwierdź jak przeczytasz.\n"
+        "2. Połącz się z githubem i zapoznaj się z repozytoriami.\n"
+        "3. Na gicie jest pewnie nowsza wersja niż wyszczególniona w zipie także się tym nie przejmuj "
+        "i analizuj bierzące wersje z gita"
+    )
+
+
+def build_cursor_delegate_followup_message() -> str:
+    """Trzecia wiadomość w Oknie rozmowy — podział ról GPT (analiza) vs Cursor (implementacja)."""
+    return (
+        "Zrobimy tak, że sam będziesz analizował, a Cursor implementował Twoje pomysły. "
+        "Możesz podawać całe kody. Jeśli będziesz chciał, możesz sobie pracę dzielić na mniejsze etapy. "
+        "Daję Tobie wolną rękę. Pamiętaj tylko że Cursor działa na plikach lokalnie a potem ja sam je "
+        "wysyłam na repo do gita, więc jak będziesz do niego pisał to pamiędaj się odnociś do ścieżek lokalnych. "
+        "Napisz czy przyjąłeś do wiadomości"
+    )
+
+
+def build_confirmation_checklist_message() -> str:
+    """Czwarta (ostatnia) wiadomość w Oknie rozmowy — potwierdzenia po ZIP-ie i GitHubie."""
+    return (
+        "1. potwierdź, że rozumiesz instrukcje,\n"
+        "2. potwierdź, jaki plik traktujesz jako główne Instructions,\n"
+        "3. potwierdź, że widzisz aktualny checkpoint z `CURRENT_APP_STATE.md`,\n"
+        "4. potwierdź, czy widzisz pliki trybów analitycznych `GICLEE_ANALYST_*_v1.md`,\n"
+        "5. potwierdź, czy widzisz pliki trybów Shopify `GICLEE_SHOPIFY_MODE_*_v1.md`,\n"
+        "6. potwierdź, że będziesz używać GitHub connectora dla prywatnych repo,\n"
+        "7. potwierdź, że poczekasz na moje konkretne zadanie."
+    )
+
+
 def build_conversation_start_prompt(
     *,
     commit_sha: str = "",

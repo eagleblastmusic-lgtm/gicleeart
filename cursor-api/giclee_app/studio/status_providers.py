@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -11,6 +12,9 @@ SESSION_FILE = CURSOR_API_ROOT / ".shopify_session.json"
 ORDERS_FILE = (
     CURSOR_API_ROOT / "Komponenty" / "produkcja" / "dane" / "zamowienia.json"
 )
+_THEME_DEV_TIMEOUT_SECONDS = 0.15
+_GITHUB_STATUS_CACHE_TTL_SECONDS = 60.0
+_github_status_cache: tuple[float, "StatusResult"] | None = None
 
 
 @dataclass(frozen=True)
@@ -41,7 +45,12 @@ def theme_dev_status() -> StatusResult:
     try:
         from Komponenty.stronaglowna.service import theme_dev_port_open
 
-        if theme_dev_port_open():
+        try:
+            is_open = theme_dev_port_open(timeout=_THEME_DEV_TIMEOUT_SECONDS)
+        except TypeError:
+            is_open = theme_dev_port_open()
+
+        if is_open:
             return StatusResult(True, "Theme Dev", "Port 9292 aktywny")
         return StatusResult(False, "Theme Dev", "Nie uruchomiony")
     except Exception:  # noqa: BLE001
@@ -58,11 +67,22 @@ def customtkinter_available() -> bool:
 
 
 def github_status() -> StatusResult:
-    """Local-only — bez GitHub API; bez git status dirty."""
+    """Local-only — bez GitHub API; bez git status dirty. Cached to avoid UI stalls."""
+    global _github_status_cache
+
+    now = time.monotonic()
+    if _github_status_cache is not None:
+        cached_at, cached_status = _github_status_cache
+        if now - cached_at <= _GITHUB_STATUS_CACHE_TTL_SECONDS:
+            return cached_status
+
     root = CURSOR_API_ROOT
     git_dir = root / ".git"
     if not git_dir.is_dir():
-        return StatusResult(None, "Git", "—")
+        result = StatusResult(None, "Git", "—")
+        _github_status_cache = (now, result)
+        return result
+
     detail = "repo lokalne"
     try:
         import subprocess
@@ -72,16 +92,19 @@ def github_status() -> StatusResult:
             cwd=str(root),
             capture_output=True,
             text=True,
-            timeout=2,
+            timeout=0.75,
             check=False,
         )
         if proc.returncode == 0:
             sha = (proc.stdout or "").strip()
             if sha and len(sha) <= 12:
                 detail = f"HEAD {sha}"
-    except (OSError, Exception):  # noqa: BLE001 — timeout/subprocess errors
+    except (OSError, Exception):  # noqa: BLE001
         pass
-    return StatusResult(True, "Git", detail)
+
+    result = StatusResult(True, "Git", detail)
+    _github_status_cache = (time.monotonic(), result)
+    return result
 
 
 def gpt_snapshot_status() -> StatusResult:

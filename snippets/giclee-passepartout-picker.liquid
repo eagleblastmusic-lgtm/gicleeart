@@ -7,15 +7,28 @@
   if template.suffix == 'szablon-wlasna-fotografia'
     assign hide_passepartout_picker = true
   endif
-  assign pp_white = 'giclee.ui.passepartout_white' | t | default: 'Białe'
-  assign pp_black = 'giclee.ui.passepartout_black' | t | default: 'Czarne'
-  assign pp_legend = 'giclee.ui.passepartout_label' | t | default: 'Passepartout'
   assign pp_fieldset_id = section.id | append: '-passepartout'
 
   assign pp_equal_width = false
   if settings.variant_button_width == 'equal-width-buttons'
     assign pp_equal_width = true
   endif
+-%}
+
+{%- capture pp_legend -%}
+  {%- render 'giclee-ui-t', key: 'giclee.ui.passepartout_label', fallback: 'Passepartout' -%}
+{%- endcapture -%}
+{%- assign pp_legend = pp_legend | strip -%}
+{%- capture pp_white -%}
+  {%- render 'giclee-ui-t', key: 'giclee.ui.passepartout_white', fallback: 'Białe' -%}
+{%- endcapture -%}
+{%- assign pp_white = pp_white | strip -%}
+{%- capture pp_black -%}
+  {%- render 'giclee-ui-t', key: 'giclee.ui.passepartout_black', fallback: 'Czarne' -%}
+{%- endcapture -%}
+{%- assign pp_black = pp_black | strip -%}
+
+{%- liquid
   assign pp_longest = pp_white.size
   if pp_black.size > pp_longest
     assign pp_longest = pp_black.size
@@ -40,7 +53,7 @@
         data-giclee-mockup-variant="CZB"
         data-input-index="0"
         data-current-checked="true"
-        aria-label="{{ pp_white }}"
+        aria-label="{{ pp_white | escape }}"
         checked
       >
       <span class="variant-option__button-label__pill" data-key="variant-option-pill"></span>
@@ -55,7 +68,7 @@
         data-giclee-mockup-variant="CZCZ"
         data-input-index="1"
         data-current-checked="false"
-        aria-label="{{ pp_black }}"
+        aria-label="{{ pp_black | escape }}"
       >
       <span class="variant-option__button-label__pill" data-key="variant-option-pill"></span>
       <span class="variant-option__button-label__text" data-key="variant-option-text">{{ pp_black }}</span>

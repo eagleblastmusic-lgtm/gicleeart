@@ -13,7 +13,9 @@ def test_launcher_gicleeframe_shell_keeps_cached_view() -> None:
     text = path.read_text(encoding="utf-8")
 
     shell = text.split("def _show_gicleeframe_shell", 1)[1].split("\n    def ", 1)[0]
-    assert "GicleeFrameView(" in shell
+    mount = text.split("def _mount_gicleeframe_deferred", 1)[1].split("\n    def ", 1)[0]
+    assert "_mount_gicleeframe_deferred" in shell
+    assert "GicleeFrameView(" in mount
     assert '"gicleeframe"' in shell or "'gicleeframe'" in shell
     assert "cache_hit" in shell
     assert ".destroy()" not in shell

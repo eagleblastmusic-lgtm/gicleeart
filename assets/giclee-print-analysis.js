@@ -105,7 +105,10 @@
   }
 
   function gicleeUi(key, fallback) {
-    return (window.__gicleeI18n && window.__gicleeI18n[key]) || fallback;
+    if (typeof window.__gicleeI18nGet === 'function') return window.__gicleeI18nGet(key, fallback);
+    var v = window.__gicleeI18n && window.__gicleeI18n[key];
+    if (!v || (typeof v === 'string' && /translation missing/i.test(v))) return fallback;
+    return v;
   }
 
   /**

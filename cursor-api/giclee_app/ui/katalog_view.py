@@ -9,6 +9,7 @@ from pathlib import Path
 
 import customtkinter as ctk
 
+from giclee_app.studio.bg import run_async
 from giclee_app.studio.perf import log_event, span
 
 from giclee_app.studio.katalog_data_map import (
@@ -62,7 +63,7 @@ _INTENT_PLACEHOLDER = "— wybierz intencję —"
 _VARIANT_PLACEHOLDER = "— wybierz wariant —"
 _ZONE_PLACEHOLDER = "— wybierz strefę —"
 _KATALOG_INITIAL_REFRESH_DELAY_MS = 50
-_KATALOG_ROW_BATCH_SIZE = 8
+_KATALOG_ROW_BATCH_SIZE = 20
 _KATALOG_ROW_BATCH_DELAY_MS = 0
 
 
@@ -666,26 +667,39 @@ class KatalogView(ctk.CTkScrollableFrame):
     def _refresh_inventory_stage(self) -> None:
         if self._refresh_abort_if_gone():
             return
-        try:
-            with span("studio.katalog.refresh.inventory"):
-                self._pending_inventory = build_katalog_inventory(self._components_root)
-            if self._on_status is not None:
-                self._on_status("Katalog: odświeżam mapę danych…")
-            self._safe_after(0, self._refresh_data_map_stage)
-        except Exception as exc:  # noqa: BLE001 — soft-fail UI refresh pipeline
-            self._refresh_pipeline_error(exc)
+        # Skan plików JSON w wątku roboczym — UI pozostaje responsywne.
+        run_async(
+            self,
+            lambda: build_katalog_inventory(self._components_root),
+            self._on_inventory_built,
+            on_error=self._refresh_pipeline_error,
+        )
+
+    def _on_inventory_built(self, inventory: KatalogInventoryReport) -> None:
+        if self._refresh_abort_if_gone():
+            return
+        self._pending_inventory = inventory
+        if self._on_status is not None:
+            self._on_status("Katalog: odświeżam mapę danych…")
+        self._refresh_data_map_stage()
 
     def _refresh_data_map_stage(self) -> None:
         if self._refresh_abort_if_gone():
             return
-        try:
-            with span("studio.katalog.refresh.data_map"):
-                self._pending_data_map = build_katalog_data_map(self._components_root)
-            if self._on_status is not None:
-                self._on_status("Katalog: wypełniam inventory…")
-            self._safe_after(0, self._refresh_inventory_rows_stage)
-        except Exception as exc:  # noqa: BLE001
-            self._refresh_pipeline_error(exc)
+        run_async(
+            self,
+            lambda: build_katalog_data_map(self._components_root),
+            self._on_data_map_built,
+            on_error=self._refresh_pipeline_error,
+        )
+
+    def _on_data_map_built(self, data_map: KatalogDataMap) -> None:
+        if self._refresh_abort_if_gone():
+            return
+        self._pending_data_map = data_map
+        if self._on_status is not None:
+            self._on_status("Katalog: wypełniam inventory…")
+        self._safe_after(0, self._refresh_inventory_rows_stage)
 
     def _refresh_inventory_rows_stage(self) -> None:
         if self._refresh_abort_if_gone():

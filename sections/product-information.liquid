@@ -54,8 +54,8 @@
 
 {%- comment -%} v3: stronicowany opis produktu (mini strony) {%- endcomment -%}
 {%- if template.suffix == 'szablon-produktu-v3' -%}
-  <link rel="stylesheet" href="{{ 'giclee-product-story.css' | asset_url }}?v=story-20260702-grid-minh">
-  <script src="{{ 'giclee-product-story.js' | asset_url }}?v=story-20260702-curtain-hysteresis" defer></script>
+  <link rel="stylesheet" href="{{ 'giclee-product-story.css' | asset_url }}?v=story-20260708-pt-overlay-fix">
+  <script src="{{ 'giclee-product-story.js' | asset_url }}?v=story-20260708-follower-overlap" defer></script>
 
   {%- comment -%}
     Ustawienia efektow PDP v3 (metafield shop custom.pdp_v3_effects, JSON):
@@ -331,11 +331,11 @@
           <span class="add-to-cart-text__content">
             <span>
               {%- if current_variant.available -%}
-                {{- 'products.product.add_to_cart' | t -}}
+                {%- render 'giclee-ui-t', key: 'products.product.add_to_cart', fallback: 'Dodaj do koszyka' -%}
               {%- elsif current_variant == blank -%}
-                {{- 'products.product.unavailable' | t -}}
+                {%- render 'giclee-ui-t', key: 'products.product.unavailable', fallback: 'Niedostępny' -%}
               {%- else -%}
-                {{- 'products.product.sold_out' | t -}}
+                {%- render 'giclee-ui-t', key: 'products.product.sold_out', fallback: 'Wyprzedane' -%}
               {%- endif -%}
             </span>
             <span

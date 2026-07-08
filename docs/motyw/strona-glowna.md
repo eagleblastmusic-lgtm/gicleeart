@@ -32,14 +32,17 @@ Separatory: bloki `divider` między sekcjami (osobne sekcje Shopify) — **po je
 | Splash + scroll reveal | `layout/theme.liquid` |
 | Mobile hero (lista z JS, nie hardcode) | `assets/giclee-home-mobile.js`, `layout/theme.liquid` |
 | Hero kolaż wideo | `blocks/_slide.liquid`, `assets/giclee-hero-video-collage*.js`, `collage_gui.py` |
+| **Opcjonalny ambient hero** | `sections/slideshow.liquid` (schema), `assets/giclee-hero-audio.js/.css` — tylko `index`, po kliknięciu |
 | Hooki sekcji `data-giclee-home` | `assets/giclee-home-sections.js`, `giclee-home-sections-boot.js` |
 | **Scroll-over warstw (home3, home4)** | `assets/giclee-home-stack.css`, `giclee-home-stack.js` — flaga `GICLEE_HOME_STACK` |
 | **Pre-stack FOUC (home3, home4)** | `snippets/giclee-home-stack-critical.liquid` |
 | **Section-scroll (jeden gest = sekcja)** | `assets/giclee-home-section-scroll.js/.css` — konfiguracja `GICLEE_HOME_SCROLL_CONFIG` |
-| Animacja intro sekcji Giclée Art | `assets/custom.css` (`data-giclee-home="intro"`) |
+| Animacja intro sekcji Giclée Art | `assets/giclee-home-studio-reveal.css`, `giclee-home-sections-boot.js` — reveal, gradient BIO, parallax; config `GICLEE_HOME_STUDIO_REVEAL_CONFIG` (GicleeApp → **Efekty…**); globalny scroll-reveal wyłączony w `assets/custom.css` |
+| Efekty pozostałych sekcji (reveal, hover, tło) | `giclee-home-sections-boot.js` — `GICLEE_HOME_SECTION_EFFECTS_CONFIG` + `GICLEE_HOME_SECTION_BG_EFFECTS_CONFIG` per hook (`restoration`, `color-correction`, `potential`, …) |
 | Układ mobile sekcji | `assets/custom.css` |
 | Suwaki przed/po | `blocks/comparison-slider.liquid`, `assets/comparison-slider.js` |
 | **Przyciemnienie tła sekcji** | `snippets/section.liquid` (`.giclee-section-bg-overlay`), `assets/custom.css` — ten sam gradient co BIO; siła: `background_overlay_pct` (GicleeApp → **Tło…**) |
+| **Hover/focus «Zobacz różnicę» (final)** | `assets/giclee-home-final-difference.css`, `giclee-home-sections-boot.js` — parametry z GicleeApp (**Animacja…**); opcja `reverseBehavior` odwraca trigger (hover na grafikach) |
 | Modal «site notice» | `snippets/giclee-site-notice.liquid`, `?giclee_skip_notice=1` |
 
 Parametry podglądu dev: `?giclee_skip_splash=1` (pomiń splash), `?giclee_skip_notice=1` (pomiń modal).

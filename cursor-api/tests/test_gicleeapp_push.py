@@ -207,6 +207,51 @@ def test_explicit_git_add_not_all(gicleeapp_env, monkeypatch) -> None:
     assert "package.json" in staged_paths
 
 
+def test_commit_and_push_triggers_starter_sync(gicleeapp_env, monkeypatch, tmp_path) -> None:
+    from Komponenty.integracjagpt import config as cfg
+    from Komponenty.integracjagpt import gicleeapp_push as gap
+    from Komponenty.integracjagpt import starter_checkpoint as sc
+
+    _, staging = gicleeapp_env
+    starter = tmp_path / "Pliki startowe dla GPT"
+    starter.mkdir()
+    (starter / "CURRENT_APP_STATE.md").write_text(
+        f"# Current App State\n\n{sc.MARKER_START}\nold\n{sc.MARKER_END}\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(cfg, "GPT_STARTER_DIR", starter)
+
+    def fake_run_git(args, cwd, log=None):
+        class P:
+            returncode = 0
+            stdout = ""
+            stderr = ""
+
+        if args[:2] == ["rev-parse", "HEAD"]:
+            P.stdout = "deadbeefcafe\n"
+        elif args[:3] == ["diff", "--cached", "--name-only"]:
+            P.stdout = "giclee_app/__init__.py\n"
+        return P()
+
+    monkeypatch.setattr(gap, "_run_git", fake_run_git)
+    monkeypatch.setattr(gap, "validate_staging_repo", lambda *a, **k: None)
+    monkeypatch.setattr(
+        gap,
+        "inspect_branch_sync",
+        lambda *a, **k: gap.BranchSyncStatus(ok=True, message="main...origin/main"),
+    )
+
+    report = gap.GicleeAppAuditReport(
+        commit_candidates=["giclee_app/__init__.py"],
+        commit_message="Refresh GicleeApp repository snapshot",
+    )
+    result = gap.commit_and_push_gicleeapp(report, staging_dir=staging, log=[])
+    assert result.ok
+    assert result.starter_sync_updated_files
+    updated = (starter / "CURRENT_APP_STATE.md").read_text(encoding="utf-8")
+    assert "deadbee" in updated
+
+
 def test_no_changes_detected(gicleeapp_env) -> None:
     from Komponenty.integracjagpt import gicleeapp_push as gap
 
@@ -389,6 +434,8 @@ def test_known_component_runtime_paths_blocked() -> None:
         "Komponenty/dokumentysprzedazy/dane/orders_sync_state.json",
         "Komponenty/kpir/dane/kpir_settings.json",
         "Komponenty/stronaglowna/data/backups/index-20260706.json",
+        "Komponenty/wspolpraca/data/variants/manifest.json",
+        "Komponenty/wspolpraca/data/variants/ws1/page.wspolpraca.json",
     )
     for rel in blocked:
         assert gap._is_runtime_path(rel), rel
@@ -400,6 +447,18 @@ def test_known_component_runtime_paths_blocked() -> None:
     )
     for rel in allowed:
         assert not gap._is_runtime_path(rel), rel
+
+
+def test_expand_path_entries_expands_untracked_directory(gicleeapp_env) -> None:
+    from Komponenty.integracjagpt import gicleeapp_push as gap
+
+    _, staging = gicleeapp_env
+    data_dir = staging / "Komponenty" / "katalog" / "data" / "variants" / "ka1"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    (data_dir / "collection.json").write_text("{}", encoding="utf-8")
+
+    expanded = gap._expand_path_entries(staging, "Komponenty/katalog/data")
+    assert "Komponenty/katalog/data/variants/ka1/collection.json" in expanded
 
 
 def test_staged_extra_paths_block_commit(gicleeapp_env, monkeypatch) -> None:

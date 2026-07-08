@@ -16,6 +16,9 @@
 
   assign can_add_to_cart = false
   assign add_to_cart_text = 'products.product.unavailable' | t
+  if add_to_cart_text contains 'Translation missing' or add_to_cart_text contains 'TRANSLATION MISSING' or add_to_cart_text contains ': pl.' or add_to_cart_text contains 'translation missing'
+    assign add_to_cart_text = 'Niedostępny'
+  endif
 
   if variant
     if variant.quantity_rule.min > variant.inventory_quantity and inventory_managed and inventory_policy == 'deny'
@@ -25,12 +28,21 @@
     if variant.available
       assign can_add_to_cart = true
       assign add_to_cart_text = 'products.product.add_to_cart' | t
+      if add_to_cart_text contains 'Translation missing' or add_to_cart_text contains 'TRANSLATION MISSING' or add_to_cart_text contains ': pl.' or add_to_cart_text contains 'translation missing'
+        assign add_to_cart_text = 'Dodaj do koszyka'
+      endif
     elsif inventory_managed and inventory_quantity <= 0 and inventory_policy == 'deny' or quantity_rule_soldout
       assign can_add_to_cart = false
       assign add_to_cart_text = 'products.product.sold_out' | t
+      if add_to_cart_text contains 'Translation missing' or add_to_cart_text contains 'TRANSLATION MISSING' or add_to_cart_text contains ': pl.' or add_to_cart_text contains 'translation missing'
+        assign add_to_cart_text = 'Wyprzedane'
+      endif
     else
       assign can_add_to_cart = false
       assign add_to_cart_text = 'products.product.unavailable' | t
+      if add_to_cart_text contains 'Translation missing' or add_to_cart_text contains 'TRANSLATION MISSING' or add_to_cart_text contains ': pl.' or add_to_cart_text contains 'translation missing'
+        assign add_to_cart_text = 'Niedostępny'
+      endif
     endif
   endif
 %}

@@ -1,0 +1,13 @@
+{
+  "active": "sk2",
+  "variants": [
+    {
+      "id": "sk1",
+      "label": "Wersja 1"
+    },
+    {
+      "id": "sk2",
+      "label": "Wersja 2"
+    }
+  ]
+}

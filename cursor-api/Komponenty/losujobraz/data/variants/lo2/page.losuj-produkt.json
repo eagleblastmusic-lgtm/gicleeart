@@ -1,0 +1,34 @@
+{
+  "sections": {
+    "random_artwork": {
+      "type": "giclee-random-artwork",
+      "settings": {
+        "eyebrow": "Fine Art Oracle",
+        "heading": "Niech sztuka wybierze Ciebie",
+        "subtitle": "Kliknij i odkryj losowo wybrane dzieło z naszej kolekcji — być może właśnie ono miało trafić do Twojego wnętrza.",
+        "button_label": "Losuj obraz",
+        "loading_text": "Przeszukuję kolekcję…",
+        "result_heading": "Wybrany obraz",
+        "view_label": "Zobacz obraz",
+        "replay_label": "Wylosuj ponownie",
+        "error_text": "Nie udało się wczytać kolekcji. Spróbuj ponownie.",
+        "retry_label": "Spróbuj ponownie",
+        "pool_limit": 50,
+        "fetch_full_pool": true,
+        "background_image": "shopify://shop_images/Printmaker_carrying_framed_artwork_2K_202607071636.jpg",
+        "background_video": "",
+        "background_parallax": true,
+        "color_scheme": "scheme-1"
+      }
+    },
+    "main": {
+      "type": "main-page",
+      "disabled": true,
+      "settings": {}
+    }
+  },
+  "order": [
+    "random_artwork",
+    "main"
+  ]
+}

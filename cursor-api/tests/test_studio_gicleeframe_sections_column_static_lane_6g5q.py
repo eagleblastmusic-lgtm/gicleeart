@@ -67,13 +67,16 @@ def test_scroll_upgrade_scheduled_includes_reason_field() -> None:
     assert "delay_ms=" in body
 
 
-def test_scroll_upgrade_scheduled_after_perceived_ready_path() -> None:
-    body = _method_block(_view_text(), "_try_mark_perceived_ready")
-    assert "_schedule_section_list_scroll_upgrade_after_perceived" in body
-    after_body = _method_block(
-        _view_text(), "_schedule_section_list_scroll_upgrade_after_perceived"
-    )
-    assert 'reason="after_perceived_ready"' in after_body
+def test_scroll_upgrade_not_blocking_atomic_reveal_prerequisites() -> None:
+    prereq_body = _method_block(_view_text(), "_ensure_atomic_reveal_prerequisites")
+    assert "_schedule_section_list_scroll_upgrade" not in prereq_body
+    assert 'reason="before_atomic_reveal"' not in prereq_body
+    gates_body = _method_block(_view_text(), "_atomic_reveal_missing_gates")
+    assert "scroll_upgrade" not in gates_body
+    assert "top_actions" not in gates_body
+    assert "section_rows" not in gates_body
+    perceived_body = _method_block(_view_text(), "_try_mark_perceived_ready")
+    assert "_schedule_atomic_reveal_check" in perceived_body
 
 
 def test_scroll_upgrade_fallback_timeout_path_exists() -> None:
@@ -169,35 +172,7 @@ def test_scroll_upgrade_creates_scroll_and_schedules_incremental() -> None:
         root.destroy()
 
 
-def test_perceived_ready_triggers_scroll_upgrade_schedule() -> None:
-    import customtkinter as ctk
-
-    from giclee_app.ui.gicleeframe_view import GicleeFrameView
-
-    root = ctk.CTk()
-    root.withdraw()
-    try:
-        view = GicleeFrameView(root)
-        view.pack()
-        parent = ctk.CTkFrame(view)
-        parent.pack()
-        view._build_sections_column_shell(parent, use_static_lane=True)
-        view._shell_sections_built = True
-        view._shell_editor_built = True
-        view._shell_control_built = True
-        view._section_list_first_visible_built = True
-        scheduled: list[tuple[int, str]] = []
-
-        def _capture_schedule(delay: int, callback) -> str:  # type: ignore[no-untyped-def]
-            scheduled.append((delay, getattr(callback, "__name__", str(callback))))
-            return "after-id"
-
-        with patch.object(view, "after", side_effect=_capture_schedule):
-            view._try_mark_perceived_ready()
-        assert view._perceived_ready_logged
-        assert view._section_list_scroll_upgrade_scheduled
-        assert scheduled
-        assert scheduled[-1] == (120, "_upgrade_section_list_scroll")
-        assert view._section_list_scroll is None
-    finally:
-        root.destroy()
+def test_perceived_ready_triggers_atomic_reveal_check() -> None:
+    body = _method_block(_view_text(), "_try_mark_perceived_ready")
+    assert "_schedule_atomic_reveal_check" in body
+    assert 'trigger=trigger or "perceived_ready"' in body

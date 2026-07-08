@@ -20,25 +20,27 @@ from giclee_app.launcher_delegate import (
     open_component_folder,
 )
 from giclee_app.studio.background_capabilities import capability_for
+from giclee_app.studio.bg import run_async
 from giclee_app.studio.categories import category_label
 from giclee_app.studio.component_index import StudioComponentIndex
 from giclee_app.studio.perf import is_enabled, log_event, span
 from giclee_app.studio.state import StudioState
 
 from . import theme
-from .widgets import ComponentCardShell, SectionHeader
+from .widgets import CARD_STABLE_HEIGHT, ComponentCardShell, SectionHeader
 
 _SEARCH_DEBOUNCE_MS = 200
-# Keep the first real batch intentionally small.
 # ComponentCardShell is lightweight; full hydration runs in idle ticks.
-_FIRST_VISIBLE_CARD_COUNT = 2
+# Większe partie = siatka kart pojawia się w 1-2 klatkach zamiast "kapać".
+_FIRST_VISIBLE_CARD_COUNT = 6
 _FIRST_VISIBLE_BUDGET_MS = 350
-_CARDS_PER_TICK = 3
-_IDLE_BATCH_SIZE = 3
+_CARDS_PER_TICK = 8
+_IDLE_BATCH_SIZE = 8
 _IDLE_BATCH_DELAY_MS = 0
 _IDLE_TICK_BUDGET_MS = 55
 _HYDRATE_DELAY_MS = 24
-_FIRST_PAINT_DELAY_MS = 16
+_FIRST_PAINT_DELAY_MS = 0
+_REAL_SHELL_FIRST_PAINT_COUNT = 6
 _SKELETON_COUNT = 6
 _GRID_COLS = 3
 _LOADING_TEXT = "Ładowanie komponentów…"
@@ -47,6 +49,7 @@ _EMPTY_CATEGORY_TEXT = "Brak komponentów w tej kategorii."
 _EMPTY_FILTER_TEXT = "Filtr nie znalazł komponentów."
 _MODE_FILTERS = ("all", "subprocess", "url", "inline")
 _LOG_TAIL_LINES = 40
+_LOG_TAIL_MAX_BYTES = 64 * 1024
 _AUTO_HYDRATION_ENV = "GICLEE_HUB_AUTO_HYDRATE"
 _HOVER_HYDRATION_ENV = "GICLEE_HUB_HYDRATE_ON_HOVER"
 _HYDRATE_ON_HOVER_DELAY_MS = 120
@@ -125,6 +128,7 @@ class ComponentHubView(ctk.CTkScrollableFrame):
         self._visual_first_cards_logged = False
         self._visual_visible_logged = False
         self._visual_full_logged = False
+        self._visual_real_shell_logged = False
         self._hover_hydration_logged = False
         self._first_visible_cards_built = 0
         self._first_visible_started_mono: float | None = None
@@ -216,7 +220,7 @@ class ComponentHubView(ctk.CTkScrollableFrame):
             corner_radius=8,
             border_width=1,
             border_color=theme.BorderSubtle,
-            height=140,
+            height=CARD_STABLE_HEIGHT,
         )
         frame.pack_propagate(False)
         accent = ctk.CTkFrame(
@@ -299,6 +303,7 @@ class ComponentHubView(ctk.CTkScrollableFrame):
         self._visual_first_cards_logged = False
         self._visual_visible_logged = False
         self._visual_full_logged = False
+        self._visual_real_shell_logged = False
         self._hover_hydration_logged = False
         log_event(
             "studio.hub.visual.enter",
@@ -327,6 +332,18 @@ class ComponentHubView(ctk.CTkScrollableFrame):
             since_enter_ms=self._since_visual_enter_ms(),
             cards_created=created,
             total_cards=len(self._category_components),
+        )
+        self._mark_visual_real_shell_first_paint(created=created)
+
+    def _mark_visual_real_shell_first_paint(self, *, created: int) -> None:
+        if self._visual_real_shell_logged:
+            return
+        self._visual_real_shell_logged = True
+        log_event(
+            "studio.hub.visual.real_shell_first_paint",
+            category=self._category_id,
+            created=created,
+            since_enter_ms=self._since_visual_enter_ms(),
         )
 
     def _mark_visual_visible_ready(self) -> None:
@@ -425,7 +442,10 @@ class ComponentHubView(ctk.CTkScrollableFrame):
                 sk.grid_remove()
 
     def _sync_skeleton_slots(self) -> None:
-        """Ukryj skeleton tylko pod slotami z realnymi kartami; reszta zostaje."""
+        """Skeleton tylko gdy brak listy komponentów — inaczej realne karty."""
+        if self._category_components:
+            self._show_skeleton(False)
+            return
         if self._cards_fully_built:
             self._show_skeleton(False)
             return
@@ -654,7 +674,7 @@ class ComponentHubView(ctk.CTkScrollableFrame):
             self._empty_label.grid_remove()
 
     def _begin_first_paint(self) -> None:
-        """Skeleton natychmiast, budowa kart dopiero po jednej klatce."""
+        """Realne lekkie karty od razu — skeleton tylko gdy brak danych."""
         with span(
             "studio.hub.first_paint",
             category=self._category_id,
@@ -676,9 +696,8 @@ class ComponentHubView(ctk.CTkScrollableFrame):
                 return
 
             self._show_empty(False)
-            self._show_loading(True)
-            self._show_skeleton(True)
-            self._mark_visual_skeleton_ready()
+            self._show_loading(False)
+            self._show_skeleton(False)
             if self._header_count:
                 self._header_count.configure(text=_PREPARE_TEXT)
             self._first_visible_cards_built = 0
@@ -686,10 +705,13 @@ class ComponentHubView(ctk.CTkScrollableFrame):
             self._hydrate_queue.clear()
             self._hydrated_cards.clear()
             self._hydration_queue_started = False
-            self._pending_render_after_id = self.after(
-                _FIRST_PAINT_DELAY_MS,
-                lambda g=gen: self._start_batch_render(g),
-            )
+            if _FIRST_PAINT_DELAY_MS <= 0:
+                self._start_batch_render(gen)
+            else:
+                self._pending_render_after_id = self.after(
+                    _FIRST_PAINT_DELAY_MS,
+                    lambda g=gen: self._start_batch_render(g),
+                )
 
     def _start_batch_render(self, gen: int) -> None:
         self._pending_render_after_id = None
@@ -706,7 +728,8 @@ class ComponentHubView(ctk.CTkScrollableFrame):
         self._batch_build_cards(gen, 0)
 
     def _is_first_visible_phase(self) -> bool:
-        if self._first_visible_cards_built >= _FIRST_VISIBLE_CARD_COUNT:
+        first_target = min(_REAL_SHELL_FIRST_PAINT_COUNT, len(self._category_components))
+        if self._first_visible_cards_built >= first_target:
             return False
         if self._first_visible_cards_built >= 1 and self._first_visible_started_mono is not None:
             elapsed_ms = (time.perf_counter() - self._first_visible_started_mono) * 1000
@@ -751,7 +774,11 @@ class ComponentHubView(ctk.CTkScrollableFrame):
         in_first_visible = self._is_first_visible_phase()
         phase = "first_visible" if in_first_visible else "idle"
 
-        max_cards = _FIRST_VISIBLE_CARD_COUNT if in_first_visible else _IDLE_BATCH_SIZE
+        max_cards = (
+            min(_REAL_SHELL_FIRST_PAINT_COUNT, len(comps))
+            if in_first_visible
+            else _IDLE_BATCH_SIZE
+        )
         budget_ms = _FIRST_VISIBLE_BUDGET_MS if in_first_visible else _IDLE_TICK_BUDGET_MS
 
         new_folders: list[str] = []
@@ -1022,7 +1049,15 @@ class ComponentHubView(ctk.CTkScrollableFrame):
         if not path.is_file():
             return "Brak pliku logu dla tego komponentu."
         try:
-            lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+            # Czytamy tylko końcówkę pliku — duże logi nie zamrażają UI.
+            with open(path, "rb") as f:
+                f.seek(0, 2)
+                size = f.tell()
+                f.seek(max(0, size - _LOG_TAIL_MAX_BYTES))
+                raw = f.read()
+            lines = raw.decode("utf-8", errors="replace").splitlines()
+            if size > _LOG_TAIL_MAX_BYTES and lines:
+                lines = lines[1:]
             if not lines:
                 return "(pusty log)"
             return "\n".join(lines[-max_lines:])
@@ -1031,7 +1066,6 @@ class ComponentHubView(ctk.CTkScrollableFrame):
 
     def _show_log_dialog(self, comp: Component) -> None:
         root = self.winfo_toplevel()
-        text = self._read_log_tail(component_log_path(comp))
         win = ctk.CTkToplevel(root)
         win.title(f"Log — {comp.name}")
         win.geometry("640x360")
@@ -1041,8 +1075,25 @@ class ComponentHubView(ctk.CTkScrollableFrame):
             fg_color=theme.PanelBg,
         )
         box.pack(fill="both", expand=True, padx=12, pady=12)
-        box.insert("1.0", text)
+        box.insert("1.0", "Ładowanie logu…")
         box.configure(state="disabled")
+
+        def _apply(text: object) -> None:
+            try:
+                if not box.winfo_exists():
+                    return
+            except tk.TclError:
+                return
+            box.configure(state="normal")
+            box.delete("1.0", "end")
+            box.insert("1.0", str(text))
+            box.configure(state="disabled")
+
+        run_async(
+            box,
+            lambda: self._read_log_tail(component_log_path(comp)),
+            _apply,
+        )
 
     def _copy_module_path(self, comp: Component) -> None:
         root = self.winfo_toplevel()
@@ -1069,7 +1120,16 @@ class ComponentHubView(ctk.CTkScrollableFrame):
 
     def _on_card_right(self, comp: Component, event: object) -> None:
         root = self.winfo_toplevel()
-        menu = tk.Menu(root, tearoff=0)
+        menu = tk.Menu(
+            root,
+            tearoff=0,
+            bg=theme.PanelBg,
+            fg=theme.TextPrimary,
+            activebackground=theme.CardHover,
+            activeforeground=theme.TextPrimary,
+            bd=0,
+            relief="flat",
+        )
         menu.add_command(label="Uruchom", command=lambda: self._on_card_click(comp))
         menu.add_command(label="Otwórz folder", command=lambda: open_component_folder(comp))
         menu.add_command(label="Pokaż log", command=lambda: self._show_log_dialog(comp))

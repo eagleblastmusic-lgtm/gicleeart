@@ -1,0 +1,14 @@
+{%- doc -%}
+  Pionowe kadrowanie obrazu (object-position Y).
+
+  @param {number} object_y - 0 = góra, 50 = środek, 100 = dół
+{%- enddoc -%}
+{%- liquid
+  assign y = object_y | default: 50 | plus: 0
+  if y < 0
+    assign y = 0
+  elsif y > 100
+    assign y = 100
+  endif
+-%}
+center {{ y }}%

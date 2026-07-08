@@ -17,8 +17,11 @@
   }
 
   function gicleeUi(key, fallback) {
+    if (typeof window.__gicleeI18nGet === 'function') return window.__gicleeI18nGet(key, fallback);
     var bag = window.__gicleeI18n || {};
-    return bag[key] || fallback;
+    var v = bag[key];
+    if (!v || (typeof v === 'string' && /translation missing/i.test(v))) return fallback;
+    return v;
   }
 
   function textOf(el) {
@@ -310,6 +313,36 @@
     // --- stan / nawigacja ---------------------------------------------
     var index = 0;
 
+    function syncHeaderHeight() {
+      var wasHidden = header.classList.contains('giclee-story__header--hidden');
+      header.classList.add('giclee-story__header--instant');
+      header.classList.remove('giclee-story__header--hidden');
+      void header.offsetHeight;
+      var measured = Math.max(header.offsetHeight, header.scrollHeight);
+      if (measured > 0) {
+        header.style.setProperty('--giclee-story-header-height', measured + 'px');
+      }
+      header.classList.remove('giclee-story__header--instant');
+      if (wasHidden) header.classList.add('giclee-story__header--hidden');
+    }
+
+    function setHeaderHidden(hidden, instant) {
+      instant =
+        instant || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      header.classList.toggle('giclee-story__header--instant', !!instant);
+      header.classList.toggle('giclee-story__header--hidden', hidden);
+      if (hidden) {
+        header.setAttribute('aria-hidden', 'true');
+      } else {
+        header.removeAttribute('aria-hidden');
+      }
+      if (instant) {
+        window.requestAnimationFrame(function () {
+          header.classList.remove('giclee-story__header--instant');
+        });
+      }
+    }
+
     function findDetailsIndex() {
       for (var i = pages.length - 1; i >= 0; i--) {
         if (pages[i].type === 'details') return i;
@@ -325,15 +358,14 @@
       inner.style.setProperty('--giclee-story-chevron-top', centerY + 'px');
     }
 
-    function setIndex(next) {
+    function setIndex(next, instant) {
       var max = pages.length - 1;
       index = Math.min(Math.max(next, 0), max);
       counter.textContent = index + 1 + ' / ' + pages.length;
       prevBtn.classList.toggle('is-hidden', index === 0);
       nextBtn.classList.toggle('is-hidden', index === max);
       var onDetails = pages[index].type === 'details';
-      header.hidden = onDetails;
-      header.classList.toggle('giclee-story__header--details', onDetails);
+      setHeaderHidden(onDetails, instant);
       for (var i = 0; i < pageNodes.length; i++) {
         pageNodes[i].classList.toggle('is-active', i === index);
         imageNodes[i].classList.toggle('is-active', i === index);
@@ -360,12 +392,12 @@
         var savedIndex = index;
         inner.style.height = 'auto';
         inner.style.removeProperty('--giclee-story-locked-height');
-        setIndex(detailsIdx);
+        setIndex(detailsIdx, true);
 
         var lockedHeight = inner.offsetHeight;
         inner.style.setProperty('--giclee-story-locked-height', lockedHeight + 'px');
 
-        setIndex(savedIndex);
+        setIndex(savedIndex, true);
         syncChevronY();
       });
     }
@@ -382,9 +414,13 @@
       });
     });
 
+    syncHeaderHeight();
     lockStoryHeight();
 
-    window.addEventListener('resize', lockStoryHeight, { passive: true });
+    window.addEventListener('resize', function () {
+      syncHeaderHeight();
+      lockStoryHeight();
+    }, { passive: true });
     if (typeof ResizeObserver !== 'undefined') {
       var chevronObserver = new ResizeObserver(syncChevronY);
       chevronObserver.observe(frame);
@@ -541,6 +577,18 @@
     holdTail.setAttribute('aria-hidden', 'true');
     pinWrap.appendChild(holdTail);
 
+    /* Pusty scroll pod sticky gridem — proces ma czas wjechac i zakryc
+       konfigurator zanim pinWrap sie konczy (bez ujemnego marginu na wrapie). */
+    var followerOverlap = document.createElement('div');
+    followerOverlap.className = 'giclee-grid-follower-overlap';
+    followerOverlap.setAttribute('aria-hidden', 'true');
+    pinWrap.appendChild(followerOverlap);
+
+    function applyFollowerOverlapHeight() {
+      var vh = window.innerHeight || document.documentElement.clientHeight || 0;
+      followerOverlap.style.height = Math.max(vh, 0) + 'px';
+    }
+
     /* Opis przypina sie dolna krawedzia do dolu ekranu (bottom-anchored sticky).
        top = max(0, viewportH - storyH). Gdy opis wyzszy niz viewport -> 0 (jak
        klasyczny top:0). --pdp-v3-curtain-h = wysokosc kurtyny tla doczepionej
@@ -560,7 +608,9 @@
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       grid.style.setProperty('--pdp-v3-grid-slide-x', '0px');
       applyStoryStickyTop();
+      applyFollowerOverlapHeight();
       window.addEventListener('resize', applyStoryStickyTop, { passive: true });
+      window.addEventListener('resize', applyFollowerOverlapHeight, { passive: true });
       return;
     }
 
@@ -601,6 +651,7 @@
     /* Staly hold — nigdy nie zmieniany w update(): zwiniecie ogona przy
        odpieciu powodowalo nagly 240px skok tresci pod gridem. */
     holdTail.style.height = HOLD_PX + 'px';
+    applyFollowerOverlapHeight();
 
     function smoothstep(t) {
       return t * t * (3 - 2 * t);
@@ -650,9 +701,9 @@
      *  1. Wjazd (pinTop > 0): fixed top:0 — TYLKO poziomo z prawej (bez skosu).
      *  2. Strefa histerezy (0 >= pinTop > -REFIX_PX): nadal fixed top:0.
      *  3. Glebiej: sticky + staly holdTail (240px pustego scrolla), potem
-     *     grid wypychany w gore koncem pinWrap; proces klei sie do dolnej
-     *     krawedzi grida naturalnie w flow (bez sticky-dock, bez skokow).
-     *     Opis zwalnia sticky od zadokowania (is-grid-docked) — nie przeswituje.
+     *     grid wypychany w gore koncem pinWrap; followerOverlap (1×vh) daje
+     *     scroll na overlay procesu nad gridem; trust (sticky, margin -100dvh)
+     *     zakrywa proces. Opis zwalnia sticky od zadokowania — nie przeswituje.
      */
     function update() {
       ticking = false;
@@ -728,6 +779,7 @@
 
     window.addEventListener('scroll', scheduleUpdate, { passive: true });
     window.addEventListener('resize', scheduleUpdate, { passive: true });
+    window.addEventListener('resize', applyFollowerOverlapHeight, { passive: true });
     if (typeof ResizeObserver !== 'undefined') {
       var slideObserver = new ResizeObserver(scheduleUpdate);
       slideObserver.observe(story);

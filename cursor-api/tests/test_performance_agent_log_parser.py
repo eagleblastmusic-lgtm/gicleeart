@@ -61,6 +61,85 @@ def test_load_jsonl_parses_fields_and_malformed(tmp_path: Path) -> None:
     assert event.generation == 2
 
 
+def test_selection_click_since_enter_not_slow_duration(tmp_path: Path) -> None:
+    log = _write_log(
+        tmp_path,
+        [
+            {
+                "event": "studio.gicleeframe.selection.click",
+                "since_enter_ms": 141000,
+                "since_click_ms": 3.0,
+            },
+        ],
+    )
+    result = parse_giclee_studio_log(log)
+    assert result.metrics.slow_events == []
+
+
+def test_details_since_request_still_slow(tmp_path: Path) -> None:
+    log = _write_log(
+        tmp_path,
+        [
+            {
+                "event": "studio.gicleeframe.details_on_demand.ready",
+                "since_request_ms": 750,
+            },
+        ],
+    )
+    result = parse_giclee_studio_log(log)
+    assert len(result.metrics.slow_events) == 1
+    assert result.metrics.slow_events[0].ms_field == "since_request_ms"
+
+
+def test_details_since_click_ignored_for_slow_ranking(tmp_path: Path) -> None:
+    log = _write_log(
+        tmp_path,
+        [
+            {
+                "event": "studio.gicleeframe.details_shell.applied",
+                "since_click_ms": 5000,
+                "since_request_ms": 63,
+                "elapsed_ms": 63,
+            },
+        ],
+    )
+    result = parse_giclee_studio_log(log)
+    assert result.metrics.slow_events == []
+
+
+def test_details_cancelled_not_slow(tmp_path: Path) -> None:
+    log = _write_log(
+        tmp_path,
+        [
+            {
+                "event": "studio.gicleeframe.details_on_demand.cancelled",
+                "request_open_ms": 14000,
+                "since_request_ms": 14000,
+            },
+        ],
+    )
+    result = parse_giclee_studio_log(log)
+    assert result.metrics.slow_events == []
+
+
+def test_details_since_details_cta_ms_can_be_slow(tmp_path: Path) -> None:
+    log = _write_log(
+        tmp_path,
+        [
+            {
+                "event": "studio.gicleeframe.details_on_demand.applied",
+                "since_details_cta_ms": 400,
+                "since_request_ms": 400,
+                "elapsed_ms": 400,
+            },
+        ],
+    )
+    result = parse_giclee_studio_log(log)
+    assert len(result.metrics.slow_events) == 3
+    assert all(row.ms_field != "since_click_ms" for row in result.metrics.slow_events)
+    assert any(row.ms_field == "since_details_cta_ms" for row in result.metrics.slow_events)
+
+
 def test_top_slow_events(tmp_path: Path) -> None:
     log = _write_log(
         tmp_path,

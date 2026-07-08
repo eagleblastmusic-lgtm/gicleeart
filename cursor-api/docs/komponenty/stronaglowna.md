@@ -16,6 +16,8 @@
 
 | `Komponenty/stronaglowna/home_features.py` | Diff, walidacja, skan sekcji, theme dev, assets motywu |
 
+| `Komponenty/_shared/deploy_targets.py` | Cele deploy motywu (development / unpublished / live) — wspólne z edytorem stron menu |
+
 | `Komponenty/stronaglowna/registry.py` | Mapowanie stref → ścieżki w szablonie / ustawieniach |
 
 | `Komponenty/stronaglowna/homepage_variants.py` | Warianty strony głównej (home1–home4) — osobne kopie JSON |
@@ -40,9 +42,9 @@ Tryb: `inline` (w launcherze GicleeApp, sekcja **Administracja strony** — przy
 
 | Hero — slideshow | `index.json` | **Grafika**, **film** (z opcją boomerang) lub **kolaż wideo** (przycisk «Edytuj kolaż wideo…» → osobne okno); **Z listy…** — wybór z filmów w Shopify Files |
 
-| Giclée Art — intro | `index.json` | Portret, **nagłówek + treść** (plain text → HTML) |
+| Giclée Art — intro | `index.json` | Portret, **nagłówek + treść** (plain text → HTML); **Efekty…** (wszystkie typy) |
 
-| Odrestaurowywanie / korekcja / potencjał / zobacz różnicę | `index.json` | Teksty, suwaki przed/po, CTA (w korekcji: wł./wył. przyciski), **Tło…** (grafika lub film + **przyciemnienie gradientem** 0–100%, jak Tło do Bio) |
+| Odrestaurowywanie / korekcja / potencjał / zobacz różnicę | `index.json` | Teksty, suwaki przed/po, CTA, **Tło…**; **Efekty…** (wszystkie typy) |
 
 | **Powiadomienie modalne** | `config/settings_data.json` | Site notice: wł./wył., wersja, tytuł, treść, przycisk |
 
@@ -66,7 +68,7 @@ Tryb: `inline` (w launcherze GicleeApp, sekcja **Administracja strony** — przy
 
 2. Wybierz sekcję z listy po lewej.
 
-3. Grafiki: **Wgraj grafikę…** / **Pobierz…** (Hero) lub przeciągnij plik na miniaturę (`tkinterdnd2`). **Tło…** — osobne okno: wybór **Grafika** / **Film**, upload do Shopify Files (ustawia `background_media` + `background_image` lub `video` w `index.json`), suwak **Przyciemnienie (gradient)** 0–100% + **Wyłącz przyciemnienie** (zapis → `background_overlay_pct` w ustawieniach sekcji; domyślnie 100% przy nowym tle, 0 gdy brak tła).
+3. Grafiki: **Wgraj grafikę…** / **Usuń grafikę** (lub **Usuń film…**) przy każdym polu graficznym; **Pobierz…** (Hero) lub przeciągnij plik na miniaturę (`tkinterdnd2`). **Tło…** — osobne okno: wybór **Grafika** / **Film**, upload do Shopify Files (ustawia `background_media` + `background_image` lub `video` w `index.json`), suwak **Przyciemnienie (gradient)** 0–100% + **Wyłącz przyciemnienie** + **Usuń tło** (zapis → `background_overlay_pct` w ustawieniach sekcji; domyślnie 100% przy nowym tle, 0 gdy brak tła).
 
 4. Tekst: pola **Nagłówek** i **Treść** — komponent składa HTML (`<h2>`, `<p>`).
 
@@ -126,11 +128,11 @@ Przy starcie komponent wczytuje aktywny wariant do edytora (bez automatycznego n
 
 **Scroll-over stack:** warianty z `home_stack: true` w manifeście (domyślnie `home3`/`home4`; kopia takiego wariantu dziedziczy flagę) — przy zapisie / przełączeniu komponent ustawia `window.GICLEE_HOME_STACK = true` w `assets/giclee-home-sections.js`. Motyw ładuje `giclee-home-stack.css` + `giclee-home-stack.js`: warstwy **1→6** (hero → zobacz różnicę) jadą nad menu i nad poprzednią sekcją (`sticky` + rosnący `z-index`). Separatory między warstwami mają ten sam `z-index` co następna sekcja i przewijają się razem z nią (bez ukrywania). Na touch / reduced-motion efekt wyłączony.
 
-**Ustawienia strony głównej:** przycisk **Ustawienia…** na dolnym pasku (obok «Odśwież wariant») — okno z zakładkami per wariant:
+**Efekty sekcji (universal):** przycisk **Efekty…** przy każdej sekcji z hookiem motywu (hero, intro, restoration, …). Jedno okno: combobox **Sekcja** + zakładki **typów efektów** (reveal, hover tekstu, gradient BIO, parallax). Wszystkie typy dostępne dla każdej sekcji — włączasz per zakładka. Rejestr: `home_effects_registry.py` (`HOME_EFFECT_TYPES` + `register_home_effect_type()` — nowy pakiet efektów = nowa zakładka). Panele UI: `home_effect_panels.py`. Storage: `section_effects_storage.py` (legacy: `studio-reveal.json` / `final-difference.json` dla intro / see-difference; pozostałe hooki → `section-effects.json`). Eksport: `GICLEE_HOME_STUDIO_REVEAL_CONFIG`, `GICLEE_HOME_FINAL_DIFFERENCE_CONFIG`, `GICLEE_HOME_SECTION_BG_EFFECTS_CONFIG`, `GICLEE_HOME_SECTION_EFFECTS_CONFIG` w `assets/giclee-home-sections.js`.
 
-- **Przejścia między sekcjami** (section-scroll): combobox **Preset** (Galeria domyślny, Editorial kontemplacyjny, Kinowy, Dynamiczny premium, Miękki editorial, **GPT** — wypełnia formularz bez auto-zapisu), kill switch (`enabled`), desktop on/off, tryb mobile (`native`/`soft`/`disabled`), czasy animacji (min/max), suwak **Dynamika ruchu** (`motionDynamics` 0–100: spokojny ↔ dynamiczny), progi gestów (wheel/touch), offsety headera i separatora, tryb reduced-motion (`instant`/`off`), debug. Ręczna edycja pola przełącza preset na „— własne —". Walidacja: min ≤ max, zakresy liczb, dozwolone tryby. Zapis: `Komponenty/stronaglowna/data/variants/<id>/scroll.json` (moduł `scroll_settings.py`, presety w `SCROLL_PRESETS`), a `write_home_assets()` eksportuje `window.GICLEE_HOME_SCROLL_CONFIG` do `assets/giclee-home-sections.js` — bez sekretów, bez auto-deployu (zmiana na sklepie po **Wdróż motyw…**). Przyciski: **Zapisz**, **Przywróć domyślne**, **Wyłącz awaryjnie** (ustawia `enabled: false` i od razu regeneruje asset), **Otwórz stronę główną**.
-- **Przejścia między sekcjami**: checkbox **Miękkie osadzenie nagłówka** (`headingSettle` w `scroll.json`) — zapis przez **Zapisz** razem z parametrami section-scroll.
-- **Efekty warstw** (scroll-over stack): wł./wył. `home_stack` w `manifest.json` wariantu → `window.GICLEE_HOME_STACK` w `assets/giclee-home-sections.js`. Przycisk **Zapisz ustawienia efektów**.
+**Przejścia (osobno):** przycisk **Przejścia…** na dolnym pasku — zakładki **Między sekcjami** (section-scroll, `scroll.json`) i **Warstwy (stack)** (`home_stack` w manifeście). Nie miesza się z efektami sekcji.
+
+**Section-scroll (szczegóły):** combobox **Preset** (Galeria domyślny, Editorial kontemplacyjny, Kinowy, Dynamiczny premium, Miękki editorial, **GPT** — wypełnia formularz bez auto-zapisu), kill switch (`enabled`), desktop on/off, tryb mobile (`native`/`soft`/`disabled`), czasy animacji (min/max), suwak **Dynamika ruchu** (`motionDynamics` 0–100), progi gestów (wheel/touch), offsety headera i separatora, tryb reduced-motion (`instant`/`off`), debug, **Miękkie osadzenie nagłówka** (`headingSettle`). Przyciski: **Zapisz**, **Przywróć domyślne (scroll)**, **Wyłącz awaryjnie**, **Podgląd live**.
 
 Front section-scroll: `assets/giclee-home-section-scroll.js/.css` — dock z viewportu, scroll w górę z dwuetapową logiką runway, okno ciszy kierunkowe (opis: [`docs/motyw/strona-glowna.md`](../../../docs/motyw/strona-glowna.md)). Testy: `tests/test_stronaglowna_scroll.py`.
 
@@ -198,7 +200,7 @@ Przy zapisie komponent aktualizuje:
 
 - `assets/giclee-home-mobile.js` — lista plików mobile hero
 
-- `assets/giclee-home-sections-boot.js` — ustawia `data-giclee-home` na sekcjach
+- `assets/giclee-home-sections-boot.js` — `data-giclee-home`, intro/see-difference (legacy globals), **`GICLEE_HOME_SECTION_EFFECTS_CONFIG`** (scroll reveal + hover tekstu per hook), **`GICLEE_HOME_SECTION_BG_EFFECTS_CONFIG`** (gradient + parallax; pomijane gdy sekcja ma już studio reveal)
 
 
 

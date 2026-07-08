@@ -9,19 +9,25 @@
   if section.settings.enable_webgl == nil
     assign enable_webgl = true
   endif
+  assign custom_bg = 'none'
+  if section.settings.background_video != blank
+    assign custom_bg = 'video'
+  elsif section.settings.background_image != blank
+    assign custom_bg = 'image'
+  endif
 -%}
 
 <link
   rel="stylesheet"
-  href="{{ 'giclee-random-artwork.css' | asset_url }}?v=grw-stage3-20260622"
+  href="{{ 'giclee-random-artwork.css' | asset_url }}?v=grw-parallax-20260708"
 >
 <script
-  src="{{ 'giclee-random-artwork.js' | asset_url }}?v=grw-stage3-20260622"
+  src="{{ 'giclee-random-artwork.js' | asset_url }}?v=grw-title-parens-20260708"
   defer
 ></script>
 
 <giclee-random-artwork
-  class="giclee-random-artwork color-{{ section.settings.color_scheme }}"
+  class="giclee-random-artwork color-{{ section.settings.color_scheme }}{% if custom_bg != 'none' %} grw--custom-bg grw--custom-bg-{{ custom_bg }}{% endif %}"
   data-state="idle"
   data-root-url="{{ routes.root_url }}"
   data-products-endpoint="{{ routes.root_url }}/collections/all/products.json"
@@ -39,6 +45,27 @@
   </script>
 
   <div class="giclee-random-artwork__scene" data-grw-scene>
+    {%- comment -%} Wlasne tlo uzytkownika (obraz lub film) — pod warstwami dekoracyjnymi {%- endcomment -%}
+    {%- if custom_bg != 'none' -%}
+      <div
+        class="giclee-random-artwork__custom-bg{% if section.settings.background_parallax %} grw--custom-bg-parallax{% endif %}"
+        data-grw-custom-bg
+        aria-hidden="true"
+      >
+        <div class="giclee-random-artwork__custom-bg-layers">
+          {%- render 'background-media',
+            background_media: custom_bg,
+            background_image: section.settings.background_image,
+            background_image_position: 'cover',
+            background_image_object_y: section.settings.background_image_object_y,
+            background_video: section.settings.background_video,
+            background_video_position: 'cover',
+            section: section
+          -%}
+        </div>
+      </div>
+    {%- endif -%}
+
     {%- comment -%} Warstwy tla — gradienty, swiatlo, ziarno, winieta {%- endcomment -%}
     <div class="giclee-random-artwork__bg" aria-hidden="true">
       <span class="giclee-random-artwork__bg-aurora"></span>
@@ -244,6 +271,31 @@
       "label": "Doczytaj pelna pule (AJAX)",
       "default": true,
       "info": "Pobiera wszystkie opublikowane produkty z /collections/all/products.json. Wylacz, gdy endpoint JSON jest zablokowany — zostaje pula z Liquid."
+    },
+    {
+      "type": "header",
+      "content": "Wlasne tlo"
+    },
+    {
+      "type": "paragraph",
+      "content": "Film ma pierwszenstwo przed obrazem. Puste pola = domyslna scena (aurora + WebGL)."
+    },
+    {
+      "type": "image_picker",
+      "id": "background_image",
+      "label": "Obraz tla"
+    },
+    {
+      "type": "video",
+      "id": "background_video",
+      "label": "Film / animacja tla"
+    },
+    {
+      "type": "checkbox",
+      "id": "background_parallax",
+      "label": "Parallax tla (mysz)",
+      "default": false,
+      "info": "Subtelny ruch obrazu lub filmu w tle przy ruszaniu kursorem — jak w karuzeli / konfiguratorze produktu. Dziala dla obrazu i filmu."
     },
     {
       "type": "header",

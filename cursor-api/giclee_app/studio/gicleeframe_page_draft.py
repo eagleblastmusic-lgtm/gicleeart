@@ -15,7 +15,7 @@ from giclee_app.studio.gicleeframe_page_settings import (
 )
 
 PAGE_EDITOR_TITLE = "Strona GICLÉE FRAME™"
-SECTION_LIST_TITLE = "Lista sekcji"
+SECTION_LIST_TITLE = "Sekcje strony"
 SECTION_LIST_DRAG_HINT = "Przeciągnij ⋮⋮, aby zmienić kolejność (RAM draft)."
 SECTION_EDITOR_TITLE = "Edytor sekcji"
 DEFAULT_VARIANT_NAME = "Wariant 1"
@@ -41,7 +41,12 @@ CLEAR_VARIANT_RAM_LABEL = "Wyczyść wariant RAM"
 CLEAR_DRAFT_LABEL = CLEAR_VARIANT_RAM_LABEL
 CHECK_STRUCTURE_LABEL = "Sprawdź strukturę (dry-run)"
 REFRESH_INVENTORY_LABEL = "Odśwież inventory"
-APPLY_RAM_DRAFT_LABEL = "Uaktualnij RAM draft"
+APPLY_RAM_DRAFT_LABEL = "Uaktualnij wariant RAM"
+APPLY_RAM_MICROCOPY = "Tylko pamięć · nic nie zapisuje"
+PANEL_STATUS_UNSAVED = "Nic nie zapisano"
+STRUCTURE_EMPTY_STATE = "Uruchom dry-run, aby zobaczyć mapę struktury strony."
+SECTION_VISIBLE_RAM = "Widoczna w RAM"
+SECTION_HIDDEN_RAM = "Ukryta w RAM"
 PAGE_SOURCE_FILE = "page.giclee-frame.json"
 _DEFAULT_VARIANT_ID = "ram_v1"
 
@@ -357,12 +362,7 @@ class SectionTreeRow:
 def parent_row_title(merged: MergedPageElement) -> str:
     if merged.element_type == "divider":
         return "Separator"
-    if merged.element_type == "section_legacy":
-        return f"Sekcja (legacy): {merged.label}"
-    if merged.element_type == "media_section":
-        name = merged.title or merged.label
-        return f"Sekcja: {name}"
-    return f"Sekcja: {merged.label}"
+    return merged.label
 
 
 def editor_title_for_element(merged: MergedPageElement) -> str:
@@ -423,7 +423,11 @@ def _parent_dropdown_label(
     return row.display_title
 
 
-def section_dropdown_options(merged: list[MergedPageElement]) -> list[SectionDropdownOption]:
+def section_dropdown_options(
+    merged: list[MergedPageElement],
+    *,
+    rows: list[SectionTreeRow] | None = None,
+) -> list[SectionDropdownOption]:
     """Top-level page rhythm only: separators + sections (no nested components)."""
     options: list[SectionDropdownOption] = []
     used_labels: set[str] = set()
@@ -436,7 +440,8 @@ def section_dropdown_options(merged: list[MergedPageElement]) -> list[SectionDro
         return label
 
     divider_no = 0
-    for row in section_tree_rows(merged):
+    tree_rows = rows if rows is not None else section_tree_rows(merged)
+    for row in tree_rows:
         if row.row_kind == "divider":
             divider_no += 1
             label = unique_label(

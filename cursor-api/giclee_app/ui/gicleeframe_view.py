@@ -14,6 +14,7 @@ from typing import Any
 import customtkinter as ctk
 
 from giclee_app.component_loader import find_components_dir
+from giclee_app.studio.bg import run_async
 from giclee_app.studio.perf import log_event, span
 from giclee_app.studio.gicleeframe_brief import (
     COMPONENT_DESCRIPTION,
@@ -101,7 +102,35 @@ from . import theme
 from .widgets import SectionHeader, status_color
 
 _BACK_LABEL = "Wróć do huba"
-_GF_LOADING_OVERLAY_TEXT = "Ładowanie Giclée Frame…"
+_GF_LOADING_OVERLAY_TEXT = "Przygotowuję GICLÉE FRAME…"
+_GF_ATOMIC_SWAP_STATUS_TEXT = "Przygotowuję sekcję…"
+_GF_DETAILS_ON_DEMAND_TEXT = "Szczegóły sekcji są dostępne na żądanie."
+_GF_DETAILS_ON_DEMAND_BUTTON = "Pokaż szczegóły"
+_GF_MEDIA_DETAILS_ON_DEMAND_TEXT = (
+    "Szczegóły mediów, warstwy i podgląd są dostępne na żądanie."
+)
+_GF_MEDIA_DETAILS_ON_DEMAND_BUTTON = "Pokaż szczegóły mediów"
+_GF_DETAILS_ON_DEMAND_LOADING_TEXT = "Ładowanie szczegółów…"
+_GF_DETAILS_SHELL_TITLE = "Szczegóły sekcji"
+_GF_DETAILS_SHELL_SUBTEXT = "Wybierz, które szczegóły chcesz wczytać."
+_GF_MEDIA_DETAILS_SHELL_SUBTEXT = (
+    "Podgląd, warstwy i elementy mediów są dostępne osobno, żeby nie spowalniać edytora."
+)
+_GF_DETAILS_CACHE_HIT_STATUS = "Szczegóły załadowane"
+_GF_DETAILS_MODULE_PREVIEW_TITLE = "Podgląd"
+_GF_DETAILS_MODULE_PAGE_CONTEXT_TITLE = "Ustawienia"
+_GF_DETAILS_MODULE_LAYER_NAV_TITLE = "Warstwy"
+_GF_DETAILS_MODULE_CHILDREN_TITLE = "Elementy"
+_GF_DETAILS_MODULE_PREVIEW_BUTTON = "Wczytaj podgląd"
+_GF_DETAILS_MODULE_PAGE_CONTEXT_BUTTON = "Wczytaj ustawienia"
+_GF_DETAILS_MODULE_LAYER_NAV_BUTTON = "Wczytaj warstwy"
+_GF_DETAILS_MODULE_CHILDREN_BUTTON = "Wczytaj elementy"
+_GF_DETAILS_MODULE_IDLE_STATUS = "—"
+_GF_DETAILS_MODULE_LOADED_STATUS = "Gotowe"
+_GF_DETAILS_MODULE_LOADING_STATUS = "Ładowanie…"
+_GF_DETAILS_STAGE_GAP_MS = 16
+_GF_DETAILS_CHILDREN_BATCH_SIZE = 2
+_GF_DETAILS_CONTAINER_HEIGHT = 148
 _SHELL_STATUS_CHIP = "RAM-only · bez zapisu"
 _SECTION_PLACEHOLDER = "— wybierz sekcję —"
 _VARIANT_PLACEHOLDER = "— wybierz wariant —"
@@ -157,36 +186,46 @@ _GF_DANGER = "#a07068"
 _PROGRESSIVE_BOOT_ENV = "GICLEE_GF_PROGRESSIVE_BOOT"
 _EAGER_BOOT_ENV = "GICLEE_GF_EAGER_BOOT"
 _GF_BOOT_DEFER_MS = 50
-_GF_SECTION_BATCH_SIZE = 3
-_GF_SECTION_FIRST_BATCH_SIZE = 2
-_GF_SECTION_BATCH_DELAY_MS = 16
+# Batching agresywniejszy: większe partie, minimalne przerwy — widok składa się
+# w kilku klatkach zamiast "wjeżdżać" elementami przez ~2 sekundy.
+_GF_SECTION_BATCH_SIZE = 8
+_GF_SECTION_FIRST_BATCH_SIZE = 6
+_GF_SECTION_BATCH_DELAY_MS = 0
 _GF_SECTION_FIRST_VISIBLE_DEFER_MS = 0
 _GF_SECTIONS_COLUMN_EARLY_DEFER_MS = 0
-_GF_SECTION_SCROLL_UPGRADE_AFTER_PERCEIVED_DEFER_MS = 120
+_GF_SECTION_SCROLL_UPGRADE_AFTER_PERCEIVED_DEFER_MS = 40
 _GF_SECTION_SCROLL_UPGRADE_FALLBACK_TIMEOUT_MS = 800
 _GF_INIT_REFRESH_LIGHT_DEFER_MS = 0
 _GF_MICRO_DEFER_MS = 16
-_GF_F1_DEFER_MS = 150
+_GF_F1_DEFER_MS = 60
 _GF_LAZY_SHELL_ENV = "GICLEE_GF_LAZY_SHELL"
-_GF_SHELL_SECTIONS_DEFER_MS = 30
-_GF_SHELL_EDITOR_DEFER_MS = 40
-_GF_SHELL_CONTROL_DEFER_MS = 80
-_GF_CONTROL_LATE_BUILD_DEFER_MS = 900
-_GF_EDITOR_IDENTITY_PREWARM_AFTER_PERCEIVED_MS = 300
-_GF_EDITOR_IDENTITY_LATE_DEFER_MS = 1200
-_GF_TOP_BAR_ACTIONS_LATE_DEFER_MS = 1600
+_GF_SHELL_SECTIONS_DEFER_MS = 10
+_GF_SHELL_EDITOR_DEFER_MS = 16
+_GF_SHELL_CONTROL_DEFER_MS = 30
+_GF_CONTROL_LATE_BUILD_DEFER_MS = 120
+_GF_EDITOR_IDENTITY_PREWARM_AFTER_PERCEIVED_MS = 80
+_GF_EDITOR_IDENTITY_LATE_DEFER_MS = 160
+_GF_TOP_BAR_ACTIONS_LATE_DEFER_MS = 200
 _GF_TOP_BAR_CONTEXT_ACTIONS_LATE_DEFER_MS = 0
-_GF_TOP_BAR_PRIMARY_ACTIONS_LATE_DEFER_MS = 160
-_GF_TOP_BAR_SECONDARY_ACTIONS_LATE_DEFER_MS = 320
+_GF_TOP_BAR_PRIMARY_ACTIONS_LATE_DEFER_MS = 30
+_GF_TOP_BAR_SECONDARY_ACTIONS_LATE_DEFER_MS = 60
 _GF_WORKSPACE_LOADING_TEXT = "Ładowanie edytora Giclée Frame…"
 _GF_PROGRESSIVE_PAGE_CONTEXT_ENV = "GICLEE_GF_PROGRESSIVE_PAGE_CONTEXT"
-_GF_PAGE_CONTEXT_BATCH_SIZE = 3
+_GF_PAGE_CONTEXT_BATCH_SIZE = 8
 _GF_PAGE_CONTEXT_BATCH_DELAY_MS = 0
-_GF_PAGE_CONTEXT_DEFER_MS = 20
+_GF_PAGE_CONTEXT_DEFER_MS = 10
 _GF_SELECT_POPULATE_DEFER_MS = 0
 _GF_SELECTION_PRIORITY_WINDOW_MS = 200
 _GF_SELECTION_PRIORITY_YIELD_DEFER_MS = 60
-_GF_PAGE_CONTEXT_STABLE_DEFER_MS = 140
+_GF_PAGE_CONTEXT_STABLE_DEFER_MS = 80
+_GF_PAGE_CONTEXT_SHELL_STATUS_TEXT = "Ustawienia sekcji są aktualizowane…"
+_GF_MEDIA_PREVIEW_AFTER_SHELL_MS = 20
+_GF_MEDIA_LAYER_NAV_AFTER_SHELL_MS = 40
+_GF_MEDIA_CHILDREN_AFTER_SHELL_MS = 80
+_GF_MEDIA_DETAILS_STATUS_TEXT = "Szczegóły mediów zostaną zaktualizowane…"
+_GF_MEDIA_DETAILS_STABLE_HEIGHT = 88
+_GF_EDITOR_STALE_REFRESH_STATUS_TEXT = "Aktualizuję dla wybranej sekcji…"
+_GF_PREVIEW_BOOTSTRAP_STATUS_TEXT = "Podgląd sekcji pojawi się po wyborze…"
 _GF_SECTION_ROW_COLLAPSE_ON_CLICK_ENV = "GICLEE_GF_COLLAPSE_SECTION_LIST_ON_CLICK"
 _GF_PAGE_CONTEXT_GROUP_SETTING_BATCH_SIZE = 1
 _GF_PAGE_CONTEXT_GROUP_SETTING_DELAY_MS = 0
@@ -247,6 +286,39 @@ class PageContextRowSpec:
     setting_id: str = ""
     group_id: str = ""
     group_settings: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class SectionVisualCacheEntry:
+    """Sesyjny cache wizualny — nie mutuje RAM draft."""
+
+    element_type: str
+    status: str
+    has_draft_patch: bool
+    title: str
+    text: str
+    alt: str
+    image_ref: str
+    notes: str
+    visible: bool
+    subtitle_text: str
+    page_context_summary: tuple[tuple[str, str], ...]
+    fields_title: bool
+    fields_text: bool
+    fields_alt: bool
+    fields_image_ref: bool
+    fields_notes: bool
+    fields_visible: bool
+    fields_children: bool
+    fields_page_context: bool
+    media_details_built: bool
+    preview_key: str
+    layer_nav_visible: bool
+    layer_nav_titles: tuple[str, ...]
+    details_cache_preview: bool = False
+    details_cache_page_context: bool = False
+    details_cache_layer_nav: bool = False
+    details_cache_children: bool = False
 
 
 def _ellipsize(text: str, max_chars: int = _SECTION_LABEL_MAX_CHARS) -> str:
@@ -523,7 +595,7 @@ def _make_primary_button(
         height=36,
         fg_color=_GF_GOLD_SOFT,
         hover_color=_GF_GOLD,
-        text_color="#161618",
+        text_color=_GF_BG,
         font=theme.get_font(11, "bold"),
         command=command,
     )
@@ -609,6 +681,7 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         self._editor_header_visible_row: ctk.CTkFrame | None = None
         self._legacy_msg_label: ctk.CTkLabel | None = None
         self._section_preview_line: ctk.CTkFrame | None = None
+        self._section_preview_card: ctk.CTkFrame | None = None
         self._section_preview_canvas: ctk.CTkFrame | None = None
         self._section_preview_badge: ctk.CTkLabel | None = None
         self._layer_nav_frame: ctk.CTkFrame | None = None
@@ -650,6 +723,8 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         self._selection_priority_until_mono: float | None = None
         self._selection_priority_end_after_id: str | None = None
         self._page_context_loading_label: ctk.CTkLabel | None = None
+        self._page_context_shell_shown_generation = 0
+        self._media_deferred_done_after_id: str | None = None
         self._page_context_specs_cache: dict[str, list[PageContextRowSpec]] = {}
         self._page_context_collapsed_group_rows: dict[str, ctk.CTkFrame] = {}
         self._page_context_collapsed_group_bodies: dict[str, ctk.CTkFrame] = {}
@@ -672,6 +747,8 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         self._preview_value_widgets: dict[str, dict[str, ctk.CTkBaseClass]] = {}
         self._preview_active_key: str | None = None
         self._preview_shell_bootstrapped: bool = False
+        self._preview_bootstrap_panel: ctk.CTkFrame | None = None
+        self._preview_bootstrap_status_label: ctk.CTkLabel | None = None
         self._notes_row: ctk.CTkFrame | None = None
         self._visible_row: ctk.CTkFrame | None = None
         self._children_overview_row: ctk.CTkFrame | None = None
@@ -725,6 +802,11 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         self._command_bar_secondary_placeholder: ctk.CTkFrame | None = None
         self._workspace_skeleton_columns_built = False
         self._perceived_ready_logged = False
+        self._atomic_reveal_ready_logged = False
+        self._atomic_reveal_overlay_shown = False
+        self._inventory_light_ready = False
+        self._atomic_swap_suppress_visible = False
+        self._atomic_swap_deferred_row_visibility: list[tuple[ctk.CTkFrame | None, bool]] = []
         self._sections_column_early_lane_scheduled = False
         self._sections_column_early_lane_scheduled_mono: float | None = None
         self._sections_column_early_lane_enter_mono: float | None = None
@@ -747,6 +829,36 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         self._notes_row_built = False
         self._children_overview_built = False
         self._page_context_shell_built = False
+        self._section_visual_cache: dict[str, SectionVisualCacheEntry] = {}
+        self._media_details_stable_frame: ctk.CTkFrame | None = None
+        self._media_details_status_label: ctk.CTkLabel | None = None
+        self._media_details_stable_built = False
+        self._editor_stable_shell_logged_for: set[str] = set()
+        self._selection_visual_cache_applied = False
+        self._editor_has_ready_content = False
+        self._editor_last_ready_element_id: str | None = None
+        self._editor_refresh_status_frame: ctk.CTkFrame | None = None
+        self._editor_refresh_status_label: ctk.CTkLabel | None = None
+        self._details_on_demand_frame: ctk.CTkFrame | None = None
+        self._details_on_demand_hint_label: ctk.CTkLabel | None = None
+        self._details_on_demand_button: ctk.CTkButton | None = None
+        self._details_on_demand_status_label: ctk.CTkLabel | None = None
+        self._details_on_demand_built = False
+        self._details_on_demand_element_id: str | None = None
+        self._details_on_demand_expanded = False
+        self._details_on_demand_after_ids: list[str] = []
+        self._details_on_demand_generation = 0
+        self._details_on_demand_request_mono: float | None = None
+        self._details_cta_click_mono: float | None = None
+        self._details_on_demand_active_element_id: str | None = None
+        self._details_container_frame: ctk.CTkFrame | None = None
+        self._details_container_built = False
+        self._details_container_title_label: ctk.CTkLabel | None = None
+        self._details_container_subtext_label: ctk.CTkLabel | None = None
+        self._details_module_rows: dict[str, ctk.CTkFrame] = {}
+        self._details_module_buttons: dict[str, ctk.CTkButton] = {}
+        self._details_module_status_labels: dict[str, ctk.CTkLabel] = {}
+        self._visible_prewarm_suppressed_logged = False
 
         _has_schedule_init_refresh_light = hasattr(
             type(self),
@@ -786,12 +898,16 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
                 self._build_shell()
             if _progressive_boot_enabled():
                 log_event("studio.gicleeframe.progressive_boot.enabled")
+                self._ensure_atomic_reveal_overlay()
                 self._schedule_init_refresh_light()
-                self._schedule_visual_ready()
             else:
                 log_event("studio.gicleeframe.progressive_boot.disabled")
+                self._ensure_atomic_reveal_overlay()
                 with span("studio.gicleeframe.init_refresh"):
                     self._refresh_inventory(warn_if_draft=False)
+                self._inventory_light_ready = True
+                self._ensure_atomic_reveal_prerequisites()
+                self._schedule_atomic_reveal_check(trigger="init_eager")
 
     def set_navigation(self, *, on_back: Callable[[], None] | None = None) -> None:
         """Update cached view navigation without rebuilding the workbench."""
@@ -816,10 +932,11 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         elif self._visual_enter_mono is None:
             self._begin_visual_session(cache_hit=False)
 
-        if cache_hit and self._visual_bootstrap_complete:
-            self._schedule_visual_ready()
-        elif not self._visual_bootstrap_complete:
-            self._schedule_visual_ready()
+        if self._visual_bootstrap_complete:
+            self._hide_loading_overlay()
+        else:
+            self._ensure_atomic_reveal_overlay()
+            self._schedule_atomic_reveal_check(trigger="on_show")
 
         log_event(
             "studio.gicleeframe.on_show",
@@ -832,6 +949,7 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
     def on_hide(self) -> None:
         self._cancel_selection_jobs()
         self._cancel_page_context_jobs()
+        self._cancel_details_on_demand_jobs()
         log_event(
             "studio.gicleeframe.on_hide",
             selected_id=self._selected_id or "",
@@ -875,6 +993,30 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         if self._selection_click_mono is None:
             return None
         return round((time.perf_counter() - self._selection_click_mono) * 1000, 2)
+
+    def _since_details_request_ms(self) -> float | None:
+        if self._details_on_demand_request_mono is None:
+            return None
+        return round((time.perf_counter() - self._details_on_demand_request_mono) * 1000, 2)
+
+    def _since_details_cta_ms(self) -> float | None:
+        if self._details_cta_click_mono is None:
+            return None
+        return round((time.perf_counter() - self._details_cta_click_mono) * 1000, 2)
+
+    def _log_perf_e_update_done(
+        self,
+        segment: str,
+        *,
+        element_type: str,
+        started: float,
+    ) -> None:
+        log_event(
+            f"studio.gicleeframe.{segment}.update.done",
+            element_type=element_type,
+            elapsed_ms=round((time.perf_counter() - started) * 1000, 2),
+            since_click_ms=self._since_selection_click_ms(),
+        )
 
     def _selection_priority_active(self, generation: int | None = None) -> bool:
         if self._selection_priority_until_mono is None:
@@ -1008,8 +1150,10 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         return True
 
     def _should_run_immediate_selection_populate(self, m: MergedPageElement) -> bool:
-        fields = editor_field_visibility(m.element_type)
-        return not self._should_defer_editor_detail_populate(m, fields)
+        # PERF-E.1: shell + pola muszą iść synchronicznie po kliknięciu.
+        # Ciężkie preview/layer_nav/children deferujemy wewnątrz _populate_editor.
+        _ = m
+        return True
 
     def _schedule_selection_populate(
         self,
@@ -1040,6 +1184,98 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
             cache_hit=cache_hit,
             source="view_on_show",
         )
+
+    def _ensure_atomic_reveal_overlay(self) -> None:
+        if self._visual_bootstrap_complete:
+            return
+        self._show_loading_overlay()
+        if self._atomic_reveal_overlay_shown:
+            return
+        self._atomic_reveal_overlay_shown = True
+        log_event(
+            "studio.gicleeframe.atomic_reveal.overlay_shown",
+            since_enter_ms=self._since_visual_enter_ms(),
+        )
+
+    def _atomic_reveal_missing_gates(self) -> list[str]:
+        missing: list[str] = []
+        if not self._shell_sections_built:
+            missing.append("sections")
+        if not self._shell_editor_built:
+            missing.append("editor")
+        if not self._shell_control_built and not self._shell_control_skeleton_built:
+            missing.append("control")
+        if not self._editor_form_shell_ready:
+            missing.append("editor_form")
+        if not self._inventory_light_ready:
+            missing.append("inventory")
+        return missing
+
+    def _ensure_atomic_reveal_prerequisites(self) -> None:
+        if self._shell_editor_built and not self._editor_form_shell_ready:
+            self._micro_deferred_editor_form_shell()
+
+    def _ensure_top_bar_actions_for_atomic_reveal(self) -> None:
+        if self._top_bar_actions_late_done:
+            return
+        if not self._top_bar_actions_late_started:
+            self._top_bar_actions_late_started = True
+            log_event(
+                "studio.gicleeframe.top_bar.actions_late_scheduled",
+                delay_ms=0,
+                reason="atomic_reveal",
+            )
+        self._build_context_bar_actions_late()
+        self._build_command_bar_primary_actions_late()
+        self._build_command_bar_secondary_actions_late()
+
+    def _schedule_atomic_reveal_check(self, *, trigger: str) -> None:
+        self._ensure_atomic_reveal_prerequisites()
+        self.after_idle(lambda t=trigger: self._try_atomic_reveal(trigger=t))
+
+    def _try_atomic_reveal(self, *, trigger: str | None = None) -> None:
+        if self._visual_bootstrap_complete:
+            return
+        missing = self._atomic_reveal_missing_gates()
+        if missing:
+            log_event(
+                "studio.gicleeframe.atomic_reveal.waiting_for",
+                missing_gates=",".join(missing),
+                trigger=trigger or "",
+                since_enter_ms=self._since_visual_enter_ms(),
+            )
+            self._ensure_atomic_reveal_prerequisites()
+            return
+        # Przyciski top-baru muszą istnieć przed zdjęciem nakładki —
+        # inaczej "wskakują" obcięte już po odsłonięciu widoku.
+        self._ensure_top_bar_actions_for_atomic_reveal()
+        if not self._atomic_reveal_ready_logged:
+            self._atomic_reveal_ready_logged = True
+            log_event(
+                "studio.gicleeframe.atomic_reveal.minimal_ready",
+                since_enter_ms=self._since_visual_enter_ms(),
+                trigger=trigger or "",
+            )
+            log_event(
+                "studio.gicleeframe.atomic_reveal.ready",
+                since_enter_ms=self._since_visual_enter_ms(),
+                trigger=trigger or "",
+            )
+        self._hide_loading_overlay()
+        self._visual_bootstrap_complete = True
+        log_event(
+            "studio.gicleeframe.atomic_reveal.revealed",
+            since_enter_ms=self._since_visual_enter_ms(),
+            trigger=trigger or "",
+        )
+        log_event(
+            "studio.gicleeframe.visual.visible_ready",
+            since_enter_ms=self._since_visual_enter_ms(),
+            selected_id=self._selected_id or "",
+            merged_count=len(self._merged),
+            bootstrap_complete=True,
+        )
+        self.after_idle(self._mark_idle_ready)
 
     def _ensure_loading_overlay(self) -> None:
         if self._loading_overlay is not None:
@@ -1081,22 +1317,17 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         )
 
     def _mark_visual_ready(self) -> None:
+        """Legacy hook — cold open uses atomic reveal instead."""
+        if not self._visual_bootstrap_complete:
+            self._try_atomic_reveal(trigger="mark_visual_ready")
+            return
         self._hide_loading_overlay()
-        log_event(
-            "studio.gicleeframe.visual.visible_ready",
-            since_enter_ms=self._since_visual_enter_ms(),
-            selected_id=self._selected_id or "",
-            merged_count=len(self._merged),
-            bootstrap_complete=self._visual_bootstrap_complete,
-        )
-        self._visual_bootstrap_complete = True
 
     def _schedule_visual_ready(self) -> None:
-        self.after_idle(self._mark_idle_ready)
-        self.after_idle(self._mark_visual_ready)
+        self._schedule_atomic_reveal_check(trigger="schedule_visual_ready")
 
     def _build_shell(self) -> None:
-        self._show_loading_overlay()
+        self._ensure_atomic_reveal_overlay()
         with span("studio.gicleeframe.build.context_bar"):
             self._build_context_bar()
         if _lazy_shell_enabled():
@@ -1237,8 +1468,7 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
             since_enter_ms=self._since_visual_enter_ms(),
             trigger=trigger or "",
         )
-        self._schedule_section_list_scroll_upgrade_after_perceived()
-        self._schedule_editor_identity_prewarm_after_perceived()
+        self._schedule_atomic_reveal_check(trigger=trigger or "perceived_ready")
 
     def _build_workspace_critical(self, parent: ctk.CTkFrame) -> None:
         self._workspace_frame = ctk.CTkFrame(parent, fg_color="transparent")
@@ -1310,9 +1540,33 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
                 return
         except tk.TclError:
             return
+        # Skan plików inventory w wątku roboczym — pierwsza klatka widoku bez freeze.
+        run_async(
+            self,
+            lambda: build_gicleeframe_page_inventory(find_components_dir()),
+            self._finish_init_refresh_light,
+            on_error=lambda _exc: self._finish_init_refresh_light(None),
+        )
+
+    def _finish_init_refresh_light(self, prebuilt_inventory: object) -> None:
+        try:
+            if not self.winfo_exists():
+                return
+        except tk.TclError:
+            return
         with span("studio.gicleeframe.init_refresh.light"):
-            self._refresh_inventory_light(warn_if_draft=False)
+            self._refresh_inventory_light(
+                warn_if_draft=False,
+                prebuilt_inventory=prebuilt_inventory,
+            )
+        self._inventory_light_ready = True
+        log_event(
+            "studio.gicleeframe.inventory.light_ready_for_reveal",
+            merged_count=len(self._merged),
+        )
         self._bootstrap_section_list_after_inventory_light()
+        self._ensure_atomic_reveal_prerequisites()
+        self._schedule_atomic_reveal_check(trigger="inventory_light")
 
     def _bootstrap_section_list_after_inventory_light(self) -> None:
         if not _progressive_boot_enabled() or self._progressive_bootstrap_started:
@@ -1475,6 +1729,7 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         self._editor_header_visible_row = None
         self._layer_nav_frame = None
         self._section_preview_line = None
+        self._section_preview_card = None
         self._section_preview_canvas = None
         self._section_preview_badge = None
 
@@ -1589,7 +1844,21 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         self._ensure_image_ref_row_built()
         self._ensure_notes_row_built()
 
+    def _log_visible_prewarm_suppressed(self, *, job: str) -> None:
+        log_event(
+            "studio.gicleeframe.visible_prewarm.suppressed",
+            job=job,
+            since_enter_ms=self._since_visual_enter_ms(),
+            bootstrap_complete=self._visual_bootstrap_complete,
+        )
+
+    def _should_suppress_visible_prewarm(self) -> bool:
+        return self._visual_bootstrap_complete
+
     def _run_editor_rows_prewarm(self) -> None:
+        if self._should_suppress_visible_prewarm():
+            self._log_visible_prewarm_suppressed(job="editor.rows_prewarm")
+            return
         if self._defer_background_for_selection(
             job="editor.rows_prewarm",
             reason="selection_priority_active",
@@ -1722,6 +1991,7 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         self._editor_form_shell_ready = True
         log_event("studio.gicleeframe.editor.deferred_form_shell")
         log_event("studio.gicleeframe.editor.fields_lazy_startup")
+        self._schedule_atomic_reveal_check(trigger="editor_form_shell")
 
     def _micro_deferred_editor_fields(self) -> None:
         with span("studio.gicleeframe.build.editor_column.fields"):
@@ -1811,6 +2081,7 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
             source="control_structure",
             since_scheduled_mono=self._shell_control_deferred_scheduled_mono,
         )
+        self._schedule_atomic_reveal_check(trigger="control_structure")
         self._schedule_control_late_build()
 
     def _schedule_control_late_build(self) -> None:
@@ -1820,6 +2091,9 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         self.after(_GF_CONTROL_LATE_BUILD_DEFER_MS, self._build_control_late_cards)
 
     def _build_control_late_cards(self) -> None:
+        if self._should_suppress_visible_prewarm():
+            self._log_visible_prewarm_suppressed(job="control.late_cards")
+            return
         if self._defer_background_for_selection(
             job="control.late_cards",
             reason="selection_priority_active",
@@ -2051,6 +2325,9 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         )
 
     def _build_context_bar_actions_late(self) -> None:
+        if self._should_suppress_visible_prewarm():
+            self._log_visible_prewarm_suppressed(job="top_bar.context_actions_late")
+            return
         try:
             if not self.winfo_exists():
                 return
@@ -2066,6 +2343,9 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         log_event("studio.gicleeframe.top_bar.context_actions_late_done")
 
     def _build_command_bar_primary_actions_late(self) -> None:
+        if self._should_suppress_visible_prewarm():
+            self._log_visible_prewarm_suppressed(job="top_bar.primary_actions_late")
+            return
         try:
             if not self.winfo_exists():
                 return
@@ -2081,6 +2361,9 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         log_event("studio.gicleeframe.top_bar.primary_actions_late_done")
 
     def _build_command_bar_secondary_actions_late(self) -> None:
+        if self._should_suppress_visible_prewarm():
+            self._log_visible_prewarm_suppressed(job="top_bar.secondary_actions_late")
+            return
         try:
             if not self.winfo_exists():
                 return
@@ -2098,6 +2381,7 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         log_event("studio.gicleeframe.top_bar.secondary_actions_late_done")
         log_event("studio.gicleeframe.top_bar.actions_late_done")
         self._sync_working_variant_menu()
+        self._schedule_atomic_reveal_check(trigger="top_bar_actions")
 
     def _build_page_editor_section(self) -> None:
         panel = ctk.CTkFrame(self, fg_color="transparent")
@@ -2335,6 +2619,7 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
                 since_scheduled_mono=self._sections_column_early_lane_enter_mono,
             )
             self._try_mark_perceived_ready(trigger="static_lane_first_visible")
+            self._schedule_atomic_reveal_check(trigger="static_lane_first_visible")
             return
 
         self._section_list_static_lane_real_rows = False
@@ -2411,9 +2696,13 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
             return
         self._section_list_scroll_upgrade_scheduled = True
         delay_ms = (
-            _GF_SECTION_SCROLL_UPGRADE_AFTER_PERCEIVED_DEFER_MS
-            if reason == "after_perceived_ready"
-            else 0
+            0
+            if reason in {"before_atomic_reveal", "fallback_timeout"}
+            else (
+                _GF_SECTION_SCROLL_UPGRADE_AFTER_PERCEIVED_DEFER_MS
+                if reason == "after_perceived_ready"
+                else 0
+            )
         )
         log_event(
             "studio.gicleeframe.section_list.scroll_upgrade_scheduled",
@@ -2470,6 +2759,7 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
             and self._section_list_scroll is not None
         ):
             self._schedule_section_list_incremental()
+        self._schedule_atomic_reveal_check(trigger="scroll_upgrade_ready")
 
     def _build_sections_column_extras(self, card: ctk.CTkFrame) -> None:
         if self._sections_column_extras_built:
@@ -2594,8 +2884,8 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
             actions,
             APPLY_RAM_DRAFT_LABEL,
             self._apply_edit_to_draft,
-            width=220,
-        ).pack(side="top", anchor="e")
+            width=160,
+        ).pack(side="top", anchor="e", fill="x")
 
         ctk.CTkLabel(
             actions,
@@ -2610,6 +2900,7 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         self._layer_nav_frame.pack_forget()
 
         preview = _make_gf_card(card, variant="preview", radius=14)
+        self._section_preview_card = preview
         preview.pack(fill="x", padx=_CARD_PAD_X, pady=(10, 14))
         preview.pack_propagate(False)
         preview.configure(height=_EDITOR_HERO_PREVIEW_HEIGHT)
@@ -2645,22 +2936,26 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         mat.pack_propagate(False)
         self._section_preview_canvas = mat
 
-        ghost_top = ctk.CTkFrame(mat, fg_color=_GF_FIELD_HOVER, corner_radius=999, height=4)
-        ghost_top.pack(fill="x", padx=38, pady=(16, 10))
-        ghost_top.pack_propagate(False)
-
-        self._section_preview_line = ctk.CTkFrame(
+        bootstrap = ctk.CTkFrame(
             mat,
-            height=2,
-            fg_color=_GF_GOLD,
-            corner_radius=999,
+            fg_color=_GF_FIELD,
+            corner_radius=8,
+            border_width=1,
+            border_color=_GF_BORDER,
         )
-        self._section_preview_line.pack(fill="x", padx=52, pady=(4, 10))
-        self._section_preview_line.pack_propagate(False)
-
-        ghost_bottom = ctk.CTkFrame(mat, fg_color=_GF_FIELD_HOVER, corner_radius=999, height=4)
-        ghost_bottom.pack(fill="x", padx=70, pady=(0, 14))
-        ghost_bottom.pack_propagate(False)
+        bootstrap.pack(fill="both", expand=True, padx=12, pady=10)
+        self._preview_bootstrap_panel = bootstrap
+        self._preview_bootstrap_status_label = ctk.CTkLabel(
+            bootstrap,
+            text=_GF_PREVIEW_BOOTSTRAP_STATUS_TEXT,
+            font=theme.get_font(10),
+            text_color=theme.TextMuted,
+            anchor="center",
+            justify="center",
+            wraplength=320,
+        )
+        self._preview_bootstrap_status_label.pack(expand=True, fill="both", padx=16, pady=16)
+        self._section_preview_line = None
 
     def _build_action_dock(self, parent: ctk.CTkFrame) -> None:
         action_dock = ctk.CTkFrame(
@@ -2965,6 +3260,23 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
             self._ensure_notes_row_built()
         if fields.children:
             self._ensure_children_overview_built()
+        if fields.page_context:
+            self._ensure_page_context_shell_built()
+        if fields.visible and self._visible_row is None:
+            self._visible_row = self._editor_header_visible_row
+        self._hide_editor_field_placeholder_if_needed()
+
+    def _ensure_minimal_editor_rows_for_fields(self, fields: EditorFieldVisibility) -> None:
+        if fields.title:
+            self._ensure_title_row_built()
+        if fields.text:
+            self._ensure_text_row_built()
+        if fields.alt:
+            self._ensure_alt_row_built()
+        if fields.image_ref:
+            self._ensure_image_ref_row_built()
+        if fields.notes:
+            self._ensure_notes_row_built()
         if fields.page_context:
             self._ensure_page_context_shell_built()
         if fields.visible and self._visible_row is None:
@@ -3308,14 +3620,22 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
             shell_editor_built=self._shell_editor_built,
         )
 
-    def _refresh_inventory_light(self, *, warn_if_draft: bool = False) -> None:
+    def _refresh_inventory_light(
+        self,
+        *,
+        warn_if_draft: bool = False,
+        prebuilt_inventory: object = None,
+    ) -> None:
         with span("studio.gicleeframe.refresh_inventory.light"):
             if warn_if_draft and not self._page_draft.is_empty() and self._on_status:
                 self._on_status("Odświeżono inventory · RAM draft zachowany")
             selected_before = self._selected_id
             selection_generation = self._selection_generation
             with span("studio.gicleeframe.inventory.load_report"):
-                self._inventory = build_gicleeframe_page_inventory(find_components_dir())
+                if prebuilt_inventory is not None:
+                    self._inventory = prebuilt_inventory  # type: ignore[assignment]
+                else:
+                    self._inventory = build_gicleeframe_page_inventory(find_components_dir())
             with span("studio.gicleeframe.inventory.merge_draft"):
                 self._set_merged(merge_inventory_with_draft(self._inventory, self._page_draft))
             self._update_top_bar()
@@ -3581,11 +3901,12 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
             self._open_section_dropdown()
 
     def _render_section_list(self) -> None:
+        """Pełny rebuild listy sekcji — partiami między klatkami (bez ~0.5 s freeze)."""
         if self._section_list_scroll is None:
             return
+        self._full_list_render_generation = getattr(self, "_full_list_render_generation", 0) + 1
+        generation = self._full_list_render_generation
         batch_started = time.perf_counter()
-        rows_created = 0
-        widgets_per_row = 5
         with span(
             "studio.gicleeframe.render_section_list",
             merged_count=len(self._merged),
@@ -3610,26 +3931,57 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
             if not self._section_tree_rows_cache and self._merged:
                 self._rebuild_page_model_cache()
 
-            options = self._section_dropdown_options_cache
-            for index, opt in enumerate(options):
-                self._section_row_ids.append(opt.element_id)
-                self._build_section_row(index, opt.element_id, opt.display_label)
-                rows_created += 1
+            options = list(self._section_dropdown_options_cache)
+            self._render_full_list_chunk(options, 0, generation, batch_started)
 
-            if self._selected_id is None and options:
-                if _progressive_boot_enabled():
-                    self._selected_id = None
-                    self._show_editor_placeholder_state()
-                    log_event(
-                        "studio.gicleeframe.initial_selection.skipped_progressive",
-                        merged_count=len(self._merged),
-                    )
-                else:
-                    with span("studio.gicleeframe.inventory.initial_selection"):
-                        self._select_element(options[0].element_id)
+    def _render_full_list_chunk(
+        self,
+        options: list[SectionDropdownOption],
+        start: int,
+        generation: int,
+        batch_started: float,
+    ) -> None:
+        if generation != getattr(self, "_full_list_render_generation", 0):
+            return
+        if self._section_list_scroll is None:
+            return
+        try:
+            if not self.winfo_exists():
+                return
+        except tk.TclError:
+            return
+        end = min(start + _GF_SECTION_BATCH_SIZE, len(options))
+        for index in range(start, end):
+            opt = options[index]
+            self._section_row_ids.append(opt.element_id)
+            self._build_section_row(index, opt.element_id, opt.display_label)
+        if end < len(options):
+            self.after(
+                _GF_SECTION_BATCH_DELAY_MS,
+                lambda: self._render_full_list_chunk(options, end, generation, batch_started),
+            )
+            return
+        self._finalize_full_list_render(options, batch_started)
+
+    def _finalize_full_list_render(
+        self,
+        options: list[SectionDropdownOption],
+        batch_started: float,
+    ) -> None:
+        if self._selected_id is None and options:
+            if _progressive_boot_enabled():
+                self._selected_id = None
+                self._show_editor_placeholder_state()
+                log_event(
+                    "studio.gicleeframe.initial_selection.skipped_progressive",
+                    merged_count=len(self._merged),
+                )
             else:
-                self._highlight_section_row()
-            self._update_section_list_trigger()
+                with span("studio.gicleeframe.inventory.initial_selection"):
+                    self._select_element(options[0].element_id)
+        else:
+            self._highlight_section_row()
+        self._update_section_list_trigger()
         elapsed_ms = round((time.perf_counter() - batch_started) * 1000, 2)
         log_event(
             "studio.gicleeframe.section_list_rendered",
@@ -3639,9 +3991,9 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         log_event(
             "studio.gicleeframe.render_section_list.stats",
             row_count=len(self._section_row_ids),
-            rows_created=rows_created,
-            widgets_per_row=widgets_per_row,
-            total_rows_created=rows_created,
+            rows_created=len(options),
+            widgets_per_row=5,
+            total_rows_created=len(options),
             elapsed_ms=elapsed_ms,
         )
 
@@ -3750,6 +4102,7 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
                         since_scheduled_mono=self._section_list_incremental_enter_mono,
                     )
                     self._try_mark_perceived_ready(trigger="incremental_first_visible")
+                    self._schedule_atomic_reveal_check(trigger="section_rows_first_visible")
         else:
             end = min(start + batch_size, len(options))
 
@@ -3865,10 +4218,13 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
 
     def _on_section_row_click(self, element_id: str) -> None:
         self._selection_click_mono = time.perf_counter()
+        m_click = self._merged_by_id.get(element_id)
         log_event(
             "studio.gicleeframe.selection.click",
             element_id=element_id,
+            element_type=m_click.element_type if m_click is not None else "",
             source="row",
+            generation=self._selection_generation + 1,
             static_lane=bool(
                 self._section_list_static_lane is not None
                 and not self._section_list_scroll_upgrade_done
@@ -4023,6 +4379,7 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         )
 
         selection_jobs_cancelled = self._cancel_selection_jobs()
+        details_jobs_cancelled = self._cancel_details_on_demand_jobs()
         self._page_context_generation += 1
         page_context_jobs_cancelled = self._cancel_page_context_jobs()
         if selection_jobs_cancelled or page_context_jobs_cancelled:
@@ -4033,6 +4390,20 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
                 generation=generation,
                 element_id=element_id,
             )
+        if details_jobs_cancelled:
+            request_open_ms = self._since_details_request_ms()
+            log_event(
+                "studio.gicleeframe.details_on_demand.cancelled",
+                element_id=element_id,
+                previous_details_element_id=self._details_on_demand_active_element_id or "",
+                details_jobs_cancelled=details_jobs_cancelled,
+                generation=generation,
+                request_open_ms=request_open_ms,
+            )
+            self._hide_details_container()
+            self._details_on_demand_active_element_id = None
+            self._details_on_demand_request_mono = None
+            self._details_cta_click_mono = None
 
         self._close_active_setting_editor()
         self._selected_id = element_id
@@ -4053,7 +4424,71 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         )
 
         self._update_section_list_trigger()
-        self._show_editor_selection_pending_state(m)
+        minimal_entry = self._minimal_cache_entry(m)
+        minimal_cache_hit = minimal_entry is not None
+        self._selection_visual_cache_applied = minimal_cache_hit
+        self._details_on_demand_expanded = False
+        # Schowaj stare panele szczegółów od razu — inaczej panel poprzedniej
+        # sekcji i nowy blok on-demand nakładają się podczas ładowania.
+        self._hide_details_shell()
+        self._hide_details_on_demand_block()
+        if minimal_cache_hit:
+            self._apply_minimal_cache(m)
+            log_event(
+                "studio.gicleeframe.selection.minimal_cache_hit",
+                element_id=element_id,
+                element_type=m.element_type,
+                generation=generation,
+                since_click_ms=self._since_selection_click_ms(),
+            )
+            log_event(
+                "studio.gicleeframe.selection.cache_hit_skip_visible_refresh",
+                element_id=element_id,
+                element_type=m.element_type,
+                generation=generation,
+                since_click_ms=self._since_selection_click_ms(),
+            )
+        else:
+            if self._section_visual_cache.get(m.element_id) is not None:
+                log_event(
+                    "studio.gicleeframe.selection.cache_hit_partial",
+                    element_id=element_id,
+                    element_type=m.element_type,
+                    generation=generation,
+                    since_click_ms=self._since_selection_click_ms(),
+                )
+            log_event(
+                "studio.gicleeframe.selection.minimal_cache_miss",
+                element_id=element_id,
+                element_type=m.element_type,
+                generation=generation,
+                since_click_ms=self._since_selection_click_ms(),
+            )
+            log_event(
+                "studio.gicleeframe.selection.cache_miss_stable_shell",
+                element_id=element_id,
+                element_type=m.element_type,
+                since_click_ms=self._since_selection_click_ms(),
+            )
+            if self._editor_has_ready_content:
+                self._show_editor_refresh_status(_GF_ATOMIC_SWAP_STATUS_TEXT)
+                log_event(
+                    "studio.gicleeframe.editor.stale_content_kept",
+                    element_id=element_id,
+                    element_type=m.element_type,
+                    previous_element_id=self._editor_last_ready_element_id or "",
+                    since_click_ms=self._since_selection_click_ms(),
+                )
+            else:
+                self._hide_media_details_stable_shell()
+                self._show_editor_selection_stable_shell_state(m, from_cache=False)
+            log_event(
+                "studio.gicleeframe.selection.atomic_swap.scheduled",
+                element_id=element_id,
+                element_type=m.element_type,
+                generation=generation,
+                since_click_ms=self._since_selection_click_ms(),
+            )
         log_event(
             "studio.gicleeframe.selection.pending_state_done",
             element_id=element_id,
@@ -4075,6 +4510,14 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
             previous_id=previous_id or "",
             elapsed_ms=elapsed_ms,
         )
+        log_event(
+            "studio.gicleeframe.selection.immediate_ready",
+            element_id=element_id,
+            element_type=m.element_type,
+            generation=generation,
+            since_click_ms=self._since_selection_click_ms(),
+            elapsed_ms=elapsed_ms,
+        )
 
         self._open_selection_priority_window(
             generation,
@@ -4082,56 +4525,1618 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
             element_type=m.element_type,
         )
 
-        if self._should_run_immediate_selection_populate(m):
-            self._selection_populate_scheduled_mono = time.perf_counter()
-            log_event(
-                "studio.gicleeframe.selection.populate_priority_scheduled",
-                element_id=element_id,
-                element_type=m.element_type,
-                generation=generation,
-                defer_ms=0,
-                immediate=True,
-                since_click_ms=self._since_selection_click_ms(),
+        if minimal_cache_hit:
+            return
+
+        self._selection_populate_scheduled_mono = time.perf_counter()
+        log_event(
+            "studio.gicleeframe.selection.populate_priority_scheduled",
+            element_id=element_id,
+            element_type=m.element_type,
+            generation=generation,
+            defer_ms=0,
+            immediate=True,
+            atomic_swap=True,
+            since_click_ms=self._since_selection_click_ms(),
+        )
+        log_event(
+            "studio.gicleeframe.selection.populate_scheduled",
+            element_id=element_id,
+            element_type=m.element_type,
+            generation=generation,
+            elapsed_ms=round((time.perf_counter() - started) * 1000, 2),
+            since_click_ms=self._since_selection_click_ms(),
+            immediate=True,
+            atomic_swap=True,
+        )
+        self._schedule_atomic_swap_populate(element_id, generation)
+
+    def _ensure_media_details_stable_shell(self) -> None:
+        if self._atomic_swap_suppress_visible:
+            return
+        if self._identity_card is None:
+            return
+        if not self._media_details_stable_built:
+            frame = ctk.CTkFrame(
+                self._identity_card,
+                fg_color=_GF_FIELD,
+                corner_radius=10,
+                border_width=1,
+                border_color=_GF_BORDER,
+                height=_GF_MEDIA_DETAILS_STABLE_HEIGHT,
             )
-            log_event(
-                "studio.gicleeframe.selection.populate_scheduled",
-                element_id=element_id,
-                element_type=m.element_type,
-                generation=generation,
-                elapsed_ms=round((time.perf_counter() - started) * 1000, 2),
-                since_click_ms=self._since_selection_click_ms(),
-                immediate=True,
+            frame.pack_propagate(False)
+            self._media_details_status_label = ctk.CTkLabel(
+                frame,
+                text=_GF_MEDIA_DETAILS_STATUS_TEXT,
+                font=theme.get_font(10),
+                text_color=theme.TextMuted,
+                anchor="w",
             )
-            self._populate_editor_deferred(element_id, generation)
+            self._media_details_status_label.pack(fill="x", padx=12, pady=10)
+            self._media_details_stable_frame = frame
+            self._media_details_stable_built = True
+        if self._media_details_stable_frame is None:
+            return
+        if self._layer_nav_frame is not None and self._layer_nav_frame.winfo_manager():
+            self._media_details_stable_frame.pack(
+                fill="x",
+                padx=_CARD_PAD_X,
+                pady=(0, 4),
+                before=self._layer_nav_frame,
+            )
         else:
-            self._schedule_selection_populate(
-                element_id,
-                generation,
-                element_type=m.element_type,
-            )
-            log_event(
-                "studio.gicleeframe.selection.populate_scheduled",
-                element_id=element_id,
-                element_type=m.element_type,
-                generation=generation,
-                elapsed_ms=round((time.perf_counter() - started) * 1000, 2),
-                since_click_ms=self._since_selection_click_ms(),
-                immediate=False,
+            self._media_details_stable_frame.pack(
+                fill="x",
+                padx=_CARD_PAD_X,
+                pady=(0, 4),
             )
 
-    def _show_editor_selection_pending_state(self, m: MergedPageElement) -> None:
-        if self._editor_status_dot:
-            self._editor_status_dot.configure(text_color=_GF_GOLD_SOFT)
-        if self._editor_section_subtitle:
-            self._editor_section_subtitle.configure(
-                text=f"Ładowanie: {editor_title_for_element(m)}",
+    def _hide_media_details_stable_shell(self) -> None:
+        if self._media_details_stable_frame is None:
+            return
+        try:
+            self._media_details_stable_frame.pack_forget()
+        except tk.TclError:
+            pass
+
+    def _log_editor_skeleton_suppressed(
+        self,
+        *,
+        element_id: str,
+        element_type: str,
+        reason: str,
+    ) -> None:
+        log_event(
+            "studio.gicleeframe.editor.skeleton_suppressed",
+            element_id=element_id,
+            element_type=element_type,
+            reason=reason,
+            since_click_ms=self._since_selection_click_ms(),
+        )
+
+    def _show_editor_refresh_status(self, text: str) -> None:
+        if self._identity_card is None:
+            return
+        if self._editor_refresh_status_frame is None:
+            frame = ctk.CTkFrame(self._identity_card, fg_color="transparent")
+            self._editor_refresh_status_label = ctk.CTkLabel(
+                frame,
+                text=text,
+                font=theme.get_font(9),
+                text_color=theme.TextMuted,
+                anchor="w",
             )
+            self._editor_refresh_status_label.pack(fill="x", padx=_CARD_PAD_X, pady=(0, 4))
+            self._editor_refresh_status_frame = frame
+        elif self._editor_refresh_status_label is not None:
+            self._editor_refresh_status_label.configure(text=text)
+        if self._editor_refresh_status_frame is None:
+            return
+        try:
+            self._editor_refresh_status_frame.pack(
+                fill="x",
+                padx=0,
+                pady=(0, 2),
+                before=self._layer_nav_frame
+                if self._layer_nav_frame is not None and self._layer_nav_frame.winfo_manager()
+                else None,
+            )
+        except tk.TclError:
+            try:
+                self._editor_refresh_status_frame.pack(fill="x", padx=0, pady=(0, 2))
+            except tk.TclError:
+                pass
+
+    def _hide_editor_refresh_status(self) -> None:
+        if self._editor_refresh_status_frame is None:
+            return
+        try:
+            self._editor_refresh_status_frame.pack_forget()
+        except tk.TclError:
+            pass
+
+    def _mark_editor_content_ready(self, m: MergedPageElement) -> None:
+        self._editor_has_ready_content = True
+        self._editor_last_ready_element_id = m.element_id
+
+    def _log_editor_content_swapped(
+        self,
+        m: MergedPageElement,
+        *,
+        region: str,
+        preview_key: str = "",
+    ) -> None:
+        log_event(
+            "studio.gicleeframe.editor.content_swapped",
+            element_id=m.element_id,
+            element_type=m.element_type,
+            region=region,
+            preview_key=preview_key,
+            since_click_ms=self._since_selection_click_ms(),
+        )
+
+    def _minimal_cache_entry(
+        self,
+        m: MergedPageElement,
+    ) -> SectionVisualCacheEntry | None:
+        return self._section_visual_cache.get(m.element_id)
+
+    def _details_cache_entry(
+        self,
+        m: MergedPageElement,
+    ) -> SectionVisualCacheEntry | None:
+        entry = self._section_visual_cache.get(m.element_id)
+        if entry is None:
+            return None
+        if self._any_details_module_cached(entry):
+            return entry
+        if entry.media_details_built:
+            return entry
+        return None
+
+    def _any_details_module_cached(self, entry: SectionVisualCacheEntry) -> bool:
+        return any(
+            (
+                entry.details_cache_preview,
+                entry.details_cache_page_context,
+                entry.details_cache_layer_nav,
+                entry.details_cache_children,
+            )
+        )
+
+    def _details_module_cache_hit(self, entry: SectionVisualCacheEntry, module: str) -> bool:
+        return {
+            "preview": entry.details_cache_preview,
+            "page_context": entry.details_cache_page_context,
+            "layer_nav": entry.details_cache_layer_nav,
+            "children": entry.details_cache_children,
+        }.get(module, False)
+
+    def _cached_details_modules(self, entry: SectionVisualCacheEntry) -> list[str]:
+        modules: list[str] = []
+        if entry.details_cache_preview:
+            modules.append("preview")
+        if entry.details_cache_page_context:
+            modules.append("page_context")
+        if entry.details_cache_layer_nav:
+            modules.append("layer_nav")
+        if entry.details_cache_children:
+            modules.append("children")
+        return modules
+
+    def _full_visual_cache_entry(
+        self,
+        m: MergedPageElement,
+    ) -> SectionVisualCacheEntry | None:
+        """Legacy alias — details cache only."""
+        return self._details_cache_entry(m)
+
+    def _fields_from_cache_entry(self, entry: SectionVisualCacheEntry) -> EditorFieldVisibility:
+        return EditorFieldVisibility(
+            title=entry.fields_title,
+            text=entry.fields_text,
+            alt=entry.fields_alt,
+            image_ref=entry.fields_image_ref,
+            notes=entry.fields_notes,
+            visible=entry.fields_visible,
+            children=entry.fields_children,
+            page_context=entry.fields_page_context,
+        )
+
+    def _apply_cached_page_context_summary(self, entry: SectionVisualCacheEntry) -> None:
+        if not entry.fields_page_context or not entry.page_context_summary:
+            if self._page_context_frame is not None:
+                self._page_context_frame.pack_forget()
+            return
+        self._ensure_page_context_shell_built()
+        if self._page_context_frame is None or self._page_context_inner is None:
+            return
+        self._hide_page_context_rows()
+        self._clear_page_context_loading_label()
+        self._page_context_frame.pack(**self._page_context_pack_kwargs())
+        self._get_or_create_readonly_card()
+        self._show_page_context_row("container:readonly", fill="x", pady=(0, 8))
+        for label, value in entry.page_context_summary:
+            row_key = f"shell_summary:{label}"
+            _, value_widget = self._get_or_create_page_context_row(
+                row_key,
+                label=label,
+                kind="shell_summary",
+            )
+            value_widget.configure(text=value)
+            self._show_page_context_row(row_key, fill="x", pady=2)
+
+    def _apply_cached_preview_module(self, entry: SectionVisualCacheEntry) -> None:
+        if not entry.details_cache_preview or not entry.preview_key:
+            return
+        preview_key = entry.preview_key
+        self._ensure_preview_structure(preview_key)
+        self._show_preview_frame(preview_key)
+        self._show_heavy_editor_modules()
+
+    def _apply_cached_page_context_module(self, entry: SectionVisualCacheEntry) -> None:
+        if not entry.details_cache_page_context:
+            return
+        self._apply_cached_page_context_summary(entry)
+
+    def _apply_cached_layer_nav_module(self, entry: SectionVisualCacheEntry) -> None:
+        if not entry.details_cache_layer_nav:
+            return
+        if entry.layer_nav_visible and self._layer_nav_frame is not None:
+            if not self._layer_nav_frame.winfo_manager():
+                self._layer_nav_frame.pack(fill="x", padx=_CARD_PAD_X, pady=(8, 0))
+            header = self._get_or_create_layer_nav_header()
+            if "header:title" not in self._layer_nav_visible_keys:
+                header.pack(fill="x", pady=(0, 6))
+                self._layer_nav_visible_keys.add("header:title")
+            row = self._get_or_create_layer_nav_row()
+            if "container:row" not in self._layer_nav_visible_keys:
+                row.pack(fill="x")
+                self._layer_nav_visible_keys.add("container:row")
+            desired_keys: list[str] = []
+            for index, title in enumerate(entry.layer_nav_titles):
+                slot_key = f"slot:{index}"
+                desired_keys.append(slot_key)
+                self._update_layer_nav_tile(
+                    slot_key,
+                    kind="SEKCJA" if index == 0 else "WARSTWA",
+                    title=title,
+                    active=index == 0,
+                )
+            self._sync_layer_nav_visibility(desired_keys)
+
+    def _apply_cached_children_module(
+        self,
+        m: MergedPageElement,
+        entry: SectionVisualCacheEntry,
+    ) -> None:
+        if not entry.details_cache_children:
+            return
+        self._set_row_visible(self._children_overview_row, entry.fields_children)
+        if entry.fields_children:
+            self._fill_children_overview_buttons(m, stale_refresh=False)
+
+    def _apply_cached_media_details(self, entry: SectionVisualCacheEntry) -> None:
+        if not entry.media_details_built and not self._any_details_module_cached(entry):
+            return
+        self._apply_cached_preview_module(entry)
+        self._apply_cached_layer_nav_module(entry)
+        self._hide_media_details_stable_shell()
+
+    def _apply_section_visual_cache(self, m: MergedPageElement) -> bool:
+        """Legacy alias — minimal cache only."""
+        return self._apply_minimal_cache(m)
+
+    def _apply_minimal_cache(self, m: MergedPageElement) -> bool:
+        entry = self._section_visual_cache.get(m.element_id)
+        if entry is None:
+            return False
+
+        self._ensure_editor_identity_built()
+        fields = self._fields_from_cache_entry(entry)
+        self._ensure_minimal_editor_rows_for_fields(fields)
+
+        dot_color, _ = _element_pill_colors(
+            entry.status,
+            has_draft_patch=entry.has_draft_patch,
+        )
+        if self._editor_status_dot:
+            self._editor_status_dot.configure(text_color=dot_color)
+        if self._editor_section_subtitle:
+            self._editor_section_subtitle.configure(text=entry.subtitle_text)
+
+        readonly = entry.element_type == "section_legacy"
+        self._set_row_visible(self._title_row, fields.title)
+        self._set_row_visible(self._text_row, fields.text)
+        self._set_row_visible(self._alt_row, fields.alt)
+        self._set_row_visible(self._image_ref_row, fields.image_ref)
+        self._set_row_visible(self._notes_row, fields.notes)
+        self._set_row_visible(self._visible_row, fields.visible)
+        self._set_row_visible(self._children_overview_row, False)
+
+        if self._title_entry:
+            self._set_entry(self._title_entry, entry.title, readonly=readonly or not fields.title)
+        if self._text_box:
+            self._set_textbox(self._text_box, entry.text, readonly=readonly or not fields.text)
+        if self._alt_entry:
+            self._set_entry(self._alt_entry, entry.alt, readonly=readonly or not fields.alt)
+        if self._image_ref_entry:
+            self._set_entry(self._image_ref_entry, entry.image_ref, readonly=True)
+        if self._notes_box:
+            self._set_textbox(self._notes_box, entry.notes, readonly=readonly or not fields.notes)
+        if self._visible_var is not None and fields.visible:
+            self._visible_var.set(entry.visible)
+
+        self._apply_cached_page_context_summary(entry)
+        self._hide_heavy_editor_modules()
+        self._hide_media_details_stable_shell()
+        self._show_details_on_demand_block(m)
+
+        self._page_context_shell_shown_generation = self._selection_generation
+        self._mark_editor_stable_shell_ready(m, from_cache=True)
+        self._mark_editor_content_ready(m)
+        self._hide_editor_refresh_status()
+        self._log_minimal_editor_ready(m, from_cache=True)
+        return True
+
+    def _log_minimal_editor_ready(
+        self,
+        m: MergedPageElement,
+        *,
+        from_cache: bool,
+    ) -> None:
+        log_event(
+            "studio.gicleeframe.selection.minimal_editor_ready",
+            element_id=m.element_id,
+            element_type=m.element_type,
+            since_click_ms=self._since_selection_click_ms(),
+            from_cache=from_cache,
+        )
+
+    def _hide_heavy_editor_modules(self) -> None:
+        self._hide_preview_frames()
+        if self._section_preview_card is not None:
+            try:
+                self._section_preview_card.pack_forget()
+            except tk.TclError:
+                pass
+        if self._layer_nav_frame is not None:
+            try:
+                self._layer_nav_frame.pack_forget()
+            except tk.TclError:
+                pass
+        self._set_row_visible(self._children_overview_row, False)
+
+    def _show_heavy_editor_modules(self) -> None:
+        if self._section_preview_card is not None:
+            try:
+                if not self._section_preview_card.winfo_manager():
+                    self._section_preview_card.pack(fill="x", padx=_CARD_PAD_X, pady=(10, 14))
+            except tk.TclError:
+                pass
+
+    def _ensure_details_on_demand_block_built(self) -> None:
+        parent = self._identity_card or self._edit_panel
+        if self._details_on_demand_built or parent is None:
+            return
+        frame = ctk.CTkFrame(
+            parent,
+            fg_color=_GF_FIELD,
+            corner_radius=10,
+            border_width=1,
+            border_color=_GF_BORDER,
+        )
+        inner = ctk.CTkFrame(frame, fg_color="transparent")
+        inner.pack(fill="x", padx=12, pady=10)
+        self._details_on_demand_hint_label = ctk.CTkLabel(
+            inner,
+            text=_GF_DETAILS_ON_DEMAND_TEXT,
+            font=theme.get_font(10),
+            text_color=theme.TextMuted,
+            anchor="w",
+            wraplength=420,
+            justify="left",
+        )
+        self._details_on_demand_hint_label.pack(fill="x", pady=(0, 8))
+        self._details_on_demand_button = ctk.CTkButton(
+            inner,
+            text=_GF_DETAILS_ON_DEMAND_BUTTON,
+            height=_BTN_HEIGHT,
+            width=120,
+            fg_color=_GF_CARD_SOFT,
+            hover_color=_GF_FIELD_HOVER,
+            text_color=theme.TextPrimary,
+            command=self._on_details_on_demand_clicked,
+        )
+        self._details_on_demand_button.pack(anchor="w", fill="x")
+        self._details_on_demand_status_label = ctk.CTkLabel(
+            inner,
+            text="",
+            font=theme.get_font(9),
+            text_color=theme.TextMuted,
+            anchor="w",
+        )
+        self._details_on_demand_frame = frame
+        self._details_on_demand_built = True
+
+    def _hide_details_on_demand_block(self) -> None:
+        if self._details_on_demand_frame is None:
+            return
+        try:
+            self._details_on_demand_frame.pack_forget()
+        except tk.TclError:
+            pass
+        if self._details_on_demand_status_label is not None:
+            self._details_on_demand_status_label.configure(text="")
+
+    def _show_details_on_demand_block(self, m: MergedPageElement) -> None:
+        if self._atomic_swap_suppress_visible:
+            return
+        if self._details_on_demand_expanded:
+            self._hide_details_on_demand_block()
+            return
+        self._ensure_details_on_demand_block_built()
+        if self._details_on_demand_frame is None:
+            return
+        is_media = m.element_type == "media_section"
+        hint = _GF_MEDIA_DETAILS_ON_DEMAND_TEXT if is_media else _GF_DETAILS_ON_DEMAND_TEXT
+        button_text = (
+            _GF_MEDIA_DETAILS_ON_DEMAND_BUTTON if is_media else _GF_DETAILS_ON_DEMAND_BUTTON
+        )
+        if self._details_on_demand_hint_label is not None:
+            self._details_on_demand_hint_label.configure(text=hint)
+        if self._details_on_demand_button is not None:
+            self._details_on_demand_button.configure(text=button_text)
+        self._details_on_demand_element_id = m.element_id
+        cache_entry = self._details_cache_entry(m)
+        cached_modules = self._cached_details_modules(cache_entry) if cache_entry else []
+        if self._details_on_demand_status_label is not None:
+            if cached_modules:
+                self._details_on_demand_status_label.configure(
+                    text=f"Załadowano: {len(cached_modules)} moduł(y)",
+                )
+                self._details_on_demand_status_label.pack(fill="x", pady=(8, 0))
+            else:
+                self._details_on_demand_status_label.configure(text="")
+                try:
+                    self._details_on_demand_status_label.pack_forget()
+                except tk.TclError:
+                    pass
+        pack_before = None
+        if self._section_preview_card is not None:
+            pack_before = self._section_preview_card
+        elif self._layer_nav_frame is not None and self._layer_nav_frame.winfo_manager():
+            pack_before = self._layer_nav_frame
+        try:
+            if pack_before is not None:
+                self._details_on_demand_frame.pack(
+                    fill="x",
+                    padx=_CARD_PAD_X,
+                    pady=(0, 8),
+                    before=pack_before,
+                )
+            else:
+                self._details_on_demand_frame.pack(fill="x", padx=_CARD_PAD_X, pady=(0, 8))
+        except tk.TclError:
+            try:
+                self._details_on_demand_frame.pack(fill="x", padx=_CARD_PAD_X, pady=(0, 8))
+            except tk.TclError:
+                pass
+        log_event(
+            "studio.gicleeframe.details_on_demand.available",
+            element_id=m.element_id,
+            element_type=m.element_type,
+            since_click_ms=self._since_selection_click_ms(),
+            details_cached=bool(cached_modules),
+        )
+
+    def _on_details_on_demand_clicked(self) -> None:
+        element_id = self._details_on_demand_element_id or self._selected_id
+        if not element_id:
+            return
+        m = self._merged_by_id.get(element_id)
+        if m is None or self._selected_id != element_id:
+            return
+
+        self._cancel_details_on_demand_jobs()
+        self._details_on_demand_generation += 1
+        details_generation = self._details_on_demand_generation
+        request_started = time.perf_counter()
+        self._details_on_demand_request_mono = request_started
+        self._details_cta_click_mono = request_started
+        self._details_on_demand_active_element_id = element_id
+
+        log_event(
+            "studio.gicleeframe.details_on_demand.requested",
+            element_id=element_id,
+            element_type=m.element_type,
+            since_details_cta_ms=0.0,
+            since_request_ms=0.0,
+            generation=details_generation,
+        )
+        log_event(
+            "studio.gicleeframe.details_on_demand.full_auto_suppressed",
+            element_id=element_id,
+            element_type=m.element_type,
+            generation=details_generation,
+            since_request_ms=self._since_details_request_ms(),
+        )
+        log_event(
+            "studio.gicleeframe.details_shell.requested",
+            element_id=element_id,
+            element_type=m.element_type,
+            generation=details_generation,
+            since_request_ms=self._since_details_request_ms(),
+        )
+
+        self._hide_details_on_demand_block()
+        self._show_details_shell(m)
+        self._details_on_demand_expanded = True
+        self._hide_editor_refresh_status()
+
+        elapsed_ms = self._since_details_request_ms()
+        log_event(
+            "studio.gicleeframe.details_shell.ready",
+            element_id=element_id,
+            element_type=m.element_type,
+            generation=details_generation,
+            elapsed_ms=elapsed_ms,
+            since_details_cta_ms=elapsed_ms,
+            since_request_ms=elapsed_ms,
+        )
+        log_event(
+            "studio.gicleeframe.details_shell.applied",
+            element_id=element_id,
+            element_type=m.element_type,
+            generation=details_generation,
+            elapsed_ms=elapsed_ms,
+            since_details_cta_ms=elapsed_ms,
+            since_request_ms=elapsed_ms,
+        )
+        log_event(
+            "studio.gicleeframe.details_on_demand.applied",
+            element_id=element_id,
+            element_type=m.element_type,
+            generation=details_generation,
+            elapsed_ms=elapsed_ms,
+            since_details_cta_ms=elapsed_ms,
+            since_request_ms=elapsed_ms,
+            shell_only=True,
+        )
+
+    def _on_details_module_clicked(self, module: str) -> None:
+        element_id = self._details_on_demand_active_element_id or self._selected_id
+        if not element_id:
+            return
+        m = self._merged_by_id.get(element_id)
+        if m is None or self._selected_id != element_id:
+            return
+
+        self._cancel_details_on_demand_jobs()
+        self._details_on_demand_generation += 1
+        module_generation = self._details_on_demand_generation
+        self._details_on_demand_request_mono = time.perf_counter()
+        self._details_on_demand_active_element_id = element_id
+
+        log_event(
+            "studio.gicleeframe.details_module.requested",
+            module=module,
+            element_id=element_id,
+            element_type=m.element_type,
+            generation=module_generation,
+            since_request_ms=0.0,
+        )
+
+        cache_entry = self._section_visual_cache.get(element_id)
+        if cache_entry is not None and self._details_module_cache_hit(cache_entry, module):
+            log_event(
+                "studio.gicleeframe.details_module.cache_hit",
+                module=module,
+                element_id=element_id,
+                element_type=m.element_type,
+                generation=module_generation,
+                since_request_ms=self._since_details_request_ms(),
+            )
+            self._apply_details_module_from_cache(m, module, cache_entry, module_generation)
+            return
+
+        self._update_details_module_status(module, _GF_DETAILS_MODULE_LOADING_STATUS)
+        if module == "children":
+            self._schedule_details_on_demand_job(
+                0,
+                lambda mod=module, eid=element_id, gen=module_generation: (
+                    self._run_children_details_module_batched(
+                        eid,
+                        gen,
+                        mod,
+                        start=0,
+                    )
+                ),
+            )
+            return
+
+        self._schedule_details_on_demand_job(
+            0,
+            lambda mod=module, eid=element_id, gen=module_generation: (
+                self._execute_details_module(eid, gen, mod)
+            ),
+        )
+
+    def _apply_details_module_from_cache(
+        self,
+        m: MergedPageElement,
+        module: str,
+        entry: SectionVisualCacheEntry,
+        generation: int,
+    ) -> None:
+        if not self._details_stage_still_valid(m.element_id, generation):
+            return
+        started = time.perf_counter()
+        if module == "preview":
+            self._apply_cached_preview_module(entry)
+        elif module == "page_context":
+            self._apply_cached_page_context_module(entry)
+        elif module == "layer_nav":
+            self._apply_cached_layer_nav_module(entry)
+        elif module == "children":
+            self._apply_cached_children_module(m, entry)
+        self._update_details_module_status(module, _GF_DETAILS_MODULE_LOADED_STATUS)
+        elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
+        log_event(
+            "studio.gicleeframe.details_module.ready",
+            module=module,
+            element_id=m.element_id,
+            element_type=m.element_type,
+            generation=generation,
+            elapsed_ms=elapsed_ms,
+            since_request_ms=self._since_details_request_ms(),
+            from_cache=True,
+        )
+        log_event(
+            "studio.gicleeframe.details_module.applied",
+            module=module,
+            element_id=m.element_id,
+            element_type=m.element_type,
+            generation=generation,
+            elapsed_ms=elapsed_ms,
+            since_request_ms=self._since_details_request_ms(),
+            from_cache=True,
+        )
+
+    def _execute_details_module(self, element_id: str, generation: int, module: str) -> None:
+        if not self._details_stage_still_valid(element_id, generation):
+            return
+        m = self._merged_by_id.get(element_id)
+        if m is None:
+            return
+        started = time.perf_counter()
+        stale_refresh = self._editor_has_ready_content
+        fields = editor_field_visibility(m.element_type or "unknown")
+
+        if module == "preview":
+            self._show_heavy_editor_modules()
+            self._update_section_preview(m, stale_refresh=stale_refresh)
+        elif module == "page_context":
+            if fields.page_context:
+                self._fill_page_context(m, show=True)
+        elif module == "layer_nav":
+            self._update_layer_nav(m, stale_refresh=stale_refresh)
+        elif module == "children":
+            self._set_row_visible(self._children_overview_row, True)
+            self._fill_children_overview_buttons(m, stale_refresh=stale_refresh)
+
+        self._save_details_module_cache(m, module, fields)
+        self._update_details_module_status(module, _GF_DETAILS_MODULE_LOADED_STATUS)
+        elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
+        log_event(
+            "studio.gicleeframe.details_module.ready",
+            module=module,
+            element_id=element_id,
+            element_type=m.element_type,
+            generation=generation,
+            elapsed_ms=elapsed_ms,
+            since_request_ms=self._since_details_request_ms(),
+            from_cache=False,
+        )
+        log_event(
+            "studio.gicleeframe.details_module.applied",
+            module=module,
+            element_id=element_id,
+            element_type=m.element_type,
+            generation=generation,
+            elapsed_ms=elapsed_ms,
+            since_request_ms=self._since_details_request_ms(),
+            from_cache=False,
+        )
+
+    def _run_children_details_module_batched(
+        self,
+        element_id: str,
+        generation: int,
+        module: str,
+        *,
+        start: int,
+    ) -> None:
+        if not self._details_stage_still_valid(element_id, generation):
+            return
+        m = self._merged_by_id.get(element_id)
+        if m is None:
+            return
+        parent_row = self._tree_row_for_element(element_id)
+        children = parent_row.children if parent_row is not None else ()
+        total = len(children)
+        end = min(start + _GF_DETAILS_CHILDREN_BATCH_SIZE, total)
+        started = time.perf_counter()
+        stale_refresh = self._editor_has_ready_content
+
+        self._set_row_visible(self._children_overview_row, True)
+        self._fill_children_overview_buttons_range(
+            m,
+            start,
+            end,
+            stale_refresh=stale_refresh and start == 0,
+        )
+
+        elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
+        if total > 2 or (total > 0 and end < total):
+            log_event(
+                "studio.gicleeframe.details_module.batch",
+                module=module,
+                start=start,
+                end=end,
+                total=total,
+                elapsed_ms=elapsed_ms,
+                element_id=element_id,
+                element_type=m.element_type,
+                generation=generation,
+            )
+
+        if end < total:
+            self._schedule_details_on_demand_job(
+                _GF_DETAILS_STAGE_GAP_MS,
+                lambda s=end: self._run_children_details_module_batched(
+                    element_id,
+                    generation,
+                    module,
+                    start=s,
+                ),
+            )
+            return
+
+        fields = editor_field_visibility(m.element_type or "unknown")
+        self._save_details_module_cache(m, module, fields)
+        self._update_details_module_status(module, _GF_DETAILS_MODULE_LOADED_STATUS)
+        total_elapsed_ms = self._since_details_request_ms()
+        log_event(
+            "studio.gicleeframe.details_module.ready",
+            module=module,
+            element_id=element_id,
+            element_type=m.element_type,
+            generation=generation,
+            elapsed_ms=total_elapsed_ms,
+            since_request_ms=total_elapsed_ms,
+            from_cache=False,
+        )
+        log_event(
+            "studio.gicleeframe.details_module.applied",
+            module=module,
+            element_id=element_id,
+            element_type=m.element_type,
+            generation=generation,
+            elapsed_ms=total_elapsed_ms,
+            since_request_ms=total_elapsed_ms,
+            from_cache=False,
+        )
+
+    def _save_details_module_cache(
+        self,
+        m: MergedPageElement,
+        module: str,
+        fields: EditorFieldVisibility,
+    ) -> None:
+        existing = self._section_visual_cache.get(m.element_id)
+        preview_key = self._preview_key_for_element(m)
+        layer_nav_titles: tuple[str, ...] = ()
+        layer_nav_visible = False
+        if module == "layer_nav":
+            if self._layer_nav_frame is not None and self._layer_nav_frame.winfo_manager():
+                layer_nav_visible = True
+                items = self._selected_layer_items(m)
+                layer_nav_titles = tuple(title for _, _, title in items)
+            elif existing is not None:
+                layer_nav_visible = existing.layer_nav_visible
+                layer_nav_titles = existing.layer_nav_titles
+        elif existing is not None:
+            layer_nav_visible = existing.layer_nav_visible
+            layer_nav_titles = existing.layer_nav_titles
+
+        effective_preview_key = preview_key if module == "preview" else (
+            existing.preview_key if existing is not None else ""
+        )
+        subtitle = (
+            self._editor_section_subtitle.cget("text")
+            if self._editor_section_subtitle is not None
+            else editor_title_for_element(m)
+        )
+        page_context_summary = tuple(self._page_context_shell_summary_lines(m))
+        if existing is not None and module != "page_context":
+            page_context_summary = existing.page_context_summary
+
+        self._section_visual_cache[m.element_id] = SectionVisualCacheEntry(
+            element_type=m.element_type or "unknown",
+            status=m.status or "ok",
+            has_draft_patch=m.has_draft_patch,
+            title=m.title,
+            text=m.text,
+            alt=m.alt,
+            image_ref=m.image_ref,
+            notes=m.notes,
+            visible=m.visible,
+            subtitle_text=subtitle,
+            page_context_summary=page_context_summary,
+            fields_title=fields.title,
+            fields_text=fields.text,
+            fields_alt=fields.alt,
+            fields_image_ref=fields.image_ref,
+            fields_notes=fields.notes,
+            fields_visible=fields.visible,
+            fields_children=fields.children,
+            fields_page_context=fields.page_context,
+            media_details_built=bool(existing and existing.media_details_built),
+            preview_key=effective_preview_key or (existing.preview_key if existing else ""),
+            layer_nav_visible=layer_nav_visible,
+            layer_nav_titles=layer_nav_titles,
+            details_cache_preview=(
+                module == "preview" or bool(existing and existing.details_cache_preview)
+            ),
+            details_cache_page_context=(
+                module == "page_context"
+                or bool(existing and existing.details_cache_page_context)
+            ),
+            details_cache_layer_nav=(
+                module == "layer_nav" or bool(existing and existing.details_cache_layer_nav)
+            ),
+            details_cache_children=(
+                module == "children" or bool(existing and existing.details_cache_children)
+            ),
+        )
+        log_event(
+            "studio.gicleeframe.selection.visual_cache_saved",
+            element_id=m.element_id,
+            element_type=m.element_type,
+            media_details_built=False,
+            details_module=module,
+            minimal_only=False,
+            generation=self._selection_generation,
+        )
+
+    def _apply_details_cache_hit(
+        self,
+        m: MergedPageElement,
+        entry: SectionVisualCacheEntry,
+        generation: int,
+    ) -> None:
+        """Legacy — full details cache apply; not used by shell CTA."""
+        if not self._details_stage_still_valid(m.element_id, generation):
+            return
+        started = time.perf_counter()
+        fields = self._fields_from_cache_entry(entry)
+        stale_refresh = self._editor_has_ready_content
+
+        self._hide_details_on_demand_block()
+        self._hide_details_shell()
+        self._show_heavy_editor_modules()
+        self._apply_cached_media_details(entry)
+        if fields.page_context:
+            self._apply_cached_page_context_summary(entry)
+        self._set_row_visible(self._children_overview_row, fields.children)
+        if fields.children:
+            self._fill_children_overview_buttons(m, stale_refresh=stale_refresh)
+
+        self._details_on_demand_expanded = True
+        self._hide_editor_refresh_status()
+        self._mark_editor_content_ready(m)
+        elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
+        details_cta_ms = self._since_details_cta_ms()
+        log_event(
+            "studio.gicleeframe.details_on_demand.ready",
+            element_id=m.element_id,
+            element_type=m.element_type,
+            generation=generation,
+            elapsed_ms=elapsed_ms,
+            since_details_cta_ms=details_cta_ms,
+            since_request_ms=self._since_details_request_ms(),
+            from_cache=True,
+        )
+        log_event(
+            "studio.gicleeframe.details_on_demand.applied",
+            element_id=m.element_id,
+            element_type=m.element_type,
+            generation=generation,
+            elapsed_ms=elapsed_ms,
+            since_details_cta_ms=details_cta_ms,
+            since_request_ms=self._since_details_request_ms(),
+            from_cache=True,
+            shell_only=False,
+        )
+        log_event(
+            "studio.gicleeframe.details_on_demand.all_done",
+            element_id=m.element_id,
+            element_type=m.element_type,
+            generation=generation,
+            elapsed_ms=elapsed_ms,
+            since_request_ms=self._since_details_request_ms(),
+            from_cache=True,
+        )
+
+    def _apply_heavy_details_on_demand(self, m: MergedPageElement) -> None:
+        """Legacy internal — staged pipeline; not started from shell CTA."""
+        self._begin_details_on_demand_stages(m.element_id, self._details_on_demand_generation)
+
+    def _details_stage_still_valid(self, element_id: str, generation: int) -> bool:
+        if generation != self._details_on_demand_generation:
+            return False
+        if self._selected_id != element_id:
+            return False
+        if self._details_on_demand_active_element_id != element_id:
+            return False
+        if not self.winfo_exists():
+            return False
+        return True
+
+    def _details_on_demand_stages_for(self, m: MergedPageElement) -> list[str]:
+        fields = editor_field_visibility(m.element_type or "unknown")
+        stages: list[str] = ["summary", "preview"]
+        if fields.page_context:
+            stages.append("page_context")
+        stages.append("layer_nav")
+        if fields.children:
+            stages.append("children")
+        return stages
+
+    def _begin_details_on_demand_stages(self, element_id: str, generation: int) -> None:
+        """Legacy internal — full auto chain; suppressed after PERF-F.5 shell CTA."""
+        if not self._details_stage_still_valid(element_id, generation):
+            return
+        m = self._merged_by_id.get(element_id)
+        if m is None:
+            return
+        self._show_heavy_editor_modules()
+        stages = self._details_on_demand_stages_for(m)
+        self._schedule_next_details_stage(element_id, generation, stages, 0)
+
+    def _schedule_next_details_stage(
+        self,
+        element_id: str,
+        generation: int,
+        stages: list[str],
+        index: int,
+    ) -> None:
+        if not self._details_stage_still_valid(element_id, generation):
+            return
+        if index >= len(stages):
+            self._schedule_details_on_demand_job(
+                0,
+                lambda eid=element_id, gen=generation: self._finalize_details_on_demand(
+                    eid,
+                    gen,
+                ),
+            )
+            return
+        stage = stages[index]
+        delay_ms = 0 if index == 0 else _GF_DETAILS_STAGE_GAP_MS
+        merged = self._merged_by_id.get(element_id)
+        log_event(
+            "studio.gicleeframe.details_on_demand.stage_scheduled",
+            stage=stage,
+            element_id=element_id,
+            element_type=merged.element_type if merged is not None else "",
+            generation=generation,
+            since_request_ms=self._since_details_request_ms(),
+        )
+        self._schedule_details_on_demand_job(
+            delay_ms,
+            lambda eid=element_id, gen=generation, stg=stage, idx=index, stgs=stages: (
+                self._execute_details_on_demand_stage(eid, gen, stgs, idx, stg)
+            ),
+        )
+
+    def _execute_details_on_demand_stage(
+        self,
+        element_id: str,
+        generation: int,
+        stages: list[str],
+        index: int,
+        stage: str,
+    ) -> None:
+        """Legacy internal — monolithic staged pipeline stage executor."""
+        if not self._details_stage_still_valid(element_id, generation):
+            return
+        m = self._merged_by_id.get(element_id)
+        if m is None:
+            return
+        started = time.perf_counter()
+        log_event(
+            "studio.gicleeframe.details_on_demand.stage_start",
+            stage=stage,
+            element_id=element_id,
+            element_type=m.element_type,
+            generation=generation,
+            since_request_ms=self._since_details_request_ms(),
+        )
+        stale_refresh = self._editor_has_ready_content
+        fields = editor_field_visibility(m.element_type or "unknown")
+
+        if stage == "summary":
+            pass
+        elif stage == "preview":
+            self._update_section_preview(m, stale_refresh=stale_refresh)
+            self._update_details_module_status("preview", "")
+        elif stage == "page_context":
+            if fields.page_context:
+                self._fill_page_context(m, show=True)
+        elif stage == "layer_nav":
+            self._update_layer_nav(m, stale_refresh=stale_refresh)
+            self._update_details_module_status("layer_nav", "")
+        elif stage == "children":
+            self._set_row_visible(self._children_overview_row, True)
+            self._run_children_details_stage_batched(
+                m,
+                generation,
+                stale_refresh=stale_refresh,
+                start=0,
+                stages=stages,
+                stage_index=index,
+            )
+            return
+
+        elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
+        log_event(
+            "studio.gicleeframe.details_on_demand.stage_done",
+            stage=stage,
+            element_id=element_id,
+            element_type=m.element_type,
+            generation=generation,
+            elapsed_ms=elapsed_ms,
+            since_request_ms=self._since_details_request_ms(),
+        )
+        self._schedule_next_details_stage(element_id, generation, stages, index + 1)
+
+    def _run_children_details_stage_batched(
+        self,
+        m: MergedPageElement,
+        generation: int,
+        *,
+        stale_refresh: bool,
+        start: int,
+        stages: list[str],
+        stage_index: int,
+    ) -> None:
+        element_id = m.element_id
+        if not self._details_stage_still_valid(element_id, generation):
+            return
+        parent_row = self._tree_row_for_element(element_id)
+        children = parent_row.children if parent_row is not None else ()
+        total = len(children)
+        end = min(start + _GF_DETAILS_CHILDREN_BATCH_SIZE, total)
+        started = time.perf_counter()
+
+        self._fill_children_overview_buttons_range(
+            m,
+            start,
+            end,
+            stale_refresh=stale_refresh and start == 0,
+        )
+
+        elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
+        if total > 0 and (end < total or elapsed_ms > 80):
+            log_event(
+                "studio.gicleeframe.details_on_demand.stage_batch",
+                stage="children",
+                start=start,
+                end=end,
+                total=total,
+                elapsed_ms=elapsed_ms,
+                element_id=element_id,
+                element_type=m.element_type,
+                generation=generation,
+            )
+
+        if end < total:
+            self._schedule_details_on_demand_job(
+                _GF_DETAILS_STAGE_GAP_MS,
+                lambda s=end: self._run_children_details_stage_batched(
+                    m,
+                    generation,
+                    stale_refresh=stale_refresh,
+                    start=s,
+                    stages=stages,
+                    stage_index=stage_index,
+                ),
+            )
+            return
+
+        self._update_details_module_status("children", "")
+        log_event(
+            "studio.gicleeframe.details_on_demand.stage_done",
+            stage="children",
+            element_id=element_id,
+            element_type=m.element_type,
+            generation=generation,
+            elapsed_ms=elapsed_ms,
+            since_request_ms=self._since_details_request_ms(),
+        )
+        self._schedule_next_details_stage(element_id, generation, stages, stage_index + 1)
+
+    def _finalize_details_on_demand(self, element_id: str, generation: int) -> None:
+        if not self._details_stage_still_valid(element_id, generation):
+            return
+        m = self._merged_by_id.get(element_id)
+        if m is None:
+            return
+        started = time.perf_counter()
+        fields = editor_field_visibility(m.element_type or "unknown")
+
+        self._details_on_demand_expanded = True
+        self._hide_details_on_demand_block()
+        self._hide_details_shell()
+        self._hide_media_details_stable_shell()
+        self._hide_editor_refresh_status()
+        self._save_section_visual_cache(m, fields, media_details_built=True)
+        self._mark_editor_content_ready(m)
+        elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
+        total_elapsed_ms = self._since_details_request_ms()
+        details_cta_ms = self._since_details_cta_ms()
+        log_event(
+            "studio.gicleeframe.details_on_demand.all_done",
+            element_id=element_id,
+            element_type=m.element_type,
+            generation=generation,
+            elapsed_ms=total_elapsed_ms,
+            since_request_ms=total_elapsed_ms,
+        )
+        log_event(
+            "studio.gicleeframe.details_on_demand.ready",
+            element_id=element_id,
+            element_type=m.element_type,
+            generation=generation,
+            elapsed_ms=total_elapsed_ms,
+            since_details_cta_ms=details_cta_ms,
+            since_request_ms=total_elapsed_ms,
+            from_cache=False,
+        )
+        log_event(
+            "studio.gicleeframe.details_on_demand.applied",
+            element_id=element_id,
+            element_type=m.element_type,
+            generation=generation,
+            elapsed_ms=total_elapsed_ms,
+            since_details_cta_ms=details_cta_ms,
+            since_request_ms=total_elapsed_ms,
+            from_cache=False,
+        )
+
+    def _ensure_details_shell_built(self) -> None:
+        parent = self._identity_card or self._edit_panel
+        if self._details_container_built or parent is None:
+            return
+        frame = ctk.CTkFrame(
+            parent,
+            fg_color=_GF_FIELD,
+            corner_radius=10,
+            border_width=1,
+            border_color=_GF_BORDER,
+        )
+        inner = ctk.CTkFrame(frame, fg_color="transparent")
+        inner.pack(fill="x", padx=12, pady=10)
+        self._details_container_title_label = ctk.CTkLabel(
+            inner,
+            text=_GF_DETAILS_SHELL_TITLE,
+            font=theme.get_font(11, "bold"),
+            text_color=theme.TextPrimary,
+            anchor="w",
+        )
+        self._details_container_title_label.pack(fill="x", pady=(0, 4))
+        self._details_container_subtext_label = ctk.CTkLabel(
+            inner,
+            text=_GF_DETAILS_SHELL_SUBTEXT,
+            font=theme.get_font(9),
+            text_color=theme.TextMuted,
+            anchor="w",
+            wraplength=420,
+            justify="left",
+        )
+        self._details_container_subtext_label.pack(fill="x", pady=(0, 10))
+        modules_parent = ctk.CTkFrame(inner, fg_color="transparent")
+        modules_parent.pack(fill="x")
+        module_specs = (
+            ("preview", _GF_DETAILS_MODULE_PREVIEW_TITLE, _GF_DETAILS_MODULE_PREVIEW_BUTTON),
+            (
+                "page_context",
+                _GF_DETAILS_MODULE_PAGE_CONTEXT_TITLE,
+                _GF_DETAILS_MODULE_PAGE_CONTEXT_BUTTON,
+            ),
+            ("layer_nav", _GF_DETAILS_MODULE_LAYER_NAV_TITLE, _GF_DETAILS_MODULE_LAYER_NAV_BUTTON),
+            ("children", _GF_DETAILS_MODULE_CHILDREN_TITLE, _GF_DETAILS_MODULE_CHILDREN_BUTTON),
+        )
+        for module_key, title, button_text in module_specs:
+            # Dwie linie: tytuł + status na górze, przycisk na całą szerokość pod spodem —
+            # przy wąskiej kolumnie nic nie jest wyciskane ani obcinane.
+            row = ctk.CTkFrame(modules_parent, fg_color="transparent")
+            row.pack(fill="x", pady=(0, 8))
+            head = ctk.CTkFrame(row, fg_color="transparent")
+            head.pack(fill="x")
+            ctk.CTkLabel(
+                head,
+                text=title,
+                font=theme.get_font(9, "bold"),
+                text_color=theme.TextPrimary,
+                anchor="w",
+            ).pack(side="left")
+            status = ctk.CTkLabel(
+                head,
+                text=_GF_DETAILS_MODULE_IDLE_STATUS,
+                font=theme.get_font(9),
+                text_color=theme.TextMuted,
+                anchor="e",
+            )
+            status.pack(side="right")
+            button = ctk.CTkButton(
+                row,
+                text=button_text,
+                height=24,
+                width=120,
+                fg_color=_GF_CARD_SOFT,
+                hover_color=_GF_FIELD_HOVER,
+                text_color=theme.TextPrimary,
+                command=lambda mod=module_key: self._on_details_module_clicked(mod),
+            )
+            button.pack(fill="x", pady=(3, 0))
+            self._details_module_rows[module_key] = row
+            self._details_module_buttons[module_key] = button
+            self._details_module_status_labels[module_key] = status
+        self._details_container_frame = frame
+        self._details_container_built = True
+
+    def _show_details_shell(self, m: MergedPageElement) -> None:
+        if self._atomic_swap_suppress_visible:
+            return
+        self._ensure_details_shell_built()
+        if self._details_container_frame is None:
+            return
+        is_media = m.element_type == "media_section"
+        fields = editor_field_visibility(m.element_type or "unknown")
+        if self._details_container_title_label is not None:
+            self._details_container_title_label.configure(text=_GF_DETAILS_SHELL_TITLE)
+        if self._details_container_subtext_label is not None:
+            subtext = _GF_MEDIA_DETAILS_SHELL_SUBTEXT if is_media else _GF_DETAILS_SHELL_SUBTEXT
+            self._details_container_subtext_label.configure(text=subtext)
+        cache_entry = self._section_visual_cache.get(m.element_id)
+        module_visibility = {
+            "preview": True,
+            "page_context": fields.page_context,
+            "layer_nav": True,
+            "children": fields.children,
+        }
+        for module_key, row in self._details_module_rows.items():
+            visible = module_visibility.get(module_key, False)
+            if visible:
+                try:
+                    row.pack(fill="x", pady=(0, 8))
+                except tk.TclError:
+                    pass
+                cached = (
+                    cache_entry is not None
+                    and self._details_module_cache_hit(cache_entry, module_key)
+                )
+                status_text = _GF_DETAILS_MODULE_LOADED_STATUS if cached else _GF_DETAILS_MODULE_IDLE_STATUS
+                self._update_details_module_status(module_key, status_text)
+            else:
+                try:
+                    row.pack_forget()
+                except tk.TclError:
+                    pass
+        pack_before = None
+        if self._section_preview_card is not None:
+            pack_before = self._section_preview_card
+        elif self._layer_nav_frame is not None and self._layer_nav_frame.winfo_manager():
+            pack_before = self._layer_nav_frame
+        try:
+            if pack_before is not None:
+                self._details_container_frame.pack(
+                    fill="x",
+                    padx=_CARD_PAD_X,
+                    pady=(0, 8),
+                    before=pack_before,
+                )
+            else:
+                self._details_container_frame.pack(fill="x", padx=_CARD_PAD_X, pady=(0, 8))
+        except tk.TclError:
+            try:
+                self._details_container_frame.pack(fill="x", padx=_CARD_PAD_X, pady=(0, 8))
+            except tk.TclError:
+                pass
+
+    def _hide_details_shell(self) -> None:
+        if self._details_container_frame is None:
+            return
+        try:
+            self._details_container_frame.pack_forget()
+        except tk.TclError:
+            pass
+
+    def _hide_details_container(self) -> None:
+        """Legacy alias — details shell hide."""
+        self._hide_details_shell()
+
+    def _update_details_module_status(self, module_key: str, text: str) -> None:
+        label = self._details_module_status_labels.get(module_key)
+        if label is None:
+            return
+        try:
+            display = text if text else _GF_DETAILS_MODULE_LOADED_STATUS
+            label.configure(text=display)
+        except tk.TclError:
+            pass
+
+    def _cancel_details_on_demand_jobs(self) -> int:
+        cancelled = len(self._details_on_demand_after_ids)
+        while self._details_on_demand_after_ids:
+            after_id = self._details_on_demand_after_ids.pop()
+            try:
+                self.after_cancel(after_id)
+            except tk.TclError:
+                pass
+        return cancelled
+
+    def _schedule_details_on_demand_job(self, delay_ms: int, callback: Callable[[], None]) -> None:
+        after_id = self.after(delay_ms, callback)
+        self._details_on_demand_after_ids.append(after_id)
+
+    def _save_section_visual_cache(
+        self,
+        m: MergedPageElement,
+        fields: EditorFieldVisibility,
+        *,
+        media_details_built: bool,
+    ) -> None:
+        layer_nav_titles: tuple[str, ...] = ()
+        layer_nav_visible = False
+        preview_key = self._preview_key_for_element(m)
+        subtitle = (
+            self._editor_section_subtitle.cget("text")
+            if self._editor_section_subtitle is not None
+            else editor_title_for_element(m)
+        )
+        existing = self._section_visual_cache.get(m.element_id)
+        if media_details_built:
+            if self._layer_nav_frame is not None and self._layer_nav_frame.winfo_manager():
+                layer_nav_visible = True
+                items = self._selected_layer_items(m)
+                layer_nav_titles = tuple(title for _, _, title in items)
+            else:
+                layer_nav_visible = existing.layer_nav_visible if existing else False
+                layer_nav_titles = existing.layer_nav_titles if existing else ()
+            effective_preview_key = preview_key
+        else:
+            layer_nav_visible = existing.layer_nav_visible if existing else False
+            layer_nav_titles = existing.layer_nav_titles if existing else ()
+            effective_preview_key = existing.preview_key if existing else ""
+        effective_media_details = media_details_built or bool(
+            existing and existing.media_details_built
+        )
+        if media_details_built:
+            cache_preview = True
+            cache_page_context = fields.page_context
+            cache_layer_nav = True
+            cache_children = fields.children
+        elif existing is not None:
+            cache_preview = existing.details_cache_preview
+            cache_page_context = existing.details_cache_page_context
+            cache_layer_nav = existing.details_cache_layer_nav
+            cache_children = existing.details_cache_children
+        else:
+            cache_preview = False
+            cache_page_context = False
+            cache_layer_nav = False
+            cache_children = False
+        self._section_visual_cache[m.element_id] = SectionVisualCacheEntry(
+            element_type=m.element_type or "unknown",
+            status=m.status or "ok",
+            has_draft_patch=m.has_draft_patch,
+            title=m.title,
+            text=m.text,
+            alt=m.alt,
+            image_ref=m.image_ref,
+            notes=m.notes,
+            visible=m.visible,
+            subtitle_text=subtitle,
+            page_context_summary=tuple(self._page_context_shell_summary_lines(m)),
+            fields_title=fields.title,
+            fields_text=fields.text,
+            fields_alt=fields.alt,
+            fields_image_ref=fields.image_ref,
+            fields_notes=fields.notes,
+            fields_visible=fields.visible,
+            fields_children=fields.children,
+            fields_page_context=fields.page_context,
+            media_details_built=effective_media_details,
+            preview_key=effective_preview_key,
+            layer_nav_visible=layer_nav_visible,
+            layer_nav_titles=layer_nav_titles,
+            details_cache_preview=cache_preview,
+            details_cache_page_context=cache_page_context,
+            details_cache_layer_nav=cache_layer_nav,
+            details_cache_children=cache_children,
+        )
+        log_event(
+            "studio.gicleeframe.selection.visual_cache_saved",
+            element_id=m.element_id,
+            element_type=m.element_type,
+            media_details_built=effective_media_details,
+            minimal_only=not media_details_built,
+            generation=self._selection_generation,
+        )
+
+    def _mark_editor_stable_shell_ready(
+        self,
+        m: MergedPageElement,
+        *,
+        from_cache: bool = False,
+    ) -> None:
+        if m.element_id in self._editor_stable_shell_logged_for and not from_cache:
+            return
+        if not from_cache:
+            self._editor_stable_shell_logged_for.add(m.element_id)
+        log_event(
+            "studio.gicleeframe.editor.stable_shell_ready",
+            element_id=m.element_id,
+            element_type=m.element_type,
+            generation=self._selection_generation,
+            from_cache=from_cache,
+            since_click_ms=self._since_selection_click_ms(),
+        )
+
+    def _maybe_log_layout_shift_guard(
+        self,
+        m: MergedPageElement,
+        *,
+        phase: str,
+        rows_visible: int,
+    ) -> None:
+        log_event(
+            "studio.gicleeframe.editor.layout_shift_guard",
+            element_id=m.element_id,
+            element_type=m.element_type,
+            phase=phase,
+            rows_visible=rows_visible,
+            generation=self._selection_generation,
+        )
+
+    def _show_editor_selection_stable_shell_state(
+        self,
+        m: MergedPageElement,
+        *,
+        from_cache: bool = False,
+    ) -> None:
+        if self._editor_status_dot:
+            if from_cache:
+                dot_color, _ = _element_pill_colors(m.status, has_draft_patch=m.has_draft_patch)
+            else:
+                dot_color = _GF_GOLD_SOFT
+            self._editor_status_dot.configure(text_color=dot_color)
+        if self._editor_section_subtitle:
+            self._editor_section_subtitle.configure(text=editor_title_for_element(m))
+
+        log_event(
+            "studio.gicleeframe.editor.selection_stable_shell",
+            element_id=m.element_id,
+            element_type=m.element_type,
+            from_cache=from_cache,
+        )
+
+    def _show_editor_selection_pending_state(self, m: MergedPageElement) -> None:
+        self._show_editor_selection_stable_shell_state(m, from_cache=False)
 
         log_event(
             "studio.gicleeframe.editor.selection_pending",
             element_id=m.element_id,
             element_type=m.element_type,
         )
+
+    def _mark_editor_shell_ready_after_click(
+        self,
+        m: MergedPageElement,
+        *,
+        page_context_shell: bool,
+    ) -> None:
+        if self._editor_section_subtitle:
+            title = editor_title_for_element(m)
+            self._editor_section_subtitle.configure(text=title)
+        log_event(
+            "studio.gicleeframe.editor.shell_ready_after_click",
+            element_id=m.element_id,
+            element_type=m.element_type,
+            generation=self._selection_generation,
+            page_context_shell=page_context_shell,
+            since_click_ms=self._since_selection_click_ms(),
+        )
+
+    def _schedule_atomic_swap_populate(self, element_id: str, generation: int) -> None:
+        self.after_idle(
+            lambda eid=element_id, gen=generation: self._run_atomic_swap_populate(eid, gen),
+        )
+
+    def _run_atomic_swap_populate(self, element_id: str, generation: int) -> None:
+        if generation != self._selection_generation:
+            log_event(
+                "studio.gicleeframe.selection.atomic_swap.stale",
+                element_id=element_id,
+                generation=generation,
+                current_generation=self._selection_generation,
+            )
+            return
+        m = self._merged_by_id.get(element_id)
+        if m is None or self._selected_id != element_id:
+            return
+        log_event(
+            "studio.gicleeframe.selection.atomic_swap.ready",
+            element_id=element_id,
+            element_type=m.element_type,
+            generation=generation,
+            since_click_ms=self._since_selection_click_ms(),
+        )
+        had_stale_content = self._editor_has_ready_content
+        self._atomic_swap_suppress_visible = had_stale_content
+        self._atomic_swap_deferred_row_visibility.clear()
+        populate_started = time.perf_counter()
+        try:
+            with span(
+                "studio.gicleeframe.selection.atomic_swap.populate",
+                element_id=element_id,
+                element_type=m.element_type,
+            ):
+                self._populate_editor(m, atomic_swap=True)
+            if had_stale_content:
+                self._flush_atomic_swap_row_visibility()
+        finally:
+            self._atomic_swap_suppress_visible = False
+            self._atomic_swap_deferred_row_visibility.clear()
+        if generation == self._selection_generation and self._selected_id == element_id:
+            populate_elapsed_ms = round((time.perf_counter() - populate_started) * 1000, 2)
+            log_event(
+                "studio.gicleeframe.selection.atomic_swap.applied",
+                element_id=element_id,
+                element_type=m.element_type,
+                generation=generation,
+                elapsed_ms=populate_elapsed_ms,
+                since_click_ms=self._since_selection_click_ms(),
+            )
+            log_event(
+                "studio.gicleeframe.selection.populate_done",
+                element_id=element_id,
+                element_type=m.element_type,
+                generation=generation,
+                elapsed_ms=populate_elapsed_ms,
+                since_click_ms=self._since_selection_click_ms(),
+            )
+            log_event(
+                "studio.gicleeframe.selection.populate.done",
+                element_id=element_id,
+                element_type=m.element_type,
+                generation=generation,
+                elapsed_ms=populate_elapsed_ms,
+                since_click_ms=self._since_selection_click_ms(),
+            )
+            self._hide_editor_refresh_status()
+
+    def _flush_atomic_swap_row_visibility(self) -> None:
+        deferred = list(self._atomic_swap_deferred_row_visibility)
+        self._atomic_swap_deferred_row_visibility.clear()
+        self._atomic_swap_suppress_visible = False
+        for row, visible in deferred:
+            self._set_row_visible(row, visible)
 
     def _populate_editor_deferred(self, element_id: str, generation: int) -> None:
         queue_latency_ms = self._queue_latency_since_ms(self._selection_populate_scheduled_mono)
@@ -4161,21 +6166,41 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
             queue_latency_ms=queue_latency_ms,
             since_click_ms=self._since_selection_click_ms(),
         )
+        log_event(
+            "studio.gicleeframe.selection.populate.start",
+            element_id=element_id,
+            element_type=m.element_type,
+            generation=generation,
+            since_click_ms=self._since_selection_click_ms(),
+            queue_latency_ms=queue_latency_ms,
+        )
         populate_started = time.perf_counter()
         with span(
             "studio.gicleeframe.populate_editor.deferred",
             element_id=element_id,
             element_type=m.element_type,
         ):
-            self._populate_editor(m)
+            self._populate_editor(
+                m,
+                visual_cache_refresh=self._selection_visual_cache_applied,
+            )
 
         if generation == self._selection_generation and self._selected_id == element_id:
+            populate_elapsed_ms = round((time.perf_counter() - populate_started) * 1000, 2)
             log_event(
                 "studio.gicleeframe.selection.populate_done",
                 element_id=element_id,
                 element_type=m.element_type,
                 generation=generation,
-                elapsed_ms=round((time.perf_counter() - populate_started) * 1000, 2),
+                elapsed_ms=populate_elapsed_ms,
+                since_click_ms=self._since_selection_click_ms(),
+            )
+            log_event(
+                "studio.gicleeframe.selection.populate.done",
+                element_id=element_id,
+                element_type=m.element_type,
+                generation=generation,
+                elapsed_ms=populate_elapsed_ms,
                 since_click_ms=self._since_selection_click_ms(),
             )
 
@@ -4184,14 +6209,8 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         m: MergedPageElement,
         fields: object,
     ) -> bool:
-        if m.element_type == "media_section":
-            return True
-        if bool(getattr(fields, "children", False)):
-            return True
-
-        # Same page_settings dla dividera nie powinny deferować layer_nav/children.
-        # Page context ma własny progressive/stable defer.
-        return False
+        _ = (m, fields)
+        return True
 
     def _merged_for_selection_generation(
         self,
@@ -4229,12 +6248,14 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         )
         if m is None:
             return
+        segment_started = time.perf_counter()
         with span(
             "studio.gicleeframe.populate_editor.preview_deferred",
             element_id=element_id,
             element_type=m.element_type,
         ):
-            self._update_section_preview(m)
+            self._update_section_preview(m, stale_refresh=self._editor_has_ready_content)
+        self._log_perf_e_update_done("preview", element_type=m.element_type, started=segment_started)
 
     def _populate_editor_layer_nav_deferred(self, element_id: str, generation: int) -> None:
         m = self._merged_for_selection_generation(
@@ -4244,12 +6265,14 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         )
         if m is None:
             return
+        segment_started = time.perf_counter()
         with span(
             "studio.gicleeframe.populate_editor.layer_nav_deferred",
             element_id=element_id,
             element_type=m.element_type,
         ):
-            self._update_layer_nav(m)
+            self._update_layer_nav(m, stale_refresh=self._editor_has_ready_content)
+        self._log_perf_e_update_done("layer_nav", element_type=m.element_type, started=segment_started)
 
     def _populate_editor_children_deferred(self, element_id: str, generation: int) -> None:
         m = self._merged_for_selection_generation(
@@ -4259,12 +6282,138 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         )
         if m is None:
             return
+        segment_started = time.perf_counter()
         with span(
             "studio.gicleeframe.populate_editor.children_deferred",
             element_id=element_id,
             element_type=m.element_type,
         ):
-            self._fill_children_overview_buttons(m)
+            self._fill_children_overview_buttons(m, stale_refresh=self._editor_has_ready_content)
+        self._log_perf_e_update_done("children", element_type=m.element_type, started=segment_started)
+
+    def _page_context_shell_summary_lines(
+        self,
+        m: MergedPageElement,
+    ) -> list[tuple[str, str]]:
+        etype = m.element_type or "unknown"
+        lines: list[tuple[str, str]] = [
+            ("Typ sekcji", etype),
+            ("Status", m.status or "ok"),
+        ]
+        settings_count = len(m.page_settings)
+        if settings_count:
+            layout = "divider" if m.element_type == "divider" else "flat"
+            lines.append(("Ustawienia", f"{settings_count} · układ {layout}"))
+        return lines
+
+    def _show_page_context_shell_state(self, m: MergedPageElement) -> None:
+        if self._atomic_swap_suppress_visible:
+            return
+        if self._page_context_frame is None or self._page_context_inner is None:
+            return
+        self._hide_page_context_rows()
+        self._clear_page_context_loading_label()
+        self._page_context_frame.pack(**self._page_context_pack_kwargs())
+
+        self._get_or_create_readonly_card()
+        self._show_page_context_row("container:readonly", fill="x", pady=(0, 8))
+        for label, value in self._page_context_shell_summary_lines(m):
+            row_key = f"shell_summary:{label}"
+            _, value_widget = self._get_or_create_page_context_row(
+                row_key,
+                label=label,
+                kind="shell_summary",
+            )
+            value_widget.configure(text=value)
+            self._show_page_context_row(row_key, fill="x", pady=2)
+
+        if not self._selection_visual_cache_applied:
+            pass
+        else:
+            self._clear_page_context_loading_label()
+        self._page_context_shell_shown_generation = self._selection_generation
+        log_event(
+            "studio.gicleeframe.page_context.shell_ready",
+            element_id=m.element_id,
+            element_type=m.element_type,
+            generation=self._selection_generation,
+            since_click_ms=self._since_selection_click_ms(),
+        )
+
+    def _schedule_media_deferred_details(
+        self,
+        m: MergedPageElement,
+        generation: int,
+    ) -> None:
+        if generation != self._selection_generation:
+            return
+        element_id = m.element_id
+        if self._selection_visual_cache_applied:
+            return
+        started = time.perf_counter()
+        log_event(
+            "studio.gicleeframe.media_deferred.scheduled",
+            element_id=element_id,
+            element_type=m.element_type,
+            generation=generation,
+            jobs="preview,layer_nav,children",
+            since_click_ms=self._since_selection_click_ms(),
+        )
+        self._schedule_selection_job(
+            _GF_MEDIA_PREVIEW_AFTER_SHELL_MS,
+            lambda eid=element_id, gen=generation, mono=started: self._populate_editor_media_details_batch(
+                eid,
+                gen,
+                started_mono=mono,
+            ),
+        )
+        if self._media_deferred_done_after_id is not None:
+            try:
+                self.after_cancel(self._media_deferred_done_after_id)
+            except tk.TclError:
+                pass
+            self._media_deferred_done_after_id = None
+
+    def _populate_editor_media_details_batch(
+        self,
+        element_id: str,
+        generation: int,
+        *,
+        started_mono: float,
+    ) -> None:
+        m = self._merged_for_selection_generation(
+            element_id,
+            generation,
+            event_prefix="studio.gicleeframe.populate_editor.media_details_batch",
+        )
+        if m is None:
+            return
+        stale_refresh = self._editor_has_ready_content
+        segment_started = time.perf_counter()
+        with span(
+            "studio.gicleeframe.populate_editor.media_details_batch",
+            element_id=element_id,
+            element_type=m.element_type,
+        ):
+            self._update_section_preview(m, stale_refresh=stale_refresh)
+            self._update_layer_nav(m, stale_refresh=stale_refresh)
+            self._fill_children_overview_buttons(m, stale_refresh=stale_refresh)
+        self._hide_media_details_stable_shell()
+        self._hide_editor_refresh_status()
+        fields = editor_field_visibility(m.element_type)
+        self._save_section_visual_cache(m, fields, media_details_built=True)
+        self._mark_editor_content_ready(m)
+        log_event(
+            "studio.gicleeframe.media_deferred.done",
+            generation=generation,
+            elapsed_ms=round((time.perf_counter() - started_mono) * 1000, 2),
+            since_click_ms=self._since_selection_click_ms(),
+        )
+        self._log_perf_e_update_done(
+            "media_details_batch",
+            element_type=m.element_type,
+            started=segment_started,
+        )
 
     def _schedule_or_fill_page_context(
         self,
@@ -4278,7 +6427,8 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
             and _progressive_page_context_enabled()
             and (readonly_rows or m.page_settings)
         ):
-            self._show_page_context_loading_state(m)
+            if self._page_context_shell_shown_generation != self._selection_generation:
+                self._show_page_context_shell_state(m)
             log_event(
                 "studio.gicleeframe.page_context.deferred",
                 element_id=m.element_id,
@@ -4295,12 +6445,19 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         else:
             self._fill_page_context(m, show=False)
 
-    def _populate_editor(self, m: MergedPageElement) -> None:
+    def _populate_editor(
+        self,
+        m: MergedPageElement,
+        *,
+        visual_cache_refresh: bool = False,
+        atomic_swap: bool = False,
+    ) -> None:
         etype = m.element_type
         fields = editor_field_visibility(etype)
         readonly = etype == "section_legacy"
-        defer_details = self._should_defer_editor_detail_populate(m, fields)
+        cache_entry = self._section_visual_cache.get(m.element_id)
         generation = self._selection_generation
+        _ = (visual_cache_refresh, atomic_swap)
 
         segment_started = time.perf_counter()
         self._ensure_editor_identity_built()
@@ -4314,7 +6471,7 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         )
 
         segment_started = time.perf_counter()
-        self._ensure_editor_rows_for_fields(fields)
+        self._ensure_minimal_editor_rows_for_fields(fields)
         log_event(
             "studio.gicleeframe.selection.editor.ensure_rows",
             element_id=m.element_id,
@@ -4324,35 +6481,37 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
             since_click_ms=self._since_selection_click_ms(),
         )
 
+        if self._editor_status_dot:
+            dot_color, _ = _element_pill_colors(m.status, has_draft_patch=m.has_draft_patch)
+            self._editor_status_dot.configure(text_color=dot_color)
+        if self._editor_section_subtitle:
+            self._editor_section_subtitle.configure(text=self._selected_section_label())
+
+        page_context_from_cache = (
+            cache_entry is not None
+            and cache_entry.fields_page_context
+            and bool(cache_entry.page_context_summary)
+        )
+        if page_context_from_cache and cache_entry is not None:
+            self._apply_cached_page_context_summary(cache_entry)
+        elif fields.page_context:
+            self._show_page_context_shell_state(m)
+        elif self._page_context_frame is not None:
+            self._page_context_frame.pack_forget()
+
         with span(
             "studio.gicleeframe.populate_editor",
             element_type=etype,
             element_id=m.element_id,
-            defer_details=defer_details,
+            defer_details=True,
         ):
-            dot_color, _ = _element_pill_colors(m.status, has_draft_patch=m.has_draft_patch)
-
-            if self._editor_status_dot:
-                self._editor_status_dot.configure(text_color=dot_color)
-
-            if self._editor_section_subtitle:
-                self._editor_section_subtitle.configure(text=self._selected_section_label())
-
-            preview_deferred = defer_details and etype == "media_section"
             segment_started = time.perf_counter()
-            if preview_deferred:
-                log_event(
-                    "studio.gicleeframe.populate_editor.preview_deferred_requested",
-                    element_id=m.element_id,
-                    element_type=etype,
-                )
-                self._schedule_selection_job(
-                    _GF_PREVIEW_DEFER_FOR_HEAVY_TYPES_MS,
-                    lambda eid=m.element_id, gen=generation: self._populate_editor_preview_deferred(eid, gen),
-                )
-            else:
-                with span("studio.gicleeframe.populate_editor.preview", element_type=etype):
-                    self._update_section_preview(m)
+            log_event(
+                "studio.gicleeframe.populate_editor.preview_deferred_requested",
+                element_id=m.element_id,
+                element_type=etype,
+                scheduled_from="details_on_demand",
+            )
             log_event(
                 "studio.gicleeframe.selection.editor.preview",
                 element_id=m.element_id,
@@ -4360,7 +6519,7 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
                 generation=generation,
                 elapsed_ms=round((time.perf_counter() - segment_started) * 1000, 2),
                 since_click_ms=self._since_selection_click_ms(),
-                deferred=preview_deferred,
+                deferred=True,
             )
 
             segment_started = time.perf_counter()
@@ -4383,7 +6542,7 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
                     self._notes_row.pack(fill="x", pady=(8, 8))
 
                 self._set_row_visible(self._visible_row, fields.visible)
-                self._set_row_visible(self._children_overview_row, fields.children)
+                self._set_row_visible(self._children_overview_row, False)
             log_event(
                 "studio.gicleeframe.selection.editor.rows_visibility",
                 element_id=m.element_id,
@@ -4416,30 +6575,13 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
                 since_click_ms=self._since_selection_click_ms(),
             )
 
-            layer_nav_deferred = defer_details
             segment_started = time.perf_counter()
-            if defer_details:
-                log_event(
-                    "studio.gicleeframe.populate_editor.details_deferred",
-                    element_id=m.element_id,
-                    element_type=etype,
-                )
-                self._schedule_selection_job(
-                    _GF_SELECTION_LAYER_NAV_DEFER_MS,
-                    lambda eid=m.element_id, gen=generation: self._populate_editor_layer_nav_deferred(eid, gen),
-                )
-                children_delay = (
-                    _GF_SELECTION_CHILDREN_LATE_DEFER_MS
-                    if etype == "media_section"
-                    else _GF_SELECTION_CHILDREN_DEFER_MS
-                )
-                self._schedule_selection_job(
-                    children_delay,
-                    lambda eid=m.element_id, gen=generation: self._populate_editor_children_deferred(eid, gen),
-                )
-            else:
-                with span("studio.gicleeframe.populate_editor.layer_nav", element_type=etype):
-                    self._update_layer_nav(m)
+            log_event(
+                "studio.gicleeframe.populate_editor.details_deferred",
+                element_id=m.element_id,
+                element_type=etype,
+                scheduled_from="details_on_demand",
+            )
             log_event(
                 "studio.gicleeframe.selection.editor.layer_nav",
                 element_id=m.element_id,
@@ -4447,14 +6589,10 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
                 generation=generation,
                 elapsed_ms=round((time.perf_counter() - segment_started) * 1000, 2),
                 since_click_ms=self._since_selection_click_ms(),
-                deferred=layer_nav_deferred,
+                deferred=True,
             )
 
-            children_deferred = defer_details
             segment_started = time.perf_counter()
-            if not defer_details:
-                with span("studio.gicleeframe.populate_editor.children", element_type=etype):
-                    self._fill_children_overview_buttons(m)
             log_event(
                 "studio.gicleeframe.selection.editor.children",
                 element_id=m.element_id,
@@ -4462,19 +6600,53 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
                 generation=generation,
                 elapsed_ms=round((time.perf_counter() - segment_started) * 1000, 2),
                 since_click_ms=self._since_selection_click_ms(),
-                deferred=children_deferred,
+                deferred=True,
             )
 
-        segment_started = time.perf_counter()
-        self._schedule_or_fill_page_context(m, fields, etype)
+        page_context_shell = bool(
+            fields.page_context
+            and (
+                editor_context_rows(m)
+                or m.page_settings
+            )
+        )
         log_event(
             "studio.gicleeframe.selection.editor.page_context_schedule_or_fill",
             element_id=m.element_id,
             element_type=etype,
             generation=generation,
-            elapsed_ms=round((time.perf_counter() - segment_started) * 1000, 2),
+            elapsed_ms=0.0,
             since_click_ms=self._since_selection_click_ms(),
+            shell_ready=page_context_shell,
+            scheduled_early=False,
         )
+
+        self._mark_editor_shell_ready_after_click(
+            m,
+            page_context_shell=page_context_shell,
+        )
+        self._mark_editor_stable_shell_ready(m)
+        self._hide_heavy_editor_modules()
+        self._hide_media_details_stable_shell()
+        self._show_details_on_demand_block(m)
+        self._hide_editor_refresh_status()
+
+        visible_rows = sum(
+            1
+            for flag in (
+                fields.title,
+                fields.text,
+                fields.alt,
+                fields.image_ref,
+                fields.notes,
+                fields.page_context,
+            )
+            if flag
+        )
+        self._maybe_log_layout_shift_guard(m, phase="populate_done", rows_visible=visible_rows)
+        self._save_section_visual_cache(m, fields, media_details_built=False)
+        self._mark_editor_content_ready(m)
+        self._log_minimal_editor_ready(m, from_cache=False)
 
         if not self._visual_bootstrap_complete:
             log_event(
@@ -4831,7 +7003,12 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
             has_target=bool(element_id),
         )
 
-    def _update_layer_nav(self, m: MergedPageElement) -> None:
+    def _update_layer_nav(
+        self,
+        m: MergedPageElement,
+        *,
+        stale_refresh: bool = False,
+    ) -> None:
         if self._layer_nav_frame is None:
             return
 
@@ -4845,6 +7022,16 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
             items = self._selected_layer_items(m)
 
             if not items:
+                if stale_refresh and self._layer_nav_frame is not None and self._layer_nav_frame.winfo_manager():
+                    log_event(
+                        "studio.gicleeframe.editor.stale_content_kept",
+                        element_id=m.element_id,
+                        element_type=m.element_type,
+                        previous_element_id=self._editor_last_ready_element_id or "",
+                        since_click_ms=self._since_selection_click_ms(),
+                        region="layer_nav",
+                    )
+                    return
                 self._sync_layer_nav_visibility([])
                 self._layer_nav_frame.pack_forget()
                 log_event(
@@ -4898,6 +7085,9 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
                 )
 
             self._sync_layer_nav_visibility(desired_keys)
+
+            if stale_refresh:
+                self._log_editor_content_swapped(m, region="layer_nav")
 
             log_event(
                 "studio.gicleeframe.layer_nav.delta",
@@ -5006,6 +7196,13 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         canvas = self._section_preview_canvas
         if canvas is None or self._preview_shell_bootstrapped:
             return
+        if self._preview_bootstrap_panel is not None:
+            try:
+                self._preview_bootstrap_panel.destroy()
+            except tk.TclError:
+                pass
+            self._preview_bootstrap_panel = None
+            self._preview_bootstrap_status_label = None
         cached_frames = set(self._preview_frame_cache.values())
         bootstrap_children = [
             child for child in canvas.winfo_children() if child not in cached_frames
@@ -5274,7 +7471,12 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         else:
             self._update_default_preview_content(preview_key, m)
 
-    def _update_section_preview(self, m: MergedPageElement) -> None:
+    def _update_section_preview(
+        self,
+        m: MergedPageElement,
+        *,
+        stale_refresh: bool = False,
+    ) -> None:
         canvas = self._section_preview_canvas
         if canvas is None:
             return
@@ -5284,20 +7486,44 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
             element_type=m.element_type,
             selected_id=m.element_id,
             cached_frames=len(self._preview_frame_cache),
+            stale_refresh=stale_refresh,
         ):
             before_children = len(canvas.winfo_children())
-            self._clear_preview_shell_bootstrap_once()
-            self._hide_preview_frames()
+            preview_key = self._preview_key_for_element(m)
+            previous_key = self._preview_active_key
 
             if self._section_preview_badge is not None:
                 self._section_preview_badge.configure(
                     text=_section_kind_copy(m.element_id, self._merged) or "RAM preview",
                 )
 
-            preview_key = self._preview_key_for_element(m)
             self._ensure_preview_structure(preview_key)
             self._update_preview_content(preview_key, m)
-            self._show_preview_frame(preview_key)
+
+            if stale_refresh and previous_key:
+                if previous_key != preview_key:
+                    self._show_preview_frame(preview_key)
+                    self._log_editor_content_swapped(
+                        m,
+                        region="preview",
+                        preview_key=preview_key,
+                    )
+                else:
+                    self._log_editor_content_swapped(
+                        m,
+                        region="preview",
+                        preview_key=preview_key,
+                    )
+            else:
+                self._clear_preview_shell_bootstrap_once()
+                self._hide_preview_frames()
+                self._show_preview_frame(preview_key)
+                if previous_key and previous_key != preview_key:
+                    self._log_editor_content_swapped(
+                        m,
+                        region="preview",
+                        preview_key=preview_key,
+                    )
 
             log_event(
                 "studio.gicleeframe.preview.reuse",
@@ -5660,6 +7886,12 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
                 self.after_cancel(after_id)
             except tk.TclError:
                 pass
+        if self._media_deferred_done_after_id is not None:
+            try:
+                self.after_cancel(self._media_deferred_done_after_id)
+            except tk.TclError:
+                pass
+            self._media_deferred_done_after_id = None
         return cancelled
 
     def _schedule_selection_job(self, delay_ms: int, callback: Callable[[], None]) -> None:
@@ -5701,19 +7933,8 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
         self._page_context_loading_label = None
 
     def _show_page_context_loading_state(self, m: MergedPageElement) -> None:
-        if self._page_context_frame is None or self._page_context_inner is None:
-            return
-        self._hide_page_context_rows()
-        self._clear_page_context_loading_label()
-        self._page_context_frame.pack(**self._page_context_pack_kwargs())
-        self._page_context_loading_label = ctk.CTkLabel(
-            self._page_context_inner,
-            text="Ładowanie ustawień…",
-            font=theme.get_font(11),
-            text_color=theme.TextMuted,
-            anchor="w",
-        )
-        self._page_context_loading_label.pack(fill="x", padx=10, pady=8)
+        """Backward-compatible alias — shell summary replaces heavy loading placeholder."""
+        self._show_page_context_shell_state(m)
         log_event(
             "studio.gicleeframe.page_context.loading_state",
             element_id=m.element_id,
@@ -6263,9 +8484,12 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
             element_type=m.element_type,
             start=start,
             end=end,
+            batch_index=start,
             created=end - start,
             total_rows=len(specs),
+            total=len(specs),
             elapsed_ms=elapsed_ms,
+            since_click_ms=self._since_selection_click_ms(),
         )
 
         if end < len(specs):
@@ -6336,15 +8560,31 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
             generation=generation,
             since_click_ms=self._since_selection_click_ms(),
         )
+        log_event(
+            "studio.gicleeframe.page_context.start",
+            element_id=m.element_id,
+            element_type=m.element_type,
+            generation=generation,
+            since_click_ms=self._since_selection_click_ms(),
+        )
         page_context_started = time.perf_counter()
         self._populate_page_context_progressive(m)
         if generation == self._selection_generation and self._selected_id == m.element_id:
+            page_context_elapsed_ms = round((time.perf_counter() - page_context_started) * 1000, 2)
             log_event(
                 "studio.gicleeframe.selection.page_context.populate_done",
                 element_id=m.element_id,
                 element_type=m.element_type,
                 generation=generation,
-                elapsed_ms=round((time.perf_counter() - page_context_started) * 1000, 2),
+                elapsed_ms=page_context_elapsed_ms,
+                since_click_ms=self._since_selection_click_ms(),
+            )
+            log_event(
+                "studio.gicleeframe.page_context.done",
+                element_id=m.element_id,
+                element_type=m.element_type,
+                generation=generation,
+                elapsed_ms=page_context_elapsed_ms,
                 since_click_ms=self._since_selection_click_ms(),
             )
 
@@ -6431,6 +8671,16 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
 
         readonly_rows = editor_context_rows(m) if show else ()
         settings_count = len(m.page_settings) if show else 0
+        page_context_started = time.perf_counter() if show else None
+        if show and (readonly_rows or m.page_settings):
+            log_event(
+                "studio.gicleeframe.page_context.start",
+                element_id=m.element_id,
+                element_type=m.element_type,
+                generation=self._selection_generation,
+                since_click_ms=self._since_selection_click_ms(),
+                immediate=True,
+            )
 
         with span(
             "studio.gicleeframe.populate.page_context",
@@ -6569,13 +8819,59 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
                 readonly_rows_count=len(readonly_rows),
                 children_before_destroy=before_children,
             )
+            if page_context_started is not None:
+                page_context_elapsed_ms = round((time.perf_counter() - page_context_started) * 1000, 2)
+                log_event(
+                    "studio.gicleeframe.page_context.done",
+                    element_id=m.element_id,
+                    element_type=m.element_type,
+                    generation=self._selection_generation,
+                    elapsed_ms=page_context_elapsed_ms,
+                    since_click_ms=self._since_selection_click_ms(),
+                    immediate=True,
+                )
 
-    def _fill_children_overview_buttons(self, m: MergedPageElement) -> None:
+    def _fill_children_overview_buttons(
+        self,
+        m: MergedPageElement,
+        *,
+        stale_refresh: bool = False,
+    ) -> None:
+        parent_row = self._tree_row_for_element(m.element_id)
+        total = len(parent_row.children) if parent_row is not None else 0
+        if total == 0:
+            if self._children_overview_buttons is None:
+                return
+            if m.element_type != "media_section":
+                log_event(
+                    "studio.gicleeframe.children_overview",
+                    element_type=m.element_type,
+                    children_count=0,
+                )
+                return
+            log_event(
+                "studio.gicleeframe.children_overview",
+                element_type=m.element_type,
+                children_count=0,
+            )
+            return
+        self._fill_children_overview_buttons_range(
+            m,
+            0,
+            total,
+            stale_refresh=stale_refresh,
+        )
+
+    def _fill_children_overview_buttons_range(
+        self,
+        m: MergedPageElement,
+        start: int,
+        end: int,
+        *,
+        stale_refresh: bool = False,
+    ) -> None:
         if self._children_overview_buttons is None:
             return
-
-        for child in self._children_overview_buttons.winfo_children():
-            child.destroy()
 
         if m.element_type != "media_section":
             log_event(
@@ -6594,10 +8890,29 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
             )
             return
 
-        grid = ctk.CTkFrame(self._children_overview_buttons, fg_color="transparent")
-        grid.pack(fill="x")
+        children = parent_row.children
+        if start == 0:
+            if stale_refresh:
+                for child in list(self._children_overview_buttons.winfo_children()):
+                    try:
+                        child.destroy()
+                    except tk.TclError:
+                        continue
+            else:
+                for child in self._children_overview_buttons.winfo_children():
+                    child.destroy()
 
-        for idx, child in enumerate(parent_row.children):
+        grid: ctk.CTkFrame | None = None
+        for child_widget in self._children_overview_buttons.winfo_children():
+            if isinstance(child_widget, ctk.CTkFrame):
+                grid = child_widget
+                break
+        if grid is None:
+            grid = ctk.CTkFrame(self._children_overview_buttons, fg_color="transparent")
+            grid.pack(fill="x")
+
+        for idx in range(start, min(end, len(children))):
+            child = children[idx]
             grid.grid_columnconfigure(idx, weight=1)
 
             tile = _make_gf_card(grid, variant="field", radius=12, bordered=True)
@@ -6639,14 +8954,20 @@ class GicleeFrameView(ctk.CTkScrollableFrame):
                     lambda _e, mid=child.element_id: self._select_element(mid),
                 )
 
-        log_event(
-            "studio.gicleeframe.children_overview",
-            element_type=m.element_type,
-            children_count=len(parent_row.children),
-        )
+        if end >= len(children):
+            log_event(
+                "studio.gicleeframe.children_overview",
+                element_type=m.element_type,
+                children_count=len(children),
+            )
+            if stale_refresh:
+                self._log_editor_content_swapped(m, region="children")
 
     def _set_row_visible(self, row: ctk.CTkFrame | None, visible: bool) -> None:
         if row is None:
+            return
+        if self._atomic_swap_suppress_visible:
+            self._atomic_swap_deferred_row_visibility.append((row, visible))
             return
         if visible:
             row.pack(fill="x", pady=(0, 8))

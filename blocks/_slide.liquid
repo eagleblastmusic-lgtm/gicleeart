@@ -55,13 +55,24 @@
         if block_index == 0 and section_index == 1
           assign fetchpriority = 'high'
         endif
+
+        capture slide_image_object_y_style
+          render 'giclee-image-object-position-style', object_y: block_settings.image_1_object_y
+        endcapture
       -%}
 
       {%- if block_settings.media_type_1 == 'image' -%}
         {{
           block_settings.image_1
           | image_url: width: 3840
-          | image_tag: height: height, sizes: sizes, widths: widths, class: 'slide__image', loading: loading, fetchpriority: fetchpriority
+          | image_tag:
+            height: height,
+            sizes: sizes,
+            widths: widths,
+            class: 'slide__image',
+            loading: loading,
+            fetchpriority: fetchpriority,
+            style: slide_image_object_y_style
         }}
       {%- elsif block_settings.media_type_1 == 'collage' -%}
         <div class="giclee-video-collage slide__video" data-giclee-video-collage></div>

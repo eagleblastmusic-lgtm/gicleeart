@@ -7,10 +7,13 @@ import json
 import shutil
 import subprocess
 import threading
+import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Callable
+
+from Komponenty._shared.deploy_targets import DEPLOY_TARGETS
 
 from .registry import HOME_ZONES, SECTION_NAME_HINTS
 from .service import (
@@ -20,7 +23,9 @@ from .service import (
     load_zone_values,
     mobile_hero_path,
     path_get,
+    resolve_development_store,
     settings_data_path,
+    shopify_admin_reachable,
     shopify_cli_popen,
     shopify_ref_label,
     theme_dev_cli_args,
@@ -34,27 +39,6 @@ from .service import (
 PREVIEW_QUERY = "giclee_skip_splash=1&giclee_skip_notice=1"
 HOMEPAGE_URL = "https://gicleeart.eu/"
 THEME_DEV_URL = "http://127.0.0.1:9292/"
-
-DEPLOY_TARGETS: dict[str, dict[str, Any]] = {
-    "development": {
-        "label": "Development (shopify.theme.toml)",
-        "environment": "development",
-        "allow_live": False,
-        "hint": "Motyw «GicleeApp dev» (200713503068) — dedykowana piaskownica.",
-    },
-    "unpublished": {
-        "label": "Kopia nieopublikowana",
-        "environment": "unpublished",
-        "allow_live": False,
-        "hint": "Theme ID 199521829212 — kopia robocza na Shopify.",
-    },
-    "live": {
-        "label": "Live (opublikowany motyw)",
-        "environment": "live",
-        "allow_live": True,
-        "hint": "Theme ID 197314249052 — wymaga --allow-live.",
-    },
-}
 
 _theme_dev_proc: subprocess.Popen[str] | None = None
 
@@ -432,7 +416,14 @@ def restart_theme_dev_port(*, on_line: Callable[[str], None] | None = None) -> N
         on_line(f"Zatrzymano proces(y) na porcie 9292: {', '.join(str(p) for p in killed)}")
 
 
-def start_theme_dev(*, on_line: Callable[[str], None] | None = None, force_restart: bool = False) -> None:
+def start_theme_dev(
+    *,
+    on_line: Callable[[str], None] | None = None,
+    force_restart: bool = False,
+    network_retries: int = 3,
+    launch_retries: int = 3,
+    skip_network_probe: bool = False,
+) -> None:
     global _theme_dev_proc
     if force_restart:
         restart_theme_dev_port(on_line=on_line)
@@ -444,18 +435,81 @@ def start_theme_dev(*, on_line: Callable[[str], None] | None = None, force_resta
         restart_theme_dev_port(on_line=on_line)
     elif theme_dev_running():
         return
-    proc = shopify_cli_popen(theme_dev_cli_args(), cwd=theme_root())
-    _theme_dev_proc = proc
-    assert _theme_dev_proc.stdout is not None
 
-    def _reader() -> None:
-        assert _theme_dev_proc is not None
+    store = resolve_development_store()
+    collected: list[str] = []
+
+    def emit(line: str) -> None:
+        collected.append(line)
+        if on_line:
+            on_line(line)
+
+    for launch_attempt in range(1, launch_retries + 1):
+        if not skip_network_probe:
+            for attempt in range(1, network_retries + 1):
+                ok, err = shopify_admin_reachable(store=store, attempts=1, timeout=12.0)
+                if ok:
+                    break
+                detail = err or "timeout"
+                emit(
+                    f"Brak połączenia z {store} ({detail}) — "
+                    f"próba {attempt}/{network_retries}…"
+                )
+                if attempt >= network_retries:
+                    raise OSError(
+                        f"Nie udało się połączyć z Shopify ({store}) po {network_retries} próbach.\n\n"
+                        "ETIMEDOUT = problem sieci (nie auth ani theme ID).\n"
+                        "Sprawdź: internet, VPN/proxy, firewall Windows (Node.js / shopify.cmd),\n"
+                        "potem w PowerShell: ipconfig /flushdns\n"
+                        "i ponów Theme dev."
+                    )
+                time.sleep(2.0 * attempt)
+
+        if launch_attempt > 1:
+            emit(
+                f"Theme dev — ponawiam start po timeout sieci "
+                f"({launch_attempt}/{launch_retries})…"
+            )
+            restart_theme_dev_port(on_line=emit)
+
+        proc = shopify_cli_popen(theme_dev_cli_args(), cwd=theme_root())
+        _theme_dev_proc = proc
         assert _theme_dev_proc.stdout is not None
-        for line in _theme_dev_proc.stdout:
-            if line and on_line:
-                on_line(line.rstrip())
 
-    threading.Thread(target=_reader, daemon=True).start()
+        def _reader() -> None:
+            assert _theme_dev_proc is not None
+            assert _theme_dev_proc.stdout is not None
+            for line in _theme_dev_proc.stdout:
+                if line:
+                    emit(line.rstrip())
+
+        threading.Thread(target=_reader, daemon=True).start()
+
+        for _ in range(50):
+            if theme_dev_http_ready(url=preview_url(local=True)):
+                return
+            proc = _theme_dev_proc
+            if proc is None or proc.poll() is not None:
+                break
+            time.sleep(1)
+
+        proc = _theme_dev_proc
+        if proc is not None and proc.poll() is None:
+            return
+
+        log_blob = "\n".join(collected).lower()
+        timed_out = "etimedout" in log_blob
+        if timed_out and launch_attempt < launch_retries:
+            continue
+
+        if timed_out and launch_attempt >= launch_retries:
+            raise OSError(
+                f"Theme dev nie połączył się z Shopify ({store}) po {launch_retries} próbach.\n\n"
+                "ETIMEDOUT = timeout sieci — to nie błąd hasła ani theme ID.\n"
+                "Spróbuj: wyłączyć VPN, zmienić sieć (hotspot), zezwolić Node.js w firewallu,\n"
+                "ipconfig /flushdns, potem ponów Theme dev."
+            )
+        return
 
 
 def stop_theme_dev() -> None:
@@ -527,9 +581,21 @@ def write_home_assets(
     mobile_slide_urls: list[str] | None = None,
     stack_enabled: bool = False,
     scroll_config: dict[str, Any] | None = None,
+    final_difference_config: dict[str, Any] | None = None,
+    studio_reveal_config: dict[str, Any] | None = None,
+    section_bg_effects_config: dict[str, dict[str, Any]] | None = None,
 ) -> None:
+    from .final_difference_settings import (
+        FINAL_DIFFERENCE_DEFAULTS,
+        export_final_difference_config,
+    )
     from .registry import ZONE_HOME_HOOK
     from .scroll_settings import SCROLL_DEFAULTS, normalize_scroll_config
+    from .studio_reveal_settings import (
+        STUDIO_REVEAL_DEFAULTS,
+        export_studio_reveal_config,
+    )
+    from .section_bg_effects_settings import export_section_bg_effects_config
 
     assets_dir = theme_root() / "assets"
     assets_dir.mkdir(parents=True, exist_ok=True)
@@ -565,6 +631,41 @@ def write_home_assets(
     )
     sections_js += (
         "window.GICLEE_HOME_SCROLL_CONFIG = " + json.dumps(scroll_cfg, ensure_ascii=False) + ";\n"
+    )
+    fd_cfg = export_final_difference_config(
+        final_difference_config
+        if final_difference_config is not None
+        else dict(FINAL_DIFFERENCE_DEFAULTS)
+    )
+    sections_js += (
+        "window.GICLEE_HOME_FINAL_DIFFERENCE_CONFIG = "
+        + json.dumps(fd_cfg, ensure_ascii=False)
+        + ";\n"
+    )
+    sr_cfg = export_studio_reveal_config(
+        studio_reveal_config
+        if studio_reveal_config is not None
+        else dict(STUDIO_REVEAL_DEFAULTS)
+    )
+    sections_js += (
+        "window.GICLEE_HOME_STUDIO_REVEAL_CONFIG = "
+        + json.dumps(sr_cfg, ensure_ascii=False)
+        + ";\n"
+    )
+    bg_effects_cfg = export_section_bg_effects_config(section_bg_effects_config or {})
+    sections_js += (
+        "window.GICLEE_HOME_SECTION_BG_EFFECTS_CONFIG = "
+        + json.dumps(bg_effects_cfg, ensure_ascii=False)
+        + ";\n"
+    )
+    from .homepage_variants import active_variant_id
+    from .section_effects_storage import export_section_effects_config as export_per_hook_effects
+
+    per_hook_effects = export_per_hook_effects(active_variant_id())
+    sections_js += (
+        "window.GICLEE_HOME_SECTION_EFFECTS_CONFIG = "
+        + json.dumps(per_hook_effects, ensure_ascii=False)
+        + ";\n"
     )
     _write_text_if_changed(assets_dir / "giclee-home-sections.js", sections_js)
     _write_home_stack_critical_snippet(section_map, stack_enabled=stack_enabled)

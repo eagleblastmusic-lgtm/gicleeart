@@ -11,14 +11,20 @@ import socket
 import subprocess
 import sys
 import copy
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Callable
-from urllib.error import URLError
+from urllib.error import HTTPError, URLError
 from urllib.parse import unquote, urlparse
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 from Komponenty.dodajobraz import shopify_client as sc
+from Komponenty._shared.theme_page_editor.image_object_y import (
+    normalize_object_y,
+    object_y_field_id,
+    object_y_path,
+)
 
 from .registry import HOME_ZONES, SITE_NOTICE_ZONE_ID, HomeField, HomeZone, set_zone_enabled, zone_enabled
 from .text_html import (
@@ -160,6 +166,91 @@ def save_storefront_password(password: str) -> None:
     path.write_text(pw + "\n", encoding="utf-8")
 
 
+def resolve_development_store() -> str:
+    """Sklep z `[environments.development]` w shopify.theme.toml."""
+    toml = theme_root() / "shopify.theme.toml"
+    if toml.is_file():
+        text = toml.read_text(encoding="utf-8")
+        match = re.search(
+            r'\[environments\.development\].*?store\s*=\s*"([^"]+)"',
+            text,
+            re.DOTALL,
+        )
+        if match:
+            return match.group(1).strip()
+    return "giclee-art-3.myshopify.com"
+
+
+def shopify_admin_reachable(
+    *,
+    store: str | None = None,
+    timeout: float = 10.0,
+    attempts: int = 3,
+    pause: float = 2.0,
+) -> tuple[bool, str]:
+    """Szybki test HTTPS do Admin API i storefrontu (400/401 = połączenie OK)."""
+    host = (store or resolve_development_store()).strip()
+    probes: list[tuple[str, str, bytes | None]] = [
+        ("POST", f"https://{host}/admin/api/2026-07/graphql.json", b"{}"),
+        ("GET", f"https://{host}/", None),
+    ]
+    last_err = ""
+    for attempt in range(attempts):
+        attempt_errs: list[str] = []
+        for method, url, body in probes:
+            ok, err = _shopify_http_probe(url, method=method, body=body, timeout=timeout)
+            if ok:
+                continue
+            attempt_errs.append(err or "timeout")
+        if not attempt_errs:
+            return True, ""
+        last_err = "; ".join(attempt_errs)
+        if attempt + 1 < attempts:
+            time.sleep(pause * (attempt + 1))
+    return False, last_err
+
+
+def _shopify_http_probe(
+    url: str,
+    *,
+    method: str = "GET",
+    body: bytes | None = None,
+    timeout: float = 10.0,
+) -> tuple[bool, str]:
+    headers = {"Content-Type": "application/json"} if body is not None else {}
+    try:
+        req = Request(url, data=body, headers=headers, method=method)
+        with urlopen(req, timeout=timeout) as response:
+            if response.status < 500:
+                return True, ""
+            return False, f"HTTP {response.status}"
+    except HTTPError as exc:
+        if exc.code < 500:
+            return True, ""
+        return False, f"HTTP {exc.code}"
+    except TimeoutError:
+        return False, "timeout"
+    except URLError as exc:
+        reason = exc.reason
+        if isinstance(reason, TimeoutError):
+            return False, "timeout"
+        return False, str(reason or exc)
+    except OSError as exc:
+        return False, str(exc)
+
+
+def shopify_cli_env() -> dict[str, str]:
+    env = os.environ.copy()
+    pw = resolve_storefront_password()
+    if pw:
+        env["SHOPIFY_FLAG_STORE_PASSWORD"] = pw
+    ipv4_flag = "--dns-result-order=ipv4first"
+    node_opts = env.get("NODE_OPTIONS", "").strip()
+    if ipv4_flag not in node_opts:
+        env["NODE_OPTIONS"] = f"{node_opts} {ipv4_flag}".strip()
+    return env
+
+
 def theme_dev_cli_args() -> list[str]:
     args = ["theme", "dev", "--environment", "development"]
     pw = resolve_storefront_password()
@@ -227,10 +318,7 @@ def resolve_shopify_cli() -> str:
 
 def shopify_cli_popen(cli_args: list[str], *, cwd: Path | str) -> subprocess.Popen[str]:
     cli = resolve_shopify_cli()
-    env = os.environ.copy()
-    pw = resolve_storefront_password()
-    if pw:
-        env["SHOPIFY_FLAG_STORE_PASSWORD"] = pw
+    env = shopify_cli_env()
     popen_kw: dict[str, Any] = {
         "cwd": str(cwd),
         "stdout": subprocess.PIPE,
@@ -947,23 +1035,25 @@ def _section_bg_overlay_path(section_key: str) -> tuple[str, ...]:
 
 def _parse_section_background(value: Any) -> dict[str, Any]:
     overlay_pct = 0
+    object_y = normalize_object_y(None)
     if isinstance(value, dict):
         media = str(value.get("media") or "none").strip().lower()
         ref = str(value.get("ref") or "").strip()
+        object_y = normalize_object_y(value.get("object_y"))
         if media not in ("image", "video"):
             media = "video" if ref.startswith(("shopify://files/videos/", "gid://shopify/Video/")) else (
                 "image" if ref.startswith("shopify://") else "none"
             )
         overlay_pct = normalize_overlay_pct(value.get("overlay_pct"))
         if media == "none" or not ref:
-            return {"media": "none", "ref": "", "overlay_pct": 0}
-        return {"media": media, "ref": ref, "overlay_pct": overlay_pct}
+            return {"media": "none", "ref": "", "overlay_pct": 0, "object_y": normalize_object_y(None)}
+        return {"media": media, "ref": ref, "overlay_pct": overlay_pct, "object_y": object_y}
     text = str(value or "").strip()
     if text.startswith("shopify://"):
         if "/videos/" in text or text.startswith("gid://shopify/Video/"):
-            return {"media": "video", "ref": text, "overlay_pct": 0}
-        return {"media": "image", "ref": text, "overlay_pct": 0}
-    return {"media": "none", "ref": "", "overlay_pct": 0}
+            return {"media": "video", "ref": text, "overlay_pct": 0, "object_y": normalize_object_y(None)}
+        return {"media": "image", "ref": text, "overlay_pct": 0, "object_y": normalize_object_y(None)}
+    return {"media": "none", "ref": "", "overlay_pct": 0, "object_y": normalize_object_y(None)}
 
 
 def _read_section_background(template: dict[str, Any], field: HomeField) -> dict[str, Any]:
@@ -975,14 +1065,15 @@ def _read_section_background(template: dict[str, Any], field: HomeField) -> dict
     if media == "video":
         ref = normalize_shopify_video_ref(str(path_get(template, (*settings_path, "video")) or ""))
         if not ref:
-            return {"media": "none", "ref": "", "overlay_pct": 0}
-        return {"media": "video", "ref": ref, "overlay_pct": overlay_pct}
+            return {"media": "none", "ref": "", "overlay_pct": 0, "object_y": normalize_object_y(None)}
+        return {"media": "video", "ref": ref, "overlay_pct": overlay_pct, "object_y": normalize_object_y(None)}
     if media == "image":
         ref = str(path_get(template, field.path) or "")
         if not ref:
-            return {"media": "none", "ref": "", "overlay_pct": 0}
-        return {"media": "image", "ref": ref, "overlay_pct": overlay_pct}
-    return {"media": "none", "ref": "", "overlay_pct": 0}
+            return {"media": "none", "ref": "", "overlay_pct": 0, "object_y": normalize_object_y(None)}
+        object_y = normalize_object_y(path_get(template, (*settings_path, "background_image_object_y")))
+        return {"media": "image", "ref": ref, "overlay_pct": overlay_pct, "object_y": object_y}
+    return {"media": "none", "ref": "", "overlay_pct": 0, "object_y": normalize_object_y(None)}
 
 
 def _write_section_background(template: dict[str, Any], field: HomeField, value: Any) -> None:
@@ -1006,11 +1097,17 @@ def _write_section_background(template: dict[str, Any], field: HomeField, value:
         path_set(template, img_path, ref)
         path_set(template, vid_path, "")
         path_set(template, overlay_path, overlay_pct)
+        path_set(
+            template,
+            (*settings_path, "background_image_object_y"),
+            normalize_object_y(parsed.get("object_y")),
+        )
     else:
         path_set(template, media_path, "none")
         path_set(template, img_path, "")
         path_set(template, vid_path, "")
         path_set(template, overlay_path, 0)
+        path_set(template, (*settings_path, "background_image_object_y"), normalize_object_y(None))
 
 
 def read_field(template: dict[str, Any], field: HomeField, *, settings: dict[str, Any] | None = None) -> Any:
@@ -1128,8 +1225,23 @@ def write_field(template: dict[str, Any], field: HomeField, value: Any) -> None:
         path_set(template, field.path, normalize_shopify_video_ref(str(value or "")))
     elif field.kind == "section_background" and field.path:
         _write_section_background(template, field, value)
+    elif field.kind == "shopify_image" and field.path:
+        path_set(template, field.path, value)
     else:
         path_set(template, field.path, value)
+
+
+def _write_image_object_y(
+    template: dict[str, Any], field: HomeField, values: dict[str, Any]
+) -> None:
+    if field.kind != "shopify_image" or not field.path:
+        return
+    oy_key = object_y_field_id(field.field_id)
+    if oy_key not in values:
+        return
+    oy_path = object_y_path(field.path)
+    if oy_path:
+        path_set(template, oy_path, normalize_object_y(values[oy_key]))
 
 
 def load_zone_values(
@@ -1160,6 +1272,11 @@ def load_zone_values(
             out[fld.field_id] = parse_collage(val)
         elif fld.kind == "section_background":
             out[fld.field_id] = _parse_section_background(val)
+        elif fld.kind == "shopify_image" and fld.path:
+            out[fld.field_id] = val if val is not None else ""
+            oy_path = object_y_path(fld.path)
+            if oy_path:
+                out[object_y_field_id(fld.field_id)] = normalize_object_y(path_get(template, oy_path))
         elif fld.kind == "int":
             try:
                 out[fld.field_id] = int(val or 0)
@@ -1209,6 +1326,7 @@ def apply_zone_values(
         if fld.kind in ("heading", "body", "theme_asset"):
             continue
         write_field(template, fld, values[fld.field_id])
+        _write_image_object_y(template, fld, values)
 
 
 def upload_shopify_image(local_path: Path, *, logger: Logger | None = None) -> str:

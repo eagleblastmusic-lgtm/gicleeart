@@ -40,6 +40,90 @@
   overflow: hidden;
 }
 
+/* ── Dopasowanie do ekranu (bez scrolla strony) ──
+ * Strona Losuj Obraz: header + scena + stopka mieszczą się w oknie.
+ * Stopka przyklejona do dołu (wzorzec sticky-footer na flexboxie),
+ * scena (tło + animacja) skaluje się do dostępnej wysokości, więc
+ * animacja/grafika są krótsze i nic się nie scrolluje.
+ * Tylko desktop — na wąskich ekranach zostaje naturalny układ, żeby
+ * nie przycinać dużego nagłówka. */
+@media (min-width: 750px) {
+  body:has(.giclee-random-artwork) {
+    display: flex;
+    flex-direction: column;
+    min-height: 100svh;
+  }
+
+  body:has(.giclee-random-artwork) #MainContent {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  body:has(.giclee-random-artwork) #MainContent > .shopify-section {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  body:has(.giclee-random-artwork) .giclee-random-artwork {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  body:has(.giclee-random-artwork) .giclee-random-artwork__scene {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+  }
+
+  /* Treść wypełnia wysokość sceny; panele (intro/faza/wynik/błąd)
+   * dostają definitywną wysokość wiersza, więc mogą się skalować
+   * zamiast rozpychać stronę. */
+  body:has(.giclee-random-artwork) .giclee-random-artwork__content {
+    height: 100%;
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
+    padding-block: clamp(16px, 3vh, 40px);
+    overflow: hidden;
+  }
+
+  body:has(.giclee-random-artwork) .giclee-random-artwork__intro,
+  body:has(.giclee-random-artwork) .giclee-random-artwork__result,
+  body:has(.giclee-random-artwork) .giclee-random-artwork__error {
+    justify-content: center;
+    min-height: 0;
+  }
+
+  /* Wynik: obraz skaluje się do miejsca, które zostaje po tytule i CTA. */
+  body:has(.giclee-random-artwork) .giclee-random-artwork__frame {
+    display: flex;
+    flex-direction: column;
+    flex: 0 1 auto;
+    min-height: 0;
+  }
+
+  body:has(.giclee-random-artwork) .giclee-random-artwork__frame-mat {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  body:has(.giclee-random-artwork) .giclee-random-artwork__result-image {
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: 100%;
+    min-height: 0;
+    margin-inline: auto;
+  }
+}
+
 /* ── Warstwy tla ── */
 
 .giclee-random-artwork__bg,
@@ -51,6 +135,60 @@
 
 .giclee-random-artwork__bg {
   z-index: 0;
+}
+
+/* ── Wlasne tlo uzytkownika (obraz / film) ── */
+
+.giclee-random-artwork__custom-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.giclee-random-artwork__custom-bg-layers {
+  position: absolute;
+  inset: 0;
+}
+
+/* Parallax tla — te same stale co konfigurator PDP (giclee-product-story.js) */
+.grw--custom-bg-parallax .giclee-random-artwork__custom-bg-layers {
+  transform: scale(1.08)
+    translate3d(var(--grw-cbg-px, 0px), var(--grw-cbg-py, 0px), 0);
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.giclee-random-artwork__custom-bg .background-image-container,
+.giclee-random-artwork__custom-bg video-background-component,
+.giclee-random-artwork__custom-bg .video-background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.giclee-random-artwork__custom-bg img,
+.giclee-random-artwork__custom-bg video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Przyciemnienie dla czytelnosci tekstu na wlasnym tle */
+.giclee-random-artwork__custom-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(8, 8, 12, 0.5), rgba(8, 8, 12, 0.62));
+}
+
+/* Przy wlasnym tle wygaszamy szumiaca aurora/beams, zostawiamy winiete i ziarno */
+.giclee-random-artwork.grw--custom-bg .giclee-random-artwork__bg-aurora,
+.giclee-random-artwork.grw--custom-bg .giclee-random-artwork__bg-beams {
+  opacity: 0.25;
 }
 
 .giclee-random-artwork__canvas {
@@ -675,5 +813,9 @@
 
   .giclee-random-artwork__result {
     transform: none;
+  }
+
+  .grw--custom-bg-parallax .giclee-random-artwork__custom-bg-layers {
+    transform: scale(1.02) !important;
   }
 }

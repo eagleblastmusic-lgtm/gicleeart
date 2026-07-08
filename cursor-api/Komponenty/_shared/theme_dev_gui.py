@@ -80,7 +80,7 @@ def open_theme_dev_preview(
         log.insert("end", line + "\n")
         log.see("end")
 
-    def poll_ready(attempt: int = 0) -> None:
+    def poll_ready(attempt: int = 0, network_retry: int = 0) -> None:
         preview_local = preview_url(local=True)
         if theme_dev_http_ready(url=preview_local):
             append("—" * 40)
@@ -98,7 +98,8 @@ def open_theme_dev_preview(
             code = proc.returncode
             if code != 0:
                 log_text = log.get("1.0", "end")
-                if "store password" in log_text.lower() or "failed to prompt" in log_text.lower():
+                log_lower = log_text.lower()
+                if "store password" in log_lower or "failed to prompt" in log_lower:
                     msg = (
                         f"Theme dev wymaga hasła password page sklepu (kod {code}).\n\n"
                         "GicleeApp nie może wpisać hasła interaktywnie.\n"
@@ -106,6 +107,36 @@ def open_theme_dev_preview(
                         "albo plik .shopify-store-password.local w korzeniu motywu.\n\n"
                         "Zmienna SHOPIFY_FLAG_STORE_PASSWORD w PowerShell działa tylko "
                         "jeśli GicleeApp uruchomiono z tego samego terminala."
+                    )
+                elif "etimedout" in log_lower and network_retry < 2:
+                    append("—" * 40)
+                    append(
+                        f"Timeout sieci Shopify (ETIMEDOUT) — ponawiam "
+                        f"({network_retry + 2}/3)…"
+                    )
+                    home_features_mod.restart_theme_dev_port(on_line=append)
+                    try:
+                        home_features_mod.start_theme_dev(
+                            on_line=append,
+                            force_restart=False,
+                            skip_network_probe=False,
+                        )
+                    except OSError as exc:
+                        append(str(exc))
+                        messagebox.showerror(app_title, str(exc), parent=win)
+                        return
+                    win.after(2500, lambda: poll_ready(0, network_retry + 1))
+                    return
+                elif "etimedout" in log_lower:
+                    msg = (
+                        f"Theme dev nie połączył się z Shopify (kod {code}).\n\n"
+                        "ETIMEDOUT = timeout sieci do giclee-art-3.myshopify.com — "
+                        "to nie błąd hasła ani theme ID.\n\n"
+                        "Spróbuj:\n"
+                        "• wyłączyć VPN / zmienić sieć (hotspot telefonu)\n"
+                        "• firewall Windows → zezwól Node.js i shopify.cmd\n"
+                        "• PowerShell: ipconfig /flushdns\n"
+                        "• terminal: shopify theme dev --environment development"
                     )
                 else:
                     msg = (

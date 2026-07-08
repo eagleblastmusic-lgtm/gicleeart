@@ -19,7 +19,7 @@
     "filter": "Filtr",
     "payment_methods": "Metody płatności",
     "contact_form": {
-      "name": "Nazwisko",
+      "name": "Imię i nazwisko",
       "email": "E-mail",
       "phone": "Telefon",
       "comment": "Komentarz",

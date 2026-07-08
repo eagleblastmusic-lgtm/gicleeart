@@ -14,12 +14,15 @@ from tools.performance_agent.timeutil import parse_iso_ts
 
 CoverageStatus = Literal[
     "ok",
+    "early_event_seen",
     "missing_expected_events",
     "no_events_in_window",
     "skipped",
     "incomplete_timestamps",
     "not_completed",
 ]
+
+DASHBOARD_PRE_WINDOW_GRACE_S = 120.0
 
 
 PREFIX_ORDER = (
@@ -104,19 +107,50 @@ def _event_prefix(event_name: str) -> str:
     return "other"
 
 
+DETAILS_SLOW_MARKERS = (
+    "details_on_demand.",
+    "details_shell.",
+    "details_module.",
+)
+
+DETAILS_SLOW_ALLOWED_FIELDS = frozenset(
+    {
+        "elapsed_ms",
+        "since_request_ms",
+        "since_details_cta_ms",
+        "queue_latency_ms",
+    }
+)
+
+
+def _is_details_slow_event(event_name: str) -> bool:
+    return any(marker in event_name for marker in DETAILS_SLOW_MARKERS)
+
+
 def _ms_fields(event: PerfEvent) -> list[tuple[str, float]]:
+    """Return duration-like ms fields present on the event."""
     pairs: list[tuple[str, float]] = []
     for field_name in (
         "elapsed_ms",
         "since_click_ms",
-        "since_enter_ms",
         "since_request_ms",
+        "since_details_cta_ms",
         "queue_latency_ms",
     ):
         value = getattr(event, field_name)
         if value is not None:
             pairs.append((field_name, float(value)))
     return pairs
+
+
+def _slow_ms_fields(event: PerfEvent) -> list[tuple[str, float]]:
+    """Return ms fields used for slow-event classification and ranking."""
+    if event.event.endswith(".cancelled"):
+        return []
+    pairs = _ms_fields(event)
+    if not _is_details_slow_event(event.event):
+        return pairs
+    return [(name, ms) for name, ms in pairs if name in DETAILS_SLOW_ALLOWED_FIELDS]
 
 
 def _slow_severity(ms: float, budgets: Budgets) -> str | None:
@@ -176,7 +210,7 @@ def compute_metrics(
                     )
                 )
 
-        for field_name, ms in _ms_fields(event):
+        for field_name, ms in _slow_ms_fields(event):
             severity = _slow_severity(ms, budgets)
             if severity is None:
                 continue
@@ -230,20 +264,81 @@ def event_matches_pattern(event: PerfEvent, pattern: str) -> bool:
     return False
 
 
-def _event_in_tolerance_window(
-    event_ts: str | None,
-    start_ts: str | None,
-    end_ts: str | None,
+def _events_in_extended_window(
+    events: list[PerfEvent],
+    start_ts: str,
+    end_ts: str,
     *,
     tolerance_s: float,
-) -> bool:
-    event_dt = parse_iso_ts(event_ts)
+    pre_window_grace_s: float = 0.0,
+) -> list[PerfEvent]:
     start_dt = parse_iso_ts(start_ts)
     end_dt = parse_iso_ts(end_ts)
-    if event_dt is None or start_dt is None or end_dt is None:
-        return False
+    if start_dt is None or end_dt is None:
+        return []
     margin = timedelta(seconds=tolerance_s)
-    return (start_dt - margin) <= event_dt <= (end_dt + margin)
+    grace = timedelta(seconds=pre_window_grace_s)
+    window_start = start_dt - margin - grace
+    window_end = end_dt + margin
+    result: list[PerfEvent] = []
+    for event in events:
+        event_dt = parse_iso_ts(event.ts)
+        if event_dt is None:
+            continue
+        if window_start <= event_dt <= window_end:
+            result.append(event)
+    return result
+
+
+def _dashboard_early_event_status(
+    run: ScenarioRun,
+    expected: list[str],
+    events: list[PerfEvent],
+    *,
+    tolerance_s: float,
+) -> ScenarioLogCoverage | None:
+    """Detect dashboard events before the scenario window (startup / intro)."""
+    if run.scenario_id != "dashboard_cold" or not expected:
+        return None
+
+    window_events = _events_in_extended_window(
+        events,
+        run.start_ts or "",
+        run.end_ts or "",
+        tolerance_s=tolerance_s,
+        pre_window_grace_s=0.0,
+    )
+    if window_events:
+        return None
+
+    extended_events = _events_in_extended_window(
+        events,
+        run.start_ts or "",
+        run.end_ts or "",
+        tolerance_s=tolerance_s,
+        pre_window_grace_s=DASHBOARD_PRE_WINDOW_GRACE_S,
+    )
+    matched_patterns: list[str] = []
+    for pattern in expected:
+        if any(event_matches_pattern(event, pattern) for event in extended_events):
+            matched_patterns.append(pattern)
+
+    if not matched_patterns:
+        return None
+
+    expected_match_count = sum(
+        1
+        for event in extended_events
+        if any(event_matches_pattern(event, pattern) for pattern in expected)
+    )
+    return ScenarioLogCoverage(
+        scenario_id=run.scenario_id,
+        event_count=len(extended_events),
+        expected_match_count=expected_match_count,
+        status="early_event_seen",
+        expected=expected,
+        matched_patterns=matched_patterns,
+    )
 
 
 @dataclass
@@ -315,16 +410,12 @@ def compute_scenario_log_coverage(
             )
             continue
 
-        window_events = [
-            event
-            for event in events
-            if _event_in_tolerance_window(
-                event.ts,
-                run.start_ts,
-                run.end_ts,
-                tolerance_s=tolerance_s,
-            )
-        ]
+        window_events = _events_in_extended_window(
+            events,
+            run.start_ts,
+            run.end_ts,
+            tolerance_s=tolerance_s,
+        )
         event_count = len(window_events)
 
         matched_patterns: list[str] = []
@@ -344,6 +435,15 @@ def compute_scenario_log_coverage(
         if not expected:
             status: CoverageStatus = "ok" if event_count > 0 else "no_events_in_window"
         elif event_count == 0:
+            early = _dashboard_early_event_status(
+                run,
+                expected,
+                events,
+                tolerance_s=tolerance_s,
+            )
+            if early is not None:
+                results.append(early)
+                continue
             status = "no_events_in_window"
         elif matched_patterns:
             status = "ok"

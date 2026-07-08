@@ -12,7 +12,8 @@ from giclee_app.studio.background_capabilities import capability_for
 from . import theme
 
 _SHELL_STATUS_TEXT = "Gotowe · kliknij, aby otworzyć"
-_CARD_STABLE_HEIGHT = 152
+CARD_STABLE_HEIGHT = 152
+_CARD_STABLE_HEIGHT = CARD_STABLE_HEIGHT
 _HYDRATION_STAGES = 3
 
 

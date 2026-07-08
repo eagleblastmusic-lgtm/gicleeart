@@ -6,14 +6,22 @@
     render 'giclee-i18n-text', scope: 'sections', id: section.id, field: 'eyebrow', fallback: section.settings.eyebrow
   endcapture
   if default_eyebrow == blank
-    assign default_eyebrow = 'giclee.ui.showcase_eyebrow_default' | t
+    assign default_eyebrow_key = 'giclee.ui.showcase_eyebrow_default'
+    assign default_eyebrow = default_eyebrow_key | t
+    if default_eyebrow contains 'TRANSLATION MISSING' or default_eyebrow contains 'Translation missing'
+      assign default_eyebrow = 'Kolekcja autora'
+    endif
   endif
 
   capture default_heading
     render 'giclee-i18n-text', scope: 'sections', id: section.id, field: 'heading', fallback: section.settings.heading
   endcapture
   if default_heading == blank
-    assign default_heading = 'giclee.ui.showcase_heading_default' | t
+    assign default_heading_key = 'giclee.ui.showcase_heading_default'
+    assign default_heading = default_heading_key | t
+    if default_heading contains 'TRANSLATION MISSING' or default_heading contains 'Translation missing'
+      assign default_heading = 'Wybrane dzieła'
+    endif
   endif
 
   capture default_lead
@@ -24,7 +32,11 @@
     render 'giclee-i18n-text', scope: 'sections', id: section.id, field: 'cta_label', fallback: section.settings.cta_label
   endcapture
   if cta_label == blank
-    assign cta_label = 'giclee.ui.showcase_cta_default' | t
+    assign cta_label_key = 'giclee.ui.showcase_cta_default'
+    assign cta_label = cta_label_key | t
+    if cta_label contains 'TRANSLATION MISSING' or cta_label contains 'Translation missing'
+      assign cta_label = 'Zobacz całą kolekcję'
+    endif
   endif
   assign enable_artist_nav = section.settings.enable_artist_nav | default: true
   assign enable_scroll_panel = section.settings.enable_scroll_panel | default: true
@@ -515,10 +527,10 @@
           type="button"
           class="giclee-artist-showcase__artist-nav giclee-artist-showcase__artist-nav--prev"
           data-gacs-artist-nav="prev"
-          aria-label="{{ 'giclee.ui.showcase_prev_artist' | t }}"
+          aria-label="{% render 'giclee-ui-t', key: 'giclee.ui.showcase_prev_artist', fallback: 'Poprzedni autor' %}"
           {% if initial_artist_index <= 0 %}hidden disabled{% endif %}
         >
-          <span class="giclee-artist-showcase__artist-nav-label">← {{ 'giclee.ui.showcase_prev_artist' | t }}</span>
+          <span class="giclee-artist-showcase__artist-nav-label">← {% render 'giclee-ui-t', key: 'giclee.ui.showcase_prev_artist', fallback: 'Poprzedni autor' %}</span>
           <span class="giclee-artist-showcase__artist-nav-name" data-gacs-artist-nav-name>{{ prev_artist_name | escape }}</span>
           <span class="giclee-artist-showcase__artist-nav-preview" data-gacs-artist-nav-preview aria-hidden="true"></span>
         </button>
@@ -548,10 +560,10 @@
           type="button"
           class="giclee-artist-showcase__artist-nav giclee-artist-showcase__artist-nav--next"
           data-gacs-artist-nav="next"
-          aria-label="{{ 'giclee.ui.showcase_next_artist' | t }}"
+          aria-label="{% render 'giclee-ui-t', key: 'giclee.ui.showcase_next_artist', fallback: 'Następny autor' %}"
           {% if next_artist_index >= artist_entries_count %}hidden disabled{% endif %}
         >
-          <span class="giclee-artist-showcase__artist-nav-label">{{ 'giclee.ui.showcase_next_artist' | t }} →</span>
+          <span class="giclee-artist-showcase__artist-nav-label">{% render 'giclee-ui-t', key: 'giclee.ui.showcase_next_artist', fallback: 'Następny autor' %} →</span>
           <span class="giclee-artist-showcase__artist-nav-name" data-gacs-artist-nav-name>{{ next_artist_name | escape }}</span>
           <span class="giclee-artist-showcase__artist-nav-preview" data-gacs-artist-nav-preview aria-hidden="true"></span>
         </button>
@@ -564,7 +576,7 @@
           <button
             type="button"
             class="giclee-artist-showcase__nav giclee-artist-showcase__nav--prev"
-            aria-label="{{ 'giclee.ui.showcase_prev_work' | t }}"
+            aria-label="{% render 'giclee-ui-t', key: 'giclee.ui.showcase_prev_work', fallback: 'Poprzednie dzieło' %}"
           >
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -577,7 +589,7 @@
           tabindex="0"
           role="region"
           aria-roledescription="karuzela"
-          aria-label="{{ 'giclee.ui.showcase_gallery' | t }}"
+          aria-label="{% render 'giclee-ui-t', key: 'giclee.ui.showcase_gallery', fallback: 'Galeria dzieł' %}"
         >
           <div class="giclee-artist-showcase__track" data-gacs-track>
             {%- render 'giclee-artist-showcase-track',
@@ -591,7 +603,7 @@
           <button
             type="button"
             class="giclee-artist-showcase__nav giclee-artist-showcase__nav--next"
-            aria-label="{{ 'giclee.ui.showcase_next_work' | t }}"
+            aria-label="{% render 'giclee-ui-t', key: 'giclee.ui.showcase_next_work', fallback: 'Następne dzieło' %}"
           >
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -601,7 +613,7 @@
       </div>
 
       {%- if layout_mode == 'coverflow' -%}
-        <div class="giclee-artist-showcase__dots" role="tablist" aria-label="{{ 'giclee.ui.showcase_gallery_nav' | t }}"></div>
+        <div class="giclee-artist-showcase__dots" role="tablist" aria-label="{% render 'giclee-ui-t', key: 'giclee.ui.showcase_gallery_nav', fallback: 'Nawigacja galerii' %}"></div>
       {%- endif -%}
     </div>
   </div>

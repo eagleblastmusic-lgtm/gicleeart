@@ -1,9 +1,13 @@
 {
-  "active": "gf1",
+  "active": "gf2",
   "variants": [
     {
       "id": "gf1",
       "label": "Wersja 1"
+    },
+    {
+      "id": "gf2",
+      "label": "Wersja 2"
     }
   ]
 }

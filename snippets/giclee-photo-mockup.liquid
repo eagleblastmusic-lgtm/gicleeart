@@ -14,39 +14,39 @@
   <div class="pm-stage">
     <div id="pm-hero-ui" class="pm-hero-ui">
       <div class="pm-header">
-        <div class="pm-badge">{{ 'giclee.ui.mockup_badge' | t }}</div>
-        <h2>{{ 'giclee.ui.mockup_heading' | t }}</h2>
-        <p>{{ 'giclee.ui.mockup_lead' | t }}</p>
+        <div class="pm-badge">{% render 'giclee-ui-t', key: 'giclee.ui.mockup_badge', fallback: 'Fine Art Preview' %}</div>
+        <h2>{% render 'giclee-ui-t', key: 'giclee.ui.mockup_heading', fallback: 'Stwórz swój wydruk' %}</h2>
+        <p>{% render 'giclee-ui-t', key: 'giclee.ui.mockup_lead', fallback: 'Prześlij zdjęcie i zobacz elegancki podgląd w ramie' %}</p>
       </div>
       <label class="pm-upload-btn">
-        <span>{{ 'giclee.ui.mockup_choose_photo' | t }}</span>
+        <span>{% render 'giclee-ui-t', key: 'giclee.ui.mockup_choose_photo', fallback: 'Wybierz zdjęcie' %}</span>
         <input type="file" id="pm-upload" accept="image/jpeg,image/png,image/heic,image/heif,image/webp,.heic,.heif">
       </label>
     </div>
 
     <div class="pm-side-shop" id="pm-side-shop" hidden>
-      <section class="pm-side-price" aria-label="{{ 'giclee.ui.mockup_price_label' | t }}">
+      <section class="pm-side-price" aria-label="{% render 'giclee-ui-t', key: 'giclee.ui.mockup_price_label', fallback: 'Cena' %}">
         <div class="pm-config-price" id="pm-config-price" aria-live="polite">
-          <span class="pm-config-price__eyebrow">{{ 'giclee.ui.mockup_price_label' | t }}</span>
+          <span class="pm-config-price__eyebrow">{% render 'giclee-ui-t', key: 'giclee.ui.mockup_price_label', fallback: 'Cena' %}</span>
           <span class="pm-config-price__value" id="pm-config-price-value">—</span>
         </div>
       </section>
-      <section class="pm-side-cart" aria-label="{{ 'actions.add_to_cart' | t }}">
-        <button type="button" class="pm-config-add-to-cart" id="pm-config-add-to-cart">{{ 'actions.add_to_cart' | t }}</button>
+      <section class="pm-side-cart" aria-label="{% render 'giclee-ui-t', key: 'products.product.add_to_cart', fallback: 'Dodaj do koszyka' %}">
+        <button type="button" class="pm-config-add-to-cart" id="pm-config-add-to-cart">{% render 'giclee-ui-t', key: 'products.product.add_to_cart', fallback: 'Dodaj do koszyka' %}</button>
       </section>
     </div>
 
-    <aside class="pm-hint" aria-label="{{ 'giclee.ui.mockup_aria_controls' | t }}">
+    <aside class="pm-hint" aria-label="{% render 'giclee-ui-t', key: 'giclee.ui.mockup_aria_controls', fallback: 'Sterowanie podglądem' %}">
       <div class="pm-hint__group">
-        <span class="pm-hint__word">{{ 'giclee.ui.mockup_hint_drag' | t }}</span>
+        <span class="pm-hint__word">{% render 'giclee-ui-t', key: 'giclee.ui.mockup_hint_drag', fallback: 'Przeciągnij' %}</span>
         <span class="pm-hint__sep" aria-hidden="true"></span>
-        <span class="pm-hint__word">{{ 'giclee.ui.mockup_hint_scroll' | t }}</span>
+        <span class="pm-hint__word">{% render 'giclee-ui-t', key: 'giclee.ui.mockup_hint_scroll', fallback: 'Scroll' %}</span>
         <span class="pm-hint__sep" aria-hidden="true"></span>
-        <span class="pm-hint__word">{{ 'giclee.ui.mockup_hint_dblclick' | t }}</span>
+        <span class="pm-hint__word">{% render 'giclee-ui-t', key: 'giclee.ui.mockup_hint_dblclick', fallback: 'Podwójne kliknięcie — reset' %}</span>
       </div>
       <div class="pm-hint__goal">
         <span class="pm-hint__rule" aria-hidden="true"></span>
-        <span class="pm-hint__word pm-hint__word--accent">{{ 'giclee.ui.mockup_hint_fit' | t }}</span>
+        <span class="pm-hint__word pm-hint__word--accent">{% render 'giclee-ui-t', key: 'giclee.ui.mockup_hint_fit', fallback: 'dopasuj' %}</span>
       </div>
       <div class="pm-hint__sizes">
         <label class="pm-hint__sizes-toggle" for="pm-size-toggle">
@@ -54,18 +54,18 @@
           <span class="pm-hint__sizes-toggle__track" aria-hidden="true">
             <span class="pm-hint__sizes-toggle__thumb"></span>
           </span>
-          <span class="pm-hint__sizes-toggle__label">{{ 'giclee.ui.mockup_frame_dimensions' | t }}</span>
+          <span class="pm-hint__sizes-toggle__label">{% render 'giclee-ui-t', key: 'giclee.ui.mockup_frame_dimensions', fallback: 'Wymiary ramy' %}</span>
         </label>
       </div>
       <div class="pm-hint__export">
-        <button type="button" class="pm-hint__export-btn" id="pm-export-jpg" aria-label="{{ 'giclee.ui.mockup_aria_export' | t }}">
+        <button type="button" class="pm-hint__export-btn" id="pm-export-jpg" aria-label="{% render 'giclee-ui-t', key: 'giclee.ui.mockup_aria_export', fallback: 'Eksportuj podgląd jako JPG' %}">
           <svg class="pm-hint__export-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
             <path d="M12 3v12m0 0l4-4m-4 4L8 11"/>
             <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
           </svg>
-          <span class="pm-hint__export-btn__label">{{ 'giclee.ui.mockup_export_jpg' | t }}</span>
+          <span class="pm-hint__export-btn__label">{% render 'giclee-ui-t', key: 'giclee.ui.mockup_export_jpg', fallback: 'Eksport .jpg' %}</span>
         </button>
-        <p class="pm-export-toast" id="pm-export-toast" role="status" aria-live="polite" hidden>{{ 'giclee.ui.mockup_file_saved' | t }}</p>
+        <p class="pm-export-toast" id="pm-export-toast" role="status" aria-live="polite" hidden>{% render 'giclee-ui-t', key: 'giclee.ui.mockup_file_saved', fallback: 'Plik zapisany' %}</p>
       </div>
     </aside>
 
@@ -78,13 +78,13 @@
         <div class="pm-vignette"></div>
         <div class="pm-grain"></div>
         <div class="pm-sheen"></div>
-        <div class="pm-reupload-toolbar" role="toolbar" aria-label="{{ 'giclee.ui.mockup_aria_photo_toolbar' | t }}">
-          <button type="button" class="pm-toolbar-btn" id="pm-reupload" aria-label="{{ 'giclee.ui.mockup_aria_reupload' | t }}">
+        <div class="pm-reupload-toolbar" role="toolbar" aria-label="{% render 'giclee-ui-t', key: 'giclee.ui.mockup_aria_photo_toolbar', fallback: 'Zdjęcie w podglądzie' %}">
+          <button type="button" class="pm-toolbar-btn" id="pm-reupload" aria-label="{% render 'giclee-ui-t', key: 'giclee.ui.mockup_aria_reupload', fallback: 'Wgraj nowe zdjęcie' %}">
             <svg class="pm-toolbar-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
               <path d="M12 16V4m0 0L8 8m4-4 4 4"/>
               <path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>
             </svg>
-            <span class="pm-toolbar-btn__label">{{ 'giclee.ui.mockup_reupload' | t }}</span>
+            <span class="pm-toolbar-btn__label">{% render 'giclee-ui-t', key: 'giclee.ui.mockup_reupload', fallback: 'Wgraj nowe zdjęcie' %}</span>
           </button>
         </div>
       </div>
@@ -92,16 +92,16 @@
       <div class="pm-size-overlay" id="pm-size-overlay" aria-hidden="true"></div>
     </div>
 
-    <aside class="pm-zoom-rail" aria-label="{{ 'giclee.ui.mockup_aria_zoom' | t }}">
-      <button type="button" class="pm-zoom-rail__btn" id="pm-zoom-in" aria-label="{{ 'giclee.ui.mockup_aria_zoom_in' | t }}">
+    <aside class="pm-zoom-rail" aria-label="{% render 'giclee-ui-t', key: 'giclee.ui.mockup_aria_zoom', fallback: 'Zoom podglądu' %}">
+      <button type="button" class="pm-zoom-rail__btn" id="pm-zoom-in" aria-label="{% render 'giclee-ui-t', key: 'giclee.ui.mockup_aria_zoom_in', fallback: 'Powiększ' %}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false">
           <path d="M12 5v14M5 12h14"/>
         </svg>
       </button>
       <div class="pm-zoom-rail__track">
-        <input type="range" class="pm-zoom-rail__range" id="pm-zoom-slider" min="0" max="100" value="0" step="1" aria-label="{{ 'giclee.ui.mockup_aria_zoom_level' | t }}" orient="vertical">
+        <input type="range" class="pm-zoom-rail__range" id="pm-zoom-slider" min="0" max="100" value="0" step="1" aria-label="{% render 'giclee-ui-t', key: 'giclee.ui.mockup_aria_zoom_level', fallback: 'Poziom powiększenia' %}" orient="vertical">
       </div>
-      <button type="button" class="pm-zoom-rail__btn" id="pm-zoom-out" aria-label="{{ 'giclee.ui.mockup_aria_zoom_out' | t }}">
+      <button type="button" class="pm-zoom-rail__btn" id="pm-zoom-out" aria-label="{% render 'giclee-ui-t', key: 'giclee.ui.mockup_aria_zoom_out', fallback: 'Pomniejsz' %}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false">
           <path d="M5 12h14"/>
         </svg>
@@ -109,7 +109,7 @@
     </aside>
 
     <a class="pm-cta" id="pm-cta" href="#giclee-shell">
-      <span class="pm-cta-label">{{ 'giclee.ui.mockup_cta_gicleelab' | t }}</span>
+      <span class="pm-cta-label">{% render 'giclee-ui-t', key: 'giclee.ui.mockup_cta_gicleelab', fallback: 'Przejdź do GicleeLab' %}</span>
       <div class="pm-cta-chevrons" aria-hidden="true">
         <svg width="28" height="16" viewBox="0 0 28 16" fill="none"><path d="M2 2l12 12L26 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <svg width="28" height="16" viewBox="0 0 28 16" fill="none"><path d="M2 2l12 12L26 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>

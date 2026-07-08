@@ -20,7 +20,7 @@ DEFAULT_SECTIONS: list[tuple[str, list[str]]] = [
         ],
     ),
     ("Administracja strony", [
-        "wzorzecszablonu", "stronaproduktu", "karuzela", "tldobio", "stronaglowna",
+        "wzorzecszablonu", "stronaproduktu", "karuzela", "submenukatalog", "tldobio", "stronaglowna",
         "gicleeframe", "wlasnafotografia", "katalog", "wspolpraca", "filozofiamarki",
         "kontakt", "stronablogu", "faq", "losujobraz",
     ]),

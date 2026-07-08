@@ -1,0 +1,7 @@
+{%- doc -%}
+  Inline style object-position dla kadrowania pionowego.
+
+  @param {number} object_y - 0 = góra, 50 = środek, 100 = dół
+{%- enddoc -%}
+{%- capture object_position -%}{% render 'giclee-image-object-position', object_y: object_y %}{%- endcapture -%}
+object-position: {{ object_position | strip }};

@@ -25,6 +25,13 @@
   if ratio == 0 or ratio == null
     assign ratio = 1
   endif
+
+  capture before_image_object_y_style
+    render 'giclee-image-object-position-style', object_y: block.settings.before_image_object_y
+  endcapture
+  capture after_image_object_y_style
+    render 'giclee-image-object-position-style', object_y: block.settings.after_image_object_y
+  endcapture
 %}
 
 <comparison-slider-component
@@ -58,6 +65,7 @@
               sizes: 'auto, 100vw',
               width: block.settings.before_image.width,
               height: block.settings.before_image.height,
+              style: before_image_object_y_style,
               ref: 'beforeImage'
           }}
         {%- else -%}
@@ -88,6 +96,7 @@
               sizes: 'auto, 100vw',
               width: block.settings.after_image.width,
               height: block.settings.after_image.height,
+              style: after_image_object_y_style,
               ref: 'afterImage'
           }}
         {%- else -%}

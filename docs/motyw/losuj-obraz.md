@@ -36,6 +36,14 @@ W edytorze sekcji „Losuj Obraz — oracle”:
 - „Włącz efekt WebGL (Three.js)” (`enable_webgl`, domyślnie ON) → OFF zostawia wariant CSS.
 - „Doczytaj pełną pulę (AJAX)” (`fetch_full_pool`, domyślnie ON) → OFF, gdy sklep blokuje `products.json` (zostaje pula z Liquid).
 - Kolekcja źródłowa (puste = wszystkie), teksty, schemat kolorów.
+- Własne tło: `background_image` / `background_video` (film ma priorytet); puste = domyślna scena.
+- Parallax tła (`background_parallax`): subtelny ruch obrazu lub filmu przy ruszaniu kursorem (jak konfigurator PDP).
+
+## Dopasowanie do ekranu (bez scrolla)
+
+Na desktopie (`min-width: 750px`) strona nie scrolluje się — header + scena + stopka mieszczą się w oknie. Realizacja: wzorzec sticky-footer na flexboxie, scoped `body:has(.giclee-random-artwork)` w `assets/giclee-random-artwork.css`. Scena (`__scene`) ma wtedy `flex:1; min-height:0`, więc tło i animacja skalują się do dostępnej wysokości (nadpisuje `min-height: clamp(640px, 92svh, 1000px)`). Na mobile (`max-width: 749px`) zostaje naturalny układ, by nie przycinać dużego nagłówka.
+
+Dotyczy to wszystkich stanów, także wyniku: `__content` dostaje `grid-template-rows: minmax(0,1fr)`, a karta wyniku skaluje obraz (`__frame-mat` flex, `__result-image { max-height:100% }`) do miejsca pozostałego po tytule i CTA — dzięki temu po wylosowaniu obrazu strona nadal się mieści bez scrolla.
 
 ## Test przed publikacją
 
@@ -43,6 +51,7 @@ W edytorze sekcji „Losuj Obraz — oracle”:
 - DevTools → Rendering → „Emulate prefers-reduced-motion” → fallback.
 - Ponowne losowanie 5–10×, szybkie klikanie (jedna scena naraz), resize w trakcie, DevTools throttling.
 - Konsola bez błędów; po reveal brak aktywnego `requestAnimationFrame` (Performance/Memory).
+- Tytuł wyniku: warianty w nawiasach `(lub …)` (także zagnieżdżone, np. `(lub … (1866))`) są obcinane w `giclee-random-artwork.js` (`primaryProductTitle`) — wyświetla się tylko tytuł podstawowy.
 
 ## Po `shopify theme push`
 

@@ -47,6 +47,7 @@ Typowe scenariusze: landing z hero + panel produktu, storytelling PDP, portfolio
   [slotSpacer]          ← height = wysokość slidera, tylko gdy slider jest fixed
   [slider]              ← element wjeżdżający (sticky w CSS; w fazie wjazdu: fixed)
   [holdTail]            ← height = HOLD_PX (stałe!), ustawione raz przy init
+  [followerOverlap]     ← height = viewport (stałe przy init/resize) — scroll na overlay procesu nad sliderem
 [follower A]            ← treść pod sliderem w dokumencie
 [follower B]
 ...
@@ -186,13 +187,13 @@ Gdy slider zadokowany, warstwy sceny **pod** nim nie powinny zostać `sticky` �
 }
 ```
 
-### Krok 5: Follower w flow — bez sticky-dock
+### Krok 5: Follower — sticky „karta na karcie” (nie sticky-dock)
 
-**Antywzorzec:** `position: sticky` na followerze z `top: wysokość slidera`.
+**Antywzorzec:** `position: sticky` na followerze z `top: wysokość slidera` (sticky-dock).
 
 Przy odjeżdżaniu slidera w górę powstaje luka → follower „stoi” → skok na końcu sekwencji.
 
-**Wzorzec:** follower `position: relative`, bezpośrednio pod pinWrap. W hold dojeżdża wizualnie; potem jedzie razem ze sliderem.
+**Wzorzec (PDP v3):** follower `position: sticky; top: 0` z rosnącym `z-index` (proces 35 > grid 25; trust 40 > proces 35). **Grid → proces:** pusty spacer `giclee-grid-follower-overlap` (wys. viewport) w `pinWrap` po `holdTail` — daje scroll na overlay bez ujemnego marginu na wrapie. **Proces → trust:** stały `margin-top: calc(-100dvh - gap)` na `.giclee-trust` + `min-height: 100dvh` na obu sekcjach. Wspólne tło graficzne: jeden obraz na `.pdp-v3-pt-wrap::before` z `background-attachment: fixed` (bez per-sekcji duplikatów). Po `is-scroll-normal` sticky zdjęte.
 
 ### Krok 6: Tło i z-index
 
@@ -295,6 +296,8 @@ function initScrollChoreography({ pinWrap, slider, stage, shell, holdTail, slotS
 | Czarny pas nad sceną przy szybkim scrollu | Tło shellu absolute→fixed przełączane klasą; kompozytor wyprzedza rAF | Kurtyna doczepiona do sceny — jedzie ze sticky na kompozytorze, bez klas |
 | Follower niewidoczny pod kurtyną sceny | Kurtyna `story::after` wystaje poza box; scena ma z-index 20, follower bez z-index | Followerom nadane z-index z mapy warstw (`--pdp-v3-process-z` itd.) > scena |
 | Follower niewidoczny mimo z-index na dziecku | Wrapper followerów (`isolation: isolate`) bez własnego z-index — dziecko 35 w kontekście wrapu na auto/0, scena 20 wygrywa | `z-index` na wrapperze (np. `.pdp-v3-pt-wrap`) ≥ `--pdp-v3-process-z` |
+| Follower nie zakrywa sticky slidera | Follower wchodzi dopiero gdy `pinWrap` się kończy i slider traci sticky (min-height 100dvh) | Spacer `giclee-grid-follower-overlap` (1× viewport) w `pinWrap` po `holdTail` |
+| Tło proces+trust „resetuje się” między sekcjami | Osobny `background-image` na `::before` każdej sekcji (`center`) | Jeden obraz na `.pdp-v3-pt-wrap::before` + `background-attachment: fixed` |
 | Kurtyna sceny zakrywa viewport po docku | `curtain-h` liczone od opisu; opis (relative) odjeżdża w górę, kurtyna zostaje w viewport | Wyłączyć kurtynę przy `.is-grid-docked` / `.is-scroll-normal` |
 | Slider „odbija w dół” przy scrollu w górę z docku | Flip fixed→sticky dokładnie przy `pinTop = 0`; spóźniony sticky zjeżdża z pinWrap | Histereza: fixed trzymany do `pinTop = -REFIX_PX` (tam oba stany renderują się tak samo) |
 | Jasny pasek na krawędzi tła z nakładką | Obraz na osobnej warstwie kompozytora (filter/will-change) rastruje się o px szerzej niż nakładka | Nakładka z zapasem (`inset: -4px`), kontener z `overflow: hidden` przycina |
@@ -358,7 +361,7 @@ Implementacja wzorca na szablonie `product.szablon-produktu-v3`.
 | Kurtyna tła | `.giclee-product-story::after` (wysokość `--pdp-v3-curtain-h` = shell − offset opisu, z JS przy layout/resize) |
 | Slider | `.product-information__grid` (galeria + konfigurator, z-index 25) |
 | pinWrap | `.giclee-grid-slide-pin` |
-| Follower | `.giclee-process`, potem `.giclee-trust` |
+| Follower | `.giclee-process`, potem `.giclee-trust` — oba `sticky; top: 0` z rosnącym z-index (35 / 40), zakrywają poprzednią warstwę przy scrollu |
 | Shell | `.product-information` (z-index 14; bez własnego tła — kryje kurtyna opisu) |
 
 ### Kolejność w `product-information-content.liquid`
@@ -401,8 +404,8 @@ Stabilny stan: `story-20260702-curtain-hysteresis` (2026-07-02).
 1. Wjazd grida z prawej na sticky opisie.
 2. `scrollTo` / `scrollBy` — odrzucone.
 3. `holdTail` — działa przy stałej wysokości.
-4. Sticky-dock procesu — odrzucony.
-5. `is-grid-docked` + follower w flow.
+4. Sticky-dock procesu (`top: wysokość slidera`) — odrzucony (luka + skok).
+5. `is-grid-docked` + follower w flow; od 2026-07-08: `sticky top:0` na followerach (karta na karcie nad gridem / procesem).
 6. Tło shellu absolute/fixed (`is-story-pinned`) — odrzucone (czarny pas nad opisem przy szybkim scrollu; kompozytor wyprzedza rAF). Zastąpione kurtyną `story::after`.
 7. Flip fixed→sticky przy `pinTop=0` — zastąpiony histerezą (`REFIX_PX`), bo przy scrollu w górę grid odbijał w dół.
 

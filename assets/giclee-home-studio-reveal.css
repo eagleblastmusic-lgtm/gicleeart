@@ -1,0 +1,367 @@
+/* ==========================================================================
+   Homepage studio intro — silent studio reveal
+   Scope: .giclee-home-studio-reveal only (section hook: data-giclee-home="intro").
+   Config: window.GICLEE_HOME_STUDIO_REVEAL_CONFIG (boot.js → CSS variables).
+   ========================================================================== */
+
+.giclee-home-studio-reveal {
+  --ghsr-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ghsr-duration: 980ms;
+  --ghsr-card-duration: 1100ms;
+  --ghsr-text-duration: 900ms;
+  --ghsr-hover-duration: 850ms;
+  --ghsr-heading-delay: 120ms;
+  --ghsr-paragraph-stagger: 140ms;
+  --ghsr-bg-brightness-start: 0.88;
+  --ghsr-light-opacity-min: 0.055;
+  --ghsr-light-opacity-max: 0.11;
+  --ghsr-card-hover-scale: 1.018;
+  --ghsr-card-image-hover-scale: 1.025;
+  --ghsr-copy-hover-scale: 1.022;
+  --ghsr-copy-hover-translate-y: -4px;
+  --ghsr-gradient-overlay-opacity: 1;
+  --ghsr-radial-cx: 35%;
+  --ghsr-radial-cy: 50%;
+  --ghsr-radial-rx: 55%;
+  --ghsr-radial-ry: 85%;
+  --ghsr-radial-feather: 50;
+  --ghsr-radial-exposure: 50;
+  --ghsr-parallax-x: 0px;
+  --ghsr-parallax-y: 0px;
+  --ghsr-parallax-scale: 1.06;
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.giclee-home-studio-reveal::before {
+  content: '';
+  position: absolute;
+  inset: -12%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: var(--ghsr-light-opacity-min);
+  background:
+    radial-gradient(
+      ellipse at 28% 22%,
+      rgb(255 255 255 / 0.28) 0%,
+      rgb(214 188 146 / 0.08) 28%,
+      rgb(0 0 0 / 0) 62%
+    );
+  transform: translate3d(-2%, 0, 0) scale(1.04);
+}
+
+.giclee-home-studio-reveal__bg,
+.giclee-home-studio-reveal__card,
+.giclee-home-studio-reveal__copy {
+  position: relative;
+}
+
+.giclee-home-studio-reveal__bg {
+  z-index: 0;
+}
+
+.giclee-home-studio-reveal__bg .background-image-container {
+  overflow: hidden;
+}
+
+.giclee-home-studio-reveal__overlay,
+.giclee-home-studio-reveal__radial-mask {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.giclee-home-studio-reveal__overlay {
+  z-index: 1;
+  opacity: var(--ghsr-gradient-overlay-opacity, 1);
+  transition: opacity var(--ghsr-card-duration) var(--ghsr-ease);
+}
+
+.giclee-home-studio-reveal--parallax .giclee-home-studio-reveal__overlay {
+  transform: scale(var(--ghsr-parallax-scale, 1.06));
+  transform-origin: center center;
+}
+
+.giclee-home-studio-reveal__radial-mask {
+  z-index: 2;
+}
+
+.giclee-home-studio-reveal__bg--gradient-editorial .giclee-home-studio-reveal__overlay,
+.giclee-home-section-bg-effects .giclee-home-studio-reveal__bg--gradient-editorial .giclee-home-studio-reveal__overlay {
+  background:
+    radial-gradient(
+      ellipse 118% 96% at 50% 50%,
+      rgb(0 0 0 / 0) 44%,
+      rgb(0 0 0 / 0.22) 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgb(0 0 0 / 0.66) 0%,
+      rgb(0 0 0 / 0.66) 28%,
+      rgb(0 0 0 / 0.4) 52%,
+      rgb(0 0 0 / 0.34) 72%,
+      rgb(0 0 0 / 0.5) 100%
+    ),
+    linear-gradient(180deg, rgb(0 0 0 / 0.16) 0%, rgb(0 0 0 / 0.56) 100%);
+}
+
+.giclee-home-studio-reveal__bg--gradient-menu-wide .custom-section-background::before,
+.giclee-home-section-bg-effects .giclee-home-studio-reveal__bg--gradient-menu-wide .custom-section-background::before,
+.giclee-home-studio-reveal__bg--gradient-menu-narrow .custom-section-background::before,
+.giclee-home-section-bg-effects .giclee-home-studio-reveal__bg--gradient-menu-narrow .custom-section-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  height: clamp(120px, 22vh, 220px);
+  pointer-events: none;
+}
+
+.giclee-home-studio-reveal__bg--gradient-menu-wide .custom-section-background::before,
+.giclee-home-section-bg-effects .giclee-home-studio-reveal__bg--gradient-menu-wide .custom-section-background::before {
+  background: linear-gradient(
+    180deg,
+    #000 0%,
+    #000 12%,
+    rgb(0 0 0 / 0.94) 30%,
+    rgb(0 0 0 / 0.72) 52%,
+    rgb(0 0 0 / 0.28) 78%,
+    transparent 100%
+  );
+}
+
+.giclee-home-studio-reveal__bg--gradient-menu-narrow .custom-section-background::before,
+.giclee-home-section-bg-effects .giclee-home-studio-reveal__bg--gradient-menu-narrow .custom-section-background::before {
+  background: linear-gradient(
+    180deg,
+    #000 0%,
+    rgb(0 0 0 / 0.88) 28%,
+    rgb(0 0 0 / 0.42) 58%,
+    transparent 100%
+  );
+}
+
+.giclee-home-studio-reveal__bg--gradient-radial_spot .giclee-home-studio-reveal__radial-mask,
+.giclee-home-section-bg-effects .giclee-home-studio-reveal__bg--gradient-radial_spot .giclee-home-studio-reveal__radial-mask {
+  background: radial-gradient(
+    ellipse var(--ghsr-radial-rx) var(--ghsr-radial-ry) at var(--ghsr-radial-cx) var(--ghsr-radial-cy),
+    rgb(0 0 0 / 0) 0%,
+    rgb(0 0 0 / 0) calc((100 - var(--ghsr-radial-feather)) * 0.55 * 1%),
+    rgb(0 0 0 / calc(var(--ghsr-radial-exposure) * 0.65 / 100)) 100%
+  );
+}
+
+.giclee-home-studio-reveal--parallax .giclee-home-studio-reveal__parallax-layer,
+.giclee-home-section-bg-effects.giclee-home-section-bg-effects--parallax .giclee-home-studio-reveal__parallax-layer {
+  transform: translate3d(var(--ghsr-parallax-x, 0), var(--ghsr-parallax-y, 0), 0)
+    scale(var(--ghsr-parallax-scale, 1.06));
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.giclee-home-studio-reveal--parallax .giclee-home-studio-reveal__parallax-layer img,
+.giclee-home-studio-reveal--parallax .giclee-home-studio-reveal__parallax-layer video,
+.giclee-home-section-bg-effects.giclee-home-section-bg-effects--parallax
+  .giclee-home-studio-reveal__parallax-layer
+  img,
+.giclee-home-section-bg-effects.giclee-home-section-bg-effects--parallax
+  .giclee-home-studio-reveal__parallax-layer
+  video {
+  transform: scale(1.001);
+}
+
+.giclee-home-studio-reveal__bg .background-image-container,
+.giclee-home-studio-reveal__bg .background-image-container img,
+.giclee-home-studio-reveal__bg video-background-component video {
+  transform-origin: center center;
+  transition: filter var(--ghsr-card-duration) var(--ghsr-ease);
+}
+
+.giclee-home-studio-reveal:not(.is-revealed) .giclee-home-studio-reveal__bg .background-image-container img,
+.giclee-home-studio-reveal:not(.is-revealed) .giclee-home-studio-reveal__bg video-background-component video {
+  filter: brightness(var(--ghsr-bg-brightness-start));
+}
+
+.giclee-home-studio-reveal__card {
+  z-index: 3;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(18px) scale(0.985);
+  transform-origin: center center;
+  transition:
+    opacity var(--ghsr-card-duration) var(--ghsr-ease),
+    transform var(--ghsr-card-duration) var(--ghsr-ease),
+    filter var(--ghsr-hover-duration) var(--ghsr-ease),
+    box-shadow var(--ghsr-hover-duration) var(--ghsr-ease);
+  will-change: transform, opacity;
+}
+
+.giclee-home-studio-reveal__card-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: center center;
+  transition: transform var(--ghsr-hover-duration) var(--ghsr-ease);
+}
+
+.giclee-home-studio-reveal__copy {
+  z-index: 4;
+  transform: translateY(0) scale(1);
+  transition:
+    transform var(--ghsr-hover-duration) var(--ghsr-ease),
+    filter var(--ghsr-hover-duration) var(--ghsr-ease);
+  will-change: transform;
+}
+
+.giclee-home-studio-reveal.giclee-home-studio-reveal--glow .giclee-home-studio-reveal__copy::before {
+  content: '';
+  position: absolute;
+  inset: -24% -14%;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 50%;
+  opacity: 0;
+  background: radial-gradient(
+    ellipse 72% 58% at 50% 52%,
+    rgb(255 252 245 / 0.12) 0%,
+    rgb(255 252 245 / 0.04) 44%,
+    transparent 74%
+  );
+  transition: opacity var(--ghsr-hover-duration) var(--ghsr-ease);
+}
+
+.giclee-home-studio-reveal__heading,
+.giclee-home-studio-reveal__paragraph {
+  opacity: 0;
+  transform: translateY(10px);
+  filter: blur(8px);
+  transition:
+    opacity var(--ghsr-text-duration) var(--ghsr-ease),
+    transform var(--ghsr-text-duration) var(--ghsr-ease),
+    filter var(--ghsr-text-duration) var(--ghsr-ease);
+  transition-delay: var(--ghsr-paragraph-delay, 0ms);
+}
+
+.giclee-home-studio-reveal__heading {
+  --ghsr-paragraph-delay: var(--ghsr-heading-delay);
+}
+
+.giclee-home-studio-reveal.is-revealed .giclee-home-studio-reveal__card,
+.giclee-home-studio-reveal.is-revealed .giclee-home-studio-reveal__heading,
+.giclee-home-studio-reveal.is-revealed .giclee-home-studio-reveal__paragraph {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+
+.giclee-home-studio-reveal.is-revealed .giclee-home-studio-reveal__bg .background-image-container img,
+.giclee-home-studio-reveal.is-revealed .giclee-home-studio-reveal__bg video-background-component video {
+  filter: brightness(1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .giclee-home-studio-reveal__card:hover {
+    transform: translateY(-4px) scale(var(--ghsr-card-hover-scale));
+    filter: brightness(1.035);
+    box-shadow:
+      0 28px 80px rgb(0 0 0 / 0.38),
+      0 0 0 1px rgb(255 255 255 / 0.08);
+  }
+
+  .giclee-home-studio-reveal__card:hover .giclee-home-studio-reveal__card-image {
+    transform: scale(var(--ghsr-card-image-hover-scale));
+  }
+
+  .giclee-home-studio-reveal:has(.giclee-home-studio-reveal__copy:hover) .giclee-home-studio-reveal__copy {
+    transform: translateY(var(--ghsr-copy-hover-translate-y)) scale(var(--ghsr-copy-hover-scale));
+    filter: brightness(1.06);
+  }
+
+  .giclee-home-studio-reveal.giclee-home-studio-reveal--glow:has(.giclee-home-studio-reveal__copy:hover)
+    .giclee-home-studio-reveal__copy::before {
+    opacity: 1;
+  }
+
+  .giclee-home-studio-reveal:has(.giclee-home-studio-reveal__copy:hover) .giclee-home-studio-reveal__card {
+    transform: translateY(2px) scale(0.995);
+    filter: brightness(0.94);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @media screen and (min-width: 750px) {
+    .giclee-home-studio-reveal.giclee-home-studio-reveal--motion::before {
+      animation: giclee-home-studio-light-breathe 12s var(--ghsr-ease) infinite alternate;
+    }
+  }
+
+  @keyframes giclee-home-studio-light-breathe {
+    from {
+      opacity: var(--ghsr-light-opacity-min);
+      transform: translate3d(-2%, 0, 0) scale(1.04);
+    }
+
+    to {
+      opacity: var(--ghsr-light-opacity-max);
+      transform: translate3d(2%, -1%, 0) scale(1.07);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giclee-home-studio-reveal,
+  .giclee-home-studio-reveal *,
+  .giclee-home-studio-reveal *::before,
+  .giclee-home-studio-reveal *::after {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    filter: none !important;
+  }
+
+  .giclee-home-studio-reveal--parallax .giclee-home-studio-reveal__parallax-layer {
+    transform: none !important;
+  }
+
+  .giclee-home-section-bg-effects.giclee-home-section-bg-effects--parallax
+    .giclee-home-studio-reveal__parallax-layer {
+    transform: none !important;
+  }
+
+  .giclee-home-studio-reveal__card,
+  .giclee-home-studio-reveal__heading,
+  .giclee-home-studio-reveal__paragraph {
+    opacity: 1 !important;
+  }
+}
+
+@media screen and (max-width: 749px) {
+  .giclee-home-studio-reveal::before {
+    display: none;
+  }
+
+  .giclee-home-studio-reveal:not(.is-revealed) .giclee-home-studio-reveal__card,
+  .giclee-home-studio-reveal:not(.is-revealed) .giclee-home-studio-reveal__heading,
+  .giclee-home-studio-reveal:not(.is-revealed) .giclee-home-studio-reveal__paragraph {
+    opacity: 0;
+    transform: none;
+    filter: none;
+  }
+
+  .giclee-home-studio-reveal.is-revealed .giclee-home-studio-reveal__card,
+  .giclee-home-studio-reveal.is-revealed .giclee-home-studio-reveal__heading,
+  .giclee-home-studio-reveal.is-revealed .giclee-home-studio-reveal__paragraph {
+    transform: none;
+    filter: none;
+  }
+
+  .giclee-home-studio-reveal__card,
+  .giclee-home-studio-reveal__copy {
+    transform: none !important;
+    filter: none !important;
+  }
+}

@@ -298,11 +298,18 @@ def _format_scenario_log_coverage(
         if dashboard is not None and dashboard.status in {
             "missing_expected_events",
             "no_events_in_window",
+            "early_event_seen",
         }:
-            note += (
-                "\n\n_Warning: `dashboard_cold` may be pre-session in `--run` mode — dashboard "
-                "events may have occurred before the wizard started this scenario._"
-            )
+            if dashboard.status == "early_event_seen":
+                note += (
+                    "\n\n_Note: `dashboard_cold` events were seen before the scenario window "
+                    "(startup / intro timing) — classified as early_event_seen._"
+                )
+            else:
+                note += (
+                    "\n\n_Warning: `dashboard_cold` may be pre-session in `--run` mode — dashboard "
+                    "events may have occurred before the wizard started this scenario._"
+                )
     return header + "\n".join(rows) + note
 
 

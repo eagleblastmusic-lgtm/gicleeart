@@ -349,9 +349,10 @@
 /* Strona główna — przyciemnienie tła sekcji (ten sam gradient co Tło do Bio) */
 .giclee-section-bg-overlay {
   position: absolute;
-  inset: 0;
-  z-index: 1;
+  inset: -4px;
+  z-index: 3;
   pointer-events: none;
+  transform-origin: center center;
   background:
     radial-gradient(
       ellipse 118% 96% at 50% 50%,
@@ -367,4 +368,15 @@
       rgba(0, 0, 0, 0.5) 100%
     ),
     linear-gradient(180deg, rgba(0, 0, 0, 0.16) 0%, rgba(0, 0, 0, 0.56) 100%);
+}
+
+/* Parallax overscan — nakładka ta sama skala co grafika (jak PDP v3) */
+.giclee-home-studio-reveal--parallax
+  .giclee-home-studio-reveal__bg
+  > .giclee-section-bg-overlay,
+.giclee-home-section-bg-effects--parallax
+  .giclee-home-studio-reveal__bg
+  > .giclee-section-bg-overlay {
+  inset: 0;
+  transform: scale(var(--ghsr-parallax-scale, 1.06));
 }

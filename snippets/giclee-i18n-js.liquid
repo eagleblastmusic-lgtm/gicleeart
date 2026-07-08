@@ -1,4 +1,5 @@
 <script>
+  window.__gicleeI18nDefaults = {% render 'giclee-i18n-defaults-json' %};
   window.__gicleeI18n = {
     catalog_artists: {{ 'giclee.ui.catalog_artists' | t | json }},
     catalog_view_collection: {{ 'giclee.ui.catalog_view_collection' | t | json }},
@@ -64,7 +65,42 @@
     print_quality_hopeless: {{ 'giclee.ui.print_quality_hopeless' | t | json }},
     print_quality_critical_note: {{ 'giclee.ui.print_quality_critical_note' | t | json }},
     mockup_back: {{ 'actions.back' | t | json }},
-    add_to_cart: {{ 'actions.add_to_cart' | t | json }},
+    add_to_cart: {{ 'products.product.add_to_cart' | t | json }},
     adding_to_cart: {{ 'products.product.adding_to_cart' | t | json }},
   };
+  (function () {
+    var defaults = window.__gicleeI18nDefaults || {};
+    var stdDefaults = {
+      mockup_back: 'Powrót',
+      add_to_cart: 'Dodaj do koszyka',
+      adding_to_cart: 'Trwa dodawanie...'
+    };
+    var bag = window.__gicleeI18n || {};
+
+    function isMissing(val) {
+      return (
+        val == null ||
+        val === '' ||
+        (typeof val === 'string' &&
+          (/translation missing/i.test(val) || /: pl\./i.test(val) || /: en\./i.test(val)))
+      );
+    }
+
+    Object.keys(defaults).forEach(function (key) {
+      if (isMissing(bag[key])) {
+        bag[key] = defaults[key];
+      }
+    });
+    Object.keys(stdDefaults).forEach(function (key) {
+      if (isMissing(bag[key])) {
+        bag[key] = stdDefaults[key];
+      }
+    });
+
+    window.__gicleeI18n = bag;
+    window.__gicleeI18nGet = function (key, fallback) {
+      var v = bag[key];
+      return isMissing(v) ? fallback : v;
+    };
+  })();
 </script>

@@ -79,19 +79,18 @@ def test_selection_populate_scheduled_on_priority_path(gicleeframe_view) -> None
     element = _sample_merged("elem-pop", "section_legacy")
     view._merged = [element]
     view._rebuild_page_model_cache()
-    populate_calls: list[tuple[str, int]] = []
+    swap_calls: list[tuple[str, int]] = []
 
     with patch.object(
         view,
-        "_populate_editor_deferred",
-        side_effect=lambda eid, gen: populate_calls.append((eid, gen)),
+        "_schedule_atomic_swap_populate",
+        side_effect=lambda eid, gen: swap_calls.append((eid, gen)),
     ):
         with patch.object(view, "_highlight_section_row"):
-            with patch.object(view, "_show_editor_selection_pending_state"):
-                view._select_element("elem-pop")
+            view._select_element("elem-pop")
 
-    assert len(populate_calls) == 1
-    assert populate_calls[0] == ("elem-pop", view._selection_generation)
+    assert len(swap_calls) == 1
+    assert swap_calls[0] == ("elem-pop", view._selection_generation)
 
 
 def test_deferred_types_use_priority_schedule_path(gicleeframe_view) -> None:
@@ -99,19 +98,18 @@ def test_deferred_types_use_priority_schedule_path(gicleeframe_view) -> None:
     element = _sample_merged("elem-media", "media_section")
     view._merged = [element]
     view._rebuild_page_model_cache()
-    scheduled: list[tuple[str, int, str]] = []
+    swap_calls: list[tuple[str, int]] = []
 
-    def _capture_populate(element_id: str, generation: int, *, element_type: str) -> None:
-        scheduled.append((element_id, generation, element_type))
+    with patch.object(
+        view,
+        "_schedule_atomic_swap_populate",
+        side_effect=lambda eid, gen: swap_calls.append((eid, gen)),
+    ):
+        with patch.object(view, "_highlight_section_row"):
+            view._select_element("elem-media")
 
-    with patch.object(view, "_schedule_selection_populate", side_effect=_capture_populate):
-        with patch.object(view, "_populate_editor_deferred"):
-            with patch.object(view, "_highlight_section_row"):
-                with patch.object(view, "_show_editor_selection_pending_state"):
-                    view._select_element("elem-media")
-
-    assert len(scheduled) == 1
-    assert scheduled[0] == ("elem-media", view._selection_generation, "media_section")
+    assert len(swap_calls) == 1
+    assert swap_calls[0] == ("elem-media", view._selection_generation)
 
 
 def test_background_job_yields_during_active_selection_priority(gicleeframe_view) -> None:
@@ -175,27 +173,22 @@ def test_rapid_clicks_cancel_stale_jobs_last_generation_wins(gicleeframe_view) -
     second = _sample_merged("elem-b", "media_section")
     view._merged = [first, second]
     view._rebuild_page_model_cache()
-    scheduled: list[tuple[str, int]] = []
+    swap_calls: list[tuple[str, int]] = []
 
-    def _capture_populate(element_id: str, generation: int, *, element_type: str) -> None:
-        scheduled.append((element_id, generation))
-        view._schedule_selection_job(
-            0,
-            lambda eid=element_id, gen=generation: view._populate_editor_deferred(eid, gen),
-        )
+    def _capture_swap(element_id: str, generation: int) -> None:
+        swap_calls.append((element_id, generation))
 
-    with patch.object(view, "_schedule_selection_populate", side_effect=_capture_populate):
+    with patch.object(view, "_schedule_atomic_swap_populate", side_effect=_capture_swap):
         with patch.object(view, "_highlight_section_row"):
-            with patch.object(view, "_show_editor_selection_pending_state"):
-                with patch.object(view, "_populate_editor") as populate_mock:
-                    view._select_element("elem-a")
-                    gen_a = view._selection_generation
-                    view._select_element("elem-b")
-                    gen_b = view._selection_generation
+            with patch.object(view, "_populate_editor") as populate_mock:
+                view._select_element("elem-a")
+                gen_a = view._selection_generation
+                view._select_element("elem-b")
+                gen_b = view._selection_generation
 
-                    view._populate_editor_deferred("elem-a", gen_a)
-                    view._populate_editor_deferred("elem-b", gen_b)
+                view._run_atomic_swap_populate("elem-a", gen_a)
+                view._run_atomic_swap_populate("elem-b", gen_b)
 
-    assert scheduled[-1] == ("elem-b", gen_b)
+    assert swap_calls[-1] == ("elem-b", gen_b)
     populate_mock.assert_called_once()
     assert view._selected_id == "elem-b"

@@ -53,6 +53,8 @@
     <script src="{{ 'giclee-hero-video-collage.js' | asset_url }}" defer></script>
     <script src="{{ 'giclee-hero-video-collage-player.js' | asset_url }}" defer></script>
     {{ 'giclee-hero-video-collage.css' | asset_url | stylesheet_tag }}
+    {{ 'giclee-home-final-difference.css' | asset_url | stylesheet_tag }}
+    {{ 'giclee-home-studio-reveal.css' | asset_url | stylesheet_tag }}
     <link
       rel="preload"
       as="image"
@@ -194,12 +196,12 @@
   border-bottom: 1px solid rgba(201,168,76,0.2);
   box-shadow: 0 60px 120px rgba(0,0,0,0.95);
   display: grid;
-  grid-template-columns: 1fr 560px;
+  grid-template-columns: 1fr var(--giclee-catalog-preview-width, 560px);
   opacity: 0;
   visibility: hidden;
   transform: translateY(-8px);
   transition: opacity 0.4s ease, transform 0.4s ease, visibility 0.4s;
-  max-height: 82vh;
+  max-height: var(--giclee-catalog-panel-max-height, 82vh);
   overflow: hidden;
   font-family: 'Inter', sans-serif;
 }
@@ -224,7 +226,7 @@
 
 .giclee-artists-columns {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--giclee-catalog-list-columns, 3), minmax(0, 1fr));
   gap: 32px;
   flex: 1;
   align-items: start;
@@ -385,7 +387,7 @@
     <div class="splash-content">
       <p class="splash-title">Giclée Art</p>
       <div class="splash-line"></div>
-      <p class="splash-sub">{{ 'giclee.ui.splash_subtitle' | t }}</p>
+      <p class="splash-sub">{% render 'giclee-ui-t', key: 'giclee.ui.splash_subtitle', fallback: 'Witamy w świecie sztuki' %}</p>
     </div>
   </div>
   {% endunless %}
@@ -755,16 +757,83 @@
       to   { opacity: 1; transform: translateY(0); }
     }
     .contact-form__form-row,
-    .contact-form__form > .contact-form__input,
     .contact-form__form > .contact-form__input--textarea,
     .contact-form__form > *:last-child {
       opacity: 0;
       animation: fieldReveal 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
-    .contact-form__form-row                             { animation-delay: 0.8s; }
-    .contact-form__form > .contact-form__input          { animation-delay: 0.98s; }
-    .contact-form__form > .contact-form__input--textarea { animation-delay: 1.16s; }
-    .contact-form__form > *:last-child                  { animation-delay: 1.34s; }
+    .contact-form__form-row                              { animation-delay: 0.8s; }
+    .contact-form__form > .contact-form__input--textarea { animation-delay: 0.98s; }
+    .contact-form__form > *:last-child                   { animation-delay: 1.16s; }
+    {% endif %}
+
+    {% if template.suffix == 'contact' %}
+    /* ===== CONTACT PAGE — sticky footer, bez scrolla strony (desktop) ===== */
+    @media (min-width: 750px) {
+      html:has(main .contact-form) {
+        overflow: hidden;
+        height: 100svh;
+      }
+
+      body:has(main .contact-form) {
+        min-height: 100svh;
+        max-height: 100svh;
+        overflow: hidden;
+      }
+
+      body:has(main .contact-form) #header-group {
+        flex-shrink: 0;
+      }
+
+      body:has(main .contact-form) #MainContent {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      body:has(main .contact-form) #MainContent > .shopify-section {
+        flex-shrink: 0;
+        min-height: 0;
+      }
+
+      body:has(main .contact-form) #MainContent > .shopify-section.hero-wrapper .hero {
+        --hero-min-height: clamp(120px, 16svh, 22svh);
+        min-height: var(--hero-min-height);
+      }
+
+      body:has(main .contact-form) #MainContent > .shopify-section:has([data-testid^="divider-"]) .section {
+        padding-block: 8px !important;
+      }
+
+      body:has(main .contact-form) #MainContent > .shopify-section:has(.contact-form) {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      body:has(main .contact-form) #MainContent > .shopify-section:has(.contact-form) .section {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding-block-start: 16px !important;
+        padding-block-end: 24px !important;
+      }
+
+      body:has(main .contact-form) .contact-form__input--textarea {
+        min-height: 120px;
+        max-height: 22vh;
+      }
+
+      body:has(main .contact-form) footer {
+        flex-shrink: 0;
+      }
+    }
     {% endif %}
 
     #page-transition:not(.closing):not(.pt-init) .pt-seam {
@@ -1802,35 +1871,128 @@ const imageCache = {};
 let currentPreviewSrc = null;
 let activePreviewHandle = null;
 
-// Ukryci artysci w panelu Katalog i menu mobilnym (handle kolekcji Shopify).
-// Kolekcje nadal dzialaja pod bezposrednim URL; znika tylko pozycja w nawigacji.
-// Aktualizuj te tablice na prosbe (np. "ukryj X", "odkryj Y").
-const HIDDEN_CATALOG_ARTISTS = new Set([
-  'francois-boucher', // Boucher, François
-  'william-bradford', // Bradford, William
-  'paul-fisher', // Fisher, Paul
-  'jean-auguste-ingres', // Ingres, Jean-Auguste
-  'peder-severin-kryer', // Krøyer, Peder Severin
-  'edmund-blair-leighton', // Leighton, Edmund Blair
-  'charles-sillem-lidderdale', // Lidderdale, Charles Sillem
-  'giordano-luca', // Luca, Giordano
-  'anders-andersen-lundby', // Lundby, Anders Andersen
-  'johan-thomas-lundbye', // Lundbye, Johan Thomas
-  'anton-melbye', // Melbye, Anton
-  'jean-francois-millet', // Millet, Jean-François
-  'claude-monet', // Monet, Claude
-  'thomas-moran', // Moran, Thomas
-  'bartolome-esteban-murillo', // Murillo, Bartolomé Esteban
-  'harmenszoon-van-rijn-rembrandt', // Rembrandt, Harmenszoon van Rijn
-  'guido-reni', // Reni, Guido
-  'aguste-renoir', // Renoir, Aguste
-  'willem-roelofs', // Roelofs, Willem
-  'dante-gabriel-rossetti', // Rossetti, Dante Gabriel
-  'rafael-santi', // Santi, Rafael
-  'alfred-sisley', // Sisley, Alfred
-  'tycjan-tiziano-vecellio', // Tycjan (Tiziano Vecellio)
-  'claude-joseph-vernet', // Vernet, Claude Joseph
-]);
+// Konfiguracja panelu Katalog — edytowana w GicleeApp (Komponenty/submenukatalog).
+// Źródło: assets/giclee-catalog-submenu-config.json
+var DEFAULT_CATALOG_SUBMENU_CONFIG = {
+  version: 1,
+  list: {
+    columns: 3,
+    show_header: true,
+    hidden_artists_text: [
+      'francois-boucher',
+      'william-bradford',
+      'paul-fisher',
+      'jean-auguste-ingres',
+      'peder-severin-kryer',
+      'edmund-blair-leighton',
+      'charles-sillem-lidderdale',
+      'giordano-luca',
+      'anders-andersen-lundby',
+      'johan-thomas-lundbye',
+      'anton-melbye',
+      'jean-francois-millet',
+      'claude-monet',
+      'thomas-moran',
+      'bartolome-esteban-murillo',
+      'harmenszoon-van-rijn-rembrandt',
+      'guido-reni',
+      'aguste-renoir',
+      'willem-roelofs',
+      'dante-gabriel-rossetti',
+      'rafael-santi',
+      'alfred-sisley',
+      'tycjan-tiziano-vecellio',
+      'claude-joseph-vernet'
+    ].join('\n')
+  },
+  animation: {
+    open_reveal_delay_ms: 120,
+    max_cascade_ms: 2200,
+    min_interval_ms: 20,
+    max_interval_ms: 92,
+    interval_curve: 1.75,
+    link_transition_ms: 220
+  },
+  appearance: {
+    preview_width_px: 560,
+    panel_max_height_vh: 82
+  }
+};
+
+var catalogSubmenuConfig = DEFAULT_CATALOG_SUBMENU_CONFIG;
+var HIDDEN_CATALOG_ARTISTS = new Set();
+var CATALOG_LIST_COLUMNS = 3;
+var CATALOG_SHOW_HEADER = true;
+var catalogSubmenuConfigLoaded = false;
+var catalogSubmenuConfigUrl = {{ 'giclee-catalog-submenu-config.json' | asset_url | json }};
+
+function _catalogCfgNum(value, fallback) {
+  var n = Number(value);
+  return isFinite(n) ? n : fallback;
+}
+
+function _catalogHiddenHandlesFromText(text) {
+  return String(text || '')
+    .split(/[\n,]+/)
+    .map(function(handle) { return handle.replace(/#.*/, '').trim().toLowerCase(); })
+    .filter(Boolean);
+}
+
+function applyCatalogSubmenuConfig(cfg) {
+  var merged = DEFAULT_CATALOG_SUBMENU_CONFIG;
+  if (cfg && typeof cfg === 'object') {
+    merged = {
+      version: cfg.version || DEFAULT_CATALOG_SUBMENU_CONFIG.version,
+      list: Object.assign({}, DEFAULT_CATALOG_SUBMENU_CONFIG.list, cfg.list || {}),
+      animation: Object.assign({}, DEFAULT_CATALOG_SUBMENU_CONFIG.animation, cfg.animation || {}),
+      appearance: Object.assign({}, DEFAULT_CATALOG_SUBMENU_CONFIG.appearance, cfg.appearance || {})
+    };
+  }
+
+  catalogSubmenuConfig = merged;
+  CATALOG_LIST_COLUMNS = Math.max(1, Math.min(5, Math.round(_catalogCfgNum(merged.list.columns, 3))));
+  CATALOG_SHOW_HEADER = merged.list.show_header !== false;
+  HIDDEN_CATALOG_ARTISTS = new Set(_catalogHiddenHandlesFromText(merged.list.hidden_artists_text));
+
+  var previewWidth = Math.max(320, Math.round(_catalogCfgNum(merged.appearance.preview_width_px, 560)));
+  var panelMaxHeight = Math.max(40, Math.min(100, Math.round(_catalogCfgNum(merged.appearance.panel_max_height_vh, 82))));
+  document.documentElement.style.setProperty('--giclee-catalog-preview-width', previewWidth + 'px');
+  document.documentElement.style.setProperty('--giclee-catalog-panel-max-height', panelMaxHeight + 'vh');
+  document.documentElement.style.setProperty('--giclee-catalog-list-columns', String(CATALOG_LIST_COLUMNS));
+}
+
+function _parseCatalogSubmenuConfigText(raw) {
+  if (!raw) return null;
+  var text = String(raw).replace(/^\s+/, '');
+  if (text.indexOf('/*') === 0) {
+    var end = text.indexOf('*/');
+    if (end >= 0) text = text.slice(end + 2).replace(/^\s+/, '');
+  }
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    return null;
+  }
+}
+
+function loadCatalogSubmenuConfig(callback) {
+  if (!catalogSubmenuConfigUrl) {
+    applyCatalogSubmenuConfig(null);
+    catalogSubmenuConfigLoaded = true;
+    if (callback) callback();
+    return;
+  }
+  fetch(catalogSubmenuConfigUrl, { credentials: 'same-origin' })
+    .then(function(response) { return response.ok ? response.text() : null; })
+    .catch(function() { return null; })
+    .then(function(raw) {
+      applyCatalogSubmenuConfig(_parseCatalogSubmenuConfigText(raw));
+      catalogSubmenuConfigLoaded = true;
+      if (callback) callback();
+    });
+}
+
+applyCatalogSubmenuConfig(null);
 
 function shopifyUrlRoot() {
   var root = (window.Shopify && window.Shopify.routes && window.Shopify.routes.root) || '/';
@@ -1873,8 +2035,6 @@ function applyHiddenCatalogArtistsToNavigation() {
     }
   });
 }
-
-const CATALOG_LIST_COLUMNS = 3;
 
 var CATALOG_SURNAME_PARTICLES = {
   van: 1, von: 1, de: 1, da: 1, del: 1, della: 1, di: 1, du: 1,
@@ -1966,7 +2126,7 @@ function populateCatalogArtistList(listCol, artistLinks, showHeader) {
     return catalogArtistSortKey(a.text).localeCompare(catalogArtistSortKey(b.text));
   });
 
-  if (showHeader) {
+  if (showHeader && CATALOG_SHOW_HEADER) {
     const header = document.createElement('div');
     header.className = 'giclee-artists-list-header';
     header.textContent = (window.__gicleeI18n && window.__gicleeI18n.catalog_artists) || 'Artyści';
@@ -2286,6 +2446,13 @@ function initGalleryCatalog() {
   }
 
   function staggerPanelLinks() {
+    var anim = (catalogSubmenuConfig && catalogSubmenuConfig.animation) || {};
+    var openRevealDelay = _catalogCfgNum(anim.open_reveal_delay_ms, 120);
+    var maxCascadeMs = _catalogCfgNum(anim.max_cascade_ms, 2200);
+    var minIntervalMs = _catalogCfgNum(anim.min_interval_ms, 20);
+    var maxIntervalMs = _catalogCfgNum(anim.max_interval_ms, 92);
+    var intervalCurve = _catalogCfgNum(anim.interval_curve, 1.75);
+    var linkTransitionMs = _catalogCfgNum(anim.link_transition_ms, 220);
     var links = listCol.querySelectorAll('a');
     resetPanelLinks();
     links.forEach(function(link) {
@@ -2298,20 +2465,19 @@ function initGalleryCatalog() {
     });
 
     requestAnimationFrame(function() {
-      var openRevealDelay = 120;
-      var maxCascadeMs = Math.min(2200, Math.max(1300, Math.max(0, links.length - 1) * 24));
-      var minIntervalMs = 20;
-      var maxIntervalMs = 92;
-      var intervalCurve = 1.75; // stronger slow-down near the end
-      var intervals = [];
+      var maxCascadeMsClamped = Math.min(4000, Math.max(400, maxCascadeMs));
+      var minIntervalMsClamped = Math.max(4, minIntervalMs);
+      var maxIntervalMsClamped = Math.max(minIntervalMsClamped, maxIntervalMs);
+      var intervalCurveClamped = Math.max(0.5, intervalCurve);
       var totalIntervals = 0;
+      var intervals = [];
       for (var k = 0; k < Math.max(0, links.length - 1); k++) {
         var q = (links.length - 2) > 0 ? (k / (links.length - 2)) : 1;
-        var rawInterval = minIntervalMs + (maxIntervalMs - minIntervalMs) * Math.pow(q, intervalCurve);
+        var rawInterval = minIntervalMsClamped + (maxIntervalMsClamped - minIntervalMsClamped) * Math.pow(q, intervalCurveClamped);
         intervals.push(rawInterval);
         totalIntervals += rawInterval;
       }
-      var intervalScale = totalIntervals > 0 ? (maxCascadeMs / totalIntervals) : 1;
+      var intervalScale = totalIntervals > 0 ? (maxCascadeMsClamped / totalIntervals) : 1;
       var cumulativeDelay = 0;
 
       links.forEach(function(link, i) {
@@ -2319,7 +2485,7 @@ function initGalleryCatalog() {
         var timer = setTimeout(function() {
           link.style.visibility = 'visible';
           link.offsetHeight;
-          link.style.transition = 'opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)';
+          link.style.transition = 'opacity ' + (linkTransitionMs / 1000) + 's cubic-bezier(0.16, 1, 0.3, 1), transform ' + (linkTransitionMs / 1000) + 's cubic-bezier(0.16, 1, 0.3, 1)';
           link.style.opacity = '1';
           link.style.transform = 'translateY(0)';
           link.classList.add('is-in');
@@ -2454,9 +2620,21 @@ function initGalleryCatalog() {
 }
 
 let attempts = 0;
-const interval = setInterval(function() {
+let catalogSubmenuBootstrapped = false;
+
+function bootstrapGalleryCatalog() {
   applyHiddenCatalogArtistsToNavigation();
   initGalleryCatalog();
+}
+
+loadCatalogSubmenuConfig(function() {
+  catalogSubmenuBootstrapped = true;
+  bootstrapGalleryCatalog();
+});
+
+const interval = setInterval(function() {
+  if (!catalogSubmenuBootstrapped) return;
+  bootstrapGalleryCatalog();
   attempts++;
   if (attempts > 20) clearInterval(interval);
 }, 500);
@@ -3121,8 +3299,11 @@ const interval = setInterval(function() {
       }
 
       function gicleeT(key, fallback) {
+        if (typeof window.__gicleeI18nGet === 'function') return window.__gicleeI18nGet(key, fallback);
         var bag = window.__gicleeI18n || {};
-        return bag[key] || fallback;
+        var v = bag[key];
+        if (!v || (typeof v === 'string' && /translation missing/i.test(v))) return fallback;
+        return v;
       }
 
       var pmSizeToVariant = { M: 'M', S: 'M', L: 'L', XL: 'XL' };

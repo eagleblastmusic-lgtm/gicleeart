@@ -12,9 +12,13 @@ from pathlib import Path
 from tkinter import filedialog, messagebox, scrolledtext, simpledialog, ttk
 from typing import Any
 
+from Komponenty._shared.recent_images import add_recent_image, list_recent_images
+from Komponenty._shared.tkdnd_safe import parse_dnd_files, register_drop_target
 from Komponenty._shared.toast import show_toast
 from Komponenty._shared.window_geometry import position_toplevel_screen_center
 from PIL import Image, ImageTk
+
+from .image_object_y import build_object_y_controls, object_y_field_id
 
 from .config import PageEditorConfig
 from .features import (
@@ -24,6 +28,7 @@ from .features import (
     restore_backup,
     validate_page,
 )
+from .section_background_ui import open_section_background_dialog
 from .service_base import (
     apply_all_zone_values,
     apply_zone_values,
@@ -31,15 +36,18 @@ from .service_base import (
     deploy_theme,
     fetch_thumbnail_bytes,
     load_zone_values,
+    normalize_video_ref,
     preview_url,
     save_template,
-    shopify_ref_label,
     upload_image,
+    upload_video,
 )
+from Komponenty.stronaglowna.service import _parse_section_background
 from .types import TemplateField, TemplateZone, zone_by_id
 from . import variants as varmod
 
 _IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
+_VIDEO_SUFFIXES = {".mp4", ".webm", ".mov"}
 _THUMB_SIZE = (128, 96)
 
 
@@ -423,14 +431,17 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
 
     def _build_field_widget(zone: TemplateZone, fld: TemplateField, row: int) -> None:
         zid = zone.zone_id
-        ttk.Label(editor_inner, text=fld.label, font=("", 9, "bold")).grid(
-            row=row, column=0, sticky="nw", pady=(8, 2), padx=(0, 8)
-        )
+        ttk.Label(
+            editor_inner,
+            text=fld.label,
+            font=("", 9, "bold"),
+            wraplength=480,
+        ).grid(row=row, column=0, sticky="nw", pady=(8, 2), padx=(0, 8))
         if fld.hint:
             ttk.Label(editor_inner, text=fld.hint, foreground="#777", wraplength=480).grid(
                 row=row, column=1, sticky="w", pady=(8, 2)
             )
-            row += 1
+        row += 1
 
         if fld.kind in ("heading", "body", "text", "link"):
             var = tk.StringVar(value=str(_zone_value(zid, fld.field_id) or ""))
@@ -464,33 +475,180 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
                 row=row, column=0, columnspan=2, sticky="w", pady=(0, 6)
             )
             var.trace_add("write", lambda *_a, v=var, fid=fld.field_id: _set_zone_value(zid, fid, v.get()))
-        elif fld.kind == "shopify_image":
+        elif fld.kind in ("shopify_image", "shopify_video"):
+            is_video = fld.kind == "shopify_video"
+            suffixes = _VIDEO_SUFFIXES if is_video else _IMAGE_SUFFIXES
             frame = ttk.Frame(editor_inner)
             frame.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(0, 6))
             ref = str(_zone_value(zid, fld.field_id) or "")
+            if ref:
+                add_recent_image(ref)
             thumb = _render_thumb(frame, ref)
             thumb.pack(side="left")
             ref_var = tk.StringVar(value=ref)
+            fid = fld.field_id
 
-            def _pick_image(fid: str = fld.field_id) -> None:
-                path = filedialog.askopenfilename(
-                    parent=host,
-                    filetypes=[("Obrazy", "*.jpg *.jpeg *.png *.webp")],
-                )
-                if not path:
+            def _apply_new_ref(new_ref: str, _fid: str = fid, _video: bool = is_video) -> None:
+                new_ref = (new_ref or "").strip()
+                if not new_ref:
                     return
+                if _video:
+                    new_ref = normalize_video_ref(new_ref)
+                _set_zone_value(zid, _fid, new_ref)
+                add_recent_image(new_ref)
+                _render_zone_editor()
+
+            def _upload_from_path(path: Path, _video: bool = is_video) -> None:
                 try:
-                    new_ref = upload_image(Path(path))
-                    _set_zone_value(zid, fid, new_ref)
-                    _render_zone_editor()
+                    new_ref = upload_video(path) if _video else upload_image(path)
+                    _apply_new_ref(new_ref)
+                    show_toast(host, f"Wgrano: {shopify_ref_label(new_ref)}")
                 except Exception as exc:
                     messagebox.showerror(config.app_title, str(exc), parent=host)
 
-            ttk.Button(frame, text="Wgraj…", command=_pick_image).pack(side="left", padx=8)
-            ttk.Entry(frame, textvariable=ref_var, width=40).pack(side="left", fill="x", expand=True)
+            def _pick_media(_video: bool = is_video) -> None:
+                if _video:
+                    filetypes = [("Filmy", "*.mp4 *.webm *.mov")]
+                else:
+                    filetypes = [("Obrazy", "*.jpg *.jpeg *.png *.webp")]
+                path = filedialog.askopenfilename(parent=host, filetypes=filetypes)
+                if not path:
+                    return
+                _upload_from_path(Path(path))
+
+            def _on_media_drop(event: Any, _suffixes: set[str] = suffixes, _video: bool = is_video) -> None:
+                data = getattr(event, "data", "") or ""
+                paths = parse_dnd_files(data)
+                matched = [p for p in paths if p.suffix.lower() in _suffixes]
+                if not matched:
+                    warn = (
+                        "Upuść plik wideo (MP4, WebM, MOV)."
+                        if _video
+                        else "Upuść plik graficzny (JPG, PNG, WebP)."
+                    )
+                    messagebox.showwarning(config.app_title, warn, parent=host)
+                    return
+                _upload_from_path(matched[0])
+
+            def _show_recent_menu(anchor: tk.Widget) -> None:
+                recents = list_recent_images()
+                popup = tk.Toplevel(host)
+                popup.wm_overrideredirect(True)
+                popup.configure(background="#2b2b2b", borderwidth=1, relief="solid")
+                popup.wm_geometry(
+                    f"+{anchor.winfo_rootx()}+{anchor.winfo_rooty() + anchor.winfo_height()}"
+                )
+
+                if not recents:
+                    ttk.Label(popup, text="(brak historii)", padding=10).pack()
+                    popup.after(50, lambda: popup.bind("<FocusOut>", lambda _e: popup.destroy()))
+                    popup.focus_set()
+                    return
+
+                thumb_cache: dict[str, Any] = {}
+
+                container = ttk.Frame(popup, padding=4)
+                container.pack(fill="both", expand=True)
+                listbox = tk.Listbox(
+                    container,
+                    height=min(len(recents), 12),
+                    width=34,
+                    activestyle="dotbox",
+                    exportselection=False,
+                )
+                for rec_ref in recents:
+                    listbox.insert("end", shopify_ref_label(rec_ref))
+                listbox.grid(row=0, column=0, sticky="ns")
+                scroll = ttk.Scrollbar(container, orient="vertical", command=listbox.yview)
+                listbox.configure(yscrollcommand=scroll.set)
+                scroll.grid(row=0, column=1, sticky="ns")
+
+                preview = ttk.Label(
+                    container,
+                    text="Najedź, aby zobaczyć podgląd",
+                    width=20,
+                    anchor="center",
+                    justify="center",
+                )
+                preview.grid(row=0, column=2, sticky="nsew", padx=(8, 0))
+                container.grid_columnconfigure(2, minsize=140)
+
+                def _load_preview(idx: int) -> None:
+                    if idx < 0 or idx >= len(recents):
+                        return
+                    ref = recents[idx]
+                    if ref not in thumb_cache:
+                        photo = None
+                        try:
+                            data = fetch_thumbnail_bytes(shopify_ref=ref)
+                            if data:
+                                img = Image.open(io.BytesIO(data))
+                                img.thumbnail((128, 128))
+                                photo = ImageTk.PhotoImage(img)
+                        except Exception:
+                            photo = None
+                        thumb_cache[ref] = photo
+                    photo = thumb_cache[ref]
+                    if photo is not None:
+                        preview.configure(image=photo, text="")
+                        preview.image = photo  # type: ignore[attr-defined]
+                    else:
+                        preview.configure(image="", text="brak\npodglądu")
+
+                def _on_motion(event: tk.Event) -> None:  # type: ignore[type-arg]
+                    idx = listbox.nearest(event.y)
+                    if idx != getattr(listbox, "_hover_idx", -1):
+                        listbox._hover_idx = idx  # type: ignore[attr-defined]
+                        listbox.selection_clear(0, "end")
+                        listbox.selection_set(idx)
+                        _load_preview(idx)
+
+                def _apply_selected(_event: tk.Event | None = None) -> None:  # type: ignore[type-arg]
+                    sel = listbox.curselection()
+                    if sel:
+                        chosen = recents[int(sel[0])]
+                        popup.destroy()
+                        _apply_new_ref(chosen)
+
+                listbox.bind("<Motion>", _on_motion)
+                listbox.bind("<Double-Button-1>", _apply_selected)
+                listbox.bind("<Return>", _apply_selected)
+                popup.bind("<Escape>", lambda _e: popup.destroy())
+                popup.bind("<FocusOut>", lambda _e: popup.destroy())
+                listbox.selection_set(0)
+                listbox.focus_set()
+                _load_preview(0)
+
+            upload_label = "Wgraj film…" if is_video else "Wgraj…"
+            ttk.Button(frame, text=upload_label, command=_pick_media).pack(side="left", padx=8)
+            recent_btn = ttk.Button(frame, text="Ostatnie ▾")
+            recent_btn.configure(command=lambda b=recent_btn: _show_recent_menu(b))
+            recent_btn.pack(side="left", padx=(0, 8))
+            delete_label = "Usuń film" if is_video else "Usuń grafikę"
+            ttk.Button(
+                frame,
+                text=delete_label,
+                command=lambda _fid=fid: (_set_zone_value(zid, _fid, ""), _render_zone_editor()),
+            ).pack(side="left", padx=(0, 8))
+            entry = ttk.Entry(frame, textvariable=ref_var, width=40)
+            entry.pack(side="left", fill="x", expand=True)
             ref_var.trace_add(
-                "write", lambda *_a, v=ref_var, fid=fld.field_id: _set_zone_value(zid, fid, v.get())
+                "write", lambda *_a, v=ref_var, _fid=fid: _set_zone_value(zid, _fid, v.get())
             )
+
+            # Drag & drop pliku z Eksploratora (degraduje bez tkinterdnd2).
+            for target in (frame, thumb, entry):
+                register_drop_target(target, on_drop=_on_media_drop)
+
+            if not is_video:
+                crop_host = ttk.Frame(editor_inner)
+                crop_host.grid(row=row + 1, column=0, columnspan=2, sticky="ew", pady=(0, 6))
+                oy_key = object_y_field_id(fid)
+                build_object_y_controls(
+                    crop_host,
+                    initial=_zone_value(zid, oy_key),
+                    on_change=lambda value, key=oy_key: _set_zone_value(zid, key, value),
+                )
         else:
             var = tk.StringVar(value=str(_zone_value(zid, fld.field_id) or ""))
             ttk.Entry(editor_inner, textvariable=var, width=64).grid(
@@ -519,7 +677,57 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             row=1, column=0, columnspan=2, sticky="w", pady=(0, 8)
         )
         row = 2
+        bg_fld = next((f for f in zone.fields if f.kind == "section_background"), None)
+        if bg_fld is not None:
+            bg_status_var = tk.StringVar()
+
+            def _bg_status_text() -> str:
+                raw = state["zone_values"].get(zid, {}).get(bg_fld.field_id, "")
+                bg_val = _parse_section_background(raw)
+                ref = bg_val.get("ref", "")
+                if not ref:
+                    return "(brak tła)"
+                prefix = "film: " if bg_val.get("media") == "video" else ""
+                label = shopify_ref_label(ref)
+                return f"({prefix}{label})" if label != "(brak)" else "(brak tła)"
+
+            bg_status_var.set(_bg_status_text())
+
+            def _open_bg() -> None:
+                def _get_widget(key: str) -> Any:
+                    return state["widgets"].get(key)
+
+                def _set_widget(key: str, value: Any) -> None:
+                    state["widgets"][key] = value
+
+                open_section_background_dialog(
+                    host,
+                    zone_label=zone.label,
+                    bg_field_id=bg_fld.field_id,
+                    page_label=config.intro_title,
+                    initial_value=state["zone_values"].get(zid, {}).get(bg_fld.field_id),
+                    get_widget=_get_widget,
+                    set_widget=_set_widget,
+                    get_zone_bg=lambda: _parse_section_background(
+                        state["zone_values"].get(zid, {}).get(bg_fld.field_id)
+                    ),
+                    set_zone_bg=lambda val: _set_zone_value(zid, bg_fld.field_id, val),
+                    mark_dirty=_mark_dirty,
+                    app_title=config.app_title,
+                    status_var=status_var,
+                )
+                bg_status_var.set(_bg_status_text())
+
+            ttk.Button(editor_inner, text="Tło…", command=_open_bg).grid(
+                row=row, column=0, sticky="w", pady=(0, 4)
+            )
+            ttk.Label(editor_inner, textvariable=bg_status_var, foreground="#666").grid(
+                row=row, column=1, sticky="w", pady=(0, 4)
+            )
+            row += 1
         for fld in zone.fields:
+            if fld.kind == "section_background":
+                continue
             _build_field_widget(zone, fld, row)
             row += 2
 

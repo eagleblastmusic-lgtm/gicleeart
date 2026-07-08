@@ -41,6 +41,7 @@ Komponenty inline (`blog`, `produkcja`, `limity`, `poczta`, …) wymagają `view
 | Objaw | Sprawdź |
 |-------|---------|
 | Edytor strony: pusty panel „Edycja sekcji” po kliknięciu sekcji | Naprawione w v1.25.1 — `_shared/theme_page_editor/gui_shell.py` (ramka edytora musi być dzieckiem `Canvas`, nie `LabelFrame`) |
+| Edytor strony: ucięte etykiety przy polach liczbowych (Spinbox) | Naprawione w v1.44.6 — `_shared/theme_page_editor/gui_shell.py` (etykieta i kontrolka w osobnych wierszach siatki) |
 
 ---
 

@@ -36,6 +36,7 @@ Folder kodu: `cursor-api/Komponenty/`
 | `stronablogu` | Strona blogu | [`stronablogu.md`](stronablogu.md) | skrót |
 | `faq` | FAQ | [`faq.md`](faq.md) | skrót |
 | `losujobraz` | Losuj Obraz | [`losujobraz.md`](losujobraz.md) | skrót |
+| `submenukatalog` | Submenu katalog | [`submenukatalog.md`](submenukatalog.md) | skrót |
 | `obrazy` | Obrazy | [`obrazy.md`](obrazy.md) | skrót |
 | `produkcja` | Produkcja | [`produkcja.md`](produkcja.md) | pełny |
 | `passepartout` | Passe-partout | [`passepartout.md`](passepartout.md) | skrót |

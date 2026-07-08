@@ -1,0 +1,503 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "main-page",
+      "blocks": {
+        "heading": {
+          "type": "text",
+          "name": "Title",
+          "settings": {
+            "text": "<p>MANIFEST MARKI</p>",
+            "width": "100%",
+            "max_width": "normal",
+            "alignment": "left",
+            "type_preset": "h2",
+            "font": "var(--font-primary--family)",
+            "font_size": "",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "color": "",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        },
+        "page-content": {
+          "type": "page-content",
+          "disabled": true,
+          "settings": {},
+          "blocks": {}
+        },
+        "text_nPizan": {
+          "type": "text",
+          "name": "t:names.text",
+          "settings": {
+            "text": "<p>Giclée Art opiera się na idei, że dzieło sztuki nie kończy się na obrazie.<br/><br/>Kończy się dopiero wtedy, gdy otrzymuje swoją ostateczną formę — spójną, archiwalną i gotową do ekspozycji.<br/><br/><br/>W pracy z materiałem wizualnym operuję na dwóch równoległych obszarach.<br/><br/>Pierwszym są obrazy malarskie — często stare, pożółkłe, zapomniane lub wymagające ponownego opracowania w formie reprodukcji. W tym procesie traktuję je jak materię kulturową, którą można przywrócić do życia poprzez precyzyjny druk Fine Art i świadomą oprawę. Dzięki temu odzyskują swoją obecność, głębię i możliwość funkcjonowania w przestrzeni współczesnej.<br/><br/>Drugim obszarem jest fotografia — zarówno autorska, jak i powierzona mi do realizacji. W tym przypadku nie odtwarzam przeszłości, lecz domykam proces twórczy, nadając obrazowi jego finalną, materialną formę.<br/><br/>Dopiero w formie wydruku i oprawy zyskują skalę, strukturę i relację ze światłem, które pozwalają im zaistnieć jako obiekt, a nie tylko zapis cyfrowy.<br/><br/>Wierzę, że fotografia i obraz w pełni „żyją” dopiero wtedy, gdy opuszczają ekran i zostają przeniesione do świata fizycznego.<br/><br/>Dopiero w formie wydruku i oprawy zyskują skalę, strukturę i relację ze światłem, które pozwalają im zaistnieć jako obiekt, a nie tylko zapis cyfrowy.<br/><br/>Dlatego każdy projekt traktuję jako proces przejścia<br/><br/>Od obrazu potencjalnego - do obrazu obecnego.<br/><br/>Od pliku — do obiektu.<br/><br/>Od informacji — do materii.</p>",
+            "width": "fit-content",
+            "max_width": "normal",
+            "alignment": "left",
+            "type_preset": "rte",
+            "font": "var(--font-body--family)",
+            "font_size": "1rem",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "color": "var(--color-foreground)",
+            "background": false,
+            "background_color": "#00000012",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "heading",
+        "page-content",
+        "text_nPizan"
+      ],
+      "disabled": true,
+      "settings": {
+        "content_direction": "column",
+        "gap": 32,
+        "color_scheme": "",
+        "padding-block-start": 40,
+        "padding-block-end": 80
+      }
+    },
+    "divider_AidLhU": {
+      "type": "divider",
+      "name": "t:names.divider_section",
+      "settings": {
+        "color_scheme": "scheme-58084d4c-a86e-4d0a-855e-a0966e5043f7",
+        "section_width": "full-width",
+        "thickness": 1,
+        "corner_radius": "square",
+        "width_percent": 100,
+        "alignment_horizontal": "center",
+        "padding-block-start": 16,
+        "padding-block-end": 16
+      }
+    },
+    "divider_wcBAHm": {
+      "type": "divider",
+      "name": "t:names.divider_section",
+      "settings": {
+        "color_scheme": "scheme-58084d4c-a86e-4d0a-855e-a0966e5043f7",
+        "section_width": "full-width",
+        "thickness": 1,
+        "corner_radius": "square",
+        "width_percent": 100,
+        "alignment_horizontal": "center",
+        "padding-block-start": 16,
+        "padding-block-end": 16
+      }
+    },
+    "media_with_content_D7REjd": {
+      "type": "media-with-content",
+      "blocks": {
+        "media": {
+          "type": "_media-without-appearance",
+          "static": true,
+          "settings": {
+            "media_type": "image",
+            "image": "shopify://shop_images/aristoteles_202409779.jpg",
+            "link": "",
+            "video_loop": true,
+            "video_autoplay": false,
+            "image_position": "contain",
+            "video_position": "cover"
+          },
+          "blocks": {}
+        },
+        "content": {
+          "type": "_content-without-appearance",
+          "static": true,
+          "settings": {
+            "horizontal_alignment_flex_direction_column": "center",
+            "vertical_alignment_flex_direction_column": "flex-end",
+            "gap": 24
+          },
+          "blocks": {
+            "text_UerD4k": {
+              "type": "text",
+              "name": "t:names.heading",
+              "settings": {
+                "text": "<h2>FILOZOFIA MARKI</h2>",
+                "width": "fit-content",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "rte",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "wrap": "pretty",
+                "color": "var(--color-foreground)",
+                "background": false,
+                "background_color": "#00000026",
+                "corner_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            },
+            "jumbo_text_Jpe7tA": {
+              "type": "jumbo-text",
+              "name": "t:names.jumbo_text",
+              "disabled": true,
+              "settings": {
+                "text": "filozofia marki",
+                "font": "heading",
+                "alignment": "right",
+                "line_height": "0.8",
+                "letter_spacing": "-0.03em",
+                "case": "uppercase",
+                "text_effect": "none",
+                "animation_repeat": false
+              },
+              "blocks": {}
+            },
+            "text_kdAGGw": {
+              "type": "text",
+              "name": "t:names.text",
+              "settings": {
+                "text": "<p>Giclée Art opiera się na idei, że dzieło sztuki nie kończy się na pliku cyfrowym.<br/><br/>Kończy się dopiero wtedy, gdy otrzymuje swoją ostateczną formę — spójną, archiwalną i gotową do ekspozycji.<br/><br/>W pracy z materiałem wizualnym operuję w dwóch równoległych obszarach.<br/><br/>Pierwszym są obrazy malarskie — często stare, pożółkłe, zapomniane lub wymagające ponownego opracowania w formie reprodukcji. W tym procesie traktuję je jak materię kulturową, którą można przywrócić do życia poprzez korekcję tonalną i kolorystyczną, precyzyjny druk Fine Art i świadomą oprawę. Dzięki temu odzyskują swoją obecność, głębię i możliwość funkcjonowania w przestrzeni współczesnej.<br/><br/>Drugim obszarem jest fotografia  powierzona mi do realizacji. W tym przypadku nie odtwarzam przeszłości, lecz domykam proces twórczy, nadając obrazowi jego finalną, materialną formę.<br/><br/>Dopiero w formie wydruku i oprawy grafika zyskuje skalę, strukturę i relację ze światłem, które pozwalają im zaistnieć jako obiekt, a nie tylko zapis cyfrowy.<br/><br/>Wierzę, że fotografia i obraz w pełni „żyją” dopiero wtedy, gdy opuszczają ekran i zostają przeniesione do świata fizycznego.<br/><br/>Dlatego każdy projekt traktuję jako proces przejścia<br/><br/>Od obrazu potencjalnego - do obrazu obecnego.<br/><br/>Od pliku — do obiektu.<br/><br/>Od informacji — do materii.</p>",
+                "width": "fit-content",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "rte",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "wrap": "pretty",
+                "color": "var(--color-foreground)",
+                "background": false,
+                "background_color": "#00000026",
+                "corner_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "text_UerD4k",
+            "jumbo_text_Jpe7tA",
+            "text_kdAGGw"
+          ]
+        }
+      },
+      "name": "t:names.editorial_jumbo_text",
+      "settings": {
+        "media_position": "right",
+        "media_width": "medium",
+        "media_height": "60svh",
+        "section_width": "page-width",
+        "extend_media": true,
+        "color_scheme": "scheme-8eb870ca-9301-4cb6-aca4-90e92bbd3bf8",
+        "padding-block-start": 0,
+        "padding-block-end": 0
+      }
+    },
+    "media_with_content_LgNBmd": {
+      "type": "media-with-content",
+      "blocks": {
+        "media": {
+          "type": "_media-without-appearance",
+          "static": true,
+          "settings": {
+            "media_type": "image",
+            "image": "shopify://shop_images/aristoteles_202409779.jpg",
+            "link": "",
+            "video_loop": true,
+            "video_autoplay": false,
+            "image_position": "cover",
+            "video_position": "cover"
+          },
+          "blocks": {}
+        },
+        "content": {
+          "type": "_content-without-appearance",
+          "static": true,
+          "settings": {
+            "horizontal_alignment_flex_direction_column": "center",
+            "vertical_alignment_flex_direction_column": "space-between",
+            "gap": 24
+          },
+          "blocks": {
+            "group_dimbtz": {
+              "type": "group",
+              "settings": {
+                "content_direction": "column",
+                "vertical_on_mobile": true,
+                "horizontal_alignment": "flex-start",
+                "vertical_alignment": "center",
+                "align_baseline": false,
+                "horizontal_alignment_flex_direction_column": "center",
+                "vertical_alignment_flex_direction_column": "center",
+                "gap": 12,
+                "width": "fill",
+                "custom_width": 100,
+                "width_mobile": "fill",
+                "custom_width_mobile": 100,
+                "height": "fit",
+                "custom_height": 100,
+                "inherit_color_scheme": false,
+                "color_scheme": "",
+                "background_media": "none",
+                "video_position": "cover",
+                "background_image_position": "cover",
+                "border": "none",
+                "border_width": 0,
+                "border_opacity": 100,
+                "border_radius": 0,
+                "toggle_overlay": false,
+                "overlay_color": "#00000026",
+                "overlay_style": "solid",
+                "gradient_direction": "to top",
+                "link": "",
+                "open_in_new_tab": false,
+                "placeholder": "",
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {
+                "text_nMfgYW": {
+                  "type": "text",
+                  "name": "t:names.heading",
+                  "settings": {
+                    "text": "<h2>Filozofia marki</h2>",
+                    "width": "fit-content",
+                    "max_width": "normal",
+                    "alignment": "left",
+                    "type_preset": "h3",
+                    "font": "var(--font-body--family)",
+                    "font_size": "1rem",
+                    "line_height": "normal",
+                    "letter_spacing": "normal",
+                    "case": "none",
+                    "wrap": "pretty",
+                    "color": "var(--color-foreground)",
+                    "background": false,
+                    "background_color": "#00000026",
+                    "corner_radius": 0,
+                    "padding-block-start": 0,
+                    "padding-block-end": 0,
+                    "padding-inline-start": 0,
+                    "padding-inline-end": 0
+                  },
+                  "blocks": {}
+                },
+                "text_9ftdzW": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>Giclée Art opiera się na idei, że dzieło sztuki nie kończy się na obrazie.<br/><br/>Kończy się dopiero wtedy, gdy otrzymuje swoją ostateczną formę — spójną, archiwalną i gotową do ekspozycji.<br/><br/><br/>W pracy z materiałem wizualnym operuję na dwóch równoległych obszarach.<br/><br/>Pierwszym są obrazy malarskie — często stare, pożółkłe, zapomniane lub wymagające ponownego opracowania w formie reprodukcji. W tym procesie traktuję je jak materię kulturową, którą można przywrócić do życia poprzez precyzyjny druk Fine Art i świadomą oprawę. Dzięki temu odzyskują swoją obecność, głębię i możliwość funkcjonowania w przestrzeni współczesnej.<br/><br/>Drugim obszarem jest fotografia — zarówno autorska, jak i powierzona mi do realizacji. W tym przypadku nie odtwarzam przeszłości, lecz domykam proces twórczy, nadając obrazowi jego finalną, materialną formę.<br/><br/>Dopiero w formie wydruku i oprawy zyskują skalę, strukturę i relację ze światłem, które pozwalają im zaistnieć jako obiekt, a nie tylko zapis cyfrowy.<br/><br/>Wierzę, że fotografia i obraz w pełni „żyją” dopiero wtedy, gdy opuszczają ekran i zostają przeniesione do świata fizycznego.<br/><br/>Dopiero w formie wydruku i oprawy zyskują skalę, strukturę i relację ze światłem, które pozwalają im zaistnieć jako obiekt, a nie tylko zapis cyfrowy.<br/><br/>Dlatego każdy projekt traktuję jako proces przejścia<br/><br/>Od obrazu potencjalnego - do obrazu obecnego.<br/><br/>Od pliku — do obiektu.<br/><br/>Od informacji — do materii.</p>",
+                    "width": "fit-content",
+                    "max_width": "narrow",
+                    "alignment": "left",
+                    "type_preset": "rte",
+                    "font": "var(--font-body--family)",
+                    "font_size": "1rem",
+                    "line_height": "normal",
+                    "letter_spacing": "normal",
+                    "case": "none",
+                    "wrap": "pretty",
+                    "color": "var(--color-foreground)",
+                    "background": false,
+                    "background_color": "#00000026",
+                    "corner_radius": 0,
+                    "padding-block-start": 0,
+                    "padding-block-end": 0,
+                    "padding-inline-start": 0,
+                    "padding-inline-end": 0
+                  },
+                  "blocks": {}
+                }
+              },
+              "block_order": [
+                "text_nMfgYW",
+                "text_9ftdzW"
+              ]
+            }
+          },
+          "block_order": [
+            "group_dimbtz"
+          ]
+        }
+      },
+      "disabled": true,
+      "name": "t:names.editorial",
+      "settings": {
+        "media_position": "right",
+        "media_width": "medium",
+        "media_height": "60svh",
+        "section_width": "full-width",
+        "extend_media": true,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 0,
+        "padding-block-end": 0
+      }
+    },
+    "divider_Utf3HQ": {
+      "type": "divider",
+      "name": "t:names.divider_section",
+      "settings": {
+        "color_scheme": "scheme-58084d4c-a86e-4d0a-855e-a0966e5043f7",
+        "section_width": "full-width",
+        "thickness": 1,
+        "corner_radius": "square",
+        "width_percent": 100,
+        "alignment_horizontal": "center",
+        "padding-block-start": 16,
+        "padding-block-end": 16
+      }
+    },
+    "divider_9G9jCt": {
+      "type": "divider",
+      "disabled": true,
+      "name": "t:names.divider_section",
+      "settings": {
+        "color_scheme": "scheme-58084d4c-a86e-4d0a-855e-a0966e5043f7",
+        "section_width": "full-width",
+        "thickness": 1,
+        "corner_radius": "square",
+        "width_percent": 100,
+        "alignment_horizontal": "center",
+        "padding-block-start": 16,
+        "padding-block-end": 16
+      }
+    },
+    "section_tAj94h": {
+      "type": "section",
+      "blocks": {
+        "text_RDX6ft": {
+          "type": "text",
+          "settings": {
+            "text": "<h2><br/>\"Nie rzeczy same w sobie, lecz ich forma nadaje im znaczenie.\"<br/><br/>— Giclée Art<br/></h2>",
+            "width": "100%",
+            "max_width": "narrow",
+            "alignment": "center",
+            "type_preset": "h2",
+            "font": "var(--font-body--family)",
+            "font_size": "1rem",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "color": "var(--color-foreground)",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "text_RDX6ft"
+      ],
+      "name": "t:names.pull_quote",
+      "settings": {
+        "content_direction": "column",
+        "vertical_on_mobile": true,
+        "horizontal_alignment": "flex-start",
+        "vertical_alignment": "center",
+        "align_baseline": false,
+        "horizontal_alignment_flex_direction_column": "center",
+        "vertical_alignment_flex_direction_column": "center",
+        "gap": 16,
+        "section_width": "page-width",
+        "section_height": "",
+        "section_height_custom": 0,
+        "color_scheme": "",
+        "background_media": "none",
+        "video_position": "cover",
+        "background_image_position": "cover",
+        "border": "none",
+        "border_width": 1,
+        "border_opacity": 100,
+        "border_radius": 0,
+        "toggle_overlay": false,
+        "overlay_color": "#00000026",
+        "overlay_style": "solid",
+        "gradient_direction": "to top",
+        "padding-block-start": 32,
+        "padding-block-end": 64
+      }
+    },
+    "divider_7zYbrk": {
+      "type": "divider",
+      "disabled": true,
+      "name": "t:names.divider_section",
+      "settings": {
+        "color_scheme": "scheme-58084d4c-a86e-4d0a-855e-a0966e5043f7",
+        "section_width": "full-width",
+        "thickness": 1,
+        "corner_radius": "square",
+        "width_percent": 100,
+        "alignment_horizontal": "center",
+        "padding-block-start": 16,
+        "padding-block-end": 16
+      }
+    },
+    "divider_H4ahef": {
+      "type": "divider",
+      "name": "t:names.divider_section",
+      "settings": {
+        "color_scheme": "scheme-58084d4c-a86e-4d0a-855e-a0966e5043f7",
+        "section_width": "full-width",
+        "thickness": 1,
+        "corner_radius": "square",
+        "width_percent": 100,
+        "alignment_horizontal": "center",
+        "padding-block-start": 16,
+        "padding-block-end": 16
+      }
+    }
+  },
+  "order": [
+    "main",
+    "divider_AidLhU",
+    "divider_wcBAHm",
+    "media_with_content_D7REjd",
+    "media_with_content_LgNBmd",
+    "divider_Utf3HQ",
+    "divider_9G9jCt",
+    "section_tAj94h",
+    "divider_7zYbrk",
+    "divider_H4ahef"
+  ]
+}

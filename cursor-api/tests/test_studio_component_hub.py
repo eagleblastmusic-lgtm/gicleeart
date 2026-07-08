@@ -86,7 +86,8 @@ def test_lazy_render_has_batching() -> None:
 def test_skeleton_first_paint_constants() -> None:
     path = Path(__file__).resolve().parents[1] / "giclee_app" / "ui" / "component_hub.py"
     text = path.read_text(encoding="utf-8")
-    assert _FIRST_PAINT_DELAY_MS == 16
+    assert _FIRST_PAINT_DELAY_MS == 0
+    assert "_FIRST_PAINT_DELAY_MS <= 0" in text
     assert _SKELETON_COUNT == 6
     assert _PREPARE_TEXT in text
     assert "_make_skeleton_card" in text

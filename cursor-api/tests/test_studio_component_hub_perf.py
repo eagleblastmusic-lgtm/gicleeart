@@ -153,3 +153,14 @@ def test_component_hub_lifecycle_log() -> None:
 
     assert "hub.lifecycle" in text
     assert "cache_hit=cache_hit" in text
+
+
+def test_component_hub_prefers_real_shell_over_skeleton() -> None:
+    path = ROOT / "giclee_app" / "ui" / "component_hub.py"
+    text = path.read_text(encoding="utf-8")
+
+    assert "hub.visual.real_shell_first_paint" in text
+    assert "_REAL_SHELL_FIRST_PAINT_COUNT" in text
+    begin_block = text.split("def _begin_first_paint", 1)[1].split("\n    def ", 1)[0]
+    assert "_show_skeleton(True)" not in begin_block
+    assert "CARD_STABLE_HEIGHT" in text

@@ -1,0 +1,29 @@
+{%- doc -%}
+  Translation with Polish fallback when Shopify locale key is missing.
+
+  @param {string} key - e.g. giclee.ui.catalog_artists, products.product.add_to_cart
+  @param {string} fallback - default text (usually Polish)
+  @param {boolean} [html] - when true, output raw HTML (for richtext-like strings)
+{%- enddoc -%}
+
+{%- liquid
+  assign giclee_ui_t_raw = key | t
+  assign giclee_ui_t_missing = false
+  if giclee_ui_t_raw == key or giclee_ui_t_raw == blank
+    assign giclee_ui_t_missing = true
+  elsif giclee_ui_t_raw contains ': pl.' or giclee_ui_t_raw contains ': en.' or giclee_ui_t_raw contains ': de.'
+    assign giclee_ui_t_missing = true
+  elsif giclee_ui_t_raw contains 'TRANSLATION MISSING' or giclee_ui_t_raw contains 'Translation missing' or giclee_ui_t_raw contains 'translation missing'
+    assign giclee_ui_t_missing = true
+  endif
+  if giclee_ui_t_missing
+    assign giclee_ui_t_out = fallback
+  else
+    assign giclee_ui_t_out = giclee_ui_t_raw
+  endif
+-%}
+{%- if html -%}
+{{- giclee_ui_t_out -}}
+{%- else -%}
+{{- giclee_ui_t_out | escape -}}
+{%- endif -%}

@@ -80,7 +80,7 @@
     "variant_button_radius": 14,
     "variant_button_width": "equal-width-buttons",
     "password_page_countdown_end": "2026-06-05T04:40:00+02:00",
-    "site_notice_enabled": true,
+    "site_notice_enabled": false,
     "site_notice_version": "1",
     "site_notice_title": "Informacja",
     "site_notice_message": "Strona w fazie testów i naprawy błędów. W krótce pojawi się więcej materiałów.",

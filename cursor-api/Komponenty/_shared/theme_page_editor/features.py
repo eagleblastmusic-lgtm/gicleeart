@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from Komponenty.stronaglowna.home_features import DEPLOY_TARGETS
+from Komponenty._shared.deploy_targets import DEPLOY_TARGETS
 from Komponenty.stronaglowna.service import shopify_ref_label
 
 from .config import PageEditorConfig

@@ -21,6 +21,11 @@ except ImportError:
     _HAS_DND = False
 
 from Komponenty._shared.tkdnd_safe import dnd_files_available, register_drop_target
+from Komponenty._shared.theme_page_editor.image_object_y import (
+    build_object_y_controls,
+    normalize_object_y,
+    object_y_field_id,
+)
 from Komponenty._shared.toast import show_toast
 from Komponenty._shared.window_geometry import position_toplevel_screen_center
 from PIL import Image, ImageTk
@@ -52,19 +57,13 @@ from .homepage_variants import (
     variant_uses_home_stack,
 )
 from .collage_gui import add_collage_launcher
-from .scroll_settings import (
-    MOBILE_MODES,
-    PRESET_CUSTOM_LABEL,
-    REDUCED_MOTION_MODES,
-    SCROLL_DEFAULTS,
-    SCROLL_PRESETS,
-    apply_scroll_preset,
-    load_scroll_config,
-    save_scroll_config,
-    validate_scroll_config,
-)
+from .final_difference_settings import load_final_difference_config
+from .studio_reveal_settings import load_studio_reveal_config
+from .section_bg_effects_settings import load_section_bg_effects_config
+from .home_effects_dialog import open_section_effects_dialog, open_transitions_dialog
+from .scroll_settings import load_scroll_config
 from .video_picker import pick_shopify_video
-from .registry import HOME_ZONES, SITE_NOTICE_ZONE_ID, HomeField, HomeZone, zone_by_id
+from .registry import HOME_ZONES, SITE_NOTICE_ZONE_ID, HomeField, HomeZone, zone_by_id, ZONE_HOME_HOOK
 from .service import (
     _boomerang_loop_is_current,
     _color_correction_cta_present,
@@ -276,6 +275,9 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
                     values[fld.field_id] = full
                 else:
                     values[fld.field_id] = state["zone_values"].get(zone_id, {}).get(fld.field_id, "")
+                oy_var = state["widgets"].get(object_y_field_id(fld.field_id))
+                if oy_var is not None and hasattr(oy_var, "get"):
+                    values[object_y_field_id(fld.field_id)] = normalize_object_y(oy_var.get())
             elif fld.kind == "section_background":
                 media_w = state["widgets"].get(f"{fld.field_id}__media")
                 media = media_w.get() if media_w is not None and hasattr(media_w, "get") else None
@@ -297,11 +299,23 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
                     overlay_pct = normalize_overlay_pct(stored.get("overlay_pct") if isinstance(stored, dict) else 0)
                 if overlay_off:
                     overlay_pct = 0
+                image_slot = f"{fld.field_id}__image"
+                oy_var = state["widgets"].get(object_y_field_id(image_slot))
+                object_y = (
+                    normalize_object_y(oy_var.get())
+                    if oy_var is not None and hasattr(oy_var, "get")
+                    else normalize_object_y(
+                        (state["zone_values"].get(zone_id, {}).get(fld.field_id) or {}).get("object_y")
+                        if isinstance(state["zone_values"].get(zone_id, {}).get(fld.field_id), dict)
+                        else None
+                    )
+                )
                 if isinstance(full, str) and (full.startswith("shopify://") or full.startswith("gid://")):
                     values[fld.field_id] = {
                         "media": "video" if media == "video" else "image",
                         "ref": full,
                         "overlay_pct": overlay_pct,
+                        "object_y": object_y if media == "image" else normalize_object_y(None),
                     }
                 else:
                     stored = state["zone_values"].get(zone_id, {}).get(fld.field_id, {"media": "none", "ref": ""})
@@ -310,9 +324,15 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
                             "media": stored.get("media", "none"),
                             "ref": stored.get("ref", ""),
                             "overlay_pct": overlay_pct if stored.get("ref") else 0,
+                            "object_y": object_y if stored.get("media") == "image" and stored.get("ref") else normalize_object_y(None),
                         }
                     else:
-                        values[fld.field_id] = {"media": "none", "ref": "", "overlay_pct": 0}
+                        values[fld.field_id] = {
+                            "media": "none",
+                            "ref": "",
+                            "overlay_pct": 0,
+                            "object_y": normalize_object_y(None),
+                        }
             elif fld.kind == "shopify_video":
                 full = state["widgets"].get(f"{fld.field_id}__full")
                 if isinstance(full, str) and (full.startswith("shopify://") or full.startswith("gid://")):
@@ -416,6 +436,7 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
         initial: str,
         *,
         on_media_set: Any = None,
+        initial_object_y: Any = None,
     ) -> None:
         is_video = fld.kind == "shopify_video"
         is_shopify_ref = fld.kind in ("shopify_image", "shopify_video")
@@ -640,11 +661,46 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
 
             threading.Thread(target=worker, daemon=True, name="stronaglowna-download").start()
 
+        def _clear_media() -> None:
+            if fld.kind == "theme_asset":
+                local = mobile_hero_path()
+                if local.is_file():
+                    try:
+                        local.unlink()
+                    except OSError as exc:
+                        messagebox.showerror(APP_TITLE, str(exc), parent=host)
+                        return
+                var.set("(brak)")
+                state["widgets"][f"{fld.field_id}__full"] = ""
+                state["zone_values"].setdefault(zone.zone_id, {})[fld.field_id] = ""
+                _set_thumbnail(thumb, local=None)
+            else:
+                var.set("(brak)")
+                state["widgets"][f"{fld.field_id}__full"] = ""
+                state["zone_values"].setdefault(zone.zone_id, {})[fld.field_id] = ""
+                if is_video and zone.zone_id == "hero" and fld.field_id == "hero_desktop_video":
+                    state["zone_values"][zone.zone_id]["hero_desktop_video_reversed"] = ""
+                oy_key = object_y_field_id(fld.field_id)
+                if oy_key in state["widgets"]:
+                    try:
+                        state["widgets"][oy_key].set(50)
+                    except (tk.TclError, AttributeError):
+                        state["zone_values"].setdefault(zone.zone_id, {})[oy_key] = 50
+                _refresh_thumb("")
+            _mark_dirty()
+            removed = "film" if is_video else "grafikę"
+            status_var.set(f"Usunięto {removed}: {fld.label}")
+            show_toast(host, f"Usunięto {removed}", duration_ms=1400)
+            if on_media_set is not None:
+                on_media_set()
+
         btn_row = ttk.Frame(meta)
         btn_row.pack(anchor="w", pady=(4, 0))
         ttk.Button(btn_row, text=upload_label, command=_pick).pack(side="left")
         if is_video:
             ttk.Button(btn_row, text="Z listy…", command=_pick_from_library).pack(side="left", padx=(8, 0))
+        delete_label = "Usuń film" if is_video else ("Usuń plik" if fld.kind == "theme_asset" else "Usuń grafikę")
+        ttk.Button(btn_row, text=delete_label, command=_clear_media).pack(side="left", padx=(8, 0))
         if zone.zone_id == "hero" and fld.kind in ("shopify_image", "shopify_video", "theme_asset"):
             ttk.Button(btn_row, text="Pobierz…", command=_download_current).pack(side="left", padx=(8, 0))
         if register_drop_target(thumb, on_drop=_on_drop):
@@ -666,6 +722,18 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
                 foreground="#888",
             ).pack(anchor="w", pady=(2, 0))
         _refresh_thumb(str(initial or ""))
+
+        if fld.kind == "shopify_image":
+            zone_vals = state["zone_values"].get(zone.zone_id, {})
+            oy_initial = initial_object_y
+            if oy_initial is None:
+                oy_initial = zone_vals.get(object_y_field_id(fld.field_id))
+            oy_var = build_object_y_controls(
+                content,
+                initial=oy_initial,
+                on_change=lambda _value: _mark_dirty(),
+            )
+            state["widgets"][object_y_field_id(fld.field_id)] = oy_var
 
     def _open_background_editor(zone: HomeZone, bg_fld: HomeField, values: dict[str, Any]) -> None:
         _collect_current_zone()
@@ -799,7 +867,14 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
         vid_fld = HomeField(f"{bg_fld.field_id}__video", "Film", "shopify_video", None)
         image_initial = bg.get("ref", "") if bg.get("media") == "image" else ""
         video_initial = bg.get("ref", "") if bg.get("media") == "video" else ""
-        _add_image_row(image_frame, img_fld, zone, image_initial, on_media_set=_on_new_bg_media)
+        _add_image_row(
+            image_frame,
+            img_fld,
+            zone,
+            image_initial,
+            on_media_set=_on_new_bg_media,
+            initial_object_y=bg.get("object_y"),
+        )
         _add_image_row(video_frame, vid_fld, zone, video_initial, on_media_set=_on_new_bg_media)
 
         def _sync_bg_media() -> None:
@@ -834,6 +909,7 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
                 "media": "none",
                 "ref": "",
                 "overlay_pct": 0,
+                "object_y": normalize_object_y(None),
             }
             _set_overlay_controls_enabled(False)
             _update_overlay_label()
@@ -851,6 +927,49 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
         ttk.Button(btn_row, text="Zamknij", command=_close).pack(side="right")
 
         dlg.protocol("WM_DELETE_WINDOW", _close)
+
+    def _export_home_assets(**overrides: Any) -> None:
+        variant_id = state["variant_id"]
+        mobile_name = mobile_hero_path().name if mobile_hero_path().is_file() else None
+        write_home_assets(
+            state["template"],
+            mobile_slide_urls=[mobile_name] if mobile_name else None,
+            stack_enabled=variant_uses_home_stack(variant_id),
+            scroll_config=overrides.pop("scroll_config", load_scroll_config(variant_id)),
+            final_difference_config=overrides.pop(
+                "final_difference_config", load_final_difference_config(variant_id)
+            ),
+            studio_reveal_config=overrides.pop(
+                "studio_reveal_config", load_studio_reveal_config(variant_id)
+            ),
+            section_bg_effects_config=overrides.pop(
+                "section_bg_effects_config", load_section_bg_effects_config(variant_id)
+            ),
+            **overrides,
+        )
+
+    def _open_zone_effects(zone: HomeZone) -> None:
+        if not ZONE_HOME_HOOK.get(zone.zone_id):
+            return
+        open_section_effects_dialog(
+            host,
+            variant_id=state["variant_id"],
+            initial_zone_id=zone.zone_id,
+            app_title=APP_TITLE,
+            export_home_assets=_export_home_assets,
+            status_var=status_var,
+        )
+
+    def _open_transitions(initial_tab: int = 0) -> None:
+        open_transitions_dialog(
+            host,
+            variant_id=state["variant_id"],
+            initial_tab=initial_tab,
+            app_title=APP_TITLE,
+            export_home_assets=_export_home_assets,
+            status_var=status_var,
+            open_preview=_open_preview_live,
+        )
 
     def _add_hero_media_type(parent: ttk.Frame, zone: HomeZone, values: dict[str, Any]) -> None:
         fld = next(f for f in zone.fields if f.field_id == "hero_media_type")
@@ -971,6 +1090,9 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
             ).pack(anchor="w", pady=(0, 12))
 
         bg_fld = next((f for f in zone.fields if f.kind == "section_background"), None)
+        has_graphics = any(
+            f.kind in ("shopify_image", "shopify_video", "theme_asset") for f in zone.fields
+        )
         if bg_fld is not None:
             bg_row = ttk.Frame(editor_inner)
             bg_row.pack(anchor="w", pady=(0, 12))
@@ -993,6 +1115,25 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
 
             ttk.Button(bg_row, text="Tło…", command=_open_bg).pack(side="left")
             ttk.Label(bg_row, textvariable=bg_status, foreground="#666").pack(side="left")
+        elif has_graphics and zone.zone_id == "hero":
+            ttk.Label(
+                editor_inner,
+                text="Tło sekcji: ustaw media slajdu poniżej (hero nie używa tła sekcji jak intro).",
+                wraplength=620,
+                foreground="#777",
+            ).pack(anchor="w", pady=(0, 12))
+
+        if ZONE_HOME_HOOK.get(zone.zone_id):
+            fx_row = ttk.Frame(editor_inner)
+            fx_row.pack(anchor="w", pady=(0, 12))
+            ttk.Button(fx_row, text="Efekty…", command=lambda z=zone: _open_zone_effects(z)).pack(
+                side="left"
+            )
+            ttk.Label(
+                fx_row,
+                text="  reveal · hover · gradient · parallax — zakładki per typ efektu",
+                foreground="#666",
+            ).pack(side="left")
 
         for fld in zone.fields:
             initial = values.get(fld.field_id, "")
@@ -1512,6 +1653,9 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
                 mobile_slide_urls=[mobile_name] if mobile_name else None,
                 stack_enabled=variant_uses_home_stack(state["variant_id"]),
                 scroll_config=load_scroll_config(state["variant_id"]),
+                final_difference_config=load_final_difference_config(state["variant_id"]),
+                studio_reveal_config=load_studio_reveal_config(state["variant_id"]),
+                section_bg_effects_config=load_section_bg_effects_config(state["variant_id"]),
             )
         except Exception as exc:
             messagebox.showerror(APP_TITLE, str(exc), parent=host)
@@ -1581,366 +1725,10 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
         show_toast(host, "Otwieram podgląd live…")
 
     def _regenerate_home_assets() -> None:
-        mobile_name = mobile_hero_path().name if mobile_hero_path().is_file() else None
-        write_home_assets(
-            state["template"],
-            mobile_slide_urls=[mobile_name] if mobile_name else None,
-            stack_enabled=variant_uses_home_stack(state["variant_id"]),
-            scroll_config=load_scroll_config(state["variant_id"]),
-        )
+        _export_home_assets()
 
-    def _open_home_settings() -> None:
-        variant_id = state["variant_id"]
-        cfg = load_scroll_config(variant_id)
-        stack_on = variant_uses_home_stack(variant_id)
-
-        win = tk.Toplevel(host)
-        win.title(f"Ustawienia strony głównej — {variant_label(variant_id)}")
-        position_toplevel_screen_center(win, 620, 820)
-        win.transient(host)
-        win.grab_set()
-
-        notebook = ttk.Notebook(win)
-        notebook.pack(fill="both", expand=True, padx=12, pady=(12, 0))
-
-        tab_scroll = ttk.Frame(notebook, padding=(4, 8))
-        tab_effects = ttk.Frame(notebook, padding=(14, 12))
-        notebook.add(tab_scroll, text="Przejścia między sekcjami")
-        notebook.add(tab_effects, text="Efekty warstw")
-
-        pad = tab_scroll
-
-        ttk.Label(
-            pad,
-            text="Section-scroll — jeden gest przewija do kolejnej sekcji.",
-            font=("", 10, "bold"),
-        ).pack(anchor="w", padx=(10, 0))
-        ttk.Label(
-            pad,
-            text=(
-                "Ustawienia zapisują się per wariant (data/variants/…/scroll.json) i trafiają do "
-                "assets/giclee-home-sections.js. Zmiana na sklepie wymaga wdrożenia motywu."
-            ),
-            wraplength=520,
-            foreground="#555",
-        ).pack(anchor="w", padx=(10, 0), pady=(4, 10))
-
-        preset_names = list(SCROLL_PRESETS.keys())
-        preset_var = tk.StringVar(value=preset_names[0])
-        applying_preset = {"active": False}
-
-        preset_row = ttk.Frame(pad)
-        preset_row.pack(fill="x", pady=(0, 8))
-        ttk.Label(preset_row, text="Preset:").pack(side="left")
-        preset_combo = ttk.Combobox(
-            preset_row,
-            textvariable=preset_var,
-            values=preset_names + [PRESET_CUSTOM_LABEL],
-            state="readonly",
-            width=28,
-        )
-        preset_combo.pack(side="left", padx=(8, 0))
-        ttk.Label(
-            preset_row,
-            text="wypełnia formularz — zapis dopiero po Zapisz",
-            foreground="#777",
-        ).pack(side="left", padx=(10, 0))
-
-        enabled_var = tk.BooleanVar(value=bool(cfg["enabled"]))
-        desktop_var = tk.BooleanVar(value=bool(cfg["desktopEnabled"]))
-        settle_var = tk.BooleanVar(value=bool(cfg["headingSettle"]))
-        debug_var = tk.BooleanVar(value=bool(cfg["debug"]))
-        mobile_var = tk.StringVar(value=str(cfg["mobileMode"]))
-        reduced_var = tk.StringVar(value=str(cfg["reducedMotionMode"]))
-        header_auto_var = tk.BooleanVar(value=cfg["headerOffset"] is None)
-
-        ttk.Checkbutton(pad, text="Efekt włączony (kill switch)", variable=enabled_var).pack(anchor="w")
-        ttk.Checkbutton(pad, text="Aktywny na desktopie", variable=desktop_var).pack(anchor="w")
-
-        mode_row = ttk.Frame(pad)
-        mode_row.pack(fill="x", pady=(6, 0))
-        ttk.Label(mode_row, text="Tryb mobile:").pack(side="left")
-        ttk.Combobox(
-            mode_row, textvariable=mobile_var, values=list(MOBILE_MODES),
-            state="readonly", width=12,
-        ).pack(side="left", padx=(8, 0))
-        ttk.Label(
-            mode_row,
-            text="native = zwykły scroll (zalecane), soft = delikatne dociąganie",
-            foreground="#777",
-        ).pack(side="left", padx=(10, 0))
-
-        reduced_row = ttk.Frame(pad)
-        reduced_row.pack(fill="x", pady=(4, 0))
-        ttk.Label(reduced_row, text="Reduced motion:").pack(side="left")
-        ttk.Combobox(
-            reduced_row, textvariable=reduced_var, values=list(REDUCED_MOTION_MODES),
-            state="readonly", width=12,
-        ).pack(side="left", padx=(8, 0))
-        ttk.Label(
-            reduced_row,
-            text="instant = skok bez animacji, off = efekt wyłączony",
-            foreground="#777",
-        ).pack(side="left", padx=(10, 0))
-
-        ttk.Checkbutton(
-            pad,
-            text="Miękkie osadzenie nagłówka po zatrzymaniu",
-            variable=settle_var,
-        ).pack(anchor="w", pady=(8, 0))
-        ttk.Label(
-            pad,
-            text="Delikatna animacja nagłówka po przejściu do sekcji (wymaga section-scroll).",
-            wraplength=520,
-            foreground="#777",
-        ).pack(anchor="w", padx=(22, 0))
-
-        nums = ttk.LabelFrame(pad, text="Parametry animacji", padding=(10, 8))
-        nums.pack(fill="x", pady=(10, 0))
-
-        spin_vars: dict[str, tk.StringVar] = {}
-
-        def _spin(row: int, key: str, label: str, lo: int, hi: int, step: int) -> None:
-            ttk.Label(nums, text=label).grid(row=row, column=0, sticky="w", pady=2)
-            var = tk.StringVar(value=str(cfg[key]))
-            spin_vars[key] = var
-            ttk.Spinbox(nums, textvariable=var, from_=lo, to=hi, increment=step, width=8).grid(
-                row=row, column=1, sticky="w", padx=(10, 0), pady=2
-            )
-
-        _spin(0, "minDuration", "Min. czas animacji (ms):", 200, 3000, 50)
-        _spin(1, "maxDuration", "Maks. czas animacji (ms):", 200, 4000, 50)
-        _spin(2, "wheelThreshold", "Próg gestu — kółko/trackpad (px):", 5, 400, 5)
-        _spin(3, "touchThreshold", "Próg dociągania — dotyk (px):", 5, 400, 5)
-        _spin(4, "headerOffsetExtra", "Zapas pod headerem (px):", 0, 200, 4)
-        _spin(5, "separatorOffset", "Offset separatora w kadrze (px):", 0, 120, 2)
-
-        dynamics_row = ttk.Frame(nums)
-        dynamics_row.grid(row=6, column=0, columnspan=2, sticky="ew", pady=(8, 0))
-        ttk.Label(dynamics_row, text="Dynamika ruchu:").grid(row=0, column=0, sticky="w")
-        dynamics_value_lbl = ttk.Label(dynamics_row, text=str(cfg.get("motionDynamics", 50)), width=4)
-        dynamics_value_lbl.grid(row=0, column=2, sticky="e")
-        motion_dynamics_var = tk.IntVar(value=int(cfg.get("motionDynamics", 50)))
-
-        def _sync_dynamics_label(*_a) -> None:
-            dynamics_value_lbl.configure(text=str(int(motion_dynamics_var.get())))
-
-        motion_dynamics_var.trace_add("write", _sync_dynamics_label)
-
-        scale_row = ttk.Frame(dynamics_row)
-        scale_row.grid(row=1, column=0, columnspan=3, sticky="ew", pady=(4, 0))
-        ttk.Label(scale_row, text="spokojny", foreground="#777").pack(side="left")
-        ttk.Scale(
-            scale_row,
-            from_=0,
-            to=100,
-            orient="horizontal",
-            variable=motion_dynamics_var,
-            length=260,
-        ).pack(side="left", fill="x", expand=True, padx=(8, 8))
-        ttk.Label(scale_row, text="dynamiczny", foreground="#777").pack(side="left")
-
-        header_row = ttk.Frame(nums)
-        header_row.grid(row=7, column=0, columnspan=2, sticky="w", pady=(6, 0))
-        ttk.Checkbutton(header_row, text="Offset headera: auto", variable=header_auto_var).pack(side="left")
-        header_offset_var = tk.StringVar(
-            value="" if cfg["headerOffset"] is None else str(cfg["headerOffset"])
-        )
-        header_spin = ttk.Spinbox(
-            header_row, textvariable=header_offset_var, from_=0, to=400, increment=4, width=8
-        )
-        header_spin.pack(side="left", padx=(10, 0))
-
-        def _sync_header_spin(*_a) -> None:
-            header_spin.configure(state="disabled" if header_auto_var.get() else "normal")
-
-        header_auto_var.trace_add("write", _sync_header_spin)
-        _sync_header_spin()
-
-        ttk.Checkbutton(pad, text="Debug w konsoli przeglądarki", variable=debug_var).pack(anchor="w", pady=(10, 0))
-
-        ttk.Label(
-            pad,
-            text=(
-                "Test: theme dev (127.0.0.1:9292) → homepage z ?giclee_skip_splash=1&giclee_skip_notice=1. "
-                "Sprawdź kółko myszy, trackpad (serię szybkich gestów), scroll w górę, klawiaturę "
-                "(PageDown/PageUp/strzałki), suwaki przed/po, menu i koszyk. Mobile zostaje natywny."
-            ),
-            wraplength=520,
-            foreground="#555",
-        ).pack(anchor="w", pady=(10, 0))
-
-        def _apply_cfg_to_form(new_cfg: dict[str, Any]) -> None:
-            applying_preset["active"] = True
-            enabled_var.set(bool(new_cfg["enabled"]))
-            desktop_var.set(bool(new_cfg["desktopEnabled"]))
-            mobile_var.set(str(new_cfg["mobileMode"]))
-            reduced_var.set(str(new_cfg["reducedMotionMode"]))
-            settle_var.set(bool(new_cfg["headingSettle"]))
-            debug_var.set(bool(new_cfg["debug"]))
-            for key, var in spin_vars.items():
-                var.set(str(new_cfg[key]))
-            motion_dynamics_var.set(int(new_cfg.get("motionDynamics", SCROLL_DEFAULTS["motionDynamics"])))
-            if new_cfg.get("headerOffset") is None:
-                header_auto_var.set(True)
-                header_offset_var.set("")
-            else:
-                header_auto_var.set(False)
-                header_offset_var.set(str(new_cfg["headerOffset"]))
-            _sync_header_spin()
-            applying_preset["active"] = False
-
-        def _mark_custom_preset(*_a) -> None:
-            if applying_preset["active"]:
-                return
-            preset_var.set(PRESET_CUSTOM_LABEL)
-
-        def _on_preset_selected(*_a) -> None:
-            name = preset_var.get()
-            if name == PRESET_CUSTOM_LABEL or name not in SCROLL_PRESETS:
-                return
-            _apply_cfg_to_form(apply_scroll_preset(name))
-
-        preset_var.trace_add("write", _on_preset_selected)
-        enabled_var.trace_add("write", _mark_custom_preset)
-        desktop_var.trace_add("write", _mark_custom_preset)
-        mobile_var.trace_add("write", _mark_custom_preset)
-        reduced_var.trace_add("write", _mark_custom_preset)
-        settle_var.trace_add("write", _mark_custom_preset)
-        debug_var.trace_add("write", _mark_custom_preset)
-        header_auto_var.trace_add("write", _mark_custom_preset)
-        header_offset_var.trace_add("write", _mark_custom_preset)
-        motion_dynamics_var.trace_add("write", _mark_custom_preset)
-        for var in spin_vars.values():
-            var.trace_add("write", _mark_custom_preset)
-
-        _apply_cfg_to_form(cfg)
-        preset_var.set(PRESET_CUSTOM_LABEL)
-
-        def _collect_cfg() -> dict[str, Any]:
-            out: dict[str, Any] = dict(SCROLL_DEFAULTS)
-            out["enabled"] = bool(enabled_var.get())
-            out["desktopEnabled"] = bool(desktop_var.get())
-            out["mobileMode"] = mobile_var.get()
-            out["reducedMotionMode"] = reduced_var.get()
-            out["headingSettle"] = bool(settle_var.get())
-            out["debug"] = bool(debug_var.get())
-            for key, var in spin_vars.items():
-                try:
-                    out[key] = int(float(var.get()))
-                except (TypeError, ValueError):
-                    out[key] = SCROLL_DEFAULTS[key]
-            try:
-                out["motionDynamics"] = int(motion_dynamics_var.get())
-            except (TypeError, ValueError):
-                out["motionDynamics"] = SCROLL_DEFAULTS["motionDynamics"]
-            if header_auto_var.get():
-                out["headerOffset"] = None
-            else:
-                try:
-                    out["headerOffset"] = int(float(header_offset_var.get()))
-                except (TypeError, ValueError):
-                    out["headerOffset"] = None
-            return out
-
-        def _persist(new_cfg: dict[str, Any], *, toast: str) -> bool:
-            errors = validate_scroll_config(new_cfg)
-            if errors:
-                messagebox.showerror(APP_TITLE, "Popraw ustawienia:\n- " + "\n- ".join(errors), parent=win)
-                return False
-            try:
-                saved = save_scroll_config(variant_id, new_cfg)
-                _regenerate_home_assets()
-            except Exception as exc:
-                messagebox.showerror(APP_TITLE, str(exc), parent=win)
-                return False
-            show_toast(host, toast)
-            return True
-
-        def _save() -> None:
-            if _persist(_collect_cfg(), toast="Zapisano przejścia między sekcjami. Wdróż motyw, aby opublikować."):
-                win.destroy()
-
-        def _restore_defaults() -> None:
-            if not messagebox.askyesno(APP_TITLE, "Przywrócić domyślne ustawienia przejść między sekcjami?", parent=win):
-                return
-            if _persist(dict(SCROLL_DEFAULTS), toast="Przywrócono domyślne ustawienia przejść."):
-                win.destroy()
-
-        def _emergency_off() -> None:
-            if not messagebox.askyesno(
-                APP_TITLE,
-                "Awaryjnie wyłączyć przejścia między sekcjami?\n\n"
-                "Strona wróci do natywnego scrolla. Na sklepie zmiana pojawi się po wdrożeniu motywu.",
-                parent=win,
-            ):
-                return
-            off_cfg = _collect_cfg()
-            off_cfg["enabled"] = False
-            if _persist(off_cfg, toast="Przejścia między sekcjami wyłączone (kill switch)."):
-                win.destroy()
-
-        # --- Zakładka: efekty warstw (scroll-over stack) ---
-        ttk.Label(
-            tab_effects,
-            text="Scroll-over stack",
-            font=("", 10, "bold"),
-        ).pack(anchor="w")
-        ttk.Label(
-            tab_effects,
-            text=(
-                "Sekcje strony głównej (hero → intro → … → zobacz różnicę) układają się warstwami. "
-                "Przy przewijaniu kolejna sekcja wjeżdża nad poprzednią — nad menu i headerem. "
-                "Flaga zapisuje się w manifest.json wariantu; front czyta "
-                "window.GICLEE_HOME_STACK z assets/giclee-home-sections.js."
-            ),
-            wraplength=520,
-            foreground="#555",
-        ).pack(anchor="w", pady=(4, 12))
-
-        stack_var = tk.BooleanVar(value=stack_on)
-        ttk.Checkbutton(
-            tab_effects,
-            text="Stack włączony dla tego wariantu",
-            variable=stack_var,
-        ).pack(anchor="w")
-
-        ttk.Label(
-            tab_effects,
-            text=(
-                "Na urządzeniach dotykowych i przy prefer-reduced-motion efekt jest automatycznie "
-                "wyłączony w przeglądarce. Działa razem z przejściami między sekcjami — section-scroll "
-                "używa layoutu stacku do obliczania pozycji docelowych."
-            ),
-            wraplength=520,
-            foreground="#777",
-        ).pack(anchor="w", pady=(10, 0))
-
-        stack_status = tk.StringVar(value="")
-        ttk.Label(tab_effects, textvariable=stack_status, foreground="#0a6").pack(anchor="w", pady=(8, 0))
-
-        def _save_stack() -> None:
-            try:
-                set_variant_home_stack(variant_id, bool(stack_var.get()))
-                _regenerate_home_assets()
-            except Exception as exc:
-                messagebox.showerror(APP_TITLE, str(exc), parent=win)
-                return
-            parts = [f"stack {'włączony' if stack_var.get() else 'wyłączony'}"]
-            stack_status.set(f"Zapisano: {', '.join(parts)}. Wdróż motyw, aby opublikować.")
-            show_toast(host, f"Zapisano ustawienia efektów ({parts[0]}).")
-
-        stack_btn_row = ttk.Frame(tab_effects)
-        stack_btn_row.pack(anchor="w", pady=(16, 0))
-        ttk.Button(stack_btn_row, text="Zapisz ustawienia efektów", command=_save_stack).pack(side="left")
-
-        btn_row = ttk.Frame(win, padding=(12, 0, 12, 12))
-        btn_row.pack(fill="x")
-        ttk.Button(btn_row, text="Zamknij", command=win.destroy).pack(side="right")
-        ttk.Button(btn_row, text="Zapisz", command=_save).pack(side="right", padx=(0, 8))
-        ttk.Button(btn_row, text="Przywróć domyślne", command=_restore_defaults).pack(side="left")
-        ttk.Button(btn_row, text="Wyłącz awaryjnie", command=_emergency_off).pack(side="left", padx=(8, 0))
-        ttk.Button(btn_row, text="Otwórz stronę główną", command=_open_preview_live).pack(side="left", padx=(8, 0))
+    def _open_home_settings(initial_tab: int = 0) -> None:
+        _open_transitions(initial_tab=initial_tab)
 
     def _deploy_theme() -> None:
         pending = _confirm_diff_and_validate(action_label="Wdróż")
@@ -2008,6 +1796,9 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
                 mobile_slide_urls=[mobile_name] if mobile_name else None,
                 stack_enabled=variant_uses_home_stack(state["variant_id"]),
                 scroll_config=load_scroll_config(state["variant_id"]),
+                final_difference_config=load_final_difference_config(state["variant_id"]),
+                studio_reveal_config=load_studio_reveal_config(state["variant_id"]),
+                section_bg_effects_config=load_section_bg_effects_config(state["variant_id"]),
             )
             state["template"] = pending_template
             state["settings"] = pending_settings
@@ -2068,7 +1859,7 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
 
         threading.Thread(target=worker, daemon=True).start()
 
-    ttk.Button(bottom, text="Ustawienia…", command=lambda: _open_home_settings()).pack(side="left")
+    ttk.Button(bottom, text="Przejścia…", command=lambda: _open_transitions()).pack(side="left")
     ttk.Button(bottom, text="Odśwież wariant", command=lambda: _reload()).pack(side="left", padx=(8, 0))
     ttk.Button(bottom, text="Historia wersji…", command=_show_history).pack(side="left", padx=(8, 0))
     ttk.Button(bottom, text="Podgląd live", command=_open_preview_live).pack(side="left", padx=(8, 0))

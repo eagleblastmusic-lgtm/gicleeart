@@ -118,15 +118,17 @@ main[data-template='product.szablon-produktu-v3']
 }
 
 /* Opakowanie: sticky grid + hold-tail (pusty scroll bez fixed/scrollTo) */
-.giclee-grid-slide-pin {
+main[data-template='product.szablon-produktu-v3'] .giclee-grid-slide-pin {
   position: relative;
+  z-index: var(--pdp-v3-grid-z);
 }
-
-.giclee-grid-slot-spacer,
-.giclee-grid-hold-tail {
-  height: 0;
-  pointer-events: none;
-}
+  
+  .giclee-grid-slot-spacer,
+  .giclee-grid-hold-tail,
+  .giclee-grid-follower-overlap {
+    height: 0;
+    pointer-events: none;
+  }
 
 @media (prefers-reduced-motion: no-preference) {
   main[data-template='product.szablon-produktu-v3'] .product-information .product-information__grid {
@@ -193,14 +195,29 @@ main[data-template='product.szablon-produktu-v3'] .product-information .giclee-b
   background-color: var(--color-background, #0a0a0a);
 }
 
-/* Proces: klei sie do dolnej krawedzi grida naturalnie w flow (tuz pod
-   pinWrap) — dojezdza do niej w fazie hold, potem scrolluja razem.
-   z-index > opis (20): kurtyna story::after wystaje poza box opisu i bez
-   tego zakrywa proces (stacking context opisu). */
+/* Proces: sticky top:0 + z-index > grid — zakrywa konfigurator w fazie hold.
+   Strefa scrolla (min-height) daje trustowi miejsce na overlay nad procesem. */
 main[data-template='product.szablon-produktu-v3'] .product-information .giclee-process {
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: var(--pdp-v3-process-z);
   background-color: var(--color-background, #0a0a0a);
+  isolation: isolate;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Trust: sticky nad procesem — ujemny margin cofa sekcje pod proces
+   (bez skoku layoutu, bo margin staly od poczatku). */
+main[data-template='product.szablon-produktu-v3'] .product-information .giclee-trust {
+  position: sticky;
+  top: 0;
+  z-index: var(--pdp-v3-trust-z);
+  background-color: var(--color-background, #0a0a0a);
+  isolation: isolate;
+  margin-top: calc(-100dvh - var(--gap, 48px));
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* Grid zadokowany — opis zwalnia sticky; nic nie przeswituje w szczelinach
@@ -211,19 +228,19 @@ main[data-template='product.szablon-produktu-v3']
   position: relative;
 }
 
-main[data-template='product.szablon-produktu-v3'] .product-information .giclee-trust {
-  position: relative;
-  z-index: var(--pdp-v3-trust-z);
-  background-color: var(--color-background, #0a0a0a);
-}
-
-/* Tryb normalny (galeria juz odklejona) — zwolnij sticky opisu i grida */
+/* Tryb normalny (galeria juz odklejona) — zwolnij sticky wszystkich warstw */
 main[data-template='product.szablon-produktu-v3']
   .product-information.is-scroll-normal
   .giclee-product-story,
 main[data-template='product.szablon-produktu-v3']
   .product-information.is-scroll-normal
-  .product-information__grid {
+  .product-information__grid,
+main[data-template='product.szablon-produktu-v3']
+  .product-information.is-scroll-normal
+  .giclee-process,
+main[data-template='product.szablon-produktu-v3']
+  .product-information.is-scroll-normal
+  .giclee-trust {
   position: relative;
 }
 
@@ -282,7 +299,53 @@ main[data-template='product.szablon-produktu-v3'] .product-information .giclee-t
 }
 
 .giclee-story__header {
+  --giclee-story-header-height: 12rem;
+  max-height: var(--giclee-story-header-height);
   margin-bottom: clamp(1.1rem, 2vw, 1.6rem);
+  overflow: hidden;
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition:
+    opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    max-height 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    margin-bottom 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s;
+}
+
+/* Znika razem z wychodzaca strona opisu (nie wczesniej — bez skoku tresci) */
+.giclee-story__header.giclee-story__header--hidden {
+  max-height: 0;
+  margin-bottom: 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-0.45rem);
+  transition:
+    opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    max-height 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    margin-bottom 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0.5s;
+}
+
+.giclee-story__header:not(.giclee-story__header--hidden) {
+  transition:
+    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.12s,
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.12s,
+    max-height 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.12s,
+    margin-bottom 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.12s,
+    visibility 0s;
+}
+
+.giclee-story__header.giclee-story__header--instant {
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giclee-story__header {
+    transition: none !important;
+  }
 }
 
 .giclee-story__title {
@@ -711,10 +774,15 @@ main[data-template='product.szablon-produktu-v3']
 main[data-template='product.szablon-produktu-v3'] .pdp-v3-pt-wrap {
   position: relative;
   isolation: isolate;
-  /* Caly wrap nad opisem (20): bez tego z-index dzieci (process 35) jest
-     zamkniety w kontekscie wrapu na auto/0 i kurtyna story::after przykrywa
-     proces mimo z-index na .giclee-process. */
   z-index: var(--pdp-v3-process-z);
+}
+
+/* Separator miedzy procesem a trustem psul linie podzialu tla */
+main[data-template='product.szablon-produktu-v3']
+  .pdp-v3-pt-wrap
+  .giclee-process
+  + .product-description-trailing-separator {
+  display: none;
 }
 
 /* Separator po wrapperze — te same odstepy co po .giclee-trust */
@@ -735,6 +803,7 @@ main[data-template='product.szablon-produktu-v3'] .pdp-v3-pt-wrap.has-bg::before
   background-image: var(--pdp-v3-pt-image);
   background-size: cover;
   background-position: center;
+  background-attachment: fixed;
   filter: blur(var(--pdp-v3-pt-blur, 0px)) brightness(var(--pdp-v3-pt-brightness, 1));
   pointer-events: none;
 }
@@ -742,21 +811,22 @@ main[data-template='product.szablon-produktu-v3'] .pdp-v3-pt-wrap.has-bg::before
 /* Przyciemnienie dla czytelnosci tresci nad grafika.
    Ten sam scale(1.03) co grafika w ::before — bez niego obraz wystawal
    gora i dolem poza nakladke (przeswit nieprzyciemnionej grafiki). */
-main[data-template='product.szablon-produktu-v3'] .pdp-v3-pt-wrap.has-bg::after {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 100vw;
-  transform: translateX(-50%) scale(1.03);
-  background: rgba(0, 0, 0, 0.45);
-  pointer-events: none;
-}
+   main[data-template='product.szablon-produktu-v3'] .pdp-v3-pt-wrap.has-bg::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    top: calc(-1 * var(--gap, 48px));
+background:
+  linear-gradient(
+    to bottom,
+    #000 0,
+    #000 var(--gap, 48px),
+    rgba(0, 0, 0, 0.45) var(--gap, 48px),
+    rgba(0, 0, 0, 0.45) 100%
+  );
+  }
 
-/* Czarne tla sekcji zwalniaja miejsce dla grafiki (::before dziedziczy
-   background-color, inset box-shadow rysowalby czarna linie) */
+/* Czarne tlo sekcji zwalniaja miejsce dla wspolnej grafiki wrapa */
 main[data-template='product.szablon-produktu-v3'] .pdp-v3-pt-wrap.has-bg .giclee-process,
 main[data-template='product.szablon-produktu-v3'] .pdp-v3-pt-wrap.has-bg .giclee-trust {
   background-color: transparent;
@@ -765,6 +835,8 @@ main[data-template='product.szablon-produktu-v3'] .pdp-v3-pt-wrap.has-bg .giclee
 main[data-template='product.szablon-produktu-v3'] .pdp-v3-pt-wrap.has-bg .giclee-process::before,
 main[data-template='product.szablon-produktu-v3'] .pdp-v3-pt-wrap.has-bg .giclee-trust::before {
   box-shadow: none;
+  background-color: transparent;
+  background-image: none;
 }
 
 /* ------------------------------------------------------------------ */

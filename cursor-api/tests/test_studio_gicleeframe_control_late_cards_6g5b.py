@@ -33,7 +33,7 @@ def test_control_structure_marks_shell_ready_before_late_cards() -> None:
     body = text[start:end]
 
     assert "self._shell_control_built = True" in body
-    assert "_try_mark_perceived_ready" in body
+    assert "_schedule_atomic_reveal_check(trigger=\"control_structure\")" in body
     assert "self._schedule_control_late_build()" in body
     assert "_micro_deferred_control_readiness" not in body
 

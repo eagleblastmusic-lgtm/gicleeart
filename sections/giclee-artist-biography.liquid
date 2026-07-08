@@ -332,10 +332,18 @@
         data-gab-default-bg
         {% if bio_bg_url != blank %}hidden{% endif %}
       >
+        {%- capture default_bg_object_y_style -%}
+          {%- render 'giclee-image-object-position-style', object_y: section.settings.background_image_object_y -%}
+        {%- endcapture -%}
         {{
           section.settings.background_image
           | image_url: width: 3840
-          | image_tag: loading: 'eager', fetchpriority: 'high', sizes: '100vw', alt: ''
+          | image_tag:
+            loading: 'eager',
+            fetchpriority: 'high',
+            sizes: '100vw',
+            alt: '',
+            style: default_bg_object_y_style
         }}
       </div>
     {%- endif -%}

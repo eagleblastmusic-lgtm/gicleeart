@@ -27,7 +27,16 @@ def main() -> None:
     import customtkinter as ctk
 
     ctk.set_appearance_mode("dark")
-    ctk.set_default_color_theme("dark-blue")
+
+    # Spójna paleta Studio (dark premium + złoty akcent) zamiast domyślnego
+    # niebieskiego "dark-blue" — widgety bez jawnych kolorów dziedziczą Studio look.
+    from pathlib import Path
+
+    _theme_json = Path(__file__).resolve().parent / "ui" / "studio_ctk_theme.json"
+    if _theme_json.is_file():
+        ctk.set_default_color_theme(str(_theme_json))
+    else:
+        ctk.set_default_color_theme("dark-blue")
 
     from giclee_app.launcher_studio import GicleeAppStudio
 

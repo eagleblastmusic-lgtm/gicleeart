@@ -9,7 +9,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def _method_block(text: str, name: str) -> str:
-    marker = f"def {name}"
+    marker = f"def {name}(\n"
+    if marker not in text:
+        marker = f"def {name}("
     assert marker in text
     return text.split(marker, 1)[1].split("\n    def ", 1)[0]
 
@@ -59,7 +61,7 @@ def test_preview_key_covers_editorial_section_types() -> None:
 def test_update_section_preview_still_uses_reuse_cache() -> None:
     path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
     text = path.read_text(encoding="utf-8")
-    block = _method_block(text, "_update_section_preview(self, m:")
+    block = _method_block(text, "_update_section_preview")
 
     assert "preview.reuse" in block
     assert "_ensure_preview_structure" in block

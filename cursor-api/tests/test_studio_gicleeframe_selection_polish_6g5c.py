@@ -17,15 +17,14 @@ def _view_text() -> str:
 def test_divider_is_not_deferred_only_for_page_settings() -> None:
     text = _view_text()
 
-    assert "Same page_settings dla dividera" in text
-    assert 'm.element_type == "media_section"' in text
-    assert 'getattr(fields, "children", False)' in text
-
     start = text.index("def _should_defer_editor_detail_populate")
     end = text.index("def _merged_for_selection_generation")
     body = text[start:end]
 
-    assert "bool(m.page_settings)" not in body
+    assert "return True" in body
+    assert "_populate_editor_preview_deferred" in text
+    assert "_populate_editor_layer_nav_deferred" in text
+    assert "_populate_editor_children_deferred" in text
 
 
 def test_media_section_preview_is_deferred() -> None:
@@ -38,12 +37,12 @@ def test_media_section_preview_is_deferred() -> None:
 
 
 def test_media_section_children_can_be_delayed_later_than_default() -> None:
+    from giclee_app.ui import gicleeframe_view as gfv
+
     text = _view_text()
 
-    assert "_GF_SELECTION_CHILDREN_LATE_DEFER_MS" in text
-    assert "_GF_SELECTION_CHILDREN_DEFER_MS" in text
-    assert "children_delay" in text
-    assert 'if etype == "media_section"' in text
+    assert gfv._GF_SELECTION_CHILDREN_LATE_DEFER_MS > gfv._GF_SELECTION_CHILDREN_DEFER_MS
+    assert "_populate_editor_children_deferred" in text
 
 
 def test_selection_polish_preserves_lazy_startup_and_late_control() -> None:

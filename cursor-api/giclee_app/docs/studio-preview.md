@@ -410,6 +410,21 @@ Checklista ręczna w Studio Preview — nie w CI.
 - **F3.2** — cross-nav stack, `inline_min_*`, breadcrumb polish
 - **F3.2.1** — powrót z inline do huba bez pustego contentu (lifecycle hub cache)
 - **F3.2.1.1** — CTk: nie wołać `self.minsize()` bez argów (czyta `tk.Misc.minsize`); `_safe_geometry` przed resize/restore
+- **v1.42.0 — wątki robocze (`studio/bg.py`)**: `run_async(widget, func, on_done)` — IO poza mainloop, wynik przez polling `after()` (thread-safe, bez wołania tkinter z obcego wątku). Używane w:
+  - `ui/topbar.py` — wszystkie statusy (Shopify/Git/Theme Dev/GPT) w jednym wątku, pills „sprawdzanie…" do czasu wyniku
+  - `ui/dashboard.py` — statusy + orders + activity log w wątku; theme_dev/git deferred też przez wątek
+  - `ui/inline_host.py` — import modułu komponentu w wątku + loading label; mount widoku po pierwszej klatce (`after(1)`)
+  - `ui/katalog_view.py` — `build_katalog_inventory` / `build_katalog_data_map` w wątku
+  - `ui/gicleeframe_view.py` — init light inventory w wątku (`_refresh_inventory_light(prebuilt_inventory=…)`)
+  - `ui/background_panel.py` — `panel_rows()` (JSON IO) w wątku, body budowane po wyniku
+  - `ui/component_hub.py` — log tail w wątku + czytanie tylko końcówki pliku (64 KB)
+- **v1.42.0 — inne**: zapis `StudioState` po inline przez `after_idle`; katalog assetów tła budowany 1× zamiast 2× na refresh
+
+## Wygląd (v1.42.0)
+
+- `ui/studio_ctk_theme.json` — własny motyw CTk (dark premium + złoty akcent) ładowany w `studio_preview.py` zamiast `dark-blue`; widgety bez jawnych kolorów dziedziczą paletę Studio
+- `component_loader.py` — fallback kolory kafelków w palecie Studio (stonowane ciepłe tony zamiast Material blue); domyślny akcent `#c9a962`
+- Hub: menu PPM w kolorach Studio (`PanelBg`/`CardHover`)
 
 ---
 

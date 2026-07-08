@@ -17,7 +17,7 @@ Polski jest językiem bazowym sklepu. Treść z edytora motywu (JSON szablonów)
 | Bloki tekstowe / przyciski / FAQ / jumbo | `snippets/text.liquid`, `snippets/button.liquid`, `snippets/jumbo-text.liquid`, `blocks/_accordion-row.liquid` | `giclee-i18n-block-text.liquid` — runtime `block.id` ma prefisz sekcji (`SekcjaId__text_abc` → klucz `text_abc`); brak tłumaczenia = `{{ block.settings.text }}` (richtext bez escapingu); tłumaczenie z locale = Liquid escapuje HTML → `assets/rte-formatter.js` dekoduje encje przy starcie |
 | **Mockup fotografii** | `snippets/giclee-photo-mockup.liquid`, `assets/giclee-photo-mockup.js` | `giclee.ui.mockup_*` + `window.__gicleeI18n` |
 | Sekcja galerii autora | `sections/giclee-artist-collection-showcase.liquid` | to samo dla `heading`, `lead`, `cta_label`, `eyebrow` |
-| UI (splash, katalog, mockup, JS) | `snippets/giclee-i18n-js.liquid` → `window.__gicleeI18n` | klucze `giclee.ui.*` + standardowe `actions.*` / `products.product.*` |
+| UI (splash, katalog, mockup, JS) | `snippets/giclee-i18n-js.liquid` → `window.__gicleeI18n` | klucze `giclee.ui.*` + standardowe `actions.*` / `products.product.*`; fallback PL: `snippets/giclee-i18n-defaults-json.liquid` + `snippets/giclee-ui-t.liquid` gdy brak klucza w locale |
 | Analiza PPI mockupu | `assets/giclee-print-analysis.js` | czyta `window.__gicleeI18n` |
 
 ## Utrzymanie tłumaczeń

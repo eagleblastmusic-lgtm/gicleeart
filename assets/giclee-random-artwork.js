@@ -26,10 +26,43 @@
   const prefersReducedMotion = () =>
     window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
+  const isTouchLikeDevice = () =>
+    window.matchMedia?.('(hover: none), (pointer: coarse)').matches ?? false;
+
   const isMobileViewport = () =>
     window.matchMedia?.('(max-width: 749px)').matches ?? window.innerWidth < 750;
 
   const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+  /** Tytuł podstawowy — bez wariantów w nawiasach, np. „(lub … (1866))”. */
+  const primaryProductTitle = (title) => {
+    const text = String(title || '').trim();
+    if (!text) return text;
+
+    let result = '';
+    let i = 0;
+    while (i < text.length) {
+      if (text[i] === '(') {
+        let depth = 1;
+        let j = i + 1;
+        while (j < text.length && depth > 0) {
+          if (text[j] === '(') depth += 1;
+          else if (text[j] === ')') depth -= 1;
+          j += 1;
+        }
+        if (depth === 0) {
+          while (result.length && /\s/.test(result[result.length - 1])) {
+            result = result.slice(0, -1);
+          }
+          i = j;
+          continue;
+        }
+      }
+      result += text[i];
+      i += 1;
+    }
+    return result.replace(/\s{2,}/g, ' ').trim();
+  };
 
   const hasWebGL = () => {
     try {
@@ -65,11 +98,12 @@
 
   const normalizeProduct = (raw) => {
     if (!raw || !raw.title || !raw.image || !raw.url) return null;
+    const title = primaryProductTitle(raw.title);
     return {
-      title: String(raw.title),
+      title,
       url: String(raw.url),
       image: String(raw.image),
-      imageAlt: raw.imageAlt ? String(raw.imageAlt) : String(raw.title),
+      imageAlt: raw.imageAlt ? primaryProductTitle(raw.imageAlt) : title,
       available: raw.available !== false,
     };
   };
@@ -113,11 +147,78 @@
       this.retryButton?.addEventListener('click', () => this.draw());
 
       this.setState(STATE.IDLE);
+      this.initCustomBgParallax();
     }
 
     disconnectedCallback() {
+      this.cleanupCustomBgParallax();
       window.clearTimeout(this.resultTeardownTimer);
       this.teardownScene();
+    }
+
+    initCustomBgParallax() {
+      this.cleanupCustomBgParallax();
+
+      const bg = this.querySelector('[data-grw-custom-bg]');
+      if (!bg?.classList.contains('grw--custom-bg-parallax')) return;
+      if (isTouchLikeDevice() || prefersReducedMotion()) return;
+
+      const layers = bg.querySelector('.giclee-random-artwork__custom-bg-layers');
+      if (!layers) return;
+
+      const MAX_X = 22;
+      const MAX_Y = 14;
+      const EASE = 0.075;
+      let targetX = 0;
+      let targetY = 0;
+      let curX = 0;
+      let curY = 0;
+      let rafId = 0;
+
+      const tick = () => {
+        rafId = 0;
+        curX += (targetX - curX) * EASE;
+        curY += (targetY - curY) * EASE;
+        layers.style.setProperty('--grw-cbg-px', `${(-curX * MAX_X).toFixed(2)}px`);
+        layers.style.setProperty('--grw-cbg-py', `${(-curY * MAX_Y).toFixed(2)}px`);
+        if (Math.abs(targetX - curX) > 0.0008 || Math.abs(targetY - curY) > 0.0008) {
+          rafId = window.requestAnimationFrame(tick);
+        }
+      };
+
+      const startLoop = () => {
+        if (!rafId) rafId = window.requestAnimationFrame(tick);
+      };
+
+      const onPointerMove = (event) => {
+        const vw = window.innerWidth || 1;
+        const vh = window.innerHeight || 1;
+        targetX = Math.min(Math.max((event.clientX / vw) * 2 - 1, -1), 1);
+        targetY = Math.min(Math.max((event.clientY / vh) * 2 - 1, -1), 1);
+        startLoop();
+      };
+
+      const onPointerLeave = () => {
+        targetX = 0;
+        targetY = 0;
+        startLoop();
+      };
+
+      window.addEventListener('pointermove', onPointerMove, { passive: true });
+      document.addEventListener('pointerleave', onPointerLeave, { passive: true });
+
+      this._cleanupCustomBgParallax = () => {
+        window.removeEventListener('pointermove', onPointerMove);
+        document.removeEventListener('pointerleave', onPointerLeave);
+        if (rafId) window.cancelAnimationFrame(rafId);
+        this._cleanupCustomBgParallax = null;
+      };
+    }
+
+    cleanupCustomBgParallax() {
+      if (typeof this._cleanupCustomBgParallax === 'function') {
+        this._cleanupCustomBgParallax();
+      }
     }
 
     parseEmbeddedPool() {

@@ -12,11 +12,13 @@ from Komponenty.stronaglowna.service import (
     cdn_url_to_shopify_ref,
     deploy_theme,
     fetch_thumbnail_bytes,
+    normalize_shopify_video_ref,
     path_get,
     path_set,
     shopify_ref_label,
     theme_root,
     upload_shopify_image,
+    upload_shopify_video,
 )
 from Komponenty.stronaglowna.text_html import (
     body_to_html,
@@ -28,6 +30,7 @@ from Komponenty.stronaglowna.text_html import (
 )
 
 from .config import PageEditorConfig
+from .image_object_y import normalize_object_y, object_y_field_id, object_y_path
 from .types import TemplateField, TemplateZone, set_zone_enabled, zone_enabled
 
 Logger = Callable[[str], None]
@@ -93,7 +96,9 @@ def config_slug(path: Path) -> str:
 def save_template_to_path(path: Path, template: dict[str, Any], *, logger: Logger | None = None) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     body = json.dumps(template, ensure_ascii=False, indent=2) + "\n"
-    path.write_text(INDEX_HEADER + body, encoding="utf-8")
+    rel = str(path).replace("\\", "/")
+    header = INDEX_HEADER if "/templates/" in rel else ""
+    path.write_text(header + body, encoding="utf-8")
     _log(logger, f"Zapisano {path.name}.")
 
 
@@ -160,6 +165,18 @@ def _write_blocks_visible(template: dict[str, Any], field: TemplateField, visibl
 def read_field(template: dict[str, Any], field: TemplateField) -> Any:
     if field.kind == "blocks_visible":
         return _read_blocks_visible(template, field)
+    if field.kind == "section_background" and field.path:
+        from Komponenty.stronaglowna.registry import HomeField
+        from Komponenty.stronaglowna.service import _read_section_background
+
+        home_field = HomeField(
+            field.field_id,
+            field.label,
+            "section_background",
+            field.path,
+            hint=field.hint or "",
+        )
+        return _read_section_background(template, home_field)
     if not field.path:
         return None
     return path_get(template, field.path)
@@ -250,6 +267,18 @@ def write_field(template: dict[str, Any], field: TemplateField, value: Any) -> N
             path_set(template, field.path, float(str(value).replace(",", ".")))
         except (TypeError, ValueError):
             path_set(template, field.path, 0.0)
+    elif field.kind == "section_background" and field.path:
+        from Komponenty.stronaglowna.registry import HomeField
+        from Komponenty.stronaglowna.service import _write_section_background
+
+        home_field = HomeField(
+            field.field_id,
+            field.label,
+            "section_background",
+            field.path,
+            hint=field.hint or "",
+        )
+        _write_section_background(template, home_field, value)
     else:
         path_set(template, field.path, value)
 
@@ -273,9 +302,31 @@ def load_zone_values(template: dict[str, Any], zone: TemplateZone) -> dict[str, 
                 out[fld.field_id] = float(val if val is not None else 0)
             except (TypeError, ValueError):
                 out[fld.field_id] = 0.0
+        elif fld.kind == "shopify_image" and fld.path:
+            out[fld.field_id] = val if val is not None else ""
+            oy_path = object_y_path(fld.path)
+            if oy_path:
+                out[object_y_field_id(fld.field_id)] = normalize_object_y(path_get(template, oy_path))
+        elif fld.kind == "section_background":
+            from Komponenty.stronaglowna.service import _parse_section_background
+
+            out[fld.field_id] = _parse_section_background(val)
         else:
             out[fld.field_id] = val if val is not None else ""
     return out
+
+
+def _write_image_object_y(
+    template: dict[str, Any], field: TemplateField, values: dict[str, Any]
+) -> None:
+    if field.kind != "shopify_image" or not field.path:
+        return
+    oy_key = object_y_field_id(field.field_id)
+    if oy_key not in values:
+        return
+    oy_path = object_y_path(field.path)
+    if oy_path:
+        path_set(template, oy_path, normalize_object_y(values[oy_key]))
 
 
 def apply_zone_values(template: dict[str, Any], zone: TemplateZone, values: dict[str, Any]) -> None:
@@ -287,6 +338,7 @@ def apply_zone_values(template: dict[str, Any], zone: TemplateZone, values: dict
         if fld.kind in ("heading", "body", "theme_asset"):
             continue
         write_field(template, fld, values[fld.field_id])
+        _write_image_object_y(template, fld, values)
 
 
 def apply_all_zone_values(
@@ -337,6 +389,15 @@ def upload_image(local_path: Path, *, logger: Logger | None = None) -> str:
     return upload_shopify_image(local_path, logger=logger)
 
 
+def upload_video(local_path: Path, *, logger: Logger | None = None) -> str:
+    ref = upload_shopify_video(local_path, logger=logger)
+    return normalize_shopify_video_ref(ref, logger=logger)
+
+
+def normalize_video_ref(ref: str, *, logger: Logger | None = None) -> str:
+    return normalize_shopify_video_ref(ref, logger=logger)
+
+
 __all__ = [
     "INDEX_HEADER",
     "apply_all_zone_values",
@@ -350,12 +411,14 @@ __all__ = [
     "load_template",
     "load_template_from_path",
     "load_zone_values",
+    "normalize_video_ref",
     "preview_url",
     "save_template",
     "save_template_to_path",
     "shopify_ref_label",
     "template_path_for_config",
     "upload_image",
+    "upload_video",
     "validate_template_paths",
     "variants_root_for",
 ]

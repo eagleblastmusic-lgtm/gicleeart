@@ -136,7 +136,7 @@
       "name": "t:names.hero",
       "settings": {
         "media_type_1": "image",
-        "image_1": "shopify://shop_images/frescoes-in-the-chapel-of-versailles.jpg",
+        "image_1": "shopify://shop_images/Gloves_on_archival_paper_print_202v607081020.jpg",
         "media_type_2": "image",
         "stack_media_on_mobile": false,
         "custom_mobile_media": false,
@@ -241,7 +241,7 @@
                 "text_Q8RMTC": {
                   "type": "text",
                   "settings": {
-                    "text": "<p>Czas realizacji zamówienia wynosi od 3 do 7 dni. Jest to związane z czasem dostawy drewna oraz materiałów potrzebnych do produkcji. Staram się zawsze trzymać minimalne zapasy drewna jednak przed wykończeniem, które impregnuje, drewno jest podatne na paczenie. Dlatego produkty od początku do końca realizuję z materiałów dostarczonych na świeżo.<br/><br/>Proces produkcji składa się z wielu różnych etapów, od cięcia drewna, przez nakładanie różnych warstw wykończenia, które schną dlatego trzeba liczyć 1 dzień cięcie i malowanie podkładem, 2 dzień olejowanie i drukowanie, kolejne 3 dni wstępnego schnięcia i utwardzania olejowosku, a także schnięcie papieru po zastosowaniu sprayu ochronnego</p>",
+                    "text": "<p>Czas realizacji zamówienia wynosi od 3 do 7 dni. Jest to związane z czasem dostawy drewna oraz materiałów potrzebnych do produkcji. Staram się zawsze trzymać minimalne zapasy drewna jednak przed wykończeniem, które impregnuje, drewno jest podatne na paczenie. Dlatego produkty od początku do końca realizuję z materiałów dostarczonych na świeżo.</p><p>Proces produkcji składa się z wielu różnych etapów, od cięcia drewna, przez nakładanie różnych warstw wykończenia, które schną dlatego trzeba liczyć 1 dzień cięcie i malowanie podkładem, 2 dzień olejowanie i drukowanie, kolejne 3 dni wstępnego schnięcia i utwardzania olejowosku, a także schnięcie papieru po zastosowaniu sprayu ochronnego</p>",
                     "width": "100%",
                     "max_width": "normal",
                     "alignment": "left",

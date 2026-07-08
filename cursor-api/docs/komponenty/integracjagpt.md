@@ -12,6 +12,9 @@
 | `obs_record.py` | Nagrywanie OBS (WebSocket StartRecord/StopRecord) → review-demos |
 | `handoff.py` | Szablony wiadomości review / start rozmowy (na bazie plików w «Pliki startowe dla GPT») |
 | `gicleeapp_push.py` | Bezpieczny push snapshotu `cursor-api` → staging → `eagleblastmusic-lgtm/gicleeapp` |
+| `starter_checkpoint.py` | Auto-sync plików startowych GPT po udanym Push GicleeApp (wersja, SHA, branch) |
+| `starter_files_push.py` | Bezpieczny push allowlisty plików startowych GPT → monorepo `origin/master` |
+| `giclee_viewer_push.py` | Bezpieczny push `C:\Strona\giclee-viewer` → `eagleblastmusic-lgtm/giclee-viewer` |
 | `gicleeart_gpt_push.py` | Bezpieczny push snapshotu motywu → `.gpt_mirror` → `eagleblastmusic-lgtm/gicleeart-gpt` |
 
 Tryb: `subprocess`. Sekcja launchera: **Narzędzia pomocnicze**.
@@ -49,12 +52,54 @@ Zachowuje 8 plików review-only (m.in. `GPT_README.md`, `docs/GPT_KNOWLEDGE_PACK
 **Runtime denylist (F3.2.1.2 + hygiene):** m.in. `documents/`, `notatki/`, `print_optimize/data/`, `stronaglowna/data/tmp/`, `stronaglowna/data/backups/`, scratch root (`_tmp_*`, `czesc*.json`, `tmp_getty*`) — wykluczone z audytu i commita. Dodatkowo jawne wykluczenia runtime/cache:
 
 - `Komponenty/stronaglowna/data/variants/*/index.json` i `*/settings.json` — lokalny runtime wariantu Shopify (nie commitować przy snapshotcie)
+- `Komponenty/wspolpraca/data/variants/manifest.json` i `*/page.wspolpraca.json` — lokalny runtime edytora strony Współpraca
 - `Komponenty/tldobio/data/collections.json` oraz `Komponenty/tldobio/data/*.{jpg,jpeg,png,webp}` — cache kolekcji / obrazy
 - `Komponenty/integracjagpt/data/gpt_config.json`, `Komponenty/dokumentysprzedazy/dane/orders_sync_state.json`, `Komponenty/kpir/dane/kpir_settings.json` — local config / sync state
 
 Nie blokuje się globalnie `Komponenty/*/data/variants/` (np. seed katalogu może być dozwolony). Przed commitem: `git diff --cached --name-only` musi zgadzać się z listą zaakceptowanych plików; inaczej push **przerwany** (hard stop).
 
 Domyślny commit: `Refresh GicleeApp repository snapshot`.
+
+Po **udanym** pushu workflow automatycznie aktualizuje pliki startowe Custom GPT w `Pliki startowe dla GPT/` (markery `<!-- gpt-starter:gicleeapp-push:* -->`):
+
+- `CURRENT_APP_STATE.md`
+- `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md`
+- `Wiadomość początkowa.txt`
+- `GICLEE_CURSOR_MASTER_INDEX_v37.md` (wersja + linia checkpointu)
+
+Źródło wersji: `giclee_app/__init__.py`. Dodatkowo czytany jest stan monorepo (`origin/master` vs lokalne commity pending). **Nie generuje ZIP-a** — tylko pliki `.md` / `.txt` źródłowe.
+
+Po pushu GicleeApp GUI może zaproponować **Push plików startowych GPT** do monorepo, jeśli allowlista ma lokalne zmiany.
+
+## Push plików startowych GPT (monorepo)
+
+Osobny przycisk w sekcji **Push GicleeApp** — **Push pliki startowe GPT do GitHub**.
+
+| Etap | Działanie |
+|------|-----------|
+| A — dry-run | Przebudowa `giclee_cursor_architect_knowledge_v37.zip` z aktywnych źródeł (CLEAN_PACK v37), `git status` / diff, skan sekretów |
+| B — push | Po potwierdzeniu: `git pull --ff-only` (jeśli behind), `git add -- <explicit allowlist paths>`, commit `docs(gpt): refresh starter files checkpoint`, `git push origin master` |
+
+**Allowlista:** tylko aktywne pliki z `CLEAN_PACK_V37_ACTIVE_FILES` + `Wiadomość początkowa.txt` + `giclee_cursor_architect_knowledge_v37.zip` w folderze `Pliki startowe dla GPT/`. Archiwalne wersje v32–v36, backup ZIP-y i `_zip_verify_*` **nie** trafiają do commita.
+
+**Nie dotyczy:** `eagleblastmusic-lgtm/gicleeapp`, motywu Shopify, `gicleeart-gpt`.
+
+Implementacja: `starter_files_push.py`.
+
+## Push Giclee Viewer
+
+Osobna sekcja w GUI **Integracja z GPT** — **Push Giclee Viewer do GitHub**.
+
+| Etap | Działanie |
+|------|-----------|
+| A — dry-run | `git status` / diff w `C:\Strona\giclee-viewer`, skan sekretów, wykluczenie `bin/` / `obj/` / `.vs/` / cache |
+| B — push | Po potwierdzeniu: auto-`origin` jeśli brak, `git pull --ff-only` (jeśli behind), opcjonalny commit, `git push -u origin master` |
+
+**Working tree clean:** jeśli lokalne commity nie są na GitHubie (np. pierwszy push GV-7), workflow wypycha istniejące commity **bez** nowego commita.
+
+**Nie dotyczy:** `gicleeapp`, `gicleeart-gpt`, monorepo `gicleeart`, plików startowych GPT.
+
+Implementacja: `giclee_viewer_push.py`.
 
 ## Repo GPT (lustro)
 
@@ -125,7 +170,7 @@ Wymaga: `npm install`, `npx playwright install chromium`, theme dev (localhost) 
 
 **Hasło password page:** sklep za hasłem wymaga `--store-password` dla CLI. W GUI **Integracja z GPT** → pole **Hasło sklepu** → Zapisz (plik `.shopify-store-password.local`, gitignore).
 
-**ZIP wiedzy + rozmowa z GPT:** **Okno rozmowy** → **Skopiuj .zip** buduje `giclee_cursor_architect_knowledge_v37.zip` z **19 aktywnych plików** manifestu `CLEAN_PACK v37` w `{THEME_ROOT}/Pliki startowe dla GPT/` (archiwalne `.md` na dysku są pomijane), kopiuje ZIP do schowka Windows, potem **Skopiuj Wiadomość początkową** (`Wiadomość początkowa.txt`). **Zmień wiadomość początkową** otwiera edytor i zapisuje `Wiadomość początkowa.txt` w tym samym folderze. Alternatywnie: **Załaduj zip do rozmowy** → kopia w `data/gpt_knowledge.zip`. Po **Pełnym cyklu** ZIP trafia do schowka; aktywuje się **Skopiuj prompt rozpoczęcia rozmowy**.
+**ZIP wiedzy + rozmowa z GPT:** **Okno rozmowy** → **Skopiuj .zip** buduje `giclee_cursor_architect_knowledge_v37.zip` z **36 aktywnych plików** manifestu `CLEAN_PACK v37` w `{THEME_ROOT}/Pliki startowe dla GPT/` (archiwalne `.md` na dysku są pomijane), kopiuje ZIP do schowka Windows, potem **Skopiuj Wiadomość początkową** (`Wiadomość początkowa.txt`), **Skopiuj wiadomość follow-up** (ZIP + GitHub), **Skopiuj wiadomość o roli** (GPT analizuje, Cursor implementuje) i **Skopiuj wiadomość potwierdzeń** (checklista Instructions, checkpoint, tryby analityczne/Shopify, GitHub). **Zmień wiadomość początkową** otwiera edytor i zapisuje `Wiadomość początkowa.txt` w tym samym folderze. Alternatywnie: **Załaduj zip do rozmowy** → kopia w `data/gpt_knowledge.zip`. Po **Pełnym cyklu** ZIP trafia do schowka; aktywuje się **Skopiuj prompt rozpoczęcia rozmowy**.
 
 **Źródła paczki wiedzy (kanoniczne):** `C:\Strona\pusty\Pliki startowe dla GPT` — pliki `.md` i `Wiadomość początkowa.txt` w tym folderze są źródłem prawdy. **Wygenerowany ZIP** (`giclee_cursor_architect_knowledge_v37.zip`) to output generatora; edytuj źródła, potem przebuduj ZIP z GUI (Integracja z GPT), nie ręcznie archiwum ZIP.
 

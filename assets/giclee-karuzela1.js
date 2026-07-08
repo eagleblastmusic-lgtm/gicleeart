@@ -4,8 +4,11 @@
   /* Karuzela1 — zamrożona kopia oryginalnej karuzeli (bez dynamicznego tła). Nie modyfikuj. */
 
   function gicleeUi(key, fallback) {
+    if (typeof window.__gicleeI18nGet === 'function') return window.__gicleeI18nGet(key, fallback);
     var bag = window.__gicleeI18n || {};
-    return bag[key] || fallback;
+    var v = bag[key];
+    if (!v || (typeof v === 'string' && /translation missing/i.test(v))) return fallback;
+    return v;
   }
 
   function prefersReducedMotion() {

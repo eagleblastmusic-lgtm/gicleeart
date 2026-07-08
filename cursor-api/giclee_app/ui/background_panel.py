@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import tkinter as tk
 from collections.abc import Callable
 from pathlib import Path
 from tkinter import messagebox
@@ -9,6 +10,7 @@ from tkinter import messagebox
 import customtkinter as ctk
 
 from giclee_app.component_loader import Component
+from giclee_app.studio.bg import run_async
 from giclee_app.studio.background_asset_catalog import (
     ASSET_SELECTION_BADGE,
     ASSET_SELECTION_EMPTY,
@@ -164,6 +166,8 @@ class BackgroundPanelView(ctk.CTkFrame):
         self._asset_selection_body: ctk.CTkFrame | None = None
         self._asset_selection_summary: ctk.CTkLabel | None = None
         self._asset_buttons: dict[str, ctk.CTkButton] = {}
+        self._scroll: ctk.CTkScrollableFrame | None = None
+        self._body_loading_label: ctk.CTkLabel | None = None
         self._build_shell()
         if callable(self._on_status):
             self._on_status(f"Tło: {cap.label} — read-only panel")
@@ -204,6 +208,7 @@ class BackgroundPanelView(ctk.CTkFrame):
         scroll = ctk.CTkScrollableFrame(self, fg_color=theme.AppBg, corner_radius=0)
         scroll.pack(fill="both", expand=True, padx=24, pady=(8, 24))
         scroll.grid_columnconfigure(0, weight=1)
+        self._scroll = scroll
 
         ctk.CTkLabel(
             scroll,
@@ -216,12 +221,35 @@ class BackgroundPanelView(ctk.CTkFrame):
             height=22,
         ).grid(row=0, column=0, sticky="w", pady=(0, 12))
 
-        rows = panel_rows(
-            self._cap,
-            component_name=self._comp.name,
-            folder_name=self._comp.folder_name,
-            package_path=self._comp.package_path,
+        self._body_loading_label = ctk.CTkLabel(
+            scroll,
+            text="Ładowanie panelu tła…",
+            font=theme.get_font(12),
+            text_color=theme.TextMuted,
+            anchor="w",
         )
+        self._body_loading_label.grid(row=1, column=0, sticky="w")
+
+        # panel_rows czyta JSON wariantów/indexów — w wątku roboczym, poza mainloop.
+        run_async(
+            self,
+            lambda: panel_rows(
+                self._cap,
+                component_name=self._comp.name,
+                folder_name=self._comp.folder_name,
+                package_path=self._comp.package_path,
+            ),
+            self._build_body_with_rows,
+        )
+
+    def _build_body_with_rows(self, rows: list[tuple[str, str]]) -> None:
+        if self._body_loading_label is not None:
+            try:
+                self._body_loading_label.destroy()
+            except tk.TclError:
+                pass
+            self._body_loading_label = None
+        scroll = self._scroll
         grid_row = 1
         show_draft = draft_enabled_for_folder(self._comp.folder_name)
 
@@ -448,10 +476,11 @@ class BackgroundPanelView(ctk.CTkFrame):
 
         self._refresh_asset_selection_ui()
 
-    def _selected_asset_label(self) -> str | None:
+    def _selected_asset_label(self, catalog: object = None) -> str | None:
         if not self._draft.selected_asset_id:
             return None
-        catalog = build_background_asset_catalog(self._comp.package_path)
+        if catalog is None:
+            catalog = build_background_asset_catalog(self._comp.package_path)
         entry = find_entry_by_id(catalog, self._draft.selected_asset_id)
         if entry is None:
             return None
@@ -472,6 +501,7 @@ class BackgroundPanelView(ctk.CTkFrame):
             self._asset_selection_panel.grid_remove()
             return
 
+        # Jeden build katalogu na odświeżenie — wcześniej był budowany dwukrotnie.
         catalog = build_background_asset_catalog(self._comp.package_path)
         entries = filter_entries_for_draft_kind(catalog, self._draft.asset_kind)
 
@@ -491,7 +521,7 @@ class BackgroundPanelView(ctk.CTkFrame):
 
         if self._asset_selection_summary is not None:
             if self._draft.selected_asset_id:
-                label = self._selected_asset_label() or "wybrany asset"
+                label = self._selected_asset_label(catalog) or "wybrany asset"
                 kind = self._draft.kind_label_pl()
                 self._asset_selection_summary.configure(
                     text=f"Wybrany asset: {label} · {kind}",

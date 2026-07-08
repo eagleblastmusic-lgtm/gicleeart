@@ -49,9 +49,12 @@ def _load_json_file(path: Path) -> dict[str, Any]:
     return data
 
 
-def _save_json_file(path: Path, data: dict[str, Any], *, header: str = INDEX_HEADER) -> None:
+def _save_json_file(path: Path, data: dict[str, Any], *, header: str | None = None) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     body = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
+    if header is None:
+        rel = str(path).replace("\\", "/")
+        header = INDEX_HEADER if "/templates/" in rel else ""
     path.write_text(header + body, encoding="utf-8")
 
 

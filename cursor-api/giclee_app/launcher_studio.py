@@ -730,7 +730,8 @@ class GicleeAppStudio(ctk.CTk):
 
     def _on_inline_opened(self, comp: Component) -> None:
         self._studio_state.record_launch(comp)
-        self._studio_state.save()
+        # Zapis JSON poza ścieżką otwierania widoku — bez blokowania pierwszej klatki.
+        self.after_idle(self._studio_state.save)
 
     def _handoff_background_to_inline(self, comp: Component) -> None:
         category = self._background_return_category or self._current_category or "theme"

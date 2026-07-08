@@ -9,7 +9,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def _method_block(text: str, name: str) -> str:
-    marker = f"def {name}"
+    marker = f"def {name}(\n"
+    if marker not in text:
+        marker = f"def {name}("
     assert marker in text
     return text.split(marker, 1)[1].split("\n    def ", 1)[0]
 
@@ -44,7 +46,7 @@ def test_update_layer_nav_tile_can_skip_unchanged_tile() -> None:
 def test_update_layer_nav_uses_delta_not_global_hide() -> None:
     path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
     text = path.read_text(encoding="utf-8")
-    block = _method_block(text, "_update_layer_nav(self, m:")
+    block = _method_block(text, "_update_layer_nav")
 
     assert "_sync_layer_nav_visibility" in block
     assert "layer_nav.delta" in block

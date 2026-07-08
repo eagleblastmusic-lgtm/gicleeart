@@ -1,0 +1,9 @@
+{
+  "active": "ws1",
+  "variants": [
+    {
+      "id": "ws1",
+      "label": "Wersja 1"
+    }
+  ]
+}

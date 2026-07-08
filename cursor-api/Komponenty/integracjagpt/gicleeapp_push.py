@@ -170,6 +170,8 @@ class GicleeAppPushResult:
     commit_sha: str = ""
     committed_files: list[str] = field(default_factory=list)
     message: str = ""
+    starter_sync_message: str = ""
+    starter_sync_updated_files: list[str] = field(default_factory=list)
 
 
 def _log(lines: OnLine, msg: str) -> None:
@@ -202,6 +204,23 @@ def _run_git(
 
 def _norm_rel(path: str | Path) -> str:
     return Path(path).as_posix().lstrip("./")
+
+
+def _expand_path_entries(staging: Path, rel: str) -> list[str]:
+    """Rozwiń wpis katalogu z git status do konkretnych plików (git add na dir stage'uje dzieci)."""
+    n = _norm_rel(rel).rstrip("/")
+    full = staging / n
+    if not full.is_dir():
+        return [n]
+    expanded: list[str] = []
+    for file_path in sorted(full.rglob("*")):
+        if not file_path.is_file():
+            continue
+        child = _norm_rel(file_path.relative_to(staging))
+        if _git_ignored(staging, child):
+            continue
+        expanded.append(child)
+    return expanded or [n]
 
 
 def _is_review_only(rel: str) -> bool:
@@ -626,24 +645,24 @@ def audit_staging_repo(
     candidates: list[str] = []
 
     for rel in all_changed:
-        n = _norm_rel(rel)
-        if _git_ignored(staging, n):
-            continue
-        if _is_runtime_path(n):
-            report.runtime_hits.append(n)
-            continue
-        if _skip_secret_scan(n):
+        for n in _expand_path_entries(staging, rel):
+            if _git_ignored(staging, n):
+                continue
+            if _is_runtime_path(n):
+                report.runtime_hits.append(n)
+                continue
+            if _skip_secret_scan(n):
+                candidates.append(n)
+                continue
+            hits = scan_file_secrets(staging / n, rel=n)
+            if hits:
+                report.secret_hits.extend(hits)
+                continue
             candidates.append(n)
-            continue
-        hits = scan_file_secrets(staging / n, rel=n)
-        if hits:
-            report.secret_hits.extend(hits)
-            continue
-        candidates.append(n)
-        for prefix in GICLEEAPP_THEME_PATH_PREFIXES:
-            if n.startswith(prefix):
-                report.theme_related_changes.append(n)
-                break
+            for prefix in GICLEEAPP_THEME_PATH_PREFIXES:
+                if n.startswith(prefix):
+                    report.theme_related_changes.append(n)
+                    break
 
     deletable = report.deletable_files
     report.commit_candidates = sorted(set(candidates))
@@ -725,9 +744,12 @@ def commit_and_push_gicleeapp(
     if not branch_status.ok:
         return GicleeAppPushResult(ok=False, message=branch_status.message)
 
-    paths_to_stage = list(report.commit_candidates)
+    paths_to_stage: list[str] = []
+    for rel in report.commit_candidates:
+        paths_to_stage.extend(_expand_path_entries(staging, rel))
     if include_deletions:
         paths_to_stage.extend(report.deletable_files)
+    paths_to_stage = sorted({_norm_rel(p) for p in paths_to_stage})
 
     if not paths_to_stage:
         return GicleeAppPushResult(ok=False, message="Brak ścieżek do git add.")
@@ -779,9 +801,36 @@ def commit_and_push_gicleeapp(
     final_status = _run_git(["status", "-sb"], staging, log=log)
     status_line = (final_status.stdout or "").strip()
     _log(log, f"Push OK: {sha[:12]}")
+
+    starter_sync_message = ""
+    starter_updated: list[str] = []
+    try:
+        from .starter_checkpoint import sync_starter_files_after_gicleeapp_push
+
+        sync = sync_starter_files_after_gicleeapp_push(
+            gicleeapp_sha=sha,
+            commit_message=msg,
+            log=log,
+        )
+        starter_sync_message = sync.message
+        starter_updated = list(sync.updated_files)
+        if sync.errors:
+            _log(log, f"GPT starter sync: {'; '.join(sync.errors)}")
+        elif sync.updated_files:
+            _log(log, starter_sync_message)
+    except Exception as exc:  # noqa: BLE001 — push OK; sync starterów nie może cofać pusha
+        starter_sync_message = f"GPT starter sync pominięty: {exc}"
+        _log(log, starter_sync_message)
+
+    base_message = f"GicleeApp zaktualizowane — {sha[:12]} ({status_line})"
+    if starter_sync_message and starter_updated:
+        base_message = f"{base_message} | {starter_sync_message}"
+
     return GicleeAppPushResult(
         ok=True,
         commit_sha=sha,
         committed_files=paths_to_stage,
-        message=f"GicleeApp zaktualizowane — {sha[:12]} ({status_line})",
+        message=base_message,
+        starter_sync_message=starter_sync_message,
+        starter_sync_updated_files=starter_updated,
     )

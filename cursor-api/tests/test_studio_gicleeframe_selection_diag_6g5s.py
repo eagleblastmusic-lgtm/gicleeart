@@ -80,7 +80,7 @@ def test_selection_diag_pipeline_events_exist() -> None:
 
 def test_selection_diag_editor_segment_events_exist() -> None:
     text = _view_text()
-    marker = "def _populate_editor(self, m: MergedPageElement)"
+    marker = "def _populate_editor("
     assert marker in text
     populate_body = text.split(marker, 1)[1].split("\n    def ", 1)[0]
     for segment in (
@@ -94,6 +94,18 @@ def test_selection_diag_editor_segment_events_exist() -> None:
         "studio.gicleeframe.selection.editor.page_context_schedule_or_fill",
     ):
         assert segment in populate_body
+
+
+def test_selection_diag_atomic_swap_events_exist() -> None:
+    text = _view_text()
+    for event in (
+        "studio.gicleeframe.selection.atomic_swap.scheduled",
+        "studio.gicleeframe.selection.atomic_swap.ready",
+        "studio.gicleeframe.selection.atomic_swap.applied",
+        "studio.gicleeframe.selection.cache_hit_skip_visible_refresh",
+        "studio.gicleeframe.selection.cache_hit_partial",
+    ):
+        assert event in text
 
 
 def test_selection_diag_page_context_events_exist() -> None:

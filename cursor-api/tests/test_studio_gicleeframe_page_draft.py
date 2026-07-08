@@ -296,7 +296,11 @@ def test_section_dropdown_top_level_only() -> None:
     assert divider_labels[0] == "Separator 1"
     for index, label in enumerate(divider_labels, start=1):
         assert label == f"Separator {index}"
-    assert any(label.startswith("Sekcja:") for label in labels)
+    media_rows = [r for r in tree if r.row_kind == "media_section"]
+    assert media_rows
+    assert not any(label.startswith("Sekcja:") for label in labels)
+    assert not any(label.startswith("Edytorski:") for label in labels)
+    assert all(r.display_title == r.merged.label for r in media_rows)
 
 
 def test_reorder_page_blocks_updates_ram_order() -> None:

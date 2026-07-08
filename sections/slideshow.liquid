@@ -61,10 +61,18 @@
   endif
 %}
 
+{% liquid
+  assign hero_audio_enabled = false
+  if request.page_type == 'index' and section.settings.enable_audio and section.settings.audio_url != blank
+    assign hero_audio_enabled = true
+  endif
+%}
+
 <div class="section-background color-{{ section.settings.color_scheme }}"></div>
 <div
-  class="slideshow-section spacing-style section {{ section_width_class }} color-{{ section.settings.color_scheme }} disable-section-top-offset"
+  class="slideshow-section spacing-style section {{ section_width_class }} color-{{ section.settings.color_scheme }} disable-section-top-offset{% if hero_audio_enabled %} giclee-hero-audio-host{% endif %}"
   style="{% render 'spacing-padding', settings: section.settings %}; --slideshow-gap: {{ section.settings.slideshow_gap }}px;{% if rounded_slide_corners %} --corner-radius: {{ section.settings.corner_radius }}px;{% endif %}"
+  {% if hero_audio_enabled %}data-giclee-hero-audio{% endif %}
 >
   <h2 class="visually-hidden">{{ 'accessibility.slideshow' | t }}</h2>
   {% render 'slideshow',
@@ -79,6 +87,32 @@
     slide_count: section.blocks.size,
     slide_size: section.settings.slide_height
   %}
+
+  {%- if hero_audio_enabled -%}
+    <audio
+      class="giclee-hero-audio"
+      src="{{ section.settings.audio_url | escape }}"
+      loop
+      preload="none"
+      aria-hidden="true"
+    ></audio>
+
+    <button
+      type="button"
+      class="giclee-hero-sound-toggle"
+      aria-pressed="false"
+      aria-label="{{ section.settings.audio_label_on | escape }}"
+      data-audio-label-on="{{ section.settings.audio_label_on | escape }}"
+      data-audio-label-off="{{ section.settings.audio_label_off | escape }}"
+      data-audio-volume="{{ section.settings.audio_volume | default: 28 }}"
+    >
+      <span class="giclee-hero-sound-toggle__icon" aria-hidden="true"></span>
+      <span class="giclee-hero-sound-toggle__label">{{ section.settings.audio_label_on }}</span>
+    </button>
+
+    {{ 'giclee-hero-audio.css' | asset_url | stylesheet_tag }}
+    <script src="{{ 'giclee-hero-audio.js' | asset_url }}" defer></script>
+  {%- endif -%}
 </div>
 
 {% stylesheet %}
@@ -380,6 +414,48 @@
       "unit": "s",
       "default": 4,
       "visible_if": "{{ section.settings.display_mode == 'full_frame' and section.settings.autoplay }}"
+    },
+    {
+      "type": "header",
+      "content": "Opcjonalny dźwięk hero (strona główna)"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_audio",
+      "label": "Włącz opcjonalny dźwięk hero",
+      "default": false
+    },
+    {
+      "type": "text",
+      "id": "audio_url",
+      "label": "URL pliku audio hero",
+      "info": "Wklej URL z Shopify Files albo CDN",
+      "visible_if": "{{ section.settings.enable_audio }}"
+    },
+    {
+      "type": "text",
+      "id": "audio_label_on",
+      "label": "Etykieta — włącz dźwięk",
+      "default": "Włącz dźwięk",
+      "visible_if": "{{ section.settings.enable_audio }}"
+    },
+    {
+      "type": "text",
+      "id": "audio_label_off",
+      "label": "Etykieta — wycisz",
+      "default": "Wycisz",
+      "visible_if": "{{ section.settings.enable_audio }}"
+    },
+    {
+      "type": "range",
+      "id": "audio_volume",
+      "label": "Głośność ambientu",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 28,
+      "visible_if": "{{ section.settings.enable_audio }}"
     },
     {
       "type": "header",

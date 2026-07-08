@@ -14,4 +14,12 @@ Tryb: `inline` (sekcja **Administracja strony**). Uruchomienie: `python -m Kompo
 
 **Warianty:** domyślnie jedna wersja (`ko1`); **Dodaj nową…** kopiuje bieżącą.
 
+**Pole grafiki (`shopify_image`, wspólne dla wszystkich edytorów stron):**
+- **Wgraj…** — wybór pliku (JPG/PNG/WebP) → upload do Shopify Files.
+- **Drag & drop** — upuszczenie pliku na miniaturę/wiersz pola wgrywa grafikę (wymaga `tkinterdnd2`; bez niego degraduje bez błędu).
+- **Ostatnie ▾** — lista ostatnio użytych grafik (historia w `Komponenty/_shared/data/recent_images.json`, moduł `_shared/recent_images.py`); klik ustawia ref.
+- **Kadrowanie góra–dół** — suwak + skróty Góra / Środek / Dół (0–100%, domyślnie 50). Zapis w JSON jako `{klucz_obrazu}_object_y` obok refa (np. `image_1_object_y`). Motyw: `object-position: center Y%` (`snippets/giclee-image-object-position*.liquid`).
+
+Implementacja: `_shared/theme_page_editor/image_object_y.py`, `gui_shell.py` (strony menu), `stronaglowna/gui.py` (strona główna + tło sekcji).
+
 → [`README.md`](README.md) · wzorzec: [`stronaglowna.md`](stronaglowna.md)

@@ -78,6 +78,17 @@ _MEDIA_SECTION_SETTING_SPECS: tuple[PageSettingSpec, ...] = (
 )
 
 
+_DIVIDER_SETTING_GROUP_ORDER: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("Linia", ("thickness", "width_percent", "alignment_horizontal")),
+    ("Układ", ("section_width", "padding-block-start", "padding-block-end")),
+    ("Styl", ("color_scheme", "corner_radius")),
+)
+
+
+def divider_setting_groups() -> tuple[tuple[str, tuple[str, ...]], ...]:
+    return _DIVIDER_SETTING_GROUP_ORDER
+
+
 def _specs_for_section(section_type: str) -> tuple[PageSettingSpec, ...]:
     if section_type == "divider":
         return _DIVIDER_SETTING_SPECS

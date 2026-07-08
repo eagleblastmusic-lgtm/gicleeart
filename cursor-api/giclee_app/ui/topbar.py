@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import tkinter as tk
-
 import customtkinter as ctk
 
 from giclee_app.studio import status_providers
+from giclee_app.studio.bg import run_async
 
 from . import theme
 from .widgets import StatusPill
@@ -59,39 +58,40 @@ class Topbar(ctk.CTkFrame):
             command=self.refresh,
         ).pack(side="left", padx=(8, 0))
 
+        self._refresh_running = False
         self.refresh(fast=True)
 
     def set_breadcrumb(self, text: str) -> None:
         self._breadcrumb.configure(text=text)
 
     def refresh(self, *, fast: bool = False) -> None:
-        """fast=True: shopify/github/gpt od razu; theme_dev po after_idle."""
-        st_shopify = status_providers.shopify_status()
-        st_github = status_providers.github_status()
-        st_gpt = status_providers.gpt_snapshot_status()
-
-        self._apply_pill("shopify", st_shopify)
-        self._apply_pill("github", st_github)
-        self._apply_pill("gpt_snapshot", st_gpt)
-
-        theme_pill = self._pills.get("theme_dev")
-        if theme_pill is not None:
-            if fast:
-                theme_pill.update_status(None, "Theme Dev", "sprawdzanie…")
-                root = self.winfo_toplevel()
-                try:
-                    root.after_idle(self._refresh_theme_dev)
-                except tk.TclError:
-                    self._refresh_theme_dev()
-            else:
-                self._refresh_theme_dev()
-
-    def _refresh_theme_dev(self) -> None:
-        pill = self._pills.get("theme_dev")
-        if pill is None:
+        """Statusy zbierane w wątku roboczym — UI nie blokuje się na IO/subprocess."""
+        if self._refresh_running:
             return
-        st = status_providers.theme_dev_status()
-        pill.update_status(st.ok, st.label, st.detail)
+        self._refresh_running = True
+        for key, title in (
+            ("shopify", "Shopify"),
+            ("theme_dev", "Theme Dev"),
+            ("github", "GitHub"),
+            ("gpt_snapshot", "GPT"),
+        ):
+            pill = self._pills.get(key)
+            if pill is not None:
+                pill.update_status(None, title, "sprawdzanie…")
+        run_async(
+            self,
+            status_providers.refresh_all_topbar,
+            self._apply_statuses,
+            on_error=lambda _exc: self._finish_refresh(),
+        )
+
+    def _apply_statuses(self, statuses: dict[str, status_providers.StatusResult]) -> None:
+        for key, st in statuses.items():
+            self._apply_pill(key, st)
+        self._finish_refresh()
+
+    def _finish_refresh(self) -> None:
+        self._refresh_running = False
 
     def _apply_pill(self, key: str, st: status_providers.StatusResult) -> None:
         pill = self._pills.get(key)

@@ -29,9 +29,10 @@ from pathlib import Path
 
 
 # Domyslne kolory akcentow rotacyjne dla komponentow bez wlasnego color.
+# Paleta zgodna ze Studio (dark premium): stonowane, ciepłe tony zamiast Material.
 _FALLBACK_COLORS = (
-    "#1e88e5", "#43a047", "#fb8c00", "#8e24aa",
-    "#e53935", "#00897b", "#5e35b1", "#c0ca33",
+    "#c9a962", "#6b9e7a", "#7a89b8", "#b8867a",
+    "#8a9e6b", "#a97ab8", "#6b9e9e", "#b8a06b",
 )
 
 
@@ -42,7 +43,7 @@ class Component:
     name: str                   # nazwa wyswietlana
     description: str            # opis
     icon: str = ""              # emoji albo sciezka do pliku
-    color: str = "#1e88e5"      # kolor akcentu
+    color: str = "#c9a962"      # kolor akcentu (Studio gold)
     order: int = 1000           # mniejsze = wczesniej
     mode: str = "subprocess"    # "subprocess" | "inline" | "url"
     url: str = ""               # tylko dla mode=url

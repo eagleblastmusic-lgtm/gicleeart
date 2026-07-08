@@ -64,7 +64,7 @@ Sekcja ładuje `assets/giclee-karuzela.js`, który wybiera implementację JS **o
 
 ## Nawigacja między autorami
 
-**Domyślnie (auto):** sekcja buduje listę z podmenu **Katalog** (do 3 poziomów flyoutu) i **dołącza pozostałe kolekcje** sklepu — kolejność menu, potem reszta alfabetycznie z `collections`. Pomija ukrytych autorów: `HIDDEN_CATALOG_ARTISTS` w `layout/theme.liquid` (panel Katalog + menu mobilne) oraz `gacs_hidden_csv` w tej sekcji (nawigacja prev/next) — **obie listy trzymaj zsynchronizowane**. Nie filtruje po `products_count` w pętli `for nav_col in collections` (w Shopify bywa niedostępne w tej pętli).
+**Domyślnie (auto):** sekcja buduje listę z podmenu **Katalog** (do 3 poziomów flyoutu) i **dołącza pozostałe kolekcje** sklepu — kolejność menu, potem reszta alfabetycznie z `collections`. Pomija ukrytych autorów: konfiguracja w **GicleeApp → Submenu katalog** (`assets/giclee-catalog-submenu-config.json`) oraz `gacs_hidden_csv` w tej sekcji (nawigacja prev/next) — **obie listy trzymaj zsynchronizowane**. Nie filtruje po `products_count` w pętli `for nav_col in collections` (w Shopify bywa niedostępne w tej pętli).
 
 Przyciski **← Poprzedni autor** / **Następny autor →** są na wysokości nagłówka „Wybrane dzieła” (nie przy karuzeli). Hover pokazuje miniaturę kolejnej/poprzedniej kolekcji. Przejście: blur + translate3d + opacity, easing `cubic-bezier(0.22, 1, 0.36, 1)`, bez przeładowania strony (`history.pushState`).
 

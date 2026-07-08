@@ -16,7 +16,42 @@ CONFIG_FILE = DATA_DIR / "gpt_config.json"
 VIDEOS_DIR = DATA_DIR / "nagrania"
 REVIEW_DEMOS_DIR = THEME_ROOT / "docs" / "review-demos"
 GPT_STARTER_DIR = THEME_ROOT / "Pliki startowe dla GPT"
+GPT_STARTER_REL_PREFIX = "Pliki startowe dla GPT"
 GPT_STARTER_ZIP_NAME = "giclee_cursor_architect_knowledge_v37.zip"
+MONOREPO_BRANCH = "master"
+STARTER_FILES_COMMIT_MESSAGE = "docs(gpt): refresh starter files checkpoint"
+
+# --- Push Giclee Viewer (C:\Strona\giclee-viewer → giclee-viewer na GitHub) ---
+GICLEE_VIEWER_DIR = Path(r"C:\Strona\giclee-viewer")
+GICLEE_VIEWER_REMOTE_URL = "https://github.com/eagleblastmusic-lgtm/giclee-viewer.git"
+GICLEE_VIEWER_BRANCH = "master"
+GICLEE_VIEWER_COMMIT_MESSAGE = "feat: sync Giclee Viewer workspace"
+
+GICLEE_VIEWER_RUNTIME_DIR_NAMES: frozenset[str] = frozenset({
+    ".vs",
+    "bin",
+    "obj",
+    "TestResults",
+    "packages",
+    ".cache",
+    "ThumbnailsCache",
+    "AppData",
+    "artifacts",
+    ".idea",
+})
+
+GICLEE_VIEWER_RUNTIME_FILE_SUFFIXES: tuple[str, ...] = (
+    ".user",
+    ".suo",
+    ".sln.docstates",
+    ".sln.iml",
+    ".cache",
+    ".log",
+    ".trx",
+    ".coverage",
+    ".coveragexml",
+    ".nupkg",
+)
 GPT_COMPACT_INSTRUCTIONS_FILE = "GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md"
 GPT_START_MESSAGE_FILE = "Wiadomość początkowa.txt"
 # Kanoniczne nazwy nagrań — Custom GPT szuka tych ścieżek w repo (handoff / manifest).
@@ -152,6 +187,8 @@ GICLEEAPP_RUNTIME_DENYLIST_PREFIXES: tuple[str, ...] = (
 GICLEEAPP_RUNTIME_DENYLIST_GLOBS: tuple[str, ...] = (
     "Komponenty/stronaglowna/data/variants/*/index.json",
     "Komponenty/stronaglowna/data/variants/*/settings.json",
+    "Komponenty/wspolpraca/data/variants/manifest.json",
+    "Komponenty/wspolpraca/data/variants/*/page.wspolpraca.json",
     "Komponenty/tldobio/data/collections.json",
     "Komponenty/tldobio/data/*.jpg",
     "Komponenty/tldobio/data/*.jpeg",

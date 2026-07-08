@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "desktopEnabled": true,
+  "mobileMode": "native",
+  "minDuration": 650,
+  "maxDuration": 1050,
+  "wheelThreshold": 60,
+  "touchThreshold": 48,
+  "headerOffset": null,
+  "headerOffsetExtra": 24,
+  "separatorOffset": 8,
+  "motionDynamics": 32,
+  "reducedMotionMode": "instant",
+  "headingSettle": true,
+  "debug": false
+}

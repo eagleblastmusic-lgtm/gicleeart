@@ -15,6 +15,7 @@ import customtkinter as ctk
 
 from giclee_app.component_loader import Component
 from giclee_app.launcher_delegate import component_log_path
+from giclee_app.studio.bg import run_async
 
 from . import theme
 from .widgets import SectionHeader
@@ -91,8 +92,12 @@ class InlineHostView(ctk.CTkFrame):
         self._back_label = back_label
         self._tk_mount: tk.Frame | None = None
         self._load_ok = False
+        self._loading_label: ctk.CTkLabel | None = None
         self._build_shell()
-        self._mount_inline()
+        self._show_loading()
+        # Import modułu w wątku roboczym + budowa widoku po pierwszej klatce —
+        # okno nie zamraża się na czas ładowania ciężkiego komponentu.
+        self.after(1, self._start_mount)
 
     @property
     def load_ok(self) -> bool:
@@ -173,18 +178,46 @@ class InlineHostView(ctk.CTkFrame):
         else:
             os.environ.pop(_STUDIO_INLINE_ENV, None)
 
-    def _mount_inline(self) -> None:
-        try:
-            mod = importlib.import_module(self._comp.view_module_path)
-        except Exception as exc:  # noqa: BLE001
-            err = _short_error(exc)
-            self._append_log(f"import failed: {err}")
-            self._show_error(
-                "Nie udało się załadować widoku",
-                f"Moduł {self._comp.view_module_path} nie jest dostępny.\n{err}",
-            )
-            return
+    def _show_loading(self) -> None:
+        self._loading_label = ctk.CTkLabel(
+            self._body,
+            text=f"Ładowanie: {self._comp.name}…",
+            font=theme.get_font(13),
+            text_color=theme.TextMuted,
+        )
+        self._loading_label.grid(row=0, column=0)
 
+    def _hide_loading(self) -> None:
+        if self._loading_label is None:
+            return
+        try:
+            self._loading_label.destroy()
+        except tk.TclError:
+            pass
+        self._loading_label = None
+
+    def _start_mount(self) -> None:
+        run_async(
+            self,
+            lambda: importlib.import_module(self._comp.view_module_path),
+            self._on_module_ready,
+            on_error=self._on_import_error,
+        )
+
+    def _on_import_error(self, exc: BaseException) -> None:
+        self._hide_loading()
+        err = _short_error(exc)
+        self._append_log(f"import failed: {err}")
+        self._show_error(
+            "Nie udało się załadować widoku",
+            f"Moduł {self._comp.view_module_path} nie jest dostępny.\n{err}",
+        )
+
+    def _on_module_ready(self, mod: Any) -> None:
+        self._hide_loading()
+        self._mount_inline(mod)
+
+    def _mount_inline(self, mod: Any) -> None:
         builder = getattr(mod, "build_view", None)
         if not callable(builder):
             self._append_log("missing build_view(parent, on_back)")

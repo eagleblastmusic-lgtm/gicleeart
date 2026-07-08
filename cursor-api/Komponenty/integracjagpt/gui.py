@@ -17,6 +17,9 @@ from .handoff import (
     build_conversation_start_prompt,
     build_plan_evaluation_message,
     build_review_request,
+    build_zip_read_github_followup_message,
+    build_cursor_delegate_followup_message,
+    build_confirmation_checklist_message,
 )
 from .mirror import build_review_package, sync_theme_to_mirror
 from .record import record_preview, record_video_to_disk
@@ -50,6 +53,8 @@ class IntegracjaGptApp:
         self._full_cycle_prompt_ready = False
         self._obs_recording = False
         self._gicleeapp_audit = None
+        self._starter_files_audit = None
+        self._giclee_viewer_audit = None
         self._gicleeart_audit = None
         self._gicleeart_full_cycle_on_success = None
         self._build_ui()
@@ -303,6 +308,44 @@ class IntegracjaGptApp:
             text="Dry-run → audyt → potwierdzenie → commit + push (main)",
             foreground="#666",
         ).pack(side="left", padx=(10, 0))
+        ga_starter_row = ttk.Frame(gicleeapp_frame)
+        ga_starter_row.pack(fill="x", pady=(8, 0))
+        self._starter_files_btn = ttk.Button(
+            ga_starter_row,
+            text="Push pliki startowe GPT do GitHub",
+            command=self._start_starter_files_push,
+        )
+        self._starter_files_btn.pack(side="left")
+        ttk.Label(
+            ga_starter_row,
+            text="monorepo master → Pliki startowe dla GPT (+ ZIP v37)",
+            foreground="#666",
+        ).pack(side="left", padx=(10, 0))
+
+        giclee_viewer_frame = ttk.LabelFrame(self.root, text="Push Giclee Viewer", padding=10)
+        giclee_viewer_frame.pack(fill="x", padx=12, pady=(0, 8))
+        ttk.Label(
+            giclee_viewer_frame,
+            text=(
+                "Osobny workflow: C:\\Strona\\giclee-viewer → eagleblastmusic-lgtm/giclee-viewer. "
+                "Nie dotyczy GicleeApp, motywu Shopify ani plików startowych GPT."
+            ),
+            foreground="#555",
+            wraplength=920,
+        ).pack(anchor="w", pady=(0, 8))
+        gv_row = ttk.Frame(giclee_viewer_frame)
+        gv_row.pack(fill="x")
+        self._giclee_viewer_btn = ttk.Button(
+            gv_row,
+            text="Push Giclee Viewer do GitHub",
+            command=self._start_giclee_viewer_push,
+        )
+        self._giclee_viewer_btn.pack(side="left")
+        ttk.Label(
+            gv_row,
+            text="Dry-run → audyt → potwierdzenie → commit + push (master)",
+            foreground="#666",
+        ).pack(side="left", padx=(10, 0))
 
         self.status_var = tk.StringVar(value="Gotowy.")
         ttk.Label(self.root, textvariable=self.status_var, padding=(12, 0, 12, 4)).pack(fill="x")
@@ -467,7 +510,7 @@ class IntegracjaGptApp:
     def _open_conversation_window(self) -> None:
         dlg = tk.Toplevel(self.root)
         dlg.title("Okno rozmowy — ChatGPT + ZIP")
-        position_toplevel_screen_center(dlg, 560, 280)
+        position_toplevel_screen_center(dlg, 560, 300)
         dlg.transient(self.root)
 
         ttk.Label(
@@ -476,7 +519,10 @@ class IntegracjaGptApp:
                 "Przygotuj rozmowę w ChatGPT (nowe okno + załącznik ZIP):\n"
                 "1. «Skopiuj .zip» — archiwum wiedzy CLEAN_PACK v37 ze schowka plików\n"
                 "2. Wklej ZIP w ChatGPT\n"
-                "3. «Skopiuj Wiadomość początkową» — tekst startowy do wklejenia obok ZIP-a"
+                "3. «Skopiuj Wiadomość początkową» — tekst startowy do wklejenia obok ZIP-a\n"
+                "4. «Skopiuj wiadomość follow-up» — prośba o przeczytanie ZIP-a i połączenie z GitHubem\n"
+                "5. «Skopiuj wiadomość o roli» — GPT analizuje, Cursor implementuje\n"
+                "6. «Skopiuj wiadomość potwierdzeń» — checklista Instructions, checkpoint, tryby, GitHub"
             ),
             padding=(12, 12, 12, 8),
             wraplength=480,
@@ -603,8 +649,95 @@ class IntegracjaGptApp:
             self._copy_text(text)
             show_toast(dlg, "Wiadomość początkowa — wklej w ChatGPT.")
             dlg.destroy()
+            self._open_followup_message_window(parent)
 
         ttk.Button(btn_row, text="Skopiuj Wiadomość początkową", command=copy_message).pack(side="left")
+        ttk.Button(btn_row, text="Później", command=dlg.destroy).pack(side="right")
+
+    def _open_followup_message_window(self, parent: tk.Misc) -> None:
+        dlg = tk.Toplevel(parent)
+        dlg.title("Skopiuj wiadomość follow-up")
+        position_toplevel_screen_center(dlg, 520, 180)
+        dlg.transient(parent)
+        dlg.grab_set()
+
+        ttk.Label(
+            dlg,
+            text=(
+                "Wiadomość początkowa jest w schowku. "
+                "Teraz skopiuj kolejną wiadomość — prośbę o przeczytanie ZIP-a i GitHub."
+            ),
+            padding=(12, 12, 12, 8),
+            wraplength=480,
+        ).pack(anchor="w")
+
+        btn_row = ttk.Frame(dlg, padding=(12, 4, 12, 12))
+        btn_row.pack(fill="x")
+
+        def copy_followup() -> None:
+            self._copy_text(build_zip_read_github_followup_message())
+            show_toast(dlg, "Wiadomość follow-up — wklej w ChatGPT.")
+            dlg.destroy()
+            self._open_cursor_delegate_message_window(parent)
+
+        ttk.Button(btn_row, text="Skopiuj wiadomość follow-up", command=copy_followup).pack(side="left")
+        ttk.Button(btn_row, text="Później", command=dlg.destroy).pack(side="right")
+
+    def _open_cursor_delegate_message_window(self, parent: tk.Misc) -> None:
+        dlg = tk.Toplevel(parent)
+        dlg.title("Skopiuj wiadomość o roli")
+        position_toplevel_screen_center(dlg, 520, 180)
+        dlg.transient(parent)
+        dlg.grab_set()
+
+        ttk.Label(
+            dlg,
+            text=(
+                "Kolejny krok: skopiuj wiadomość o podziale ról — "
+                "Ty (GPT) analizujesz, Cursor implementuje."
+            ),
+            padding=(12, 12, 12, 8),
+            wraplength=480,
+        ).pack(anchor="w")
+
+        btn_row = ttk.Frame(dlg, padding=(12, 4, 12, 12))
+        btn_row.pack(fill="x")
+
+        def copy_delegate() -> None:
+            self._copy_text(build_cursor_delegate_followup_message())
+            show_toast(dlg, "Wiadomość o roli — wklej w ChatGPT.")
+            dlg.destroy()
+            self._open_confirmation_checklist_message_window(parent)
+
+        ttk.Button(btn_row, text="Skopiuj wiadomość o roli", command=copy_delegate).pack(side="left")
+        ttk.Button(btn_row, text="Później", command=dlg.destroy).pack(side="right")
+
+    def _open_confirmation_checklist_message_window(self, parent: tk.Misc) -> None:
+        dlg = tk.Toplevel(parent)
+        dlg.title("Skopiuj wiadomość potwierdzeń")
+        position_toplevel_screen_center(dlg, 520, 200)
+        dlg.transient(parent)
+        dlg.grab_set()
+
+        ttk.Label(
+            dlg,
+            text=(
+                "Ostatni krok: skopiuj checklistę potwierdzeń — "
+                "Instructions, checkpoint, tryby analityczne i Shopify, GitHub, oczekiwanie na zadanie."
+            ),
+            padding=(12, 12, 12, 8),
+            wraplength=480,
+        ).pack(anchor="w")
+
+        btn_row = ttk.Frame(dlg, padding=(12, 4, 12, 12))
+        btn_row.pack(fill="x")
+
+        def copy_checklist() -> None:
+            self._copy_text(build_confirmation_checklist_message())
+            show_toast(dlg, "Wiadomość potwierdzeń — wklej w ChatGPT.")
+            dlg.destroy()
+
+        ttk.Button(btn_row, text="Skopiuj wiadomość potwierdzeń", command=copy_checklist).pack(side="left")
         ttk.Button(btn_row, text="Później", command=dlg.destroy).pack(side="right")
 
     def _load_knowledge_zip(self) -> None:
@@ -1213,10 +1346,277 @@ class IntegracjaGptApp:
                 self._append_log("Pliki w commicie:")
                 for path in result.committed_files:
                     self._append_log(f"  • {path}")
+            if result.starter_sync_updated_files:
+                self._append_log("Pliki startowe GPT (auto-sync):")
+                for path in result.starter_sync_updated_files:
+                    self._append_log(f"  • {path}")
+            elif result.starter_sync_message:
+                self._append_log(result.starter_sync_message)
             show_toast(self.root, result.message or "GicleeApp zaktualizowane")
             self.status_var.set(result.message or "GicleeApp zaktualizowane")
+            self._offer_starter_files_push_after_gicleeapp()
         else:
             self._set_busy(False, "Push GicleeApp: błąd")
+            messagebox.showerror(APP_TITLE, result.message or "Push nie powiódł się.", parent=self.root)
+
+    def _offer_starter_files_push_after_gicleeapp(self) -> None:
+        from .starter_files_push import dry_run_starter_files_push
+
+        report = dry_run_starter_files_push(rebuild_zip=True, log=[])
+        if report.blocked or report.no_changes:
+            return
+        if not messagebox.askyesno(
+            APP_TITLE,
+            "Pliki startowe GPT mają lokalne zmiany w monorepo.\n\n"
+            f"Kandydaci: {len(report.commit_candidates)} plików\n\n"
+            "Wypchnąć je teraz na origin/master?",
+            parent=self.root,
+        ):
+            return
+        self._starter_files_audit = report
+        self._run_starter_files_commit_push(include_deletions=False)
+
+    def _start_starter_files_push(self) -> None:
+        if self._busy:
+            messagebox.showinfo(APP_TITLE, "Poczekaj na zakończenie bieżącej operacji.", parent=self.root)
+            return
+        self._clear_log()
+        self._starter_files_audit = None
+        self._set_busy(True, "Sprawdzam pliki startowe GPT…")
+        self._starter_files_btn.configure(state="disabled")
+
+        def run() -> None:
+            from .starter_files_push import dry_run_starter_files_push
+
+            lines: list[str] = []
+            report = dry_run_starter_files_push(rebuild_zip=True, log=lines)
+            self.root.after(0, lambda: self._finish_starter_files_dry_run(lines, report))
+
+        threading.Thread(target=run, daemon=True, name="integracjagpt-starter-files-dry-run").start()
+
+    def _finish_starter_files_dry_run(self, lines: list[str], report) -> None:
+        for line in lines:
+            self._append_log(line)
+        for line in report.format_report():
+            self._append_log(line)
+
+        self._starter_files_audit = report
+        self._starter_files_btn.configure(state="normal")
+
+        if report.blocked:
+            self._set_busy(False, "Push plików startowych: zablokowany")
+            messagebox.showerror(
+                APP_TITLE,
+                report.error or "Audyt wykrył blokady — commit i push anulowane.",
+                parent=self.root,
+            )
+            return
+
+        if report.no_changes:
+            self._set_busy(False, "Brak zmian — pliki startowe GPT są aktualne")
+            messagebox.showinfo(
+                APP_TITLE,
+                "Brak zmian — pliki startowe GPT są aktualne na monorepo.",
+                parent=self.root,
+            )
+            return
+
+        self._set_busy(False, "Gotowe do commita — potwierdź push")
+        preview_lines = []
+        for path in report.commit_candidates[:30]:
+            preview_lines.append(f"• {path}")
+        if len(report.commit_candidates) > 30:
+            preview_lines.append(f"… i {len(report.commit_candidates) - 30} więcej")
+        if report.outside_allowlist_hits:
+            preview_lines.append("")
+            preview_lines.append("Uwaga: inne pliki w folderze starterów (poza allowlistą) nie trafią do commita.")
+
+        include_deletions = False
+        if report.deletable_files:
+            include_deletions = messagebox.askyesno(
+                APP_TITLE,
+                "Wykryto usunięte pliki startowe z allowlisty.\n\n"
+                "Uwzględnić je w commicie?",
+                parent=self.root,
+            )
+
+        if not messagebox.askyesno(
+            APP_TITLE,
+            "Commit + push plików startowych GPT na GitHub?\n\n"
+            f"Repo: monorepo (origin/master)\n"
+            f"Pliki: {len(report.commit_candidates)}"
+            + (f" + {len(report.deletable_files)} usunięć" if include_deletions else "")
+            + "\n\n"
+            + "\n".join(preview_lines),
+            parent=self.root,
+        ):
+            self.status_var.set("Push plików startowych GPT anulowany.")
+            return
+
+        self._run_starter_files_commit_push(include_deletions)
+
+    def _run_starter_files_commit_push(self, include_deletions: bool) -> None:
+        report = self._starter_files_audit
+        if report is None:
+            return
+        self._set_busy(True, "Pushuję pliki startowe GPT…")
+        self._starter_files_btn.configure(state="disabled")
+
+        def run() -> None:
+            from .starter_files_push import commit_and_push_starter_files
+
+            lines: list[str] = []
+            result = commit_and_push_starter_files(
+                report,
+                include_deletions=include_deletions,
+                log=lines,
+            )
+            self.root.after(0, lambda: self._finish_starter_files_push(lines, result))
+
+        threading.Thread(target=run, daemon=True, name="integracjagpt-starter-files-push").start()
+
+    def _finish_starter_files_push(self, lines: list[str], result) -> None:
+        for line in lines:
+            self._append_log(line)
+        self._starter_files_btn.configure(state="normal")
+        if result.ok:
+            self._set_busy(False, "Pliki startowe GPT zaktualizowane")
+            if result.commit_sha:
+                self._append_log(f"Commit SHA: {result.commit_sha}")
+                self._append_log("Pliki w commicie:")
+                for path in result.committed_files:
+                    self._append_log(f"  • {path}")
+            show_toast(self.root, result.message or "Pliki startowe GPT zaktualizowane")
+            self.status_var.set(result.message or "Pliki startowe GPT zaktualizowane")
+        else:
+            self._set_busy(False, "Push plików startowych GPT: błąd")
+            messagebox.showerror(APP_TITLE, result.message or "Push nie powiódł się.", parent=self.root)
+
+    def _start_giclee_viewer_push(self) -> None:
+        if self._busy:
+            messagebox.showinfo(APP_TITLE, "Poczekaj na zakończenie bieżącej operacji.", parent=self.root)
+            return
+        self._clear_log()
+        self._giclee_viewer_audit = None
+        self._set_busy(True, "Sprawdzam Giclee Viewer…")
+        self._giclee_viewer_btn.configure(state="disabled")
+
+        def run() -> None:
+            from .giclee_viewer_push import dry_run_giclee_viewer_push
+
+            lines: list[str] = []
+            report = dry_run_giclee_viewer_push(log=lines)
+            self.root.after(0, lambda: self._finish_giclee_viewer_dry_run(lines, report))
+
+        threading.Thread(target=run, daemon=True, name="integracjagpt-giclee-viewer-dry-run").start()
+
+    def _finish_giclee_viewer_dry_run(self, lines: list[str], report) -> None:
+        for line in lines:
+            self._append_log(line)
+        for line in report.format_report():
+            self._append_log(line)
+
+        self._giclee_viewer_audit = report
+        self._giclee_viewer_btn.configure(state="normal")
+
+        if report.blocked:
+            self._set_busy(False, "Push Giclee Viewer: zablokowany")
+            messagebox.showerror(
+                APP_TITLE,
+                report.error or "Audyt wykrył blokady — commit i push anulowane.",
+                parent=self.root,
+            )
+            return
+
+        if report.no_changes:
+            self._set_busy(False, "Brak zmian — giclee-viewer jest aktualne")
+            messagebox.showinfo(
+                APP_TITLE,
+                "Brak zmian — giclee-viewer jest aktualne na GitHub.",
+                parent=self.root,
+            )
+            return
+
+        self._set_busy(False, "Gotowe do pusha — potwierdź")
+        preview_lines = []
+        if report.push_only:
+            preview_lines.append(
+                f"• working tree clean — wypchnięcie {report.unpushed_commits} lokalnych commitów"
+            )
+        else:
+            for path in report.commit_candidates[:30]:
+                preview_lines.append(f"• {path}")
+            if len(report.commit_candidates) > 30:
+                preview_lines.append(f"… i {len(report.commit_candidates) - 30} więcej")
+
+        include_deletions = False
+        if report.deletable_files:
+            include_deletions = messagebox.askyesno(
+                APP_TITLE,
+                "Wykryto usunięte pliki projektu.\n\nUwzględnić je w commicie?",
+                parent=self.root,
+            )
+
+        action = "Push" if report.push_only else "Commit + push"
+        if not messagebox.askyesno(
+            APP_TITLE,
+            f"{action} Giclee Viewer na GitHub?\n\n"
+            f"Repo: eagleblastmusic-lgtm/giclee-viewer (master)\n"
+            + (
+                f"Commity do wypchnięcia: {report.unpushed_commits}\n\n"
+                if report.push_only
+                else (
+                    f"Pliki: {len(report.commit_candidates)}"
+                    + (f" + {len(report.deletable_files)} usunięć" if include_deletions else "")
+                    + "\n\n"
+                )
+            )
+            + "\n".join(preview_lines),
+            parent=self.root,
+        ):
+            self.status_var.set("Push Giclee Viewer anulowany.")
+            return
+
+        self._run_giclee_viewer_commit_push(include_deletions)
+
+    def _run_giclee_viewer_commit_push(self, include_deletions: bool) -> None:
+        report = self._giclee_viewer_audit
+        if report is None:
+            return
+        self._set_busy(True, "Pushuję Giclee Viewer…")
+        self._giclee_viewer_btn.configure(state="disabled")
+
+        def run() -> None:
+            from .giclee_viewer_push import commit_and_push_giclee_viewer
+
+            lines: list[str] = []
+            result = commit_and_push_giclee_viewer(
+                report,
+                include_deletions=include_deletions,
+                log=lines,
+            )
+            self.root.after(0, lambda: self._finish_giclee_viewer_push(lines, result))
+
+        threading.Thread(target=run, daemon=True, name="integracjagpt-giclee-viewer-push").start()
+
+    def _finish_giclee_viewer_push(self, lines: list[str], result) -> None:
+        for line in lines:
+            self._append_log(line)
+        self._giclee_viewer_btn.configure(state="normal")
+        if result.ok:
+            self._set_busy(False, "Giclee Viewer zaktualizowane")
+            if result.commit_sha:
+                self._append_log(f"Commit SHA: {result.commit_sha}")
+            if result.push_only:
+                self._append_log(f"Wypchnięte commity: {result.pushed_commits}")
+            elif result.committed_files:
+                self._append_log("Pliki w commicie:")
+                for path in result.committed_files:
+                    self._append_log(f"  • {path}")
+            show_toast(self.root, result.message or "Giclee Viewer zaktualizowane")
+            self.status_var.set(result.message or "Giclee Viewer zaktualizowane")
+        else:
+            self._set_busy(False, "Push Giclee Viewer: błąd")
             messagebox.showerror(APP_TITLE, result.message or "Push nie powiódł się.", parent=self.root)
 
     def _run_full_cycle(self) -> None:

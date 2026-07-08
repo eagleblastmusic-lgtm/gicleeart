@@ -3,8 +3,11 @@
     if (!hero) return;
 
     function pmI18n(key, fallback) {
+      if (typeof window.__gicleeI18nGet === 'function') return window.__gicleeI18nGet(key, fallback);
       var bag = window.__gicleeI18n || {};
-      return bag[key] || fallback;
+      var v = bag[key];
+      if (!v || (typeof v === 'string' && /translation missing/i.test(v))) return fallback;
+      return v;
     }
 
     const embedHost = hero.closest(".product-wlasna-fotografia-mockup");

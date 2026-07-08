@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 try:
@@ -17,6 +18,34 @@ except ImportError:
 def dnd_files_available() -> bool:
     """Pakiet tkinterdnd2 zainstalowany — nie gwarantuje działania w zwykłym tk.Frame."""
     return _DND_IMPORTED
+
+
+def parse_dnd_files(data: str) -> list[Path]:
+    """Parsuje payload zdarzenia <<Drop>> tkdnd na listę ścieżek.
+
+    Ścieżki ze spacjami są opakowane w {klamry}; wiele plików rozdziela spacja.
+    """
+    out: list[Path] = []
+    buf = ""
+    in_brace = False
+    for ch in data:
+        if ch == "{":
+            in_brace = True
+            buf = ""
+        elif ch == "}":
+            in_brace = False
+            if buf.strip():
+                out.append(Path(buf.strip()))
+            buf = ""
+        elif ch == " " and not in_brace:
+            if buf.strip():
+                out.append(Path(buf.strip()))
+            buf = ""
+        else:
+            buf += ch
+    if buf.strip():
+        out.append(Path(buf.strip()))
+    return out
 
 
 def register_drop_target(
@@ -41,4 +70,9 @@ def register_drop_target(
     return True
 
 
-__all__ = ["DND_FILES", "dnd_files_available", "register_drop_target"]
+__all__ = [
+    "DND_FILES",
+    "dnd_files_available",
+    "parse_dnd_files",
+    "register_drop_target",
+]

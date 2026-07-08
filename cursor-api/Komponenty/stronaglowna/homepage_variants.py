@@ -343,13 +343,17 @@ def apply_variant_to_theme(variant_id: str) -> None:
     if mobile_src.is_file():
         shutil.copy2(mobile_src, mobile_hero_path())
     mobile_name = mobile_hero_path().name if mobile_hero_path().is_file() else None
+    from .final_difference_settings import load_final_difference_config
     from .scroll_settings import load_scroll_config
+    from .studio_reveal_settings import load_studio_reveal_config
 
     write_home_assets(
         template,
         mobile_slide_urls=[mobile_name] if mobile_name else None,
         stack_enabled=variant_uses_home_stack(variant_id),
         scroll_config=load_scroll_config(variant_id),
+        final_difference_config=load_final_difference_config(variant_id),
+        studio_reveal_config=load_studio_reveal_config(variant_id),
     )
 
 

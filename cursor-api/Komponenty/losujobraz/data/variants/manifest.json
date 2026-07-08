@@ -1,9 +1,13 @@
 {
-  "active": "lo1",
+  "active": "lo2",
   "variants": [
     {
       "id": "lo1",
       "label": "Wersja 1"
+    },
+    {
+      "id": "lo2",
+      "label": "Kopia Wersja 2"
     }
   ]
 }

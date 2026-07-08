@@ -50,6 +50,7 @@ class PerfEvent:
     since_enter_ms: float | None = None
     since_click_ms: float | None = None
     since_request_ms: float | None = None
+    since_details_cta_ms: float | None = None
     queue_latency_ms: float | None = None
     element_id: str | None = None
     element_type: str | None = None
@@ -72,6 +73,7 @@ class PerfEvent:
             since_enter_ms=_optional_float(raw.get("since_enter_ms")),
             since_click_ms=_optional_float(raw.get("since_click_ms")),
             since_request_ms=_optional_float(raw.get("since_request_ms")),
+            since_details_cta_ms=_optional_float(raw.get("since_details_cta_ms")),
             queue_latency_ms=_optional_float(raw.get("queue_latency_ms")),
             element_id=raw.get("element_id"),
             element_type=raw.get("element_type"),
@@ -88,6 +90,7 @@ class PerfEvent:
             self.since_click_ms,
             self.since_enter_ms,
             self.since_request_ms,
+            self.since_details_cta_ms,
             self.queue_latency_ms,
         ):
             if value is not None:

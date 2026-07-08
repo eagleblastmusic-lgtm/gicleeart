@@ -18,6 +18,7 @@ from giclee_app.component_loader import Component
 from giclee_app.launcher_delegate import LaunchOutcome, launch
 from giclee_app.runtime import get_component_cwd
 from giclee_app.studio import status_providers
+from giclee_app.studio.bg import run_async
 from giclee_app.studio.component_index import StudioComponentIndex
 from giclee_app.studio.perf import log_event, span
 from giclee_app.studio.state import StudioState
@@ -325,24 +326,69 @@ class DashboardView(ctk.CTkScrollableFrame):
 
     def _run_on_show_body(self) -> None:
         with span("studio.dashboard.on_show.fast"):
-            shop = status_providers.shopify_status()
-            gpt_st = status_providers.gpt_snapshot_status()
-
+            # Chipy i pending pills od razu (lekkie); IO statusów w wątku roboczym.
+            pending = StatusResult(None, "", "sprawdzanie…")
             theme_pending = StatusResult(None, "Theme Dev", "sprawdzanie…")
             git_pending = StatusResult(None, "Git", "sprawdzanie…")
+            shop_pending = StatusResult(None, "Shopify", "sprawdzanie…")
+            gpt_pending = StatusResult(None, "GPT", "sprawdzanie…")
 
-            self._last_shop_status = shop
+            self._last_shop_status = shop_pending
             self._last_theme_status = theme_pending
             self._last_git_status = git_pending
-            self._last_gpt_status = gpt_st
+            self._last_gpt_status = gpt_pending
 
-            self._refresh_status_pills(shop, theme_pending, git_pending, gpt_st)
-            self._refresh_stat_cards(shop, theme_pending)
+            self._refresh_status_pills(shop_pending, theme_pending, git_pending, gpt_pending)
             self._refresh_chip_rows()
-            self.refresh_activity()
+
+        run_async(self, self._collect_dashboard_data, self._apply_dashboard_data)
 
         self._schedule_theme_status_check()
         self._safe_after_refresh(_GIT_STATUS_DELAY_MS, self._refresh_git_status_deferred)
+
+    @staticmethod
+    def _collect_dashboard_data() -> dict[str, object]:
+        """Wątek roboczy — czyta pliki JSON i logi bez blokowania UI."""
+        return {
+            "shop": status_providers.shopify_status(),
+            "gpt": status_providers.gpt_snapshot_status(),
+            "orders": status_providers.production_orders_count(),
+            "activity": status_providers.activity_log_lines(8),
+        }
+
+    def _apply_dashboard_data(self, data: dict[str, object]) -> None:
+        shop = data.get("shop")
+        gpt_st = data.get("gpt")
+        if isinstance(shop, StatusResult):
+            self._last_shop_status = shop
+            if self._status_pills:
+                self._status_pills[0].update_status(shop.ok, shop.label, shop.detail)
+            if "shopify" in self._stat_cards:
+                self._stat_cards["shopify"].update_value(
+                    "OK" if shop.ok else (shop.detail[:18] or "—"),
+                )
+        if isinstance(gpt_st, StatusResult):
+            self._last_gpt_status = gpt_st
+            if self._gpt_pill is not None:
+                self._gpt_pill.update_status(gpt_st.ok, gpt_st.label, gpt_st.detail)
+
+        if self._component_index is not None and "components" in self._stat_cards:
+            total, visible = self._component_index.component_counts()
+            self._stat_cards["components"].update_value(f"{visible}/{total}")
+
+        orders = data.get("orders")
+        if "orders" in self._stat_cards:
+            self._stat_cards["orders"].update_value(
+                str(orders) if isinstance(orders, int) else "—",
+            )
+
+        activity = data.get("activity")
+        if isinstance(activity, list) and self._activity_box is not None:
+            text = "\n".join(activity) if activity else "Brak wpisów w dzienniku."
+            self._activity_box.configure(state="normal")
+            self._activity_box.delete("1.0", "end")
+            self._activity_box.insert("1.0", text)
+            self._activity_box.configure(state="disabled")
 
     def _schedule_theme_status_check(self) -> None:
         log_event(
@@ -352,8 +398,9 @@ class DashboardView(ctk.CTkScrollableFrame):
         self._safe_after_refresh(_THEME_STATUS_DELAY_MS, self._refresh_theme_status_deferred)
 
     def _refresh_theme_status_deferred(self) -> None:
-        with span("studio.dashboard.status.theme_dev.deferred"):
-            theme_st = self._fetch_theme_dev_status()
+        run_async(self, self._fetch_theme_dev_status, self._apply_theme_status)
+
+    def _apply_theme_status(self, theme_st: StatusResult) -> None:
         self._last_theme_status = theme_st
 
         if self._theme_pill is not None:
@@ -366,8 +413,9 @@ class DashboardView(ctk.CTkScrollableFrame):
         log_event("studio.dashboard.status.theme_dev.done")
 
     def _refresh_git_status_deferred(self) -> None:
-        with span("studio.dashboard.status.git.deferred"):
-            git_st = status_providers.github_status()
+        run_async(self, status_providers.github_status, self._apply_git_status)
+
+    def _apply_git_status(self, git_st: StatusResult) -> None:
         self._last_git_status = git_st
 
         if self._git_pill is not None:

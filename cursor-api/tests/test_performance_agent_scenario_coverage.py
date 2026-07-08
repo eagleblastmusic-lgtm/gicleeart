@@ -64,3 +64,50 @@ def test_compute_scenario_log_coverage_skipped() -> None:
     run = ScenarioRun(scenario_id="gf_open", scenario_name="GF", skipped=True)
     coverage = compute_scenario_log_coverage([run], profile.scenario_by_id(), [])
     assert coverage[0].status == "skipped"
+
+
+def test_dashboard_cold_early_event_seen_before_window() -> None:
+    profile = get_profile("giclee_studio")
+    scenarios = profile.scenario_by_id()
+    run = ScenarioRun(
+        scenario_id="dashboard_cold",
+        scenario_name="Dashboard",
+        start_ts="2026-07-07T21:21:41+00:00",
+        end_ts="2026-07-07T21:21:41+00:00",
+        completed=True,
+    )
+    events = [
+        PerfEvent.from_raw(
+            1,
+            {
+                "ts": "2026-07-07T21:20:30+00:00",
+                "event": "studio.dashboard.visual.visible_ready",
+            },
+        ),
+    ]
+    coverage = compute_scenario_log_coverage([run], scenarios, events, tolerance_s=2.0)
+    assert coverage[0].status == "early_event_seen"
+    assert "studio.dashboard" in coverage[0].matched_patterns
+
+
+def test_dashboard_cold_no_events_when_missing() -> None:
+    profile = get_profile("giclee_studio")
+    scenarios = profile.scenario_by_id()
+    run = ScenarioRun(
+        scenario_id="dashboard_cold",
+        scenario_name="Dashboard",
+        start_ts="2026-07-07T21:21:41+00:00",
+        end_ts="2026-07-07T21:21:41+00:00",
+        completed=True,
+    )
+    events = [
+        PerfEvent.from_raw(
+            1,
+            {
+                "ts": "2026-07-07T21:25:00+00:00",
+                "event": "studio.hub.visual.visible_ready",
+            },
+        ),
+    ]
+    coverage = compute_scenario_log_coverage([run], scenarios, events, tolerance_s=2.0)
+    assert coverage[0].status == "no_events_in_window"

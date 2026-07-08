@@ -70,3 +70,67 @@ def test_apply_edit_to_draft_rebuilds_model_cache() -> None:
     block = _method_block(text, "_apply_edit_to_draft")
 
     assert "_set_merged" in block or "_rebuild_page_model_cache" in block
+
+
+def test_media_section_selection_defers_heavy_details_to_on_demand() -> None:
+    import customtkinter as ctk
+    from unittest.mock import patch
+
+    from giclee_app.studio.gicleeframe_page_draft import MergedPageElement
+    from giclee_app.ui.gicleeframe_view import GicleeFrameView
+
+    root = ctk.CTk()
+    root.withdraw()
+    try:
+        view = GicleeFrameView(root)
+        view.pack()
+        media = MergedPageElement(
+            element_id="media-1",
+            section_key="section-media",
+            element_type="media_section",
+            group="body",
+            order=0,
+            label="Media",
+            title="Media title",
+            text="",
+            image_ref="",
+            alt="",
+            notes="",
+            editable=True,
+            source="inventory",
+            status="ok",
+            has_draft_patch=False,
+            visible=True,
+        )
+        view._merged_by_id = {"media-1": media}
+
+        logged: list[tuple[str, dict]] = []
+
+        def _capture(event: str, **kwargs) -> None:  # type: ignore[no-untyped-def]
+            logged.append((event, kwargs))
+
+        with patch("giclee_app.ui.gicleeframe_view.log_event", side_effect=_capture):
+            with patch.object(view, "after_idle", side_effect=lambda cb: cb()):
+                with patch.object(view, "_update_section_preview") as preview_mock:
+                    with patch.object(view, "_fill_children_overview_buttons") as children_mock:
+                        with patch.object(view, "_ensure_editor_identity_built"):
+                            view._edit_panel = ctk.CTkFrame(view)
+                            view._select_element("media-1")
+
+        preview_mock.assert_not_called()
+        children_mock.assert_not_called()
+        assert any(item[0] == "studio.gicleeframe.details_on_demand.available" for item in logged)
+        assert not any(item[0].endswith("preview.update.done") for item in logged)
+        assert not any(item[0].endswith("children.update.done") for item in logged)
+    finally:
+        root.destroy()
+
+
+def test_minimal_editor_path_logs_ready_without_auto_details() -> None:
+    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
+    text = path.read_text(encoding="utf-8")
+    populate = text.split("def _populate_editor(", 1)[1].split("\n    def ", 1)[0]
+    assert "studio.gicleeframe.selection.minimal_editor_ready" in text
+    assert "_show_details_on_demand_block" in populate
+    assert "_update_section_preview(" not in populate
+    assert "_fill_children_overview_buttons(" not in populate

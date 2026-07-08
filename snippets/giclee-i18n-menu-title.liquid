@@ -13,7 +13,7 @@
     echo 'giclee.menu.' | append: menu_slug
   endcapture
   assign menu_val = menu_key | t
-  if menu_val == menu_key or menu_val contains 'Translation missing'
+  if menu_val == menu_key or menu_val contains 'Translation missing' or menu_val contains 'TRANSLATION MISSING'
     echo link.title
   else
     echo menu_val

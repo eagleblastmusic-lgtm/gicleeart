@@ -25,25 +25,24 @@ def test_gicleeframe_uses_stable_workspace_skeleton_columns() -> None:
     assert "_clear_column_children" in text
 
 
-def test_gicleeframe_tracks_perceived_ready_after_deferred_shell_parts() -> None:
+def test_gicleeframe_tracks_atomic_reveal_gates() -> None:
     text = _view_text()
 
-    assert "_try_mark_perceived_ready" in text
-    assert "studio.gicleeframe.visual.perceived_ready" in text
+    assert "_try_atomic_reveal" in text
+    assert "_atomic_reveal_missing_gates" in text
+    assert "studio.gicleeframe.atomic_reveal.revealed" in text
     assert "_shell_sections_built" in text
     assert "_shell_editor_built" in text
     assert "_shell_control_built" in text
 
 
-def test_gicleeframe_defers_heavy_media_section_editor_details() -> None:
+def test_gicleeframe_defers_heavy_editor_details_to_on_demand() -> None:
     text = _view_text()
 
     assert "_should_defer_editor_detail_populate" in text
     assert "studio.gicleeframe.populate_editor.details_deferred" in text
-    assert "_populate_editor_layer_nav_deferred" in text
-    assert "_populate_editor_children_deferred" in text
-    assert "studio.gicleeframe.populate_editor.layer_nav_deferred" in text
-    assert "studio.gicleeframe.populate_editor.children_deferred" in text
+    assert "_apply_heavy_details_on_demand" in text
+    assert "studio.gicleeframe.details_on_demand.requested" in text
     assert "_selection_generation" in text
     assert ".stale" in text
 
