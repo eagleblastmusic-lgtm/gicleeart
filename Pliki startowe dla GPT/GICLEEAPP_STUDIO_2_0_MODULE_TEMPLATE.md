@@ -24,6 +24,7 @@ Asset Lab
 
 Administracja strony
 ├── Strona główna
+├── Strona główna v2
 ├── Giclee Frame
 ├── Własna fotografia
 ├── Katalog

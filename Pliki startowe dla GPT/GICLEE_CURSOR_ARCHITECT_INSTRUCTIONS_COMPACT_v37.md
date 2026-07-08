@@ -141,16 +141,13 @@ Jeśli użytkownik aktywuje konkretny tryb, np. „Tryb Shopify Homepage”, „
 <!-- gpt-starter:gicleeapp-push:start -->
 Repo kanoniczne: `eagleblastmusic-lgtm/gicleeapp` (monorepo `gicleeart`, branch `master`, app w `cursor-api/`)
 
-GitHub / aktualna wersja aplikacji: **v1.41.2** (`giclee_app/__init__.py`, `package.json`)
-Ostatni push GicleeApp: `4cd50f3` na `main` (2026-07-08 03:27 UTC) — Refresh GicleeApp repository snapshot
-Monorepo origin/master: `845191c` — docs(gpt): refresh starter files after GICLÉE FRAME F2.1
+GitHub / aktualna wersja aplikacji: **v1.42.0** (`giclee_app/__init__.py`, `package.json`)
+Ostatni push GicleeApp: `3585d9d` na `main` (2026-07-08 14:44 UTC) — Refresh GicleeApp repository snapshot
+Monorepo origin/master: `5b0191c` — feat(cursor-api): add controlled dry-run bridge tools
 Ostatni pushed feature checkpoint aplikacji (F2.1, historia): `4647c1b` — v1.40.1
-Lokalny commit monorepo (push pending): `4affd42` — docs(gpt): refresh starter files checkpoint
-Lokalny commit monorepo (push pending): `c966912` — feat(perf-agent): add guided performance audit workflow
-Lokalny commit monorepo (push pending): `926bc60` — perf(studio): improve cold perceived readiness across dashboard, katalog and gicleeframe
 Poprzedni checkpoint: `46fc718` — GICLÉE FRAME page inventory RAM editor (v1.40.0)
-Wersja aplikacji: **GicleeApp Studio v1.41.2**
-Branch: GitHub gicleeapp **v1.41.2** / `main` @ `4cd50f3`; monorepo origin/master `845191c`; lokalny monorepo ma commity pending względem origin/master
+Wersja aplikacji: **GicleeApp Studio v1.42.0**
+Branch: GitHub gicleeapp **v1.42.0** / `main` @ `3585d9d`; monorepo origin/master `5b0191c`
 <!-- gpt-starter:gicleeapp-push:end -->
 
 Zamknięte:
