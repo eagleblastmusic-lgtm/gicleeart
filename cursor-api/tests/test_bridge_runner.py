@@ -10,6 +10,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from workers.bridge_runner import (
+    ALLOWED_TOOLS,
     LOG_FILE,
     REQUEST_FILE,
     RESULT_FILE,
@@ -427,3 +428,83 @@ def test_git_readonly_rejects_non_allowlisted_command() -> None:
     assert ("status", "--short") in ALLOWED_GIT_COMMANDS
     with pytest.raises(ValueError):
         _git_run(Path("."), ("push", "origin", "main"), 10)
+
+
+def test_allowed_tools_run_tool_allowlist_exactly_four() -> None:
+    assert set(ALLOWED_TOOLS.keys()) == {
+        "performance_agent_doctor",
+        "project_state_snapshot",
+        "git_status_readonly",
+        "component_inventory_readonly",
+    }
+
+
+def test_component_inventory_readonly_valid_roots(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    job_dir = tmp_path / "job-inventory"
+    workspace = _setup_cursor_api_workspace(tmp_path, monkeypatch)
+    komponenty = workspace / "Komponenty"
+    komponenty.mkdir()
+    (komponenty / "stronaglowna").mkdir()
+    (komponenty / "kontakt").mkdir()
+    (workspace / "giclee_app").mkdir()
+    (workspace / "giclee_app" / "__init__.py").write_text('__version__ = "2.1.0"\n', encoding="utf-8")
+    (workspace / "package.json").write_text('{"version": "1.2.3"}\n', encoding="utf-8")
+    (workspace / "tools" / "performance_agent").mkdir(parents=True)
+
+    def _fail_popen(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("component_inventory_readonly must not spawn a subprocess")
+
+    def _fail_run(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("component_inventory_readonly must not invoke subprocess.run")
+
+    monkeypatch.setattr("workers.bridge_runner.subprocess.Popen", _fail_popen)
+    monkeypatch.setattr("workers.bridge_runner.subprocess.run", _fail_run)
+
+    _write_request(
+        job_dir,
+        "run_tool",
+        args={"toolId": "component_inventory_readonly"},
+        project_roots={"cursorApiRoot": str(workspace), "themeRoot": str(tmp_path)},
+    )
+
+    exit_code = run_job(job_dir)
+
+    assert exit_code == 0
+    result = json.loads((job_dir / RESULT_FILE).read_text(encoding="utf-8"))
+    assert result["status"] == "Succeeded"
+    payload = result["payload"]
+    assert payload["componentsPathExists"] == "true"
+    assert payload["componentCount"] == "2"
+    assert payload["gicleeAppVersion"] == "2.1.0"
+    assert payload["packageJsonVersion"] == "1.2.3"
+
+
+def test_component_inventory_missing_komponenty_succeeds_with_warning(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    job_dir = tmp_path / "job-inventory-missing"
+    workspace = _setup_cursor_api_workspace(tmp_path, monkeypatch)
+
+    def _fail_popen(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("no subprocess")
+
+    monkeypatch.setattr("workers.bridge_runner.subprocess.Popen", _fail_popen)
+
+    _write_request(
+        job_dir,
+        "run_tool",
+        args={"toolId": "component_inventory_readonly"},
+        project_roots={"cursorApiRoot": str(workspace), "themeRoot": str(tmp_path)},
+    )
+
+    exit_code = run_job(job_dir)
+
+    assert exit_code == 0
+    result = json.loads((job_dir / RESULT_FILE).read_text(encoding="utf-8"))
+    assert result["status"] == "Succeeded"
+    payload = result["payload"]
+    assert payload["componentsPathExists"] == "false"
+    assert result["warnings"]
+    assert "Komponenty" in payload["inspectionWarnings"] or "Komponenty" in result["warnings"][0]

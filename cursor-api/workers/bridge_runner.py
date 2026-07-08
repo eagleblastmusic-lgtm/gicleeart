@@ -1,8 +1,8 @@
 """Minimal Python bridge runner for GicleeApp Studio worker jobs (GAS-2B/2C/GAS-4).
 
-GAS-4 adds a small, explicitly allowlisted set of read-only tools behind the
-``run_tool`` command. Only the three tool ids below are permitted; there is no
-general command runner, no ``shell=True`` and no user-provided arguments.
+GAS-4/GAS-5 add a small, explicitly allowlisted set of read-only tools behind the
+``run_tool`` command. Only the four tool ids in ``ALLOWED_TOOLS`` are permitted;
+there is no general command runner, no ``shell=True`` and no user-provided arguments.
 """
 
 from __future__ import annotations
@@ -51,7 +51,17 @@ ALLOWED_TOOLS: dict[str, dict[str, Any]] = {
         "log_source": "git_status_readonly",
         "summary_success": "Git status (read-only) completed successfully.",
     },
+    "component_inventory_readonly": {
+        "kind": "component_inventory",
+        "read_only": True,
+        "default_timeout": 60,
+        "log_source": "component_inventory_readonly",
+        "summary_success": "Component inventory inspection completed successfully.",
+    },
 }
+
+COMPONENT_INVENTORY_MAX_NAMES = 100
+_VERSION_PATTERN = re.compile(r"""__version__\s*=\s*['"]([^'"]+)['"]""")
 
 # Only these exact git argument tuples may be executed. No add/commit/push/reset.
 ALLOWED_GIT_COMMANDS: tuple[tuple[str, ...], ...] = (
@@ -319,6 +329,10 @@ def run_tool(job_dir: Path, request: dict[str, Any]) -> int:
         return run_git_status_readonly(
             job_dir, request, tool_id, tool_spec, cursor_api_root, theme_root
         )
+    if kind == "component_inventory":
+        return run_component_inventory_readonly(
+            job_dir, request, tool_id, tool_spec, cursor_api_root
+        )
 
     return fail_job(job_dir, request, "tool_not_allowed", f"Tool kind not supported: {kind}")
 
@@ -568,6 +582,146 @@ def run_project_state_snapshot(
             "exitCode": 0,
             "summary": summary,
             "warnings": [],
+            "errors": [],
+            "artifacts": [],
+            "reportRefs": [],
+            "payload": payload,
+            "startedUtc": started_utc,
+            "finishedUtc": finished_utc,
+        },
+    )
+    write_status(job_dir, status="Succeeded", progress=100, message=summary)
+    return 0
+
+
+def _read_giclee_app_version(init_path: Path) -> str:
+    if not init_path.is_file():
+        return ""
+    try:
+        text = init_path.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+    match = _VERSION_PATTERN.search(text)
+    return match.group(1) if match else ""
+
+
+def _read_package_json_version(package_path: Path) -> str:
+    if not package_path.is_file():
+        return ""
+    try:
+        data = json.loads(package_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ""
+    version = data.get("version")
+    return str(version).strip() if version else ""
+
+
+def run_component_inventory_readonly(
+    job_dir: Path,
+    request: dict[str, Any],
+    tool_id: str,
+    tool_spec: dict[str, Any],
+    cursor_api_root: Path,
+) -> int:
+    """Read-only component inventory. No subprocess, no Komponenty import/execution, no deep scan."""
+
+    request_id = request.get("requestId", "")
+    started_utc = utc_now_iso()
+    log_source = str(tool_spec.get("log_source", tool_id))
+    summary = str(
+        tool_spec.get("summary_success", "Component inventory inspection completed successfully.")
+    )
+
+    append_log(job_dir, "Info", f"run_tool started: {tool_id}", source=log_source)
+    write_status(job_dir, status="Running", progress=40, message=f"Running {tool_id}…")
+
+    components_path = cursor_api_root / "Komponenty"
+    giclee_app_init = cursor_api_root / "giclee_app" / "__init__.py"
+    package_json = cursor_api_root / "package.json"
+    tools_path = cursor_api_root / "tools"
+    performance_agent_path = tools_path / "performance_agent"
+    module_registry = cursor_api_root / "module_registry.json"
+
+    warnings: list[str] = []
+    inspection_warnings: list[str] = []
+
+    components_exists = components_path.is_dir()
+    component_names: list[str] = []
+    component_names_truncated = "false"
+
+    if components_exists:
+        try:
+            component_names = sorted(entry.name for entry in components_path.iterdir())
+        except OSError as exc:
+            inspection_warnings.append(f"Komponenty listing failed: {exc}")
+            warnings.append(f"Komponenty listing failed: {exc}")
+    else:
+        inspection_warnings.append("Komponenty path does not exist.")
+        warnings.append("Komponenty path does not exist.")
+
+    if len(component_names) > COMPONENT_INVENTORY_MAX_NAMES:
+        component_names_truncated = "true"
+        component_names = component_names[:COMPONENT_INVENTORY_MAX_NAMES]
+
+    if components_exists and len(component_names) == 0:
+        inspection_warnings.append("Komponenty folder is empty.")
+        warnings.append("Komponenty folder is empty.")
+
+    giclee_app_version = _read_giclee_app_version(giclee_app_init)
+    if not giclee_app_version:
+        inspection_warnings.append("giclee_app version unknown or missing.")
+
+    package_json_version = _read_package_json_version(package_json)
+    if not package_json_version:
+        inspection_warnings.append("package.json version unknown or missing.")
+
+    if not performance_agent_path.is_dir():
+        inspection_warnings.append("tools/performance_agent path does not exist.")
+
+    payload: dict[str, str] = {
+        "timestampUtc": started_utc,
+        "cursorApiRoot": str(cursor_api_root),
+        "componentsPath": str(components_path),
+        "componentsPathExists": _bool_str(components_exists),
+        "componentCount": str(len(component_names)),
+        "componentNamesPreview": ",".join(component_names),
+        "componentNamesTruncated": component_names_truncated,
+        "gicleeAppPackageExists": _bool_str(giclee_app_init.is_file()),
+        "gicleeAppVersion": giclee_app_version,
+        "packageJsonExists": _bool_str(package_json.is_file()),
+        "packageJsonVersion": package_json_version,
+        "toolsPathExists": _bool_str(tools_path.is_dir()),
+        "performanceAgentPathExists": _bool_str(performance_agent_path.is_dir()),
+        "moduleRegistryExists": _bool_str(module_registry.is_file()),
+        "inspectionWarnings": ",".join(inspection_warnings),
+        "toolId": tool_id,
+        "readOnly": "true",
+    }
+
+    append_log(
+        job_dir,
+        "Info",
+        f"componentsPathExists={payload['componentsPathExists']} componentCount={payload['componentCount']}",
+        source=log_source,
+    )
+    append_log(
+        job_dir,
+        "Info",
+        f"gicleeAppVersion={giclee_app_version or 'unknown'} packageJsonVersion={package_json_version or 'unknown'}",
+        source=log_source,
+    )
+    for warning in inspection_warnings:
+        append_log(job_dir, "Warning", warning, source=log_source)
+
+    finished_utc = utc_now_iso()
+    write_result(
+        job_dir,
+        {
+            "requestId": request_id,
+            "status": "Succeeded",
+            "exitCode": 0,
+            "summary": summary,
+            "warnings": warnings,
             "errors": [],
             "artifacts": [],
             "reportRefs": [],
