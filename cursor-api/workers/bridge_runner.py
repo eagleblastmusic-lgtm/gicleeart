@@ -1,7 +1,7 @@
 """Minimal Python bridge runner for GicleeApp Studio worker jobs (GAS-2B/2C/GAS-4).
 
-GAS-4/GAS-5 add a small, explicitly allowlisted set of read-only tools behind the
-``run_tool`` command. Only the four tool ids in ``ALLOWED_TOOLS`` are permitted;
+GAS-4/GAS-5/GAS-6 add a small, explicitly allowlisted set of read-only and dry-run
+tools behind the ``run_tool`` command. Only the six tool ids in ``ALLOWED_TOOLS`` are permitted;
 there is no general command runner, no ``shell=True`` and no user-provided arguments.
 """
 
@@ -58,9 +58,25 @@ ALLOWED_TOOLS: dict[str, dict[str, Any]] = {
         "log_source": "component_inventory_readonly",
         "summary_success": "Component inventory inspection completed successfully.",
     },
+    "module_registry_audit_readonly": {
+        "kind": "module_registry_audit",
+        "read_only": True,
+        "default_timeout": 60,
+        "log_source": "module_registry_audit_readonly",
+        "summary_success": "Module registry audit completed successfully.",
+    },
+    "component_inventory_report_dryrun": {
+        "kind": "dryrun_component_inventory_report",
+        "read_only": True,
+        "default_timeout": 60,
+        "log_source": "component_inventory_report_dryrun",
+        "summary_success": "Component inventory report dry-run completed successfully.",
+    },
 }
 
 COMPONENT_INVENTORY_MAX_NAMES = 100
+MODULE_REGISTRY_MAX_NAMES = 50
+DRYRUN_PROPOSED_SECTIONS = ("summary", "components", "versions", "warnings")
 _VERSION_PATTERN = re.compile(r"""__version__\s*=\s*['"]([^'"]+)['"]""")
 
 # Only these exact git argument tuples may be executed. No add/commit/push/reset.
@@ -331,6 +347,14 @@ def run_tool(job_dir: Path, request: dict[str, Any]) -> int:
         )
     if kind == "component_inventory":
         return run_component_inventory_readonly(
+            job_dir, request, tool_id, tool_spec, cursor_api_root
+        )
+    if kind == "module_registry_audit":
+        return run_module_registry_audit_readonly(
+            job_dir, request, tool_id, tool_spec, cursor_api_root
+        )
+    if kind == "dryrun_component_inventory_report":
+        return run_component_inventory_report_dryrun(
             job_dir, request, tool_id, tool_spec, cursor_api_root
         )
 
@@ -721,7 +745,353 @@ def run_component_inventory_readonly(
             "status": "Succeeded",
             "exitCode": 0,
             "summary": summary,
-            "warnings": warnings,
+            "warnings": [],
+            "errors": [],
+            "artifacts": [],
+            "reportRefs": [],
+            "payload": payload,
+            "startedUtc": started_utc,
+            "finishedUtc": finished_utc,
+        },
+    )
+    write_status(job_dir, status="Succeeded", progress=100, message=summary)
+    return 0
+
+
+def _proposed_draft_report_path() -> str:
+    local_app_data = os.environ.get("LOCALAPPDATA", "")
+    return os.path.join(local_app_data, "GicleeAppStudio", "drafts", "component_inventory_report.json")
+
+
+def _list_top_level_component_names(components_path: Path) -> tuple[list[str], list[str]]:
+    """Return sorted top-level Komponenty names and any listing warnings."""
+
+    warnings: list[str] = []
+    if not components_path.is_dir():
+        warnings.append("Komponenty path does not exist.")
+        return [], warnings
+
+    try:
+        return sorted(entry.name for entry in components_path.iterdir()), warnings
+    except OSError as exc:
+        warnings.append(f"Komponenty listing failed: {exc}")
+        return [], warnings
+
+
+def _audit_module_registry(
+    registry_path: Path,
+) -> tuple[int, int, list[str], str, str, str, list[str]]:
+    """Parse module_registry.json when present. Returns counts, previews, issues, warnings."""
+
+    audit_warnings: list[str] = []
+    module_group_count = 0
+    module_count = 0
+    module_names: list[str] = []
+    duplicate_module_ids = ""
+    invalid_module_entries = ""
+    module_names_truncated = "false"
+
+    if not registry_path.is_file():
+        audit_warnings.append("module_registry.json does not exist.")
+        return (
+            module_group_count,
+            module_count,
+            module_names,
+            module_names_truncated,
+            duplicate_module_ids,
+            invalid_module_entries,
+            audit_warnings,
+        )
+
+    try:
+        data = json.loads(registry_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        audit_warnings.append(f"module_registry.json could not be read: {exc}")
+        return (
+            module_group_count,
+            module_count,
+            module_names,
+            module_names_truncated,
+            duplicate_module_ids,
+            invalid_module_entries,
+            audit_warnings,
+        )
+
+    groups = data.get("groups")
+    if not isinstance(groups, list):
+        audit_warnings.append("module_registry.json groups field is missing or invalid.")
+        return (
+            module_group_count,
+            module_count,
+            module_names,
+            module_names_truncated,
+            duplicate_module_ids,
+            invalid_module_entries,
+            audit_warnings,
+        )
+
+    module_group_count = len(groups)
+    seen_ids: dict[str, int] = {}
+    duplicate_ids: list[str] = []
+    invalid_entries: list[str] = []
+
+    for group_index, group in enumerate(groups):
+        if not isinstance(group, dict):
+            invalid_entries.append(f"group[{group_index}]:not_object")
+            continue
+
+        modules = group.get("modules")
+        if not isinstance(modules, list):
+            invalid_entries.append(f"group[{group_index}]:modules_invalid")
+            continue
+
+        for module_index, module in enumerate(modules):
+            if not isinstance(module, dict):
+                invalid_entries.append(f"group[{group_index}].modules[{module_index}]:not_object")
+                continue
+
+            module_count += 1
+            name = str(module.get("name", "")).strip()
+            if name:
+                module_names.append(name)
+
+            for key in ("id", "slug", "title"):
+                if key not in module:
+                    continue
+                value = str(module.get(key, "")).strip()
+                if not value:
+                    invalid_entries.append(
+                        f"group[{group_index}].modules[{module_index}]:empty_{key}"
+                    )
+
+            identifier = ""
+            if "id" in module:
+                identifier = str(module.get("id", "")).strip()
+            elif "slug" in module:
+                identifier = str(module.get("slug", "")).strip()
+
+            if identifier:
+                seen_ids[identifier] = seen_ids.get(identifier, 0) + 1
+
+    duplicate_ids = sorted(key for key, count in seen_ids.items() if count > 1)
+    if duplicate_ids:
+        audit_warnings.append(f"Duplicate module ids/slugs found: {', '.join(duplicate_ids)}")
+
+    if len(module_names) > MODULE_REGISTRY_MAX_NAMES:
+        module_names_truncated = "true"
+        module_names = module_names[:MODULE_REGISTRY_MAX_NAMES]
+
+    return (
+        module_group_count,
+        module_count,
+        module_names,
+        module_names_truncated,
+        ",".join(duplicate_ids),
+        ",".join(invalid_entries),
+        audit_warnings,
+    )
+
+
+def run_module_registry_audit_readonly(
+    job_dir: Path,
+    request: dict[str, Any],
+    tool_id: str,
+    tool_spec: dict[str, Any],
+    cursor_api_root: Path,
+) -> int:
+    """Read-only module registry audit. No subprocess, no Komponenty import/execution."""
+
+    request_id = request.get("requestId", "")
+    started_utc = utc_now_iso()
+    log_source = str(tool_spec.get("log_source", tool_id))
+    summary = str(tool_spec.get("summary_success", "Module registry audit completed successfully."))
+
+    append_log(job_dir, "Info", f"run_tool started: {tool_id}", source=log_source)
+    write_status(job_dir, status="Running", progress=40, message=f"Running {tool_id}…")
+
+    module_registry_path = cursor_api_root / "module_registry.json"
+    components_path = cursor_api_root / "Komponenty"
+    giclee_app_init = cursor_api_root / "giclee_app" / "__init__.py"
+    package_json = cursor_api_root / "package.json"
+
+    warnings: list[str] = []
+    module_registry_exists = module_registry_path.is_file()
+
+    component_names, component_warnings = _list_top_level_component_names(components_path)
+    warnings.extend(component_warnings)
+
+    (
+        module_group_count,
+        module_count,
+        module_names,
+        module_names_truncated,
+        duplicate_module_ids,
+        invalid_module_entries,
+        audit_warnings,
+    ) = _audit_module_registry(module_registry_path)
+    warnings.extend(audit_warnings)
+
+    giclee_app_version = _read_giclee_app_version(giclee_app_init)
+    package_json_version = _read_package_json_version(package_json)
+
+    payload: dict[str, str] = {
+        "timestampUtc": started_utc,
+        "cursorApiRoot": str(cursor_api_root),
+        "moduleRegistryPath": str(module_registry_path),
+        "moduleRegistryExists": _bool_str(module_registry_exists),
+        "moduleGroupCount": str(module_group_count),
+        "moduleCount": str(module_count),
+        "moduleNamesPreview": ",".join(module_names),
+        "moduleNamesTruncated": module_names_truncated,
+        "duplicateModuleIds": duplicate_module_ids,
+        "invalidModuleEntries": invalid_module_entries,
+        "componentsPathExists": _bool_str(components_path.is_dir()),
+        "componentTopLevelCount": str(len(component_names)),
+        "gicleeAppVersion": giclee_app_version,
+        "packageJsonVersion": package_json_version,
+        "auditWarnings": ",".join(audit_warnings),
+        "toolId": tool_id,
+        "readOnly": "true",
+    }
+
+    append_log(
+        job_dir,
+        "Info",
+        (
+            f"moduleRegistryExists={payload['moduleRegistryExists']} "
+            f"moduleGroupCount={payload['moduleGroupCount']} moduleCount={payload['moduleCount']}"
+        ),
+        source=log_source,
+    )
+    for warning in audit_warnings:
+        append_log(job_dir, "Warning", warning, source=log_source)
+
+    finished_utc = utc_now_iso()
+    write_result(
+        job_dir,
+        {
+            "requestId": request_id,
+            "status": "Succeeded",
+            "exitCode": 0,
+            "summary": summary,
+            "warnings": [],
+            "errors": [],
+            "artifacts": [],
+            "reportRefs": [],
+            "payload": payload,
+            "startedUtc": started_utc,
+            "finishedUtc": finished_utc,
+        },
+    )
+    write_status(job_dir, status="Succeeded", progress=100, message=summary)
+    return 0
+
+
+def run_component_inventory_report_dryrun(
+    job_dir: Path,
+    request: dict[str, Any],
+    tool_id: str,
+    tool_spec: dict[str, Any],
+    cursor_api_root: Path,
+) -> int:
+    """Dry-run component inventory report plan. No writes beyond standard job files."""
+
+    request_id = request.get("requestId", "")
+    started_utc = utc_now_iso()
+    log_source = str(tool_spec.get("log_source", tool_id))
+    summary = str(
+        tool_spec.get("summary_success", "Component inventory report dry-run completed successfully.")
+    )
+
+    append_log(job_dir, "Info", f"run_tool started: {tool_id}", source=log_source)
+    write_status(job_dir, status="Running", progress=40, message=f"Running {tool_id}…")
+
+    components_path = cursor_api_root / "Komponenty"
+    giclee_app_init = cursor_api_root / "giclee_app" / "__init__.py"
+    package_json = cursor_api_root / "package.json"
+    module_registry_path = cursor_api_root / "module_registry.json"
+    tools_path = cursor_api_root / "tools"
+    performance_agent_path = tools_path / "performance_agent"
+    proposed_report_path = _proposed_draft_report_path()
+
+    warnings: list[str] = []
+    inspection_warnings: list[str] = []
+
+    component_names, component_warnings = _list_top_level_component_names(components_path)
+    inspection_warnings.extend(component_warnings)
+    warnings.extend(component_warnings)
+
+    component_names_truncated = "false"
+    if len(component_names) > COMPONENT_INVENTORY_MAX_NAMES:
+        component_names_truncated = "true"
+        component_names = component_names[:COMPONENT_INVENTORY_MAX_NAMES]
+
+    if components_path.is_dir() and len(component_names) == 0 and not component_warnings:
+        inspection_warnings.append("Komponenty folder is empty.")
+        warnings.append("Komponenty folder is empty.")
+
+    giclee_app_version = _read_giclee_app_version(giclee_app_init)
+    if not giclee_app_version:
+        inspection_warnings.append("giclee_app version unknown or missing.")
+
+    package_json_version = _read_package_json_version(package_json)
+    if not package_json_version:
+        inspection_warnings.append("package.json version unknown or missing.")
+
+    if not performance_agent_path.is_dir():
+        inspection_warnings.append("tools/performance_agent path does not exist.")
+
+    source_paths = [
+        str(cursor_api_root),
+        str(components_path),
+        str(giclee_app_init),
+        str(package_json),
+        str(module_registry_path),
+        str(performance_agent_path),
+    ]
+
+    payload: dict[str, str] = {
+        "timestampUtc": started_utc,
+        "dryRun": "true",
+        "wouldWrite": "false",
+        "proposedReportPath": proposed_report_path,
+        "proposedReportFormat": "json",
+        "proposedSectionCount": str(len(DRYRUN_PROPOSED_SECTIONS)),
+        "proposedSections": ",".join(DRYRUN_PROPOSED_SECTIONS),
+        "sourcePathsRead": ",".join(source_paths),
+        "writePathsPreview": proposed_report_path,
+        "requiresConfirmation": "true",
+        "safetyLevel": "DryRun",
+        "componentCount": str(len(component_names)),
+        "componentNamesTruncated": component_names_truncated,
+        "gicleeAppVersion": giclee_app_version,
+        "packageJsonVersion": package_json_version,
+        "warnings": ",".join(inspection_warnings),
+        "toolId": tool_id,
+        "readOnly": "true",
+    }
+
+    append_log(
+        job_dir,
+        "Info",
+        (
+            f"dryRun={payload['dryRun']} wouldWrite={payload['wouldWrite']} "
+            f"proposedReportPath={proposed_report_path}"
+        ),
+        source=log_source,
+    )
+    for warning in inspection_warnings:
+        append_log(job_dir, "Warning", warning, source=log_source)
+
+    finished_utc = utc_now_iso()
+    write_result(
+        job_dir,
+        {
+            "requestId": request_id,
+            "status": "Succeeded",
+            "exitCode": 0,
+            "summary": summary,
+            "warnings": [],
             "errors": [],
             "artifacts": [],
             "reportRefs": [],

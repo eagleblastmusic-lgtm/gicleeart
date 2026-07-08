@@ -430,12 +430,14 @@ def test_git_readonly_rejects_non_allowlisted_command() -> None:
         _git_run(Path("."), ("push", "origin", "main"), 10)
 
 
-def test_allowed_tools_run_tool_allowlist_exactly_four() -> None:
+def test_allowed_tools_run_tool_allowlist_exactly_six() -> None:
     assert set(ALLOWED_TOOLS.keys()) == {
         "performance_agent_doctor",
         "project_state_snapshot",
         "git_status_readonly",
         "component_inventory_readonly",
+        "module_registry_audit_readonly",
+        "component_inventory_report_dryrun",
     }
 
 
@@ -506,5 +508,129 @@ def test_component_inventory_missing_komponenty_succeeds_with_warning(
     assert result["status"] == "Succeeded"
     payload = result["payload"]
     assert payload["componentsPathExists"] == "false"
-    assert result["warnings"]
-    assert "Komponenty" in payload["inspectionWarnings"] or "Komponenty" in result["warnings"][0]
+    assert result["warnings"] == []
+    assert "Komponenty" in payload["inspectionWarnings"]
+
+
+def test_module_registry_audit_readonly_valid_roots(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    job_dir = tmp_path / "job-registry-audit"
+    workspace = _setup_cursor_api_workspace(tmp_path, monkeypatch)
+    komponenty = workspace / "Komponenty"
+    komponenty.mkdir()
+    (komponenty / "stronaglowna").mkdir()
+    (workspace / "giclee_app").mkdir()
+    (workspace / "giclee_app" / "__init__.py").write_text('__version__ = "2.1.0"\n', encoding="utf-8")
+    (workspace / "package.json").write_text('{"version": "1.2.3"}\n', encoding="utf-8")
+    registry = {
+        "version": 1,
+        "groups": [
+            {
+                "name": "Administracja",
+                "modules": [
+                    {"name": "Strona główna", "id": "home"},
+                    {"name": "Kontakt", "id": "contact"},
+                ],
+            }
+        ],
+    }
+    (workspace / "module_registry.json").write_text(json.dumps(registry), encoding="utf-8")
+
+    def _fail_popen(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("module_registry_audit_readonly must not spawn a subprocess")
+
+    def _fail_run(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("module_registry_audit_readonly must not invoke subprocess.run")
+
+    monkeypatch.setattr("workers.bridge_runner.subprocess.Popen", _fail_popen)
+    monkeypatch.setattr("workers.bridge_runner.subprocess.run", _fail_run)
+
+    _write_request(
+        job_dir,
+        "run_tool",
+        args={"toolId": "module_registry_audit_readonly"},
+        project_roots={"cursorApiRoot": str(workspace), "themeRoot": str(tmp_path)},
+    )
+
+    exit_code = run_job(job_dir)
+
+    assert exit_code == 0
+    result = json.loads((job_dir / RESULT_FILE).read_text(encoding="utf-8"))
+    assert result["status"] == "Succeeded"
+    payload = result["payload"]
+    assert payload["moduleRegistryExists"] == "true"
+    assert payload["moduleGroupCount"] == "1"
+    assert payload["moduleCount"] == "2"
+    assert "Strona główna" in payload["moduleNamesPreview"]
+    assert payload["componentsPathExists"] == "true"
+    assert payload["componentTopLevelCount"] == "1"
+
+
+def test_module_registry_audit_readonly_missing_registry_succeeds_with_warning(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    job_dir = tmp_path / "job-registry-missing"
+    workspace = _setup_cursor_api_workspace(tmp_path, monkeypatch)
+
+    def _fail_popen(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("no subprocess")
+
+    monkeypatch.setattr("workers.bridge_runner.subprocess.Popen", _fail_popen)
+
+    _write_request(
+        job_dir,
+        "run_tool",
+        args={"toolId": "module_registry_audit_readonly"},
+        project_roots={"cursorApiRoot": str(workspace), "themeRoot": str(tmp_path)},
+    )
+
+    exit_code = run_job(job_dir)
+
+    assert exit_code == 0
+    result = json.loads((job_dir / RESULT_FILE).read_text(encoding="utf-8"))
+    assert result["status"] == "Succeeded"
+    payload = result["payload"]
+    assert payload["moduleRegistryExists"] == "false"
+    assert result["warnings"] == []
+    assert "module_registry.json" in payload["auditWarnings"]
+
+
+def test_component_inventory_report_dryrun_succeeds_without_writing_report(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    job_dir = tmp_path / "job-dryrun"
+    workspace = _setup_cursor_api_workspace(tmp_path, monkeypatch)
+    komponenty = workspace / "Komponenty"
+    komponenty.mkdir()
+    (komponenty / "faq").mkdir()
+    (workspace / "giclee_app").mkdir()
+    (workspace / "giclee_app" / "__init__.py").write_text('__version__ = "2.1.0"\n', encoding="utf-8")
+    (workspace / "package.json").write_text('{"version": "1.2.3"}\n', encoding="utf-8")
+
+    def _fail_popen(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("dryrun must not spawn a subprocess")
+
+    monkeypatch.setattr("workers.bridge_runner.subprocess.Popen", _fail_popen)
+
+    _write_request(
+        job_dir,
+        "run_tool",
+        args={"toolId": "component_inventory_report_dryrun"},
+        project_roots={"cursorApiRoot": str(workspace), "themeRoot": str(tmp_path)},
+    )
+
+    exit_code = run_job(job_dir)
+
+    assert exit_code == 0
+    result = json.loads((job_dir / RESULT_FILE).read_text(encoding="utf-8"))
+    assert result["status"] == "Succeeded"
+    payload = result["payload"]
+    assert payload["dryRun"] == "true"
+    assert payload["wouldWrite"] == "false"
+    assert payload["requiresConfirmation"] == "true"
+    assert payload["proposedReportPath"]
+    assert "component_inventory_report.json" in payload["proposedReportPath"]
+    assert not Path(payload["proposedReportPath"]).exists()
+    assert payload["safetyLevel"] == "DryRun"
+    assert payload["proposedSections"]
