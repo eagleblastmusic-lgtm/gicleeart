@@ -129,7 +129,7 @@ Master Index v37 traktuje je jako opcjonalne.
 
 **Checkpoint refresh 2026-07-07 (GitHub app v1.41.2):** aktualna wersja aplikacji na GitHub **v1.41.2**; monorepo origin/master `845191c`; F2.1 historycznie `4647c1b` v1.40.1; PA lokalnie `c966912` push pending. Paczka nadal v3.7 — bez bumpu na v38.
 
-**Checkpoint refresh 2026-07-08 (GV-7 + GAS 2.0 template):** Giclee Viewer HEAD `26446ce487d6fe1a511c7c137215834c78b6849f` — GV-7 **done** (143/143 tests); next GV-8; nowy `GICLEEAPP_STUDIO_2_0_MODULE_TEMPLATE.md`; GAS-0 future direction. Paczka nadal v3.7 — bez bumpu na v38.
+**Checkpoint refresh 2026-07-08 (GV-7 + GAS 2.0 template):** Giclee Viewer GitHub `eagleblastmusic-lgtm/giclee-viewer` · HEAD `26446ce487d6fe1a511c7c137215834c78b6849f` — GV-7 **done** (143/143 tests); next GV-8; nowy `GICLEEAPP_STUDIO_2_0_MODULE_TEMPLATE.md`; GAS-0 future direction. Paczka nadal v3.7 — bez bumpu na v38.
 
 **Checkpoint refresh 2026-07-08 (architecture principles):** nowe sekcje § Programming / Architecture Principles + § Current technical lessons from Giclee Viewer w COMPACT v37 i `CURRENT_APP_STATE.md` — praktyczne zasady C# / WPF + Python + SQLite/JSON dla przyszłych aplikacji lokalnych. Paczka nadal v3.7 — bez bumpu na v38.
 

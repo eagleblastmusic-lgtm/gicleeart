@@ -45,7 +45,7 @@ Szczegóły: `GICLEE_GITHUB_SNAPSHOT_REVIEW_WORKFLOW_v35.md`.
 
 ## ROUTING REPOZYTORIÓW
 
-Kanon: `GICLEE_DUAL_REPO_REVIEW_ROUTING_v35.md`. Dwa repozytoria review:
+Kanon: `GICLEE_DUAL_REPO_REVIEW_ROUTING_v35.md`. Repozytoria review (m.in.):
 
 **`eagleblastmusic-lgtm/gicleeapp`**
 - lokalna aplikacja GicleeApp / cursor-api
@@ -59,11 +59,18 @@ Kanon: `GICLEE_DUAL_REPO_REVIEW_ROUTING_v35.md`. Dwa repozytoria review:
 - `changed_files` w manifeście nie jest diffem względem live/main
 - `snapshot_commit` może być orientacyjne; kanoniczny jest commit GitHub / SHA podany przez użytkownika
 
+**`eagleblastmusic-lgtm/giclee-viewer`**
+- Giclee Viewer — osobne repo C# / WPF / SQLite
+- lokalnie: `C:\Strona\giclee-viewer`
+- media library, thumbnails, collections, creative metadata, prompty
+- **nie** mieszać z `gicleeapp` / monorepo `pusty` bez wyraźnego polecenia
+
 - Theme / frontend Shopify → **`gicleeart-gpt`**
 - Local app / launcher / Python / cursor-api → **`gicleeapp`**
+- Giclee Viewer desktop → **`giclee-viewer`**
 - Cross-layer → app logic in **`gicleeapp`**, theme effect in **`gicleeart-gpt`**
 
-Nie proś o zmiany Pythona w `gicleeart-gpt`. Nie traktuj `gicleeapp` jako motywu Shopify. Używaj GitHub connectora; nie publicznych ani raw URL-i.
+Nie proś o zmiany Pythona w `gicleeart-gpt`. Nie traktuj `gicleeapp` jako motywu Shopify. Nie mieszaj `giclee-viewer` z `gicleeapp`. Używaj GitHub connectora; nie publicznych ani raw URL-i.
 
 ## GicleeApp push workflow
 
@@ -135,14 +142,15 @@ Jeśli użytkownik aktywuje konkretny tryb, np. „Tryb Shopify Homepage”, „
 Repo kanoniczne: `eagleblastmusic-lgtm/gicleeapp` (monorepo `gicleeart`, branch `master`, app w `cursor-api/`)
 
 GitHub / aktualna wersja aplikacji: **v1.41.2** (`giclee_app/__init__.py`, `package.json`)
-Ostatni push GicleeApp: `8a3c60a` na `main` (2026-07-07 22:19 UTC) — Refresh GicleeApp repository snapshot
+Ostatni push GicleeApp: `4cd50f3` na `main` (2026-07-08 03:27 UTC) — Refresh GicleeApp repository snapshot
 Monorepo origin/master: `845191c` — docs(gpt): refresh starter files after GICLÉE FRAME F2.1
 Ostatni pushed feature checkpoint aplikacji (F2.1, historia): `4647c1b` — v1.40.1
+Lokalny commit monorepo (push pending): `4affd42` — docs(gpt): refresh starter files checkpoint
 Lokalny commit monorepo (push pending): `c966912` — feat(perf-agent): add guided performance audit workflow
 Lokalny commit monorepo (push pending): `926bc60` — perf(studio): improve cold perceived readiness across dashboard, katalog and gicleeframe
 Poprzedni checkpoint: `46fc718` — GICLÉE FRAME page inventory RAM editor (v1.40.0)
 Wersja aplikacji: **GicleeApp Studio v1.41.2**
-Branch: GitHub gicleeapp **v1.41.2** / `main` @ `8a3c60a`; monorepo origin/master `845191c`; lokalny monorepo ma commity pending względem origin/master
+Branch: GitHub gicleeapp **v1.41.2** / `main` @ `4cd50f3`; monorepo origin/master `845191c`; lokalny monorepo ma commity pending względem origin/master
 <!-- gpt-starter:gicleeapp-push:end -->
 
 Zamknięte:
@@ -217,7 +225,7 @@ Szczegóły: `CURRENT_APP_STATE.md` § Performance Agent + GF-P0.1 · `tools/per
 
 ## Giclee Viewer — checkpoint
 
-Repo lokalne: `C:\Strona\giclee-viewer` (osobne od `gicleeapp` / `gicleeart-gpt`).
+GitHub: `eagleblastmusic-lgtm/giclee-viewer` · lokalnie: `C:\Strona\giclee-viewer` (osobne od `gicleeapp` / `gicleeart-gpt`).
 
 Aktualny HEAD: `26446ce487d6fe1a511c7c137215834c78b6849f` — **GV-7 Creative Metadata Workspace done**.
 
@@ -430,7 +438,8 @@ W nowych sesjach GPT należy traktować poniższe zasady jako obowiązujące:
 1. Giclee Viewer i GicleeApp Studio 2.0 to dwa różne projekty.
 
 Giclee Viewer:
-- osobne repo: `C:\Strona\giclee-viewer`
+- GitHub: `eagleblastmusic-lgtm/giclee-viewer`
+- lokalnie: `C:\Strona\giclee-viewer`
 - C# / WPF / SQLite
 - media library, thumbnails, tags, collections, rename, prompts, metadata, future variants/preview
 

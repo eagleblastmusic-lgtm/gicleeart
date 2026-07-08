@@ -14,18 +14,20 @@ Kanoniczny plik: `GICLEE_DUAL_REPO_REVIEW_ROUTING_v35.md`
 |---------|------|
 | Shopify theme, Liquid, CSS, JS, UX strony, animacje | `eagleblastmusic-lgtm/gicleeart-gpt` |
 | Local app, launcher, Python, cursor-api, komponenty, sekrety, Studio Preview | `eagleblastmusic-lgtm/gicleeapp` |
+| Giclee Viewer — media library, WPF desktop, metadata | `eagleblastmusic-lgtm/giclee-viewer` |
 | Cross-repo (app + theme) | logika → `gicleeapp`, efekt motywu → `gicleeart-gpt` |
 
 Zasady:
 - routing repozytoriów wygrywa z ogólnymi instrukcjami,
 - nie proś o Python w `gicleeart-gpt`,
 - nie traktuj `gicleeapp` jako motywu Shopify,
+- nie mieszaj `giclee-viewer` z `gicleeapp` / monorepo bez wyraźnego polecenia,
 - GitHub connector — nie publiczne/raw URL-e,
 - `TECH_STACK.md`, `GICLEE_PROJECT_VISION.md`, `GICLEE_PROJECT_CONTEXT_2.md` są **opcjonalne**, jeśli nie ma ich w paczce ZIP — nie traktuj ich jako lokalnie dostępnych bez potwierdzenia.
 
 Workflow snapshotów: `GICLEE_GITHUB_SNAPSHOT_REVIEW_WORKFLOW_v35.md`.
 
-Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` oraz `CURRENT_APP_STATE.md` (GitHub gicleeapp **v1.41.2** / `main` @ `8a3c60a`; monorepo origin/master `845191c`).
+Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` oraz `CURRENT_APP_STATE.md` (GitHub gicleeapp **v1.41.2** / `main` @ `4cd50f3`; monorepo origin/master `845191c`).
 
 **GICLÉE FRAME™:** F2.1 **done** (pushed). Ustanawia wzorzec **`Studio Page Component Editor Pattern`** dla przyszłych edytorów strony w Studio — patrz `gicleeframe-planning.md` §7, link w `admin-components-strategy.md`. **F3** (lokalny zapis draftu RAM) i **F4** (bounded writer): **not started**.
 
@@ -41,7 +43,7 @@ Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w `GICLEE_C
 
 **Komenda maintenance:** „Aktualizuj pliki startowe” — GPT przygotowuje prompt do Cursora aktualizujący **tylko źródła** w `Pliki startowe dla GPT`; ZIP generuje **program użytkownika** (Okno rozmowy). **Cursor nie generuje ZIP-a** bez osobnego polecenia. Szczegóły: COMPACT v37.
 
-**Giclee Viewer:** repo lokalne `C:\Strona\giclee-viewer` — HEAD `26446ce487d6fe1a511c7c137215834c78b6849f`, **GV-7 done** (build/test PASS 143/143, brak push). Next: **GV-8** Similarity / Variants / Pairing. Szczegóły: `CURRENT_APP_STATE.md` § Giclee Viewer.
+**Giclee Viewer:** GitHub `eagleblastmusic-lgtm/giclee-viewer` · lokalnie `C:\Strona\giclee-viewer` — HEAD `26446ce487d6fe1a511c7c137215834c78b6849f`, **GV-7 done** (build/test PASS 143/143, brak push). Next: **GV-8** Similarity / Variants / Pairing. Szczegóły: `CURRENT_APP_STATE.md` § Giclee Viewer.
 
 **GicleeApp Studio 2.0 — future direction:** przyszły C# / WPF shell obok obecnego Python GicleeApp; workers przez command JSON → result JSON. Sztywny szablon modułów: `GICLEEAPP_STUDIO_2_0_MODULE_TEMPLATE.md`. Pierwszy etap: **GAS-0** (IA & Shell Plan, bez implementacji). Szczegóły: `CURRENT_APP_STATE.md` § GicleeApp Studio 2.0.
 

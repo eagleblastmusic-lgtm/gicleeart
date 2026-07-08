@@ -5,12 +5,13 @@ GicleeApp Studio v1.41.2
 
 GitHub / aktualna wersja aplikacji (`eagleblastmusic-lgtm/gicleeapp`):
 v1.41.2 — zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`
-Ostatni push GicleeApp: `8a3c60a` na `main` (2026-07-07 22:19 UTC) — Refresh GicleeApp repository snapshot
+Ostatni push GicleeApp: `4cd50f3` na `main` (2026-07-08 03:27 UTC) — Refresh GicleeApp repository snapshot
 
 Monorepo origin/master (projekt / docs):
 845191c docs(gpt): refresh starter files after GICLÉE FRAME F2.1
 
 Lokalne commity monorepo (nie na origin/master, push pending):
+- `4affd42` docs(gpt): refresh starter files checkpoint
 - `c966912` feat(perf-agent): add guided performance audit workflow
 - `926bc60` perf(studio): improve cold perceived readiness across dashboard, katalog and gicleeframe
 
@@ -18,17 +19,18 @@ Previous checkpoint:
 46fc718 feat(studio): add GICLÉE FRAME page inventory RAM editor (v1.40.0)
 
 Branch status:
-- **GitHub gicleeapp:** v1.41.2 / `main` @ `8a3c60a` (auto-sync po Push GicleeApp, 2026-07-07 22:19 UTC)
+- **GitHub gicleeapp:** v1.41.2 / `main` @ `4cd50f3` (auto-sync po Push GicleeApp, 2026-07-08 03:27 UTC)
 - **monorepo origin/master:** `845191c` — docs(gpt): refresh starter files after GICLÉE FRAME F2.1
 - **lokalnie monorepo:** dodatkowe commity względem origin/master — push pending (nie zakładać push monorepo bez potwierdzenia użytkownika)
+  - `4affd42` docs(gpt): refresh starter files checkpoint
   - `c966912` feat(perf-agent): add guided performance audit workflow
   - `926bc60` perf(studio): improve cold perceived readiness across dashboard, katalog and gicleeframe
 
 GPT starter files:
-auto-sync po Push GicleeApp 2026-07-07 22:19 UTC (gicleeapp `8a3c60a`, v1.41.2; paczka v37; źródło = ten folder, nie ZIP)
+auto-sync po Push GicleeApp 2026-07-08 03:27 UTC (gicleeapp `4cd50f3`, v1.41.2; paczka v37; źródło = ten folder, nie ZIP)
 
 Recent context:
-- **GitHub gicleeapp:** v1.41.2 / `main` @ `8a3c60a` — auto-sync po Push GicleeApp
+- **GitHub gicleeapp:** v1.41.2 / `main` @ `4cd50f3` — auto-sync po Push GicleeApp
 - GICLÉE FRAME™ F2.1: closed + pushed (historycznie v1.40.1 / `4647c1b`; aktualna wersja aplikacji na GitHub jest nowsza)
 - **Performance Agent** — lokalny commit monorepo `c966912`; push monorepo pending (nie mylić z pushem gicleeapp)
 - Local runtime/untracked still outside commit and remote (working tree hygiene pending)
@@ -280,6 +282,10 @@ python -m tools.performance_agent --scenario-checklist
 ---
 
 ## Giclee Viewer — current state
+
+Repo GitHub:
+
+`eagleblastmusic-lgtm/giclee-viewer`
 
 Repo lokalne:
 
@@ -644,7 +650,8 @@ W nowych sesjach GPT należy traktować poniższe zasady jako obowiązujące:
 1. Giclee Viewer i GicleeApp Studio 2.0 to dwa różne projekty.
 
 Giclee Viewer:
-- osobne repo: `C:\Strona\giclee-viewer`
+- GitHub: `eagleblastmusic-lgtm/giclee-viewer`
+- lokalnie: `C:\Strona\giclee-viewer` (osobne od `gicleeapp` / `gicleeart-gpt`)
 - C# / WPF / SQLite
 - media library, thumbnails, tags, collections, rename, prompts, metadata, future variants/preview
 

@@ -271,7 +271,7 @@ Te pliki są dodatkowymi rozszerzeniami do głównych Instructions v37. Nie zmie
 
 Bez bumpu paczki na v38:
 
-- **Giclee Viewer** HEAD: `26446ce487d6fe1a511c7c137215834c78b6849f` — GV-7 Creative Metadata Workspace **done**
+- **Giclee Viewer** GitHub `eagleblastmusic-lgtm/giclee-viewer` · HEAD: `26446ce487d6fe1a511c7c137215834c78b6849f` — GV-7 Creative Metadata Workspace **done**
 - build PASS · test PASS 143/143 · working tree clean · brak push
 - next likely: **GV-8** Similarity / Variants / Pairing
 - **GicleeApp Studio 2.0** — future direction (C# / WPF shell + Python workers); sztywny szablon: `GICLEEAPP_STUDIO_2_0_MODULE_TEMPLATE.md`
