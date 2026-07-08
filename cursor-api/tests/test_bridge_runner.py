@@ -238,3 +238,192 @@ def test_run_tool_captures_stdout_stderr(
     assert "performance_agent_doctor" in sources
     assert "stdout line" in messages
     assert "stderr line" in messages
+
+
+def test_run_tool_missing_theme_root_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    job_dir = tmp_path / "job-no-theme"
+    workspace = _setup_cursor_api_workspace(tmp_path, monkeypatch)
+    _write_request(
+        job_dir,
+        "run_tool",
+        args={"toolId": "project_state_snapshot"},
+        project_roots={"cursorApiRoot": str(workspace)},
+    )
+
+    exit_code = run_job(job_dir)
+
+    assert exit_code == 1
+    result = json.loads((job_dir / RESULT_FILE).read_text(encoding="utf-8"))
+    assert result["status"] == "Failed"
+    assert result["errors"][0]["code"] == "invalid_project_roots"
+
+
+def test_project_state_snapshot_succeeds_without_subprocess(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    job_dir = tmp_path / "job-snapshot"
+    workspace = _setup_cursor_api_workspace(tmp_path, monkeypatch)
+    (workspace / "workers").mkdir()
+    (workspace / "workers" / "bridge_runner.py").write_text("# stub", encoding="utf-8")
+    (workspace / "reports" / "performance").mkdir(parents=True)
+
+    def _fail_popen(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("project_state_snapshot must not spawn a subprocess")
+
+    monkeypatch.setattr("workers.bridge_runner.subprocess.Popen", _fail_popen)
+
+    _write_request(
+        job_dir,
+        "run_tool",
+        args={"toolId": "project_state_snapshot"},
+        project_roots={"cursorApiRoot": str(workspace), "themeRoot": str(tmp_path)},
+    )
+
+    exit_code = run_job(job_dir)
+
+    assert exit_code == 0
+    result = json.loads((job_dir / RESULT_FILE).read_text(encoding="utf-8"))
+    assert result["status"] == "Succeeded"
+    assert result["summary"] == "Project state snapshot completed successfully."
+    payload = result["payload"]
+    assert payload["cursorApiRootExists"] == "true"
+    assert payload["toolsExists"] == "true"
+    assert payload["workersBridgeRunnerExists"] == "true"
+    assert payload["reportsPerformanceExists"] == "true"
+    assert payload["themeRootExists"] == "true"
+    assert "timestampUtc" in payload
+
+
+class _FakeCompletedProcess:
+    def __init__(self, returncode: int, stdout: str = "", stderr: str = "") -> None:
+        self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = stderr
+
+
+def _git_readonly_request(job_dir: Path, workspace: Path, tmp_path: Path) -> None:
+    _write_request(
+        job_dir,
+        "run_tool",
+        args={"toolId": "git_status_readonly"},
+        project_roots={"cursorApiRoot": str(workspace), "themeRoot": str(tmp_path)},
+    )
+
+
+def test_git_status_readonly_reports_branch_head_dirty(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    job_dir = tmp_path / "job-git"
+    workspace = _setup_cursor_api_workspace(tmp_path, monkeypatch)
+    _git_readonly_request(job_dir, workspace, tmp_path)
+
+    def _fake_run(cmd: list[str], **_kwargs: object) -> _FakeCompletedProcess:
+        git_args = tuple(cmd[3:])
+        if git_args == ("rev-parse", "--abbrev-ref", "HEAD"):
+            return _FakeCompletedProcess(0, stdout="main\n")
+        if git_args == ("rev-parse", "HEAD"):
+            return _FakeCompletedProcess(0, stdout="abc123\n")
+        if git_args == ("status", "--short"):
+            return _FakeCompletedProcess(0, stdout=" M a.py\n M b.py\n")
+        raise AssertionError(f"unexpected git args: {git_args}")
+
+    monkeypatch.setattr("workers.bridge_runner.subprocess.run", _fake_run)
+
+    exit_code = run_job(job_dir)
+
+    assert exit_code == 0
+    result = json.loads((job_dir / RESULT_FILE).read_text(encoding="utf-8"))
+    assert result["status"] == "Succeeded"
+    payload = result["payload"]
+    assert payload["cursorApiBranch"] == "main"
+    assert payload["cursorApiHead"] == "abc123"
+    assert payload["cursorApiDirtyCount"] == "2"
+    assert payload["cursorApiHasDirtyState"] == "true"
+
+
+def test_git_status_readonly_truncates_long_status(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    job_dir = tmp_path / "job-git-long"
+    workspace = _setup_cursor_api_workspace(tmp_path, monkeypatch)
+    _git_readonly_request(job_dir, workspace, tmp_path)
+
+    long_status = "".join(f" M file_{i}.py\n" for i in range(250))
+
+    def _fake_run(cmd: list[str], **_kwargs: object) -> _FakeCompletedProcess:
+        git_args = tuple(cmd[3:])
+        if git_args == ("rev-parse", "--abbrev-ref", "HEAD"):
+            return _FakeCompletedProcess(0, stdout="main\n")
+        if git_args == ("rev-parse", "HEAD"):
+            return _FakeCompletedProcess(0, stdout="abc123\n")
+        if git_args == ("status", "--short"):
+            return _FakeCompletedProcess(0, stdout=long_status)
+        raise AssertionError(f"unexpected git args: {git_args}")
+
+    monkeypatch.setattr("workers.bridge_runner.subprocess.run", _fake_run)
+
+    exit_code = run_job(job_dir)
+
+    assert exit_code == 0
+    result = json.loads((job_dir / RESULT_FILE).read_text(encoding="utf-8"))
+    assert result["payload"]["cursorApiDirtyCount"] == "250"
+
+    log_lines = (job_dir / LOG_FILE).read_text(encoding="utf-8").strip().splitlines()
+    messages = [json.loads(line)["message"] for line in log_lines]
+    truncated = [m for m in messages if "truncated" in m]
+    assert truncated, "expected a truncated marker in the git log output"
+    status_lines = [m for m in messages if m.startswith("cursor-api:  M file_")]
+    assert len(status_lines) == 100
+
+
+def test_git_status_readonly_not_a_repo_is_warning_not_crash(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    job_dir = tmp_path / "job-git-norepo"
+    workspace = _setup_cursor_api_workspace(tmp_path, monkeypatch)
+    _git_readonly_request(job_dir, workspace, tmp_path)
+
+    def _fake_run(cmd: list[str], **_kwargs: object) -> _FakeCompletedProcess:
+        return _FakeCompletedProcess(128, stderr="fatal: not a git repository")
+
+    monkeypatch.setattr("workers.bridge_runner.subprocess.run", _fake_run)
+
+    exit_code = run_job(job_dir)
+
+    assert exit_code == 0
+    result = json.loads((job_dir / RESULT_FILE).read_text(encoding="utf-8"))
+    assert result["status"] == "Succeeded"
+    payload = result["payload"]
+    assert payload["cursorApiBranch"] == "Unknown"
+    assert payload["cursorApiDirtyCount"] == "0"
+    assert payload["cursorApiHasDirtyState"] == "false"
+
+
+def test_git_status_readonly_missing_git_fails_cleanly(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    job_dir = tmp_path / "job-git-missing"
+    workspace = _setup_cursor_api_workspace(tmp_path, monkeypatch)
+    _git_readonly_request(job_dir, workspace, tmp_path)
+
+    def _fake_run(*_args: object, **_kwargs: object) -> _FakeCompletedProcess:
+        raise FileNotFoundError("git")
+
+    monkeypatch.setattr("workers.bridge_runner.subprocess.run", _fake_run)
+
+    exit_code = run_job(job_dir)
+
+    assert exit_code == 1
+    result = json.loads((job_dir / RESULT_FILE).read_text(encoding="utf-8"))
+    assert result["status"] == "Failed"
+    assert result["errors"][0]["code"] == "git_not_available"
+
+
+def test_git_readonly_rejects_non_allowlisted_command() -> None:
+    from workers.bridge_runner import ALLOWED_GIT_COMMANDS, _git_run
+
+    assert ("status", "--short") in ALLOWED_GIT_COMMANDS
+    with pytest.raises(ValueError):
+        _git_run(Path("."), ("push", "origin", "main"), 10)
