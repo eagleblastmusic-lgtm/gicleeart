@@ -141,13 +141,13 @@ Jeśli użytkownik aktywuje konkretny tryb, np. „Tryb Shopify Homepage”, „
 <!-- gpt-starter:gicleeapp-push:start -->
 Repo kanoniczne: `eagleblastmusic-lgtm/gicleeapp` (monorepo `gicleeart`, branch `master`, app w `cursor-api/`)
 
-GitHub / aktualna wersja aplikacji: **v1.42.0** (`giclee_app/__init__.py`, `package.json`)
-Ostatni push GicleeApp: `3585d9d` na `main` (2026-07-08 14:44 UTC) — Refresh GicleeApp repository snapshot
-Monorepo origin/master: `5b0191c` — feat(cursor-api): add controlled dry-run bridge tools
+GitHub / aktualna wersja aplikacji: **v1.44.1** (`giclee_app/__init__.py`, `package.json`)
+Ostatni push GicleeApp: `4a4f946` na `main` (2026-07-08 16:55 UTC) — Refresh GicleeApp repository snapshot
+Monorepo origin/master: `752ee19` — docs(gpt): refresh starter files checkpoint
 Ostatni pushed feature checkpoint aplikacji (F2.1, historia): `4647c1b` — v1.40.1
 Poprzedni checkpoint: `46fc718` — GICLÉE FRAME page inventory RAM editor (v1.40.0)
-Wersja aplikacji: **GicleeApp Studio v1.42.0**
-Branch: GitHub gicleeapp **v1.42.0** / `main` @ `3585d9d`; monorepo origin/master `5b0191c`
+Wersja aplikacji: **GicleeApp Studio v1.44.1**
+Branch: GitHub gicleeapp **v1.44.1** / `main` @ `4a4f946`; monorepo origin/master `752ee19`
 <!-- gpt-starter:gicleeapp-push:end -->
 
 Zamknięte:

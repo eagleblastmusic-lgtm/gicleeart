@@ -1,27 +1,27 @@
 # Current App State
 
 <!-- gpt-starter:gicleeapp-push:start -->
-GicleeApp Studio v1.42.0
+GicleeApp Studio v1.44.1
 
 GitHub / aktualna wersja aplikacji (`eagleblastmusic-lgtm/gicleeapp`):
-v1.42.0 — zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`
-Ostatni push GicleeApp: `3585d9d` na `main` (2026-07-08 14:44 UTC) — Refresh GicleeApp repository snapshot
+v1.44.1 — zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`
+Ostatni push GicleeApp: `4a4f946` na `main` (2026-07-08 16:55 UTC) — Refresh GicleeApp repository snapshot
 
 Monorepo origin/master (projekt / docs):
-5b0191c feat(cursor-api): add controlled dry-run bridge tools
+752ee19 docs(gpt): refresh starter files checkpoint
 
 Previous checkpoint:
 46fc718 feat(studio): add GICLÉE FRAME page inventory RAM editor (v1.40.0)
 
 Branch status:
-- **GitHub gicleeapp:** v1.42.0 / `main` @ `3585d9d` (auto-sync po Push GicleeApp, 2026-07-08 14:44 UTC)
-- **monorepo origin/master:** `5b0191c` — feat(cursor-api): add controlled dry-run bridge tools
+- **GitHub gicleeapp:** v1.44.1 / `main` @ `4a4f946` (auto-sync po Push GicleeApp, 2026-07-08 16:55 UTC)
+- **monorepo origin/master:** `752ee19` — docs(gpt): refresh starter files checkpoint
 
 GPT starter files:
-auto-sync po Push GicleeApp 2026-07-08 14:44 UTC (gicleeapp `3585d9d`, v1.42.0; paczka v37; źródło = ten folder, nie ZIP)
+auto-sync po Push GicleeApp 2026-07-08 16:55 UTC (gicleeapp `4a4f946`, v1.44.1; paczka v37; źródło = ten folder, nie ZIP)
 
 Recent context:
-- **GitHub gicleeapp:** v1.42.0 / `main` @ `3585d9d` — auto-sync po Push GicleeApp
+- **GitHub gicleeapp:** v1.44.1 / `main` @ `4a4f946` — auto-sync po Push GicleeApp
 - GICLÉE FRAME™ F2.1: closed + pushed (historycznie v1.40.1 / `4647c1b`; aktualna wersja aplikacji na GitHub jest nowsza)
 - Local runtime/untracked still outside commit and remote (working tree hygiene pending)
 <!-- gpt-starter:gicleeapp-push:end -->
