@@ -65,6 +65,10 @@ Kanon: `GICLEE_DUAL_REPO_REVIEW_ROUTING_v35.md`. Dwa repozytoria review:
 
 Nie proś o zmiany Pythona w `gicleeart-gpt`. Nie traktuj `gicleeapp` jako motywu Shopify. Używaj GitHub connectora; nie publicznych ani raw URL-i.
 
+## GicleeApp push workflow
+
+Workflow push GicleeApp: użytkownik zwykle wypycha lokalną aplikację przez przycisk w GicleeApp **„Push GicleeApp do GitHub”**, a nie ręcznie przez terminal. Traktuj to jako kanoniczny workflow push dla aplikacji: `cursor-api` → staging → `eagleblastmusic-lgtm/gicleeapp`; dry-run → audyt → potwierdzenie użytkownika → commit + push na `main`. Po udanym pushu workflow **automatycznie aktualizuje pliki startowe GPT** w `Pliki startowe dla GPT/` (wersja, SHA gicleeapp, branch — markery auto-sync). Workflow dotyczy wyłącznie lokalnej GicleeApp/cursor-api. Nie dotyczy motywu Shopify, repo `gicleeart-gpt`, generowania ZIP-a wiedzy ani ręcznej edycji całej paczki poza blokiem auto-sync. Gdy dajesz instrukcje push/checkpoint, odnoś się do tego przycisku/workflow, chyba że użytkownik wyraźnie prosi o komendy terminalowe.
+
 ## Knowledge pack source location
 
 Źródło prawdy Custom GPT:
@@ -82,14 +86,64 @@ Cursor **nie uruchamia** bez wyraźnego polecenia:
 - GUI Integracja z GPT → **Skopiuj .zip**
 - żadnego ręcznego generatora / przebudowy ZIP
 
+## Dodatkowe tryby analityczne
+
+Oprócz głównych Instructions v37 dostępne są dodatkowe pliki trybów analitycznych:
+
+- `GICLEE_ANALYST_BASE_PROMPT_v1.md`
+- `GICLEE_ANALYST_MODE_PERFORMANCE_v1.md`
+- `GICLEE_ANALYST_MODE_DEBUG_REGRESSION_v1.md`
+- `GICLEE_ANALYST_MODE_CURSOR_REVIEW_v1.md`
+- `GICLEE_ANALYST_MODE_STAGE_ARCHITECT_v1.md`
+- `GICLEE_ANALYST_MODE_UI_UX_PREMIUM_v1.md`
+- `GICLEE_ANALYST_MODE_SHOPIFY_SNAPSHOT_v1.md`
+- `GICLEE_ANALYST_MODE_GPT_ZIP_INTEGRATION_v1.md`
+
+Traktuj je jako rozszerzenia głównych Instructions, a nie jako ich zamiennik.
+
+Jeśli użytkownik aktywuje konkretny tryb, np. „Tryb Performance”, „Tryb Debug”, „Tryb Review Cursora”, „Tryb Architekt Etapów”, „Tryb UI/UX Premium”, „Tryb Shopify Snapshot” albo „Tryb GPT Integration / ZIP”, zastosuj główne Instructions v37 oraz odpowiedni plik trybu.
+
+Jeśli użytkownik nie poda trybu wprost, wybierz najwłaściwszy tryb automatycznie na podstawie problemu.
+
+Zawsze stosuj jednocześnie:
+1. główne Instructions v37,
+2. aktualny checkpoint z `CURRENT_APP_STATE.md`,
+3. prompt bazowy analityka, jeśli jest dostępny,
+4. odpowiedni tryb roboczy, jeśli pasuje do zadania.
+
+## Dodatkowe tryby Shopify
+
+Oprócz plików `GICLEE_ANALYST_*_v1.md` dostępne są dodatkowe tryby Shopify dla pracy nad stroną Giclée Art:
+
+- `GICLEE_SHOPIFY_MODE_HOMEPAGE_ART_DIRECTION_v1.md`
+- `GICLEE_SHOPIFY_MODE_PRODUCT_PAGE_PDP_v1.md`
+- `GICLEE_SHOPIFY_MODE_COLLECTION_CATALOG_v1.md`
+- `GICLEE_SHOPIFY_MODE_COPY_BRAND_STORY_v1.md`
+- `GICLEE_SHOPIFY_MODE_MOTION_INTERACTION_v1.md`
+- `GICLEE_SHOPIFY_MODE_CONVERSION_TRUST_v1.md`
+- `GICLEE_SHOPIFY_MODE_RESPONSIVE_ACCESSIBILITY_v1.md`
+- `GICLEE_SHOPIFY_MODE_SEO_CONTENT_v1.md`
+- `GICLEE_SHOPIFY_MODE_TRANSLATION_MARKETS_v1.md`
+
+Traktuj je jako rozszerzenia głównych Instructions v37 oraz trybu Shopify Snapshot, a nie jako ich zamiennik. Stosuj je przy pracy nad stroną Shopify Giclée Art, szczególnie dla homepage, PDP, katalogu, copy, motion, conversion/trust, responsive/accessibility, SEO oraz tłumaczeń/Markets.
+
+Jeśli użytkownik aktywuje konkretny tryb, np. „Tryb Shopify Homepage”, „Tryb PDP”, „Tryb Katalog”, „Tryb Copy”, „Tryb Motion”, „Tryb Conversion”, „Tryb Responsive”, „Tryb SEO” albo „Tryb Translation/Markets”, zastosuj główne Instructions v37, aktualny checkpoint, tryb Shopify Snapshot oraz odpowiedni plik `GICLEE_SHOPIFY_MODE_*_v1.md`. Jeśli użytkownik nie poda trybu wprost, wybierz najwłaściwszy tryb automatycznie na podstawie problemu.
+
 ## AKTUALNY CHECKPOINT GICLEEAPP / STUDIO
 
+<!-- gpt-starter:gicleeapp-push:start -->
 Repo kanoniczne: `eagleblastmusic-lgtm/gicleeapp` (monorepo `gicleeart`, branch `master`, app w `cursor-api/`)
 
-HEAD / origin/master: `4647c1b` — feat(studio): GICLÉE FRAME F2.1 editor workflow polish  
-Poprzedni checkpoint: `46fc718` — GICLÉE FRAME page inventory RAM editor (v1.40.0)  
-Wersja aplikacji: **GicleeApp Studio v1.40.1**  
-Branch: **master synced with origin/master**
+GitHub / aktualna wersja aplikacji: **v1.41.2** (`giclee_app/__init__.py`, `package.json`)
+Ostatni push GicleeApp: `8a3c60a` na `main` (2026-07-07 22:19 UTC) — Refresh GicleeApp repository snapshot
+Monorepo origin/master: `845191c` — docs(gpt): refresh starter files after GICLÉE FRAME F2.1
+Ostatni pushed feature checkpoint aplikacji (F2.1, historia): `4647c1b` — v1.40.1
+Lokalny commit monorepo (push pending): `c966912` — feat(perf-agent): add guided performance audit workflow
+Lokalny commit monorepo (push pending): `926bc60` — perf(studio): improve cold perceived readiness across dashboard, katalog and gicleeframe
+Poprzedni checkpoint: `46fc718` — GICLÉE FRAME page inventory RAM editor (v1.40.0)
+Wersja aplikacji: **GicleeApp Studio v1.41.2**
+Branch: GitHub gicleeapp **v1.41.2** / `main` @ `8a3c60a`; monorepo origin/master `845191c`; lokalny monorepo ma commity pending względem origin/master
+<!-- gpt-starter:gicleeapp-push:end -->
 
 Zamknięte:
 - Background Builder local v1: **frozen**
@@ -101,6 +155,7 @@ Zamknięte:
   - wariant źródłowy read-only, warianty RAM, trigger sekcji, popup + drag reorder
   - settings/reorder jako RAM patch; brak writera / zapisu JSON
 - **Studio Page Component Editor Pattern** — udokumentowany (referencja dla przyszłych edytorów strony)
+- **Performance Agent** PA-1A–PA-3B — **done** lokalnie (testy 162 passed; GF-P0.1 done w kodzie, fresh run pending)
 
 Nie rozpoczęte:
 - GICLÉE FRAME F3 (lokalny zapis draftu RAM)
@@ -108,13 +163,335 @@ Nie rozpoczęte:
 - F5 / F5.5 preview / Shopify sync-deploy
 - Katalog writer / Shopify integration / migration
 
-Następna rekomendacja (wybierz jedną ścieżkę — **żadna nie rozpoczęta**):
+Następna rekomendacja:
+
+**Studio Performance (lokalnie, working tree może wyprzedzać GitHub):**
+- **6G.5** główna nitka GICLÉE FRAME performance — **PASS / checkpoint** (pełny opis: `CURRENT_APP_STATE.md` § Performance). Nie startować kolejnej szerokiej optymalizacji bez wyraźnego objawu po ręcznym teście.
+
+**Osobne ścieżki produktowe (wybierz jedną — żadna nie rozpoczęta):**
 - **A.** cleanup / runtime hygiene working tree
 - **B.** GICLÉE FRAME™ F3 — lokalny zapis draftów RAM do pliku
 
 Backlog techniczny (tylko po osobnej akceptacji): Katalog bounded writer (**zero Save**, **zero Shopify/sync/deploy**).
 
 Szczegóły guardrails: `CURRENT_APP_STATE.md`, `gicleeframe-planning.md`.
+
+## GICLEEAPP STUDIO PERFORMANCE — CHECKPOINT
+
+Główna nitka performance **6G.5** zamknięta jako **PASS / checkpoint** — aktualny stan zawsze w `CURRENT_APP_STATE.md`. Fazy **5F–6G.5** (K → S.2B) done lokalnie w Cursorze.
+
+**Źródło prawdy diagnozy nowych objawów:** bundle Performance Agent (`report.md`, `summary.json` z `reports/performance/**`) — preferuj nad surowym `studio_perf.log`. Gdy brak bundle: `cursor-api/giclee_app/logs/studio_perf.log`.
+
+**Zasada obowiązkowa:** przy „dalej muli”, „wolno się otwiera”, „sekcje przycinają” — GPT **najpierw prosi o** bundle PA (`report.md` / `summary.json`), `studio_perf.log` albo raport Cursora z ostatniej sesji. **Nie zgadywać po objawie. Najpierw metryki, potem kod.**
+
+Skrót faz (pełny opis: `CURRENT_APP_STATE.md`):
+- **5F/5G Hub** — batching OK, hover/auto hydration OFF, hub nie jest bottleneckiem; nie optymalizować bez nowych logów.
+- **6A** cold views — dashboard progressive, katalog cache, Asset Lab + GF instrumentation.
+- **6B** GF progressive boot — cold open ~2.8 s → ~0.6–0.7 s; brak auto page_context przed kliknięciem.
+- **6C** progressive page_context — poza synchronicznym kliknięciem.
+- **6D** lazy divider groups — Linia/Układ/Styl collapsed; brak pełnych kontrolek od razu.
+- **6E** lightweight setting rows — summary + Edytuj; jeden inline editor naraz.
+- **6F** responsive selection — immediate feedback + deferred populate; lista sekcji nie zwija się po każdym kliknięciu.
+- **6G.1** route shell — heavy factory po `after`; prewarm skorygowany w 6G.2.
+- **6G.2** real freeze reduction — prewarm OFF; GF open ~31 ms, visible_ready ~179 ms; Asset Lab shell batches ~13–18 ms.
+
+**Status głównej nitki:** **PASS / checkpoint** — nie startować szerokiej optymalizacji bez konkretnego objawu UX po ręcznym teście. Przy nowych objawach: najpierw `studio_perf.log` / raport Cursora; ewentualny wąski follow-up (np. **6G.5-T.UX**) tylko symptom-driven (`CURRENT_APP_STATE.md` § Post-checkpoint UX follow-up).
+
+**GitHub vs lokal:** jeśli connector widzi starszy kod niż lokalny Cursor — **log / working tree użytkownika wygrywa** przy diagnozie performance.
+
+**Granice:** performance = `gicleeapp` lokalnie; nie Shopify theme; nie `Komponenty/*`, writer, Save, sync/deploy bez osobnej zgody.
+
+## PERFORMANCE AGENT — NARZĘDZIE DIAGNOSTYCZNE
+
+**Lokalizacja:** `cursor-api/tools/performance_agent/` — guided performance audit + read-only analysis CLI.
+
+**Status:** PA-1A–PA-3B **done** lokalnie; GF-P0.1 **done w kodzie**; fresh `--run` walidacji **pending**. Testy: **162 passed**.
+
+**Operator CLI** (z `cursor-api/`): `--doctor` · `--analyze-latest` · `--coverage-latest` · `--hotspots-latest` · `--baseline-candidate` · `--cursor-prompt-latest` (pełna lista i interpretacja → `CURRENT_APP_STATE.md` § Performance Agent + GF-P0.1).
+
+**Generowanie bundle:** `--parse-only` · `--manual` · `--run`
+
+**Zasady:** `1/9` = weak evidence · `SCENARIO_LOG_NOT_CONFIRMED` = jakość sesji, nie auto-regresja · stary `slow_events.csv` w starych bundle = oczekiwane.
+
+Szczegóły: `CURRENT_APP_STATE.md` § Performance Agent + GF-P0.1 · `tools/performance_agent/README.md`.
+
+## Giclee Viewer — checkpoint
+
+Repo lokalne: `C:\Strona\giclee-viewer` (osobne od `gicleeapp` / `gicleeart-gpt`).
+
+Aktualny HEAD: `26446ce487d6fe1a511c7c137215834c78b6849f` — **GV-7 Creative Metadata Workspace done**.
+
+Status: build PASS · test PASS 143/143 · working tree clean · brak push.
+
+Metadane kreatywne tylko w SQLite — zero zapisu do oryginalnych obrazów/wideo/EXIF.
+
+Następny sugerowany etap: **GV-8** Similarity / Variants / Pairing.
+
+Pełny opis: `CURRENT_APP_STATE.md` § Giclee Viewer.
+
+## GicleeApp Studio 2.0 — future direction
+
+GicleeApp Studio 2.0 ma być przyszłym C# / WPF shell dla obecnego workflow Giclée Art.
+
+Założenie architektoniczne:
+
+- C# / WPF: UI, dashboard, moduły, routing, statusy, logi, panele, szybka responsywność
+- Python / obecny gicleeapp / cursor-api: workers, generatory, Shopify helpers, GPT ZIP, raporty, Performance Agent, automatyzacje
+- komunikacja: command JSON → Python worker → result JSON/report → UI
+
+Nie przepisywać obecnego GicleeApp 1:1.
+Nie usuwać obecnych narzędzi Python.
+Budować nowy shell obok i podpinać istniejące workers etapami.
+
+Sztywny szablon modułów: `GICLEEAPP_STUDIO_2_0_MODULE_TEMPLATE.md` — nie zmieniać nazw, kolejności ani struktury bez wyraźnej decyzji użytkownika.
+
+Pierwszy przyszły etap:
+
+GAS-0 — GicleeApp Studio 2.0 Information Architecture & Shell Plan
+
+Cel GAS-0:
+
+- przeanalizować obecny GicleeApp / cursor-api,
+- zaprojektować WPF shell,
+- zachować sztywny szablon modułów użytkownika,
+- zaproponować dashboard,
+- zaproponować worker bridge,
+- zaproponować routing,
+- zaproponować roadmapę GAS-1/GAS-2/GAS-3,
+- bez implementacji i bez przepisywania obecnego GicleeApp.
+
+## Programming / Architecture Principles — current direction
+
+Aktualna preferowana architektura dla nowych aplikacji Giclée Art:
+
+```text
+C# / WPF
+= UI, dashboard, routing, szybka responsywność, MVVM, panele, statusy
+
+Python
+= workers, generatory, Shopify helpers, GPT ZIP, raporty, automatyzacje
+
+SQLite / JSON
+= lokalny stan, indeks, historia, komunikacja między modułami
+```
+
+Nie „Python kontra C#” — oba warstwy współpracują.
+
+1. Dla nowych aplikacji desktopowych preferować **C# / WPF + MVVM**.
+   Powód: lepsza responsywność UI, wirtualizacja list, stabilniejsze desktopowe layouty, async/await, dobre testowanie ViewModeli.
+
+2. **Python zostaje ważnym silnikiem narzędziowym.**
+   Nie przepisywać działających Pythonowych workerów bez powodu. Python jest dobry do:
+   - generowania plików,
+   - integracji GPT,
+   - Shopify helpers,
+   - raportów,
+   - automatyzacji,
+   - lokalnych narzędzi workflow.
+
+3. **Długie operacje nigdy nie mogą blokować UI.**
+   Każda ciężka operacja powinna działać jako:
+   - background task,
+   - worker process,
+   - kolejka,
+   - albo async service z CancellationToken.
+
+4. **Local-first.**
+   Dane aplikacji trzymać lokalnie:
+   - SQLite dla stanu aplikacji,
+   - JSON/report files dla wymiany wyników,
+   - cache lokalny dla miniatur i artefaktów.
+   Nie zapisywać metadanych do oryginalnych plików bez osobnej decyzji użytkownika.
+
+5. **Data safety first.**
+   Operacje na prawdziwych plikach muszą mieć:
+   - dry-run,
+   - walidację,
+   - double confirmation,
+   - audit,
+   - recovery/rollback, jeśli operacja jest destrukcyjna lub częściowo odwracalna.
+
+6. **No per-tile / per-row heavy queries.**
+   Dla gridów, miniatur, badge'ów i filtrów preferować batch queries oraz cache. Unikać zapytań DB wykonywanych osobno dla każdego kafelka.
+
+7. **Nie rozdrabniać pracy bez powodu.**
+   Małe etapy są dobre tylko przy ryzyku danych, migracji lub operacjach na plikach.
+   Dla funkcji produktowych preferować większe, spójne pakiety.
+
+8. **Existing GicleeApp is not a mistake.**
+   Obecne Pythonowe GicleeApp traktować jako działający worker/tooling foundation.
+   GicleeApp Studio 2.0 ma być nowym WPF shell obok, a nie brutalnym przepisaniem 1:1.
+
+9. **Connector / private repo rule.**
+   Dla prywatnych repo używać GitHub connectora, nie publicznych raw URL.
+
+10. **Cursor role.**
+    Cursor implementuje lokalnie.
+    GPT/assistant projektuje architekturę, reviewuje raporty, wykrywa ryzyka i przygotowuje precyzyjne prompty.
+
+## Current technical lessons from Giclee Viewer
+
+Giclee Viewer potwierdził, że C# / WPF + SQLite jest dobrym kierunkiem dla nowych lokalnych aplikacji Giclée Art.
+
+Sprawdzone wzorce:
+- MVVM z testowalnymi ViewModelami,
+- SQLite migracje addytywne i idempotentne,
+- batch queries zamiast query per tile,
+- background thumbnail generation,
+- cache lokalny,
+- generation counters dla async loadów,
+- dry-run + execution + rollback + audit dla operacji na plikach,
+- ViewModel tests bez kruchych Task.Delay,
+- oddzielanie UI od worker/service layer.
+
+Te wzorce powinny być traktowane jako baza dla przyszłego GicleeApp Studio 2.0.
+
+## Strategic Direction — Giclée Art Studio OS
+
+Długoterminowy kierunek projektu to budowa lokalnego ekosystemu:
+
+Giclée Art Studio OS
+
+Obecnie składa się / będzie składał z dwóch głównych filarów:
+
+1. Giclee Viewer
+   - szybka lokalna biblioteka obrazów/wideo,
+   - miniatury,
+   - kolekcje,
+   - flagi/tagi,
+   - creative metadata,
+   - prompty,
+   - warianty/podobieństwo,
+   - preview,
+   - selekcja materiałów.
+
+2. GicleeApp Studio 2.0
+   - przyszły C# / WPF shell dla workflow Giclée Art,
+   - bazujący na obecnym Pythonowym GicleeApp / cursor-api,
+   - nie jako przepisanie 1:1, tylko nowy premium desktop shell,
+   - Python pozostaje worker/tooling layer.
+
+Giclee Viewer traktować jako praktyczny wzorzec technologiczny dla przyszłego GicleeApp Studio 2.0:
+- WPF / MVVM,
+- SQLite,
+- testowalne ViewModele,
+- migracje addytywne,
+- batch queries,
+- background tasks,
+- safety-first workflow,
+- lokalny cache,
+- brak blokowania UI.
+
+GicleeApp Studio 2.0 ma używać sztywnego szablonu modułów użytkownika z pliku:
+
+`GICLEEAPP_STUDIO_2_0_MODULE_TEMPLATE.md`
+
+Nie zmieniać nazw, kolejności ani struktury modułów bez wyraźnej decyzji użytkownika.
+
+## Work Planning Rule
+
+Nie rozdrabniać dalszych prac na zbyt małe mikroetapy.
+
+Małe etapy są uzasadnione tylko przy:
+- migracjach bazy,
+- operacjach na prawdziwych plikach,
+- ryzyku utraty danych,
+- rollback/recovery,
+- dużych zmianach architektury.
+
+Dla funkcji produktowych preferować większe, spójne pakiety:
+- GV-8 Similarity / Variants / Pairing
+- GV-9 Preview Workspace
+- GV-10 Review Workflow
+- GAS-0 GicleeApp Studio 2.0 Architecture Discovery
+
+## UI / Product Taste Direction
+
+Docelowy styl nowych aplikacji Giclée Art:
+- premium,
+- spokojny,
+- ciemny,
+- czytelny,
+- studyjny,
+- bez chaosu,
+- bez przeładowania efektami,
+- dużo oddechu,
+- logiczne karty,
+- jasne statusy,
+- estetyka: fine art / museum / creative operations dashboard.
+
+Nie kopiować chaotycznie obecnego UI 1:1.
+Zachować użyteczne elementy obecnego GicleeApp Studio, ale GicleeApp Studio 2.0 projektować jako bardziej dojrzały, elegancki i responsywny shell.
+
+## Source of Truth / Decision Memory
+
+W nowych sesjach GPT należy traktować poniższe zasady jako obowiązujące:
+
+1. Giclee Viewer i GicleeApp Studio 2.0 to dwa różne projekty.
+
+Giclee Viewer:
+- osobne repo: `C:\Strona\giclee-viewer`
+- C# / WPF / SQLite
+- media library, thumbnails, tags, collections, rename, prompts, metadata, future variants/preview
+
+GicleeApp / GicleeApp Studio 2.0:
+- obecny workflow bazuje na `C:\Strona\pusty` / `cursor-api`
+- obecne GicleeApp to działający Python tooling foundation
+- GicleeApp Studio 2.0 ma być przyszłym C# / WPF shell + Python workers
+
+Nie mieszać tych dwóch codebase'ów bez wyraźnego polecenia użytkownika.
+
+2. ZIP wiedzy nie jest źródłem prawdy.
+
+Źródłem prawdy są lokalne pliki:
+
+`C:\Strona\pusty\Pliki startowe dla GPT`
+
+ZIP jest tylko paczką eksportową generowaną z tych źródeł.
+
+Cursor nie generuje ZIP-a bez osobnej komendy użytkownika.
+
+3. Sztywny szablon GicleeApp Studio 2.0 jest obecnie decyzją użytkownika.
+
+Plik:
+
+`GICLEEAPP_STUDIO_2_0_MODULE_TEMPLATE.md`
+
+zawiera aktualny, sztywny układ modułów.
+
+Nie zmieniać nazw, kolejności ani struktury modułów bez wyraźnej decyzji użytkownika.
+
+4. Nie wracać do dyskusji „Python czy C#” od zera.
+
+Aktualna decyzja strategiczna:
+- C# / WPF dla nowych desktopowych shelli i UI,
+- Python dla istniejących workerów, automatyzacji, generatorów i narzędzi,
+- SQLite / JSON / raporty jako lokalna warstwa stanu i wymiany danych.
+
+5. Nie rozdrabniać roadmapy bez powodu.
+
+Preferować większe pakiety produktowe.
+
+Mikroetapy są dopuszczalne tylko przy:
+- ryzyku utraty danych,
+- operacjach na realnych plikach,
+- migracjach bazy,
+- rollback/recovery,
+- dużych zmianach architektury.
+
+6. Każda nowa sesja GPT powinna najpierw sprawdzić aktualny checkpoint.
+
+Najważniejsze bieżące checkpointy:
+- Giclee Viewer HEAD: `26446ce487d6fe1a511c7c137215834c78b6849f`
+- GV-7 Creative Metadata Workspace done
+- build PASS
+- test PASS: 143/143
+- working tree clean
+- brak push
+- next likely GV stage: GV-8 Similarity / Variants / Pairing
+- future GAS stage: GAS-0 GicleeApp Studio 2.0 Information Architecture & Shell Plan
+
+Pełny opis: `CURRENT_APP_STATE.md` § Source of Truth / Decision Memory.
 
 ## Current operating rhythm
 

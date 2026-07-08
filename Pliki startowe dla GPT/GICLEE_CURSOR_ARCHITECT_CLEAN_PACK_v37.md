@@ -10,13 +10,14 @@ Manifest plików wiedzy Custom GPT. **Stare pliki na dysku nie są usuwane** —
 
 | Plik | Rola |
 |------|------|
-| `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` | **Źródło do pola Instructions** (v3.7: Studio v1.40.1 / 4647c1b, GICLÉE FRAME F2.1 done, pattern, next A/B) |
+| `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` | **Źródło do pola Instructions** (v3.7: Studio v1.41.2, GICLÉE FRAME F2.1 done, pattern, next A/B) |
 | `GICLEE_DUAL_REPO_REVIEW_ROUTING_v35.md` | Kanon dual-repo |
 | `GICLEE_GITHUB_SNAPSHOT_REVIEW_WORKFLOW_v35.md` | Workflow review snapshotów |
 | `GICLEE_CURSOR_MASTER_INDEX_v37.md` | Hierarchia (POZIOM 0), wskazuje COMPACT v37 |
 | `README_GICLEE_CURSOR_ARCHITECT_UPDATE_v37.md` | Instrukcja wdrożenia v3.7 |
 | `GICLEE_CURSOR_ARCHITECT_CLEAN_PACK_v37.md` | Ten manifest |
-| `CURRENT_APP_STATE.md` | Aktualny stan GicleeApp Studio v1.40.1 |
+| `CURRENT_APP_STATE.md` | Aktualny stan GicleeApp Studio v1.41.2 + Giclee Viewer GV-7 + GAS 2.0 direction |
+| `GICLEEAPP_STUDIO_2_0_MODULE_TEMPLATE.md` | Sztywny szablon modułów GicleeApp Studio 2.0 |
 
 ### Motion / effects / patterns (aktualne, bez nowej wersji)
 
@@ -35,7 +36,7 @@ Manifest plików wiedzy Custom GPT. **Stare pliki na dysku nie są usuwane** —
 | `GICLEE_SECTION_PLAYBOOK_v32.md` |
 | `GICLEE_SIGNATURE_MOMENTS_v33.md` |
 
-**Razem aktywne: 19 plików** (7 routing/instructions v37 + 12 motion/effects).
+**Razem aktywne: 37 plików** (8 routing/instructions v37 + 12 motion/effects + 8 analyst modes + 9 Shopify modes).
 
 **Generated ZIP name:** `giclee_cursor_architect_knowledge_v37.zip`
 
@@ -72,7 +73,7 @@ Te pliki mogą **mieszać routing** (single-repo, stare wersje, duplikaty Instru
 
 | Plik | Uwaga |
 |------|--------|
-| `Wiadomość początkowa.txt` | Osobno od ZIP — checkpoint Studio v1.40.1 |
+| `Wiadomość początkowa.txt` | Osobno od ZIP — checkpoint Studio v1.41.2 |
 
 ---
 
@@ -119,3 +120,65 @@ Master Index v37 traktuje je jako opcjonalne.
 **Checkpoint refresh 2026-07-06 (post Push GicleeApp):** project checkpoint `4760a29` / Studio code `65e862b` / gicleeapp snapshot `21bc3ed` / GPT starter refreshed / primary next = GICLÉE FRAME™. Bez wiązania docs z `origin/master`. Paczka nadal v3.7.
 
 **Checkpoint refresh 2026-07-06 (post F2.1):** HEAD / origin/master `4647c1b` / GicleeApp Studio **v1.40.1** / GICLÉE FRAME F2.1 **done** + **Studio Page Component Editor Pattern** / next = **(A)** hygiene working tree **or (B)** GICLÉE FRAME F3 (not started). Paczka nadal v3.7 — bez bumpu na v38.
+
+**Checkpoint refresh 2026-07-07 (Studio Performance 5F–6G.2):** fazy performance done lokalnie w Cursorze; źródło prawdy diagnozy = `giclee_app/logs/studio_perf.log`; zasada: metryki przed kodem; GitHub connector może być za lokalnym working tree. Paczka nadal v3.7 — bez bumpu na v38.
+
+**Checkpoint refresh 2026-07-07 (Studio Performance 6G.5 closure):** główna nitka **6G.5** **PASS / checkpoint**; aktualny stan w `CURRENT_APP_STATE.md`; przy nowych objawach — najpierw `studio_perf.log` / raport Cursora, bez szerokiej optymalizacji bez objawu. Paczka nadal v3.7 — bez bumpu na v38.
+
+**Checkpoint refresh 2026-07-07 (Performance Agent PA-1C.2):** PA-1A–PA-1C.2 **done** w `cursor-api/tools/performance_agent/`; lokalny commit `c966912`; testy 46/46 PASS; push pending; preferuj bundle `report.md`/`summary.json` nad surowym logiem; `SCENARIO_LOG_NOT_CONFIRMED` = jakość sesji; nie startować PA-1D bez prośby. Paczka nadal v3.7 — bez bumpu na v38.
+
+**Checkpoint refresh 2026-07-07 (GitHub app v1.41.2):** aktualna wersja aplikacji na GitHub **v1.41.2**; monorepo origin/master `845191c`; F2.1 historycznie `4647c1b` v1.40.1; PA lokalnie `c966912` push pending. Paczka nadal v3.7 — bez bumpu na v38.
+
+**Checkpoint refresh 2026-07-08 (GV-7 + GAS 2.0 template):** Giclee Viewer HEAD `26446ce487d6fe1a511c7c137215834c78b6849f` — GV-7 **done** (143/143 tests); next GV-8; nowy `GICLEEAPP_STUDIO_2_0_MODULE_TEMPLATE.md`; GAS-0 future direction. Paczka nadal v3.7 — bez bumpu na v38.
+
+**Checkpoint refresh 2026-07-08 (architecture principles):** nowe sekcje § Programming / Architecture Principles + § Current technical lessons from Giclee Viewer w COMPACT v37 i `CURRENT_APP_STATE.md` — praktyczne zasady C# / WPF + Python + SQLite/JSON dla przyszłych aplikacji lokalnych. Paczka nadal v3.7 — bez bumpu na v38.
+
+**Checkpoint refresh 2026-07-08 (strategic direction):** nowe sekcje § Strategic Direction — Giclée Art Studio OS + § Work Planning Rule + § UI / Product Taste Direction w COMPACT v37 i `CURRENT_APP_STATE.md` — kierunek ekosystemu, tempo prac i estetyka produktu dla nowych sesji GPT. Paczka nadal v3.7 — bez bumpu na v38.
+
+**Checkpoint refresh 2026-07-08 (source of truth / decision memory):** nowa sekcja § Source of Truth / Decision Memory w COMPACT v37 i `CURRENT_APP_STATE.md` — GV ≠ GAS 2.0, lokalne pliki ≠ ZIP, szablon modułów, decyzja C#/Python, roadmapa, checkpoint startowy sesji. Paczka nadal v3.7 — bez bumpu na v38.
+
+## Analyst mode extension
+
+Paczka zawiera dodatkowy zestaw trybów analitycznych `GICLEE_ANALYST_*_v1.md`.
+
+Ich celem jest rozszerzenie głównych Instructions v37 o specjalizowane sposoby pracy:
+
+- performance,
+- debug/regresja,
+- review implementacji Cursora,
+- architektura etapów,
+- UI/UX premium,
+- Shopify snapshot review,
+- GPT integration / ZIP workflow.
+
+Tryby nie zastępują głównych Instructions. Należy stosować je razem z `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` oraz aktualnym `CURRENT_APP_STATE.md`.
+
+### Shopify modes (v1)
+
+| Plik |
+|------|
+| `GICLEE_SHOPIFY_MODE_HOMEPAGE_ART_DIRECTION_v1.md` |
+| `GICLEE_SHOPIFY_MODE_PRODUCT_PAGE_PDP_v1.md` |
+| `GICLEE_SHOPIFY_MODE_COLLECTION_CATALOG_v1.md` |
+| `GICLEE_SHOPIFY_MODE_COPY_BRAND_STORY_v1.md` |
+| `GICLEE_SHOPIFY_MODE_MOTION_INTERACTION_v1.md` |
+| `GICLEE_SHOPIFY_MODE_CONVERSION_TRUST_v1.md` |
+| `GICLEE_SHOPIFY_MODE_RESPONSIVE_ACCESSIBILITY_v1.md` |
+| `GICLEE_SHOPIFY_MODE_SEO_CONTENT_v1.md` |
+| `GICLEE_SHOPIFY_MODE_TRANSLATION_MARKETS_v1.md` |
+
+## Shopify mode extension
+
+Paczka zawiera dodatkowy zestaw trybów Shopify `GICLEE_SHOPIFY_MODE_*_v1.md`. Ich celem jest rozszerzenie głównych Instructions v37 oraz Shopify Snapshot workflow o specjalizowane sposoby pracy dla strony Giclée Art:
+
+- homepage art direction,
+- product page / PDP,
+- collection / catalog,
+- copy / brand story,
+- motion / interaction,
+- conversion / trust,
+- responsive / accessibility,
+- SEO / content,
+- translation / markets.
+
+Tryby Shopify nie zastępują głównych Instructions. Należy stosować je razem z `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md`, aktualnym `CURRENT_APP_STATE.md` oraz trybem Shopify Snapshot.

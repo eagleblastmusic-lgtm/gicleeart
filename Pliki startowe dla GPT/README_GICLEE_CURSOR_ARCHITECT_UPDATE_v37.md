@@ -10,6 +10,8 @@
 - Sets next recommended phase to Katalog local planning layer.
 - Adds pacing rule: group safe planning layers; split writer, Shopify, migrations, and major architecture decisions.
 
+> **Uwaga:** Poniższa sekcja „v37 update” to historyczne notatki pierwotnego release v3.7 — **nie** aktualny checkpoint aplikacji. Aktualny stan projektu zawsze w `CURRENT_APP_STATE.md` (obecnie Studio v1.41.2 na GitHub, monorepo origin/master `845191c`, Performance Agent lokalnie `c966912` push pending, Performance 6G.5: **PASS / checkpoint**).
+
 ---
 
 v3.5 = dual-repo routing po utworzeniu `eagleblastmusic-lgtm/gicleeapp`.  
@@ -65,6 +67,65 @@ Zaktualizowane pliki: `CURRENT_APP_STATE.md`, COMPACT v37, MASTER_INDEX v37, CLE
 
 ---
 
+## Checkpoint refresh (Studio Performance 5F–6G.2 — 2026-07-07)
+
+Bez bumpu paczki na v38:
+
+- Fazy **5F–6G.2:** done lokalnie (Hub, cold views, GF progressive boot/page_context, lazy dividers, lightweight rows, responsive selection, route shell, freeze reduction)
+- **Źródło prawdy diagnozy:** `cursor-api/giclee_app/logs/studio_perf.log` — GPT zaczyna od logów, nie od hipotez UI
+- Metryki po 6G.2: GF `open` ~31 ms, `visible_ready` ~179 ms; Asset Lab shell batches ~13–18 ms
+- **Zasada:** „dalej muli” → najpierw `studio_perf.log` lub raport Cursora; **najpierw metryki, potem kod**
+- GitHub connector może widzieć starszy stan niż lokalny working tree — log użytkownika wygrywa
+
+Zaktualizowane pliki: `CURRENT_APP_STATE.md`, COMPACT v37, MASTER_INDEX v37, CLEAN_PACK v37, ten README, `Wiadomość początkowa.txt`. **ZIP generuje użytkownik** przez Okno rozmowy.
+
+---
+
+## Checkpoint refresh (GICLÉE FRAME Performance 6G.5 closure — 2026-07-07)
+
+Bez bumpu paczki na v38:
+
+- **Główna nitka 6G.5:** **PASS / checkpoint** (K → S.2B zamknięte)
+- Kluczowe wyniki: early lane ~35 ms queue; `first_visible_ready` ~175–250 ms; `CTkScrollableFrame` odroczony do scroll upgrade; click → populate_enter median ~17.5 ms (S.2B)
+- **Current recommendation:** STOP / checkpoint — nie startować kolejnej szerokiej optymalizacji bez wyraźnego problemu UX po ręcznym teście
+- Opcjonalnie później (P2): page context polish, perceived-ready semantics, control late work; hygiene analyzer scenario C
+- Guardrails bez zmian: nie `Komponenty/*`, writer, Save, Shopify/sync/deploy, launcher lifecycle, static lane/scroll upgrade, DnD bez osobnego scope
+
+Zaktualizowane pliki: `CURRENT_APP_STATE.md`, ten README (aktywny checkpoint). **ZIP generuje użytkownik** przez Okno rozmowy — Cursor nie generuje ZIP.
+
+---
+
+## Checkpoint refresh (Performance Agent PA-1C.2 — 2026-07-07)
+
+Bez bumpu paczki na v38:
+
+- **Performance Agent** PA-1A–PA-1C.2: **done** — guided performance audit workflow w `cursor-api/tools/performance_agent/`
+- Lokalny commit: `c966912` — `feat(perf-agent): add guided performance audit workflow`; testy 46/46 PASS; **push pending** (nie zakładać push bez potwierdzenia)
+- Komendy: `--parse-only`, `--manual`, `--run`
+- Bundle: `report.md`, `summary.json`, `events.jsonl`, `agent_events.jsonl`, `questions_answers.json`, `scenario_timeline.csv`, `slow_events.csv`, `raw/studio_perf.log`
+- Runtime output: `reports/performance/**` (gitignored); runtime log: `giclee_app/logs/studio_perf.log` (gitignored)
+- **Diagnoza wydajności:** preferuj bundle PA (`report.md` / `summary.json`) nad surowym logiem
+- **`SCENARIO_LOG_NOT_CONFIRMED`:** jakość danych sesji, nie automatycznie regresja runtime
+- **Nie startować PA-1D** (headless/GUI/marker injection) bez wyraźnej prośby
+- Opcjonalnie na przyszłość: analiza realnych raportów (`DETAILS_CTA_SLOW`, `scroll_upgrade`, UX score GF itd.)
+
+Zaktualizowane pliki: `CURRENT_APP_STATE.md`, COMPACT v37, MASTER_INDEX v37, CLEAN_PACK v37, `GICLEE_ANALYST_MODE_PERFORMANCE_v1.md`, ten README. **ZIP generuje użytkownik** przez Okno rozmowy — Cursor nie generuje ZIP.
+
+---
+
+## Checkpoint refresh (GitHub app v1.41.2 — 2026-07-07)
+
+Bez bumpu paczki na v38:
+
+- **GitHub gicleeapp:** aktualna wersja aplikacji **v1.41.2** (`giclee_app/__init__.py`, `package.json`)
+- Stary checkpoint ZIP (v1.40.1 / `4647c1b` F2.1) jest nieaktualny co do numeru wersji
+- **monorepo origin/master:** `845191c` (docs); kod aplikacji na origin = linia v1.40.1
+- **Performance Agent** lokalnie `c966912` — push pending (bez zmian)
+
+Zaktualizowane pliki: `CURRENT_APP_STATE.md`, COMPACT v37, MASTER_INDEX v37, CLEAN_PACK v37, `Wiadomość początkowa.txt`, ten README. **ZIP generuje użytkownik** przez Okno rozmowy — Cursor nie generuje ZIP.
+
+---
+
 ## Zasada: Cursor nie generuje ZIP
 
 - **Cursor** aktualizuje tylko pliki źródłowe w `Pliki startowe dla GPT/`.
@@ -108,11 +169,11 @@ GPT **nie implementuje** feature aplikacji. Nie miesza maintenance z writerem, S
 
 ## Co nowego
 
-1. **`GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md`** — Instructions z checkpointem v1.37.0, routingiem, granicami Studio/Katalog, pacing rule i zasadami testowania
+1. **`GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md`** — Instructions z routingiem, granicami Studio/Katalog, pacing rule i zasadami testowania (checkpoint odświeżany w `CURRENT_APP_STATE.md`)
 2. **`GICLEE_CURSOR_MASTER_INDEX_v37.md`** — hierarchia v3.7, główny plik instrukcji = COMPACT v37
 3. **`README_GICLEE_CURSOR_ARCHITECT_UPDATE_v37.md`** — ten plik
 4. **`GICLEE_CURSOR_ARCHITECT_CLEAN_PACK_v37.md`** — manifest v3.7
-5. **`CURRENT_APP_STATE.md`** — zaktualizowany stan Studio v1.37.0
+5. **`CURRENT_APP_STATE.md`** — źródło prawdy aktualnego checkpointu (nie ten README)
 
 Bez zmian wersji (nadal v3.5 / v3.x): dual-repo routing, snapshot workflow, motion/effects.
 
@@ -150,6 +211,22 @@ Dodaj **aktywne pliki v3.7** (patrz `GICLEE_CURSOR_ARCHITECT_CLEAN_PACK_v37.md`)
 - `GICLEE_SECTION_PLAYBOOK_v32.md`
 - `GICLEE_SIGNATURE_MOMENTS_v33.md`
 
+## Added Shopify mode files
+
+Dodano zestaw plików `GICLEE_SHOPIFY_MODE_*_v1.md`, które wprowadzają modularne tryby pracy dla strony Shopify Giclée Art. Nowe tryby obejmują:
+
+- homepage art direction,
+- product page / PDP,
+- collection / catalog,
+- copy / brand story,
+- motion / interaction,
+- conversion / trust,
+- responsive / accessibility,
+- SEO / content,
+- translation / markets.
+
+Te pliki są dodatkowymi rozszerzeniami do głównych Instructions v37 oraz Shopify Snapshot workflow. Nie zastępują `CURRENT_APP_STATE.md` i nie oznaczają zmian w produkcji/live.
+
 ### GitHub connector
 
 Podłącz **oba** prywatne repo (jeśli review obu warstw):
@@ -169,4 +246,74 @@ Stare README, stare compact instructions (v36 i wcześniejsze), pełne `INSTRUCT
 
 ## Następny krok (poza tym update)
 
-Zaktualizować **`Wiadomość początkowa.txt`** — dual-repo routing + checkpoint Studio v1.37.0 + pacing rule.
+**Zrobione:** `Wiadomość początkowa.txt` zawiera dual-repo routing, pacing rule i odniesienie do aktualnego checkpointu z `CURRENT_APP_STATE.md` (nie z historycznych notatek v1.37.0 w tym README).
+
+## Added analyst mode files
+
+Dodano zestaw plików `GICLEE_ANALYST_*_v1.md`, które wprowadzają modularne tryby pracy dla analizy GicleeApp i Giclée Art.
+
+Nowe tryby obejmują:
+
+- base analyst prompt,
+- performance,
+- debug/regression,
+- Cursor implementation review,
+- stage architect,
+- UI/UX premium,
+- Shopify snapshot,
+- GPT integration / ZIP.
+
+Te pliki są dodatkowymi rozszerzeniami do głównych Instructions v37. Nie zmieniają źródła prawdy projektu i nie zastępują `CURRENT_APP_STATE.md`.
+
+---
+
+## Checkpoint refresh (GV-7 + GicleeApp Studio 2.0 template)
+
+Bez bumpu paczki na v38:
+
+- **Giclee Viewer** HEAD: `26446ce487d6fe1a511c7c137215834c78b6849f` — GV-7 Creative Metadata Workspace **done**
+- build PASS · test PASS 143/143 · working tree clean · brak push
+- next likely: **GV-8** Similarity / Variants / Pairing
+- **GicleeApp Studio 2.0** — future direction (C# / WPF shell + Python workers); sztywny szablon: `GICLEEAPP_STUDIO_2_0_MODULE_TEMPLATE.md`
+- pierwszy etap GAS: **GAS-0** Information Architecture & Shell Plan (bez implementacji)
+
+Zaktualizowane pliki: `CURRENT_APP_STATE.md`, `GICLEEAPP_STUDIO_2_0_MODULE_TEMPLATE.md` (nowy), checkpoint w COMPACT v37, `GICLEE_CURSOR_MASTER_INDEX_v37.md`, `Wiadomość początkowa.txt`, ten README. ZIP generuje użytkownik przez Okno rozmowy — Cursor nie generuje ZIP-a.
+
+---
+
+## Checkpoint refresh (architecture principles)
+
+Bez bumpu paczki na v38:
+
+- **Programming / Architecture Principles — current direction** — 10 praktycznych zasad: C# / WPF (UI, MVVM) + Python (workers) + SQLite/JSON (local-first); data safety; no per-tile queries; GicleeApp jako foundation, nie błąd
+- **Current technical lessons from Giclee Viewer** — sprawdzone wzorce z GV jako baza dla GicleeApp Studio 2.0
+
+Kanon: `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` (sekcje w COMPACT). Pełny opis: `CURRENT_APP_STATE.md`. Skrót: `GICLEE_CURSOR_MASTER_INDEX_v37.md` POZIOM 0.
+
+Zaktualizowane pliki: COMPACT v37, `CURRENT_APP_STATE.md`, MASTER INDEX v37, CLEAN PACK v37, ten README. ZIP generuje użytkownik — Cursor nie generuje ZIP-a.
+
+---
+
+## Checkpoint refresh (strategic direction)
+
+Bez bumpu paczki na v38:
+
+- **Strategic Direction — Giclée Art Studio OS** — ekosystem = Giclee Viewer + GicleeApp Studio 2.0; GV jako wzorzec technologiczny; szablon modułów `GICLEEAPP_STUDIO_2_0_MODULE_TEMPLATE.md`
+- **Work Planning Rule** — większe pakiety produktowe (GV-8…GV-10, GAS-0); mikroetapy tylko przy ryzyku danych / migracjach / plikach
+- **UI / Product Taste Direction** — premium, spokojny, ciemny, studyjny; fine art / museum / creative operations dashboard
+
+Kanon: `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` (trzy nowe sekcje). Pełny opis: `CURRENT_APP_STATE.md`. Skrót: `GICLEE_CURSOR_MASTER_INDEX_v37.md` POZIOM 0.
+
+Zaktualizowane pliki: COMPACT v37, `CURRENT_APP_STATE.md`, MASTER INDEX v37, CLEAN PACK v37, `Wiadomość początkowa.txt`, ten README. ZIP generuje użytkownik — Cursor nie generuje ZIP-a.
+
+---
+
+## Checkpoint refresh (source of truth / decision memory)
+
+Bez bumpu paczki na v38:
+
+- **Source of Truth / Decision Memory** — GV ≠ GAS 2.0 (osobne codebase'y); źródło prawdy = lokalne pliki w `Pliki startowe dla GPT`, nie ZIP; szablon modułów = decyzja użytkownika; nie wracać do „Python czy C#”; nie rozdrabniać roadmapy; nowa sesja = najpierw checkpoint (GV-7 done, next GV-8, future GAS-0)
+
+Kanon: `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` § Source of Truth / Decision Memory. Pełny opis: `CURRENT_APP_STATE.md`. Skrót: `GICLEE_CURSOR_MASTER_INDEX_v37.md` POZIOM 0.
+
+Zaktualizowane pliki: COMPACT v37, `CURRENT_APP_STATE.md`, MASTER INDEX v37, CLEAN PACK v37, `Wiadomość początkowa.txt`, ten README. ZIP generuje użytkownik — Cursor nie generuje ZIP-a.
