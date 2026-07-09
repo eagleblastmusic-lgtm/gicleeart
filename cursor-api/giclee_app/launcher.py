@@ -31,6 +31,12 @@ from .launcher_layout import (
     resolve_sections,
 )
 from .launcher_options import show_launcher_options
+from .launcher_shortcuts import (
+    LAUNCHER_KEY_SHORTCUTS,
+    dialog_blocks_shortcuts,
+    focus_blocks_shortcuts,
+    shortcut_key_from_event,
+)
 from .runtime import get_bundle_root, get_component_cwd, resolve_python_interpreter
 
 try:
@@ -206,6 +212,11 @@ class GicleeApp:
         # Scroll kolem / touchpadem (delta < 120 na Windows = glowny powod "klejenia" przy // 120)
         self._ensure_tiles_wheel_binding()
 
+        # Klawiatura: canvas musi móc przejąć fokus (kafelki mają takefocus=False).
+        self.canvas.configure(takefocus=True)
+        self.canvas.bind("<Button-1>", self._focus_tiles_canvas, add="+")
+        self.tiles_frame.bind("<Button-1>", self._focus_tiles_canvas, add="+")
+
         # Status bar
         status = ttk.Frame(self.root, padding=(12, 4))
         status.pack(fill="x")
@@ -215,6 +226,51 @@ class GicleeApp:
             text=f"wersja {__version__}  ·  Komponenty: {self.components_dir}",
             foreground="#aaa",
         ).pack(side="right")
+
+        self._bind_launcher_shortcuts()
+        self.root.after_idle(self._focus_tiles_canvas)
+
+    def _focus_tiles_canvas(self, _event: object = None) -> None:
+        if not self.tiles_view.winfo_ismapped():
+            return
+        try:
+            self.canvas.focus_set()
+        except tk.TclError:
+            pass
+
+    def _bind_launcher_shortcuts(self) -> None:
+        self.root.bind_all("<KeyPress>", self._on_launcher_key_shortcut, add="+")
+
+    def _launcher_shortcut_key(self, event: tk.Event) -> str | None:
+        return shortcut_key_from_event(event)
+
+    def _launcher_shortcuts_active(self) -> bool:
+        """Skróty literowe działają tylko na siatce kafelków (nie w inline / dialogu)."""
+        if not self.tiles_view.winfo_ismapped():
+            return False
+        if dialog_blocks_shortcuts(self.root):
+            return False
+        if focus_blocks_shortcuts(self.root):
+            return False
+        return True
+
+    def _on_launcher_key_shortcut(self, event: tk.Event) -> str | None:
+        if not self._launcher_shortcuts_active():
+            return None
+        if event.state & (0x4 | 0x8):  # Control, Alt
+            return None
+        key = self._launcher_shortcut_key(event)
+        if not key:
+            return None
+        folder = LAUNCHER_KEY_SHORTCUTS.get(key)
+        if not folder:
+            return None
+        comp = self._component_by_folder(folder)
+        if comp is None:
+            self.status_var.set(f"Skrót «{key}»: brak komponentu {folder}")
+            return "break"
+        self._launch(comp)
+        return "break"
 
     def _pointer_is_over_tiles_canvas(self, evt: tk.Event) -> bool:
         """True gdy zdarzenie dotyczy obszaru canvas z kafelkami (nie naglowka / innego okna)."""
@@ -975,6 +1031,7 @@ class GicleeApp:
         """Przywraca scroll siatki kafelkow (inline komponenty nie moga robic unbind_all)."""
         try:
             self.root.bind_all("<MouseWheel>", self._on_canvas_mousewheel)
+            self._bind_launcher_shortcuts()
         except tk.TclError:
             pass
 
@@ -993,6 +1050,7 @@ class GicleeApp:
         if not self.tiles_view.winfo_ismapped():
             self.tiles_view.pack(fill="both", expand=True)
         self._ensure_tiles_wheel_binding()
+        self.root.after_idle(self._focus_tiles_canvas)
         self.status_var.set("")
 
     # ---------- Misc ----------
@@ -1530,6 +1588,10 @@ procesie**, wiec ewentualny crash jednego komponentu NIE polozy launchera.
 1. Kliknij dowolne miejsce na kafelku (cala karta jest klikalna).
 2. Albo kliknij niebieski/zielony/pomaranczowy przycisk **Uruchom** w prawym dolnym rogu.
 3. Komponent otworzy sie w nowym oknie. Mozesz miec wiele komponentow otwartych jednoczesnie.
+
+## Skroty klawiszowe (siatka kafelkow)
+- **i** — uruchom **Integracja z GPT** (`integracjagpt`). Dziala tylko na glownej siatce
+  (nie w widoku inline ani w otwartym dialogu). Bez Ctrl/Alt/Win.
 
 ## Toolbar w prawym gornym rogu
 - **Token setup** - checklista OAuth Shopify + Meta (`CHECKLIST_SETUP.md`).

@@ -12,6 +12,11 @@ import customtkinter as ctk
 from giclee_app import __version__
 from giclee_app.component_loader import Component, find_components_dir
 from giclee_app.launcher_delegate import LaunchOutcome, launch
+from giclee_app.launcher_shortcuts import (
+    LAUNCHER_KEY_SHORTCUTS,
+    focus_blocks_shortcuts,
+    shortcut_key_from_event,
+)
 from giclee_app.studio.background_capabilities import capability_for
 from giclee_app.studio.categories import category_label
 from giclee_app.studio.component_index import StudioComponentIndex
@@ -138,6 +143,37 @@ class GicleeAppStudio(ctk.CTk):
         x = max(0, (sw - w) // 2)
         y = max(0, (sh - h) // 2)
         self.geometry(f"{w}x{h}+{x}+{y}")
+
+        self.bind_all("<KeyPress>", self._on_global_key_shortcut, add="+")
+        self.after_idle(self.focus_set)
+
+    def _global_shortcuts_active(self) -> bool:
+        if self._inline_host is not None or self._background_host is not None:
+            return False
+        if focus_blocks_shortcuts(self):
+            return False
+        return True
+
+    def _on_global_key_shortcut(self, event: tk.Event) -> str | None:
+        if not self._global_shortcuts_active():
+            return None
+        if event.state & (0x4 | 0x8):
+            return None
+        key = shortcut_key_from_event(event)
+        if not key:
+            return None
+        folder = LAUNCHER_KEY_SHORTCUTS.get(key)
+        if not folder:
+            return None
+        comp = self._component_index.by_folder.get(folder)
+        if comp is None:
+            self._set_status(f"Skrót «{key}»: brak komponentu {folder}")
+            return "break"
+        result = launch(comp, on_status=self._set_status)
+        if result.outcome == LaunchOutcome.OK:
+            self._studio_state.record_launch(comp)
+            self.after_idle(self._studio_state.save)
+        return "break"
 
     def _set_status(self, msg: str) -> None:
         self._status_var.set(msg)

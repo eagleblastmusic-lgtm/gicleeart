@@ -14,6 +14,7 @@ Plik: `cursor-api/giclee_app/launcher.py`
 - Uruchamia komponenty jako **osobne procesy** (`subprocess`) lub **inline views** w tym samym oknie
 - Toolbar: **Stan sesji**, **Theme dev…**, **Zamknij porty**, **Dziennik akcji**, **Odśwież**
 - Co 3 s skanuje `Komponenty/` w tle (nowe kafelki)
+- Skrót **i** na siatce kafelków → uruchamia **Integracja z GPT** (`integracjagpt`). Kliknij raz w obszar kafelków, jeśli skrót nie reaguje (fokus okna).
 
 ---
 
