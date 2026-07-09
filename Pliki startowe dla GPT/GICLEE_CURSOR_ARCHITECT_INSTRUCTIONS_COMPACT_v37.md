@@ -168,13 +168,13 @@ Komendy aktywujące tryb Veo/Flow: Veo premium · Veo krótko · Veo popraw · T
 <!-- gpt-starter:gicleeapp-push:start -->
 Repo kanoniczne: `eagleblastmusic-lgtm/gicleeapp` (monorepo `gicleeart`, branch `master`, app w `cursor-api/`)
 
-GitHub / aktualna wersja aplikacji: **v1.44.1** (`giclee_app/__init__.py`, `package.json`)
-Ostatni push GicleeApp: `4a4f946` na `main` (2026-07-08 16:55 UTC) — Refresh GicleeApp repository snapshot
-Monorepo origin/master: `752ee19` — docs(gpt): refresh starter files checkpoint
+GitHub / aktualna wersja aplikacji: **v1.45.2** (`giclee_app/__init__.py`, `package.json`)
+Ostatni push GicleeApp: `c2dfa93` na `main` (2026-07-09 21:35 UTC) — Refresh GicleeApp repository snapshot
+Monorepo origin/master: `1cbf2b2` — docs(gpt): refresh starter files checkpoint
 Ostatni pushed feature checkpoint aplikacji (F2.1, historia): `4647c1b` — v1.40.1
 Poprzedni checkpoint: `46fc718` — GICLÉE FRAME page inventory RAM editor (v1.40.0)
-Wersja aplikacji: **GicleeApp Studio v1.44.1**
-Branch: GitHub gicleeapp **v1.44.1** / `main` @ `4a4f946`; monorepo origin/master `752ee19`
+Wersja aplikacji: **GicleeApp Studio v1.45.2**
+Branch: GitHub gicleeapp **v1.45.2** / `main` @ `c2dfa93`; monorepo origin/master `1cbf2b2`
 <!-- gpt-starter:gicleeapp-push:end -->
 
 Zamknięte:
