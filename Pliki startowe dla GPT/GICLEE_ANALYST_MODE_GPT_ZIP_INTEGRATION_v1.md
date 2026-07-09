@@ -29,21 +29,17 @@ Aktywuj ten tryb przy zadaniach typu:
 
 ## Najważniejsza zasada źródła prawdy
 
-ZIP wiedzy nie jest źródłem prawdy.
+ZIP traktuj jako aktualny snapshot wiedzy załączony do rozmowy.
 
-Źródłem prawdy są lokalne pliki źródłowe użytkownika:
-
-`C:\Strona\pusty\Pliki startowe dla GPT`
-
-ZIP wiedzy jest generowany automatycznie przez program użytkownika przy wysyłce paczki przez Okno rozmowy w integracji z GPT.
-
-Cursor aktualizuje tylko lokalne pliki źródłowe w folderze:
+Źródłem edycji dla Cursora są lokalne pliki źródłowe użytkownika:
 
 `C:\Strona\pusty\Pliki startowe dla GPT`
+
+Cursor aktualizuje lokalne pliki źródłowe, a ZIP jest generowany z nich automatycznie przez Integrację z GPT.
 
 Cursor nie generuje ZIP-a bez osobnego, wyraźnego polecenia użytkownika.
 
-Jeśli trzeba aktualizować wiedzę Custom GPT, należy edytować lokalne pliki źródłowe, a nie traktować ZIP-a jako głównego miejsca pracy.
+Jeśli trzeba aktualizować wiedzę Custom GPT, edytuj lokalne pliki źródłowe — ZIP to snapshot załączony do rozmowy, nie miejsce edycji.
 
 ## GicleeApp push workflow
 

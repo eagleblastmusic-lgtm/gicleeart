@@ -1,11 +1,11 @@
 Załączam ZIP z plikami wiedzy mojego Custom GPT „Giclee Cursor Architect”.
 
-Pliki źródłowe, z których generowany jest ZIP wiedzy, znajdują się lokalnie w:
+ZIP traktuj jako aktualny snapshot wiedzy załączony do tej rozmowy.
+Źródłem edycji dla Cursora są lokalne pliki w:
 `C:\Strona\pusty\Pliki startowe dla GPT`
 
-ZIP wiedzy generuje automatycznie mój program przy wysyłce paczki przez Okno rozmowy (Integracja z GPT).
-Cursor aktualizuje tylko pliki źródłowe w tym folderze — Cursor nie generuje ZIP-a bez osobnego, wyraźnego polecenia.
-Nie traktuj ZIP-a jako źródła prawdy.
+Cursor aktualizuje lokalne pliki źródłowe, a ZIP jest generowany z nich automatycznie przez Integrację z GPT.
+Cursor nie generuje ZIP-a bez osobnego, wyraźnego polecenia.
 
 Od teraz traktuj te pliki jako główne instrukcje pracy, stylu rozumowania i sposobu odpowiadania w projekcie Giclée Art.
 
@@ -108,19 +108,19 @@ Najważniejsze zasady pracy:
 Aktualny checkpoint, który powinien być widoczny w `CURRENT_APP_STATE.md`:
 
 <!-- gpt-starter:gicleeapp-push:start -->
-- GicleeApp Studio v1.44.1
+- GicleeApp Studio v1.45.2
 
-- GitHub / aktualna wersja aplikacji: v1.44.1 — zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`
+- GitHub / aktualna wersja aplikacji: v1.45.2 — zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`
 
-- Ostatni push GicleeApp: 4a4f946 na main (2026-07-08 16:55 UTC) — Refresh GicleeApp repository snapshot
+- Ostatni push GicleeApp: ad025ed na main (2026-07-09 22:49 UTC) — Refresh GicleeApp repository snapshot
 
-- Monorepo origin/master: 752ee19 docs(gpt): refresh starter files checkpoint
+- Monorepo origin/master: 28b5931 docs(gpt): refresh starter files checkpoint
 
 - Ostatni pushed feature checkpoint aplikacji (F2.1, historia): 4647c1b feat(studio): GICLÉE FRAME F2.1 editor workflow polish (v1.40.1)
 
 - Branch:
-  - GitHub gicleeapp: v1.44.1 / main @ 4a4f946 (auto-sync po Push GicleeApp)
-  - monorepo origin/master: 752ee19 (docs / projekt)
+  - GitHub gicleeapp: v1.45.2 / main @ ad025ed (auto-sync po Push GicleeApp)
+  - monorepo origin/master: 28b5931 (docs / projekt)
 <!-- gpt-starter:gicleeapp-push:end -->
 
 - Background Builder local v1: frozen
@@ -201,7 +201,7 @@ Aktualny checkpoint, który powinien być widoczny w `CURRENT_APP_STATE.md`:
 
 - Giclee Viewer i GicleeApp Studio 2.0 to dwa różne projekty — nie mieszać codebase'ów bez polecenia
 - Giclee Viewer: GitHub `eagleblastmusic-lgtm/giclee-viewer`, lokalnie `C:\Strona\giclee-viewer`
-- źródło prawdy = lokalne pliki w `Pliki startowe dla GPT`, nie ZIP; Cursor nie generuje ZIP-a
+- ZIP = aktualny snapshot wiedzy załączony do rozmowy; źródłem edycji dla Cursora = lokalne pliki w `Pliki startowe dla GPT`; Cursor nie generuje ZIP-a
 - szablon modułów `GICLEEAPP_STUDIO_2_0_MODULE_TEMPLATE.md` = decyzja użytkownika — nie zmieniać bez polecenia
 - nie wracać do dyskusji „Python czy C#” — C#/WPF (UI) + Python (workers) + SQLite/JSON (stan)
 - nie rozdrabniać roadmapy — większe pakiety produktowe; mikroetapy tylko przy ryzyku danych / plikach / migracjach
@@ -253,6 +253,7 @@ Dodatkowo w ZIP-ie znajdują się pliki trybów analitycznych dla pracy z Giclee
 - `GICLEE_ANALYST_MODE_UI_UX_PREMIUM_v1.md`
 - `GICLEE_ANALYST_MODE_SHOPIFY_SNAPSHOT_v1.md`
 - `GICLEE_ANALYST_MODE_GPT_ZIP_INTEGRATION_v1.md`
+- `GICLEE_ANALYST_MODE_VEO_FLOW_IMAGE_VIDEO_PROMPT_DIRECTOR_v1.md`
 
 Przeczytaj je razem z pozostałymi plikami ZIP-a.
 
@@ -271,6 +272,7 @@ Jeśli poproszę o konkretny tryb, np.:
 - „Tryb UI/UX Premium”,
 - „Tryb Shopify Snapshot”,
 - „Tryb GPT Integration / ZIP”,
+- „Tryb Veo / Flow / Image-Video Prompt Director”,
 
 użyj odpowiedniego pliku trybu z ZIP-a.
 

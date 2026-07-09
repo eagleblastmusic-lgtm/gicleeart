@@ -5,23 +5,23 @@ GicleeApp Studio v1.45.2
 
 GitHub / aktualna wersja aplikacji (`eagleblastmusic-lgtm/gicleeapp`):
 v1.45.2 — zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`
-Ostatni push GicleeApp: `c2dfa93` na `main` (2026-07-09 21:35 UTC) — Refresh GicleeApp repository snapshot
+Ostatni push GicleeApp: `ad025ed` na `main` (2026-07-09 22:49 UTC) — Refresh GicleeApp repository snapshot
 
 Monorepo origin/master (projekt / docs):
-1cbf2b2 docs(gpt): refresh starter files checkpoint
+28b5931 docs(gpt): refresh starter files checkpoint
 
 Previous checkpoint:
 46fc718 feat(studio): add GICLÉE FRAME page inventory RAM editor (v1.40.0)
 
 Branch status:
-- **GitHub gicleeapp:** v1.45.2 / `main` @ `c2dfa93` (auto-sync po Push GicleeApp, 2026-07-09 21:35 UTC)
-- **monorepo origin/master:** `1cbf2b2` — docs(gpt): refresh starter files checkpoint
+- **GitHub gicleeapp:** v1.45.2 / `main` @ `ad025ed` (auto-sync po Push GicleeApp, 2026-07-09 22:49 UTC)
+- **monorepo origin/master:** `28b5931` — docs(gpt): refresh starter files checkpoint
 
 GPT starter files:
-auto-sync po Push GicleeApp 2026-07-09 21:35 UTC (gicleeapp `c2dfa93`, v1.45.2; paczka v37; źródło = ten folder, nie ZIP)
+auto-sync po Push GicleeApp 2026-07-09 22:49 UTC (gicleeapp `ad025ed`, v1.45.2; paczka v37; źródło = ten folder, nie ZIP)
 
 Recent context:
-- **GitHub gicleeapp:** v1.45.2 / `main` @ `c2dfa93` — auto-sync po Push GicleeApp
+- **GitHub gicleeapp:** v1.45.2 / `main` @ `ad025ed` — auto-sync po Push GicleeApp
 - GICLÉE FRAME™ F2.1: closed + pushed (historycznie v1.40.1 / `4647c1b`; aktualna wersja aplikacji na GitHub jest nowsza)
 - Local runtime/untracked still outside commit and remote (working tree hygiene pending)
 <!-- gpt-starter:gicleeapp-push:end -->
@@ -187,7 +187,7 @@ Technical backlog (only after separate acceptance):
 Important guardrails:
 - Knowledge pack source folder: `C:\Strona\pusty\Pliki startowe dla GPT` — **Cursor edytuje tylko pliki źródłowe `.md` / `.txt` w tym folderze**
 - **Cursor NIE generuje ZIP-a wiedzy** — bez osobnego, wyraźnego polecenia użytkownika
-- ZIP wiedzy (`giclee_cursor_architect_knowledge_v37.zip`) generuje **automatycznie program użytkownika** przy wysyłce paczki przez **Okno rozmowy** (Integracja z GPT) — nie traktuj ZIP jako źródła prawdy
+- ZIP traktuj jako **aktualny snapshot wiedzy** załączony do rozmowy; ZIP wiedzy (`giclee_cursor_architect_knowledge_v37.zip`) generuje **automatycznie program użytkownika** przy wysyłce paczki przez **Okno rozmowy** (Integracja z GPT); **źródłem edycji dla Cursora** są lokalne pliki w `Pliki startowe dla GPT`
 - Cursor nie uruchamia: `build_starter_knowledge_zip()`, GUI **Skopiuj .zip**, żadnego ręcznego generatora ZIP
 - GICLÉE FRAME F2.1: RAM-only — no write_text, no writer, no sync/deploy, no Komponenty/* mutation from panel
 - Do not start F3/F4/writer without separate approval
@@ -658,13 +658,13 @@ GicleeApp / GicleeApp Studio 2.0:
 
 Nie mieszać tych dwóch codebase'ów bez wyraźnego polecenia użytkownika.
 
-2. ZIP wiedzy nie jest źródłem prawdy.
+2. ZIP = aktualny snapshot wiedzy załączony do rozmowy.
 
-Źródłem prawdy są lokalne pliki:
+Źródłem edycji dla Cursora są lokalne pliki:
 
 `C:\Strona\pusty\Pliki startowe dla GPT`
 
-ZIP jest tylko paczką eksportową generowaną z tych źródeł.
+Cursor aktualizuje lokalne pliki źródłowe, a ZIP jest generowany z nich automatycznie przez Integrację z GPT.
 
 Cursor nie generuje ZIP-a bez osobnej komendy użytkownika.
 

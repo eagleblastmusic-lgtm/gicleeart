@@ -27,7 +27,7 @@ Zasady:
 
 Workflow snapshotów: `GICLEE_GITHUB_SNAPSHOT_REVIEW_WORKFLOW_v35.md`.
 
-Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` oraz `CURRENT_APP_STATE.md` (GitHub gicleeapp **v1.45.2** / `main` @ `c2dfa93`; monorepo origin/master `1cbf2b2`).
+Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` oraz `CURRENT_APP_STATE.md` (GitHub gicleeapp **v1.45.2** / `main` @ `ad025ed`; monorepo origin/master `28b5931`).
 
 **GICLÉE FRAME™:** F2.1 **done** (pushed). Ustanawia wzorzec **`Studio Page Component Editor Pattern`** dla przyszłych edytorów strony w Studio — patrz `gicleeframe-planning.md` §7, link w `admin-components-strategy.md`. **F3** (lokalny zapis draftu RAM) i **F4** (bounded writer): **not started**.
 
@@ -57,7 +57,7 @@ Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w `GICLEE_C
 
 **UI / Product Taste Direction:** premium, spokojny, ciemny, studyjny — fine art / museum / creative operations dashboard; GAS 2.0 dojrzalszy niż obecny UI 1:1. Kanon: COMPACT v37 § UI / Product Taste Direction.
 
-**Source of Truth / Decision Memory:** GV ≠ GAS 2.0 (osobne codebase'y); źródło prawdy = lokalne pliki w `Pliki startowe dla GPT`, nie ZIP; szablon modułów = decyzja użytkownika; nie wracać do „Python czy C#”; nie rozdrabniać roadmapy; nowa sesja = najpierw checkpoint (GV-7 done, next GV-8, future GAS-0). Kanon: COMPACT v37 § Source of Truth / Decision Memory.
+**Source of Truth / Decision Memory:** GV ≠ GAS 2.0 (osobne codebase'y); ZIP = aktualny snapshot wiedzy załączony do rozmowy; źródłem edycji dla Cursora = lokalne pliki w `Pliki startowe dla GPT`; szablon modułów = decyzja użytkownika; nie wracać do „Python czy C#”; nie rozdrabniać roadmapy; nowa sesja = najpierw checkpoint (GV-7 done, next GV-8, future GAS-0). Kanon: COMPACT v37 § Source of Truth / Decision Memory.
 
 ---
 

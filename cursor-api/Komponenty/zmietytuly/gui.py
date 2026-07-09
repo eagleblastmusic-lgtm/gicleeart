@@ -42,6 +42,25 @@ _STASH_SEPARATOR = "\n\n"
 _WIN_INVALID_FILENAME = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
 
+def _win_alive(win: tk.Misc | None) -> bool:
+    if win is None:
+        return False
+    try:
+        return bool(win.winfo_exists())
+    except tk.TclError:
+        return False
+
+
+def _safe_configure(widget: tk.Misc | None, **kwargs) -> None:
+    if widget is None:
+        return
+    try:
+        if widget.winfo_exists():
+            widget.configure(**kwargs)
+    except tk.TclError:
+        return
+
+
 def _safe_download_stem(row: dict) -> str:
     artist = str(row.get("artist") or "").strip()
     title = str(row.get("painting_title") or "").strip()
@@ -586,7 +605,36 @@ def _open_title_editor_dialog(
     save_btn.pack(side="right")
     copy_btn = ttk.Button(btns, text="Kopiuj prompt", state="disabled")
     copy_btn.pack(side="right", padx=(0, 8))
-    ttk.Button(btns, text="Zamknij", command=win.destroy).pack(side="left")
+
+    ui_closed = [False]
+    pending_after_ids: list[str] = []
+
+    def _invalidate_ui() -> None:
+        ui_closed[0] = True
+        for aid in pending_after_ids:
+            try:
+                win.after_cancel(aid)
+            except (tk.TclError, ValueError):
+                pass
+        pending_after_ids.clear()
+
+    def _close_dialog() -> None:
+        _invalidate_ui()
+        if _win_alive(win):
+            win.destroy()
+
+    def _schedule_ui(callback: Callable[[], None]) -> None:
+        if ui_closed[0] or not _win_alive(win):
+            return
+
+        def wrapper() -> None:
+            if ui_closed[0] or not _win_alive(win):
+                return
+            callback()
+
+        pending_after_ids.append(win.after(0, wrapper))
+
+    ttk.Button(btns, text="Zamknij", command=_close_dialog).pack(side="left")
 
     def _collect_titles() -> dict[str, str]:
         return {key: title_vars[key].get().strip() for key in TITLE_EDIT_LANG_KEYS}
@@ -609,12 +657,16 @@ def _open_title_editor_dialog(
         show_toast(win, "Prompt skopiowany do schowka", duration_ms=1600)
 
     def _enable_form() -> None:
+        if not _win_alive(win):
+            return
         for ent in entries.values():
-            ent.configure(state="normal")
-        save_btn.configure(state="normal")
-        copy_btn.configure(state="normal")
+            _safe_configure(ent, state="normal")
+        _safe_configure(save_btn, state="normal")
+        _safe_configure(copy_btn, state="normal")
 
     def _set_form_values(titles: dict[str, str]) -> None:
+        if not _win_alive(win):
+            return
         for key in TITLE_EDIT_LANG_KEYS:
             title_vars[key].set(titles.get(key) or "")
 
@@ -626,9 +678,10 @@ def _open_title_editor_dialog(
         if not titles.get("orig"):
             messagebox.showwarning(APP_TITLE, "Tytul oryginalny jest wymagany.", parent=win)
             return
-        save_btn.configure(state="disabled")
-        copy_btn.configure(state="disabled")
-        status_var.set("Zapisuje w Shopify...")
+        _safe_configure(save_btn, state="disabled")
+        _safe_configure(copy_btn, state="disabled")
+        if _win_alive(win):
+            status_var.set("Zapisuje w Shopify...")
 
         def work() -> None:
             try:
@@ -639,47 +692,50 @@ def _open_title_editor_dialog(
                 )
                 set_title_update_mark(product_id, marked=True)
             except Exception as exc:
-                win.after(
-                    0,
+                _schedule_ui(
                     lambda e=exc: messagebox.showerror(APP_TITLE, str(e), parent=win),
                 )
-                win.after(0, lambda: status_var.set(f"Blad: {exc}"))
-                win.after(0, _enable_form)
+                _schedule_ui(lambda e=exc: status_var.set(f"Blad: {e}"))
+                _schedule_ui(_enable_form)
                 return
 
             def done() -> None:
+                if not _win_alive(win):
+                    return
                 status_var.set("Zapisano.")
                 show_toast(win, "Tytuly zapisane w sklepie", duration_ms=1800)
                 if on_saved:
                     on_saved(titles)
-                win.destroy()
+                _close_dialog()
 
-            win.after(0, done)
+            _schedule_ui(done)
 
         threading.Thread(target=work, daemon=True, name="zmietytuly-save-titles").start()
 
     copy_btn.configure(command=_copy_prompt)
     save_btn.configure(command=_save)
-    win.bind("<Escape>", lambda _e: win.destroy())
+    win.protocol("WM_DELETE_WINDOW", _close_dialog)
+    win.bind("<Escape>", lambda _e: _close_dialog())
 
     def _load() -> None:
         try:
             titles = load_product_title_fields(product_id)
         except Exception as exc:
-            win.after(
-                0,
+            _schedule_ui(
                 lambda e=exc: messagebox.showerror(APP_TITLE, str(e), parent=win),
             )
-            win.after(0, lambda e=exc: status_var.set(f"Blad pobierania: {e}"))
-            win.after(0, _enable_form)
+            _schedule_ui(lambda e=exc: status_var.set(f"Blad pobierania: {e}"))
+            _schedule_ui(_enable_form)
             return
 
         def populate() -> None:
+            if ui_closed[0] or not _win_alive(win):
+                return
             _set_form_values(titles)
             status_var.set("Edytuj tytuly i zapisz lub skopiuj prompt do Cursora.")
             _enable_form()
 
-        win.after(0, populate)
+        _schedule_ui(populate)
 
     threading.Thread(target=_load, daemon=True, name="zmietytuly-load-titles").start()
 

@@ -86,7 +86,7 @@ Workflow push GicleeApp: użytkownik zwykle wypycha lokalną aplikację przez pr
 
 **Cursor NIE generuje ZIP-a wiedzy** — chyba że użytkownik da **osobne, wyraźne polecenie**.
 
-ZIP wiedzy (`giclee_cursor_architect_knowledge_v37.zip`) generuje **automatycznie program użytkownika** przy wysyłce paczki przez **Okno rozmowy** (Integracja z GPT). Nie traktuj ZIP jako źródła prawdy.
+ZIP traktuj jako **aktualny snapshot wiedzy** załączony do rozmowy. ZIP wiedzy (`giclee_cursor_architect_knowledge_v37.zip`) generuje **automatycznie program użytkownika** przy wysyłce paczki przez **Okno rozmowy** (Integracja z GPT). **Źródłem edycji dla Cursora** są lokalne pliki w `C:\Strona\pusty\Pliki startowe dla GPT` — Cursor aktualizuje je, a ZIP jest z nich generowany automatycznie.
 
 Cursor **nie uruchamia** bez wyraźnego polecenia:
 - `build_starter_knowledge_zip()`
@@ -169,12 +169,12 @@ Komendy aktywujące tryb Veo/Flow: Veo premium · Veo krótko · Veo popraw · T
 Repo kanoniczne: `eagleblastmusic-lgtm/gicleeapp` (monorepo `gicleeart`, branch `master`, app w `cursor-api/`)
 
 GitHub / aktualna wersja aplikacji: **v1.45.2** (`giclee_app/__init__.py`, `package.json`)
-Ostatni push GicleeApp: `c2dfa93` na `main` (2026-07-09 21:35 UTC) — Refresh GicleeApp repository snapshot
-Monorepo origin/master: `1cbf2b2` — docs(gpt): refresh starter files checkpoint
+Ostatni push GicleeApp: `ad025ed` na `main` (2026-07-09 22:49 UTC) — Refresh GicleeApp repository snapshot
+Monorepo origin/master: `28b5931` — docs(gpt): refresh starter files checkpoint
 Ostatni pushed feature checkpoint aplikacji (F2.1, historia): `4647c1b` — v1.40.1
 Poprzedni checkpoint: `46fc718` — GICLÉE FRAME page inventory RAM editor (v1.40.0)
 Wersja aplikacji: **GicleeApp Studio v1.45.2**
-Branch: GitHub gicleeapp **v1.45.2** / `main` @ `c2dfa93`; monorepo origin/master `1cbf2b2`
+Branch: GitHub gicleeapp **v1.45.2** / `main` @ `ad025ed`; monorepo origin/master `28b5931`
 <!-- gpt-starter:gicleeapp-push:end -->
 
 Zamknięte:
@@ -474,13 +474,13 @@ GicleeApp / GicleeApp Studio 2.0:
 
 Nie mieszać tych dwóch codebase'ów bez wyraźnego polecenia użytkownika.
 
-2. ZIP wiedzy nie jest źródłem prawdy.
+2. ZIP = aktualny snapshot wiedzy załączony do rozmowy.
 
-Źródłem prawdy są lokalne pliki:
+Źródłem edycji dla Cursora są lokalne pliki:
 
 `C:\Strona\pusty\Pliki startowe dla GPT`
 
-ZIP jest tylko paczką eksportową generowaną z tych źródeł.
+Cursor aktualizuje lokalne pliki źródłowe, a ZIP jest generowany z nich automatycznie przez Integrację z GPT.
 
 Cursor nie generuje ZIP-a bez osobnej komendy użytkownika.
 

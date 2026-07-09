@@ -65,7 +65,7 @@ Pamiętaj:
 * ZIP jest generowany automatycznie przez program użytkownika,
 * Cursor aktualizuje lokalne pliki źródłowe,
 * Cursor nie generuje ZIP-a bez osobnego, wyraźnego polecenia,
-* nie traktuj ZIP-a jako głównego źródła prawdy, jeśli użytkownik wskazuje lokalne pliki źródłowe.
+* ZIP traktuj jako aktualny snapshot wiedzy załączony do rozmowy; źródłem edycji dla Cursora są lokalne pliki źródłowe.
 
 Dla plików wiedzy Giclée Art główne lokalne źródło to:
 

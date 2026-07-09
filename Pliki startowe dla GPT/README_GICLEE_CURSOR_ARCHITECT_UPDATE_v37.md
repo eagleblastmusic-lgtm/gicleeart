@@ -312,7 +312,7 @@ Zaktualizowane pliki: COMPACT v37, `CURRENT_APP_STATE.md`, MASTER INDEX v37, CLE
 
 Bez bumpu paczki na v38:
 
-- **Source of Truth / Decision Memory** — GV ≠ GAS 2.0 (osobne codebase'y); źródło prawdy = lokalne pliki w `Pliki startowe dla GPT`, nie ZIP; szablon modułów = decyzja użytkownika; nie wracać do „Python czy C#”; nie rozdrabniać roadmapy; nowa sesja = najpierw checkpoint (GV-7 done, next GV-8, future GAS-0)
+- **Source of Truth / Decision Memory** — GV ≠ GAS 2.0 (osobne codebase'y); ZIP = aktualny snapshot wiedzy załączony do rozmowy; źródłem edycji dla Cursora = lokalne pliki w `Pliki startowe dla GPT`; szablon modułów = decyzja użytkownika; nie wracać do „Python czy C#”; nie rozdrabniać roadmapy; nowa sesja = najpierw checkpoint (GV-7 done, next GV-8, future GAS-0)
 
 Kanon: `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` § Source of Truth / Decision Memory. Pełny opis: `CURRENT_APP_STATE.md`. Skrót: `GICLEE_CURSOR_MASTER_INDEX_v37.md` POZIOM 0.
 
