@@ -208,7 +208,7 @@
       document.body.removeChild(probe);
       if (h > 0) return h;
     }
-    return 46;
+    return 61;
   }
 
   function stackRunwayStep() {

@@ -60,11 +60,11 @@
     },
     "review": {
       "label": "Review / GPT",
-      "folders": ["integracjagpt", "bazapromptow", "debugowanie"]
+      "folders": ["integracjagpt", "bazapromptow", "wybortrybu", "debugowanie"]
     },
     "system": {
       "label": "System",
-      "folders": ["limity", "planer", "notatnik", "poczta", "sklep", "pushe"]
+      "folders": ["limity", "planer", "notatnik", "poczta", "sklep", "pushe", "segregatorplikow"]
     }
   }
 }

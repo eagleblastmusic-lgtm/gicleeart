@@ -27,7 +27,7 @@ DEFAULT_SECTIONS: list[tuple[str, list[str]]] = [
     ("Zamowienia", ["obrazy", "produkcja", "passepartout"]),
     ("Finanse", ["finanse", "kalkulacja"]),
     ("Marketing", ["blog", "socialmedia", "zadania", "cenyMarketing", "analytics"]),
-    ("Narzedzia pomocnicze", ["limity", "planer", "notatnik", "bazapromptow", "integracjagpt", "stronyzobrazami", "stronydozycia", "poczta", "sklep"]),
+    ("Narzedzia pomocnicze", ["limity", "planer", "notatnik", "bazapromptow", "wybortrybu", "integracjagpt", "stronyzobrazami", "stronydozycia", "poczta", "sklep", "segregatorplikow"]),
 ]
 
 

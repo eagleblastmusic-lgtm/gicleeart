@@ -14,6 +14,7 @@ cursor-api/docs/
 ├── README.md                    ← jesteś tutaj
 ├── zaleznosci-wewnetrzne.md     OAuth, .env, R2, shopify_client
 ├── shared.md                    Komponenty/_shared
+├── GICLEEAPP_IMPLEMENTED_SOLUTIONS_INDEX.md   mapa wzorców GicleeApp (nie duplikuj)
 ├── troubleshooting.md
 ├── worker/
 │   ├── README.md
@@ -48,6 +49,7 @@ Nowe zmiany → plik w [`komponenty/`](komponenty/). Czytaj sekcję SHOP tylko g
 | Odnowa tokenów Meta | [`komponenty/meta-tokeny.md`](komponenty/meta-tokeny.md) |
 | OAuth, sesja, R2 | [`zaleznosci-wewnetrzne.md`](zaleznosci-wewnetrzne.md) |
 | Moduły współdzielone (_shared) | [`shared.md`](shared.md) |
+| Nowy komponent / helper — co już istnieje | [`GICLEEAPP_IMPLEMENTED_SOLUTIONS_INDEX.md`](GICLEEAPP_IMPLEMENTED_SOLUTIONS_INDEX.md) |
 | Uruchomić launcher GUI | [`../giclee_app/docs/README.md`](../giclee_app/docs/README.md) |
 | Integracja Custom GPT (lustro GitHub, nagrania) | [`komponenty/integracjagpt.md`](komponenty/integracjagpt.md) |
 | Coś nie działa | [`troubleshooting.md`](troubleshooting.md) |

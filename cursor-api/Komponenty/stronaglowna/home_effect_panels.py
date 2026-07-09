@@ -50,11 +50,17 @@ def build_scroll_reveal_tab(
     cfg: dict[str, Any],
     *,
     hook: str,
+    front_hint: str | None = None,
 ) -> dict[str, Any]:
     tab = ttk.Frame(notebook, padding=(8, 8))
     notebook.add(tab, text="Reveal i hover")
 
-    _front_status_label(tab, hook, "scroll_reveal")
+    if front_hint:
+        ttk.Label(tab, text=front_hint, wraplength=500, foreground="#555").pack(
+            anchor="w", pady=(0, 8)
+        )
+    else:
+        _front_status_label(tab, hook, "scroll_reveal")
 
     preset_names = list(STUDIO_REVEAL_PRESETS.keys())
     preset_var = tk.StringVar(value=preset_names[0])

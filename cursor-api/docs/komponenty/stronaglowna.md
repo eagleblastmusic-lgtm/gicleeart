@@ -76,7 +76,7 @@ Tryb: `inline` (w launcherze GicleeApp, sekcja **Administracja strony** — przy
 
 6. **Historia wersji…** — przywracanie kopii jednym kliknięciem.
 
-7. **Podgląd live** — URL z `?giclee_skip_splash=1&giclee_skip_notice=1` (pomija splash i modal). Lokalny podgląd motywu: **Theme dev…** w pasku narzędzi launchera (`http://127.0.0.1:9292/` + te same parametry).
+7. **Podgląd live** — URL z `?giclee_skip_splash=1&giclee_skip_notice=1` (pomija splash i modal). Lokalny podgląd motywu: **Theme dev…** w pasku narzędzi launchera (`http://127.0.0.1:9292/` + te same parametry). Start theme dev: do 5 prób połączenia z Shopify (timeout 25 s), oczekiwanie na serwer lokalny do 120 s — tolerancja na wolniejszą sieć przy otwartym Cursorze.
 
 8. **Wdróż motyw…** — wybór celu: development / unpublished / live (`shopify.theme.toml`).
 

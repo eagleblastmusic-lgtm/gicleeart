@@ -163,6 +163,8 @@ GICLEEAPP_SYNC_SKIP_REL_PREFIXES: tuple[str, ...] = (
     "Komponenty/notatnik/notatki/",
     "Komponenty/integracjagpt/data/nagrania/",
     "Komponenty/bazapromptow/data/context_images/",
+    "Komponenty/bazapromptow/data/context_files/",
+    "Komponenty/bazapromptow/data/context_videos/",
     "Komponenty/stronyzobrazami/data/cache/",
     "Komponenty/print_optimize/data/",
     "Komponenty/socialmedia/data/cykl/Obrazy/",

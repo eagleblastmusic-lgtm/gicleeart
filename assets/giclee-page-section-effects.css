@@ -1,0 +1,101 @@
+/* Page section effects — tekst (reveal/hover) + grafika (parallax/hover).
+   Scope: sekcje editorial z GicleeApp (Efekty tekstu/grafiki…). */
+
+[data-giclee-page-fx] > .scroll-reveal {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+.giclee-page-fx-text {
+  --gpf-text-duration: 900ms;
+  --gpf-text-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --gpf-heading-delay: 120ms;
+  --gpf-paragraph-stagger: 140ms;
+  --gpf-copy-scale: 1.022;
+  --gpf-copy-y: -4px;
+  --gpf-hover-duration: 850ms;
+}
+
+.giclee-page-fx-text .giclee-page-fx-heading,
+.giclee-page-fx-text .giclee-page-fx-body > * {
+  opacity: 0;
+  transform: translateY(22px);
+  transition:
+    opacity var(--gpf-text-duration) var(--gpf-text-ease),
+    transform var(--gpf-text-duration) var(--gpf-text-ease);
+}
+
+.giclee-page-fx-text.is-revealed .giclee-page-fx-heading {
+  opacity: 1;
+  transform: none;
+  transition-delay: var(--gpf-heading-delay);
+}
+
+.giclee-page-fx-text.is-revealed .giclee-page-fx-body > * {
+  opacity: 1;
+  transform: none;
+}
+
+.giclee-page-fx-text.is-revealed .giclee-page-fx-body > *:nth-child(1) {
+  transition-delay: calc(var(--gpf-heading-delay) + var(--gpf-paragraph-stagger));
+}
+
+.giclee-page-fx-text.is-revealed .giclee-page-fx-body > *:nth-child(2) {
+  transition-delay: calc(var(--gpf-heading-delay) + var(--gpf-paragraph-stagger) * 2);
+}
+
+.giclee-page-fx-text.is-revealed .giclee-page-fx-body > *:nth-child(3) {
+  transition-delay: calc(var(--gpf-heading-delay) + var(--gpf-paragraph-stagger) * 3);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .giclee-page-fx-text.giclee-page-fx-text--glow {
+    position: relative;
+  }
+
+  .giclee-page-fx-text.giclee-page-fx-text--glow.is-hover {
+    transform: translateY(var(--gpf-copy-y)) scale(var(--gpf-copy-scale));
+    transition: transform var(--gpf-hover-duration) var(--gpf-text-ease);
+  }
+}
+
+.giclee-page-fx-media {
+  --gpf-media-hover-scale: 1.025;
+  --gpf-media-hover-duration: 850ms;
+  overflow: hidden;
+}
+
+.giclee-page-fx-media .media-block,
+.giclee-page-fx-media img,
+.giclee-page-fx-media picture,
+.giclee-page-fx-media video {
+  transition: transform var(--gpf-media-hover-duration) cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .giclee-page-fx-media.is-hover .media-block,
+  .giclee-page-fx-media.is-hover img,
+  .giclee-page-fx-media.is-hover picture,
+  .giclee-page-fx-media.is-hover video {
+    transform: scale(var(--gpf-media-hover-scale));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giclee-page-fx-text .giclee-page-fx-heading,
+  .giclee-page-fx-text .giclee-page-fx-body > * {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .giclee-page-fx-media .media-block,
+  .giclee-page-fx-media img,
+  .giclee-page-fx-media picture,
+  .giclee-page-fx-media video {
+    transition: none;
+    transform: none !important;
+  }
+}

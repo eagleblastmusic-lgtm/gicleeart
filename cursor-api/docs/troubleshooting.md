@@ -80,3 +80,22 @@ Notatki FAQ: `Komponenty/notatnik/notatki/05-faq-i-trobleshoot.md`
 ## Motyw / front (objawy w przeglądarce)
 
 → [`../../docs/motyw/troubleshooting.md`](../../docs/motyw/troubleshooting.md)
+
+---
+
+## Theme dev (GicleeApp / Shopify CLI)
+
+| Objaw | Sprawdź |
+|-------|---------|
+| `ETIMEDOUT` do `giclee-art-3.myshopify.com` | Firewall Windows — zezwól `node.exe` (skrypt poniżej); VPN/proxy; ponów Theme dev (GicleeApp ma retry) |
+| Port 9292 zajęty / brak HTTP | GicleeApp → **Zamknij porty** lub restart Theme dev |
+| Formularz hasła sklepu | Integracja z GPT → Hasło sklepu, albo `.shopify-store-password.local` w korzeniu motywu |
+
+**Firewall Node.js (Windows, jako administrator):**
+
+```powershell
+cd C:\Strona\pusty\cursor-api\scripts
+.\setup-node-firewall.ps1
+```
+
+Skrypt: `cursor-api/scripts/setup-node-firewall.ps1` — reguły wychodzące (Shopify HTTPS) i przychodzące (podgląd `:9292`).

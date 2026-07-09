@@ -1,0 +1,161 @@
+{
+  "version": 1,
+  "source": "tryby_pracy_chatgpt_giclee_art.xlsx",
+  "modes": [
+    {
+      "id": "gui_ui_premium",
+      "number": 1,
+      "name": "GUI / UI Premium",
+      "aliases": [
+        "GUI Premium",
+        "GUI / UI Premium"
+      ],
+      "category": "UI",
+      "purpose": "Ocena i projektowanie wyglądu sekcji, układu, typografii, odstępów, hierarchii i premium feelingu.",
+      "focus": "Layout, kompozycja, czytelność, kontrast, rytm, mobile, spójność z marką; animacja jako część całości.",
+      "when_to_use": "Gdy chcesz ocenić lub poprawić wygląd sekcji/strony.",
+      "sample_command": "TRYB GUI / UI Premium\nOceń tę sekcję i powiedz, co poprawić.",
+      "simplest": "Jak to ma wyglądać i czy jest dobrze zaprojektowane.",
+      "search_text": "GUI / UI Premium GUI Premium GUI / UI Premium Ocena i projektowanie wyglądu sekcji, układu, typografii, odstępów, hierarchii i premium feelingu. Layout, kompozycja, czytelność, kontrast, rytm, mobile, spójność z marką; animacja jako część całości. Gdy chcesz ocenić lub poprawić wygląd sekcji/strony. Jak to ma wyglądać i czy jest dobrze zaprojektowane. UI"
+    },
+    {
+      "id": "motion_director",
+      "number": 2,
+      "name": "Motion Director",
+      "aliases": [
+        "Motion Director"
+      ],
+      "category": "Motion",
+      "purpose": "Projektowanie ruchu: wejść sekcji, scroll reveal, hoverów, opóźnień, easingów, światła i tempa animacji.",
+      "focus": "Co rusza się pierwsze, jak długo, jakim easingiem, co reaguje na hover/scroll, czego nie ruszać.",
+      "when_to_use": "Gdy layout jest zaakceptowany, ale chcesz nadać sekcji życie i rytm.",
+      "sample_command": "TRYB Motion Director\nZaprojektuj animację dla tej sekcji.",
+      "simplest": "Jak to ma się poruszać, pojawiać i reagować.",
+      "search_text": "Motion Director Motion Director Projektowanie ruchu: wejść sekcji, scroll reveal, hoverów, opóźnień, easingów, światła i tempa animacji. Co rusza się pierwsze, jak długo, jakim easingiem, co reaguje na hover/scroll, czego nie ruszać. Gdy layout jest zaakceptowany, ale chcesz nadać sekcji życie i rytm. Jak to ma się poruszać, pojawiać i reagować. Motion"
+    },
+    {
+      "id": "cursor_prompt_architect",
+      "number": 3,
+      "name": "Cursor Prompt Architect",
+      "aliases": [
+        "Cursor Architect",
+        "Cursor Prompt Architect"
+      ],
+      "category": "Cursor",
+      "purpose": "Tworzenie gotowych, bezpiecznych promptów dla Cursora z planem, guardrailami i checklistą testów.",
+      "focus": "Pliki do sprawdzenia, czego nie ruszać, kolejność faz, raport, brak commita, ryzyka regresji.",
+      "when_to_use": "Gdy chcesz, żebym przygotował wiadomość do wklejenia Cursorowi.",
+      "sample_command": "TRYB Cursor Architect\nPrzygotuj prompt dla Cursora, najpierw plan.",
+      "simplest": "Zamienia pomysł w bezpieczny prompt dla Cursora.",
+      "search_text": "Cursor Prompt Architect Cursor Architect Cursor Prompt Architect Tworzenie gotowych, bezpiecznych promptów dla Cursora z planem, guardrailami i checklistą testów. Pliki do sprawdzenia, czego nie ruszać, kolejność faz, raport, brak commita, ryzyka regresji. Gdy chcesz, żebym przygotował wiadomość do wklejenia Cursorowi. Zamienia pomysł w bezpieczny prompt dla Cursora. Cursor"
+    },
+    {
+      "id": "code_aware_reviewer",
+      "number": 4,
+      "name": "Code-aware Reviewer",
+      "aliases": [
+        "Code-aware Reviewer"
+      ],
+      "category": "Cursor",
+      "purpose": "Ocena planu, diffu, raportu lub kodu Cursora pod kątem bezpieczeństwa technicznego.",
+      "focus": "Scope CSS/JS, globalne selektory, regresje, ryzyka, czy zmiany są za duże, czy trzeba rozbić na fazy.",
+      "when_to_use": "Gdy Cursor wysyła plan/diff/raport i chcesz wiedzieć, czy zatwierdzać.",
+      "sample_command": "TRYB Code-aware Reviewer\nOceń plan Cursora.",
+      "simplest": "Sprawdza, czy Cursor nie zrobi technicznego bałaganu.",
+      "search_text": "Code-aware Reviewer Code-aware Reviewer Ocena planu, diffu, raportu lub kodu Cursora pod kątem bezpieczeństwa technicznego. Scope CSS/JS, globalne selektory, regresje, ryzyka, czy zmiany są za duże, czy trzeba rozbić na fazy. Gdy Cursor wysyła plan/diff/raport i chcesz wiedzieć, czy zatwierdzać. Sprawdza, czy Cursor nie zrobi technicznego bałaganu. Cursor"
+    },
+    {
+      "id": "shopify_snapshot_reviewer",
+      "number": 5,
+      "name": "Shopify Snapshot Reviewer",
+      "aliases": [
+        "Shopify Snapshot Reviewer"
+      ],
+      "category": "Shopify",
+      "purpose": "Review motywu Shopify: Liquid, templates JSON, sections, snippets, assets, homepage, PDP, header, menu.",
+      "focus": "Auto-generated JSON, Theme Editor, Liquid, warunkowe ładowanie assetów, scope template, konflikty globalne.",
+      "when_to_use": "Gdy temat dotyczy sklepu/motywu Shopify.",
+      "sample_command": "TRYB Shopify Snapshot Reviewer\nSprawdź tę zmianę w theme.liquid.",
+      "simplest": "Pilnuje, żeby motyw Shopify nie rozjechał się przez jedną zmianę.",
+      "search_text": "Shopify Snapshot Reviewer Shopify Snapshot Reviewer Review motywu Shopify: Liquid, templates JSON, sections, snippets, assets, homepage, PDP, header, menu. Auto-generated JSON, Theme Editor, Liquid, warunkowe ładowanie assetów, scope template, konflikty globalne. Gdy temat dotyczy sklepu/motywu Shopify. Pilnuje, żeby motyw Shopify nie rozjechał się przez jedną zmianę. Shopify"
+    },
+    {
+      "id": "gicleeapp_architect",
+      "number": 6,
+      "name": "GicleeApp Architect",
+      "aliases": [
+        "GicleeApp Architect"
+      ],
+      "category": "GicleeApp",
+      "purpose": "Projektowanie lokalnej aplikacji, Studio, cursor-api, komponentów, wariantów, ZIP wiedzy i workflow.",
+      "focus": "Architektura modułów, source-of-truth, warianty gf1/gf2, testy, manifesty, integracje i małe fazy pracy.",
+      "when_to_use": "Gdy chodzi o GicleeApp, lokalne narzędzia, komponenty lub integrację z GPT.",
+      "sample_command": "TRYB GicleeApp Architect\nZaprojektuj komponent Segregator Plików.",
+      "simplest": "Projektuje lokalny system/aplikację, nie tylko stronę.",
+      "search_text": "GicleeApp Architect GicleeApp Architect Projektowanie lokalnej aplikacji, Studio, cursor-api, komponentów, wariantów, ZIP wiedzy i workflow. Architektura modułów, source-of-truth, warianty gf1/gf2, testy, manifesty, integracje i małe fazy pracy. Gdy chodzi o GicleeApp, lokalne narzędzia, komponenty lub integrację z GPT. Projektuje lokalny system/aplikację, nie tylko stronę. GicleeApp"
+    },
+    {
+      "id": "performance_debug",
+      "number": 7,
+      "name": "Performance / Debug",
+      "aliases": [
+        "Performance",
+        "Performance / Debug"
+      ],
+      "category": "Performance",
+      "purpose": "Diagnoza lagów, CLS, problemów scrolla, błędów JS, regresji, skoków layoutu i wolnego renderu.",
+      "focus": "Hipotezy przyczyn, minimalny fix, pomiary, main thread, obrazki, sticky/fixed, observers, ryzyko nowych bibliotek.",
+      "when_to_use": "Gdy coś tnie, skacze, działało i przestało albo strona ma błędy.",
+      "sample_command": "TRYB Performance\nScroll na PDP tnie, znajdź możliwe przyczyny.",
+      "simplest": "Najpierw diagnoza, potem minimalny fix.",
+      "search_text": "Performance / Debug Performance Performance / Debug Diagnoza lagów, CLS, problemów scrolla, błędów JS, regresji, skoków layoutu i wolnego renderu. Hipotezy przyczyn, minimalny fix, pomiary, main thread, obrazki, sticky/fixed, observers, ryzyko nowych bibliotek. Gdy coś tnie, skacze, działało i przestało albo strona ma błędy. Najpierw diagnoza, potem minimalny fix. Performance"
+    },
+    {
+      "id": "writer_copy_premium",
+      "number": 8,
+      "name": "Writer / Copy Premium",
+      "aliases": [
+        "Copy Premium",
+        "Writer / Copy Premium"
+      ],
+      "category": "Copy",
+      "purpose": "Pisanie tekstów na stronę, opisów sekcji, CTA, claimów, nazw, opisów produktów i copy premium.",
+      "focus": "Ton marki, brzmienie premium, klarowność, rytm akapitów, wersja muzealna/techniczna/sprzedażowa.",
+      "when_to_use": "Gdy potrzebujesz konkretnego tekstu lub poprawy istniejącego copy.",
+      "sample_command": "TRYB Copy Premium\nNapisz tekst do sekcji Wymiary produktów.",
+      "simplest": "Pisze teksty, które brzmią jak marka premium.",
+      "search_text": "Writer / Copy Premium Copy Premium Writer / Copy Premium Pisanie tekstów na stronę, opisów sekcji, CTA, claimów, nazw, opisów produktów i copy premium. Ton marki, brzmienie premium, klarowność, rytm akapitów, wersja muzealna/techniczna/sprzedażowa. Gdy potrzebujesz konkretnego tekstu lub poprawy istniejącego copy. Pisze teksty, które brzmią jak marka premium. Copy"
+    },
+    {
+      "id": "veo_flow_image_prompt",
+      "number": 9,
+      "name": "Veo / Flow / Image Prompt",
+      "aliases": [
+        "Veo Premium",
+        "Veo / Flow / Image Prompt"
+      ],
+      "category": "AI Prompt",
+      "purpose": "Tworzenie promptów do Veo, Flow, Nano Banana i innych narzędzi obraz/wideo.",
+      "focus": "Opis sceny, kamera, światło, ruch, negative prompt, ostatnia klatka, styl i techniczne ograniczenia generatora.",
+      "when_to_use": "Gdy chcesz prompt do obrazu, wideo albo animowania grafiki.",
+      "sample_command": "TRYB Veo Premium\nPrzeanalizuj grafikę i zrób prompt.",
+      "simplest": "Prompt engineering dla obrazów i filmów.",
+      "search_text": "Veo / Flow / Image Prompt Veo Premium Veo / Flow / Image Prompt Tworzenie promptów do Veo, Flow, Nano Banana i innych narzędzi obraz/wideo. Opis sceny, kamera, światło, ruch, negative prompt, ostatnia klatka, styl i techniczne ograniczenia generatora. Gdy chcesz prompt do obrazu, wideo albo animowania grafiki. Prompt engineering dla obrazów i filmów. AI Prompt"
+    },
+    {
+      "id": "medyczny_ostro_ny",
+      "number": 10,
+      "name": "Medyczny ostrożny",
+      "aliases": [
+        "Medyczny ostrożny"
+      ],
+      "category": "Medical",
+      "purpose": "Ostrożna pomoc w zrozumieniu objawów, leków, wyników i przygotowaniu pytań do lekarza.",
+      "focus": "Bezpieczeństwo, czerwone flagi, możliwe mechanizmy, kiedy pilnie szukać pomocy; bez zastępowania lekarza.",
+      "when_to_use": "Gdy temat dotyczy zdrowia, objawów, leków lub badań.",
+      "sample_command": "TRYB Medyczny ostrożny\nPomóż mi zrozumieć objawy/wyniki.",
+      "simplest": "Pomoc w orientacji i bezpieczeństwie, nie diagnoza.",
+      "search_text": "Medyczny ostrożny Medyczny ostrożny Ostrożna pomoc w zrozumieniu objawów, leków, wyników i przygotowaniu pytań do lekarza. Bezpieczeństwo, czerwone flagi, możliwe mechanizmy, kiedy pilnie szukać pomocy; bez zastępowania lekarza. Gdy temat dotyczy zdrowia, objawów, leków lub badań. Pomoc w orientacji i bezpieczeństwie, nie diagnoza. Medical"
+    }
+  ]
+}

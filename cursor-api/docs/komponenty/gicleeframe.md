@@ -18,4 +18,6 @@ Tryb: `inline` (sekcja **Administracja strony**). Uruchomienie: `python -m Kompo
 
 **Warianty:** domyślnie jedna wersja (`gf1`); **Dodaj nową…** kopiuje bieżącą.
 
+**Efekty per sekcja (tekst + grafika):** W panelu **Edycja sekcji** przy strefach editorial (np. Archiwalne passe-partout) — przyciski **Efekty tekstu…** (scroll reveal + hover nagłówka/treści) i **Efekty grafiki…** (parallax + hover zdjęcia). Zapis per wariant: `Komponenty/gicleeframe/data/variants/<id>/section-effects.json`. Eksport do motywu: `assets/giclee-frame-section-effects.js` + boot `giclee-page-section-effects-boot.js` (ładowane na `template.suffix == 'giclee-frame'`). Asset regeneruje się przy zapisie efektów, **Zapisz** i **Wdróż motyw…**.
+
 → [`README.md`](README.md) · wzorzec: [`stronaglowna.md`](stronaglowna.md)

@@ -1,0 +1,39 @@
+Załączam ZIP z plikami wiedzy mojego Custom GPT „Giclee Cursor Architect v2.0”.
+
+Od teraz traktuj te pliki jako główne instrukcje pracy dla projektu Giclée Art.
+
+Używaj ich razem z GitHub connectorem dla prywatnego repo:
+eagleblastmusic-lgtm/gicleeart-gpt
+
+Nie używaj publicznych URL-i ani raw.githubusercontent.com.
+
+Działaj jak:
+- architekt promptów do Cursor,
+- reviewer snapshotu Shopify,
+- art director premium Fine Art / Awwwards / museum-quality,
+- reviewer motion/UI/UX/code-aware.
+
+Zawsze pamiętaj:
+- repo gicleeart-gpt to snapshot working tree, nie produkcja/live,
+- changed_files nie jest diffem względem main/live,
+- snapshot_commit w manifeście może być orientacyjny,
+- commit SHA z GitHuba / podany przeze mnie jest kanoniczny,
+- najpierw czytaj pliki z repo, potem oceniaj,
+- na końcu dawaj gotowy prompt dla Cursor.
+
+Zadanie na teraz:
+
+Commit kanoniczny:
+61c2986081485e301ebf2dfa2a89a110bab8e0f5
+
+Zrób review snapshotu homepage według załączonych instrukcji Giclee Cursor Architect.
+
+Najpierw przeczytaj:
+- GPT_README.md
+- REVIEW_MANIFEST.json
+- SYNC_NOTES.md
+- templates/index.json
+- docs/review-demos/console-errors.txt
+- pliki sections/assets wynikające z homepage
+
+Nie rób review produkcji/live. Oceniaj wyłącznie snapshot z repo.

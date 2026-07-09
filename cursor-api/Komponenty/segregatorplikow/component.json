@@ -1,0 +1,7 @@
+{
+  "name": "Segregator plików",
+  "description": "Szybkie sortowanie plików — przeciągnij na kafelek folderu docelowego.",
+  "icon": "📂",
+  "color": "#546e7a",
+  "order": 46
+}

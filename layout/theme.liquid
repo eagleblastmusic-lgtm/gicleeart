@@ -62,6 +62,11 @@
       media="(max-width: 767px)"
     >
     {%- endif -%}
+    {%- if request.page_type == 'page' and template.suffix == 'giclee-frame' -%}
+    <script src="{{ 'giclee-frame-section-effects.js' | asset_url }}" defer></script>
+    {{ 'giclee-page-section-effects.css' | asset_url | stylesheet_tag }}
+    <script src="{{ 'giclee-page-section-effects-boot.js' | asset_url }}" defer></script>
+    {%- endif -%}
     {%- if request.page_type == 'index' and request.design_mode == false -%}
     <style>
       html.splash-pending,

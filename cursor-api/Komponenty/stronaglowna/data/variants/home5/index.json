@@ -39,7 +39,8 @@
             "video_1": "shopify://files/videos/Use_the_uploaded_workshop_image_202607021817.mp4",
             "video_boomerang": false,
             "video_1_reversed": "",
-            "video_collage_json": "{\"loop\":true,\"clips\":[{\"video\":\"shopify://files/videos/Old_carpentry_workshop_background_202607021822.mp4\",\"transition_in\":\"fade_in\",\"transition_out\":\"fade_out\",\"transition_in_ms\":3000,\"transition_out_ms\":1500,\"cross_effect\":false,\"label\":\"Old_carpentry_workshop_background_202607021822\"},{\"video\":\"shopify://files/videos/Birch_forest_to_bark_texture_202607010119.mp4\",\"transition_in\":\"fade_in\",\"transition_out\":\"fade_out\",\"transition_in_ms\":800,\"transition_out_ms\":800,\"cross_effect\":false,\"label\":\"Birch_forest_to_bark_texture_202607010119\"}]}"
+            "video_collage_json": "{\"loop\":true,\"clips\":[{\"video\":\"shopify://files/videos/Old_carpentry_workshop_background_202607021822.mp4\",\"transition_in\":\"fade_in\",\"transition_out\":\"fade_out\",\"transition_in_ms\":3000,\"transition_out_ms\":1500,\"cross_effect\":false,\"label\":\"Old_carpentry_workshop_background_202607021822\"},{\"video\":\"shopify://files/videos/Birch_forest_to_bark_texture_202607010119.mp4\",\"transition_in\":\"fade_in\",\"transition_out\":\"fade_out\",\"transition_in_ms\":800,\"transition_out_ms\":800,\"cross_effect\":false,\"label\":\"Birch_forest_to_bark_texture_202607010119\"}]}",
+            "image_1_object_y": 50
           },
           "blocks": {}
         }
@@ -182,7 +183,8 @@
                     "padding-block-start": 0,
                     "padding-block-end": 0,
                     "padding-inline-start": 0,
-                    "padding-inline-end": 0
+                    "padding-inline-end": 0,
+                    "image_object_y": 50
                   },
                   "blocks": {}
                 },
@@ -321,7 +323,8 @@
         "padding-block-end": 40,
         "background_image": "",
         "video": "",
-        "background_overlay_pct": 0
+        "background_overlay_pct": 0,
+        "background_image_object_y": 50
       }
     },
     "divider_M9rfEz": {
@@ -515,7 +518,9 @@
             "padding-block-start": 0,
             "padding-block-end": 0,
             "padding-inline-start": 0,
-            "padding-inline-end": 0
+            "padding-inline-end": 0,
+            "before_image_object_y": 50,
+            "after_image_object_y": 50
           },
           "blocks": {}
         }
@@ -553,7 +558,8 @@
         "padding-block-end": 40,
         "background_image": "",
         "video": "",
-        "background_overlay_pct": 0
+        "background_overlay_pct": 0,
+        "background_image_object_y": 50
       }
     },
     "divider_JyULmz": {
@@ -604,7 +610,9 @@
             "padding-block-start": 0,
             "padding-block-end": 0,
             "padding-inline-start": 0,
-            "padding-inline-end": 0
+            "padding-inline-end": 0,
+            "before_image_object_y": 50,
+            "after_image_object_y": 50
           },
           "blocks": {}
         },
@@ -862,7 +870,8 @@
         "padding-block-end": 40,
         "background_image": "",
         "video": "",
-        "background_overlay_pct": 0
+        "background_overlay_pct": 0,
+        "background_image_object_y": 50
       }
     },
     "divider_chnDAz": {
@@ -1056,7 +1065,9 @@
             "padding-block-start": 0,
             "padding-block-end": 0,
             "padding-inline-start": 0,
-            "padding-inline-end": 0
+            "padding-inline-end": 0,
+            "before_image_object_y": 50,
+            "after_image_object_y": 50
           },
           "blocks": {}
         }
@@ -1094,7 +1105,8 @@
         "padding-block-end": 40,
         "background_image": "shopify://shop_images/Abstract_background_powder_blue___202607040128_1.jpg",
         "video": "",
-        "background_overlay_pct": 0
+        "background_overlay_pct": 0,
+        "background_image_object_y": 50
       }
     },
     "divider_idXL6J": {
@@ -1145,7 +1157,9 @@
             "padding-block-start": 0,
             "padding-block-end": 0,
             "padding-inline-start": 0,
-            "padding-inline-end": 0
+            "padding-inline-end": 0,
+            "before_image_object_y": 50,
+            "after_image_object_y": 50
           },
           "blocks": {}
         },
@@ -1323,7 +1337,9 @@
             "padding-block-start": 0,
             "padding-block-end": 0,
             "padding-inline-start": 0,
-            "padding-inline-end": 0
+            "padding-inline-end": 0,
+            "before_image_object_y": 50,
+            "after_image_object_y": 50
           },
           "blocks": {}
         }
@@ -1362,7 +1378,8 @@
         "padding-block-end": 40,
         "background_image": "",
         "video": "",
-        "background_overlay_pct": 0
+        "background_overlay_pct": 0,
+        "background_image_object_y": 50
       }
     }
   },

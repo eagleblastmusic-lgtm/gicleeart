@@ -28,6 +28,11 @@ from .service import (
     shopify_admin_reachable,
     shopify_cli_popen,
     shopify_ref_label,
+    THEME_DEV_LAUNCH_RETRIES,
+    THEME_DEV_NETWORK_PAUSE_SEC,
+    THEME_DEV_NETWORK_RETRIES,
+    THEME_DEV_SHOPIFY_PROBE_TIMEOUT,
+    THEME_DEV_STARTUP_POLL_SEC,
     theme_dev_cli_args,
     theme_dev_http_ready,
     theme_dev_port_open,
@@ -420,8 +425,8 @@ def start_theme_dev(
     *,
     on_line: Callable[[str], None] | None = None,
     force_restart: bool = False,
-    network_retries: int = 3,
-    launch_retries: int = 3,
+    network_retries: int = THEME_DEV_NETWORK_RETRIES,
+    launch_retries: int = THEME_DEV_LAUNCH_RETRIES,
     skip_network_probe: bool = False,
 ) -> None:
     global _theme_dev_proc
@@ -447,7 +452,11 @@ def start_theme_dev(
     for launch_attempt in range(1, launch_retries + 1):
         if not skip_network_probe:
             for attempt in range(1, network_retries + 1):
-                ok, err = shopify_admin_reachable(store=store, attempts=1, timeout=12.0)
+                ok, err = shopify_admin_reachable(
+                    store=store,
+                    attempts=1,
+                    timeout=THEME_DEV_SHOPIFY_PROBE_TIMEOUT,
+                )
                 if ok:
                     break
                 detail = err or "timeout"
@@ -463,7 +472,7 @@ def start_theme_dev(
                         "potem w PowerShell: ipconfig /flushdns\n"
                         "i ponów Theme dev."
                     )
-                time.sleep(2.0 * attempt)
+                time.sleep(THEME_DEV_NETWORK_PAUSE_SEC * attempt)
 
         if launch_attempt > 1:
             emit(
@@ -485,7 +494,7 @@ def start_theme_dev(
 
         threading.Thread(target=_reader, daemon=True).start()
 
-        for _ in range(50):
+        for _ in range(THEME_DEV_STARTUP_POLL_SEC):
             if theme_dev_http_ready(url=preview_url(local=True)):
                 return
             proc = _theme_dev_proc

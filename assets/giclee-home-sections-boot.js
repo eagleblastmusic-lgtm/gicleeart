@@ -172,7 +172,7 @@
     sectionInner.style.setProperty('--ghsr-parallax-scale', String(cfg.parallaxOverscan));
 
     sectionInner.classList.toggle('giclee-home-studio-reveal--motion', !!cfg.enabled);
-    sectionInner.classList.toggle('giclee-home-studio-reveal--glow', !!cfg.glowEnabled);
+    sectionInner.classList.toggle('giclee-home-studio-reveal--glow', !!cfg.enabled && !!cfg.glowEnabled);
     sectionInner.classList.toggle(
       'giclee-home-studio-reveal--parallax',
       !!cfg.enabled && !!cfg.parallaxEnabled && !!cfg.desktopEnabled
@@ -402,11 +402,66 @@
     });
   }
 
+  function stripStudioRevealEnhancement(sectionEl) {
+    if (!sectionEl) return;
+
+    var sectionInner = sectionEl.querySelector('.section');
+    if (!sectionInner) return;
+
+    sectionInner.classList.remove(
+      'giclee-home-studio-reveal',
+      'giclee-home-studio-reveal--motion',
+      'giclee-home-studio-reveal--glow',
+      'giclee-home-studio-reveal--parallax',
+      'is-revealed'
+    );
+    delete sectionInner.dataset.gicleeRevealBound;
+    delete sectionInner.dataset.gicleeParallaxBound;
+
+    var bg = sectionInner.querySelector('.custom-section-background');
+    if (bg) {
+      bg.classList.remove('giclee-home-studio-reveal__bg');
+      ['none', 'editorial', 'menu_wide', 'menu_narrow', 'radial_spot'].forEach(function (preset) {
+        bg.classList.remove('giclee-home-studio-reveal__bg--gradient-' + preset);
+      });
+      bg.querySelectorAll(
+        '.giclee-home-studio-reveal__overlay, .giclee-home-studio-reveal__radial-mask'
+      ).forEach(function (el) {
+        el.remove();
+      });
+      bg.querySelectorAll('.giclee-home-studio-reveal__parallax-layer').forEach(function (el) {
+        el.classList.remove('giclee-home-studio-reveal__parallax-layer');
+      });
+    }
+
+    sectionEl.querySelectorAll('.giclee-home-studio-reveal__card').forEach(function (el) {
+      el.classList.remove('giclee-home-studio-reveal__card');
+    });
+    sectionEl.querySelectorAll('.giclee-home-studio-reveal__card-image').forEach(function (el) {
+      el.classList.remove('giclee-home-studio-reveal__card-image');
+    });
+    sectionEl.querySelectorAll('.giclee-home-studio-reveal__copy').forEach(function (el) {
+      el.classList.remove('giclee-home-studio-reveal__copy');
+    });
+    sectionEl.querySelectorAll('.giclee-home-studio-reveal__heading').forEach(function (el) {
+      el.classList.remove('giclee-home-studio-reveal__heading');
+    });
+    sectionEl.querySelectorAll('.giclee-home-studio-reveal__paragraph').forEach(function (el) {
+      el.classList.remove('giclee-home-studio-reveal__paragraph');
+      el.style.removeProperty('--ghsr-paragraph-delay');
+    });
+  }
+
   function enhanceIntro(sectionEl, cfg) {
     if (!sectionEl || !cfg) return;
 
     var sectionInner = sectionEl.querySelector('.section');
     if (!sectionInner) return;
+
+    if (!cfg.enabled) {
+      stripStudioRevealEnhancement(sectionEl);
+      return;
+    }
 
     var firstPass = !sectionInner.classList.contains('giclee-home-studio-reveal');
     sectionInner.classList.add('giclee-home-studio-reveal');

@@ -128,6 +128,70 @@ def copy_pil_image_to_clipboard(image: Image.Image) -> None:
         _copy_pil_via_ctypes(image)
 
 
+_CLIPBOARD_IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp"}
+
+
+def clipboard_images_for_import() -> list[Image.Image | Path]:
+    """Obrazy ze schowka: bitmapa (PIL) lub sciezki skopiowanych plikow (Windows)."""
+    if not _HAS_PIL:
+        raise RuntimeError("Brak Pillow — zainstaluj: pip install Pillow")
+    if sys.platform != "win32":
+        raise OSError("Wklejanie grafiki ze schowka jest dostepne tylko w Windows.")
+
+    from PIL import ImageGrab
+
+    try:
+        data = ImageGrab.grabclipboard()
+    except Exception:
+        data = None
+
+    if isinstance(data, Image.Image):
+        return [data.copy()]
+
+    if isinstance(data, list):
+        paths: list[Image.Image | Path] = []
+        for item in data:
+            path = Path(str(item))
+            if path.suffix.lower() in _CLIPBOARD_IMAGE_SUFFIXES and path.is_file():
+                paths.append(path)
+        return paths
+
+    return []
+
+
+def clipboard_file_paths_for_import(*, exclude_images: bool = False) -> list[Path]:
+    """Sciezki plikow ze schowka (np. skopiowany plik w Eksploratorze)."""
+    if sys.platform != "win32":
+        raise OSError("Wklejanie plikow ze schowka jest dostepne tylko w Windows.")
+
+    try:
+        from PIL import ImageGrab
+
+        data = ImageGrab.grabclipboard()
+    except Exception:
+        data = None
+
+    if not isinstance(data, list):
+        return []
+
+    paths: list[Path] = []
+    for item in data:
+        path = Path(str(item))
+        if not path.is_file():
+            continue
+        suffix = path.suffix.lower()
+        if exclude_images and suffix in _CLIPBOARD_IMAGE_SUFFIXES:
+            continue
+        paths.append(path)
+    return paths
+
+
+def clipboard_video_paths_for_import() -> list[Path]:
+    """Sciezki filmow ze schowka (skopiowany plik w Eksploratorze)."""
+    video_suffixes = {".mp4", ".webm", ".mov", ".avi", ".mkv", ".m4v", ".wmv"}
+    return [p for p in clipboard_file_paths_for_import() if p.suffix.lower() in video_suffixes]
+
+
 def _pil_to_dib_bytes(image: Image.Image) -> bytes:
     output = BytesIO()
     image.convert("RGB").save(output, "BMP")

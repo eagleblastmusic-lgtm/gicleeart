@@ -28,6 +28,12 @@ from .features import (
     restore_backup,
     validate_page,
 )
+from .page_effects_dialog import open_image_effects_dialog, open_text_effects_dialog
+from .page_section_effects_settings import (
+    zone_has_image_effects,
+    zone_has_text_effects,
+    write_page_section_effects_asset,
+)
 from .section_background_ui import open_section_background_dialog
 from .service_base import (
     apply_all_zone_values,
@@ -235,6 +241,10 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
         except Exception as exc:
             messagebox.showerror(config.app_title, str(exc), parent=host)
             return
+        try:
+            write_page_section_effects_asset(config, state["variant_id"])
+        except OSError:
+            pass
         state["template"] = pending
         state["baseline_template"] = copy.deepcopy(pending)
         state["dirty"] = False
@@ -324,6 +334,7 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
 
             def worker() -> None:
                 try:
+                    write_page_section_effects_asset(config, state["variant_id"])
                     code = deploy_theme(
                         environment=str(meta.get("environment", key)),
                         allow_live=bool(meta.get("allow_live")),
@@ -724,6 +735,43 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             ttk.Label(editor_inner, textvariable=bg_status_var, foreground="#666").grid(
                 row=row, column=1, sticky="w", pady=(0, 4)
             )
+            row += 1
+        has_text_fx = zone_has_text_effects(zone)
+        has_image_fx = zone_has_image_effects(zone)
+        if has_text_fx or has_image_fx:
+            fx_row = ttk.Frame(editor_inner)
+            fx_row.grid(row=row, column=0, columnspan=2, sticky="w", pady=(0, 8))
+            if has_text_fx:
+                ttk.Button(
+                    fx_row,
+                    text="Efekty tekstu…",
+                    command=lambda z=zone: open_text_effects_dialog(
+                        host,
+                        config=config,
+                        variant_id=state["variant_id"],
+                        zone=z,
+                        app_title=config.app_title,
+                        status_var=status_var,
+                    ),
+                ).pack(side="left")
+            if has_image_fx:
+                ttk.Button(
+                    fx_row,
+                    text="Efekty grafiki…",
+                    command=lambda z=zone: open_image_effects_dialog(
+                        host,
+                        config=config,
+                        variant_id=state["variant_id"],
+                        zone=z,
+                        app_title=config.app_title,
+                        status_var=status_var,
+                    ),
+                ).pack(side="left", padx=(8, 0) if has_text_fx else (0, 0))
+            ttk.Label(
+                fx_row,
+                text="  reveal · hover · parallax — per sekcja editorial",
+                foreground="#666",
+            ).pack(side="left", padx=(8, 0))
             row += 1
         for fld in zone.fields:
             if fld.kind == "section_background":

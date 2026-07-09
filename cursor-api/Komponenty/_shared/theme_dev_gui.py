@@ -11,6 +11,8 @@ from Komponenty._shared.toast import show_toast
 from Komponenty._shared.window_geometry import position_toplevel_screen_center
 from Komponenty.stronaglowna.home_features import preview_url
 from Komponenty.stronaglowna.service import (
+    THEME_DEV_LAUNCH_RETRIES,
+    THEME_DEV_STARTUP_POLL_SEC,
     resolve_storefront_password,
     theme_dev_http_ready,
     theme_dev_port_open,
@@ -108,11 +110,11 @@ def open_theme_dev_preview(
                         "Zmienna SHOPIFY_FLAG_STORE_PASSWORD w PowerShell działa tylko "
                         "jeśli GicleeApp uruchomiono z tego samego terminala."
                     )
-                elif "etimedout" in log_lower and network_retry < 2:
+                elif "etimedout" in log_lower and network_retry < THEME_DEV_LAUNCH_RETRIES - 1:
                     append("—" * 40)
                     append(
                         f"Timeout sieci Shopify (ETIMEDOUT) — ponawiam "
-                        f"({network_retry + 2}/3)…"
+                        f"({network_retry + 2}/{THEME_DEV_LAUNCH_RETRIES})…"
                     )
                     home_features_mod.restart_theme_dev_port(on_line=append)
                     try:
@@ -125,7 +127,7 @@ def open_theme_dev_preview(
                         append(str(exc))
                         messagebox.showerror(app_title, str(exc), parent=win)
                         return
-                    win.after(2500, lambda: poll_ready(0, network_retry + 1))
+                    win.after(4000, lambda: poll_ready(0, network_retry + 1))
                     return
                 elif "etimedout" in log_lower:
                     msg = (
@@ -149,7 +151,7 @@ def open_theme_dev_preview(
                     status_var.set("Theme dev — błąd.")
                 messagebox.showerror(app_title, msg, parent=win)
             return
-        if attempt >= 90:
+        if attempt >= THEME_DEV_STARTUP_POLL_SEC:
             append("—" * 40)
             append(
                 "Timeout — brak odpowiedzi HTTP na 127.0.0.1:9292.\n"

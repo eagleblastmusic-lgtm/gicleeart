@@ -92,8 +92,13 @@ Komponenty/integracjagpt/data/gpt_knowledge.zip
 # integracjagpt — lokalne nagrania wideo (duże pliki, poza lustrem GPT)
 Komponenty/integracjagpt/data/nagrania/
 
-# bazapromptow — grafiki kontekstu promptów (pliki użytkownika)
+# bazapromptow — załączniki kontekstu promptów (pliki użytkownika)
 Komponenty/bazapromptow/data/context_images/
+Komponenty/bazapromptow/data/context_files/
+Komponenty/bazapromptow/data/context_videos/
+
+# segregatorplikow — lokalne ścieżki folderów użytkownika (szablon: data/tiles.example.json)
+Komponenty/segregatorplikow/data/tiles.json
 
 # Analiza ruchu — lokalna baza eventów
 Komponenty/analytics/dane/analytics.db

@@ -181,12 +181,20 @@ def resolve_development_store() -> str:
     return "giclee-art-3.myshopify.com"
 
 
+THEME_DEV_SHOPIFY_PROBE_TIMEOUT = 25.0
+THEME_DEV_NETWORK_RETRIES = 5
+THEME_DEV_LAUNCH_RETRIES = 5
+THEME_DEV_NETWORK_PAUSE_SEC = 3.0
+THEME_DEV_HTTP_READY_TIMEOUT = 20.0
+THEME_DEV_STARTUP_POLL_SEC = 120
+
+
 def shopify_admin_reachable(
     *,
     store: str | None = None,
-    timeout: float = 10.0,
+    timeout: float = THEME_DEV_SHOPIFY_PROBE_TIMEOUT,
     attempts: int = 3,
-    pause: float = 2.0,
+    pause: float = THEME_DEV_NETWORK_PAUSE_SEC,
 ) -> tuple[bool, str]:
     """Szybki test HTTPS do Admin API i storefrontu (400/401 = połączenie OK)."""
     host = (store or resolve_development_store()).strip()
@@ -215,7 +223,7 @@ def _shopify_http_probe(
     *,
     method: str = "GET",
     body: bytes | None = None,
-    timeout: float = 10.0,
+    timeout: float = THEME_DEV_SHOPIFY_PROBE_TIMEOUT,
 ) -> tuple[bool, str]:
     headers = {"Content-Type": "application/json"} if body is not None else {}
     try:
@@ -262,7 +270,7 @@ def theme_dev_cli_args() -> list[str]:
 def theme_dev_http_ready(
     *,
     url: str = "http://127.0.0.1:9292/?giclee_skip_splash=1&giclee_skip_notice=1",
-    timeout: float = 12.0,
+    timeout: float = THEME_DEV_HTTP_READY_TIMEOUT,
     min_bytes: int = 200,
 ) -> bool:
     """Port otwarty ≠ serwer odpowiada — weryfikacja HTTP (zombie theme dev)."""
