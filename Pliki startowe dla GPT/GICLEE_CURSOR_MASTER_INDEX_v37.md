@@ -144,6 +144,7 @@ Wygrywają markowo: ton, Fine Art, unikanie taniego e-commerce.
 - `GICLEE_DUAL_REPO_REVIEW_ROUTING_v35.md`
 - sekcja 2.2 w `GICLEE_GITHUB_SNAPSHOT_REVIEW_WORKFLOW_v35.md`
 - `CURRENT_APP_STATE.md`
+- **`cursor-api/docs/GICLEEAPP_IMPLEMENTED_SOLUTIONS_INDEX.md`** — obowiązkowy indeks przed nowymi komponentami/helperami/mechanizmami; aktualizacja po dodaniu reużywalnego wzorca
 - `docs/UI_REDESIGN_PLAN.md` w repo (jeśli connector widzi `gicleeapp`)
 - `giclee_app/docs/studio-preview.md` w repo
 
@@ -154,6 +155,7 @@ Wygrywają markowo: ton, Fine Art, unikanie taniego e-commerce.
 ### Prompt do Cursor (GicleeApp Studio / GICLÉE FRAME / Katalog)
 
 - COMPACT v37 (checkpoint, granice, pacing rule, zasady testowania) + `CURRENT_APP_STATE.md`
+- **`cursor-api/docs/GICLEEAPP_IMPLEMENTED_SOLUTIONS_INDEX.md`** — sprawdź przed nowym komponentem/helperem; zaktualizuj po dodaniu reużywalnego mechanizmu
 - GICLÉE FRAME: `gicleeframe-planning.md` w repo (F2.1 pattern §7)
 
 ### Maintenance paczki wiedzy / checkpoint refresh
@@ -209,6 +211,7 @@ Dodatkowe pliki trybów analitycznych:
 - `GICLEE_ANALYST_MODE_UI_UX_PREMIUM_v1.md` — tryb do review i projektowania UI/UX premium, Fine Art, Awwwards, museum-quality.
 - `GICLEE_ANALYST_MODE_SHOPIFY_SNAPSHOT_v1.md` — tryb do review snapshotu Shopify, Liquid/CSS/JS, homepage, header, menu i motion.
 - `GICLEE_ANALYST_MODE_GPT_ZIP_INTEGRATION_v1.md` — tryb do pracy z ZIP-em wiedzy, plikami startowymi GPT, wiadomością początkową i workflow integracji GPT.
+- `GICLEE_ANALYST_MODE_VEO_FLOW_IMAGE_VIDEO_PROMPT_DIRECTOR_v1.md` — prompty Veo/Flow/Nano Banana, image-to-video, kamera, światło, pył, final frame, loop, negative prompt; **nie** Shopify CSS/JS motion.
 
 ## Shopify mode files
 

@@ -198,6 +198,14 @@ Myśl jak senior analityk:
 * nie dawaj ogólników bez wskazania gdzie, dlaczego, jak przetestować i co może się zepsuć,
 * zostaw użytkownikowi jasny następny krok.
 
+## GicleeApp — przed nowym komponentem
+
+Przed projektowaniem lub wdrażaniem nowego komponentu GicleeApp, helpera, mechanizmu, storage, loggera, dialogu, DnD, operacji na plikach, rejestracji launchera albo integracji lokalnej **najpierw sprawdź**:
+
+`cursor-api/docs/GICLEEAPP_IMPLEMENTED_SOLUTIONS_INDEX.md`
+
+Po dodaniu nowego komponentu, helpera lub mechanizmu, który może być użyty ponownie w przyszłości, **zaktualizuj ten indeks** — nie przy każdej kosmetycznej zmianie, tylko gdy dodano nowy wzorzec/mechanizm do ponownego użycia.
+
 ## Tryby robocze
 
 Ten prompt bazowy jest fundamentem.
@@ -211,6 +219,7 @@ W zależności od problemu użytkownik może aktywować jeden z trybów:
 * TRYB UI / UX / PREMIUM,
 * TRYB SHOPIFY SNAPSHOT,
 * TRYB WRITER / DATA SAFETY,
-* TRYB GPT INTEGRATION / ZIP.
+* TRYB GPT INTEGRATION / ZIP,
+* **TRYB VEO / FLOW / IMAGE-VIDEO PROMPT DIRECTOR** (Veo premium, Veo krótko, Veo popraw, prompt do Veo/Flow/Nano Banana, image-to-video).
 
 Po aktywowaniu trybu stosuj najpierw ten prompt bazowy, a potem szczegółowe zasady danego trybu.

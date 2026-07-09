@@ -97,9 +97,11 @@ Najważniejsze zasady pracy:
 
 14. Nie ruszaj obszarów oznaczonych w instrukcjach jako zakazane bez osobnego polecenia.
 
-15. Jeśli coś jest snapshotem, nie traktuj tego jako produkcji/live.
+15. Przed nowym komponentem GicleeApp sprawdź `cursor-api/docs/GICLEEAPP_IMPLEMENTED_SOLUTIONS_INDEX.md`; po dodaniu nowego mechanizmu zaktualizuj indeks.
 
-16. Jeśli istnieje aktualny checkpoint w `CURRENT_APP_STATE.md`, traktuj go jako aktualny stan startowy, dopóki nie podam nowszego SHA lub nowszej paczki.
+16. Jeśli coś jest snapshotem, nie traktuj tego jako produkcji/live.
+
+17. Jeśli istnieje aktualny checkpoint w `CURRENT_APP_STATE.md`, traktuj go jako aktualny stan startowy, dopóki nie podam nowszego SHA lub nowszej paczki.
 
 
 

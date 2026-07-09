@@ -50,10 +50,11 @@ Przykładowa struktura `tiles.json` po skonfigurowaniu:
 1. Użytkownik przeciąga pliki na kafelek **lub** wybiera pliki i klika kafelek.
 2. Foldery są odfiltrowywane (MVP — tylko pliki).
 3. `move_service.plan_moves()` buduje plan (dry-run).
-4. Dialog podglądu pokazuje źródło, cel, status.
-5. Dopiero klik **Przenieś** (+ potwierdzenie) wywołuje `shutil.move`.
+4. **Bez konfliktu nazw** w folderze docelowym: od razu `shutil.move` + toast.
+5. **Konflikt nazw** (plik o tej samej nazwie już istnieje): dialog podglądu ze źródłem, celem, statusem i polityką duplikatów.
+6. W dialogu dopiero klik **Przenieś** (+ potwierdzenie) wywołuje przeniesienie.
 
-**Drop nigdy nie przenosi od razu.**
+**Drop bez konfliktu nie pokazuje podglądu.**
 
 ## Duplikaty
 

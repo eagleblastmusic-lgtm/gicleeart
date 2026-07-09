@@ -8,7 +8,10 @@ from collections.abc import Callable
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
-from Komponenty._shared.window_geometry import position_toplevel_screen_center
+from Komponenty._shared.window_geometry import (
+    position_toplevel_screen_center,
+    position_toplevel_screen_center_from_reqsize,
+)
 
 from .move_service import DuplicatePolicy, MovePlan, MovePlanItem, PlanStatus, plan_moves
 from .storage import TileEntry, normalize_path
@@ -128,30 +131,39 @@ class PreviewDialog:
         dlg = tk.Toplevel(self._parent)
         self._dlg = dlg
         dlg.title("Podglad operacji przenoszenia")
-        position_toplevel_screen_center(dlg, 820, 520)
+        dlg.minsize(760, 520)
         dlg.transient(self._parent.winfo_toplevel())
         dlg.grab_set()
 
-        header = ttk.Frame(dlg, padding=(14, 12, 14, 4))
-        header.pack(fill="x")
-        ttk.Label(
-            header,
-            text=f"Cel: {self._tile_name}",
-            font=("Segoe UI", 12, "bold"),
-        ).pack(anchor="w")
-        ttk.Label(
-            header,
-            text=str(self._dest_dir),
-            foreground="#444",
-        ).pack(anchor="w")
-        ttk.Label(
-            header,
-            text=f"Plikow do przetworzenia: {len(self._sources)}",
-            foreground="#666",
-        ).pack(anchor="w", pady=(4, 0))
+        bar = ttk.Frame(dlg, padding=(14, 8, 14, 14))
+        bar.pack(side="bottom", fill="x")
+        self._move_btn = ttk.Button(bar, text="Przenies", command=self._confirm)
+        self._move_btn.pack(side="right")
+        ttk.Button(bar, text="Anuluj", command=dlg.destroy).pack(side="right", padx=(0, 8))
+
+        self._summary_var = tk.StringVar()
+        ttk.Label(dlg, textvariable=self._summary_var, padding=(14, 6, 14, 4)).pack(
+            side="bottom", anchor="w"
+        )
+
+        tree_frame = ttk.Frame(dlg, padding=(14, 4))
+        tree_frame.pack(fill="both", expand=True)
+        cols = ("src", "dest", "status")
+        tree = ttk.Treeview(tree_frame, columns=cols, show="headings", height=8)
+        self._tree = tree
+        tree.heading("src", text="Zrodlo")
+        tree.heading("dest", text="Cel")
+        tree.heading("status", text="Status")
+        tree.column("src", width=280)
+        tree.column("dest", width=280)
+        tree.column("status", width=180)
+        scroll = ttk.Scrollbar(tree_frame, orient="vertical", command=tree.yview)
+        tree.configure(yscrollcommand=scroll.set)
+        tree.pack(side="left", fill="both", expand=True)
+        scroll.pack(side="right", fill="y")
 
         policy_frame = ttk.LabelFrame(dlg, text="Duplikaty (plik docelowy juz istnieje)", padding=10)
-        policy_frame.pack(fill="x", padx=14, pady=8)
+        policy_frame.pack(side="top", fill="x", padx=14, pady=8)
 
         ttk.Radiobutton(
             policy_frame,
@@ -183,32 +195,26 @@ class PreviewDialog:
             foreground="#999",
         ).pack(side="left")
 
-        tree_frame = ttk.Frame(dlg, padding=(14, 4))
-        tree_frame.pack(fill="both", expand=True)
-        cols = ("src", "dest", "status")
-        tree = ttk.Treeview(tree_frame, columns=cols, show="headings", height=10)
-        self._tree = tree
-        tree.heading("src", text="Zrodlo")
-        tree.heading("dest", text="Cel")
-        tree.heading("status", text="Status")
-        tree.column("src", width=280)
-        tree.column("dest", width=280)
-        tree.column("status", width=180)
-        scroll = ttk.Scrollbar(tree_frame, orient="vertical", command=tree.yview)
-        tree.configure(yscrollcommand=scroll.set)
-        tree.pack(side="left", fill="both", expand=True)
-        scroll.pack(side="right", fill="y")
-
-        self._summary_var = tk.StringVar()
-        ttk.Label(dlg, textvariable=self._summary_var, padding=(14, 4)).pack(anchor="w")
-
-        bar = ttk.Frame(dlg, padding=(14, 8, 14, 12))
-        bar.pack(fill="x")
-        self._move_btn = ttk.Button(bar, text="Przenies", command=self._confirm)
-        self._move_btn.pack(side="right")
-        ttk.Button(bar, text="Anuluj", command=dlg.destroy).pack(side="right", padx=(0, 8))
+        header = ttk.Frame(dlg, padding=(14, 12, 14, 4))
+        header.pack(side="top", fill="x")
+        ttk.Label(
+            header,
+            text=f"Cel: {self._tile_name}",
+            font=("Segoe UI", 12, "bold"),
+        ).pack(anchor="w")
+        ttk.Label(
+            header,
+            text=str(self._dest_dir),
+            foreground="#444",
+        ).pack(anchor="w")
+        ttk.Label(
+            header,
+            text=f"Plikow do przetworzenia: {len(self._sources)}",
+            foreground="#666",
+        ).pack(anchor="w", pady=(4, 0))
 
         self._rebuild_plan()
+        position_toplevel_screen_center_from_reqsize(dlg, min_width=820, min_height=560)
 
     def _current_policy(self) -> DuplicatePolicy:
         try:

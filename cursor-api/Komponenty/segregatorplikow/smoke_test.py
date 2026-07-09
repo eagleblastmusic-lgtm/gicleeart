@@ -14,6 +14,7 @@ if str(ROOT) not in sys.path:
 
 from Komponenty.segregatorplikow.move_service import (  # noqa: E402
     DuplicatePolicy,
+    has_name_conflicts,
     auto_rename_path,
     execute_moves,
     filter_file_paths,
@@ -56,6 +57,12 @@ def main() -> int:
         renamed = auto_rename_path(dest_a, "test1.txt")
         if renamed.name != "test1 (1).txt":
             errors.append(f"auto_rename: {renamed.name}")
+
+        # has_name_conflicts
+        if has_name_conflicts([f2], dest_a):
+            errors.append("has_name_conflicts: nieoczekiwany konflikt dla test2")
+        if not has_name_conflicts([f1], dest_a):
+            errors.append("has_name_conflicts: powinien byc konflikt dla test1")
 
         # plan + execute (rename policy)
         plan = plan_moves([f1, f2], dest_a, duplicate_policy=DuplicatePolicy.RENAME)

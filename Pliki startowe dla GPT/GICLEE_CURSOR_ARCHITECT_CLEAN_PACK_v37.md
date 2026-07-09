@@ -36,9 +36,11 @@ Manifest plików wiedzy Custom GPT. **Stare pliki na dysku nie są usuwane** —
 | `GICLEE_SECTION_PLAYBOOK_v32.md` |
 | `GICLEE_SIGNATURE_MOMENTS_v33.md` |
 
-**Razem aktywne: 37 plików** (8 routing/instructions v37 + 12 motion/effects + 8 analyst modes + 9 Shopify modes).
+**Razem aktywne: 38 plików** (8 routing/instructions v37 + 12 motion/effects + 9 analyst modes + 9 Shopify modes).
 
 **Generated ZIP name:** `giclee_cursor_architect_knowledge_v37.zip`
+
+**Repo-dokument GicleeApp (poza ZIP-em, w monorepo):** `cursor-api/docs/GICLEEAPP_IMPLEMENTED_SOLUTIONS_INDEX.md` — przy zadaniach komponentowych Cursor/GPT **musi** go sprawdzić przed nowym komponentem/helperem i zaktualizować po dodaniu reużywalnego mechanizmu (jak `gicleeframe-planning.md` — referencja repo, nie plik paczki ZIP).
 
 ---
 
@@ -149,9 +151,26 @@ Ich celem jest rozszerzenie głównych Instructions v37 o specjalizowane sposoby
 - architektura etapów,
 - UI/UX premium,
 - Shopify snapshot review,
-- GPT integration / ZIP workflow.
+- GPT integration / ZIP workflow,
+- Veo / Flow / image-video prompt director.
 
 Tryby nie zastępują głównych Instructions. Należy stosować je razem z `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` oraz aktualnym `CURRENT_APP_STATE.md`.
+
+Przy zadaniach komponentowych GicleeApp sprawdź repo-dokument `cursor-api/docs/GICLEEAPP_IMPLEMENTED_SOLUTIONS_INDEX.md` (poza ZIP-em).
+
+### Analyst modes (v1)
+
+| Plik |
+|------|
+| `GICLEE_ANALYST_BASE_PROMPT_v1.md` |
+| `GICLEE_ANALYST_MODE_PERFORMANCE_v1.md` |
+| `GICLEE_ANALYST_MODE_DEBUG_REGRESSION_v1.md` |
+| `GICLEE_ANALYST_MODE_CURSOR_REVIEW_v1.md` |
+| `GICLEE_ANALYST_MODE_STAGE_ARCHITECT_v1.md` |
+| `GICLEE_ANALYST_MODE_UI_UX_PREMIUM_v1.md` |
+| `GICLEE_ANALYST_MODE_SHOPIFY_SNAPSHOT_v1.md` |
+| `GICLEE_ANALYST_MODE_GPT_ZIP_INTEGRATION_v1.md` |
+| `GICLEE_ANALYST_MODE_VEO_FLOW_IMAGE_VIDEO_PROMPT_DIRECTOR_v1.md` |
 
 ### Shopify modes (v1)
 

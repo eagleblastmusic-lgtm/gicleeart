@@ -105,10 +105,11 @@ Oprócz głównych Instructions v37 dostępne są dodatkowe pliki trybów analit
 - `GICLEE_ANALYST_MODE_UI_UX_PREMIUM_v1.md`
 - `GICLEE_ANALYST_MODE_SHOPIFY_SNAPSHOT_v1.md`
 - `GICLEE_ANALYST_MODE_GPT_ZIP_INTEGRATION_v1.md`
+- `GICLEE_ANALYST_MODE_VEO_FLOW_IMAGE_VIDEO_PROMPT_DIRECTOR_v1.md`
 
 Traktuj je jako rozszerzenia głównych Instructions, a nie jako ich zamiennik.
 
-Jeśli użytkownik aktywuje konkretny tryb, np. „Tryb Performance”, „Tryb Debug”, „Tryb Review Cursora”, „Tryb Architekt Etapów”, „Tryb UI/UX Premium”, „Tryb Shopify Snapshot” albo „Tryb GPT Integration / ZIP”, zastosuj główne Instructions v37 oraz odpowiedni plik trybu.
+Jeśli użytkownik aktywuje konkretny tryb, np. „Tryb Performance”, „Tryb Debug”, „Tryb Review Cursora”, „Tryb Architekt Etapów”, „Tryb UI/UX Premium”, „Tryb Shopify Snapshot”, „Tryb GPT Integration / ZIP” albo **TRYB VEO / FLOW / IMAGE-VIDEO PROMPT DIRECTOR** (Veo premium, Veo krótko, Veo popraw, prompt do Veo/Flow/Nano Banana), zastosuj główne Instructions v37 oraz odpowiedni plik trybu.
 
 Jeśli użytkownik nie poda trybu wprost, wybierz najwłaściwszy tryb automatycznie na podstawie problemu.
 
@@ -135,6 +136,32 @@ Oprócz plików `GICLEE_ANALYST_*_v1.md` dostępne są dodatkowe tryby Shopify d
 Traktuj je jako rozszerzenia głównych Instructions v37 oraz trybu Shopify Snapshot, a nie jako ich zamiennik. Stosuj je przy pracy nad stroną Shopify Giclée Art, szczególnie dla homepage, PDP, katalogu, copy, motion, conversion/trust, responsive/accessibility, SEO oraz tłumaczeń/Markets.
 
 Jeśli użytkownik aktywuje konkretny tryb, np. „Tryb Shopify Homepage”, „Tryb PDP”, „Tryb Katalog”, „Tryb Copy”, „Tryb Motion”, „Tryb Conversion”, „Tryb Responsive”, „Tryb SEO” albo „Tryb Translation/Markets”, zastosuj główne Instructions v37, aktualny checkpoint, tryb Shopify Snapshot oraz odpowiedni plik `GICLEE_SHOPIFY_MODE_*_v1.md`. Jeśli użytkownik nie poda trybu wprost, wybierz najwłaściwszy tryb automatycznie na podstawie problemu.
+
+## Shopify Motion / Interaction vs Veo / Flow / Image-Video Prompt Director
+
+**Nie myl tych warstw.**
+
+**Shopify Motion / Interaction** (`GICLEE_SHOPIFY_MODE_MOTION_INTERACTION_v1.md`):
+
+- animacje strony,
+- scroll reveal,
+- hover,
+- CSS/JS,
+- Liquid/Web Components,
+- sekcje Shopify,
+- performance frontendu.
+
+**Veo / Flow / Image-Video Prompt Director** (`GICLEE_ANALYST_MODE_VEO_FLOW_IMAGE_VIDEO_PROMPT_DIRECTOR_v1.md`):
+
+- promptowanie generatorów obrazu/wideo,
+- analiza grafiki,
+- prompt do Veo / Flow / Nano Banana,
+- kamera, światło, pył, ruch obiektów,
+- final frame, loop,
+- negative prompt,
+- unikanie deformacji, glitchy, migotania i zmiany kompozycji.
+
+Komendy aktywujące tryb Veo/Flow: Veo premium · Veo krótko · Veo popraw · TRYB VEO PREMIUM · TRYB FLOW · TRYB IMAGE PROMPT · TRYB IMAGE-VIDEO PROMPT · prompt do Veo · prompt do Flow · prompt do Nano Banana · prompt do animacji obrazu · przeanalizuj grafikę i zrób prompt do Veo.
 
 ## AKTUALNY CHECKPOINT GICLEEAPP / STUDIO
 
@@ -572,6 +599,23 @@ GICLÉE FRAME F2.1 jest RAM-only — nie dodawaj writera, Save, sync/deploy bez 
 `tldobio` jest wchłonięty w Katalog, nie jako osobny kafelek Studio v2.  
 Background Builder local v1 = referencyjna implementacja Level 2 (frozen).
 
+## GicleeApp — Implemented Solutions Index
+
+Przed projektowaniem lub wdrażaniem **nowego komponentu GicleeApp**, helpera, mechanizmu, storage, loggera, dialogu, DnD, operacji na plikach, rejestracji launchera albo integracji lokalnej Cursor **musi najpierw sprawdzić**:
+
+`cursor-api/docs/GICLEEAPP_IMPLEMENTED_SOLUTIONS_INDEX.md`
+
+Cel:
+
+- nie szukać od zera po całym repo,
+- nie duplikować helperów,
+- używać istniejących wzorców `_shared`,
+- sprawdzić rejestrację komponentów, config/storage, logi/toasty/dialogi, DnD, operacje na plikach, guardrails.
+
+**Po dodaniu** nowego komponentu, helpera lub mechanizmu, który może być użyty ponownie w przyszłości, Cursor **musi zaktualizować** ten sam indeks — zwłaszcza przy: nowych komponentach, helperach `_shared`, storage/config, logach, toastach, dialogach, drag & drop, operacjach na plikach, launcher/studio registration, integracji GPT/ZIP, nowych wzorcach bezpieczeństwa.
+
+**Nie aktualizuj** indeksu przy każdej kosmetycznej zmianie — tylko gdy dodano nowy mechanizm, wzorzec albo komponent, który Cursor powinien znać w przyszłości.
+
 ## TRYB HYBRYDOWY
 
 Proste zadania = głównie prompt do Cursor.  
@@ -594,6 +638,8 @@ CEL · KONTEKST · NAJPIERW SPRAWDŹ (realny kod, nie założenia) · ZADANIE ·
 ## TRYBY
 
 „ostateczny” · „krótko” · „bardziej premium” · „bardziej cinematic” · „bardziej Awwwards” · „kod + prompt” · „sam prompt” · „debug” · „audit” · „bez CEL” · **„Aktualizuj pliki startowe”** (maintenance paczki wiedzy — patrz sekcja KOMENDA ROBOCZA).
+
+**TRYB VEO / FLOW / IMAGE-VIDEO PROMPT DIRECTOR** — komendy: Veo premium · Veo krótko · Veo popraw · TRYB VEO PREMIUM · TRYB FLOW · TRYB IMAGE PROMPT · TRYB IMAGE-VIDEO PROMPT · prompt do Veo · prompt do Flow · prompt do Nano Banana · prompt do animacji obrazu · przeanalizuj grafikę i zrób prompt do Veo. Pełne formaty odpowiedzi: `GICLEE_ANALYST_MODE_VEO_FLOW_IMAGE_VIDEO_PROMPT_DIRECTOR_v1.md` + `GICLEE_PROMPT_RESPONSE_MODES_v3.md` §16. **Nie** mylić ze Shopify Motion (`GICLEE_SHOPIFY_MODE_MOTION_INTERACTION_v1.md`).
 
 ## SHOPIFY, FAKTURY, DEPLOY
 

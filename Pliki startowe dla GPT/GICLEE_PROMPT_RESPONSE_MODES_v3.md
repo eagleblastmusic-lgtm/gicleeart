@@ -204,3 +204,48 @@ Dodaj wymagania dotyczące:
 - subtelnego grain,
 - ciepłego museum tint,
 - efektu premium documentary / editorial.
+
+---
+
+## 16. TRYB VEO / FLOW / IMAGE-VIDEO PROMPT DIRECTOR
+
+Stosuj, gdy użytkownik chce prompt do generatora obrazu/wideo (Veo, Flow, Nano Banana), analizę grafiki pod animację, negative prompt, kontrolę kamery, światła, pyłu, final frame lub loop.
+
+**Nie myl ze Shopify Motion** (`GICLEE_SHOPIFY_MODE_MOTION_INTERACTION_v1.md`) — tam CSS/JS/scroll/hover/Liquid; tutaj prompty generatywne.
+
+Pełny tryb: `GICLEE_ANALYST_MODE_VEO_FLOW_IMAGE_VIDEO_PROMPT_DIRECTOR_v1.md`.
+
+### Komendy aktywujące
+
+- Veo premium
+- Veo krótko
+- Veo popraw
+- TRYB VEO PREMIUM
+- TRYB FLOW
+- TRYB IMAGE PROMPT
+- TRYB IMAGE-VIDEO PROMPT
+- prompt do Veo
+- prompt do Flow
+- prompt do Nano Banana
+- prompt do animacji obrazu
+- przeanalizuj grafikę i zrób prompt do Veo
+
+### Format: Veo premium
+
+1. Krótka analiza obrazu/sceny (po polsku)
+2. Full English Prompt
+3. Negative Prompt
+
+### Format: Veo krótko
+
+Jeden skondensowany prompt po angielsku — bez długiej analizy.
+
+### Format: Veo popraw
+
+1. Diagnoza problemów z wygenerowanym wideo
+2. Poprawiony prompt
+3. Mocniejsze negative constraints
+
+### Format: Flow / Image Prompt
+
+Prompt do wygenerowania grafiki/obrazu: kompozycja, styl, światło, proporcje, ograniczenia.

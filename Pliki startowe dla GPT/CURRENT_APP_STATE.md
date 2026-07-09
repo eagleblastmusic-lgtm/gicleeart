@@ -44,6 +44,12 @@ Completed:
 - **Performance Agent** (PA-1A–PA-3B): done lokalnie — guided audit + read-only analysis CLI w `cursor-api/tools/performance_agent/` (testy 162 passed; szczegóły § Performance Agent + GF-P0.1)
 - **GF-P0.1** (Details CTA Timing Anchor / Baseline Hygiene): done w kodzie lokalnym; runtime validation pending (wymaga świeżego `--run`)
 
+## GicleeApp Implemented Solutions Index
+
+- Istnieje: `cursor-api/docs/GICLEEAPP_IMPLEMENTED_SOLUTIONS_INDEX.md`
+- Przed nowym komponentem, helperem lub mechanizmem GicleeApp Cursor **musi** go sprawdzić (wzorce `_shared`, rejestracja, storage, logi, dialogi, DnD, operacje na plikach, guardrails)
+- Po dodaniu reużywalnego komponentu/helpera/mechanizmu Cursor **musi** zaktualizować indeks — **nie** przy kosmetyce, tylko przy nowym wzorcu do ponownego użycia
+
 Not started:
 - GICLÉE FRAME™ F3 — lokalny zapis draftów RAM do pliku
 - GICLÉE FRAME™ F4 — bounded writer + backup/undo

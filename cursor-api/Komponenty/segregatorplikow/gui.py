@@ -24,7 +24,15 @@ from Komponenty._shared.toast import show_toast
 from Komponenty._shared.window_geometry import position_toplevel_screen_center
 
 from .dialogs import open_preview_dialog, open_tile_edit_dialog
-from .move_service import COMPONENT_NAME, MovePlan, MoveResult, execute_moves, filter_file_paths
+from .move_service import (
+    COMPONENT_NAME,
+    MovePlan,
+    MoveResult,
+    execute_moves,
+    filter_file_paths,
+    has_name_conflicts,
+    plan_moves,
+)
 from .storage import TileEntry, TileStore, load_tiles, new_tile_id, save_tiles
 
 APP_TITLE = "Segregator plikow"
@@ -307,7 +315,7 @@ class SegregatorApp:
         self.status_var.set("Gotowy")
 
     def _handle_incoming_paths(self, paths: list[Path], tile: TileEntry) -> None:
-        """Drop lub bezposrednie pliki — ZAWSZE przez preview, nigdy execute_moves."""
+        """Drop lub bezposrednie pliki — preview tylko przy konflikcie nazw."""
         if not paths:
             return
         files, dirs = filter_file_paths(paths)
@@ -320,15 +328,27 @@ class SegregatorApp:
         self._start_move_flow(files, tile)
 
     def _start_move_flow(self, sources: list[Path], tile: TileEntry) -> None:
-        """Krok 2-4: plan + preview. Execute dopiero w on_confirm."""
+        """Bez konfliktu nazw: od razu przenies + toast. Przy duplikacie: dialog podgladu."""
         dest = Path(tile.path)
-        open_preview_dialog(
-            self.root,
-            sources=sources,
-            dest_dir=dest,
-            tile_name=tile.name,
-            on_confirm=lambda plan: self._execute_confirmed_plan(plan, tile),
-        )
+        if not dest.is_dir():
+            messagebox.showerror(
+                APP_TITLE,
+                f"Folder docelowy nie istnieje:\n{dest}",
+            )
+            return
+
+        if has_name_conflicts(sources, dest):
+            open_preview_dialog(
+                self.root,
+                sources=sources,
+                dest_dir=dest,
+                tile_name=tile.name,
+                on_confirm=lambda plan: self._execute_confirmed_plan(plan, tile),
+            )
+        else:
+            plan = plan_moves(sources, dest, tile_name=tile.name)
+            self._execute_confirmed_plan(plan, tile)
+
         self._pending_files.clear()
         self._pending_var.set("Oczekujace pliki: 0")
 

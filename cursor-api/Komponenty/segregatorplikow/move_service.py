@@ -103,6 +103,22 @@ def filter_file_paths(paths: list[Path]) -> tuple[list[Path], list[Path]]:
     return files, dirs
 
 
+def has_name_conflicts(sources: list[Path], dest_dir: Path) -> bool:
+    """True gdy w folderze docelowym jest juz plik o tej samej nazwie."""
+    if not dest_dir.is_dir():
+        return False
+    for src in sources:
+        try:
+            resolved_src = src.resolve()
+        except OSError:
+            resolved_src = src
+        if not resolved_src.is_file():
+            continue
+        if (dest_dir / resolved_src.name).exists():
+            return True
+    return False
+
+
 def auto_rename_path(dest_dir: Path, filename: str) -> Path:
     """plik.jpg -> plik (1).jpg -> plik (2).jpg ..."""
     candidate = dest_dir / filename
