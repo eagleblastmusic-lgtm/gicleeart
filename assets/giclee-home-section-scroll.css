@@ -19,9 +19,58 @@ html.giclee-home-section-scroll .shopify-section.giclee-snap-settle .section-con
   }
 }
 
+/*
+ * Stack slip sync — warstwy 3–6.
+ * Późniejsze style/inline root transform potrafią przywrócić .section do translateY(0),
+ * mimo poprawnej wartości --home-stack-slip-y. Wymuszamy wyłącznie zamierzony offset
+ * powierzchni sekcji oraz jej czarnej bazy, tak aby tło podążało razem z separatorem.
+ */
+html.giclee-home-stack
+  .shopify-section[data-giclee-home-stack='3']:not(.giclee-home-stack-divider)
+  > :is(.section-background, .section),
+html.giclee-home-stack
+  .shopify-section[data-giclee-home-stack='4']:not(.giclee-home-stack-divider)
+  > :is(.section-background, .section),
+html.giclee-home-stack
+  .shopify-section[data-giclee-home-stack='5']:not(.giclee-home-stack-divider)
+  > :is(.section-background, .section),
+html.giclee-home-stack
+  .shopify-section[data-giclee-home-stack='6']:not(.giclee-home-stack-divider)
+  > :is(.section-background, .section) {
+  transform: translate3d(0, var(--home-stack-slip-y, 0px), 0) !important;
+  backface-visibility: hidden;
+}
+
+/*
+ * Tail separator — pojedyncza linia dokładnie na styku końca sekcji 6 i footeru.
+ * Nie należy do sticky tła sekcji, więc nie może zostać przeniesiona na górę viewportu.
+ */
+html.giclee-home-stack footer {
+  border-top: 1px solid var(
+    --home-stack-divider-line-color,
+    rgb(230 230 230 / 0.68)
+  );
+  box-shadow: 0 -1px 6px rgb(230 230 230 / 0.08);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html.giclee-home-section-scroll .shopify-section.giclee-snap-settle .section-content-wrapper h1,
   html.giclee-home-section-scroll .shopify-section.giclee-snap-settle .section-content-wrapper h2 {
     animation: none;
+  }
+
+  html.giclee-home-stack
+    .shopify-section[data-giclee-home-stack='3']:not(.giclee-home-stack-divider)
+    > :is(.section-background, .section),
+  html.giclee-home-stack
+    .shopify-section[data-giclee-home-stack='4']:not(.giclee-home-stack-divider)
+    > :is(.section-background, .section),
+  html.giclee-home-stack
+    .shopify-section[data-giclee-home-stack='5']:not(.giclee-home-stack-divider)
+    > :is(.section-background, .section),
+  html.giclee-home-stack
+    .shopify-section[data-giclee-home-stack='6']:not(.giclee-home-stack-divider)
+    > :is(.section-background, .section) {
+    transform: none !important;
   }
 }
