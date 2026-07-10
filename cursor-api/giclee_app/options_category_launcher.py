@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import ctypes
+import os
 import tkinter as tk
 from tkinter import ttk
 from typing import Any
@@ -19,45 +21,145 @@ from .launcher_shortcuts import (
 from .styled_category_launcher import StyledCategoryGicleeApp
 
 
+_WINDOWS_SHORTCUT_POLL_MS = 35
+_GA_ROOT = 2
+_VK_CONTROL = 0x11
+_VK_MENU = 0x12
+
+
+def shortcut_virtual_key(key: str) -> int | None:
+    """Zwraca kod WinAPI dla litery, cyfry albo F1-F12."""
+
+    normalized = str(key or "").strip().lower()
+    if len(normalized) == 1 and normalized.isalpha() and normalized.isascii():
+        return ord(normalized.upper())
+    if len(normalized) == 1 and normalized.isdigit():
+        return ord(normalized)
+    if normalized.startswith("f") and normalized[1:].isdigit():
+        number = int(normalized[1:])
+        if 1 <= number <= 12:
+            return 0x70 + number - 1
+    return None
+
+
+def _load_windows_user32() -> Any | None:
+    if os.name != "nt":
+        return None
+    try:
+        user32 = ctypes.windll.user32
+        user32.GetForegroundWindow.restype = ctypes.c_void_p
+        user32.GetAncestor.argtypes = (ctypes.c_void_p, ctypes.c_uint)
+        user32.GetAncestor.restype = ctypes.c_void_p
+        user32.GetAsyncKeyState.argtypes = (ctypes.c_int,)
+        user32.GetAsyncKeyState.restype = ctypes.c_short
+        return user32
+    except (AttributeError, OSError):
+        return None
+
+
 class OptionsCategoryGicleeApp(StyledCategoryGicleeApp):
     """Spójny launcher z jednym menu ustawień i dynamicznymi skrótami."""
 
     def __init__(self, root: tk.Tk) -> None:
         self._shortcut_map = load_launcher_shortcuts()
-        self._shortcut_bind_id: str | None = None
         self._shortcut_launch_pending = False
+        self._shortcut_bindtag = f"GicleeLauncherShortcuts_{id(self)}"
+        self._windows_user32 = _load_windows_user32()
+        self._windows_shortcut_down: set[str] = set()
+        self._windows_shortcut_poll_id: str | None = None
         self._options_menu: tk.Menu | None = None
         self._options_button: ttk.Menubutton | None = None
         super().__init__(root)
 
+        # Root jest początkowo withdrawn przez splash. Poller nie potrzebuje fokusu
+        # konkretnego widgetu, ale uruchamiamy go dopiero po zbudowaniu launchera.
+        if self._windows_user32 is not None:
+            try:
+                self._windows_shortcut_poll_id = self.root.after(
+                    120,
+                    self._poll_windows_shortcuts,
+                )
+            except tk.TclError:
+                self._windows_shortcut_poll_id = None
+        else:
+            try:
+                self.root.after(80, self._restore_shortcut_focus)
+                self.root.after(320, self._restore_shortcut_focus)
+            except tk.TclError:
+                pass
+
     def _build_ui(self) -> None:
         super()._build_ui()
         self._install_options_menu()
+        self._install_shortcut_bindtags()
+        try:
+            self.root.bind(
+                "<Map>",
+                lambda _event: self.root.after_idle(self._restore_shortcut_focus),
+                add="+",
+            )
+        except tk.TclError:
+            pass
+
+    def _render_tiles(self) -> None:
+        super()._render_tiles()
+        try:
+            self.root.after_idle(self._install_shortcut_bindtags)
+        except tk.TclError:
+            pass
 
     def _bind_launcher_shortcuts(self) -> None:
-        """Wiąże skróty z głównym oknem dokładnie raz.
+        """Rejestruje fallback Tk wyłącznie poza trybem WinAPI."""
 
-        Poprzednia wersja używała ``bind_all`` i przy kolejnych powrotach z widoków
-        inline mogła dokładać globalne callbacki. Dodatkowo aktywny grab menu/dialogu
-        potrafił blokować mapę użytkownika także po zamknięciu okna ustawień.
-        Binding na poziomie głównego Toplevel działa dla jego dzieci, ale nie przechwytuje
-        klawiszy z obcych dialogów.
-        """
-
-        if self._shortcut_bind_id:
-            try:
-                self.root.unbind("<KeyPress>", self._shortcut_bind_id)
-            except tk.TclError:
-                pass
-            self._shortcut_bind_id = None
+        if getattr(self, "_windows_user32", None) is not None:
+            return
         try:
-            self._shortcut_bind_id = self.root.bind(
+            self.root.unbind_class(self._shortcut_bindtag, "<KeyPress>")
+        except (AttributeError, tk.TclError):
+            pass
+        try:
+            self.root.bind_class(
+                self._shortcut_bindtag,
+                "<KeyPress>",
+                self._on_launcher_key_shortcut,
+            )
+        except (AttributeError, tk.TclError):
+            return
+        self._install_shortcut_bindtags()
+
+    def _install_shortcut_bindtags(self) -> None:
+        """Instaluje fallback Tk na całym drzewie widgetów poza Windows WinAPI."""
+
+        if getattr(self, "_windows_user32", None) is not None:
+            return
+        stack: list[tk.Misc] = [self.root]
+        while stack:
+            widget = stack.pop()
+            try:
+                current = tuple(str(tag) for tag in widget.bindtags())
+                reordered = (self._shortcut_bindtag,) + tuple(
+                    tag for tag in current if tag != self._shortcut_bindtag
+                )
+                if reordered != current:
+                    widget.bindtags(reordered)
+                self._bind_shortcut_directly(widget)
+                stack.extend(widget.winfo_children())
+            except (AttributeError, tk.TclError):
+                continue
+
+    def _bind_shortcut_directly(self, widget: tk.Misc) -> None:
+        marker = "_giclee_launcher_shortcut_bound"
+        if getattr(widget, marker, False):
+            return
+        try:
+            binding_id = widget.bind(
                 "<KeyPress>",
                 self._on_launcher_key_shortcut,
                 add="+",
             )
-        except tk.TclError:
-            self._shortcut_bind_id = None
+            setattr(widget, marker, binding_id or True)
+        except (AttributeError, tk.TclError):
+            pass
 
     def _find_widget_by_text(self, parent: tk.Misc, expected: str) -> tk.Widget | None:
         for child in parent.winfo_children():
@@ -121,18 +223,24 @@ class OptionsCategoryGicleeApp(StyledCategoryGicleeApp):
 
     def _apply_shortcuts(self, shortcuts: dict[str, str]) -> None:
         self._shortcut_map = dict(shortcuts)
-        # Odświeżamy binding i fokus po zamknięciu modala, aby nowe przypisanie
-        # działało natychmiast bez ponownego uruchamiania aplikacji ani klikania tła.
+        self._windows_shortcut_down.clear()
         self._bind_launcher_shortcuts()
         self.root.after_idle(self._restore_shortcut_focus)
-        self.status_var.set(f"Zapisano skróty: {len(self._shortcut_map)}")
+        labels = ", ".join(
+            shortcut_display_label(key) for key in sorted(self._shortcut_map)
+        )
+        self.status_var.set(
+            f"Zapisano skróty: {labels}" if labels else "Usunięto wszystkie skróty"
+        )
 
     def _restore_shortcut_focus(self) -> None:
         if not self.tiles_view.winfo_ismapped():
             return
         try:
             self.root.lift()
+            self.root.focus_force()
             self.canvas.focus_set()
+            self._install_shortcut_bindtags()
         except tk.TclError:
             pass
 
@@ -148,23 +256,71 @@ class OptionsCategoryGicleeApp(StyledCategoryGicleeApp):
             return False
         return True
 
-    def _on_launcher_key_shortcut(self, event: tk.Event) -> str | None:
-        if not self._launcher_shortcuts_active():
-            return None
-        if event.state & (0x4 | 0x8):  # Control, Alt
-            return None
-        key = self._launcher_shortcut_key(event)
-        if not key:
-            return None
+    def _windows_launcher_is_foreground(self) -> bool:
+        user32 = self._windows_user32
+        if user32 is None:
+            return False
+        try:
+            hwnd = int(self.root.winfo_id())
+            root_hwnd = int(user32.GetAncestor(ctypes.c_void_p(hwnd), _GA_ROOT) or hwnd)
+            foreground = int(user32.GetForegroundWindow() or 0)
+        except (AttributeError, OSError, TypeError, ValueError, tk.TclError):
+            return False
+        return foreground != 0 and foreground == root_hwnd
+
+    def _poll_windows_shortcuts(self) -> None:
+        user32 = self._windows_user32
+        if user32 is None:
+            return
+
+        current_down: set[str] = set()
+        for key in self._shortcut_map:
+            vk = shortcut_virtual_key(key)
+            if vk is None:
+                continue
+            try:
+                if int(user32.GetAsyncKeyState(vk)) & 0x8000:
+                    current_down.add(key)
+            except (AttributeError, OSError, TypeError, ValueError):
+                continue
+
+        active = self._windows_launcher_is_foreground() and self._launcher_shortcuts_active()
+        if active:
+            try:
+                ctrl_down = bool(int(user32.GetAsyncKeyState(_VK_CONTROL)) & 0x8000)
+                alt_down = bool(int(user32.GetAsyncKeyState(_VK_MENU)) & 0x8000)
+            except (AttributeError, OSError, TypeError, ValueError):
+                ctrl_down = False
+                alt_down = False
+            if not ctrl_down and not alt_down:
+                pressed_now = current_down - self._windows_shortcut_down
+                for key in sorted(pressed_now):
+                    if self._trigger_shortcut(key):
+                        break
+
+        # Zapamiętujemy stan także poza aktywnym oknem. Dzięki temu przytrzymany
+        # klawisz nie uruchomi komponentu dopiero po powrocie do launchera.
+        self._windows_shortcut_down = current_down
+        try:
+            self._windows_shortcut_poll_id = self.root.after(
+                _WINDOWS_SHORTCUT_POLL_MS,
+                self._poll_windows_shortcuts,
+            )
+        except tk.TclError:
+            self._windows_shortcut_poll_id = None
+
+    def _trigger_shortcut(self, key: str) -> bool:
         folder = self._shortcut_map.get(key)
         if not folder:
-            return None
+            return False
         component = self._component_by_folder(folder)
         if component is None:
-            self.status_var.set(f"Skrót «{shortcut_display_label(key)}»: brak komponentu {folder}")
-            return "break"
+            self.status_var.set(
+                f"Skrót «{shortcut_display_label(key)}»: brak komponentu {folder}"
+            )
+            return True
         if self._shortcut_launch_pending:
-            return "break"
+            return True
 
         self._shortcut_launch_pending = True
         self.status_var.set(
@@ -175,10 +331,18 @@ class OptionsCategoryGicleeApp(StyledCategoryGicleeApp):
             self._shortcut_launch_pending = False
             self._launch(component)
 
-        # Uruchomienie po zakończeniu obsługi KeyPress jest stabilniejsze dla widoków
-        # inline, które w trakcie otwierania przebudowują główny kontener launchera.
         self.root.after_idle(launch_selected)
-        return "break"
+        return True
+
+    def _on_launcher_key_shortcut(self, event: tk.Event) -> str | None:
+        if not self._launcher_shortcuts_active():
+            return None
+        if event.state & (0x4 | 0x8):
+            return None
+        key = self._launcher_shortcut_key(event)
+        if not key:
+            return None
+        return "break" if self._trigger_shortcut(key) else None
 
 
 def main() -> None:

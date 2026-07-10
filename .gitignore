@@ -50,3 +50,5 @@ _section_api.json
 
 # Generowane ZIP-y wiedzy GPT (lokalnie; źródła = .md/.txt w folderze)
 Pliki startowe dla GPT/giclee_cursor_architect_knowledge_v*.zip
+cursor-api/giclee_app/data/launcher_shortcuts.json
+cursor-api/giclee_app/data/launcher_layout.json
