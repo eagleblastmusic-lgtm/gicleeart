@@ -1,0 +1,84 @@
+/*
+ * Homepage pre-hero video scrub.
+ * A 500vh scroll runway drives one sticky 100svh video viewport.
+ */
+
+.giclee-prehero-scrub {
+  --giclee-prehero-scroll-height: 500vh;
+  position: relative;
+  width: 100%;
+  height: var(--giclee-prehero-scroll-height);
+  min-height: var(--giclee-prehero-scroll-height);
+  background: #000;
+  isolation: isolate;
+}
+
+.giclee-prehero-scrub__stage {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100svh;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #000;
+  isolation: isolate;
+}
+
+.giclee-prehero-scrub__video,
+.giclee-prehero-scrub__poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.giclee-prehero-scrub__video {
+  z-index: 1;
+  display: block;
+  object-fit: cover;
+  object-position: center center;
+  opacity: 0;
+  background: #000;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: opacity;
+  transition: opacity 280ms ease;
+}
+
+.giclee-prehero-scrub[data-video-ready='true'] .giclee-prehero-scrub__video {
+  opacity: 1;
+}
+
+.giclee-prehero-scrub__poster {
+  z-index: 0;
+  background-color: #000;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.giclee-prehero-scrub__stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.14)),
+    radial-gradient(ellipse at center, transparent 48%, rgb(0 0 0 / 0.18) 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giclee-prehero-scrub {
+    height: 100svh;
+    min-height: 100svh;
+  }
+
+  .giclee-prehero-scrub__stage {
+    position: relative;
+  }
+
+  .giclee-prehero-scrub__video {
+    transition: none;
+  }
+}

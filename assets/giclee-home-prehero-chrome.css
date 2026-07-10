@@ -1,0 +1,183 @@
+/*
+ * Homepage pre-hero viewport curtain.
+ * The native Shopify header section is the upper curtain; a matching fixed black rail is the lower curtain.
+ * The video remains locked to the viewport centre and is never translated.
+ */
+
+html.giclee-prehero-chrome-enabled {
+  --giclee-prehero-header-height: var(--header-height, 60px);
+  --giclee-prehero-header-y: 0px;
+  --giclee-prehero-band-y: 0px;
+}
+
+/*
+ * Move the complete native header section as one clipped viewport curtain. Do not restyle the
+ * internal row/grid: Shopify keeps ownership of logo sizing, columns, menu spacing and actions.
+ */
+html.giclee-prehero-chrome-enabled
+  .header-section.giclee-prehero-chrome-header,
+html.giclee-home-stack.giclee-prehero-chrome-enabled
+  .header-section.giclee-prehero-chrome-header,
+html.giclee-home-stack.giclee-prehero-chrome-enabled
+  .header-section:has(> #header-component[sticky]).giclee-prehero-chrome-header {
+  position: fixed !important;
+  inset: 0 0 auto 0 !important;
+  top: 0 !important;
+  right: 0 !important;
+  left: 0 !important;
+  display: block !important;
+  width: 100% !important;
+  height: var(--giclee-prehero-header-height, 60px) !important;
+  min-height: var(--giclee-prehero-header-height, 60px) !important;
+  max-height: var(--giclee-prehero-header-height, 60px) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  isolation: isolate;
+  background: #000 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  z-index: 216 !important;
+  transform: translate3d(0, var(--giclee-prehero-header-y, 0px), 0) !important;
+  translate: none !important;
+  transition: none !important;
+  animation: none !important;
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+/*
+ * Keep the original component and its grid intact. Only neutralise the legacy opacity controller;
+ * do not force display, widths, heights or positioning on the internal header row.
+ */
+html.giclee-prehero-chrome-enabled
+  .header-section.giclee-prehero-chrome-header
+  #header-component,
+html.giclee-home-stack.giclee-prehero-chrome-enabled
+  .header-section.giclee-prehero-chrome-header
+  #header-component,
+html.giclee-home-stack.giclee-prehero-chrome-enabled
+  .header-section.giclee-prehero-chrome-header
+  #header-component.giclee-header-scroll-fade,
+html.giclee-home-stack.giclee-prehero-chrome-enabled
+  .header-section.giclee-prehero-chrome-header
+  #header-component[data-sticky-state='idle'] {
+  --gab-header-fade-opacity: 1 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  transform: none !important;
+  translate: none !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+html.giclee-prehero-chrome-enabled
+  .header-section.giclee-prehero-chrome-header
+  #header-component[sticky]
+  .header[data-sticky-state],
+html.giclee-prehero-chrome-enabled
+  .header-section.giclee-prehero-chrome-header
+  #header-component.header[data-sticky-state] {
+  opacity: 1 !important;
+  transform: none !important;
+  translate: none !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Restore the native black underlay instead of painting/reflowing the menu row itself. */
+html.giclee-prehero-chrome-enabled
+  .header-section.giclee-prehero-chrome-header
+  #header-component
+  > .header__underlay {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+html.giclee-prehero-chrome-enabled
+  .header-section.giclee-prehero-chrome-header
+  #header-component
+  > .header__underlay-closed {
+  height: 100% !important;
+  background: #000 !important;
+  transition: none !important;
+}
+
+html.giclee-prehero-chrome-enabled
+  .header-section.giclee-prehero-chrome-header
+  #header-component
+  > .header__underlay-open {
+  height: 0 !important;
+  transition: none !important;
+}
+
+/* Preserve the native menu grid and visible content without changing its geometry. */
+html.giclee-prehero-chrome-enabled
+  .header-section.giclee-prehero-chrome-header
+  :is(
+    .header__row--top,
+    .header__columns,
+    .header__column,
+    .header-logo,
+    header-menu,
+    header-actions,
+    .search-action,
+    .dropdown-localization
+  ) {
+  opacity: 1 !important;
+  visibility: visible !important;
+  filter: none !important;
+}
+
+/* The media is a stationary, non-interactive background behind both curtains. */
+html.giclee-prehero-chrome-enabled .giclee-prehero-scrub__video,
+html.giclee-prehero-chrome-enabled .giclee-prehero-scrub__poster {
+  transform: translateZ(0) !important;
+  translate: none !important;
+  pointer-events: none !important;
+  backface-visibility: hidden;
+  will-change: opacity;
+}
+
+/* Matching lower curtain: same height, same stacking level, opposite translate. */
+.giclee-prehero-scrub__bottom-band {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 216;
+  display: block;
+  width: 100%;
+  height: var(--giclee-prehero-header-height, 60px);
+  min-height: var(--giclee-prehero-header-height, 60px);
+  max-height: var(--giclee-prehero-header-height, 60px);
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: #000;
+  opacity: 1;
+  pointer-events: none;
+  transform: translate3d(0, var(--giclee-prehero-band-y, 0px), 0);
+  translate: none;
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+.giclee-prehero-scrub__bottom-band::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #000;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.giclee-prehero-chrome-enabled
+    .header-section.giclee-prehero-chrome-header,
+  html.giclee-prehero-chrome-enabled .giclee-prehero-scrub__video,
+  html.giclee-prehero-chrome-enabled .giclee-prehero-scrub__poster,
+  .giclee-prehero-scrub__bottom-band {
+    will-change: auto;
+  }
+}
