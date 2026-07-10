@@ -1,27 +1,32 @@
 # Current App State
 
 <!-- gpt-starter:gicleeapp-push:start -->
-GicleeApp Studio v1.46.0
+GicleeApp Studio v1.46.1
 
 GitHub / aktualna wersja aplikacji (`eagleblastmusic-lgtm/gicleeapp`):
-v1.46.0 — zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`
-Ostatni push GicleeApp: `87a133a` na `main` (2026-07-10 03:38 UTC) — Refresh GicleeApp repository snapshot
+v1.46.1 — zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`
+Ostatni push GicleeApp: `291a9e4` na `main` (2026-07-10 05:53 UTC) — Refresh GicleeApp repository snapshot
 
 Monorepo origin/master (projekt / docs):
-5378c94 W assets/giclee-home-stack.css dodano desktopowy override po wspólnej regule position: relative dla separatorów scroll:
+362ecf5 feat(home): frame hero video between header bands
+
+Lokalne commity monorepo (nie na origin/master, push pending):
+- `95295b3` fix(home): clip parallax media within section seams
 
 Previous checkpoint:
 46fc718 feat(studio): add GICLÉE FRAME page inventory RAM editor (v1.40.0)
 
 Branch status:
-- **GitHub gicleeapp:** v1.46.0 / `main` @ `87a133a` (auto-sync po Push GicleeApp, 2026-07-10 03:38 UTC)
-- **monorepo origin/master:** `5378c94` — W assets/giclee-home-stack.css dodano desktopowy override po wspólnej regule position: relative dla separatorów scroll:
+- **GitHub gicleeapp:** v1.46.1 / `main` @ `291a9e4` (auto-sync po Push GicleeApp, 2026-07-10 05:53 UTC)
+- **monorepo origin/master:** `362ecf5` — feat(home): frame hero video between header bands
+- **lokalnie monorepo:** dodatkowe commity względem origin/master — push pending (nie zakładać push monorepo bez potwierdzenia użytkownika)
+  - `95295b3` fix(home): clip parallax media within section seams
 
 GPT starter files:
-auto-sync po Push GicleeApp 2026-07-10 03:38 UTC (gicleeapp `87a133a`, v1.46.0; paczka v37; źródło = ten folder, nie ZIP)
+auto-sync po Push GicleeApp 2026-07-10 05:53 UTC (gicleeapp `291a9e4`, v1.46.1; paczka v37; źródło = ten folder, nie ZIP)
 
 Recent context:
-- **GitHub gicleeapp:** v1.46.0 / `main` @ `87a133a` — auto-sync po Push GicleeApp
+- **GitHub gicleeapp:** v1.46.1 / `main` @ `291a9e4` — auto-sync po Push GicleeApp
 - GICLÉE FRAME™ F2.1: closed + pushed (historycznie v1.40.1 / `4647c1b`; aktualna wersja aplikacji na GitHub jest nowsza)
 - Local runtime/untracked still outside commit and remote (working tree hygiene pending)
 <!-- gpt-starter:gicleeapp-push:end -->
