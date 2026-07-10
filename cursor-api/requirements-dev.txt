@@ -1,4 +1,5 @@
 # Zależności dev — GicleeApp Studio Preview (nie wchodzi do .exe)
 # pip install -r requirements-dev.txt
 customtkinter>=5.2.0
+Pillow>=10.0
 pytest>=7.0

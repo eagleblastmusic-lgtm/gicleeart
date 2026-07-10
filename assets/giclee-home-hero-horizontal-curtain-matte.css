@@ -1,0 +1,26 @@
+/* Balance the visible cinema bars around Hero.
+ *
+ * The Shopify MP4 contains part of the lower black matte inside the video frame.
+ * Keep the media height unchanged, then move it slightly downward so the external
+ * top bar and the visible embedded lower matte meet at the same optical height.
+ */
+@media screen and (min-width: 750px) {
+  html.giclee-hero-horizontal-curtain-enabled {
+    /* Previous optical shift was ~16px at 953px viewport; add ~7px. */
+    --giclee-hero-matte-balance-shift: clamp(19px, 2.4svh, 27px);
+  }
+
+  html.giclee-hero-horizontal-curtain-enabled
+    #MainContent
+    > .shopify-section.giclee-hero-horizontal-curtain-source
+    slideshow-slide
+    > .slide__image-container {
+    top: calc(
+      var(--giclee-hero-cinema-bar, 60px) +
+      var(--giclee-hero-cinema-optical-shift, 30.5px) +
+      var(--giclee-hero-matte-balance-shift, 23px)
+    ) !important;
+    bottom: calc(-1 * var(--giclee-hero-matte-balance-shift, 23px)) !important;
+    height: auto !important;
+  }
+}

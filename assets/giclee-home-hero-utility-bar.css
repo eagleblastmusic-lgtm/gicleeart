@@ -1,0 +1,66 @@
+/* The real footer utilities, reused inside the FIRST pre-Hero lower curtain. */
+.giclee-prehero-scrub__bottom-band[data-giclee-prehero-utility-band] {
+  overflow: visible;
+  pointer-events: auto;
+}
+
+.giclee-prehero-scrub__bottom-band[data-giclee-prehero-utility-band]::before {
+  z-index: 0;
+  pointer-events: none;
+}
+
+/*
+ * This shell is a shallow clone of the real footer .section node. Keep its
+ * section-width and colour-scheme classes so typography, colours, icons and
+ * horizontal alignment are inherited from the live footer without imitation.
+ */
+.giclee-prehero-utility-bar {
+  position: relative !important;
+  z-index: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 0 auto !important;
+  padding-block: 0 !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+  background: transparent !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  transform: none !important;
+  content-visibility: visible !important;
+  contain: none !important;
+}
+
+/* Preserve the native .utilities grid and all of its real child components. */
+.giclee-prehero-utility-bar > .utilities {
+  width: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding-block: 0 !important;
+  background: transparent !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  content-visibility: visible !important;
+  contain: none !important;
+}
+
+.giclee-prehero-utility-bar > .utilities > * {
+  opacity: 1 !important;
+  visibility: visible !important;
+  content-visibility: visible !important;
+}
+
+/* The cloned policy popover stays closed until its real native trigger opens it. */
+.giclee-prehero-utility-bar .terms-policies-popover:not(:popover-open) {
+  opacity: 0 !important;
+}
+
+/* The abandoned Hero-mounted implementation must never render. */
+body > .giclee-hero-utility-bar,
+.giclee-hero-horizontal-curtain-source .giclee-hero-utility-bar {
+  display: none !important;
+}

@@ -1,0 +1,123 @@
+/*
+ * Final viewport-shell correction for the Hero → Giclée Art curtain.
+ * Horizon keeps part of the Hero geometry in an internal media/footer layout.
+ * Pin the complete slideshow shell to the viewport and compensate half of the
+ * native 61px lower reserve so the rendered picture, not only its DOM box,
+ * is visually centred.
+ */
+
+@media screen and (min-width: 750px) {
+  html.giclee-hero-horizontal-curtain-enabled {
+    --giclee-hero-native-bottom-reserve: var(--home-stack-seam-height, 61px);
+    --giclee-hero-cinema-optical-shift: calc(
+      var(--giclee-hero-native-bottom-reserve, 61px) / 2
+    );
+  }
+
+  html.giclee-hero-horizontal-curtain-enabled
+    #MainContent
+    > .shopify-section.giclee-hero-horizontal-curtain-source {
+    position: sticky !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: 100svh !important;
+    min-height: 100svh !important;
+    max-height: 100svh !important;
+    overflow: hidden !important;
+    background: #000 !important;
+  }
+
+  html.giclee-hero-horizontal-curtain-enabled
+    #MainContent
+    > .shopify-section.giclee-hero-horizontal-curtain-source
+    > .slideshow-section {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100svh !important;
+    min-height: 100svh !important;
+    max-height: 100svh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  html.giclee-hero-horizontal-curtain-enabled
+    #MainContent
+    > .shopify-section.giclee-hero-horizontal-curtain-source
+    > .slideshow-section
+    > slideshow-component,
+  html.giclee-hero-horizontal-curtain-enabled
+    #MainContent
+    > .shopify-section.giclee-hero-horizontal-curtain-source
+    slideshow-container,
+  html.giclee-hero-horizontal-curtain-enabled
+    #MainContent
+    > .shopify-section.giclee-hero-horizontal-curtain-source
+    slideshow-slides,
+  html.giclee-hero-horizontal-curtain-enabled
+    #MainContent
+    > .shopify-section.giclee-hero-horizontal-curtain-source
+    slideshow-slide {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100svh !important;
+    min-height: 100svh !important;
+    max-height: 100svh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  html.giclee-hero-horizontal-curtain-enabled
+    #MainContent
+    > .shopify-section.giclee-hero-horizontal-curtain-source
+    slideshow-slides {
+    display: flex !important;
+    align-items: stretch !important;
+    overflow: hidden !important;
+  }
+
+  html.giclee-hero-horizontal-curtain-enabled
+    #MainContent
+    > .shopify-section.giclee-hero-horizontal-curtain-source
+    slideshow-slide
+    > .slide__image-container {
+    position: absolute !important;
+    top: calc(
+      var(--giclee-hero-cinema-bar, 60px) +
+      var(--giclee-hero-cinema-optical-shift, 30.5px)
+    ) !important;
+    right: 0 !important;
+    bottom: calc(
+      var(--giclee-hero-cinema-bar, 60px) -
+      var(--giclee-hero-cinema-optical-shift, 30.5px)
+    ) !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+    overflow: hidden !important;
+    background: #000 !important;
+    box-sizing: border-box !important;
+  }
+
+  html.giclee-hero-horizontal-curtain-enabled
+    #MainContent
+    > .shopify-section.giclee-hero-horizontal-curtain-source
+    :is(.giclee-video-collage, .giclee-collage__stage, .giclee-collage__video) {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+  }
+}

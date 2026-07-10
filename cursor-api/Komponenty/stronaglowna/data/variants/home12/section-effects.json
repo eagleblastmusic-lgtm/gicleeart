@@ -1,0 +1,152 @@
+{
+  "restoration": {
+    "scroll_reveal": {
+      "enabled": true,
+      "desktopEnabled": true,
+      "glowEnabled": true,
+      "revealThreshold": 0.25,
+      "durationMs": 980,
+      "cardDurationMs": 1100,
+      "textDurationMs": 900,
+      "hoverDurationMs": 850,
+      "headingDelayMs": 120,
+      "paragraphStaggerMs": 140,
+      "bgBrightnessStart": 88,
+      "lightOpacityMin": 5.5,
+      "lightOpacityMax": 11.0,
+      "cardHoverScale": 1.018,
+      "cardImageHoverScale": 1.025,
+      "copyHoverScale": 1.022,
+      "copyHoverTranslateY": -4,
+      "easing": "museum"
+    },
+    "text_hover": {
+      "enabled": false,
+      "desktopEnabled": true,
+      "copyScale": 1.062,
+      "copyTranslateY": -8,
+      "mediaOffsetX": 24,
+      "mediaScale": 0.965,
+      "mediaBrightness": 82,
+      "bgBrightness": 78,
+      "bgVeilOpacity": 16,
+      "durationMs": 850,
+      "easing": "museum",
+      "glowEnabled": true,
+      "reverseBehavior": false
+    }
+  },
+  "color-correction": {
+    "scroll_reveal": {
+      "enabled": true,
+      "desktopEnabled": true,
+      "glowEnabled": true,
+      "revealThreshold": 0.25,
+      "durationMs": 980,
+      "cardDurationMs": 1100,
+      "textDurationMs": 900,
+      "hoverDurationMs": 850,
+      "headingDelayMs": 120,
+      "paragraphStaggerMs": 140,
+      "bgBrightnessStart": 88,
+      "lightOpacityMin": 5.5,
+      "lightOpacityMax": 11.0,
+      "cardHoverScale": 1.018,
+      "cardImageHoverScale": 1.025,
+      "copyHoverScale": 1.022,
+      "copyHoverTranslateY": -4,
+      "easing": "museum"
+    },
+    "text_hover": {
+      "enabled": false,
+      "desktopEnabled": true,
+      "copyScale": 1.062,
+      "copyTranslateY": -8,
+      "mediaOffsetX": 24,
+      "mediaScale": 0.965,
+      "mediaBrightness": 82,
+      "bgBrightness": 78,
+      "bgVeilOpacity": 16,
+      "durationMs": 850,
+      "easing": "museum",
+      "glowEnabled": true,
+      "reverseBehavior": false
+    }
+  },
+  "potential": {
+    "scroll_reveal": {
+      "enabled": true,
+      "desktopEnabled": true,
+      "glowEnabled": true,
+      "revealThreshold": 0.25,
+      "durationMs": 980,
+      "cardDurationMs": 1100,
+      "textDurationMs": 900,
+      "hoverDurationMs": 850,
+      "headingDelayMs": 120,
+      "paragraphStaggerMs": 140,
+      "bgBrightnessStart": 88,
+      "lightOpacityMin": 5.5,
+      "lightOpacityMax": 11.0,
+      "cardHoverScale": 1.018,
+      "cardImageHoverScale": 1.025,
+      "copyHoverScale": 1.022,
+      "copyHoverTranslateY": -4,
+      "easing": "museum"
+    },
+    "text_hover": {
+      "enabled": false,
+      "desktopEnabled": true,
+      "copyScale": 1.062,
+      "copyTranslateY": -8,
+      "mediaOffsetX": 24,
+      "mediaScale": 0.965,
+      "mediaBrightness": 82,
+      "bgBrightness": 78,
+      "bgVeilOpacity": 16,
+      "durationMs": 850,
+      "easing": "museum",
+      "glowEnabled": true,
+      "reverseBehavior": false
+    }
+  },
+  "see-difference": {
+    "scroll_reveal": {
+      "enabled": true,
+      "desktopEnabled": true,
+      "glowEnabled": true,
+      "revealThreshold": 0.25,
+      "durationMs": 980,
+      "cardDurationMs": 1100,
+      "textDurationMs": 900,
+      "hoverDurationMs": 850,
+      "headingDelayMs": 120,
+      "paragraphStaggerMs": 140,
+      "bgBrightnessStart": 88,
+      "lightOpacityMin": 5.5,
+      "lightOpacityMax": 11.0,
+      "cardHoverScale": 1.018,
+      "cardImageHoverScale": 1.025,
+      "copyHoverScale": 1.022,
+      "copyHoverTranslateY": -4,
+      "easing": "museum"
+    }
+  },
+  "intro": {
+    "text_hover": {
+      "enabled": false,
+      "desktopEnabled": true,
+      "copyScale": 1.062,
+      "copyTranslateY": -8,
+      "mediaOffsetX": 24,
+      "mediaScale": 0.965,
+      "mediaBrightness": 82,
+      "bgBrightness": 78,
+      "bgVeilOpacity": 16,
+      "durationMs": 850,
+      "easing": "museum",
+      "glowEnabled": true,
+      "reverseBehavior": false
+    }
+  }
+}

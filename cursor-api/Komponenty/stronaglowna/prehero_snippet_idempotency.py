@@ -62,9 +62,11 @@ def inject_prehero_into_snippet(
             "{{ 'giclee-home-prehero-scrub.css' | asset_url | stylesheet_tag }}",
             "{{ 'giclee-home-prehero-chrome.css' | asset_url | stylesheet_tag }}",
             "{{ 'giclee-home-prehero-reveal.css' | asset_url | stylesheet_tag }}",
+            "{{ 'giclee-home-hero-horizontal-curtain.css' | asset_url | stylesheet_tag }}",
             "<script src=\"{{ 'giclee-home-prehero-scrub.js' | asset_url }}\" defer></script>",
             "<script src=\"{{ 'giclee-home-prehero-chrome.js' | asset_url }}\" defer></script>",
             "<script src=\"{{ 'giclee-home-prehero-reveal.js' | asset_url }}\" defer></script>",
+            "<script src=\"{{ 'giclee-home-hero-horizontal-curtain.js' | asset_url }}\" defer></script>",
             _base._ASSETS_END,
         )
     )

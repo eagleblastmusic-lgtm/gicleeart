@@ -21,6 +21,8 @@ PREHERO_CODE_ASSETS = (
     "giclee-home-prehero-chrome.js",
     "giclee-home-prehero-reveal.css",
     "giclee-home-prehero-reveal.js",
+    "giclee-home-hero-horizontal-curtain.css",
+    "giclee-home-hero-horizontal-curtain.js",
 )
 
 DEFAULT_COPY_TEXT = (
@@ -37,6 +39,9 @@ PREHERO_DEFAULTS: dict[str, Any] = {
     "prehero_hero_rise_screens": 1,
     "prehero_copy_enabled": True,
     "prehero_copy_text": DEFAULT_COPY_TEXT,
+    "prehero_horizontal_curtain_enabled": True,
+    "prehero_hero_hold_screens": 1,
+    "prehero_horizontal_curtain_screens": 1,
 }
 
 _SETTING_KEYS = tuple(PREHERO_DEFAULTS)
@@ -76,6 +81,18 @@ def normalize_prehero_values(raw: dict[str, Any] | None) -> dict[str, Any]:
         1,
         min(10, max_reveal),
     )
+    hero_hold = _bounded_int(
+        source.get("prehero_hero_hold_screens"),
+        int(PREHERO_DEFAULTS["prehero_hero_hold_screens"]),
+        1,
+        5,
+    )
+    horizontal_curtain = _bounded_int(
+        source.get("prehero_horizontal_curtain_screens"),
+        int(PREHERO_DEFAULTS["prehero_horizontal_curtain_screens"]),
+        1,
+        5,
+    )
 
     text = str(source.get("prehero_copy_text") or DEFAULT_COPY_TEXT).strip()
     lines = [line.strip() for line in text.splitlines() if line.strip()]
@@ -95,6 +112,11 @@ def normalize_prehero_values(raw: dict[str, Any] | None) -> dict[str, Any]:
         "prehero_hero_rise_screens": hero_rise,
         "prehero_copy_enabled": bool(source.get("prehero_copy_enabled", True)),
         "prehero_copy_text": "\n".join(lines),
+        "prehero_horizontal_curtain_enabled": bool(
+            source.get("prehero_horizontal_curtain_enabled", True)
+        ),
+        "prehero_hero_hold_screens": hero_hold,
+        "prehero_horizontal_curtain_screens": horizontal_curtain,
     }
 
 
@@ -107,7 +129,8 @@ def _prehero_zone() -> Any:
         description=(
             "Pełnoekranowe wideo sterowane przewijaniem przed «Hero — slideshow». "
             "W końcowej części filmu portal otwiera się od środka, wyświetla tekst, "
-            "a następnie od dołu wjeżdża oryginalny Hero z filmem-kolażem."
+            "oryginalny Hero wjeżdża od dołu, pozostaje wycentrowany, a pozioma "
+            "kurtyna odsłania sekcję «Giclée Art»."
         ),
         section_key="",
         settings_only=True,
@@ -131,7 +154,7 @@ def _prehero_zone() -> Any:
                 "prehero_scroll_screens",
                 "Długość całej sekwencji (ekrany)",
                 "int",
-                hint="6 ekranów = 600vh wysokości sekcji.",
+                hint="6 ekranów = 600vh wysokości sekcji scrubbingu i pierwszego przejścia.",
             ),
             HomeField(
                 "prehero_reveal_screens",
@@ -155,6 +178,27 @@ def _prehero_zone() -> Any:
                 "Tekst przejścia",
                 "body",
                 hint="Każda niepusta linia jest animowana osobno; maksymalnie 5 linii.",
+            ),
+            HomeField(
+                "prehero_horizontal_curtain_enabled",
+                "Pozioma kurtyna Hero → Giclée Art",
+                "bool",
+                hint=(
+                    "Dzieli wycentrowany film Hero na górną i dolną część i odsłania "
+                    "sekcję Giclée Art."
+                ),
+            ),
+            HomeField(
+                "prehero_hero_hold_screens",
+                "Postój wycentrowanego Hero (ekrany)",
+                "int",
+                hint="1 ekran = 100vh pustego scrolla bez ruchu filmu.",
+            ),
+            HomeField(
+                "prehero_horizontal_curtain_screens",
+                "Otwieranie poziomej kurtyny (ekrany)",
+                "int",
+                hint="1 ekran = pełne otwarcie kurtyny podczas 100vh scrolla.",
             ),
         ),
     )
@@ -201,6 +245,9 @@ def export_prehero_config(settings: dict[str, Any] | None) -> dict[str, Any]:
         "heroRiseVh": int(values["prehero_hero_rise_screens"]) * 100,
         "copyEnabled": bool(values["prehero_copy_enabled"]),
         "copyLines": lines,
+        "horizontalCurtainEnabled": bool(values["prehero_horizontal_curtain_enabled"]),
+        "heroHoldVh": int(values["prehero_hero_hold_screens"]) * 100,
+        "heroCurtainVh": int(values["prehero_horizontal_curtain_screens"]) * 100,
         "videoRef": str(values["prehero_video"] or ""),
     }
 
@@ -300,9 +347,11 @@ def inject_prehero_into_snippet(text: str, config: dict[str, Any] | None = None)
             "{{ 'giclee-home-prehero-scrub.css' | asset_url | stylesheet_tag }}",
             "{{ 'giclee-home-prehero-chrome.css' | asset_url | stylesheet_tag }}",
             "{{ 'giclee-home-prehero-reveal.css' | asset_url | stylesheet_tag }}",
+            "{{ 'giclee-home-hero-horizontal-curtain.css' | asset_url | stylesheet_tag }}",
             "<script src=\"{{ 'giclee-home-prehero-scrub.js' | asset_url }}\" defer></script>",
             "<script src=\"{{ 'giclee-home-prehero-chrome.js' | asset_url }}\" defer></script>",
             "<script src=\"{{ 'giclee-home-prehero-reveal.js' | asset_url }}\" defer></script>",
+            "<script src=\"{{ 'giclee-home-hero-horizontal-curtain.js' | asset_url }}\" defer></script>",
             _ASSETS_END,
             "",
         )

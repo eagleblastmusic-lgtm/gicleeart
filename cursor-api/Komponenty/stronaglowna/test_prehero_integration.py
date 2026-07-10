@@ -23,6 +23,9 @@ def test_prehero_zone_is_first_and_editable() -> None:
         "prehero_hero_rise_screens",
         "prehero_copy_enabled",
         "prehero_copy_text",
+        "prehero_horizontal_curtain_enabled",
+        "prehero_hero_hold_screens",
+        "prehero_horizontal_curtain_screens",
     ]
 
 
@@ -38,6 +41,9 @@ def test_prehero_settings_roundtrip_and_normalization() -> None:
             "prehero_hero_rise_screens": 1,
             "prehero_copy_enabled": True,
             "prehero_copy_text": "Linia pierwsza\nLinia druga\nLinia trzecia",
+            "prehero_horizontal_curtain_enabled": True,
+            "prehero_hero_hold_screens": 1,
+            "prehero_horizontal_curtain_screens": 1,
         },
     )
 
@@ -49,6 +55,9 @@ def test_prehero_settings_roundtrip_and_normalization() -> None:
     assert config["revealOverlapVh"] == 200
     assert config["heroRiseVh"] == 100
     assert config["copyLines"] == ["Linia pierwsza", "Linia druga", "Linia trzecia"]
+    assert config["horizontalCurtainEnabled"] is True
+    assert config["heroHoldVh"] == 100
+    assert config["heroCurtainVh"] == 100
 
 
 def test_prehero_snippet_injection_is_idempotent() -> None:
@@ -66,6 +75,9 @@ window.GICLEE_HOME_STACK = true;
         "heroRiseVh": 100,
         "copyEnabled": True,
         "copyLines": ["A", "B", "C"],
+        "horizontalCurtainEnabled": True,
+        "heroHoldVh": 100,
+        "heroCurtainVh": 100,
         "videoRef": "shopify://files/videos/prehero.mp4",
     }
 
@@ -76,8 +88,11 @@ window.GICLEE_HOME_STACK = true;
     assert first.count("GICLEE_PREHERO_CONFIG_BEGIN") == 1
     assert first.count("GICLEE_PREHERO_ASSETS_BEGIN") == 1
     assert "window.GICLEE_PREHERO_CONFIG" in first
+    assert '"heroHoldVh": 100' in first
     assert "'prehero.mp4' | file_url" in first
     assert "giclee-home-prehero-reveal.js" in first
+    assert "giclee-home-hero-horizontal-curtain.css" in first
+    assert "giclee-home-hero-horizontal-curtain.js" in first
     assert first.index("GICLEE_PREHERO_CONFIG_BEGIN") < first.index("</script>")
     assert first.index("GICLEE_PREHERO_ASSETS_BEGIN") > first.index("</script>")
 

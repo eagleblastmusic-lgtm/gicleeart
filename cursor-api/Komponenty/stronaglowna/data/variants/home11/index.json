@@ -64,7 +64,12 @@
         "autoplay": true,
         "autoplay_speed": 3,
         "padding-block-start": 0,
-        "padding-block-end": 0
+        "padding-block-end": 0,
+        "enable_audio": false,
+        "audio_url": "",
+        "audio_label_on": "",
+        "audio_label_off": "",
+        "audio_volume": 0
       }
     },
     "divider_7d3JBN": {
