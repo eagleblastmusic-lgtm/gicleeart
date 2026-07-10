@@ -1,6 +1,6 @@
 {
   "name": "Strona główna",
-  "description": "Landing page: hero, intro, przed/po, treści sekcji — grafiki i teksty w templates/index.json.",
+  "description": "Landing page: edytowalne pre-Hero scroll video, hero, intro, przed/po, treści sekcji i assety motywu.",
   "icon": "🏠",
   "color": "#4527a0",
   "order": 37,
