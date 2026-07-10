@@ -1,4 +1,4 @@
-/* Scroll-driven Hero → Giclée Art horizontal curtain. */
+/* Scroll-driven Hero → Giclée Art horizontal curtain using the live intro section. */
 (function () {
   'use strict';
 
@@ -8,11 +8,11 @@
   var INTRO_CLASS = 'giclee-hero-horizontal-curtain-intro-target';
   var DIVIDER_CLASS = 'giclee-hero-horizontal-curtain-divider-target';
   var RUNWAY_ID = 'giclee-hero-horizontal-curtain-runway';
-  var LAYER_CLASS = 'giclee-hero-horizontal-curtain__intro-layer';
-  var CLONE_CLASS = 'giclee-hero-horizontal-curtain__intro-clone';
+  var LEGACY_LAYER_CLASS = 'giclee-hero-horizontal-curtain__intro-layer';
   var SEAMS_CLASS = 'giclee-hero-horizontal-curtain__seams';
   var HOLD_VH = configNumber('heroHoldVh', 100, 0, 500);
   var CURTAIN_VH = configNumber('heroCurtainVh', 100, 50, 500);
+  var INTRO_HOLD_VH = configNumber('introHoldVh', 100, 0, 500);
   var TAU_MS = 86;
   var EPSILON = 0.0005;
 
@@ -22,15 +22,15 @@
   var intro = null;
   var divider = null;
   var runway = null;
-  var introLayer = null;
-  var introClone = null;
   var seams = null;
   var targetProgress = 0;
   var currentProgress = 0;
+  var introHoldProgress = 0;
   var localScroll = 0;
   var rawLocalScroll = 0;
   var holdTravel = 0;
   var curtainTravel = 0;
+  var introHoldTravel = 0;
   var totalTravel = 0;
   var rafId = 0;
   var lastFrameTime = 0;
@@ -91,111 +91,41 @@
     return null;
   }
 
-  function safeId(value) {
-    return String(value || 'node').replace(/[^a-zA-Z0-9_-]+/g, '-');
-  }
-
-  function rewriteCloneIds(clone) {
-    var nodes = [clone].concat(Array.prototype.slice.call(clone.querySelectorAll('[id]')));
-    var replacements = [];
-
-    nodes.forEach(function (node, index) {
-      var oldId = node.id;
-      if (!oldId) return;
-      var newId = 'giclee-curtain-clone-' + safeId(oldId) + '-' + index;
-      replacements.push({ oldId: oldId, newId: newId });
-      node.id = newId;
-    });
-
-    clone.querySelectorAll('style').forEach(function (style) {
-      var css = style.textContent || '';
-      replacements.forEach(function (item) {
-        css = css.split('#' + item.oldId).join('#' + item.newId);
-      });
-      style.textContent = css;
-    });
-
-    clone.querySelectorAll('[for], [aria-labelledby], [aria-describedby], [href^="#"]').forEach(
-      function (node) {
-        replacements.forEach(function (item) {
-          ['for', 'aria-labelledby', 'aria-describedby', 'href'].forEach(function (attr) {
-            var value = node.getAttribute(attr);
-            if (!value) return;
-            node.setAttribute(attr, value.split(item.oldId).join(item.newId));
-          });
-        });
-      }
-    );
-  }
-
-  function prepareCloneMedia(clone) {
-    clone.querySelectorAll('video').forEach(function (video) {
-      video.muted = true;
-      video.defaultMuted = true;
-      video.playsInline = true;
-      video.loop = true;
-      video.autoplay = true;
-      video.controls = false;
-      video.setAttribute('muted', '');
-      video.setAttribute('playsinline', '');
-      var playPromise = video.play();
-      if (playPromise && typeof playPromise.catch === 'function') {
-        playPromise.catch(function () {});
-      }
-    });
-  }
-
-  function createIntroClone() {
-    if (!intro || !main) return null;
-
-    introLayer = document.createElement('div');
-    introLayer.className = LAYER_CLASS;
-    introLayer.setAttribute('aria-hidden', 'true');
-    introLayer.setAttribute('inert', '');
-
-    introClone = intro.cloneNode(true);
-    introClone.classList.add(CLONE_CLASS);
-    introClone.classList.remove('giclee-home-stack-divider');
-    introClone.classList.remove('giclee-home-stack-divider--scroll');
-    introClone.removeAttribute('data-giclee-home-stack');
-    introClone.removeAttribute('data-giclee-home-stack-hook');
-    introClone.setAttribute('aria-hidden', 'true');
-    introClone.setAttribute('inert', '');
-
-    introClone.querySelectorAll('script, noscript').forEach(function (node) {
+  function removeLegacyIntroLayers() {
+    document.querySelectorAll('.' + LEGACY_LAYER_CLASS).forEach(function (node) {
       node.remove();
     });
-    introClone.querySelectorAll('a, button, input, select, textarea, [tabindex]').forEach(
-      function (node) {
-        node.setAttribute('tabindex', '-1');
-        node.setAttribute('aria-hidden', 'true');
-        if ('disabled' in node) node.disabled = true;
-      }
-    );
+  }
 
-    rewriteCloneIds(introClone);
-    introLayer.appendChild(introClone);
-    main.appendChild(introLayer);
-    prepareCloneMedia(introClone);
-    return introLayer;
+  function configureRunway(node) {
+    if (!node) return null;
+    var totalVh = HOLD_VH + CURTAIN_VH + INTRO_HOLD_VH;
+    node.style.setProperty('--giclee-hero-hold-height', HOLD_VH + 'vh');
+    node.style.setProperty('--giclee-hero-curtain-height', CURTAIN_VH + 'vh');
+    node.style.setProperty('--giclee-hero-intro-hold-height', INTRO_HOLD_VH + 'vh');
+    node.style.height = totalVh + 'vh';
+    node.style.minHeight = totalVh + 'vh';
+    return node;
   }
 
   function createRunway() {
     if (!hero || !hero.parentNode) return null;
     var existing = document.getElementById(RUNWAY_ID);
-    if (existing) return existing;
+    if (existing) return configureRunway(existing);
 
     var node = document.createElement('div');
     node.id = RUNWAY_ID;
     node.setAttribute('aria-hidden', 'true');
-    node.style.setProperty('--giclee-hero-hold-height', HOLD_VH + 'vh');
-    node.style.setProperty('--giclee-hero-curtain-height', CURTAIN_VH + 'vh');
+    configureRunway(node);
     hero.parentNode.insertBefore(node, hero.nextElementSibling);
     return node;
   }
 
   function createSeams() {
     if (!main) return null;
+    var existing = main.querySelector(':scope > .' + SEAMS_CLASS);
+    if (existing) return existing;
+
     var node = document.createElement('div');
     node.className = SEAMS_CLASS;
     node.setAttribute('aria-hidden', 'true');
@@ -214,12 +144,18 @@
     var rect = runway.getBoundingClientRect();
     holdTravel = viewport * (HOLD_VH / 100);
     curtainTravel = Math.max(1, viewport * (CURTAIN_VH / 100));
-    totalTravel = holdTravel + curtainTravel;
+    introHoldTravel = viewport * (INTRO_HOLD_VH / 100);
+    totalTravel = holdTravel + curtainTravel + introHoldTravel;
 
     /* At Hero centre the runway starts exactly at the viewport bottom. */
     rawLocalScroll = viewport - rect.top;
     localScroll = clamp(rawLocalScroll, 0, totalTravel);
     targetProgress = clamp((localScroll - holdTravel) / curtainTravel, 0, 1);
+
+    var introHoldStart = holdTravel + curtainTravel;
+    introHoldProgress = INTRO_HOLD_VH <= 0
+      ? (localScroll >= introHoldStart - 0.5 ? 1 : 0)
+      : clamp((localScroll - introHoldStart) / Math.max(1, introHoldTravel), 0, 1);
 
     setRootFlag(
       'data-giclee-hero-horizontal-curtain-active',
@@ -237,7 +173,11 @@
     var lineIn = smoothstep(rangeProgress(eased, 0, 0.08));
     var lineOut = 1 - smoothstep(rangeProgress(eased, 0.86, 1));
     var lineOpacity = 0.72 * lineIn * lineOut;
-    var complete = currentProgress >= 0.999 && targetProgress >= 0.999;
+    var curtainComplete = currentProgress >= 0.999 && targetProgress >= 0.999;
+    var introHoldComplete = curtainComplete && (
+      INTRO_HOLD_VH <= 0 || localScroll >= totalTravel - 0.5
+    );
+    var introHoldActive = curtainComplete && !introHoldComplete;
 
     hero.style.setProperty('--giclee-hero-curtain-gap', gap.toFixed(4) + '%');
     seams.style.setProperty('--giclee-hero-curtain-gap', gap.toFixed(4) + '%');
@@ -252,8 +192,15 @@
     );
 
     setRootFlag('data-giclee-hero-horizontal-curtain-opening', opening);
-    setRootFlag('data-giclee-hero-horizontal-curtain-complete', complete);
-    if (runway) runway.setAttribute('data-curtain-progress', eased.toFixed(4));
+    setRootFlag('data-giclee-hero-horizontal-curtain-complete', curtainComplete);
+    setRootFlag('data-giclee-hero-intro-hold-active', introHoldActive);
+    setRootFlag('data-giclee-hero-intro-hold-complete', introHoldComplete);
+    setRootFlag('data-giclee-hero-horizontal-curtain-handoff-complete', introHoldComplete);
+
+    if (runway) {
+      runway.setAttribute('data-curtain-progress', eased.toFixed(4));
+      runway.setAttribute('data-intro-hold-progress', introHoldProgress.toFixed(4));
+    }
   }
 
   function tick(now) {
@@ -307,22 +254,27 @@
     intro = findSection('intro', 'section_ThWw4Q');
     if (!main || !hero || !intro || hero.parentNode !== intro.parentNode) return;
 
+    removeLegacyIntroLayers();
     divider = findDividerBetween(hero, intro);
     hero.classList.add(HERO_CLASS);
     intro.classList.add(INTRO_CLASS);
+    intro.setAttribute('data-giclee-curtain-live-intro', 'true');
     if (divider) divider.classList.add(DIVIDER_CLASS);
 
     runway = createRunway();
-    introLayer = createIntroClone();
     seams = createSeams();
-    if (!runway || !introLayer || !seams) return;
+    if (!runway || !seams) return;
 
     root.classList.add(ROOT_CLASS);
     root.style.setProperty('--giclee-hero-hold-height', HOLD_VH + 'vh');
     root.style.setProperty('--giclee-hero-curtain-height', CURTAIN_VH + 'vh');
+    root.style.setProperty('--giclee-hero-intro-hold-height', INTRO_HOLD_VH + 'vh');
     setRootFlag('data-giclee-hero-horizontal-curtain-active', false);
     setRootFlag('data-giclee-hero-horizontal-curtain-opening', false);
     setRootFlag('data-giclee-hero-horizontal-curtain-complete', false);
+    setRootFlag('data-giclee-hero-intro-hold-active', false);
+    setRootFlag('data-giclee-hero-intro-hold-complete', false);
+    setRootFlag('data-giclee-hero-horizontal-curtain-handoff-complete', false);
 
     measureProgress();
     currentProgress = targetProgress;
@@ -334,8 +286,10 @@
     window.addEventListener('pageshow', measureProgress, { passive: true });
 
     window.GICLEE_HERO_HORIZONTAL_CURTAIN_STATUS = function () {
+      var introStyle = window.getComputedStyle(intro);
       return {
         ready: true,
+        transitionMode: 'live-intro-hold',
         targetProgress: targetProgress,
         smoothedProgress: currentProgress,
         easedProgress: smoothstep(currentProgress),
@@ -344,6 +298,8 @@
         localScroll: localScroll,
         holdTravel: holdTravel,
         curtainTravel: curtainTravel,
+        introHoldTravel: introHoldTravel,
+        introHoldProgress: introHoldProgress,
         totalTravel: totalTravel,
         active:
           root.getAttribute('data-giclee-hero-horizontal-curtain-active') ===
@@ -354,14 +310,26 @@
         complete:
           root.getAttribute('data-giclee-hero-horizontal-curtain-complete') ===
           'true',
+        introHoldActive:
+          root.getAttribute('data-giclee-hero-intro-hold-active') === 'true',
+        introHoldComplete:
+          root.getAttribute('data-giclee-hero-intro-hold-complete') === 'true',
+        handoffComplete:
+          root.getAttribute(
+            'data-giclee-hero-horizontal-curtain-handoff-complete'
+          ) === 'true',
         heroRect: rectSnapshot(hero),
         runwayRect: rectSnapshot(runway),
         introRect: rectSnapshot(intro),
-        introCloneRect: rectSnapshot(introClone),
+        introCloneRect: null,
+        introPosition: introStyle.position,
+        introOpacity: introStyle.opacity,
+        introVisibility: introStyle.visibility,
         dividerHidden: !!divider,
         config: {
           heroHoldVh: HOLD_VH,
           heroCurtainVh: CURTAIN_VH,
+          introHoldVh: INTRO_HOLD_VH,
         },
       };
     };

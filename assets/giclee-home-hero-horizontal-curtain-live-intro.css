@@ -1,0 +1,78 @@
+/* Reveal the real Shopify Giclée Art section behind the Hero curtain. */
+
+/* A cached older script may have left an inert visual clone in the document. */
+.giclee-hero-horizontal-curtain__intro-layer,
+.giclee-hero-horizontal-curtain__intro-clone {
+  display: none !important;
+}
+
+/*
+ * The real intro is promoted to a fixed viewport layer as soon as Hero reaches
+ * its centred hold. It remains fixed through the complete curtain reveal and
+ * one additional empty 100vh scroll before returning to normal document flow.
+ */
+html.giclee-hero-horizontal-curtain-enabled[
+    data-giclee-hero-horizontal-curtain-active='true'
+  ]:not([data-giclee-hero-horizontal-curtain-handoff-complete='true'])
+  #MainContent
+  > .shopify-section.giclee-hero-horizontal-curtain-intro-target[
+    data-giclee-curtain-live-intro='true'
+  ] {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 19 !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100svh !important;
+  min-height: 100svh !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: none !important;
+  transform: none !important;
+  content-visibility: visible !important;
+  contain: none !important;
+  backface-visibility: hidden;
+}
+
+html.giclee-hero-horizontal-curtain-enabled[
+    data-giclee-hero-horizontal-curtain-active='true'
+  ]:not([data-giclee-hero-horizontal-curtain-handoff-complete='true'])
+  #MainContent
+  > .shopify-section.giclee-hero-horizontal-curtain-intro-target[
+    data-giclee-curtain-live-intro='true'
+  ]
+  > :is(.section, .section-background) {
+  min-height: 100svh !important;
+  content-visibility: visible !important;
+  contain: none !important;
+}
+
+/* The revealed section can be used normally during its empty-scroll hold. */
+html.giclee-hero-horizontal-curtain-enabled[
+    data-giclee-hero-horizontal-curtain-complete='true'
+  ]:not([data-giclee-hero-horizontal-curtain-handoff-complete='true'])
+  #MainContent
+  > .shopify-section.giclee-hero-horizontal-curtain-intro-target[
+    data-giclee-curtain-live-intro='true'
+  ] {
+  pointer-events: auto !important;
+}
+
+/* At hand-off the same live section returns to its native document position. */
+html.giclee-hero-horizontal-curtain-enabled[
+    data-giclee-hero-horizontal-curtain-handoff-complete='true'
+  ]
+  #MainContent
+  > .shopify-section.giclee-hero-horizontal-curtain-intro-target[
+    data-giclee-curtain-live-intro='true'
+  ] {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  content-visibility: visible !important;
+  contain: none !important;
+}

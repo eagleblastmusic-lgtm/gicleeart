@@ -1,8 +1,8 @@
 {
   "version": 1,
   "section_order": [
-    "Administracja produktu",
     "Administracja strony",
+    "Administracja produktu",
     "Zamowienia",
     "Finanse",
     "Marketing",
@@ -183,17 +183,112 @@
     "karuzela": {
       "section": "Administracja strony",
       "visible": true,
-      "sort_key": 30
+      "sort_key": 60
     },
     "tldobio": {
       "section": "Administracja strony",
       "visible": true,
-      "sort_key": 31
+      "sort_key": 50
     },
     "kolaz": {
       "section": "Marketing",
       "visible": true,
       "sort_key": 32
+    },
+    "pushe": {
+      "section": "Inne",
+      "visible": true,
+      "sort_key": 33
+    },
+    "wzorzecszablonu": {
+      "section": "Administracja strony",
+      "visible": true,
+      "sort_key": 100
+    },
+    "przedpo": {
+      "section": "Administracja produktu",
+      "visible": true,
+      "sort_key": 35
+    },
+    "stronaglowna": {
+      "section": "Administracja strony",
+      "visible": true,
+      "sort_key": 0
+    },
+    "katalog": {
+      "section": "Administracja strony",
+      "visible": true,
+      "sort_key": 40
+    },
+    "stronaproduktu": {
+      "section": "Administracja strony",
+      "visible": true,
+      "sort_key": 70
+    },
+    "submenukatalog": {
+      "section": "Administracja strony",
+      "visible": true,
+      "sort_key": 30
+    },
+    "wlasnafotografia": {
+      "section": "Administracja strony",
+      "visible": true,
+      "sort_key": 20
+    },
+    "gicleeframe": {
+      "section": "Administracja strony",
+      "visible": true,
+      "sort_key": 10
+    },
+    "wspolpraca": {
+      "section": "Administracja strony",
+      "visible": true,
+      "sort_key": 80
+    },
+    "filozofiamarki": {
+      "section": "Administracja strony",
+      "visible": true,
+      "sort_key": 90
+    },
+    "wybortrybu": {
+      "section": "Narzedzia pomocnicze",
+      "visible": true,
+      "sort_key": 44
+    },
+    "kontakt": {
+      "section": "Administracja strony",
+      "visible": true,
+      "sort_key": 110
+    },
+    "stronydozycia": {
+      "section": "Narzedzia pomocnicze",
+      "visible": true,
+      "sort_key": 46
+    },
+    "integracjagpt": {
+      "section": "Narzedzia pomocnicze",
+      "visible": true,
+      "sort_key": 47
+    },
+    "stronablogu": {
+      "section": "Administracja strony",
+      "visible": true,
+      "sort_key": 120
+    },
+    "faq": {
+      "section": "Administracja strony",
+      "visible": true,
+      "sort_key": 130
+    },
+    "losujobraz": {
+      "section": "Administracja strony",
+      "visible": true,
+      "sort_key": 140
+    },
+    "segregatorplikow": {
+      "section": "Narzedzia pomocnicze",
+      "visible": true,
+      "sort_key": 51
     }
   }
 }

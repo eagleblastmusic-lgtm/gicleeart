@@ -7,6 +7,7 @@
   var LEGACY_BAR_CLASS = 'giclee-hero-utility-bar';
   var RETRY_LIMIT = 120;
   var RETRY_MS = 100;
+  var widthObserver = null;
 
   function findFooterUtilities() {
     return (
@@ -68,11 +69,28 @@
   }
 
   function removeStaleBars() {
+    if (widthObserver) {
+      widthObserver.disconnect();
+      widthObserver = null;
+    }
+
     document
       .querySelectorAll('.' + BAR_CLASS + ', .' + LEGACY_BAR_CLASS)
       .forEach(function (node) {
         node.remove();
       });
+  }
+
+  function syncLiveFooterWidth(band, source) {
+    if (!band || !source) return;
+
+    var sourceRect = source.getBoundingClientRect();
+    if (!sourceRect.width) return;
+
+    band.style.setProperty(
+      '--giclee-prehero-footer-live-width',
+      (Math.round(sourceRect.width * 100) / 100).toFixed(2) + 'px'
+    );
   }
 
   function createNativeShell(source) {
@@ -87,7 +105,6 @@
     shell.setAttribute('data-giclee-prehero-utility-bar', '');
     shell.setAttribute('aria-label', 'Informacje i odnośniki Giclée Art');
 
-    /* Preserve the real footer section width and colour scheme, but fit it into the 60px rail. */
     shell.style.setProperty('--padding-block-start', '0px');
     shell.style.setProperty('--padding-block-end', '0px');
 
@@ -113,7 +130,23 @@
 
     band.removeAttribute('aria-hidden');
     band.setAttribute('data-giclee-prehero-utility-band', '');
+    syncLiveFooterWidth(band, source);
     band.appendChild(bar);
+
+    if (window.ResizeObserver) {
+      widthObserver = new ResizeObserver(function () {
+        syncLiveFooterWidth(band, source);
+      });
+      widthObserver.observe(source);
+    } else {
+      window.addEventListener(
+        'resize',
+        function () {
+          syncLiveFooterWidth(band, source);
+        },
+        { passive: true }
+      );
+    }
 
     document.documentElement.setAttribute('data-giclee-prehero-utility-ready', 'true');
 
@@ -136,8 +169,11 @@
           height: Math.round(bandRect.height),
         },
         rect: {
+          left: Math.round(barRect.left),
+          right: Math.round(barRect.right),
           top: Math.round(barRect.top),
           bottom: Math.round(barRect.bottom),
+          width: Math.round(barRect.width),
           height: Math.round(barRect.height),
         },
         sourceRect: {

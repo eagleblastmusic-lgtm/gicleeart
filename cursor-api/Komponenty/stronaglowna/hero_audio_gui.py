@@ -11,6 +11,7 @@ import tkinter as tk
 from .service import AUDIO_SUFFIXES, upload_hero_audio
 
 _WIN_TITLE = "Dźwięk ambient — hero"
+_AUDIO_UPLOAD_TOAST = "Audio wgrane — URL CDN ustawiony w polu poniżej."
 
 
 def _audio_label_from_url(url: str) -> str:
@@ -72,6 +73,11 @@ def ensure_hero_audio_widgets(state: dict[str, Any], values: dict[str, Any]) -> 
         if volume <= 0 and raw_vol in (None, ""):
             volume = 28
         state["widgets"]["hero_audio_volume"] = tk.IntVar(value=max(0, min(100, volume)))
+
+
+def _notify_audio_uploaded(show_toast: Callable[..., Any], parent: tk.Misc) -> None:
+    """Pokaż toast sukcesu z prawidłowym widgetem rodzica jako pierwszym argumentem."""
+    show_toast(parent, _AUDIO_UPLOAD_TOAST)
 
 
 def open_hero_audio_editor_window(
@@ -145,15 +151,24 @@ def open_hero_audio_editor_window(
         )
         if not path:
             return
+
         try:
             url = upload_hero_audio(Path(path))
-            url_var.set(url)
-            enable_var.set(True)
-            mark_dirty()
-            status_var.set("Wgrano plik audio do Shopify Files.")
-            show_toast("Audio wgrane", "URL CDN ustawiony w polu poniżej.")
         except Exception as exc:
             messagebox.showerror(_WIN_TITLE, f"Nie udało się wgrać pliku:\n{exc}", parent=win)
+            return
+
+        url_var.set(url)
+        enable_var.set(True)
+        mark_dirty()
+        status_var.set("Wgrano plik audio do Shopify Files.")
+
+        # Toast jest tylko informacją pomocniczą. Jego ewentualny błąd nie może
+        # zostać pokazany jako fałszywa awaria zakończonego już uploadu.
+        try:
+            _notify_audio_uploaded(show_toast, win)
+        except Exception:
+            pass
 
     btn_row = ttk.Frame(file_frame)
     btn_row.pack(anchor="w", pady=(8, 0))

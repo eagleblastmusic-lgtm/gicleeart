@@ -10,16 +10,20 @@
 }
 
 /*
- * This shell is a shallow clone of the real footer .section node. Keep its
- * section-width and colour-scheme classes so typography, colours, icons and
- * horizontal alignment are inherited from the live footer without imitation.
+ * The shell is a shallow clone of the real footer .section node. Its live width
+ * is measured from the original footer utilities and reused here, so the three
+ * groups stay clustered exactly like the footer instead of stretching edge-to-edge.
  */
 .giclee-prehero-utility-bar {
   position: relative !important;
   z-index: 1 !important;
   display: flex !important;
   align-items: center !important;
-  width: 100% !important;
+  width: min(
+    calc(100% - 32px),
+    var(--giclee-prehero-footer-live-width, 1440px)
+  ) !important;
+  max-width: var(--giclee-prehero-footer-live-width, 1440px) !important;
   height: 100% !important;
   min-height: 0 !important;
   margin: 0 auto !important;
@@ -63,4 +67,11 @@
 body > .giclee-hero-utility-bar,
 .giclee-hero-horizontal-curtain-source .giclee-hero-utility-bar {
   display: none !important;
+}
+
+@media screen and (max-width: 749px) {
+  .giclee-prehero-utility-bar {
+    width: calc(100% - 28px) !important;
+    max-width: none !important;
+  }
 }

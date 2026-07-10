@@ -17,7 +17,8 @@ window.GICLEE_PREHERO_CONFIG = {
   ],
   horizontalCurtainEnabled: true,
   heroHoldVh: 100,
-  heroCurtainVh: 100
+  heroCurtainVh: 100,
+  introHoldVh: 100
 };
 window.GICLEE_PREHERO_SCRUB_VIDEO_URL = {{ 'giclee-home-prehero-scrub.mp4' | asset_url | json }};
 
@@ -42,12 +43,15 @@ window.GICLEE_PREHERO_SCRUB_VIDEO_URL = {{ 'giclee-home-prehero-scrub.mp4' | ass
 {{ 'giclee-home-prehero-chrome.css' | asset_url | stylesheet_tag }}
 {{ 'giclee-home-prehero-reveal.css' | asset_url | stylesheet_tag }}
 {{ 'giclee-home-hero-horizontal-curtain.css' | asset_url | stylesheet_tag }}
+{{ 'giclee-home-hero-horizontal-curtain-live-intro.css' | asset_url | stylesheet_tag }}
 {{ 'giclee-home-hero-horizontal-curtain-center.css' | asset_url | stylesheet_tag }}
 {{ 'giclee-home-hero-horizontal-curtain-matte.css' | asset_url | stylesheet_tag }}
 {{ 'giclee-home-hero-utility-bar.css' | asset_url | stylesheet_tag }}
+{{ 'giclee-home-hero-sound-consent.css' | asset_url | stylesheet_tag }}
 <script src="{{ 'giclee-home-prehero-scrub.js' | asset_url }}" defer></script>
 <script src="{{ 'giclee-home-prehero-chrome.js' | asset_url }}" defer></script>
 <script src="{{ 'giclee-home-prehero-reveal.js' | asset_url }}" defer></script>
+<script src="{{ 'giclee-home-hero-video-gate.js' | asset_url }}" defer></script>
 <script src="{{ 'giclee-home-hero-horizontal-curtain.js' | asset_url }}" defer></script>
 <script src="{{ 'giclee-home-hero-utility-bar.js' | asset_url }}" defer></script>
 <style>
