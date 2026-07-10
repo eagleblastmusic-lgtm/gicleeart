@@ -6,13 +6,27 @@
   'use strict';
 
   var ROOT_ID = 'giclee-prehero-video-scrub';
-  var LERP = 0.08;
+  var CONFIG = window.GICLEE_PREHERO_CONFIG || {};
+  var LERP = configNumber('scrubLerp', 0.08, 0.02, 0.35);
   var SEEK_EPSILON = 0.01;
   var SOURCE_RETRY_MS = 250;
   var SOURCE_RETRY_LIMIT = 80;
+  var SCROLL_HEIGHT_VH = configNumber('scrollHeightVh', 600, 300, 2000);
+  var REVEAL_OVERLAP_VH = configNumber('revealOverlapVh', 200, 100, 1000);
+  var HERO_RISE_VH = configNumber('heroRiseVh', 100, 100, 500);
+
+  function configNumber(key, fallback, min, max) {
+    var value = Number(CONFIG[key]);
+    if (!Number.isFinite(value)) value = fallback;
+    return Math.min(max, Math.max(min, value));
+  }
 
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
+  }
+
+  function viewportHeight() {
+    return window.innerHeight || document.documentElement.clientHeight || 800;
   }
 
   function firstMediaSource(video) {
@@ -74,6 +88,15 @@
     root.className = 'giclee-prehero-scrub';
     root.setAttribute('data-giclee-prehero-scrub', '1');
     root.setAttribute('data-video-ready', 'false');
+    root.setAttribute('data-scrub-progress', '0');
+    root.setAttribute('data-prehero-phase', 'scrub');
+    root.style.setProperty('--giclee-prehero-scroll-height', SCROLL_HEIGHT_VH + 'vh');
+    root.style.setProperty('--giclee-prehero-reveal-overlap', REVEAL_OVERLAP_VH + 'vh');
+    root.style.setProperty('--giclee-prehero-hero-rise-height', HERO_RISE_VH + 'vh');
+    document.documentElement.style.setProperty(
+      '--giclee-prehero-hero-rise-height',
+      HERO_RISE_VH + 'vh'
+    );
 
     var stage = document.createElement('div');
     stage.className = 'giclee-prehero-scrub__stage';
@@ -124,14 +147,49 @@
     var currentTime = 0;
     var progress = 0;
     var rafId = 0;
+    var totalTravel = 0;
+    var preHeroTravel = 0;
+    var heroRiseStart = 0;
+    var heroRiseTravel = 0;
+    var heroRiseProgress = 0;
+    var revealStart = 0;
+    var revealOverlapTravel = 0;
     var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     function measureProgress() {
       if (!duration || reducedMotion) return;
+
+      var viewport = viewportHeight();
       var rect = root.getBoundingClientRect();
-      var travel = Math.max(1, root.offsetHeight - window.innerHeight);
-      progress = clamp(-rect.top / travel, 0, 1);
+      totalTravel = Math.max(1, root.offsetHeight - viewport);
+      heroRiseTravel = Math.min(totalTravel, viewport * (HERO_RISE_VH / 100));
+      preHeroTravel = Math.max(1, totalTravel - heroRiseTravel);
+      heroRiseStart = preHeroTravel;
+      revealOverlapTravel = Math.min(
+        preHeroTravel,
+        viewport * (REVEAL_OVERLAP_VH / 100)
+      );
+      revealStart = Math.max(0, preHeroTravel - revealOverlapTravel);
+
+      var localScroll = clamp(-rect.top, 0, totalTravel);
+      progress = clamp(localScroll / preHeroTravel, 0, 1);
+      heroRiseProgress = clamp(
+        (localScroll - heroRiseStart) / Math.max(1, heroRiseTravel),
+        0,
+        1
+      );
       targetTime = progress * Math.max(0, duration - 0.033);
+
+      root.setAttribute('data-scrub-progress', progress.toFixed(4));
+      root.setAttribute('data-hero-rise-progress', heroRiseProgress.toFixed(4));
+      root.setAttribute(
+        'data-prehero-phase',
+        localScroll >= heroRiseStart
+          ? 'hero-rise'
+          : localScroll >= revealStart
+            ? 'scrub-reveal'
+            : 'scrub'
+      );
       requestTick();
     }
 
@@ -141,10 +199,6 @@
 
       currentTime += (targetTime - currentTime) * LERP;
 
-      /*
-       * CRITICAL VIDEO SCRUBBING TECHNIQUE
-       * Update the frame only after the browser has finished the previous seek.
-       */
       if (
         !video.seeking &&
         video.readyState >= 1 &&
@@ -200,13 +254,26 @@
     window.GICLEE_PREHERO_SCRUB_STATUS = function () {
       return {
         ready: root.getAttribute('data-video-ready') === 'true',
+        phase: root.getAttribute('data-prehero-phase'),
         duration: duration,
         progress: progress,
         targetTime: targetTime,
         smoothedTime: currentTime,
         renderedTime: video.currentTime,
         seeking: video.seeking,
+        totalTravel: totalTravel,
+        preHeroTravel: preHeroTravel,
+        revealStart: revealStart,
+        revealOverlapTravel: revealOverlapTravel,
+        heroRiseStart: heroRiseStart,
+        heroRiseTravel: heroRiseTravel,
+        heroRiseProgress: heroRiseProgress,
         source: video.currentSrc || video.src || '',
+        config: {
+          scrollHeightVh: SCROLL_HEIGHT_VH,
+          revealOverlapVh: REVEAL_OVERLAP_VH,
+          heroRiseVh: HERO_RISE_VH,
+        },
       };
     };
   }
@@ -283,7 +350,7 @@
   }
 
   function boot() {
-    if (document.getElementById(ROOT_ID)) return;
+    if (CONFIG.enabled === false || document.getElementById(ROOT_ID)) return;
     var hero = findHero();
     if (!hero) return;
     var parts = createSection(hero);

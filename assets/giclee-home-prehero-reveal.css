@@ -1,0 +1,258 @@
+/*
+ * Integrated pre-hero portal reveal.
+ * The next Hero and its editorial statement open inside the existing sticky scrub viewport.
+ * After the portal completes, the original live Shopify Hero rises naturally from below.
+ */
+
+.giclee-prehero-reveal {
+  --giclee-prehero-reveal-inset: 50%;
+  --giclee-prehero-reveal-progress: 0;
+  --giclee-prehero-reveal-spine-opacity: 0;
+  --giclee-prehero-copy-opacity: 0;
+  --giclee-prehero-copy-y: 24px;
+  --giclee-prehero-copy-blur: 9px;
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  clip-path: inset(
+    0 var(--giclee-prehero-reveal-inset, 50%)
+    0 var(--giclee-prehero-reveal-inset, 50%)
+  );
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: clip-path;
+}
+
+.giclee-prehero-reveal__visual {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #050505;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.giclee-prehero-reveal__visual::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.22)),
+    radial-gradient(ellipse at center, transparent 42%, rgb(0 0 0 / 0.28) 100%);
+}
+
+/* Editorial statement revealed by the same horizontal portal mask. */
+.giclee-prehero-reveal__copy {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  padding: clamp(2rem, 7vw, 8rem);
+  box-sizing: border-box;
+  color: #fff;
+  text-align: center;
+  pointer-events: none;
+  transform: translate3d(0, var(--giclee-prehero-copy-y, 24px), 0);
+  filter: blur(var(--giclee-prehero-copy-blur, 9px));
+  backface-visibility: hidden;
+  will-change: transform, filter;
+}
+
+.giclee-prehero-reveal__copy::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: var(--giclee-prehero-copy-opacity, 0);
+  background: radial-gradient(
+    ellipse at center,
+    rgb(0 0 0 / 0.08) 0%,
+    rgb(0 0 0 / 0.28) 74%,
+    rgb(0 0 0 / 0.4) 100%
+  );
+  will-change: opacity;
+}
+
+.giclee-prehero-reveal__copy-text {
+  position: relative;
+  z-index: 1;
+  width: min(76rem, 88vw);
+  margin: 0;
+  color: #fff;
+  font-family: var(--font-heading--family, Georgia, 'Times New Roman', serif);
+  font-size: clamp(1.75rem, 3.15vw, 4.25rem);
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  text-align: center;
+  text-wrap: balance;
+  text-shadow:
+    0 1px 2px rgb(0 0 0 / 0.5),
+    0 12px 40px rgb(0 0 0 / 0.5);
+}
+
+.giclee-prehero-reveal__copy-line {
+  --giclee-prehero-copy-line-opacity: 0;
+  --giclee-prehero-copy-line-y: 18px;
+  display: block;
+  opacity: var(--giclee-prehero-copy-line-opacity, 0);
+  transform: translate3d(0, var(--giclee-prehero-copy-line-y, 18px), 0);
+  backface-visibility: hidden;
+  will-change: opacity, transform;
+}
+
+.giclee-prehero-reveal__copy-line + .giclee-prehero-reveal__copy-line {
+  margin-top: 0.09em;
+}
+
+/* A subtle centre seam makes the zero-width portal readable before it starts opening. */
+.giclee-prehero-reveal__spine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  z-index: 4;
+  width: 1px;
+  pointer-events: none;
+  opacity: var(--giclee-prehero-reveal-spine-opacity, 0);
+  background: rgb(255 255 255 / 0.72);
+  box-shadow: 0 0 12px rgb(255 255 255 / 0.24);
+  transform: translate3d(-0.5px, 0, 0);
+  transition: none;
+  will-change: opacity;
+}
+
+.giclee-prehero-scrub[data-reveal-active='true']
+  .giclee-prehero-reveal__spine {
+  opacity: var(--giclee-prehero-reveal-spine-opacity, 0.72);
+}
+
+/*
+ * The real Hero stays in its original DOM position. A -100vh overlap makes its top edge meet
+ * the viewport bottom exactly when the portal has finished, then native scrolling carries it
+ * to top: 0 where the existing home-stack sticky behaviour takes over without a jump.
+ */
+html.giclee-prehero-hero-rise-enabled {
+  --giclee-prehero-hero-rise-height: 100vh;
+}
+
+html.giclee-prehero-hero-rise-enabled
+  #MainContent
+  > .shopify-section.giclee-prehero-hero-rise,
+html.giclee-home-stack.giclee-prehero-hero-rise-enabled
+  #MainContent
+  > .shopify-section.giclee-prehero-hero-rise[data-giclee-home-stack='1'] {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: var(--home-stack-1-z, 20) !important;
+  margin-top: calc(-1 * var(--giclee-prehero-hero-rise-height, 100vh)) !important;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/*
+ * The pre-Hero is injected before home-stack measures its first section. At scrollY=0 the
+ * native measurement therefore sees Hero several viewports below and can store an invalid
+ * calc(100svh - documentTop) value. Pin the live Hero to its real viewport geometry from the
+ * first paint instead of relying on a later browser resize (for example opening DevTools).
+ */
+html.giclee-prehero-hero-rise-enabled
+  #MainContent
+  > .shopify-section.giclee-prehero-hero-rise,
+html.giclee-home-stack.giclee-prehero-hero-rise-enabled
+  #MainContent
+  > .shopify-section.giclee-prehero-hero-rise[data-giclee-home-stack='1'] {
+  --home-stack-hero-min-height: 100svh !important;
+  --home-stack-hero-media-offset-top: 0px !important;
+  min-height: 100svh !important;
+  content-visibility: visible !important;
+  contain: none !important;
+}
+
+html.giclee-prehero-hero-rise-enabled
+  #MainContent
+  > .shopify-section.giclee-prehero-hero-rise
+  > .slideshow-section {
+  min-height: 100svh !important;
+  content-visibility: visible !important;
+}
+
+html.giclee-prehero-hero-rise-enabled
+  #MainContent
+  > .shopify-section.giclee-prehero-hero-rise
+  slideshow-component {
+  --slide-min-height: 100svh !important;
+  --slide-min-height-desktop: 100svh !important;
+  min-height: 100svh !important;
+  content-visibility: visible !important;
+}
+
+html.giclee-prehero-hero-rise-enabled
+  #MainContent
+  > .shopify-section.giclee-prehero-hero-rise
+  :is(.giclee-video-collage, .giclee-collage__stage, .giclee-collage__video) {
+  visibility: visible !important;
+  content-visibility: visible !important;
+}
+
+/* Do not show the native scroll cue while Hero is only entering the viewport. */
+html:has(#giclee-prehero-video-scrub[data-hero-rise-complete='false'])
+  .shopify-section.giclee-prehero-hero-rise
+  .giclee-home-scroll-cue {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+@media screen and (max-width: 749px) {
+  .giclee-prehero-reveal__copy {
+    padding: 2rem 1.35rem;
+  }
+
+  .giclee-prehero-reveal__copy-text {
+    width: min(31rem, 92vw);
+    font-size: clamp(1.45rem, 6.4vw, 2.65rem);
+    line-height: 1.13;
+    letter-spacing: -0.02em;
+  }
+
+  .giclee-prehero-reveal__copy-line + .giclee-prehero-reveal__copy-line {
+    margin-top: 0.18em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giclee-prehero-reveal {
+    --giclee-prehero-reveal-inset: 0%;
+    clip-path: none;
+    will-change: auto;
+  }
+
+  .giclee-prehero-reveal__copy,
+  .giclee-prehero-reveal__copy-line {
+    filter: none;
+    transform: none;
+    will-change: auto;
+  }
+
+  html.giclee-prehero-hero-rise-enabled
+    #MainContent
+    > .shopify-section.giclee-prehero-hero-rise {
+    margin-top: 0 !important;
+  }
+
+  .giclee-prehero-reveal__spine {
+    display: none;
+  }
+}

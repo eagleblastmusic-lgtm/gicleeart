@@ -1,11 +1,16 @@
 /*
  * Homepage pre-hero video scrub.
- * A 500vh scroll runway drives one sticky 100svh video viewport.
+ * The 600vh section produces 500vh of sticky travel:
+ * - first 400vh: video scrub with the centred reveal during its final 200vh,
+ * - final 100vh: the original live Hero rises naturally from the viewport bottom.
  */
 
 .giclee-prehero-scrub {
-  --giclee-prehero-scroll-height: 500vh;
+  --giclee-prehero-scroll-height: 600vh;
+  --giclee-prehero-reveal-overlap: 200vh;
+  --giclee-prehero-hero-rise-height: 100vh;
   position: relative;
+  z-index: 19;
   width: 100%;
   height: var(--giclee-prehero-scroll-height);
   min-height: var(--giclee-prehero-scroll-height);
