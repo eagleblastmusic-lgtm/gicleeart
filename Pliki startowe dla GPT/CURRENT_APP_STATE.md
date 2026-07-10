@@ -5,23 +5,23 @@ GicleeApp Studio v1.46.0
 
 GitHub / aktualna wersja aplikacji (`eagleblastmusic-lgtm/gicleeapp`):
 v1.46.0 — zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`
-Ostatni push GicleeApp: `13c095f` na `main` (2026-07-10 01:10 UTC) — Refresh GicleeApp repository snapshot
+Ostatni push GicleeApp: `87a133a` na `main` (2026-07-10 03:38 UTC) — Refresh GicleeApp repository snapshot
 
 Monorepo origin/master (projekt / docs):
-7ac552e Aktualizacja /Wybór Trybów v2/
+5378c94 W assets/giclee-home-stack.css dodano desktopowy override po wspólnej regule position: relative dla separatorów scroll:
 
 Previous checkpoint:
 46fc718 feat(studio): add GICLÉE FRAME page inventory RAM editor (v1.40.0)
 
 Branch status:
-- **GitHub gicleeapp:** v1.46.0 / `main` @ `13c095f` (auto-sync po Push GicleeApp, 2026-07-10 01:10 UTC)
-- **monorepo origin/master:** `7ac552e` — Aktualizacja /Wybór Trybów v2/
+- **GitHub gicleeapp:** v1.46.0 / `main` @ `87a133a` (auto-sync po Push GicleeApp, 2026-07-10 03:38 UTC)
+- **monorepo origin/master:** `5378c94` — W assets/giclee-home-stack.css dodano desktopowy override po wspólnej regule position: relative dla separatorów scroll:
 
 GPT starter files:
-auto-sync po Push GicleeApp 2026-07-10 01:10 UTC (gicleeapp `13c095f`, v1.46.0; paczka v37; źródło = ten folder, nie ZIP)
+auto-sync po Push GicleeApp 2026-07-10 03:38 UTC (gicleeapp `87a133a`, v1.46.0; paczka v37; źródło = ten folder, nie ZIP)
 
 Recent context:
-- **GitHub gicleeapp:** v1.46.0 / `main` @ `13c095f` — auto-sync po Push GicleeApp
+- **GitHub gicleeapp:** v1.46.0 / `main` @ `87a133a` — auto-sync po Push GicleeApp
 - GICLÉE FRAME™ F2.1: closed + pushed (historycznie v1.40.1 / `4647c1b`; aktualna wersja aplikacji na GitHub jest nowsza)
 - Local runtime/untracked still outside commit and remote (working tree hygiene pending)
 <!-- gpt-starter:gicleeapp-push:end -->

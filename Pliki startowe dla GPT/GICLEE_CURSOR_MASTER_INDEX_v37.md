@@ -27,7 +27,7 @@ Zasady:
 
 Workflow snapshotów: `GICLEE_GITHUB_SNAPSHOT_REVIEW_WORKFLOW_v35.md`.
 
-Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` oraz `CURRENT_APP_STATE.md` (GitHub gicleeapp **v1.46.0** / `main` @ `13c095f`; monorepo origin/master `7ac552e`).
+Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` oraz `CURRENT_APP_STATE.md` (GitHub gicleeapp **v1.46.0** / `main` @ `87a133a`; monorepo origin/master `5378c94`).
 
 **GICLÉE FRAME™:** F2.1 **done** (pushed). Ustanawia wzorzec **`Studio Page Component Editor Pattern`** dla przyszłych edytorów strony w Studio — patrz `gicleeframe-planning.md` §7, link w `admin-components-strategy.md`. **F3** (lokalny zapis draftu RAM) i **F4** (bounded writer): **not started**.
 

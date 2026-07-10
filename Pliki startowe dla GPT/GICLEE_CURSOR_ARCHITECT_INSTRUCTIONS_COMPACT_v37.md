@@ -169,12 +169,12 @@ Komendy aktywujące tryb Veo/Flow: Veo premium · Veo krótko · Veo popraw · T
 Repo kanoniczne: `eagleblastmusic-lgtm/gicleeapp` (monorepo `gicleeart`, branch `master`, app w `cursor-api/`)
 
 GitHub / aktualna wersja aplikacji: **v1.46.0** (`giclee_app/__init__.py`, `package.json`)
-Ostatni push GicleeApp: `13c095f` na `main` (2026-07-10 01:10 UTC) — Refresh GicleeApp repository snapshot
-Monorepo origin/master: `7ac552e` — Aktualizacja /Wybór Trybów v2/
+Ostatni push GicleeApp: `87a133a` na `main` (2026-07-10 03:38 UTC) — Refresh GicleeApp repository snapshot
+Monorepo origin/master: `5378c94` — W assets/giclee-home-stack.css dodano desktopowy override po wspólnej regule position: relative dla separatorów scroll:
 Ostatni pushed feature checkpoint aplikacji (F2.1, historia): `4647c1b` — v1.40.1
 Poprzedni checkpoint: `46fc718` — GICLÉE FRAME page inventory RAM editor (v1.40.0)
 Wersja aplikacji: **GicleeApp Studio v1.46.0**
-Branch: GitHub gicleeapp **v1.46.0** / `main` @ `13c095f`; monorepo origin/master `7ac552e`
+Branch: GitHub gicleeapp **v1.46.0** / `main` @ `87a133a`; monorepo origin/master `5378c94`
 <!-- gpt-starter:gicleeapp-push:end -->
 
 Zamknięte:
