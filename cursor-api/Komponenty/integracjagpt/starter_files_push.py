@@ -107,7 +107,7 @@ def _norm_rel(path: str | Path) -> str:
 
 def starter_push_allowlist_rel_paths() -> list[str]:
     names: list[str] = list(CLEAN_PACK_V38_ACTIVE_FILES)
-    for extra in (GPT_START_MESSAGE_FILE, GPT_STARTER_ZIP_NAME):
+    for extra in (GPT_START_MESSAGE_FILE,):
         if extra not in names:
             names.append(extra)
     return [f"{GPT_STARTER_REL_PREFIX}/{name}" for name in names]

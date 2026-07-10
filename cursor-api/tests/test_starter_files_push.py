@@ -46,12 +46,12 @@ def starter_push_env(tmp_path, monkeypatch):
     return theme, starter
 
 
-def test_starter_push_allowlist_includes_template_and_zip(starter_push_env) -> None:
+def test_starter_push_allowlist_includes_template_excludes_zip(starter_push_env) -> None:
     from Komponenty.integracjagpt import starter_files_push as sfp
 
     paths = sfp.starter_push_allowlist_rel_paths()
     assert "Pliki startowe dla GPT/GICLEEAPP_STUDIO_2_0_MODULE_TEMPLATE.md" in paths
-    assert "Pliki startowe dla GPT/giclee_cursor_architect_knowledge_v38.zip" in paths
+    assert "Pliki startowe dla GPT/giclee_cursor_architect_knowledge_v38.zip" not in paths
     assert "Pliki startowe dla GPT/Wiadomość początkowa.txt" in paths
 
 

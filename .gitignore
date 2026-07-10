@@ -47,3 +47,6 @@ _section_api.json
 
 # Eksporty generowane lokalnie
 /exports/
+
+# Generowane ZIP-y wiedzy GPT (lokalnie; źródła = .md/.txt w folderze)
+Pliki startowe dla GPT/giclee_cursor_architect_knowledge_v*.zip
