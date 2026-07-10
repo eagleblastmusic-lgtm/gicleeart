@@ -66,7 +66,7 @@ Najważniejszym plikiem instrukcji jest zwykle:
 
 Jeśli użytkownik poda konkretną wersję, np.:
 
-`GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md`
+`GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md`
 
 traktuj ją jako główne Instructions danego Custom GPT.
 

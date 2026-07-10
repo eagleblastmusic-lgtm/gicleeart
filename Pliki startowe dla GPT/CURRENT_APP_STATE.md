@@ -5,28 +5,23 @@ GicleeApp Studio v1.46.1
 
 GitHub / aktualna wersja aplikacji (`eagleblastmusic-lgtm/gicleeapp`):
 v1.46.1 — zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`
-Ostatni push GicleeApp: `291a9e4` na `main` (2026-07-10 05:53 UTC) — Refresh GicleeApp repository snapshot
+Ostatni push GicleeApp: `ad9fd14` na `main` (2026-07-10 07:37 UTC) — Refresh GicleeApp repository snapshot
 
 Monorepo origin/master (projekt / docs):
-362ecf5 feat(home): frame hero video between header bands
-
-Lokalne commity monorepo (nie na origin/master, push pending):
-- `95295b3` fix(home): clip parallax media within section seams
+aab237b robimy integracje na galezi
 
 Previous checkpoint:
 46fc718 feat(studio): add GICLÉE FRAME page inventory RAM editor (v1.40.0)
 
 Branch status:
-- **GitHub gicleeapp:** v1.46.1 / `main` @ `291a9e4` (auto-sync po Push GicleeApp, 2026-07-10 05:53 UTC)
-- **monorepo origin/master:** `362ecf5` — feat(home): frame hero video between header bands
-- **lokalnie monorepo:** dodatkowe commity względem origin/master — push pending (nie zakładać push monorepo bez potwierdzenia użytkownika)
-  - `95295b3` fix(home): clip parallax media within section seams
+- **GitHub gicleeapp:** v1.46.1 / `main` @ `ad9fd14` (auto-sync po Push GicleeApp, 2026-07-10 07:37 UTC)
+- **monorepo origin/master:** `aab237b` — robimy integracje na galezi
 
 GPT starter files:
-auto-sync po Push GicleeApp 2026-07-10 05:53 UTC (gicleeapp `291a9e4`, v1.46.1; paczka v37; źródło = ten folder, nie ZIP)
+auto-sync po Push GicleeApp 2026-07-10 07:37 UTC (gicleeapp `ad9fd14`, v1.46.1; paczka v38; źródło = ten folder, nie ZIP)
 
 Recent context:
-- **GitHub gicleeapp:** v1.46.1 / `main` @ `291a9e4` — auto-sync po Push GicleeApp
+- **GitHub gicleeapp:** v1.46.1 / `main` @ `ad9fd14` — auto-sync po Push GicleeApp
 - GICLÉE FRAME™ F2.1: closed + pushed (historycznie v1.40.1 / `4647c1b`; aktualna wersja aplikacji na GitHub jest nowsza)
 - Local runtime/untracked still outside commit and remote (working tree hygiene pending)
 <!-- gpt-starter:gicleeapp-push:end -->
@@ -192,7 +187,7 @@ Technical backlog (only after separate acceptance):
 Important guardrails:
 - Knowledge pack source folder: `C:\Strona\pusty\Pliki startowe dla GPT` — **Cursor edytuje tylko pliki źródłowe `.md` / `.txt` w tym folderze**
 - **Cursor NIE generuje ZIP-a wiedzy** — bez osobnego, wyraźnego polecenia użytkownika
-- ZIP traktuj jako **aktualny snapshot wiedzy** załączony do rozmowy; ZIP wiedzy (`giclee_cursor_architect_knowledge_v37.zip`) generuje **automatycznie program użytkownika** przy wysyłce paczki przez **Okno rozmowy** (Integracja z GPT); **źródłem edycji dla Cursora** są lokalne pliki w `Pliki startowe dla GPT`
+- ZIP traktuj jako **aktualny snapshot wiedzy** załączony do rozmowy; ZIP wiedzy (`giclee_cursor_architect_knowledge_v38.zip`) generuje **automatycznie program użytkownika** przy wysyłce paczki przez **Okno rozmowy** (Integracja z GPT); **źródłem edycji dla Cursora** są lokalne pliki w `Pliki startowe dla GPT`
 - Cursor nie uruchamia: `build_starter_knowledge_zip()`, GUI **Skopiuj .zip**, żadnego ręcznego generatora ZIP
 - GICLÉE FRAME F2.1: RAM-only — no write_text, no writer, no sync/deploy, no Komponenty/* mutation from panel
 - Do not start F3/F4/writer without separate approval
@@ -530,7 +525,7 @@ Nie „Python kontra C#” — oba warstwy współpracują.
     Cursor implementuje lokalnie.
     GPT/assistant projektuje architekturę, reviewuje raporty, wykrywa ryzyka i przygotowuje precyzyjne prompty.
 
-Szczegóły w COMPACT v37 § Programming / Architecture Principles.
+Szczegóły w COMPACT v38 § Programming / Architecture Principles.
 
 ---
 
@@ -551,7 +546,7 @@ Sprawdzone wzorce:
 
 Te wzorce powinny być traktowane jako baza dla przyszłego GicleeApp Studio 2.0.
 
-Szczegóły w COMPACT v37 § Current technical lessons from Giclee Viewer.
+Szczegóły w COMPACT v38 § Current technical lessons from Giclee Viewer.
 
 ---
 
@@ -597,7 +592,7 @@ GicleeApp Studio 2.0 ma używać sztywnego szablonu modułów użytkownika z pli
 
 Nie zmieniać nazw, kolejności ani struktury modułów bez wyraźnej decyzji użytkownika.
 
-Szczegóły w COMPACT v37 § Strategic Direction — Giclée Art Studio OS.
+Szczegóły w COMPACT v38 § Strategic Direction — Giclée Art Studio OS.
 
 ---
 
@@ -618,7 +613,7 @@ Dla funkcji produktowych preferować większe, spójne pakiety:
 - GV-10 Review Workflow
 - GAS-0 GicleeApp Studio 2.0 Architecture Discovery
 
-Szczegóły w COMPACT v37 § Work Planning Rule.
+Szczegóły w COMPACT v38 § Work Planning Rule.
 
 ---
 
@@ -640,7 +635,7 @@ Docelowy styl nowych aplikacji Giclée Art:
 Nie kopiować chaotycznie obecnego UI 1:1.
 Zachować użyteczne elementy obecnego GicleeApp Studio, ale GicleeApp Studio 2.0 projektować jako bardziej dojrzały, elegancki i responsywny shell.
 
-Szczegóły w COMPACT v37 § UI / Product Taste Direction.
+Szczegóły w COMPACT v38 § UI / Product Taste Direction.
 
 ---
 
@@ -713,4 +708,15 @@ Najważniejsze bieżące checkpointy:
 - next likely GV stage: GV-8 Similarity / Variants / Pairing
 - future GAS stage: GAS-0 GicleeApp Studio 2.0 Information Architecture & Shell Plan
 
-Szczegóły w COMPACT v37 § Source of Truth / Decision Memory.
+Szczegóły w COMPACT v38 § Source of Truth / Decision Memory.
+
+---
+
+## GPT starter procedural update (2026-07-10)
+
+- Lokalny projekt `C:\Strona\pusty` jest **jednym monorepo**; `cursor-api/` nie jest osobnym lokalnym repozytorium Git.
+- Remotes: `origin` → gicleeart · `gpt` → gicleeart-gpt · `gicleeapp` → gicleeapp.
+- Uzgodniono **GPT Git Branch Implementation Mode** — implementacja na branchu `gpt-work/<task-slug>` w `gicleeart-gpt` lub `gicleeapp`, import do monorepo, finalny test i commit **lokalnie**.
+- `main`/`master` na GitHubie **nie są modyfikowane** bez osobnej, jednoznacznej zgody użytkownika.
+- Paczka wiedzy: **v3.8** (`GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md`, `GPT_GIT_BRANCH_WORKFLOW.md`). Procedura importu: Base SHA + Commit SHA obowiązkowe dla GicleeApp.
+- Brak deklaracji konkretnej implementacji na branchu GPT bez dowodu w GitHub / raporcie użytkownika.

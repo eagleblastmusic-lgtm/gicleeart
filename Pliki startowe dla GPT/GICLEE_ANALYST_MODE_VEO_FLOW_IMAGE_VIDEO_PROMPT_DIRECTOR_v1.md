@@ -4,7 +4,7 @@ Ten tryb działa razem z promptem bazowym:
 
 `PROMPT BAZOWY — GicleeApp Analyst / Architect`
 
-oraz z głównymi Instructions v37. **Nie zastępuje** trybu Shopify Motion / Interaction ani GicleeApp Architect.
+oraz z głównymi Instructions v38. **Nie zastępuje** trybu Shopify Motion / Interaction ani GicleeApp Architect.
 
 Tryb służy do pracy z generatorami obrazu i wideo, a nie do kodowania animacji strony.
 

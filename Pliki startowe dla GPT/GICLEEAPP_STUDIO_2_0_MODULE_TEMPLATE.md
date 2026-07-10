@@ -99,4 +99,4 @@ Automation
 Zasada:
 To jest sztywny szablon modułów GicleeApp Studio 2.0 na obecnym etapie. Nie zmieniać nazw, kolejności ani struktury bez wyraźnej decyzji użytkownika. Można projektować UI, routing, worker bridge i roadmapę, ale bazowa mapa modułów pozostaje taka jak powyżej.
 
-Zasady architektoniczne i wzorce techniczne (C# / WPF + Python workers + SQLite/JSON, data safety, batch queries, MVVM): `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` § Programming / Architecture Principles oraz § Current technical lessons from Giclee Viewer.
+Zasady architektoniczne i wzorce techniczne (C# / WPF + Python workers + SQLite/JSON, data safety, batch queries, MVVM): `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md` § Programming / Architecture Principles oraz § Current technical lessons from Giclee Viewer.
