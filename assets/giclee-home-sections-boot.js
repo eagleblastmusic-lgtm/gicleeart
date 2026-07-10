@@ -212,7 +212,14 @@
     var bg = root.querySelector('.giclee-home-studio-reveal__bg');
     if (!bg) return;
 
-    var layer = bg.querySelector('.background-image-container');
+    var clipHost = bg.querySelector('.background-image-container');
+    if (!clipHost) return;
+
+    bg.querySelectorAll('.giclee-home-studio-reveal__parallax-layer').forEach(function (element) {
+      element.classList.remove('giclee-home-studio-reveal__parallax-layer');
+    });
+
+    var layer = clipHost.querySelector('img');
     if (!layer) return;
 
     layer.classList.add('giclee-home-studio-reveal__parallax-layer');

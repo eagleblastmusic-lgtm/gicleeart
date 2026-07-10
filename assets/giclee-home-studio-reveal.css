@@ -84,6 +84,15 @@
   transform-origin: center center;
 }
 
+html.giclee-home-stack
+  :is(
+    .giclee-home-studio-reveal--parallax,
+    .giclee-home-section-bg-effects--parallax
+  )
+  .giclee-home-studio-reveal__overlay {
+  transform: none;
+}
+
 .giclee-home-studio-reveal__radial-mask {
   z-index: 2;
 }
