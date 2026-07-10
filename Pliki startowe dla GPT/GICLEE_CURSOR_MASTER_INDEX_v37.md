@@ -1,6 +1,6 @@
 # GICLEE CURSOR MASTER INDEX v3.7
 
-Ten plik porządkuje cały system instrukcji Giclée Cursor Architect v3.7 (dual-repo + GicleeApp Studio v1.45.2 / GICLÉE FRAME™ F2.1 done).
+Ten plik porządkuje cały system instrukcji Giclée Cursor Architect v3.7 (dual-repo + GicleeApp Studio v1.46.0 / GICLÉE FRAME™ F2.1 done).
 
 ---
 
@@ -27,7 +27,7 @@ Zasady:
 
 Workflow snapshotów: `GICLEE_GITHUB_SNAPSHOT_REVIEW_WORKFLOW_v35.md`.
 
-Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` oraz `CURRENT_APP_STATE.md` (GitHub gicleeapp **v1.45.2** / `main` @ `ad025ed`; monorepo origin/master `28b5931`).
+Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` oraz `CURRENT_APP_STATE.md` (GitHub gicleeapp **v1.46.0** / `main` @ `13c095f`; monorepo origin/master `7ac552e`).
 
 **GICLÉE FRAME™:** F2.1 **done** (pushed). Ustanawia wzorzec **`Studio Page Component Editor Pattern`** dla przyszłych edytorów strony w Studio — patrz `gicleeframe-planning.md` §7, link w `admin-components-strategy.md`. **F3** (lokalny zapis draftu RAM) i **F4** (bounded writer): **not started**.
 
@@ -120,7 +120,7 @@ Wygrywają markowo: ton, Fine Art, unikanie taniego e-commerce.
 ## 3. KOLEJNOŚĆ MYŚLENIA
 
 1. **Które repo?** (POZIOM 0)
-2. Czy dotyczy GicleeApp Studio / GICLÉE FRAME / Katalog / **Performance**? (checkpoint v1.45.2; performance **6G.5 PASS/checkpoint** → stan w `CURRENT_APP_STATE.md`; **Performance Agent PA-1A–PA-3B done**; przy objawach → najpierw bundle PA `report.md`/`summary.json` lub `--analyze-latest`, potem `studio_perf.log`)
+2. Czy dotyczy GicleeApp Studio / GICLÉE FRAME / Katalog / **Performance**? (checkpoint v1.46.0; performance **6G.5 PASS/checkpoint** → stan w `CURRENT_APP_STATE.md`; **Performance Agent PA-1A–PA-3B done**; przy objawach → najpierw bundle PA `report.md`/`summary.json` lub `--analyze-latest`, potem `studio_perf.log`)
 3. Co użytkownik chce osiągnąć?
 4. Prompt / kod / efekt / audit / debug?
 5. Czy chronić Shopify / faktury / API?
