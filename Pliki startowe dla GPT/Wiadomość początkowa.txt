@@ -108,19 +108,19 @@ Najważniejsze zasady pracy:
 Aktualny checkpoint, który powinien być widoczny w `CURRENT_APP_STATE.md`:
 
 <!-- gpt-starter:gicleeapp-push:start -->
-- GicleeApp Studio v1.45.2
+- GicleeApp Studio v1.46.0
 
-- GitHub / aktualna wersja aplikacji: v1.45.2 — zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`
+- GitHub / aktualna wersja aplikacji: v1.46.0 — zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`
 
-- Ostatni push GicleeApp: ad025ed na main (2026-07-09 22:49 UTC) — Refresh GicleeApp repository snapshot
+- Ostatni push GicleeApp: 13c095f na main (2026-07-10 01:10 UTC) — Refresh GicleeApp repository snapshot
 
-- Monorepo origin/master: 28b5931 docs(gpt): refresh starter files checkpoint
+- Monorepo origin/master: 7ac552e Aktualizacja /Wybór Trybów v2/
 
 - Ostatni pushed feature checkpoint aplikacji (F2.1, historia): 4647c1b feat(studio): GICLÉE FRAME F2.1 editor workflow polish (v1.40.1)
 
 - Branch:
-  - GitHub gicleeapp: v1.45.2 / main @ ad025ed (auto-sync po Push GicleeApp)
-  - monorepo origin/master: 28b5931 (docs / projekt)
+  - GitHub gicleeapp: v1.46.0 / main @ 13c095f (auto-sync po Push GicleeApp)
+  - monorepo origin/master: 7ac552e (docs / projekt)
 <!-- gpt-starter:gicleeapp-push:end -->
 
 - Background Builder local v1: frozen

@@ -1,5 +1,5 @@
 {
-  "enabled": false,
+  "enabled": true,
   "desktopEnabled": true,
   "revealThreshold": 0.25,
   "durationMs": 980,
@@ -17,7 +17,7 @@
   "copyHoverTranslateY": -4,
   "glowEnabled": true,
   "easing": "museum",
-  "gradientPreset": "none",
+  "gradientPreset": "menu_wide",
   "gradientOverlayOpacity": 100,
   "radialCenterX": 35,
   "radialCenterY": 50,

@@ -175,7 +175,6 @@ def open_section_effects_dialog(
 
         status_var.set(f"Zapisano efekty sekcji «{zone_label}» + assets motywu.")
         show_toast(host, f"Zapisano efekty — {zone_label}.", duration_ms=1600)
-        dlg.destroy()
 
     def _restore_current_tab() -> None:
         try:

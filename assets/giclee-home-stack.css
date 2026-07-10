@@ -116,6 +116,15 @@ html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll[data-g
   max-height: var(--home-stack-seam-height);
 }
 
+@media screen and (min-width: 750px) {
+  html.giclee-home-stack
+    .shopify-section.giclee-home-stack-divider--scroll[data-giclee-home-stack] {
+    position: sticky;
+    top: 0;
+    pointer-events: none;
+  }
+}
+
 html.giclee-home-stack .shopify-section.giclee-home-stack-divider--scroll[data-giclee-home-stack='2'] {
   z-index: calc(var(--home-stack-2-z) + 1);
 }
