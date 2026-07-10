@@ -17,7 +17,7 @@ VIDEOS_DIR = DATA_DIR / "nagrania"
 REVIEW_DEMOS_DIR = THEME_ROOT / "docs" / "review-demos"
 GPT_STARTER_DIR = THEME_ROOT / "Pliki startowe dla GPT"
 GPT_STARTER_REL_PREFIX = "Pliki startowe dla GPT"
-GPT_STARTER_ZIP_NAME = "giclee_cursor_architect_knowledge_v37.zip"
+GPT_STARTER_ZIP_NAME = "giclee_cursor_architect_knowledge_v38.zip"
 MONOREPO_BRANCH = "master"
 STARTER_FILES_COMMIT_MESSAGE = "docs(gpt): refresh starter files checkpoint"
 
@@ -52,7 +52,7 @@ GICLEE_VIEWER_RUNTIME_FILE_SUFFIXES: tuple[str, ...] = (
     ".coveragexml",
     ".nupkg",
 )
-GPT_COMPACT_INSTRUCTIONS_FILE = "GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md"
+GPT_COMPACT_INSTRUCTIONS_FILE = "GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md"
 GPT_START_MESSAGE_FILE = "Wiadomość początkowa.txt"
 # Kanoniczne nazwy nagrań — Custom GPT szuka tych ścieżek w repo (handoff / manifest).
 GPT_RECORDING_DESKTOP = "latest-desktop.webm"
@@ -153,6 +153,7 @@ GICLEEAPP_SYNC_SKIP_FILE_NAMES: frozenset[str] = frozenset({
     "gpt_knowledge.zip",
     "giclee_cursor_architect_knowledge.zip",
     "giclee_cursor_architect_knowledge_v37.zip",
+    "giclee_cursor_architect_knowledge_v38.zip",
 })
 
 GICLEEAPP_SYNC_SKIP_REL_PREFIXES: tuple[str, ...] = (
@@ -243,6 +244,7 @@ GICLEEAPP_RUNTIME_DENYLIST: frozenset[str] = frozenset({
     "Komponenty/zadania/data/signals_cache.json",
     "giclee_cursor_architect_knowledge.zip",
     "giclee_cursor_architect_knowledge_v37.zip",
+    "giclee_cursor_architect_knowledge_v38.zip",
     "gpt_knowledge.zip",
 })
 

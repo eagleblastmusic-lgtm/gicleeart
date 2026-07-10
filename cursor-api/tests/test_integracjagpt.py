@@ -424,10 +424,10 @@ def test_build_starter_knowledge_zip_from_md_files(tmp_path, monkeypatch) -> Non
     data_dir = tmp_path / "data"
     monkeypatch.setattr(zk, "GPT_STARTER_DIR", starter)
     monkeypatch.setattr(zk, "DATA_DIR", data_dir)
-    monkeypatch.setattr(zk, "CLEAN_PACK_V37_ACTIVE_FILES", manifest)
+    monkeypatch.setattr(zk, "CLEAN_PACK_V38_ACTIVE_FILES", manifest)
 
     zip_path = zk.build_starter_knowledge_zip()
-    assert zip_path.name == "giclee_cursor_architect_knowledge_v37.zip"
+    assert zip_path.name == "giclee_cursor_architect_knowledge_v38.zip"
     assert zip_path.is_file()
     assert data_dir.joinpath("gpt_knowledge.zip").is_file()
 

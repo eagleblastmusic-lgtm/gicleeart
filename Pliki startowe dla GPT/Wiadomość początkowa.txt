@@ -13,7 +13,7 @@ Od teraz traktuj te pliki jako główne instrukcje pracy, stylu rozumowania i sp
 
 Najważniejszym plikiem instrukcji w ZIP-ie jest:
 
-`GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md`
+`GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md`
 
 
 
@@ -23,7 +23,7 @@ Traktuj go tak, jakby był polem Instructions mojego Custom GPT.
 
 Najpierw sprawdź zawartość ZIP-a i potwierdź, że widzisz plik:
 
-`GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md`
+`GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md`
 
 
 
@@ -39,7 +39,13 @@ Jeśli w ZIP-ie są pliki typu:
 
 
 
-to używaj ich jako dodatkowej wiedzy kontekstowej, ale głównym źródłem zasad działania pozostaje plik Instructions v37.
+to używaj ich jako dodatkowej wiedzy kontekstowej, ale głównym źródłem zasad działania pozostaje plik Instructions v38.
+
+GPT może pracować w dwóch trybach implementacji:
+1. **prompt/plan dla Cursora** — Cursor edytuje lokalnie `C:\Strona\pusty`;
+2. **bezpośrednia implementacja na osobnym branchu GitHub** — domyślnie `gpt-work/<task-slug>`.
+
+Bezpośrednia implementacja na GitHubie wymaga brancha roboczego; `main`/`master` pozostają nietknięte bez jednoznacznego polecenia. Kod z brancha GPT nie jest finalny, dopóki nie zostanie pobrany lokalnie, sprawdzony w diff, uruchomiony, przetestowany i zaakceptowany. Procedura: `GPT_GIT_BRANCH_WORKFLOW.md`.
 
 
 
@@ -112,17 +118,15 @@ Aktualny checkpoint, który powinien być widoczny w `CURRENT_APP_STATE.md`:
 
 - GitHub / aktualna wersja aplikacji: v1.46.1 — zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`
 
-- Ostatni push GicleeApp: 291a9e4 na main (2026-07-10 05:53 UTC) — Refresh GicleeApp repository snapshot
+- Ostatni push GicleeApp: ad9fd14 na main (2026-07-10 07:37 UTC) — Refresh GicleeApp repository snapshot
 
-- Monorepo origin/master: 362ecf5 feat(home): frame hero video between header bands
+- Monorepo origin/master: aab237b robimy integracje na galezi
 
 - Ostatni pushed feature checkpoint aplikacji (F2.1, historia): 4647c1b feat(studio): GICLÉE FRAME F2.1 editor workflow polish (v1.40.1)
 
 - Branch:
-  - GitHub gicleeapp: v1.46.1 / main @ 291a9e4 (auto-sync po Push GicleeApp)
-  - monorepo origin/master: 362ecf5 (docs / projekt)
-  - lokalnie monorepo: commity pending względem origin/master (nie zakładać push monorepo bez potwierdzenia)
-    - 95295b3 fix(home): clip parallax media within section seams
+  - GitHub gicleeapp: v1.46.1 / main @ ad9fd14 (auto-sync po Push GicleeApp)
+  - monorepo origin/master: aab237b (docs / projekt)
 <!-- gpt-starter:gicleeapp-push:end -->
 
 - Background Builder local v1: frozen
@@ -176,28 +180,28 @@ Aktualny checkpoint, który powinien być widoczny w `CURRENT_APP_STATE.md`:
 
 - C# / WPF = UI, dashboard, MVVM · Python = workers, tooling · SQLite/JSON = local-first
 - 10 praktycznych zasad architektonicznych (nie ogólna teoria programowania)
-- kanon: COMPACT v37 § Programming / Architecture Principles
-- wzorce z Giclee Viewer: COMPACT v37 § Current technical lessons from Giclee Viewer
+- kanon: COMPACT v38 § Programming / Architecture Principles
+- wzorce z Giclee Viewer: COMPACT v38 § Current technical lessons from Giclee Viewer
 
 **Strategic Direction — Giclée Art Studio OS:**
 
 - ekosystem = Giclee Viewer + GicleeApp Studio 2.0
 - GV jako wzorzec technologiczny dla GAS 2.0 (WPF/MVVM, SQLite, batch queries, safety-first)
 - szablon modułów: `GICLEEAPP_STUDIO_2_0_MODULE_TEMPLATE.md`
-- kanon: COMPACT v37 § Strategic Direction
+- kanon: COMPACT v38 § Strategic Direction
 
 **Work Planning Rule:**
 
 - nie mikroetapy dla funkcji produktowych
 - większe pakiety: GV-8, GV-9, GV-10, GAS-0
 - mikroetapy tylko przy migracjach, plikach, ryzyku danych, rollback, dużej architekturze
-- kanon: COMPACT v37 § Work Planning Rule
+- kanon: COMPACT v38 § Work Planning Rule
 
 **UI / Product Taste Direction:**
 
 - premium, spokojny, ciemny, studyjny — fine art / museum / creative operations dashboard
 - GAS 2.0 dojrzalszy niż obecny UI 1:1
-- kanon: COMPACT v37 § UI / Product Taste Direction
+- kanon: COMPACT v38 § UI / Product Taste Direction
 
 **Source of Truth / Decision Memory:**
 
@@ -208,7 +212,7 @@ Aktualny checkpoint, który powinien być widoczny w `CURRENT_APP_STATE.md`:
 - nie wracać do dyskusji „Python czy C#” — C#/WPF (UI) + Python (workers) + SQLite/JSON (stan)
 - nie rozdrabniać roadmapy — większe pakiety produktowe; mikroetapy tylko przy ryzyku danych / plikach / migracjach
 - nowa sesja = najpierw checkpoint: GV-7 done, next GV-8, future GAS-0
-- kanon: COMPACT v37 § Source of Truth / Decision Memory
+- kanon: COMPACT v38 § Source of Truth / Decision Memory
 
 
 
@@ -237,7 +241,7 @@ Dla repozytoriów:
 Na tym etapie nie wykonuj jeszcze żadnego review, planu ani implementacji.
 
 Po odczytaniu ZIP-a potwierdź krótko:
-- główne Instructions (`GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md`),
+- główne Instructions (`GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md`),
 - `CURRENT_APP_STATE.md` (aktualny checkpoint),
 - pliki `GICLEE_ANALYST_*_v1.md`,
 - pliki `GICLEE_SHOPIFY_MODE_*_v1.md`,
@@ -259,11 +263,11 @@ Dodatkowo w ZIP-ie znajdują się pliki trybów analitycznych dla pracy z Giclee
 
 Przeczytaj je razem z pozostałymi plikami ZIP-a.
 
-Traktuj je jako dodatkowe tryby pracy, które rozszerzają główne Instructions v37, ale ich nie zastępują.
+Traktuj je jako dodatkowe tryby pracy, które rozszerzają główne Instructions v38, ale ich nie zastępują.
 
 Główne zasady działania nadal wynikają z:
 
-`GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md`
+`GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md`
 
 Jeśli poproszę o konkretny tryb, np.:
 
@@ -282,7 +286,7 @@ Jeśli nie podam trybu wprost, sam wybierz najwłaściwszy tryb na podstawie pro
 
 Zawsze stosuj jednocześnie:
 
-1. główne Instructions v37,
+1. główne Instructions v38,
 2. aktualny checkpoint z `CURRENT_APP_STATE.md`,
 3. prompt bazowy analityka, jeśli jest dostępny,
 4. odpowiedni tryb roboczy, jeśli pasuje do zadania.
@@ -301,7 +305,7 @@ Dodatkowo w ZIP-ie znajdują się pliki trybów Shopify dla pracy nad stroną Gi
 
 Przeczytaj je razem z pozostałymi plikami ZIP-a.
 
-Traktuj je jako dodatkowe tryby pracy dla strony Shopify Giclée Art, które rozszerzają główne Instructions v37 oraz tryb Shopify Snapshot, ale ich nie zastępują.
+Traktuj je jako dodatkowe tryby pracy dla strony Shopify Giclée Art, które rozszerzają główne Instructions v38 oraz tryb Shopify Snapshot, ale ich nie zastępują.
 
 Jeśli poproszę o konkretny tryb, np.:
 

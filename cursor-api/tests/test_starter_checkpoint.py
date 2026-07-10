@@ -81,7 +81,7 @@ def test_sync_starter_files_after_gicleeapp_push(starter_env) -> None:
     assert result.version == "1.41.2"
     assert result.gicleeapp_sha_short == "abc1234"
     assert "CURRENT_APP_STATE.md" in result.updated_files
-    assert "GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md" in result.updated_files
+    assert "GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md" in result.updated_files
     assert "Wiadomość początkowa.txt" in result.updated_files
     assert sc._MASTER_INDEX_FILE in result.updated_files
 

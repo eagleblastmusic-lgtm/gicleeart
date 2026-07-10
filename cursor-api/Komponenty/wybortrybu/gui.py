@@ -1,4 +1,4 @@
-"""Wybór Trybu — panel krótkich komend aktywacyjnych (pakiet wiedzy v37)."""
+"""Wybór Trybu — panel krótkich komend aktywacyjnych (pakiet wiedzy v38)."""
 
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ from .prompt_builder import (
 
 APP_TITLE = "Wybór Trybu"
 _HINT = (
-    "To są krótkie komendy aktywacyjne zgodne z pakietem wiedzy v37. "
+    "To są krótkie komendy aktywacyjne zgodne z pakietem wiedzy v38. "
     "Pełne prompty znajdziesz w Bazie Promptów."
 )
 
@@ -82,9 +82,9 @@ class WyborTrybuApp:
     def _source_status_text(self) -> str:
         sc = self._source_check
         if sc.status == "current":
-            return f"Źródła v37: {sc.message}"
+            return f"Źródła v38: {sc.message}"
         if sc.status == "unavailable":
-            return f"Źródła v37: {sc.message}"
+            return f"Źródła v38: {sc.message}"
         parts = [sc.message]
         if sc.missing_files:
             parts.append(f"Brak: {', '.join(sc.missing_files[:3])}" + (
@@ -104,7 +104,7 @@ class WyborTrybuApp:
 
         sub = ttk.Label(
             self.root,
-            text="Katalog zgodny z pakietem wiedzy v37",
+            text="Katalog zgodny z pakietem wiedzy v38",
             padding=(12, 0, 12, 2),
             foreground="#3949ab",
             font=("Segoe UI", 10, "bold"),

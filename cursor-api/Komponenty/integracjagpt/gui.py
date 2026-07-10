@@ -318,7 +318,7 @@ class IntegracjaGptApp:
         self._starter_files_btn.pack(side="left")
         ttk.Label(
             ga_starter_row,
-            text="monorepo master → Pliki startowe dla GPT (+ ZIP v37)",
+            text="monorepo master → Pliki startowe dla GPT (+ ZIP v38)",
             foreground="#666",
         ).pack(side="left", padx=(10, 0))
 
@@ -517,7 +517,7 @@ class IntegracjaGptApp:
             dlg,
             text=(
                 "Przygotuj rozmowę w ChatGPT (nowe okno + załącznik ZIP):\n"
-                "1. «Skopiuj .zip» — archiwum wiedzy CLEAN_PACK v37 ze schowka plików\n"
+                "1. «Skopiuj .zip» — archiwum wiedzy CLEAN_PACK v38 ze schowka plików\n"
                 "2. Wklej ZIP w ChatGPT\n"
                 "3. «Skopiuj Wiadomość początkową» — tekst startowy do wklejenia obok ZIP-a\n"
                 "4. «Skopiuj wiadomość follow-up» — prośba o przeczytanie ZIP-a i połączenie z GitHubem\n"
@@ -743,7 +743,7 @@ class IntegracjaGptApp:
     def _load_knowledge_zip(self) -> None:
         path = filedialog.askopenfilename(
             parent=self.root,
-            title="Wybierz ZIP wiedzy (CLEAN_PACK v37)",
+            title="Wybierz ZIP wiedzy (CLEAN_PACK v38)",
             filetypes=[("Archiwum ZIP", "*.zip"), ("Wszystkie pliki", "*.*")],
         )
         if not path:

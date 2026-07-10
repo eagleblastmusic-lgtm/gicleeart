@@ -21,14 +21,15 @@ KNOWLEDGE_ZIP_BASENAME = "gpt_knowledge.zip"
 # Alias kompatybilnościowy — lokalny runtime ZIP w DATA_DIR (testy / starsze importy).
 KNOWLEDGE_ZIP_FILE = DATA_DIR / KNOWLEDGE_ZIP_BASENAME
 
-# Zgodne z «Pliki startowe dla GPT/GICLEE_CURSOR_ARCHITECT_CLEAN_PACK_v37.md».
-CLEAN_PACK_V37_ACTIVE_FILES: tuple[str, ...] = (
+# Zgodne z «Pliki startowe dla GPT/GICLEE_CURSOR_ARCHITECT_CLEAN_PACK_v38.md».
+CLEAN_PACK_V38_ACTIVE_FILES: tuple[str, ...] = (
     "CURRENT_APP_STATE.md",
     "GICLEEAPP_STUDIO_2_0_MODULE_TEMPLATE.md",
     GPT_COMPACT_INSTRUCTIONS_FILE,
-    "GICLEE_CURSOR_ARCHITECT_CLEAN_PACK_v37.md",
-    "GICLEE_CURSOR_MASTER_INDEX_v37.md",
-    "README_GICLEE_CURSOR_ARCHITECT_UPDATE_v37.md",
+    "GICLEE_CURSOR_ARCHITECT_CLEAN_PACK_v38.md",
+    "GICLEE_CURSOR_MASTER_INDEX_v38.md",
+    "README_GICLEE_CURSOR_ARCHITECT_UPDATE_v38.md",
+    "GPT_GIT_BRANCH_WORKFLOW.md",
     "GICLEE_AWWWARDS_MOTION_SYSTEM_v3.md",
     "GICLEE_BAD_EFFECTS_BLACKLIST_v31.md",
     "GICLEE_CODE_PLUS_PROMPT_WORKFLOW_v3.md",
@@ -80,14 +81,14 @@ def gpt_starter_files_dir() -> Path:
 
 
 def list_starter_markdown_files(folder: Path | None = None) -> list[Path]:
-    """Pliki z manifestu CLEAN_PACK v37 (bez archiwalnych wersji na dysku)."""
+    """Pliki z manifestu CLEAN_PACK v38 (bez archiwalnych wersji na dysku)."""
     root = (folder or gpt_starter_files_dir()).resolve()
     if not root.is_dir():
         raise FileNotFoundError(f"Brak folderu z plikami startowymi GPT: {root}")
 
     files: list[Path] = []
     missing: list[str] = []
-    for name in CLEAN_PACK_V37_ACTIVE_FILES:
+    for name in CLEAN_PACK_V38_ACTIVE_FILES:
         path = root / name
         if path.is_file():
             files.append(path)
@@ -96,13 +97,13 @@ def list_starter_markdown_files(folder: Path | None = None) -> list[Path]:
 
     if missing:
         raise FileNotFoundError(
-            f"Brak plików CLEAN_PACK v37 w {root}: {', '.join(missing)}"
+            f"Brak plików CLEAN_PACK v38 w {root}: {', '.join(missing)}"
         )
     return files
 
 
 def build_starter_knowledge_zip(folder: Path | None = None) -> Path:
-    """Tworzy giclee_cursor_architect_knowledge_v37.zip wg manifestu CLEAN_PACK v37."""
+    """Tworzy giclee_cursor_architect_knowledge_v38.zip wg manifestu CLEAN_PACK v38."""
     root = (folder or gpt_starter_files_dir()).resolve()
     md_files = list_starter_markdown_files(root)
     zip_path = root / GPT_STARTER_ZIP_NAME
@@ -117,7 +118,7 @@ def build_starter_knowledge_zip(folder: Path | None = None) -> Path:
 
 
 def read_compact_instructions(folder: Path | None = None) -> str:
-    """Treść GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md (główne instrukcje w ZIP-ie)."""
+    """Treść GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md (główne instrukcje w ZIP-ie)."""
     root = (folder or gpt_starter_files_dir()).resolve()
     path = root / GPT_COMPACT_INSTRUCTIONS_FILE
     if not path.is_file():

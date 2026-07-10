@@ -218,13 +218,13 @@ def write_legacy_catalog(parsed: ParsedLegacyCatalog, output_dir: str | Path) ->
     modes_payload = {
         "schema_version": 1,
         "source": parsed.source,
-        "note": "Legacy import z XLSX — nie używać jako runtime v37",
+        "note": "Legacy import z XLSX — nie używać jako runtime v38",
         "modes": list(parsed.modes),
     }
     combos_payload = {
         "schema_version": 1,
         "source": parsed.source,
-        "note": "Legacy import z XLSX — nie używać jako runtime v37",
+        "note": "Legacy import z XLSX — nie używać jako runtime v38",
         "combinations": list(parsed.combinations),
     }
 

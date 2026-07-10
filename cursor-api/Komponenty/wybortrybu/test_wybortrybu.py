@@ -32,7 +32,7 @@ class WyborTrybuDataTests(unittest.TestCase):
 
     def test_catalog_schema_v2(self) -> None:
         self.assertEqual(self.catalog.schema_version, 2)
-        self.assertEqual(self.catalog.knowledge_pack, "v37")
+        self.assertEqual(self.catalog.knowledge_pack, "v38")
 
     def test_seventeen_formal_modes(self) -> None:
         formal = self.catalog.formal_modes()

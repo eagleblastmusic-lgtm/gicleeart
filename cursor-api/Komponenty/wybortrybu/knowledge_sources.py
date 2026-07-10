@@ -80,7 +80,7 @@ def check_knowledge_sources(
             expected_files=expected,
             missing_files=missing,
             unknown_files=unknown,
-            message="Rozbieżność źródeł v37: " + ", ".join(parts) + ".",
+            message="Rozbieżność źródeł v38: " + ", ".join(parts) + ".",
         )
 
     return SourceCheckResult(
@@ -88,5 +88,5 @@ def check_knowledge_sources(
         expected_files=expected,
         missing_files=(),
         unknown_files=(),
-        message="Pliki źródłowe trybów zgodne z katalogiem v37.",
+        message="Pliki źródłowe trybów zgodne z katalogiem v38.",
     )

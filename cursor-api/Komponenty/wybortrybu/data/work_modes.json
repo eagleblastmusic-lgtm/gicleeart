@@ -1,15 +1,15 @@
 {
   "schema_version": 2,
-  "knowledge_pack": "v37",
-  "catalog_source": "GICLEE_CURSOR_MASTER_INDEX_v37.md",
+  "knowledge_pack": "v38",
+  "catalog_source": "GICLEE_CURSOR_MASTER_INDEX_v38.md",
   "foundations": [
     {
       "id": "instructions_v37",
       "order": 1,
-      "name": "Instructions v37",
-      "source_file": "GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md",
-      "purpose": "Główne Instructions Custom GPT — rola Cursor Prompt Architect, format odpowiedzi, guardrails, dual-repo routing i checkpoint v37.",
-      "aliases": ["COMPACT v37", "Cursor Prompt Architect Instructions"]
+      "name": "Instructions v38",
+      "source_file": "GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md",
+      "purpose": "Główne Instructions Custom GPT — rola Cursor Prompt Architect, format odpowiedzi, guardrails, dual-repo routing i checkpoint v38.",
+      "aliases": ["COMPACT v38", "Cursor Prompt Architect Instructions"]
     },
     {
       "id": "current_app_state",
@@ -182,7 +182,7 @@
         "Tryb GPT Integration / ZIP"
       ],
       "purpose": "Praca z plikami wiedzy Custom GPT, ZIP-em, Instructions, plikami startowymi i workflow integracji.",
-      "focus": "Źródło prawdy lokalne vs ZIP, checkpoint, manifest v37; Cursor nie generuje ZIP bez polecenia.",
+      "focus": "Źródło prawdy lokalne vs ZIP, checkpoint, manifest v38; Cursor nie generuje ZIP bez polecenia.",
       "when_to_use": "Gdy aktualizujesz paczkę wiedzy, Instructions, pliki startowe albo integrację z Okno rozmowy.",
       "activation_profiles": [
         {"id": "default", "label": "Domyślna", "command": "Tryb GPT Integration / ZIP"}
@@ -456,7 +456,7 @@
       "name": "Cursor Prompt Architect",
       "short_label": "Cursor Architect",
       "category": "Workflow",
-      "source_file": "GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md",
+      "source_file": "GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md",
       "aliases": ["Cursor Architect", "Cursor Prompt Architect"],
       "purpose": "Tworzenie gotowych, bezpiecznych promptów dla Cursora z planem, guardrails i checklistą testów.",
       "focus": "Pliki do sprawdzenia, czego nie ruszać, kolejność faz, raport, brak commita, ryzyka regresji.",
@@ -466,7 +466,7 @@
       ],
       "requires": [],
       "related_mode_ids": ["analyst_cursor_review"],
-      "distinction_note": "Tryb workflow oparty na głównych Instructions v37 — nie zastępuje formalnych trybów analitycznych."
+      "distinction_note": "Tryb workflow oparty na głównych Instructions v38 — nie zastępuje formalnych trybów analitycznych."
     },
     {
       "id": "medyczny_ostrozny",
@@ -486,7 +486,7 @@
       ],
       "requires": [],
       "related_mode_ids": [],
-      "distinction_note": "Poza pakietem wiedzy Giclée v37 — tryb legacy, nie wchodzi w kontrolę kompletności pakietu."
+      "distinction_note": "Poza pakietem wiedzy Giclée v38 — tryb legacy, nie wchodzi w kontrolę kompletności pakietu."
     }
   ]
 }

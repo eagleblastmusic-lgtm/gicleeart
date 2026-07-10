@@ -22,11 +22,11 @@ _VERSION_RE = re.compile(r'__version__\s*=\s*["\']([^"\']+)["\']')
 
 _STARTER_FILES_WITH_MARKERS: tuple[str, ...] = (
     "CURRENT_APP_STATE.md",
-    "GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md",
+    "GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md",
     "Wiadomość początkowa.txt",
 )
 
-_MASTER_INDEX_FILE = "GICLEE_CURSOR_MASTER_INDEX_v37.md"
+_MASTER_INDEX_FILE = "GICLEE_CURSOR_MASTER_INDEX_v38.md"
 
 
 @dataclass
@@ -212,7 +212,7 @@ def render_current_app_state_block(ctx: GicleeAppPushCheckpointContext) -> str:
             "GPT starter files:",
             (
                 f"auto-sync po Push GicleeApp {ctx.pushed_at_label} "
-                f"(gicleeapp `{ctx.gicleeapp_sha_short}`, v{ctx.version}; paczka v37; "
+                f"(gicleeapp `{ctx.gicleeapp_sha_short}`, v{ctx.version}; paczka v38; "
                 f"źródło = ten folder, nie ZIP)"
             ),
             "",
@@ -354,7 +354,7 @@ def _update_master_index_version_lines(text: str, ctx: GicleeAppPushCheckpointCo
     )
     checkpoint_line = (
         f"Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w "
-        f"`GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md` oraz `CURRENT_APP_STATE.md` "
+        f"`GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md` oraz `CURRENT_APP_STATE.md` "
         f"(GitHub gicleeapp **v{ctx.version}** / `main` @ `{ctx.gicleeapp_sha_short}`; "
         f"monorepo origin/master `{ctx.monorepo.origin_short or 'n/d'}`)."
     )
@@ -409,7 +409,7 @@ def sync_starter_files_after_gicleeapp_push(
 
     renderers = {
         "CURRENT_APP_STATE.md": render_current_app_state_block,
-        "GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md": render_compact_checkpoint_block,
+        "GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md": render_compact_checkpoint_block,
         "Wiadomość początkowa.txt": render_wiadomosc_block,
     }
 

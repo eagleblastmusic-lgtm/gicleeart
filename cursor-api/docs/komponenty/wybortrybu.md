@@ -1,6 +1,6 @@
 # Komponent: wybortrybu
 
-**Cel:** Panel pomocniczy do przeglądania trybów pracy ChatGPT/Giclée Art (pakiet wiedzy **v37**), wybierania kombinacji i kopiowania krótkich promptów aktywacyjnych.
+**Cel:** Panel pomocniczy do przeglądania trybów pracy ChatGPT/Giclée Art (pakiet wiedzy **v38**), wybierania kombinacji i kopiowania krótkich promptów aktywacyjnych.
 
 | Plik | Rola |
 |------|------|
@@ -17,18 +17,18 @@ Tryb: `subprocess`. Sekcja launchera: **Narzędzia pomocnicze**. Kategoria Studi
 
 ## Schema v2
 
-- `schema_version: 2`, `knowledge_pack: "v37"`
-- **Stały fundament** (niewybieralny): `instructions_v37`, `current_app_state`, `analyst_base`
+- `schema_version: 2`, `knowledge_pack: "v38"`
+- **Stały fundament** (niewybieralny): `instructions_v37` (widoczna nazwa: Instructions v38), `current_app_state`, `analyst_base`
 - **17 formalnych trybów:** 8 analyst + 9 Shopify
 - **Workflow:** Cursor Prompt Architect
-- **Legacy:** Medyczny ostrożny (poza pakietem v37)
-- Komendy aktywujące: krótkie formy z COMPACT v37 (`Tryb Performance`, `Tryb Motion`, …); profile Veo: `Veo premium`, `Veo krótko`, `Veo popraw`, `TRYB FLOW`, …
+- **Legacy:** Medyczny ostrożny (poza pakietem v38)
+- Komendy aktywujące: krótkie formy z COMPACT v38 (`Tryb Performance`, `Tryb Motion`, …); profile Veo: `Veo premium`, `Veo krótko`, `Veo popraw`, `TRYB FLOW`, …
 - Alias `GicleeApp Architect` → fundament `analyst_base` (informacyjnie)
 
 ## Workflow
 
 1. Otwórz **Wybór Trybu** z launchera lub Studio (Review / GPT).
-2. Sprawdź status źródeł v37 (zielony / drift / niedostępny folder).
+2. Sprawdź status źródeł v38 (zielony / drift / niedostępny folder).
 3. Przeglądaj tryby w zakładkach **Analityczne**, **Shopify** lub **Dodatkowe** (workflow + legacy).
 4. Zaznacz tryby — Shopify specialist automatycznie dołącza **Shopify Snapshot** w prompcie.
 5. Dla trybu Veo użyj dedykowanych przycisków profili (Veo premium / krótko / popraw / Flow / Image Prompt).
@@ -65,6 +65,6 @@ python -m compileall Komponenty/wybortrybu
 
 ## Relacja do Bazy Promptów
 
-Ten komponent generuje **krótkie komendy aktywacyjne** i szkielet pełnego promptu z fundamentem v37. Pełne, rozbudowane prompty są w komponencie **Baza Promptów**.
+Ten komponent generuje **krótkie komendy aktywacyjne** i szkielet pełnego promptu z fundamentem v38. Pełne, rozbudowane prompty są w komponencie **Baza Promptów**.
 
 → [`README.md`](README.md)
