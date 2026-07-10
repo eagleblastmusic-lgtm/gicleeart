@@ -1,161 +1,492 @@
 {
-  "version": 1,
-  "source": "tryby_pracy_chatgpt_giclee_art.xlsx",
-  "modes": [
+  "schema_version": 2,
+  "knowledge_pack": "v37",
+  "catalog_source": "GICLEE_CURSOR_MASTER_INDEX_v37.md",
+  "foundations": [
     {
-      "id": "gui_ui_premium",
-      "number": 1,
-      "name": "GUI / UI Premium",
-      "aliases": [
-        "GUI Premium",
-        "GUI / UI Premium"
-      ],
-      "category": "UI",
-      "purpose": "Ocena i projektowanie wyglądu sekcji, układu, typografii, odstępów, hierarchii i premium feelingu.",
-      "focus": "Layout, kompozycja, czytelność, kontrast, rytm, mobile, spójność z marką; animacja jako część całości.",
-      "when_to_use": "Gdy chcesz ocenić lub poprawić wygląd sekcji/strony.",
-      "sample_command": "TRYB GUI / UI Premium\nOceń tę sekcję i powiedz, co poprawić.",
-      "simplest": "Jak to ma wyglądać i czy jest dobrze zaprojektowane.",
-      "search_text": "GUI / UI Premium GUI Premium GUI / UI Premium Ocena i projektowanie wyglądu sekcji, układu, typografii, odstępów, hierarchii i premium feelingu. Layout, kompozycja, czytelność, kontrast, rytm, mobile, spójność z marką; animacja jako część całości. Gdy chcesz ocenić lub poprawić wygląd sekcji/strony. Jak to ma wyglądać i czy jest dobrze zaprojektowane. UI"
+      "id": "instructions_v37",
+      "order": 1,
+      "name": "Instructions v37",
+      "source_file": "GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md",
+      "purpose": "Główne Instructions Custom GPT — rola Cursor Prompt Architect, format odpowiedzi, guardrails, dual-repo routing i checkpoint v37.",
+      "aliases": ["COMPACT v37", "Cursor Prompt Architect Instructions"]
     },
     {
-      "id": "motion_director",
-      "number": 2,
-      "name": "Motion Director",
+      "id": "current_app_state",
+      "order": 2,
+      "name": "Current App State",
+      "source_file": "CURRENT_APP_STATE.md",
+      "purpose": "Aktualny checkpoint GicleeApp Studio, wersje, status faz i źródło prawdy operacyjne.",
+      "aliases": ["checkpoint", "CURRENT_APP_STATE"]
+    },
+    {
+      "id": "analyst_base",
+      "order": 3,
+      "name": "Analyst / Architect — prompt bazowy",
+      "source_file": "GICLEE_ANALYST_BASE_PROMPT_v1.md",
+      "purpose": "Wspólny fundament analitycznego trybu pracy: Cursor lokalnie, GitHub connector, guardrails, lokalne ścieżki.",
       "aliases": [
-        "Motion Director"
+        "GicleeApp Architect",
+        "PROMPT BAZOWY — GicleeApp Analyst / Architect",
+        "Analyst Base"
+      ]
+    }
+  ],
+  "modes": [
+    {
+      "id": "analyst_performance",
+      "order": 1,
+      "family": "analyst",
+      "selectable": true,
+      "name": "Performance",
+      "short_label": "Performance",
+      "category": "Analyst",
+      "source_file": "GICLEE_ANALYST_MODE_PERFORMANCE_v1.md",
+      "aliases": ["Performance", "Performance / Debug", "Tryb Performance"],
+      "purpose": "Analiza wydajności GicleeApp Studio: lagi, wolny start, freeze UI, logi performance i Performance Agent.",
+      "focus": "Bottleneck UI, bundle PA (report.md/summary.json), studio_perf.log, minimalny bezpieczny krok optymalizacji.",
+      "when_to_use": "Gdy aplikacja muli, Studio wolno się otwiera, UI się zacina lub log performance pokazuje anomalie.",
+      "activation_profiles": [
+        {"id": "default", "label": "Domyślna", "command": "Tryb Performance"}
       ],
-      "category": "Motion",
-      "purpose": "Projektowanie ruchu: wejść sekcji, scroll reveal, hoverów, opóźnień, easingów, światła i tempa animacji.",
-      "focus": "Co rusza się pierwsze, jak długo, jakim easingiem, co reaguje na hover/scroll, czego nie ruszać.",
-      "when_to_use": "Gdy layout jest zaakceptowany, ale chcesz nadać sekcji życie i rytm.",
-      "sample_command": "TRYB Motion Director\nZaprojektuj animację dla tej sekcji.",
-      "simplest": "Jak to ma się poruszać, pojawiać i reagować.",
-      "search_text": "Motion Director Motion Director Projektowanie ruchu: wejść sekcji, scroll reveal, hoverów, opóźnień, easingów, światła i tempa animacji. Co rusza się pierwsze, jak długo, jakim easingiem, co reaguje na hover/scroll, czego nie ruszać. Gdy layout jest zaakceptowany, ale chcesz nadać sekcji życie i rytm. Jak to ma się poruszać, pojawiać i reagować. Motion"
+      "requires": [],
+      "related_mode_ids": ["analyst_debug_regression"],
+      "distinction_note": ""
+    },
+    {
+      "id": "analyst_debug_regression",
+      "order": 2,
+      "family": "analyst",
+      "selectable": true,
+      "name": "Debug / Regresja",
+      "short_label": "Debug",
+      "category": "Analyst",
+      "source_file": "GICLEE_ANALYST_MODE_DEBUG_REGRESSION_v1.md",
+      "aliases": ["Debug", "Regresja", "Performance / Debug", "Tryb Debug"],
+      "purpose": "Debugowanie błędów, regresji, crashy, failing testów i flow, które przestało działać po zmianach.",
+      "focus": "Objaw → reprodukcja → ostatnia zmiana → minimalny fix → test regresji; bez przedwczesnego refaktoru.",
+      "when_to_use": "Gdy coś przestało działać, pojawił się błąd, crash albo implementacja Cursora spowodowała regresję.",
+      "activation_profiles": [
+        {"id": "default", "label": "Domyślna", "command": "Tryb Debug"}
+      ],
+      "requires": [],
+      "related_mode_ids": ["analyst_performance", "analyst_cursor_review"],
+      "distinction_note": ""
+    },
+    {
+      "id": "analyst_cursor_review",
+      "order": 3,
+      "family": "analyst",
+      "selectable": true,
+      "name": "Review implementacji Cursora",
+      "short_label": "Review Cursora",
+      "category": "Analyst",
+      "source_file": "GICLEE_ANALYST_MODE_CURSOR_REVIEW_v1.md",
+      "aliases": [
+        "Code-aware Reviewer",
+        "Review Cursora",
+        "Review implementacji Cursora",
+        "Tryb Review Cursora"
+      ],
+      "purpose": "Review raportu, diffu, testów i zakresu implementacji Cursora pod kątem bezpieczeństwa i zgodności z poleceniem.",
+      "focus": "Zakres vs polecenie, guardrails, ryzyko regresji, decyzja: zaakceptować / poprawić / cofnąć.",
+      "when_to_use": "Gdy Cursor zakończył fazę i przekazujesz raport, diff, wynik testów lub opis implementacji.",
+      "activation_profiles": [
+        {"id": "default", "label": "Domyślna", "command": "Tryb Review Cursora"}
+      ],
+      "requires": [],
+      "related_mode_ids": ["analyst_stage_architect"],
+      "distinction_note": ""
+    },
+    {
+      "id": "analyst_stage_architect",
+      "order": 4,
+      "family": "analyst",
+      "selectable": true,
+      "name": "Architekt Etapów",
+      "short_label": "Architekt Etapów",
+      "category": "Analyst",
+      "source_file": "GICLEE_ANALYST_MODE_STAGE_ARCHITECT_v1.md",
+      "aliases": ["Architekt Etapów", "Stage Architect", "Tryb Architekt Etapów"],
+      "purpose": "Dzielenie większych zmian na bezpieczne, małe etapy z guardrails i testami kontrolnymi.",
+      "focus": "Fazy read-only → implementacja → weryfikacja; pacing rule; bez writer/deploy bez polecenia.",
+      "when_to_use": "Gdy planujesz większą funkcję, nowy panel, przebudowę flow albo większą zmianę architektoniczną.",
+      "activation_profiles": [
+        {"id": "default", "label": "Domyślna", "command": "Tryb Architekt Etapów"}
+      ],
+      "requires": [],
+      "related_mode_ids": ["analyst_cursor_review"],
+      "distinction_note": ""
+    },
+    {
+      "id": "analyst_ui_ux_premium",
+      "order": 5,
+      "family": "analyst",
+      "selectable": true,
+      "name": "UI / UX / Premium",
+      "short_label": "UI/UX Premium",
+      "category": "Analyst",
+      "source_file": "GICLEE_ANALYST_MODE_UI_UX_PREMIUM_v1.md",
+      "aliases": [
+        "GUI Premium",
+        "GUI / UI Premium",
+        "UI/UX Premium",
+        "Tryb UI/UX Premium"
+      ],
+      "purpose": "Review i projektowanie UI/UX premium w GicleeApp, Studio i snapshotach Giclée Art.",
+      "focus": "Layout, hierarchia, czytelność, premium feeling, Fine Art / museum-quality; workflow użytkownika.",
+      "when_to_use": "Gdy chcesz ocenić lub poprawić wygląd, układ, flow albo premium charakter ekranu/sekcji.",
+      "activation_profiles": [
+        {"id": "default", "label": "Domyślna", "command": "Tryb UI/UX Premium"}
+      ],
+      "requires": [],
+      "related_mode_ids": ["shopify_homepage_art_direction", "shopify_responsive_accessibility"],
+      "distinction_note": ""
+    },
+    {
+      "id": "analyst_shopify_snapshot",
+      "order": 6,
+      "family": "analyst",
+      "selectable": true,
+      "name": "Shopify Snapshot",
+      "short_label": "Shopify Snapshot",
+      "category": "Analyst",
+      "source_file": "GICLEE_ANALYST_MODE_SHOPIFY_SNAPSHOT_v1.md",
+      "aliases": [
+        "Shopify Snapshot Reviewer",
+        "Shopify Snapshot",
+        "Tryb Shopify Snapshot"
+      ],
+      "purpose": "Review snapshotu motywu Shopify: Liquid, CSS, JS, homepage, header, menu, sekcje i motion strony.",
+      "focus": "Repo gicleeart-gpt jako snapshot (nie live), GitHub connector, scope template, konflikty globalne.",
+      "when_to_use": "Gdy temat dotyczy sklepu/motywu Shopify, snapshotu theme albo review zmian frontu.",
+      "activation_profiles": [
+        {"id": "default", "label": "Domyślna", "command": "Tryb Shopify Snapshot"}
+      ],
+      "requires": [],
+      "related_mode_ids": [],
+      "distinction_note": ""
+    },
+    {
+      "id": "analyst_gpt_zip_integration",
+      "order": 7,
+      "family": "analyst",
+      "selectable": true,
+      "name": "GPT Integration / ZIP",
+      "short_label": "GPT/ZIP",
+      "category": "Analyst",
+      "source_file": "GICLEE_ANALYST_MODE_GPT_ZIP_INTEGRATION_v1.md",
+      "aliases": [
+        "GPT Integration",
+        "ZIP Integration",
+        "Tryb GPT Integration / ZIP"
+      ],
+      "purpose": "Praca z plikami wiedzy Custom GPT, ZIP-em, Instructions, plikami startowymi i workflow integracji.",
+      "focus": "Źródło prawdy lokalne vs ZIP, checkpoint, manifest v37; Cursor nie generuje ZIP bez polecenia.",
+      "when_to_use": "Gdy aktualizujesz paczkę wiedzy, Instructions, pliki startowe albo integrację z Okno rozmowy.",
+      "activation_profiles": [
+        {"id": "default", "label": "Domyślna", "command": "Tryb GPT Integration / ZIP"}
+      ],
+      "requires": [],
+      "related_mode_ids": ["analyst_cursor_review"],
+      "distinction_note": ""
+    },
+    {
+      "id": "analyst_veo_flow_director",
+      "order": 8,
+      "family": "analyst",
+      "selectable": true,
+      "name": "Veo / Flow / Image-Video Prompt Director",
+      "short_label": "Veo Director",
+      "category": "AI Prompt",
+      "source_file": "GICLEE_ANALYST_MODE_VEO_FLOW_IMAGE_VIDEO_PROMPT_DIRECTOR_v1.md",
+      "aliases": [
+        "Veo Premium",
+        "Veo / Flow / Image Prompt",
+        "Veo / Flow / Image-Video Prompt Director",
+        "prompt do Veo",
+        "prompt do Flow",
+        "prompt do Nano Banana",
+        "locked camera",
+        "final frame",
+        "seamless loop",
+        "animacja obrazu",
+        "image-to-video"
+      ],
+      "purpose": "Tworzenie, poprawianie i skracanie promptów dla generatorów obrazu/wideo (Veo, Flow, Nano Banana).",
+      "focus": "Kamera, światło, pył, tempo, loop, final frame, negative prompt; analiza grafiki referencyjnej.",
+      "when_to_use": "Gdy chcesz prompt do Veo/Flow/obrazu/wideo albo poprawiasz istniejący prompt generatywny.",
+      "activation_profiles": [
+        {
+          "id": "veo_premium",
+          "label": "Veo premium",
+          "command": "Veo premium",
+          "description": "Krótka analiza PL + Full English Prompt + osobny Negative Prompt."
+        },
+        {
+          "id": "veo_krotko",
+          "label": "Veo krótko",
+          "command": "Veo krótko",
+          "description": "Skondensowany prompt angielski; bez długiej analizy; opcjonalny krótki Negative."
+        },
+        {
+          "id": "veo_popraw",
+          "label": "Veo popraw",
+          "command": "Veo popraw",
+          "description": "Diagnoza problemu PL + poprawiony prompt EN + mocniejsze negative constraints."
+        },
+        {
+          "id": "tryb_flow",
+          "label": "Flow",
+          "command": "TRYB FLOW",
+          "description": "Prompt do Flow / grafiki."
+        },
+        {
+          "id": "tryb_image_prompt",
+          "label": "Image Prompt",
+          "command": "TRYB IMAGE PROMPT",
+          "description": "Prompt do wygenerowania obrazu."
+        },
+        {
+          "id": "tryb_image_video_prompt",
+          "label": "Image-Video Prompt",
+          "command": "TRYB IMAGE-VIDEO PROMPT",
+          "description": "Prompt image-to-video / animacja statycznej grafiki."
+        }
+      ],
+      "requires": [],
+      "related_mode_ids": ["shopify_motion_interaction"],
+      "distinction_note": "Ten tryb dotyczy generatorów obrazu/wideo. Nie jest trybem Shopify Motion / Interaction i nie projektuje CSS, JS, hoverów ani scroll reveal."
+    },
+    {
+      "id": "shopify_homepage_art_direction",
+      "order": 9,
+      "family": "shopify",
+      "selectable": true,
+      "name": "Homepage Art Direction",
+      "short_label": "Homepage",
+      "category": "Shopify",
+      "source_file": "GICLEE_SHOPIFY_MODE_HOMEPAGE_ART_DIRECTION_v1.md",
+      "aliases": ["Shopify Homepage", "Homepage Premium", "Tryb Shopify Homepage"],
+      "purpose": "Review i projektowanie homepage Giclée Art w kierunku premium Fine Art / Awwwards.",
+      "focus": "Hero, flow sekcji, pierwsze wrażenie, art direction, premium vs zwykły sklep Shopify.",
+      "when_to_use": "Gdy oceniasz, projektujesz lub poprawiasz stronę główną sklepu.",
+      "activation_profiles": [
+        {"id": "default", "label": "Domyślna", "command": "Tryb Shopify Homepage"}
+      ],
+      "requires": ["analyst_shopify_snapshot"],
+      "related_mode_ids": ["analyst_ui_ux_premium"],
+      "distinction_note": ""
+    },
+    {
+      "id": "shopify_product_page_pdp",
+      "order": 10,
+      "family": "shopify",
+      "selectable": true,
+      "name": "Product Page / PDP",
+      "short_label": "PDP",
+      "category": "Shopify",
+      "source_file": "GICLEE_SHOPIFY_MODE_PRODUCT_PAGE_PDP_v1.md",
+      "aliases": ["PDP", "Product Page", "Tryb PDP"],
+      "purpose": "Review i projektowanie strony produktu: warianty, CTA, trust notes i decyzja zakupowa.",
+      "focus": "Layout PDP, galeria, wymiary, CTA, mobile PDP, premium product storytelling.",
+      "when_to_use": "Gdy temat dotyczy strony produktu, wariantów lub konwersji na PDP.",
+      "activation_profiles": [
+        {"id": "default", "label": "Domyślna", "command": "Tryb PDP"}
+      ],
+      "requires": ["analyst_shopify_snapshot"],
+      "related_mode_ids": ["shopify_conversion_trust", "shopify_copy_brand_story"],
+      "distinction_note": ""
+    },
+    {
+      "id": "shopify_collection_catalog",
+      "order": 11,
+      "family": "shopify",
+      "selectable": true,
+      "name": "Collection / Catalog",
+      "short_label": "Katalog",
+      "category": "Shopify",
+      "source_file": "GICLEE_SHOPIFY_MODE_COLLECTION_CATALOG_v1.md",
+      "aliases": ["Collection", "Catalog", "Katalog", "Tryb Katalog"],
+      "purpose": "Review kolekcji, katalogu, gridu produktów, kart dzieł i stron artystów.",
+      "focus": "Discovery, grid, filtry, karty produktów, strony artystów, spójność katalogu.",
+      "when_to_use": "Gdy oceniasz lub projektujesz kolekcje, katalog albo strony artystów.",
+      "activation_profiles": [
+        {"id": "default", "label": "Domyślna", "command": "Tryb Katalog"}
+      ],
+      "requires": ["analyst_shopify_snapshot"],
+      "related_mode_ids": ["shopify_seo_content"],
+      "distinction_note": ""
+    },
+    {
+      "id": "shopify_copy_brand_story",
+      "order": 12,
+      "family": "shopify",
+      "selectable": true,
+      "name": "Copy / Brand Story",
+      "short_label": "Copy",
+      "category": "Shopify",
+      "source_file": "GICLEE_SHOPIFY_MODE_COPY_BRAND_STORY_v1.md",
+      "aliases": [
+        "Copy Premium",
+        "Writer / Copy Premium",
+        "Brand Story",
+        "Tryb Copy"
+      ],
+      "purpose": "Copy, brand story, opisy sekcji, CTA, FAQ i ton marki premium na stronie Shopify.",
+      "focus": "Ton Fine Art, klarowność, rytm akapitów, wersje muzealna/techniczna/sprzedażowa.",
+      "when_to_use": "Gdy potrzebujesz tekstów na stronę, PDP, kolekcje albo poprawy istniejącego copy.",
+      "activation_profiles": [
+        {"id": "default", "label": "Domyślna", "command": "Tryb Copy"}
+      ],
+      "requires": ["analyst_shopify_snapshot"],
+      "related_mode_ids": ["shopify_conversion_trust"],
+      "distinction_note": ""
+    },
+    {
+      "id": "shopify_motion_interaction",
+      "order": 13,
+      "family": "shopify",
+      "selectable": true,
+      "name": "Motion / Interaction",
+      "short_label": "Motion",
+      "category": "Shopify",
+      "source_file": "GICLEE_SHOPIFY_MODE_MOTION_INTERACTION_v1.md",
+      "aliases": [
+        "Motion Director",
+        "Shopify Motion",
+        "Motion / Interaction",
+        "Tryb Motion"
+      ],
+      "purpose": "Motion strony Shopify: animacje, hover, scroll reveal, menu, mikrointerakcje i Awwwards feeling.",
+      "focus": "CSS/JS/Liquid, performance-aware motion, Lenis/smooth scroll, premium subtelny ruch UI.",
+      "when_to_use": "Gdy layout jest zaakceptowany, ale chcesz nadać sekcji życie, rytm albo poprawić interakcje.",
+      "activation_profiles": [
+        {"id": "default", "label": "Domyślna", "command": "Tryb Motion"}
+      ],
+      "requires": ["analyst_shopify_snapshot"],
+      "related_mode_ids": ["analyst_veo_flow_director", "analyst_performance"],
+      "distinction_note": "Ten tryb dotyczy animacji strony Shopify (CSS, JS, hover, scroll reveal). Nie dotyczy generatorów Veo/Flow ani promptów image-to-video."
+    },
+    {
+      "id": "shopify_conversion_trust",
+      "order": 14,
+      "family": "shopify",
+      "selectable": true,
+      "name": "Conversion / Trust",
+      "short_label": "Conversion",
+      "category": "Shopify",
+      "source_file": "GICLEE_SHOPIFY_MODE_CONVERSION_TRUST_v1.md",
+      "aliases": ["Conversion", "Trust", "Tryb Conversion"],
+      "purpose": "Conversion i trust: obiekcje klienta, CTA, certyfikaty, dostawa, jakość i zaufanie bez taniego e-commerce.",
+      "focus": "Trust signals, CTA hierarchy, obiekcje, premium bez agresywnej sprzedaży.",
+      "when_to_use": "Gdy oceniasz, czy strona buduje zaufanie i prowadzi do zakupu.",
+      "activation_profiles": [
+        {"id": "default", "label": "Domyślna", "command": "Tryb Conversion"}
+      ],
+      "requires": ["analyst_shopify_snapshot"],
+      "related_mode_ids": ["shopify_product_page_pdp"],
+      "distinction_note": ""
+    },
+    {
+      "id": "shopify_responsive_accessibility",
+      "order": 15,
+      "family": "shopify",
+      "selectable": true,
+      "name": "Responsive / Accessibility",
+      "short_label": "Responsive",
+      "category": "Shopify",
+      "source_file": "GICLEE_SHOPIFY_MODE_RESPONSIVE_ACCESSIBILITY_v1.md",
+      "aliases": ["Responsive", "Accessibility", "a11y", "Tryb Responsive"],
+      "purpose": "Mobile, responsive, accessibility, kontrast, focus states i użyteczność na różnych ekranach.",
+      "focus": "Mobile menu, karty produktów, kontrast, focus, heading structure, touch targets.",
+      "when_to_use": "Gdy oceniasz mobile UX, dostępność albo responsywność sekcji/strony.",
+      "activation_profiles": [
+        {"id": "default", "label": "Domyślna", "command": "Tryb Responsive"}
+      ],
+      "requires": ["analyst_shopify_snapshot"],
+      "related_mode_ids": ["analyst_ui_ux_premium"],
+      "distinction_note": ""
+    },
+    {
+      "id": "shopify_seo_content",
+      "order": 16,
+      "family": "shopify",
+      "selectable": true,
+      "name": "SEO / Content",
+      "short_label": "SEO",
+      "category": "Shopify",
+      "source_file": "GICLEE_SHOPIFY_MODE_SEO_CONTENT_v1.md",
+      "aliases": ["SEO", "SEO Content", "Tryb SEO"],
+      "purpose": "SEO i content structure: H1/H2, meta title/description, opisy produktów/kolekcji, internal linking.",
+      "focus": "Struktura nagłówków, meta, opisy premium bez keyword stuffing, blog/guide content.",
+      "when_to_use": "Gdy oceniasz lub poprawiasz SEO, meta albo strukturę treści na stronie.",
+      "activation_profiles": [
+        {"id": "default", "label": "Domyślna", "command": "Tryb SEO"}
+      ],
+      "requires": ["analyst_shopify_snapshot"],
+      "related_mode_ids": ["shopify_translation_markets"],
+      "distinction_note": ""
+    },
+    {
+      "id": "shopify_translation_markets",
+      "order": 17,
+      "family": "shopify",
+      "selectable": true,
+      "name": "Translation / Markets",
+      "short_label": "Translation",
+      "category": "Shopify",
+      "source_file": "GICLEE_SHOPIFY_MODE_TRANSLATION_MARKETS_v1.md",
+      "aliases": ["Translation", "Markets", "Shopify Markets", "Tryb Translation/Markets"],
+      "purpose": "Tłumaczenia, Shopify Markets, lokalizacja EN/DE/FR/ES/NL/IT i wielojęzyczny content.",
+      "focus": "Markets, locale, tłumaczenia CTA/trust/SEO, spójność między językami.",
+      "when_to_use": "Gdy pracujesz nad tłumaczeniami, rynkami albo wielojęzyczną wersją sklepu.",
+      "activation_profiles": [
+        {"id": "default", "label": "Domyślna", "command": "Tryb Translation/Markets"}
+      ],
+      "requires": ["analyst_shopify_snapshot"],
+      "related_mode_ids": ["shopify_seo_content"],
+      "distinction_note": ""
     },
     {
       "id": "cursor_prompt_architect",
-      "number": 3,
+      "order": 18,
+      "family": "workflow",
+      "selectable": true,
       "name": "Cursor Prompt Architect",
-      "aliases": [
-        "Cursor Architect",
-        "Cursor Prompt Architect"
-      ],
-      "category": "Cursor",
-      "purpose": "Tworzenie gotowych, bezpiecznych promptów dla Cursora z planem, guardrailami i checklistą testów.",
+      "short_label": "Cursor Architect",
+      "category": "Workflow",
+      "source_file": "GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v37.md",
+      "aliases": ["Cursor Architect", "Cursor Prompt Architect"],
+      "purpose": "Tworzenie gotowych, bezpiecznych promptów dla Cursora z planem, guardrails i checklistą testów.",
       "focus": "Pliki do sprawdzenia, czego nie ruszać, kolejność faz, raport, brak commita, ryzyka regresji.",
       "when_to_use": "Gdy chcesz, żebym przygotował wiadomość do wklejenia Cursorowi.",
-      "sample_command": "TRYB Cursor Architect\nPrzygotuj prompt dla Cursora, najpierw plan.",
-      "simplest": "Zamienia pomysł w bezpieczny prompt dla Cursora.",
-      "search_text": "Cursor Prompt Architect Cursor Architect Cursor Prompt Architect Tworzenie gotowych, bezpiecznych promptów dla Cursora z planem, guardrailami i checklistą testów. Pliki do sprawdzenia, czego nie ruszać, kolejność faz, raport, brak commita, ryzyka regresji. Gdy chcesz, żebym przygotował wiadomość do wklejenia Cursorowi. Zamienia pomysł w bezpieczny prompt dla Cursora. Cursor"
-    },
-    {
-      "id": "code_aware_reviewer",
-      "number": 4,
-      "name": "Code-aware Reviewer",
-      "aliases": [
-        "Code-aware Reviewer"
+      "activation_profiles": [
+        {"id": "default", "label": "Domyślna", "command": "Cursor Prompt Architect"}
       ],
-      "category": "Cursor",
-      "purpose": "Ocena planu, diffu, raportu lub kodu Cursora pod kątem bezpieczeństwa technicznego.",
-      "focus": "Scope CSS/JS, globalne selektory, regresje, ryzyka, czy zmiany są za duże, czy trzeba rozbić na fazy.",
-      "when_to_use": "Gdy Cursor wysyła plan/diff/raport i chcesz wiedzieć, czy zatwierdzać.",
-      "sample_command": "TRYB Code-aware Reviewer\nOceń plan Cursora.",
-      "simplest": "Sprawdza, czy Cursor nie zrobi technicznego bałaganu.",
-      "search_text": "Code-aware Reviewer Code-aware Reviewer Ocena planu, diffu, raportu lub kodu Cursora pod kątem bezpieczeństwa technicznego. Scope CSS/JS, globalne selektory, regresje, ryzyka, czy zmiany są za duże, czy trzeba rozbić na fazy. Gdy Cursor wysyła plan/diff/raport i chcesz wiedzieć, czy zatwierdzać. Sprawdza, czy Cursor nie zrobi technicznego bałaganu. Cursor"
+      "requires": [],
+      "related_mode_ids": ["analyst_cursor_review"],
+      "distinction_note": "Tryb workflow oparty na głównych Instructions v37 — nie zastępuje formalnych trybów analitycznych."
     },
     {
-      "id": "shopify_snapshot_reviewer",
-      "number": 5,
-      "name": "Shopify Snapshot Reviewer",
-      "aliases": [
-        "Shopify Snapshot Reviewer"
-      ],
-      "category": "Shopify",
-      "purpose": "Review motywu Shopify: Liquid, templates JSON, sections, snippets, assets, homepage, PDP, header, menu.",
-      "focus": "Auto-generated JSON, Theme Editor, Liquid, warunkowe ładowanie assetów, scope template, konflikty globalne.",
-      "when_to_use": "Gdy temat dotyczy sklepu/motywu Shopify.",
-      "sample_command": "TRYB Shopify Snapshot Reviewer\nSprawdź tę zmianę w theme.liquid.",
-      "simplest": "Pilnuje, żeby motyw Shopify nie rozjechał się przez jedną zmianę.",
-      "search_text": "Shopify Snapshot Reviewer Shopify Snapshot Reviewer Review motywu Shopify: Liquid, templates JSON, sections, snippets, assets, homepage, PDP, header, menu. Auto-generated JSON, Theme Editor, Liquid, warunkowe ładowanie assetów, scope template, konflikty globalne. Gdy temat dotyczy sklepu/motywu Shopify. Pilnuje, żeby motyw Shopify nie rozjechał się przez jedną zmianę. Shopify"
-    },
-    {
-      "id": "gicleeapp_architect",
-      "number": 6,
-      "name": "GicleeApp Architect",
-      "aliases": [
-        "GicleeApp Architect"
-      ],
-      "category": "GicleeApp",
-      "purpose": "Projektowanie lokalnej aplikacji, Studio, cursor-api, komponentów, wariantów, ZIP wiedzy i workflow.",
-      "focus": "Architektura modułów, source-of-truth, warianty gf1/gf2, testy, manifesty, integracje i małe fazy pracy.",
-      "when_to_use": "Gdy chodzi o GicleeApp, lokalne narzędzia, komponenty lub integrację z GPT.",
-      "sample_command": "TRYB GicleeApp Architect\nZaprojektuj komponent Segregator Plików.",
-      "simplest": "Projektuje lokalny system/aplikację, nie tylko stronę.",
-      "search_text": "GicleeApp Architect GicleeApp Architect Projektowanie lokalnej aplikacji, Studio, cursor-api, komponentów, wariantów, ZIP wiedzy i workflow. Architektura modułów, source-of-truth, warianty gf1/gf2, testy, manifesty, integracje i małe fazy pracy. Gdy chodzi o GicleeApp, lokalne narzędzia, komponenty lub integrację z GPT. Projektuje lokalny system/aplikację, nie tylko stronę. GicleeApp"
-    },
-    {
-      "id": "performance_debug",
-      "number": 7,
-      "name": "Performance / Debug",
-      "aliases": [
-        "Performance",
-        "Performance / Debug"
-      ],
-      "category": "Performance",
-      "purpose": "Diagnoza lagów, CLS, problemów scrolla, błędów JS, regresji, skoków layoutu i wolnego renderu.",
-      "focus": "Hipotezy przyczyn, minimalny fix, pomiary, main thread, obrazki, sticky/fixed, observers, ryzyko nowych bibliotek.",
-      "when_to_use": "Gdy coś tnie, skacze, działało i przestało albo strona ma błędy.",
-      "sample_command": "TRYB Performance\nScroll na PDP tnie, znajdź możliwe przyczyny.",
-      "simplest": "Najpierw diagnoza, potem minimalny fix.",
-      "search_text": "Performance / Debug Performance Performance / Debug Diagnoza lagów, CLS, problemów scrolla, błędów JS, regresji, skoków layoutu i wolnego renderu. Hipotezy przyczyn, minimalny fix, pomiary, main thread, obrazki, sticky/fixed, observers, ryzyko nowych bibliotek. Gdy coś tnie, skacze, działało i przestało albo strona ma błędy. Najpierw diagnoza, potem minimalny fix. Performance"
-    },
-    {
-      "id": "writer_copy_premium",
-      "number": 8,
-      "name": "Writer / Copy Premium",
-      "aliases": [
-        "Copy Premium",
-        "Writer / Copy Premium"
-      ],
-      "category": "Copy",
-      "purpose": "Pisanie tekstów na stronę, opisów sekcji, CTA, claimów, nazw, opisów produktów i copy premium.",
-      "focus": "Ton marki, brzmienie premium, klarowność, rytm akapitów, wersja muzealna/techniczna/sprzedażowa.",
-      "when_to_use": "Gdy potrzebujesz konkretnego tekstu lub poprawy istniejącego copy.",
-      "sample_command": "TRYB Copy Premium\nNapisz tekst do sekcji Wymiary produktów.",
-      "simplest": "Pisze teksty, które brzmią jak marka premium.",
-      "search_text": "Writer / Copy Premium Copy Premium Writer / Copy Premium Pisanie tekstów na stronę, opisów sekcji, CTA, claimów, nazw, opisów produktów i copy premium. Ton marki, brzmienie premium, klarowność, rytm akapitów, wersja muzealna/techniczna/sprzedażowa. Gdy potrzebujesz konkretnego tekstu lub poprawy istniejącego copy. Pisze teksty, które brzmią jak marka premium. Copy"
-    },
-    {
-      "id": "veo_flow_image_prompt",
-      "number": 9,
-      "name": "Veo / Flow / Image Prompt",
-      "aliases": [
-        "Veo Premium",
-        "Veo / Flow / Image Prompt"
-      ],
-      "category": "AI Prompt",
-      "purpose": "Tworzenie promptów do Veo, Flow, Nano Banana i innych narzędzi obraz/wideo.",
-      "focus": "Opis sceny, kamera, światło, ruch, negative prompt, ostatnia klatka, styl i techniczne ograniczenia generatora.",
-      "when_to_use": "Gdy chcesz prompt do obrazu, wideo albo animowania grafiki.",
-      "sample_command": "TRYB Veo Premium\nPrzeanalizuj grafikę i zrób prompt.",
-      "simplest": "Prompt engineering dla obrazów i filmów.",
-      "search_text": "Veo / Flow / Image Prompt Veo Premium Veo / Flow / Image Prompt Tworzenie promptów do Veo, Flow, Nano Banana i innych narzędzi obraz/wideo. Opis sceny, kamera, światło, ruch, negative prompt, ostatnia klatka, styl i techniczne ograniczenia generatora. Gdy chcesz prompt do obrazu, wideo albo animowania grafiki. Prompt engineering dla obrazów i filmów. AI Prompt"
-    },
-    {
-      "id": "medyczny_ostro_ny",
-      "number": 10,
+      "id": "medyczny_ostrozny",
+      "order": 19,
+      "family": "legacy",
+      "selectable": true,
       "name": "Medyczny ostrożny",
-      "aliases": [
-        "Medyczny ostrożny"
-      ],
-      "category": "Medical",
+      "short_label": "Medyczny ostrożny",
+      "category": "Legacy",
+      "source_file": "",
+      "aliases": ["Medyczny ostrożny", "Tryb Medyczny ostrożny"],
       "purpose": "Ostrożna pomoc w zrozumieniu objawów, leków, wyników i przygotowaniu pytań do lekarza.",
-      "focus": "Bezpieczeństwo, czerwone flagi, możliwe mechanizmy, kiedy pilnie szukać pomocy; bez zastępowania lekarza.",
+      "focus": "Bezpieczeństwo, czerwone flagi, kiedy pilnie szukać pomocy; bez zastępowania lekarza.",
       "when_to_use": "Gdy temat dotyczy zdrowia, objawów, leków lub badań.",
-      "sample_command": "TRYB Medyczny ostrożny\nPomóż mi zrozumieć objawy/wyniki.",
-      "simplest": "Pomoc w orientacji i bezpieczeństwie, nie diagnoza.",
-      "search_text": "Medyczny ostrożny Medyczny ostrożny Ostrożna pomoc w zrozumieniu objawów, leków, wyników i przygotowaniu pytań do lekarza. Bezpieczeństwo, czerwone flagi, możliwe mechanizmy, kiedy pilnie szukać pomocy; bez zastępowania lekarza. Gdy temat dotyczy zdrowia, objawów, leków lub badań. Pomoc w orientacji i bezpieczeństwie, nie diagnoza. Medical"
+      "activation_profiles": [
+        {"id": "default", "label": "Domyślna", "command": "Tryb Medyczny ostrożny"}
+      ],
+      "requires": [],
+      "related_mode_ids": [],
+      "distinction_note": "Poza pakietem wiedzy Giclée v37 — tryb legacy, nie wchodzi w kontrolę kompletności pakietu."
     }
   ]
 }

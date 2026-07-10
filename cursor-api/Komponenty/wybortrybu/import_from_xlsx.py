@@ -1,15 +1,15 @@
-"""Import XLSX → JSON (dev/maintenance). Runtime nie wymaga openpyxl."""
+"""Import XLSX → JSON (legacy dev/maintenance). Runtime nie wymaga openpyxl."""
 
 from __future__ import annotations
 
+import argparse
 import json
-import re
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from .data_loader import data_dir, slugify
-from .prompt_builder import full_prompt_for_modes, short_prompt_for_modes
 
 try:
     import openpyxl
@@ -54,16 +54,19 @@ _EXTRA_ALIASES: dict[str, list[str]] = {
 }
 
 
+@dataclass(frozen=True)
+class ParsedLegacyCatalog:
+    source: str
+    modes: tuple[dict[str, Any], ...]
+    combinations: tuple[dict[str, Any], ...]
+
+
 def _norm(value: Any) -> str:
     return str(value or "").strip()
 
 
 def _default_source_path() -> Path:
     return data_dir() / "source" / "tryby_pracy_chatgpt_giclee_art.xlsx"
-
-
-def _build_search_text(*parts: str) -> str:
-    return " ".join(p for p in parts if p)
 
 
 def _aliases_for_mode(name: str) -> list[str]:
@@ -90,27 +93,27 @@ def _parse_modes_sheet(ws: Any) -> list[dict[str, Any]]:
         sample_command = _norm(row[5])
         simplest = _norm(row[6])
         aliases = _aliases_for_mode(name)
+        short = aliases[0] if aliases else name
         modes.append(
             {
                 "id": slugify(name),
-                "number": int(number),
+                "order": int(number),
+                "family": "legacy",
+                "selectable": True,
                 "name": name,
+                "short_label": short,
                 "aliases": aliases,
                 "category": _CATEGORY_BY_NAME.get(name, "Inne"),
+                "source_file": "",
                 "purpose": purpose,
                 "focus": focus,
                 "when_to_use": when_to_use,
-                "sample_command": sample_command,
-                "simplest": simplest,
-                "search_text": _build_search_text(
-                    name,
-                    *aliases,
-                    purpose,
-                    focus,
-                    when_to_use,
-                    simplest,
-                    _CATEGORY_BY_NAME.get(name, ""),
-                ),
+                "activation_profiles": [
+                    {"id": "default", "label": "Domyślna", "command": sample_command.split("\n")[0] or short}
+                ],
+                "requires": [],
+                "related_mode_ids": [],
+                "distinction_note": simplest,
             }
         )
     return modes
@@ -132,10 +135,9 @@ def _resolve_mode_ids(part: str, lookup: dict[str, str]) -> str | None:
     key = _norm(part).casefold()
     if key in lookup:
         return lookup[key]
-    # fuzzy: strip common prefixes
     for prefix in ("tryb ",):
         if key.startswith(prefix):
-            trimmed = key[len(prefix):].strip()
+            trimmed = key[len(prefix) :].strip()
             if trimmed in lookup:
                 return lookup[trimmed]
     return None
@@ -147,7 +149,6 @@ def _split_combination_name(name: str) -> list[str]:
 
 def _parse_combinations_sheet(ws: Any, modes: list[dict[str, Any]]) -> list[dict[str, Any]]:
     lookup = _alias_lookup(modes)
-    by_id = {m["id"]: m for m in modes}
     combinations: list[dict[str, Any]] = []
     for row in ws.iter_rows(min_row=4, values_only=True):
         name = _norm(row[0])
@@ -171,17 +172,6 @@ def _parse_combinations_sheet(ws: Any, modes: list[dict[str, Any]]) -> list[dict
             raise ValueError(
                 f"Nie rozpoznano trybów w kombinacji «{name}»: {', '.join(missing)}"
             )
-        mode_objs = [by_id[mid] for mid in mode_ids]
-        prompt_short = short_prompt_for_modes(
-            [_mode_dict_to_prompt_mode(m) for m in mode_objs]
-        )
-        prompt_full = full_prompt_for_modes(
-            [_mode_dict_to_prompt_mode(m) for m in mode_objs]
-        )
-        if usage_example:
-            prompt_full = (
-                f"{prompt_full}\n\nPrzykład użycia:\n{usage_example}"
-            )
         combinations.append(
             {
                 "id": slugify(name)[:80],
@@ -191,27 +181,12 @@ def _parse_combinations_sheet(ws: Any, modes: list[dict[str, Any]]) -> list[dict
                 "delivers": delivers,
                 "usage_example": usage_example,
                 "note": note,
-                "prompt_short": prompt_short,
-                "prompt_full": prompt_full,
             }
         )
     return combinations
 
 
-class _PromptMode:
-    """Minimal adapter for prompt_builder during import."""
-
-    def __init__(self, row: dict[str, Any]) -> None:
-        self.short_label = row["aliases"][0] if row.get("aliases") else row["name"]
-        self.purpose = row["purpose"]
-        self.sample_command = row["sample_command"]
-
-
-def _mode_dict_to_prompt_mode(row: dict[str, Any]) -> _PromptMode:
-    return _PromptMode(row)
-
-
-def import_from_xlsx(source: str | Path | None = None) -> dict[str, int]:
+def parse_xlsx(source: str | Path | None = None) -> ParsedLegacyCatalog:
     if openpyxl is None:
         raise RuntimeError(
             "Brak biblioteki openpyxl — zainstaluj: pip install openpyxl"
@@ -229,23 +204,32 @@ def import_from_xlsx(source: str | Path | None = None) -> dict[str, int]:
 
     modes = _parse_modes_sheet(wb["Tryby pracy"])
     combinations = _parse_combinations_sheet(wb["Kombinacje"], modes)
+    return ParsedLegacyCatalog(
+        source=path.name,
+        modes=tuple(modes),
+        combinations=tuple(combinations),
+    )
 
-    out_dir = data_dir()
-    out_dir.mkdir(parents=True, exist_ok=True)
+
+def write_legacy_catalog(parsed: ParsedLegacyCatalog, output_dir: str | Path) -> dict[str, int]:
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
 
     modes_payload = {
-        "version": 1,
-        "source": path.name,
-        "modes": modes,
+        "schema_version": 1,
+        "source": parsed.source,
+        "note": "Legacy import z XLSX — nie używać jako runtime v37",
+        "modes": list(parsed.modes),
     }
     combos_payload = {
-        "version": 1,
-        "source": path.name,
-        "combinations": combinations,
+        "schema_version": 1,
+        "source": parsed.source,
+        "note": "Legacy import z XLSX — nie używać jako runtime v37",
+        "combinations": list(parsed.combinations),
     }
 
-    modes_path = out_dir / "work_modes.json"
-    combos_path = out_dir / "combinations.json"
+    modes_path = out / "work_modes.json"
+    combos_path = out / "combinations.json"
     modes_path.write_text(
         json.dumps(modes_payload, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
@@ -254,17 +238,43 @@ def import_from_xlsx(source: str | Path | None = None) -> dict[str, int]:
         json.dumps(combos_payload, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
-    return {"modes": len(modes), "combinations": len(combinations)}
+    return {"modes": len(parsed.modes), "combinations": len(parsed.combinations)}
+
+
+def import_from_xlsx(
+    source: str | Path | None = None,
+    *,
+    output_dir: str | Path | None = None,
+) -> dict[str, int]:
+    """Parse-only domyślnie; zapis tylko po jawnym output_dir."""
+    parsed = parse_xlsx(source)
+    if output_dir is None:
+        return {"modes": len(parsed.modes), "combinations": len(parsed.combinations)}
+    return write_legacy_catalog(parsed, output_dir)
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = argv if argv is not None else sys.argv[1:]
-    source = args[0] if args else None
-    stats = import_from_xlsx(source)
-    print(
-        f"Zaimportowano: {stats['modes']} trybow, "
-        f"{stats['combinations']} kombinacji -> {data_dir()}"
+    parser = argparse.ArgumentParser(description="Legacy import XLSX → JSON (dev)")
+    parser.add_argument("source", nargs="?", help="Ścieżka do pliku XLSX")
+    parser.add_argument(
+        "--output-dir",
+        dest="output_dir",
+        help="Katalog docelowy zapisu (wymagany do zapisu plików)",
     )
+    args = parser.parse_args(argv)
+
+    if args.output_dir:
+        stats = import_from_xlsx(args.source, output_dir=args.output_dir)
+        print(
+            f"Zapisano legacy: {stats['modes']} trybów, "
+            f"{stats['combinations']} kombinacji -> {args.output_dir}"
+        )
+    else:
+        stats = import_from_xlsx(args.source)
+        print(
+            f"Sparsowano (bez zapisu): {stats['modes']} trybów, "
+            f"{stats['combinations']} kombinacji"
+        )
     return 0
 
 

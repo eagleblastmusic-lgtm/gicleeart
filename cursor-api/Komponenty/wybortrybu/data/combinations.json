@@ -1,91 +1,93 @@
 {
-  "version": 1,
-  "source": "tryby_pracy_chatgpt_giclee_art.xlsx",
+  "schema_version": 2,
+  "knowledge_pack": "v37",
   "combinations": [
     {
-      "id": "gui_premium_motion_director_code_aware_reviewer",
-      "name": "GUI Premium + Motion Director + Code-aware Reviewer",
-      "mode_ids": [
-        "gui_ui_premium",
-        "motion_director",
-        "code_aware_reviewer"
-      ],
-      "best_for": "Strony i sekcje premium, np. GICLÉE FRAME™",
-      "delivers": "Ocena wyglądu, projekt ruchu i kontrola ryzyka technicznego.",
-      "usage_example": "Oceń sekcję, zaprojektuj animację i sprawdź, czy Cursor nie zrobi regresji.",
-      "note": "Najlepsze do frontu Shopify.",
-      "prompt_short": "TRYB GUI Premium + Motion Director + Code-aware Reviewer",
-      "prompt_full": "Pracuj w trybie:\nGUI Premium + Motion Director + Code-aware Reviewer.\n\nZasady:\n- GUI Premium: Ocena i projektowanie wyglądu sekcji, układu, typografii, odstępów, hierarchii i premium feelingu.\n- Motion Director: Projektowanie ruchu: wejść sekcji, scroll reveal, hoverów, opóźnień, easingów, światła i tempa animacji.\n- Code-aware Reviewer: Ocena planu, diffu, raportu lub kodu Cursora pod kątem bezpieczeństwa technicznego.\n\nPrzykładowe komendy:\n1) TRYB GUI / UI Premium\nOceń tę sekcję i powiedz, co poprawić.\n2) TRYB Motion Director\nZaprojektuj animację dla tej sekcji.\n3) TRYB Code-aware Reviewer\nOceń plan Cursora.\n\nPrzykład użycia:\nOceń sekcję, zaprojektuj animację i sprawdź, czy Cursor nie zrobi regresji."
-    },
-    {
-      "id": "cursor_architect_code_aware_reviewer",
-      "name": "Cursor Architect + Code-aware Reviewer",
-      "mode_ids": [
-        "cursor_prompt_architect",
-        "code_aware_reviewer"
-      ],
+      "id": "cursor_architect_review_cursora",
+      "name": "Cursor Prompt Architect + Review Cursora",
+      "mode_ids": ["cursor_prompt_architect", "analyst_cursor_review"],
       "best_for": "Praca z Cursorem",
       "delivers": "Gotowy prompt + późniejsze sprawdzenie planu/diffu.",
       "usage_example": "Przygotuj prompt, a potem oceń odpowiedź Cursora.",
-      "note": "Najbezpieczniejszy tryb wdrożeniowy.",
-      "prompt_short": "TRYB Cursor Architect + Code-aware Reviewer",
-      "prompt_full": "Pracuj w trybie:\nCursor Architect + Code-aware Reviewer.\n\nZasady:\n- Cursor Architect: Tworzenie gotowych, bezpiecznych promptów dla Cursora z planem, guardrailami i checklistą testów.\n- Code-aware Reviewer: Ocena planu, diffu, raportu lub kodu Cursora pod kątem bezpieczeństwa technicznego.\n\nPrzykładowe komendy:\n1) TRYB Cursor Architect\nPrzygotuj prompt dla Cursora, najpierw plan.\n2) TRYB Code-aware Reviewer\nOceń plan Cursora.\n\nPrzykład użycia:\nPrzygotuj prompt, a potem oceń odpowiedź Cursora."
+      "note": "Najbezpieczniejszy tryb wdrożeniowy."
     },
     {
-      "id": "shopify_snapshot_reviewer_performance",
-      "name": "Shopify Snapshot Reviewer + Performance",
+      "id": "homepage_ui_responsive",
+      "name": "Homepage Premium + UI/UX + Responsive",
       "mode_ids": [
-        "shopify_snapshot_reviewer",
-        "performance_debug"
+        "shopify_homepage_art_direction",
+        "analyst_ui_ux_premium",
+        "shopify_responsive_accessibility"
       ],
-      "best_for": "Motyw Shopify, PDP, homepage, header, scroll",
-      "delivers": "Ocena zmian w Liquid/CSS/JS z naciskiem na wydajność.",
+      "best_for": "Strona główna premium",
+      "delivers": "Art direction homepage, UI/UX premium i responsywność.",
+      "usage_example": "Oceń homepage, popraw layout premium i mobile UX.",
+      "note": "Shopify Snapshot dołączany automatycznie."
+    },
+    {
+      "id": "pdp_conversion_copy",
+      "name": "PDP + Conversion/Trust + Copy",
+      "mode_ids": [
+        "shopify_product_page_pdp",
+        "shopify_conversion_trust",
+        "shopify_copy_brand_story"
+      ],
+      "best_for": "Strona produktu i konwersja",
+      "delivers": "PDP, trust signals i copy premium dopasowane do marki.",
+      "usage_example": "Popraw PDP, CTA i teksty budujące zaufanie.",
+      "note": ""
+    },
+    {
+      "id": "catalog_seo_translation",
+      "name": "Collection/Catalog + SEO + Translation/Markets",
+      "mode_ids": [
+        "shopify_collection_catalog",
+        "shopify_seo_content",
+        "shopify_translation_markets"
+      ],
+      "best_for": "Katalog wielojęzyczny",
+      "delivers": "Grid kolekcji, SEO content i lokalizacja Markets.",
+      "usage_example": "Uporządkuj katalog, meta i tłumaczenia rynków.",
+      "note": ""
+    },
+    {
+      "id": "motion_performance_responsive",
+      "name": "Shopify Motion + Performance + Responsive",
+      "mode_ids": [
+        "shopify_motion_interaction",
+        "analyst_performance",
+        "shopify_responsive_accessibility"
+      ],
+      "best_for": "Motion strony z kontrolą wydajności",
+      "delivers": "Projekt motion Shopify, diagnoza performance i mobile UX.",
+      "usage_example": "Zaprojektuj animację sekcji bez regresji performance.",
+      "note": "Motion = CSS/JS strony, nie generatory Veo."
+    },
+    {
+      "id": "snapshot_performance_debug",
+      "name": "Shopify Snapshot + Performance + Debug/Regresja",
+      "mode_ids": [
+        "analyst_shopify_snapshot",
+        "analyst_performance",
+        "analyst_debug_regression"
+      ],
+      "best_for": "Motyw Shopify i regresje",
+      "delivers": "Review snapshotu z naciskiem na wydajność i debug regresji.",
       "usage_example": "Sprawdź, czemu scroll tnie po zmianie w theme.liquid.",
-      "note": "Dobre przy globalnych assetach.",
-      "prompt_short": "TRYB Shopify Snapshot Reviewer + Performance",
-      "prompt_full": "Pracuj w trybie:\nShopify Snapshot Reviewer + Performance.\n\nZasady:\n- Shopify Snapshot Reviewer: Review motywu Shopify: Liquid, templates JSON, sections, snippets, assets, homepage, PDP, header, menu.\n- Performance: Diagnoza lagów, CLS, problemów scrolla, błędów JS, regresji, skoków layoutu i wolnego renderu.\n\nPrzykładowe komendy:\n1) TRYB Shopify Snapshot Reviewer\nSprawdź tę zmianę w theme.liquid.\n2) TRYB Performance\nScroll na PDP tnie, znajdź możliwe przyczyny.\n\nPrzykład użycia:\nSprawdź, czemu scroll tnie po zmianie w theme.liquid."
+      "note": ""
     },
     {
-      "id": "gicleeapp_architect_performance",
-      "name": "GicleeApp Architect + Performance",
+      "id": "gpt_zip_stage_review",
+      "name": "GPT Integration/ZIP + Architekt Etapów + Review Cursora",
       "mode_ids": [
-        "gicleeapp_architect",
-        "performance_debug"
+        "analyst_gpt_zip_integration",
+        "analyst_stage_architect",
+        "analyst_cursor_review"
       ],
-      "best_for": "Lokalna aplikacja i Studio",
-      "delivers": "Plan modułów, fazy pracy, testy i diagnoza wydajności.",
-      "usage_example": "Zaprojektuj komponent i podziel go na bezpieczne etapy.",
-      "note": "Dobre do cursor-api.",
-      "prompt_short": "TRYB GicleeApp Architect + Performance",
-      "prompt_full": "Pracuj w trybie:\nGicleeApp Architect + Performance.\n\nZasady:\n- GicleeApp Architect: Projektowanie lokalnej aplikacji, Studio, cursor-api, komponentów, wariantów, ZIP wiedzy i workflow.\n- Performance: Diagnoza lagów, CLS, problemów scrolla, błędów JS, regresji, skoków layoutu i wolnego renderu.\n\nPrzykładowe komendy:\n1) TRYB GicleeApp Architect\nZaprojektuj komponent Segregator Plików.\n2) TRYB Performance\nScroll na PDP tnie, znajdź możliwe przyczyny.\n\nPrzykład użycia:\nZaprojektuj komponent i podziel go na bezpieczne etapy."
-    },
-    {
-      "id": "copy_premium_gui_premium",
-      "name": "Copy Premium + GUI Premium",
-      "mode_ids": [
-        "writer_copy_premium",
-        "gui_ui_premium"
-      ],
-      "best_for": "Treści na stronę",
-      "delivers": "Tekst dopasowany do layoutu i marki premium.",
-      "usage_example": "Napisz copy do sekcji i powiedz, jak je rozłożyć wizualnie.",
-      "note": "Dobre do pustych sekcji.",
-      "prompt_short": "TRYB Copy Premium + GUI Premium",
-      "prompt_full": "Pracuj w trybie:\nCopy Premium + GUI Premium.\n\nZasady:\n- Copy Premium: Pisanie tekstów na stronę, opisów sekcji, CTA, claimów, nazw, opisów produktów i copy premium.\n- GUI Premium: Ocena i projektowanie wyglądu sekcji, układu, typografii, odstępów, hierarchii i premium feelingu.\n\nPrzykładowe komendy:\n1) TRYB Copy Premium\nNapisz tekst do sekcji Wymiary produktów.\n2) TRYB GUI / UI Premium\nOceń tę sekcję i powiedz, co poprawić.\n\nPrzykład użycia:\nNapisz copy do sekcji i powiedz, jak je rozłożyć wizualnie."
-    },
-    {
-      "id": "veo_premium_motion_director",
-      "name": "Veo Premium + Motion Director",
-      "mode_ids": [
-        "veo_flow_image_prompt",
-        "motion_director"
-      ],
-      "best_for": "Prompt do wideo/grafiki",
-      "delivers": "Opis sceny, kamera, światło, ruch i negative prompt.",
-      "usage_example": "Zrób prompt do Veo na bazie grafiki.",
-      "note": "Dobre do animacji tła.",
-      "prompt_short": "TRYB Veo Premium + Motion Director",
-      "prompt_full": "Pracuj w trybie:\nVeo Premium + Motion Director.\n\nZasady:\n- Veo Premium: Tworzenie promptów do Veo, Flow, Nano Banana i innych narzędzi obraz/wideo.\n- Motion Director: Projektowanie ruchu: wejść sekcji, scroll reveal, hoverów, opóźnień, easingów, światła i tempa animacji.\n\nPrzykładowe komendy:\n1) TRYB Veo Premium\nPrzeanalizuj grafikę i zrób prompt.\n2) TRYB Motion Director\nZaprojektuj animację dla tej sekcji.\n\nPrzykład użycia:\nZrób prompt do Veo na bazie grafiki."
+      "best_for": "Aktualizacja paczki wiedzy i wdrożenia",
+      "delivers": "Plan etapów dla plików wiedzy + review implementacji.",
+      "usage_example": "Zaplanuj aktualizację plików startowych i oceń raport Cursora.",
+      "note": "Bez generowania ZIP — źródła lokalne."
     }
   ]
 }

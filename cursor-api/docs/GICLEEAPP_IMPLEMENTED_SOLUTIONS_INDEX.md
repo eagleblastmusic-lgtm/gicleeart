@@ -137,7 +137,7 @@ Większość deleguje do [`theme_page_editor/bootstrap.py`](../Komponenty/_share
 | `notatnik` | Notatnik | subprocess | — | `gui.py`, `__main__.py` | Notatki Markdown |
 | `segregatorplikow` | Segregator plików | subprocess | `data/` | `gui.py`, `storage.py`, `move_service.py` | DnD (`tkdnd_safe`); kafelki folderów; config lokalny `data/tiles.json` (gitignore, szablon `tiles.example.json`); `shutil.move` od razu bez konfliktu nazw, podgląd przy duplikacie |
 | `bazapromptow` | Baza Promptów | subprocess | `data/` | `gui.py`, `storage.py` | Schowek promptów |
-| `wybortrybu` | Wybór Trybu | subprocess | `data/` | `gui.py`, `__main__.py` | Tryby pracy ChatGPT |
+| `wybortrybu` | Wybór Trybu | subprocess | `data/` | `gui.py`, `data_loader.py`, `prompt_builder.py`, `knowledge_sources.py`, `__main__.py` | Katalog trybów GPT **v37** (schema v2): 17 formalnych trybów, fundament, profile Veo, read-only kontrola `GICLEE_*_MODE_*.md`; prompty generowane live |
 | `integracjagpt` | Integracja z GPT | subprocess | `data/` | `gui.py`, `__main__.py` | Mirror, ZIP knowledge, push |
 | `stronyzobrazami` | Strony z obrazami | subprocess | `data/` | `gui.py`, `storage.py` | Muzea + wyszukiwarka |
 | `stronydozycia` | Strony do użycia | subprocess | `data/` | `gui.py`, `storage.py` | Zapisane linki |

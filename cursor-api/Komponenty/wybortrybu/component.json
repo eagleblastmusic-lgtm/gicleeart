@@ -1,6 +1,6 @@
 {
   "name": "Wybór Trybu",
-  "description": "Przeglądaj tryby pracy ChatGPT, wybierz kombinację i kopiuj gotowy prompt aktywacyjny.",
+  "description": "Przeglądaj tryby pracy ChatGPT (pakiet wiedzy v37), wybierz kombinację i kopiuj gotowy prompt aktywacyjny.",
   "icon": "🎛️",
   "color": "#3949ab",
   "order": 42
