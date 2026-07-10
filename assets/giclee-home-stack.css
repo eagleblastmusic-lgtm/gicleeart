@@ -188,6 +188,31 @@ html.giclee-home-stack .shopify-section[data-giclee-home-stack='1']:not(.giclee-
   backface-visibility: hidden;
 }
 
+/* Hero — pełny pierwszy viewport (override slide_height: large; wysokość z JS --home-stack-hero-min-height) */
+html.giclee-home-stack
+  .shopify-section[data-giclee-home-stack='1']:not(.giclee-home-stack-divider) {
+  --home-stack-hero-media-height: calc(
+    var(--home-stack-hero-min-height, 100svh) -
+    var(--home-stack-hero-footer-height, var(--header-group-height, 60px)) -
+    var(--home-stack-hero-media-offset-top, 0px)
+  );
+  min-height: var(--home-stack-hero-min-height, 100svh);
+}
+
+html.giclee-home-stack
+  .shopify-section[data-giclee-home-stack='1']:not(.giclee-home-stack-divider)
+  > .slideshow-section {
+  min-height: var(--home-stack-hero-min-height, 100svh);
+}
+
+html.giclee-home-stack
+  .shopify-section[data-giclee-home-stack='1']:not(.giclee-home-stack-divider)
+  slideshow-component {
+  --slide-min-height: var(--home-stack-hero-min-height, 100svh) !important;
+  --slide-min-height-desktop: var(--home-stack-hero-min-height, 100svh) !important;
+  min-height: var(--home-stack-hero-min-height, 100svh);
+}
+
 html.giclee-home-stack .shopify-section[data-giclee-home-stack='2']:not(.giclee-home-stack-divider) {
   position: sticky;
   top: 0;
@@ -416,13 +441,112 @@ html.giclee-home-stack .shopify-section[data-giclee-home-stack='1']:not(.giclee-
   background-color: #000;
 }
 
-/* Hero video collage — pełny bleed, bez seam crop / fade przy najezdzie */
-html.giclee-home-stack .shopify-section[data-giclee-home-stack='1']:not(.giclee-home-stack-divider) .giclee-video-collage,
-html.giclee-home-stack .shopify-section[data-giclee-home-stack='1']:not(.giclee-home-stack-divider) .giclee-collage__stage,
-html.giclee-home-stack .shopify-section[data-giclee-home-stack='1']:not(.giclee-home-stack-divider) .giclee-collage__video {
-  inset: 0 !important;
-  top: 0 !important;
-  bottom: 0 !important;
+/* Hero video collage — jeden clipping host; dzieci wypełniają kontener (giclee-hero-video-collage.css) */
+html.giclee-home-stack
+  .shopify-section[data-giclee-home-stack='1']:not(.giclee-home-stack-divider)
+  .giclee-video-collage {
+  position: absolute;
+  top: var(--home-stack-hero-media-offset-top, 0) !important;
+  bottom: var(--home-stack-hero-footer-height, var(--header-group-height, 60px)) !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  overflow: hidden;
+}
+
+/* Dolny czarny pas hero — wys. = header, szewrony wyśrodkowane */
+html.giclee-home-stack
+  .shopify-section[data-giclee-home-stack='1']:not(.giclee-home-stack-divider)
+  .giclee-home-hero-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--home-stack-hero-footer-height, var(--header-group-height, 60px));
+  background: #000;
+  pointer-events: none;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Scroll cue — subtelne szewrony w dolnym pasie hero */
+html.giclee-home-stack
+  .shopify-section[data-giclee-home-stack='1']:not(.giclee-home-stack-divider)
+  .giclee-home-scroll-cue {
+  position: relative;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 28px;
+  pointer-events: none;
+  filter: drop-shadow(0 0 7px rgb(198 169 107 / 0.28));
+  opacity: clamp(
+    0,
+    calc(0.88 - var(--home-stack-under-dim, 0) * 1.8),
+    0.88
+  );
+}
+
+html.giclee-home-stack:not(.giclee-home-stack-ready)
+  .shopify-section[data-giclee-home-stack='1']:not(.giclee-home-stack-divider)
+  .giclee-home-scroll-cue {
+  opacity: 0 !important;
+  visibility: hidden;
+}
+
+html.giclee-home-stack
+  .shopify-section[data-giclee-home-stack='1'].is-stack-under-dim:not(.giclee-home-stack-divider)
+  .giclee-home-scroll-cue {
+  transition: opacity 0.35s ease;
+}
+
+html.giclee-home-stack .giclee-home-scroll-cue__chevron {
+  display: block;
+  width: 13px;
+  height: 13px;
+  border-right: 1.5px solid #c6a96b;
+  border-bottom: 1.5px solid #c6a96b;
+  transform: rotate(45deg);
+  animation: giclee-home-scroll-chevron 1.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+html.giclee-home-stack .giclee-home-scroll-cue__chevron:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+@keyframes giclee-home-scroll-chevron {
+  0% {
+    opacity: 0;
+    transform: translateY(-5px) rotate(45deg);
+  }
+
+  35% {
+    opacity: 0.9;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(7px) rotate(45deg);
+  }
+}
+
+@media screen and (max-width: 749px) {
+  html.giclee-home-stack
+    .shopify-section[data-giclee-home-stack='1']:not(.giclee-home-stack-divider)
+    .giclee-home-scroll-cue {
+    width: 24px;
+    gap: 2px;
+  }
+
+  html.giclee-home-stack .giclee-home-scroll-cue__chevron {
+    width: 11px;
+    height: 11px;
+  }
 }
 
 html.giclee-home-stack
@@ -532,5 +656,11 @@ html.giclee-home-stack .shopify-section.is-stack-under-dim:not(.giclee-home-stac
 
   html.giclee-home-stack #header-component.giclee-header-scroll-fade {
     transition: none;
+  }
+
+  html.giclee-home-stack .giclee-home-scroll-cue__chevron {
+    animation: none;
+    opacity: 0.65;
+    transform: rotate(45deg);
   }
 }

@@ -25,6 +25,7 @@
   var SLIP_MIN_MOBILE = 40;
   var SLIP_MAX_MOBILE = 48;
   var SLIP_CLEAR_EPS = 2;
+  var HERO_VIEWPORT_TOP_EPS = 16;
 
   var stackEls = [];
   var scrollDividerEls = [];
@@ -796,6 +797,113 @@
     return 'Monitoring slip for ' + ms + 'ms — scroll now';
   };
 
+  function readHeaderGroupHeightPx() {
+    var raw = getComputedStyle(document.body).getPropertyValue('--header-group-height');
+    var px = parseFloat(raw);
+    return Number.isFinite(px) && px > 0 ? px : 0;
+  }
+
+  function resolveHeroMinHeightValue(heroTopPx) {
+    if (heroTopPx <= HERO_VIEWPORT_TOP_EPS) {
+      return '100svh';
+    }
+    return 'calc(100svh - ' + heroTopPx.toFixed(2) + 'px)';
+  }
+
+  function measureHeroViewportTopPx(heroElement) {
+    if (!heroElement) return 0;
+    if (getScrollY() <= SCROLL_REST_EPS) {
+      return Math.max(0, heroElement.getBoundingClientRect().top);
+    }
+    if (document.querySelector('#header-component[transparent]')) {
+      return 0;
+    }
+    return readHeaderGroupHeightPx();
+  }
+
+  function measureHeaderHeightPx() {
+    var header = document.getElementById('header-component');
+    if (header) {
+      return Math.max(0, header.getBoundingClientRect().height);
+    }
+    var fallback = readHeaderGroupHeightPx();
+    return fallback > 0 ? fallback : 60;
+  }
+
+  function applyHeroLayoutMetrics(heroElement) {
+    if (!heroElement) return;
+
+    var headerHeight = measureHeaderHeightPx();
+    var headerHeightPx = headerHeight.toFixed(2) + 'px';
+    var heroTopPx = measureHeroViewportTopPx(heroElement);
+    var minHeight = resolveHeroMinHeightValue(heroTopPx);
+    var mediaOffsetTopPx =
+      heroTopPx <= HERO_VIEWPORT_TOP_EPS ? headerHeight.toFixed(2) + 'px' : '0px';
+    var layoutKey =
+      minHeight +
+      '|' +
+      headerHeightPx +
+      '|' +
+      mediaOffsetTopPx;
+
+    if (heroElement._heroLayoutApplied === layoutKey) return;
+    heroElement._heroLayoutApplied = layoutKey;
+
+    document.documentElement.style.removeProperty('--home-stack-hero-min-height');
+    heroElement.style.setProperty('--home-stack-hero-min-height', minHeight);
+    heroElement.style.setProperty('--home-stack-hero-header-height', headerHeightPx);
+    heroElement.style.setProperty('--home-stack-hero-footer-height', headerHeightPx);
+    heroElement.style.setProperty('--home-stack-hero-media-offset-top', mediaOffsetTopPx);
+  }
+
+  function scheduleHeroLayoutMeasure(heroElement) {
+    if (!heroElement) return;
+    applyHeroLayoutMetrics(heroElement);
+    requestAnimationFrame(function () {
+      applyHeroLayoutMetrics(heroElement);
+      requestAnimationFrame(function () {
+        applyHeroLayoutMetrics(heroElement);
+      });
+    });
+  }
+
+  function ensureHeroFooterBand(heroElement) {
+    if (!heroElement) return null;
+    var footer = heroElement.querySelector('.giclee-home-hero-footer');
+    if (!footer) {
+      footer = document.createElement('div');
+      footer.className = 'giclee-home-hero-footer';
+      footer.setAttribute('aria-hidden', 'true');
+      heroElement.appendChild(footer);
+    }
+    return footer;
+  }
+
+  function ensureHeroScrollCue(heroElement) {
+    if (!heroElement) return;
+
+    var footer = ensureHeroFooterBand(heroElement);
+    var cue = heroElement.querySelector('.giclee-home-scroll-cue');
+
+    if (!cue) {
+      cue = document.createElement('div');
+      cue.className = 'giclee-home-scroll-cue';
+      cue.setAttribute('aria-hidden', 'true');
+
+      var chevron1 = document.createElement('span');
+      chevron1.className = 'giclee-home-scroll-cue__chevron';
+      var chevron2 = document.createElement('span');
+      chevron2.className = 'giclee-home-scroll-cue__chevron';
+
+      cue.appendChild(chevron1);
+      cue.appendChild(chevron2);
+    }
+
+    if (footer && cue.parentElement !== footer) {
+      footer.appendChild(cue);
+    }
+  }
+
   function scheduleStackUpdate() {
     if (scheduleStackUpdate._ticking) return;
     scheduleStackUpdate._ticking = true;
@@ -824,7 +932,9 @@
 
     if (stackEls.length < 2) return;
 
+    ensureHeroScrollCue(stackEls[0]);
     document.documentElement.classList.add('giclee-home-stack');
+    scheduleHeroLayoutMeasure(stackEls[0]);
     tagDividersForStack(stackEls);
     collectScrollDividers();
     resetPairProgressState(stackEls);
@@ -849,10 +959,15 @@
       scheduleMotionTick();
     }, { passive: true });
     window.addEventListener('resize', function () {
+      scheduleHeroLayoutMeasure(stackEls[0]);
       scheduleStackUpdate();
+    }, { passive: true });
+    window.addEventListener('giclee:splash-done', function () {
+      scheduleHeroLayoutMeasure(stackEls[0]);
     }, { passive: true });
     scheduleStackUpdate();
     requestAnimationFrame(function () {
+      scheduleHeroLayoutMeasure(stackEls[0]);
       document.documentElement.classList.add('giclee-home-stack-ready');
       window.dispatchEvent(new CustomEvent('giclee:home-stack-ready'));
     });
