@@ -12,6 +12,9 @@ _DATA_DIR = Path(__file__).resolve().parent / "data"
 
 SHOPIFY_SNAPSHOT_MODE_ID = "analyst_shopify_snapshot"
 FORMAL_FAMILIES: frozenset[str] = frozenset({"analyst", "shopify"})
+ALLOWED_FAMILIES: frozenset[str] = frozenset(
+    {"analyst", "shopify", "workflow", "legacy"}
+)
 
 CATEGORY_COLORS: dict[str, str] = {
     "Analyst": "#00897b",
@@ -156,7 +159,7 @@ def _profiles(raw: Any) -> tuple[ActivationProfile, ...]:
     seen: set[str] = set()
     for row in raw:
         if not isinstance(row, dict):
-            continue
+            raise ValueError(f"Nieprawidłowy activation_profile: {row!r}")
         pid = _norm(row.get("id"))
         if not pid or pid in seen:
             raise ValueError(f"Duplikat lub brak id profilu aktywacji: {row!r}")
@@ -172,6 +175,8 @@ def _profiles(raw: Any) -> tuple[ActivationProfile, ...]:
                 description=_norm(row.get("description")),
             )
         )
+    if not out:
+        raise ValueError("Tryb wymaga co najmniej jednego poprawnego activation_profile")
     return tuple(out)
 
 
@@ -266,20 +271,62 @@ def _validate_catalog(
     combinations: tuple[Combination, ...],
 ) -> None:
     all_ids: dict[str, str] = {}
+    foundation_orders: set[int] = set()
     for foundation in foundations:
+        if not foundation.id:
+            raise ValueError("Fundament wymaga niepustego id")
+        if not foundation.name or not foundation.source_file:
+            raise ValueError(
+                f"Fundament {foundation.id}: wymagane name i source_file"
+            )
         if foundation.id in all_ids:
             raise ValueError(f"Duplikat id: {foundation.id}")
         all_ids[foundation.id] = "foundation"
+        if foundation.order in foundation_orders:
+            raise ValueError(f"Duplikat order fundamentu: {foundation.order}")
+        foundation_orders.add(foundation.order)
+
+    family_orders: dict[str, set[int]] = {}
+    formal_sources: set[str] = set()
     for mode in modes:
+        if not mode.id:
+            raise ValueError("Tryb wymaga niepustego id")
+        if mode.family not in ALLOWED_FAMILIES:
+            raise ValueError(f"Tryb {mode.id}: nieznana family -> {mode.family}")
+        if not mode.name or not mode.short_label or not mode.category:
+            raise ValueError(
+                f"Tryb {mode.id}: wymagane name, short_label i category"
+            )
         if mode.id in all_ids:
             raise ValueError(f"Duplikat id: {mode.id}")
         all_ids[mode.id] = "mode"
+        orders = family_orders.setdefault(mode.family, set())
+        if mode.order in orders:
+            raise ValueError(
+                f"Duplikat order w rodzinie {mode.family}: {mode.order}"
+            )
+        orders.add(mode.order)
+
+        if mode.is_formal:
+            if not mode.source_file:
+                raise ValueError(f"Formalny tryb {mode.id} wymaga source_file")
+            if mode.source_file in formal_sources:
+                raise ValueError(
+                    f"Duplikat source_file formalnego trybu: {mode.source_file}"
+                )
+            formal_sources.add(mode.source_file)
 
     mode_ids = {m.id for m in modes}
     for mode in modes:
+        if len(set(mode.requires)) != len(mode.requires):
+            raise ValueError(f"Tryb {mode.id}: duplikat w requires")
+        if len(set(mode.related_mode_ids)) != len(mode.related_mode_ids):
+            raise ValueError(f"Tryb {mode.id}: duplikat w related_mode_ids")
         for req in mode.requires:
             if req not in mode_ids:
                 raise ValueError(f"Tryb {mode.id}: nieznane requires -> {req}")
+            if req == mode.id:
+                raise ValueError(f"Tryb {mode.id}: nie może wymagać samego siebie")
         for rel in mode.related_mode_ids:
             if rel not in mode_ids:
                 raise ValueError(f"Tryb {mode.id}: nieznane related_mode_ids -> {rel}")
@@ -294,9 +341,17 @@ def _validate_catalog(
             f"Nieprawidłowy podział formalnych trybów: analyst={analyst_count}, shopify={shopify_count}"
         )
 
+    combination_ids: set[str] = set()
     for combo in combinations:
+        if not combo.id:
+            raise ValueError("Kombinacja wymaga niepustego id")
+        if combo.id in combination_ids:
+            raise ValueError(f"Duplikat id kombinacji: {combo.id}")
+        combination_ids.add(combo.id)
         if not combo.mode_ids:
             raise ValueError(f"Kombinacja {combo.id} nie ma trybów")
+        if len(set(combo.mode_ids)) != len(combo.mode_ids):
+            raise ValueError(f"Kombinacja {combo.id} zawiera duplikaty trybów")
         for mid in combo.mode_ids:
             if mid not in mode_ids:
                 raise ValueError(f"Kombinacja {combo.name}: nieznany tryb {mid}")
@@ -321,6 +376,19 @@ def load_catalog() -> WorkModeCatalog:
     if combo_schema != 2:
         raise ValueError(f"Nieobsługiwana schema_version w combinations.json: {combo_schema}")
 
+    knowledge_pack = _norm(modes_data.get("knowledge_pack"))
+    combo_pack = _norm(combos_data.get("knowledge_pack"))
+    if not knowledge_pack:
+        raise ValueError("work_modes.json wymaga pola knowledge_pack")
+    if combo_pack != knowledge_pack:
+        raise ValueError(
+            "Niezgodny knowledge_pack: "
+            f"work_modes.json={knowledge_pack!r}, combinations.json={combo_pack!r}"
+        )
+    catalog_source = _norm(modes_data.get("catalog_source"))
+    if not catalog_source:
+        raise ValueError("work_modes.json wymaga pola catalog_source")
+
     foundations = tuple(
         _foundation_from_row(row) for row in modes_data.get("foundations", [])
     )
@@ -335,8 +403,8 @@ def load_catalog() -> WorkModeCatalog:
     foundation_by_id = {f.id: f for f in foundations}
     return WorkModeCatalog(
         schema_version=schema_version,
-        knowledge_pack=_norm(modes_data.get("knowledge_pack")),
-        catalog_source=_norm(modes_data.get("catalog_source")),
+        knowledge_pack=knowledge_pack,
+        catalog_source=catalog_source,
         foundations=foundations,
         modes=modes,
         combinations=combinations,

@@ -77,6 +77,35 @@ class WyborTrybuDataTests(unittest.TestCase):
             self.assertNotIn("prompt_short", row)
             self.assertNotIn("prompt_full", row)
 
+    def test_catalog_ids_orders_and_sources_are_unique(self) -> None:
+        mode_ids = [mode.id for mode in self.catalog.modes]
+        foundation_ids = [foundation.id for foundation in self.catalog.foundations]
+        combo_ids = [combo.id for combo in self.catalog.combinations]
+        self.assertEqual(len(mode_ids), len(set(mode_ids)))
+        self.assertEqual(len(foundation_ids), len(set(foundation_ids)))
+        self.assertFalse(set(mode_ids) & set(foundation_ids))
+        self.assertEqual(len(combo_ids), len(set(combo_ids)))
+
+        for family in ("analyst", "shopify", "workflow", "legacy"):
+            orders = [mode.order for mode in self.catalog.modes if mode.family == family]
+            self.assertEqual(len(orders), len(set(orders)), family)
+
+        formal_sources = [mode.source_file for mode in self.catalog.formal_modes()]
+        self.assertTrue(all(formal_sources))
+        self.assertEqual(len(formal_sources), len(set(formal_sources)))
+
+    def test_shopify_modes_require_snapshot(self) -> None:
+        shopify = [mode for mode in self.catalog.modes if mode.family == "shopify"]
+        self.assertEqual(len(shopify), 9)
+        for mode in shopify:
+            self.assertIn(SHOPIFY_SNAPSHOT_MODE_ID, mode.requires, mode.id)
+
+    def test_combination_pack_matches_catalog_pack(self) -> None:
+        raw = json.loads(
+            (self.data_dir / "combinations.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(raw["knowledge_pack"], self.catalog.knowledge_pack)
+
     def test_veo_activation_commands(self) -> None:
         veo = self.catalog.mode("analyst_veo_flow_director")
         assert veo is not None
@@ -87,6 +116,22 @@ class WyborTrybuDataTests(unittest.TestCase):
         self.assertEqual(commands["tryb_flow"], "TRYB FLOW")
         self.assertEqual(commands["tryb_image_prompt"], "TRYB IMAGE PROMPT")
         self.assertEqual(commands["tryb_image_video_prompt"], "TRYB IMAGE-VIDEO PROMPT")
+
+    def test_veo_profile_is_used_by_generated_prompts(self) -> None:
+        profile_map = {VEO_MODE_ID: "veo_krotko"}
+        short = short_prompt_for_modes(
+            self.catalog,
+            [VEO_MODE_ID],
+            profile_map=profile_map,
+        )
+        full = full_prompt_for_modes(
+            self.catalog,
+            [VEO_MODE_ID],
+            profile_map=profile_map,
+        )
+        self.assertEqual(short, "Veo krótko")
+        self.assertIn("Veo krótko", full)
+        self.assertNotIn("\nVeo premium\n", "\n" + full + "\n")
 
     def test_search_by_alias_command_and_source_file(self) -> None:
         by_alias = filter_modes(self.catalog, query="Motion Director")

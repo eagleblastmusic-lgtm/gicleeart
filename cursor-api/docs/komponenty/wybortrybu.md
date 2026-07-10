@@ -4,7 +4,7 @@
 
 | Plik | Rola |
 |------|------|
-| `gui.py` | Okno Tkinter: zakładki Analityczne / Shopify / Kombinacje / Dodatkowe, fundament, status źródeł |
+| `gui.py` | Premium UI Tkinter: karty trybów, profile Veo, status źródeł, zwijany generator i kombinacje |
 | `data_loader.py` | Wczytanie schema v2, walidacja ID/zależności, `resolve_modes_with_dependencies()` |
 | `prompt_builder.py` | Krótki i pełny prompt z fundamentem, auto Shopify Snapshot, rozdzielenie Veo/Motion |
 | `knowledge_sources.py` | Read-only kontrola plików `GICLEE_*_MODE_*.md` vs katalog |
@@ -31,9 +31,21 @@ Tryb: `subprocess`. Sekcja launchera: **Narzędzia pomocnicze**. Kategoria Studi
 2. Sprawdź status źródeł v38 (zielony / drift / niedostępny folder).
 3. Przeglądaj tryby w zakładkach **Analityczne**, **Shopify** lub **Dodatkowe** (workflow + legacy).
 4. Zaznacz tryby — Shopify specialist automatycznie dołącza **Shopify Snapshot** w prompcie.
-5. Dla trybu Veo użyj dedykowanych przycisków profili (Veo premium / krótko / popraw / Flow / Image Prompt).
+5. Dla trybu Veo wybierz profil (Premium / Krótko / Popraw / Flow / Image Prompt). Kliknięcie ustawia profil w generatorze i kopiuje jego komendę.
 6. Zakładka **Kombinacje** — gotowe zestawy; prompty generowane live z katalogu.
 7. Generator na dole — kopiuj krótki lub pełny prompt aktywacyjny.
+
+## UI/UX premium (WT-2.1)
+
+- paleta „gallery paper”: ciepłe tło, białe karty, grafit i granat
+- kompaktowy pasek fundamentu zamiast technicznej listy plików
+- kolorowy status źródeł: zielony `current`, bursztynowy `drift`, szary `unavailable`
+- liczniki w zakładkach i czytelne karty trybów bez globalnej numeracji
+- profile Veo wybierają aktywny wariant, aktualizują generator i kopiują komendę
+- Shopify Snapshot dodany automatycznie jest widoczny jako chip `AUTO`
+- generator ma stały pasek akcji oraz zwijany podgląd pełnego promptu
+- kombinacje są prezentowane w dwukolumnowej siatce kart
+- skróty: `Ctrl+F` — wyszukiwarka, `Esc` — wyczyść filtr / zamknij podgląd
 
 ## Kontrola plików źródłowych
 

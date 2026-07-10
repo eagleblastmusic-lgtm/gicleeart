@@ -2,7 +2,7 @@
 
 Hub warstwy API: [`README.md`](README.md) · Launcher: [`../giclee_app/docs/README.md`](../giclee_app/docs/README.md) · Logika per komponent: [`komponenty/README.md`](komponenty/README.md) · Moduły `_shared`: [`shared.md`](shared.md)
 
-**Ostatnia aktualizacja indeksu:** 2026-07-09
+**Ostatnia aktualizacja indeksu:** 2026-07-10
 
 ---
 
@@ -137,7 +137,7 @@ Większość deleguje do [`theme_page_editor/bootstrap.py`](../Komponenty/_share
 | `notatnik` | Notatnik | subprocess | — | `gui.py`, `__main__.py` | Notatki Markdown |
 | `segregatorplikow` | Segregator plików | subprocess | `data/` | `gui.py`, `storage.py`, `move_service.py` | DnD (`tkdnd_safe`); kafelki folderów; config lokalny `data/tiles.json` (gitignore, szablon `tiles.example.json`); `shutil.move` od razu bez konfliktu nazw, podgląd przy duplikacie |
 | `bazapromptow` | Baza Promptów | subprocess | `data/` | `gui.py`, `storage.py` | Schowek promptów |
-| `wybortrybu` | Wybór Trybu | subprocess | `data/` | `gui.py`, `data_loader.py`, `prompt_builder.py`, `knowledge_sources.py`, `__main__.py` | Katalog trybów GPT **v37** (schema v2): 17 formalnych trybów, fundament, profile Veo, read-only kontrola `GICLEE_*_MODE_*.md`; prompty generowane live |
+| `wybortrybu` | Wybór Trybu | subprocess | `data/` | `gui.py`, `data_loader.py`, `prompt_builder.py`, `knowledge_sources.py`, `__main__.py` | Katalog GPT **v38** (schema v2): 17 formalnych trybów, premium cards UI, wybieralne profile Veo, auto Shopify Snapshot, zwijany generator, read-only kontrola źródeł |
 | `integracjagpt` | Integracja z GPT | subprocess | `data/` | `gui.py`, `__main__.py` | Mirror, ZIP knowledge, push |
 | `stronyzobrazami` | Strony z obrazami | subprocess | `data/` | `gui.py`, `storage.py` | Muzea + wyszukiwarka |
 | `stronydozycia` | Strony do użycia | subprocess | `data/` | `gui.py`, `storage.py` | Zapisane linki |
