@@ -127,6 +127,38 @@ HOME_ZONES: tuple[HomeZone, ...] = (
                 "int",
                 _s("slideshow_4LMfx7", "settings", "autoplay_speed"),
             ),
+            HomeField(
+                "hero_audio_enable",
+                "Włącz opcjonalny dźwięk hero",
+                "bool",
+                _s("slideshow_4LMfx7", "settings", "enable_audio"),
+                hint="Ambient po kliknięciu — tylko na stronie głównej.",
+            ),
+            HomeField(
+                "hero_audio_url",
+                "URL pliku audio hero",
+                "text",
+                _s("slideshow_4LMfx7", "settings", "audio_url"),
+                hint="Publiczny URL CDN (np. po uploadzie do Shopify Files).",
+            ),
+            HomeField(
+                "hero_audio_label_on",
+                "Etykieta — włącz dźwięk",
+                "text",
+                _s("slideshow_4LMfx7", "settings", "audio_label_on"),
+            ),
+            HomeField(
+                "hero_audio_label_off",
+                "Etykieta — wycisz",
+                "text",
+                _s("slideshow_4LMfx7", "settings", "audio_label_off"),
+            ),
+            HomeField(
+                "hero_audio_volume",
+                "Głośność ambientu (%)",
+                "int",
+                _s("slideshow_4LMfx7", "settings", "audio_volume"),
+            ),
         ),
     ),
     HomeZone(

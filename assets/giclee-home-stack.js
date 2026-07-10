@@ -797,6 +797,261 @@
     return 'Monitoring slip for ' + ms + 'ms — scroll now';
   };
 
+  var VISUAL_SYNC_LAYERS = ['3', '4', '5', '6'];
+  var VISUAL_SYNC_BASELINE_MIN = 5;
+  var VISUAL_SYNC_BASELINE_MAX = 10;
+  var VISUAL_SYNC_DELTA_THRESHOLD = 2;
+
+  function visualSyncMedian(values) {
+    if (!values.length) return null;
+    var sorted = values.slice().sort(function (a, b) {
+      return a - b;
+    });
+    var mid = Math.floor(sorted.length / 2);
+    if (sorted.length % 2) return sorted[mid];
+    return (sorted[mid - 1] + sorted[mid]) / 2;
+  }
+
+  function visualSyncRectInViewport(rect) {
+    if (!rect) return false;
+    var vh = window.innerHeight || document.documentElement.clientHeight || 800;
+    var vw = window.innerWidth || document.documentElement.clientWidth || 800;
+    return rect.bottom > 0 && rect.top < vh && rect.right > 0 && rect.left < vw;
+  }
+
+  function visualSyncPointInViewport(rect) {
+    if (!rect) return false;
+    var vh = window.innerHeight || document.documentElement.clientHeight || 800;
+    return rect.bottom > 0 && rect.top < vh;
+  }
+
+  function visualSyncLayerPairIndex(layer) {
+    return parseInt(layer, 10) - 2;
+  }
+
+  function visualSyncReadTransform(el) {
+    if (!el) return 'none';
+    var t = getComputedStyle(el).transform;
+    return !t || t === 'none' ? 'none' : t;
+  }
+
+  function visualSyncFindClipHost(section) {
+    if (!section) return null;
+    return (
+      section.querySelector('.background-image-container') ||
+      section.querySelector('video-background-component')
+    );
+  }
+
+  function visualSyncFinalizeLayer(layerState) {
+    var deltas = layerState.samples.map(function (s) {
+      return s.deltaTop;
+    });
+    layerState.sampleCount = layerState.samples.length;
+    layerState.minDeltaTop =
+      deltas.length > 0 ? Math.round(Math.min.apply(null, deltas) * 10) / 10 : null;
+    layerState.maxDeltaTop =
+      deltas.length > 0 ? Math.round(Math.max.apply(null, deltas) * 10) / 10 : null;
+    layerState.maxDeltaVariation =
+      deltas.length > 0
+        ? Math.round((layerState.maxDeltaTop - layerState.minDeltaTop) * 10) / 10
+        : null;
+
+    var baselinePool = layerState.baselineCandidates.slice(0, VISUAL_SYNC_BASELINE_MAX);
+    layerState.baseline =
+      baselinePool.length >= VISUAL_SYNC_BASELINE_MIN
+        ? Math.round(visualSyncMedian(baselinePool) * 10) / 10
+        : baselinePool.length > 0
+          ? Math.round(visualSyncMedian(baselinePool) * 10) / 10
+          : null;
+
+    layerState.visualMismatches = 0;
+    if (layerState.baseline !== null) {
+      layerState.samples.forEach(function (sample) {
+        if (Math.abs(sample.deltaTop - layerState.baseline) > VISUAL_SYNC_DELTA_THRESHOLD) {
+          layerState.visualMismatches += 1;
+        }
+      });
+    }
+
+    delete layerState.samples;
+    delete layerState.baselineCandidates;
+  }
+
+  window.GICLEE_HOME_STACK_VISUAL_SYNC_CHECK = function (ms) {
+    ms = Math.max(ms || 15000, 3000);
+
+    if (isTouchLikeDevice()) {
+      var skippedTouch = {
+        status: 'skipped',
+        reason: 'mobile native / touch-like device',
+        notApplicable: true,
+      };
+      console.log('[giclee-home-stack visual sync check]', skippedTouch);
+      return Promise.resolve(skippedTouch);
+    }
+
+    if (prefersReducedMotion()) {
+      var skippedMotion = {
+        status: 'not applicable',
+        reason: 'prefers-reduced-motion',
+        notApplicable: true,
+      };
+      console.log('[giclee-home-stack visual sync check]', skippedMotion);
+      return Promise.resolve(skippedMotion);
+    }
+
+    return new Promise(function (resolve) {
+      var layerStates = {};
+      VISUAL_SYNC_LAYERS.forEach(function (layer) {
+        layerStates[layer] = {
+          layer: layer,
+          samples: [],
+          baselineCandidates: [],
+          variableMismatches: 0,
+        };
+      });
+
+      var start = performance.now();
+      var totalVariableMismatches = 0;
+      var totalVisualMismatches = 0;
+      var maxVisualDeltaVariation = 0;
+
+      function collectSample() {
+        VISUAL_SYNC_LAYERS.forEach(function (layer) {
+          var pairIndex = visualSyncLayerPairIndex(layer);
+          var prev = stackEls[pairIndex];
+          var next = stackEls[pairIndex + 1];
+          if (!prev || !next) return;
+
+          var prevRect = prev.getBoundingClientRect();
+          var incomingTop = getIncomingLeadEl(prev, next).getBoundingClientRect().top;
+          var boardTop = next.getBoundingClientRect().top;
+          var pairProgress = getPairOverlapProgress(
+            prev,
+            pairIndex,
+            prevRect,
+            incomingTop,
+            boardTop
+          );
+
+          if (pairProgress.phase !== 'approach' && pairProgress.phase !== 'overlap') return;
+
+          var section = document.querySelector(
+            '.shopify-section[data-giclee-home-stack="' +
+              layer +
+              '"]:not(.giclee-home-stack-divider)'
+          );
+          var divider = document.querySelector(
+            '.giclee-home-stack-divider--scroll[data-giclee-home-stack="' + layer + '"]'
+          );
+          if (!section || !divider) return;
+
+          var line = divider._dividerLine || divider.querySelector('.divider__line');
+          var clipHost = visualSyncFindClipHost(section);
+          if (!line || !clipHost) return;
+
+          var lineRect = line.getBoundingClientRect();
+          var clipRect = clipHost.getBoundingClientRect();
+          if (!visualSyncPointInViewport(lineRect) || !visualSyncPointInViewport(clipRect)) return;
+
+          var dividerSlipVar = divider.style.getPropertyValue('--home-stack-slip-y') || '0px';
+          var sectionSlipVar = section.style.getPropertyValue('--home-stack-slip-y') || '0px';
+          if (dividerSlipVar !== sectionSlipVar) {
+            layerStates[layer].variableMismatches += 1;
+            totalVariableMismatches += 1;
+          }
+
+          var sectionInner = section.querySelector('.section');
+          var customBg = sectionInner
+            ? sectionInner.querySelector('.custom-section-background')
+            : null;
+          var img = clipHost.querySelector('img');
+
+          var deltaTop = Math.round((clipRect.top - lineRect.bottom) * 10) / 10;
+          var sample = {
+            layer: layer,
+            phase: pairProgress.phase,
+            dividerSlipVar: dividerSlipVar,
+            sectionSlipVar: sectionSlipVar,
+            dividerLineTop: Math.round(lineRect.top * 10) / 10,
+            dividerLineBottom: Math.round(lineRect.bottom * 10) / 10,
+            clipHostTop: Math.round(clipRect.top * 10) / 10,
+            clipHostBottom: Math.round(clipRect.bottom * 10) / 10,
+            deltaTop: deltaTop,
+            sectionRectTop: Math.round(section.getBoundingClientRect().top * 10) / 10,
+            sectionInnerRectTop: sectionInner
+              ? Math.round(sectionInner.getBoundingClientRect().top * 10) / 10
+              : null,
+            dividerTransform: visualSyncReadTransform(divider.querySelector('.section')),
+            sectionTransform: visualSyncReadTransform(sectionInner),
+            clipHostTransform: visualSyncReadTransform(clipHost),
+            imgTransform: visualSyncReadTransform(img),
+          };
+
+          var state = layerStates[layer];
+          state.samples.push(sample);
+          if (state.baselineCandidates.length < VISUAL_SYNC_BASELINE_MAX) {
+            state.baselineCandidates.push(deltaTop);
+          }
+        });
+      }
+
+      function finalize() {
+        var layers = {};
+        VISUAL_SYNC_LAYERS.forEach(function (layer) {
+          visualSyncFinalizeLayer(layerStates[layer]);
+          layers[layer] = layerStates[layer];
+          if (layerStates[layer].maxDeltaVariation !== null) {
+            maxVisualDeltaVariation = Math.max(
+              maxVisualDeltaVariation,
+              layerStates[layer].maxDeltaVariation
+            );
+          }
+          totalVisualMismatches += layerStates[layer].visualMismatches || 0;
+        });
+
+        var report = {
+          status: 'complete',
+          durationMs: Math.round(performance.now() - start),
+          variableMismatches: totalVariableMismatches,
+          visualMismatches: totalVisualMismatches,
+          maxVisualDeltaVariation: Math.round(maxVisualDeltaVariation * 10) / 10,
+          layers: layers,
+        };
+
+        console.table(
+          VISUAL_SYNC_LAYERS.map(function (layer) {
+            var l = layers[layer];
+            return {
+              layer: layer,
+              sampleCount: l.sampleCount,
+              baseline: l.baseline,
+              minDeltaTop: l.minDeltaTop,
+              maxDeltaTop: l.maxDeltaTop,
+              maxDeltaVariation: l.maxDeltaVariation,
+              variableMismatches: l.variableMismatches,
+              visualMismatches: l.visualMismatches,
+            };
+          })
+        );
+        console.log('[giclee-home-stack visual sync check]', report);
+        resolve(report);
+      }
+
+      function tick() {
+        collectSample();
+        if (performance.now() - start < ms) {
+          requestAnimationFrame(tick);
+        } else {
+          finalize();
+        }
+      }
+
+      requestAnimationFrame(tick);
+    });
+  };
+
   function readHeaderGroupHeightPx() {
     var raw = getComputedStyle(document.body).getPropertyValue('--header-group-height');
     var px = parseFloat(raw);

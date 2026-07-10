@@ -16,7 +16,7 @@ html.giclee-home-stack {
   --home-stack-6-z: 70;
   --home-stack-divider-band: 60px;
   --home-stack-seam-height: calc(var(--home-stack-divider-band, 60px) + 1px);
-  --home-stack-divider-line-color: #c6a96b;
+  --home-stack-divider-line-color: rgb(230 230 230 / 0.68);
 }
 
 /* Menu: fade podczas najazdu hero (opacity z JS) */
@@ -162,8 +162,11 @@ html.giclee-home-stack .giclee-home-stack-divider--scroll .divider__line {
   min-height: 0 !important;
   height: var(--divider-border-thickness, 1px);
   border: none !important;
-  background-color: var(--home-stack-divider-line-color, #c6a96b);
-  box-shadow: 0 0 8px rgb(198 169 107 / 0.28);
+  background-color: var(
+    --home-stack-divider-line-color,
+    rgb(230 230 230 / 0.68)
+  );
+  box-shadow: 0 0 6px rgb(230 230 230 / 0.10);
   animation: none !important;
   opacity: 1;
   --home-stack-divider-scale: 0;
@@ -270,10 +273,15 @@ html.giclee-home-stack .shopify-section[data-giclee-home-stack]:not(.giclee-home
 html.giclee-home-stack .shopify-section[data-giclee-home-stack='2']:not(.giclee-home-stack-divider) > .section,
 html.giclee-home-stack .shopify-section[data-giclee-home-stack='3']:not(.giclee-home-stack-divider) > .section,
 html.giclee-home-stack .shopify-section[data-giclee-home-stack='4']:not(.giclee-home-stack-divider) > .section,
-html.giclee-home-stack .shopify-section[data-giclee-home-stack='5']:not(.giclee-home-stack-divider) > .section,
-html.giclee-home-stack .shopify-section[data-giclee-home-stack='6']:not(.giclee-home-stack-divider) > .section {
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='5']:not(.giclee-home-stack-divider) > .section {
   padding-top: var(--home-stack-seam-height);
   padding-bottom: var(--home-stack-seam-height);
+  box-sizing: border-box;
+}
+
+html.giclee-home-stack .shopify-section[data-giclee-home-stack='6']:not(.giclee-home-stack-divider) > .section {
+  padding-top: var(--home-stack-seam-height);
+  padding-bottom: 0;
   box-sizing: border-box;
 }
 
@@ -340,34 +348,64 @@ html.giclee-home-stack .shopify-section[data-giclee-home-stack]:not(.giclee-home
   overflow: hidden;
 }
 
-/* Tło ucięte nad i pod linią — warstwy 2–6 (bez hero) */
+/* Tło ucięte nad i pod linią — warstwy 2–5 (bez hero, bez ostatniej) */
 html.giclee-home-stack
-  .shopify-section[data-giclee-home-stack]:not([data-giclee-home-stack='1']):not(.giclee-home-stack-divider)
+  .shopify-section[data-giclee-home-stack]:not([data-giclee-home-stack='1']):not([data-giclee-home-stack='6']):not(.giclee-home-stack-divider)
   > .section:has(.background-image-container, video-background-component)
   .custom-section-background
   .background-image-container,
 html.giclee-home-stack
-  .shopify-section[data-giclee-home-stack]:not([data-giclee-home-stack='1']):not(.giclee-home-stack-divider)
+  .shopify-section[data-giclee-home-stack]:not([data-giclee-home-stack='1']):not([data-giclee-home-stack='6']):not(.giclee-home-stack-divider)
   > .section:has(.background-image-container, video-background-component)
   .custom-section-background
   video-background-component,
 html.giclee-home-stack
-  .shopify-section[data-giclee-home-stack]:not([data-giclee-home-stack='1']):not(.giclee-home-stack-divider)
+  .shopify-section[data-giclee-home-stack]:not([data-giclee-home-stack='1']):not([data-giclee-home-stack='6']):not(.giclee-home-stack-divider)
   > .section:has(.background-image-container, video-background-component)
   .custom-section-background
   > .giclee-section-bg-overlay,
 html.giclee-home-stack
-  .shopify-section[data-giclee-home-stack]:not([data-giclee-home-stack='1']):not(.giclee-home-stack-divider)
+  .shopify-section[data-giclee-home-stack]:not([data-giclee-home-stack='1']):not([data-giclee-home-stack='6']):not(.giclee-home-stack-divider)
   > .section:has(.background-image-container, video-background-component)
   .custom-section-background
   .giclee-home-studio-reveal__overlay,
 html.giclee-home-stack
-  .shopify-section[data-giclee-home-stack]:not([data-giclee-home-stack='1']):not(.giclee-home-stack-divider)
+  .shopify-section[data-giclee-home-stack]:not([data-giclee-home-stack='1']):not([data-giclee-home-stack='6']):not(.giclee-home-stack-divider)
   > .section:has(.background-image-container, video-background-component)
   .custom-section-background
   .giclee-home-studio-reveal__radial-mask {
   top: var(--home-stack-seam-height);
   bottom: var(--home-stack-seam-height);
+}
+
+/* Sekcja 6 — tło do naturalnego dołu (bez dolnego szwu stacka) */
+html.giclee-home-stack
+  .shopify-section[data-giclee-home-stack='6']:not(.giclee-home-stack-divider)
+  > .section:has(.background-image-container, video-background-component)
+  .custom-section-background
+  .background-image-container,
+html.giclee-home-stack
+  .shopify-section[data-giclee-home-stack='6']:not(.giclee-home-stack-divider)
+  > .section:has(.background-image-container, video-background-component)
+  .custom-section-background
+  video-background-component,
+html.giclee-home-stack
+  .shopify-section[data-giclee-home-stack='6']:not(.giclee-home-stack-divider)
+  > .section:has(.background-image-container, video-background-component)
+  .custom-section-background
+  > .giclee-section-bg-overlay,
+html.giclee-home-stack
+  .shopify-section[data-giclee-home-stack='6']:not(.giclee-home-stack-divider)
+  > .section:has(.background-image-container, video-background-component)
+  .custom-section-background
+  .giclee-home-studio-reveal__overlay,
+html.giclee-home-stack
+  .shopify-section[data-giclee-home-stack='6']:not(.giclee-home-stack-divider)
+  > .section:has(.background-image-container, video-background-component)
+  .custom-section-background
+  .giclee-home-studio-reveal__radial-mask {
+  top: var(--home-stack-seam-height);
+  bottom: 0;
 }
 
 /* Tło sekcji — min. pełny viewport (bez hero i bez ostatniej); niezależnie od wysokości suwaków / treści.
@@ -420,9 +458,6 @@ html.giclee-home-stack .shopify-section[data-giclee-home-stack='4']:not(.giclee-
   .custom-section-background::after,
 html.giclee-home-stack .shopify-section[data-giclee-home-stack='5']:not(.giclee-home-stack-divider)
   > .section:has(.background-image-container, video-background-component)
-  .custom-section-background::after,
-html.giclee-home-stack .shopify-section[data-giclee-home-stack='6']:not(.giclee-home-stack-divider)
-  > .section:has(.background-image-container, video-background-component)
   .custom-section-background::after {
   content: '';
   position: absolute;
@@ -430,10 +465,23 @@ html.giclee-home-stack .shopify-section[data-giclee-home-stack='6']:not(.giclee-
   right: 0;
   bottom: var(--home-stack-divider-band, 60px);
   height: 0;
-  border-top: 1px solid var(--home-stack-divider-line-color, #c6a96b);
-  box-shadow: 0 -1px 8px rgb(198 169 107 / 0.22);
+  border-top: 1px solid;
+  border-top-color: var(
+    --home-stack-divider-line-color,
+    rgb(230 230 230 / 0.68)
+  );
+  box-shadow: 0 -1px 6px rgb(230 230 230 / 0.08);
   pointer-events: none;
   z-index: 5;
+}
+
+/* Sekcja 6 — bez wewnętrznej dolnej linii (linia tylko w tail dividerze) */
+html.giclee-home-stack
+  .shopify-section[data-giclee-home-stack='6']:not(.giclee-home-stack-divider)
+  > .section:has(.background-image-container, video-background-component)
+  .custom-section-background::after {
+  content: none !important;
+  display: none !important;
 }
 
 /* Hero slideshow — pełne tło pod menu przy najezdzie */
@@ -484,7 +532,7 @@ html.giclee-home-stack
   gap: 3px;
   width: 28px;
   pointer-events: none;
-  filter: drop-shadow(0 0 7px rgb(198 169 107 / 0.28));
+  filter: drop-shadow(0 0 5px rgb(230 230 230 / 0.12));
   opacity: clamp(
     0,
     calc(0.88 - var(--home-stack-under-dim, 0) * 1.8),
@@ -509,8 +557,8 @@ html.giclee-home-stack .giclee-home-scroll-cue__chevron {
   display: block;
   width: 13px;
   height: 13px;
-  border-right: 1.5px solid #c6a96b;
-  border-bottom: 1.5px solid #c6a96b;
+  border-right: 1.5px solid rgb(230 230 230 / 0.78);
+  border-bottom: 1.5px solid rgb(230 230 230 / 0.78);
   transform: rotate(45deg);
   animation: giclee-home-scroll-chevron 1.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }

@@ -1,5 +1,5 @@
 {
-  "active": "home10",
+  "active": "home11",
   "variants": [
     {
       "id": "home1",
@@ -47,6 +47,11 @@
     {
       "id": "home10",
       "label": "Nowa naprawa",
+      "home_stack": true
+    },
+    {
+      "id": "home11",
+      "label": "Nowa naprawa vz nowym hero",
       "home_stack": true
     }
   ]

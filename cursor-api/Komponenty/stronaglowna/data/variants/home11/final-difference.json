@@ -1,0 +1,15 @@
+{
+  "enabled": true,
+  "desktopEnabled": true,
+  "copyScale": 1.062,
+  "copyTranslateY": -8,
+  "mediaOffsetX": 24,
+  "mediaScale": 0.965,
+  "mediaBrightness": 82,
+  "bgBrightness": 78,
+  "bgVeilOpacity": 16,
+  "durationMs": 850,
+  "easing": "museum",
+  "glowEnabled": true,
+  "reverseBehavior": false
+}

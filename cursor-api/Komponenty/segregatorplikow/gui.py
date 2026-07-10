@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import threading
+import time
 import tkinter as tk
-from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 from tkinter import filedialog, messagebox, scrolledtext, ttk
@@ -55,6 +55,13 @@ class SegregatorApp:
         self._pending_files: list[Path] = []
         self._session_log: list[str] = []
         self._tile_frames: dict[str, tk.Frame] = {}
+        self._tile_bg: dict[str, str] = {}
+        self._dnd_target_count = 0
+        self._drop_router_installed = False
+        self._drag_highlight: tk.Misc | None = None
+        self._drag_highlight_bg = "#eceff1"
+        self._last_drop_at = 0.0
+        self._last_drop_sig = ""
 
         self._build_ui()
         self._refresh_tiles()
@@ -111,6 +118,7 @@ class SegregatorApp:
         self._tiles_inner.bind("<Configure>", _on_inner_configure)
         self._canvas.bind("<Configure>", _on_canvas_configure)
         bind_mousewheel_to_canvas(self._canvas, self._tiles_inner)
+        self._install_drop_router()
 
         log_outer = ttk.LabelFrame(paned, text="Ostatnie operacje (sesja)", padding=6)
         paned.add(log_outer, weight=1)
@@ -142,6 +150,11 @@ class SegregatorApp:
         for child in self._tiles_inner.winfo_children():
             child.destroy()
         self._tile_frames.clear()
+        self._tile_bg.clear()
+        self._clear_drag_highlight()
+        self._dnd_target_count = 0
+        if self._drop_router_installed:
+            self._install_drop_router()
 
         if not self._store.tiles:
             ttk.Label(
@@ -150,10 +163,12 @@ class SegregatorApp:
                 foreground="#666",
                 padding=20,
             ).pack(anchor="w")
+            self._update_dnd_hint()
             return
 
         for tile in self._store.tiles:
             self._render_parent_tile(tile)
+        self._update_dnd_hint()
 
     def _render_parent_tile(self, tile: TileEntry) -> None:
         outer = ttk.Frame(self._tiles_inner, padding=(0, 8))
@@ -162,6 +177,7 @@ class SegregatorApp:
         card = tk.Frame(outer, bg="#eceff1", highlightbackground="#b0bec5", highlightthickness=1)
         card.pack(fill="x", padx=4, pady=2)
         self._tile_frames[tile.id] = card
+        self._tile_bg[tile.id] = "#eceff1"
 
         inner = tk.Frame(card, bg="#eceff1", padx=14, pady=12)
         inner.pack(fill="x")
@@ -197,20 +213,20 @@ class SegregatorApp:
             btn_row, text="Dodaj podkafelek", command=lambda t=tile: self._add_child_tile(t)
         ).pack(side="left", padx=(6, 0))
 
+        children_row: ttk.Frame | None = None
         if tile.children:
             children_row = ttk.Frame(outer, padding=(20, 0, 0, 0))
             children_row.pack(fill="x")
             for child in tile.children:
                 self._render_child_tile(children_row, child, tile)
 
-        self._bind_tile_drop(card, tile)
-        for w in (inner, title, path_lbl):
-            self._bind_tile_drop(w, tile)
+        card.bind("<Button-1>", lambda _e, t=tile: self._on_tile_click(t), add="+")
 
     def _render_child_tile(self, parent: ttk.Frame, child: TileEntry, parent_tile: TileEntry) -> None:
         frame = tk.Frame(parent, bg="#e3f2fd", highlightbackground="#90caf9", highlightthickness=1)
         frame.pack(side="left", padx=6, pady=6, ipadx=4, ipady=4)
         self._tile_frames[child.id] = frame
+        self._tile_bg[child.id] = "#e3f2fd"
 
         inner = tk.Frame(frame, bg="#e3f2fd", padx=10, pady=8)
         inner.pack()
@@ -235,9 +251,7 @@ class SegregatorApp:
             btns, text="X", width=3, command=lambda c=child, p=parent_tile: self._delete_child(p, c.id)
         ).pack(side="left", padx=(4, 0))
 
-        self._bind_tile_drop(frame, child)
-        for w in inner.winfo_children():
-            self._bind_tile_drop(w, child)
+        frame.bind("<Button-1>", lambda _e, t=child: self._on_tile_click(t), add="+")
 
     @staticmethod
     def _short_path(path: str, max_len: int = 72) -> str:
@@ -246,31 +260,117 @@ class SegregatorApp:
             return text
         return "..." + text[-(max_len - 3) :]
 
-    def _bind_tile_drop(self, widget: tk.Misc, tile: TileEntry) -> None:
-        def _on_drop(event: object, t: TileEntry = tile) -> None:
+    def _install_drop_router(self) -> None:
+        """Canvas na Windowsie przechwytuje DnD — kafelek wyznaczamy po pozycji kursora."""
+        if not dnd_files_available() or not _HAS_DND:
+            return
+
+        def _on_drop(event: object) -> None:
+            self._clear_drag_highlight()
+            tile = self._tile_at_event(event)
+            if tile is None:
+                show_toast(self.root, "Upusc plik bezposrednio na kafelek folderu")
+                return
             data = getattr(event, "data", "") or ""
             paths = parse_dnd_files(data)
-            self._handle_incoming_paths(paths, t)
+            if not paths:
+                show_toast(
+                    self.root,
+                    "Brak plikow w upuszczeniu — przeciagnij plik z Eksploratora Windows",
+                    duration_ms=2600,
+                )
+                return
+            self._handle_incoming_paths(paths, tile)
 
-        def _on_enter(_e: object, w: tk.Misc = widget) -> None:
+        def _on_drag_motion(event: object) -> None:
+            tile = self._tile_at_event(event)
+            if tile is None:
+                self._clear_drag_highlight()
+                return
+            frame = self._tile_frames.get(tile.id)
+            if frame is None:
+                return
+            self._set_drag_highlight(frame, self._tile_bg.get(tile.id, "#eceff1"))
+
+        def _on_drag_leave(_event: object) -> None:
+            self._clear_drag_highlight()
+
+        registered = 0
+        for widget in (self.root, self._canvas, self._tiles_inner):
+            if register_drop_target(
+                widget,
+                on_drop=_on_drop,
+                on_drag_enter=_on_drag_motion,
+                on_drag_leave=_on_drag_leave,
+            ):
+                registered += 1
+                try:
+                    widget.dnd_bind("<<DragOver>>", _on_drag_motion)
+                except Exception:
+                    pass
+        self._dnd_target_count = registered
+        self._drop_router_installed = True
+
+    def _tile_at_event(self, event: object) -> TileEntry | None:
+        x_root = int(getattr(event, "x_root", 0) or 0)
+        y_root = int(getattr(event, "y_root", 0) or 0)
+        if x_root or y_root:
             try:
-                w.configure(bg="#c8e6c9")
+                widget = self.root.winfo_containing(x_root, y_root)
             except tk.TclError:
-                pass
+                widget = getattr(event, "widget", None)
+        else:
+            widget = getattr(event, "widget", None)
+        return self._tile_for_widget(widget)
 
-        def _on_leave(_e: object, w: tk.Misc = widget, orig: str = "#eceff1") -> None:
+    def _tile_for_widget(self, widget: tk.Misc | None) -> TileEntry | None:
+        node: tk.Misc | None = widget
+        while node is not None:
+            for tile_id, frame in self._tile_frames.items():
+                if node == frame:
+                    return self._store.find(tile_id)
             try:
-                w.configure(bg=orig)
+                node = node.master
             except tk.TclError:
-                pass
+                break
+        return None
 
-        register_drop_target(
-            widget,
-            on_drop=_on_drop,
-            on_drag_enter=_on_enter,
-            on_drag_leave=_on_leave,
-        )
-        widget.bind("<Button-1>", lambda _e, t=tile: self._on_tile_click(t), add="+")
+    def _set_drag_highlight(self, frame: tk.Misc, orig_bg: str) -> None:
+        if self._drag_highlight is frame:
+            return
+        self._clear_drag_highlight()
+        self._drag_highlight = frame
+        self._drag_highlight_bg = orig_bg
+        try:
+            frame.configure(bg="#c8e6c9")
+        except tk.TclError:
+            pass
+
+    def _clear_drag_highlight(self) -> None:
+        if self._drag_highlight is None:
+            return
+        try:
+            self._drag_highlight.configure(bg=self._drag_highlight_bg)
+        except tk.TclError:
+            pass
+        self._drag_highlight = None
+
+    def _update_dnd_hint(self) -> None:
+        dnd_ok = dnd_files_available() and _HAS_DND and self._dnd_target_count > 0
+        if dnd_ok:
+            hint = (
+                "Przeciagnij pliki na kafelek lub uzyj «Wybierz pliki» i kliknij kafelek docelowy."
+            )
+        elif dnd_files_available() and _HAS_DND:
+            hint = (
+                "DnD nie zadzialalo na kafelkach — uzyj «Wybierz pliki» i kliknij kafelek docelowy."
+            )
+        else:
+            hint = (
+                "DnD niedostepne — uzyj «Wybierz pliki» i kliknij kafelek docelowy. "
+                "(pip install tkinterdnd2)"
+            )
+        self._hint_var.set(hint)
 
     def _on_tile_click(self, tile: TileEntry) -> None:
         if self._pending_files:
@@ -318,6 +418,12 @@ class SegregatorApp:
         """Drop lub bezposrednie pliki — preview tylko przy konflikcie nazw."""
         if not paths:
             return
+        sig = f"{tile.id}|" + "|".join(str(p) for p in paths)
+        now = time.monotonic()
+        if sig == self._last_drop_sig and now - self._last_drop_at < 0.5:
+            return
+        self._last_drop_sig = sig
+        self._last_drop_at = now
         files, dirs = filter_file_paths(paths)
         if dirs:
             show_toast(self.root, f"Pominieto {len(dirs)} folder(ow)")

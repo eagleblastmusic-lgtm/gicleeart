@@ -73,7 +73,7 @@ Brak automatycznego nadpisywania.
 
 | Moduł | Użycie |
 |-------|--------|
-| `_shared/tkdnd_safe.py` | `register_drop_target`, `parse_dnd_files` |
+| `_shared/tkdnd_safe.py` | `register_drop_target`, `parse_dnd_files` — drop przez router na `Canvas`/root (Windows: `create_window` nie przekazuje DnD do dzieci) |
 | `_shared/toast.py` | `show_toast` |
 | `_shared/activity_log.py` | `append_activity` |
 | `_shared/activity_log_ui.py` | globalny dziennik |

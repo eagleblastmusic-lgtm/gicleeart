@@ -32,7 +32,7 @@ Separatory: bloki `divider` między sekcjami (osobne sekcje Shopify) — **po je
 | Splash + scroll reveal | `layout/theme.liquid` |
 | Mobile hero (lista z JS, nie hardcode) | `assets/giclee-home-mobile.js`, `layout/theme.liquid` |
 | Hero kolaż wideo | `blocks/_slide.liquid`, `assets/giclee-hero-video-collage*.js`, `collage_gui.py` |
-| **Opcjonalny ambient hero** | `sections/slideshow.liquid` (schema), `assets/giclee-hero-audio.js/.css` — tylko `index`, po kliknięciu |
+| **Opcjonalny ambient hero** | `sections/slideshow.liquid` (schema), `assets/giclee-hero-audio.js/.css` — tylko `index`, po kliknięciu; edycja w GicleeApp → **Strona główna** → Hero → **Dźwięk ambient…** |
 | Hooki sekcji `data-giclee-home` | `assets/giclee-home-sections.js`, `giclee-home-sections-boot.js` |
 | **Scroll-over warstw (home3, home4)** | `assets/giclee-home-stack.css`, `giclee-home-stack.js` — flaga `GICLEE_HOME_STACK` |
 | **Pre-stack FOUC (home3, home4)** | `snippets/giclee-home-stack-critical.liquid` |

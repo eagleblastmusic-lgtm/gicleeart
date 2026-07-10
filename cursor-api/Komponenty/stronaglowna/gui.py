@@ -57,6 +57,7 @@ from .homepage_variants import (
     variant_uses_home_stack,
 )
 from .collage_gui import add_collage_launcher
+from .hero_audio_gui import add_hero_audio_launcher
 from .final_difference_settings import load_final_difference_config
 from .studio_reveal_settings import load_studio_reveal_config
 from .section_bg_effects_settings import load_section_bg_effects_config
@@ -1148,6 +1149,11 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
                 "hero_video_boomerang",
                 "hero_desktop_video_reversed",
                 "hero_video_collage",
+                "hero_audio_enable",
+                "hero_audio_url",
+                "hero_audio_label_on",
+                "hero_audio_label_off",
+                "hero_audio_volume",
             ):
                 if fld.field_id == "hero_media_type":
                     _add_hero_media_type(editor_inner, zone, values)
@@ -1232,6 +1238,19 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
                     ttk.Label(col, text=fld.hint, foreground="#777", wraplength=520).pack(anchor="w", pady=(2, 0))
                 elif fld.kind == "link":
                     ttk.Label(col, text="np. shopify://collections/all", foreground="#777").pack(anchor="w", pady=(2, 0))
+
+        if zone.zone_id == "hero":
+            audio_block = ttk.Frame(editor_inner)
+            audio_block.pack(fill="x", pady=(4, 0))
+            add_hero_audio_launcher(
+                audio_block,
+                host=host,
+                values=values,
+                state=state,
+                mark_dirty=_mark_dirty,
+                status_var=status_var,
+                show_toast=show_toast,
+            )
 
         state["dirty"] = False
         status_var.set(f"Edycja: {zone.label}")

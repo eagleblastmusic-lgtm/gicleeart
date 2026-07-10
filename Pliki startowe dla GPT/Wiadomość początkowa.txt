@@ -108,19 +108,21 @@ Najważniejsze zasady pracy:
 Aktualny checkpoint, który powinien być widoczny w `CURRENT_APP_STATE.md`:
 
 <!-- gpt-starter:gicleeapp-push:start -->
-- GicleeApp Studio v1.46.0
+- GicleeApp Studio v1.46.1
 
-- GitHub / aktualna wersja aplikacji: v1.46.0 — zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`
+- GitHub / aktualna wersja aplikacji: v1.46.1 — zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`
 
-- Ostatni push GicleeApp: 13c095f na main (2026-07-10 01:10 UTC) — Refresh GicleeApp repository snapshot
+- Ostatni push GicleeApp: 291a9e4 na main (2026-07-10 05:53 UTC) — Refresh GicleeApp repository snapshot
 
-- Monorepo origin/master: 7ac552e Aktualizacja /Wybór Trybów v2/
+- Monorepo origin/master: 362ecf5 feat(home): frame hero video between header bands
 
 - Ostatni pushed feature checkpoint aplikacji (F2.1, historia): 4647c1b feat(studio): GICLÉE FRAME F2.1 editor workflow polish (v1.40.1)
 
 - Branch:
-  - GitHub gicleeapp: v1.46.0 / main @ 13c095f (auto-sync po Push GicleeApp)
-  - monorepo origin/master: 7ac552e (docs / projekt)
+  - GitHub gicleeapp: v1.46.1 / main @ 291a9e4 (auto-sync po Push GicleeApp)
+  - monorepo origin/master: 362ecf5 (docs / projekt)
+  - lokalnie monorepo: commity pending względem origin/master (nie zakładać push monorepo bez potwierdzenia)
+    - 95295b3 fix(home): clip parallax media within section seams
 <!-- gpt-starter:gicleeapp-push:end -->
 
 - Background Builder local v1: frozen

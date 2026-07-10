@@ -250,6 +250,16 @@ def validate_homepage(
                     collage = parse_collage(file_vals.get("hero_video_collage"))
                 for msg in validate_collage(collage):
                     issues.append(ValidationIssue("error", zone.label, msg))
+            if bool(vals.get("hero_audio_enable")):
+                url = str(vals.get("hero_audio_url") or "").strip()
+                if not url.startswith("http"):
+                    issues.append(
+                        ValidationIssue(
+                            "error",
+                            zone.label,
+                            "Dźwięk ambient: wgraj plik audio lub wklej publiczny URL CDN.",
+                        )
+                    )
 
         for fld in zone.fields:
             if fld.kind != "body":

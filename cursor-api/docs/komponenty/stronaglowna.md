@@ -40,7 +40,7 @@ Tryb: `inline` (w launcherze GicleeApp, sekcja **Administracja strony** — przy
 
 |--------------------|--------|--------------|
 
-| Hero — slideshow | `index.json` | **Grafika**, **film** (z opcją boomerang) lub **kolaż wideo** (przycisk «Edytuj kolaż wideo…» → osobne okno); **Z listy…** — wybór z filmów w Shopify Files |
+| Hero — slideshow | `index.json` | **Grafika**, **film** (z opcją boomerang) lub **kolaż wideo** (przycisk «Edytuj kolaż wideo…» → osobne okno); **Z listy…** — wybór z filmów w Shopify Files; **Dźwięk ambient…** — opcjonalny ambient po kliknięciu (upload MP3/OGG/WAV → CDN URL w `enable_audio` / `audio_url`) |
 
 | Giclée Art — intro | `index.json` | Portret, **nagłówek + treść** (plain text → HTML); **Efekty…** (wszystkie typy) |
 

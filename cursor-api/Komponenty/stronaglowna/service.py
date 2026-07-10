@@ -53,6 +53,7 @@ SETTINGS_HEADER = INDEX_HEADER
 
 ALLOWED_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
 VIDEO_SUFFIXES = {".mp4", ".webm", ".mov"}
+AUDIO_SUFFIXES = frozenset({".mp3", ".ogg", ".wav", ".m4a", ".aac", ".webm", ".flac"})
 MOBILE_HERO_REL = "assets/MALE_ORG.webp"
 _HOMEPAGE_URL = "https://gicleeart.eu/"
 
@@ -1335,6 +1336,16 @@ def apply_zone_values(
             continue
         write_field(template, fld, values[fld.field_id])
         _write_image_object_y(template, fld, values)
+
+
+def upload_hero_audio(local_path: Path, *, logger: Logger | None = None) -> str:
+    """Upload audio do Shopify Files — zwraca publiczny CDN URL (dla slideshow audio_url)."""
+    local_path = Path(local_path)
+    if local_path.suffix.lower() not in AUDIO_SUFFIXES:
+        raise ValueError(f"Niedozwolone rozszerzenie audio: {local_path.suffix}")
+    url = sc.upload_file_to_shopify_files(local_path, alt=local_path.stem)
+    _log(logger, f"[strona główna] Upload audio → {url}")
+    return url
 
 
 def upload_shopify_image(local_path: Path, *, logger: Logger | None = None) -> str:

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Home stack visual sync fixture</title>
+    <style>
+      :root {
+        --color-border: rgb(230 230 230 / 0.68);
+        --style-border-radius-sm: 0;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #000;
+        color: #fff;
+        font-family: system-ui, sans-serif;
+      }
+      #MainContent.content-for-layout {
+        position: relative;
+      }
+      .shopify-section > .section {
+        position: relative;
+      }
+      .background-image-container {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      .background-image-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .section-content-wrapper {
+        position: relative;
+        z-index: 2;
+        padding: 40px;
+      }
+      .card-runway {
+        min-height: 120vh;
+      }
+      #shopify-section-slideshow_4LMfx7 .section-content-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .divider {
+        align-self: stretch;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+      }
+      .divider__line {
+        border-bottom: 1px solid var(--color-border);
+        flex-basis: 100%;
+        width: 100%;
+        min-height: 1px;
+      }
+        background: #111;
+        padding: 48px;
+      }
+    </style>
+    <link rel="stylesheet" href="/assets/giclee-home-stack.css" />
+  </head>
+  <body>
+    <div id="MainContent" class="content-for-layout">
+      <div id="shopify-section-slideshow_4LMfx7" class="shopify-section">
+        <div class="section-background"></div>
+        <div class="section section--full-width">
+          <div class="section-content-wrapper"><h1>Hero</h1></div>
+        </div>
+      </div>
+
+      <div id="shopify-section-divider_7d3JBN" class="shopify-section">
+        <div class="section-background"></div>
+        <div class="section section--full-width" data-testid="divider-7d3JBN">
+          <div class="divider spacing-style"><span class="divider__line"></span></div>
+        </div>
+      </div>
+
+      <div id="shopify-section-section_ThWw4Q" class="shopify-section">
+        <div class="section-background"></div>
+        <div class="section section--full-width">
+          <div class="custom-section-background">
+            <div class="background-image-container">
+              <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Crect width='100%25' height='100%25' fill='%23222'/%3E%3C/svg%3E" />
+            </div>
+          </div>
+          <div class="section-content-wrapper card-runway"><h2>Intro 2</h2></div>
+        </div>
+      </div>
+
+      <div id="shopify-section-divider_M9rfEz" class="shopify-section">
+        <div class="section-background"></div>
+        <div class="section section--full-width" data-testid="divider-M9rfEz">
+          <div class="divider spacing-style"><span class="divider__line"></span></div>
+        </div>
+      </div>
+
+      <div id="shopify-section-section_XwRNDp" class="shopify-section">
+        <div class="section-background"></div>
+        <div class="section section--full-width">
+          <div class="custom-section-background">
+            <div class="background-image-container">
+              <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Crect width='100%25' height='100%25' fill='%23333'/%3E%3C/svg%3E" />
+            </div>
+          </div>
+          <div class="section-content-wrapper card-runway"><h2>Restoration 3</h2></div>
+        </div>
+      </div>
+
+      <div id="shopify-section-divider_JyULmz" class="shopify-section">
+        <div class="section-background"></div>
+        <div class="section section--full-width" data-testid="divider-JyULmz">
+          <div class="divider spacing-style"><span class="divider__line"></span></div>
+        </div>
+      </div>
+
+      <div id="shopify-section-section_bj9cY3" class="shopify-section">
+        <div class="section-background"></div>
+        <div class="section section--full-width">
+          <div class="custom-section-background">
+            <div class="background-image-container">
+              <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Crect width='100%25' height='100%25' fill='%23444'/%3E%3C/svg%3E" />
+            </div>
+          </div>
+          <div class="section-content-wrapper card-runway"><h2>Color correction 4</h2></div>
+        </div>
+      </div>
+
+      <div id="shopify-section-divider_chnDAz" class="shopify-section">
+        <div class="section-background"></div>
+        <div class="section section--full-width" data-testid="divider-chnDAz">
+          <div class="divider spacing-style"><span class="divider__line"></span></div>
+        </div>
+      </div>
+
+      <div id="shopify-section-section_p9Kcm6" class="shopify-section">
+        <div class="section-background"></div>
+        <div class="section section--full-width">
+          <div class="custom-section-background">
+            <div class="background-image-container">
+              <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Crect width='100%25' height='100%25' fill='%23555'/%3E%3C/svg%3E" />
+            </div>
+          </div>
+          <div class="section-content-wrapper card-runway"><h2>Potential 5</h2></div>
+        </div>
+      </div>
+
+      <div id="shopify-section-divider_idXL6J" class="shopify-section">
+        <div class="section-background"></div>
+        <div class="section section--full-width" data-testid="divider-idXL6J">
+          <div class="divider spacing-style"><span class="divider__line"></span></div>
+        </div>
+      </div>
+
+      <div id="shopify-section-section_P9LgB3" class="shopify-section">
+        <div class="section-background"></div>
+        <div class="section section--full-width">
+          <div class="custom-section-background">
+            <div class="background-image-container">
+              <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Crect width='100%25' height='100%25' fill='%23666'/%3E%3C/svg%3E" />
+            </div>
+          </div>
+          <div class="section-content-wrapper card-runway"><h2>See difference 6</h2></div>
+        </div>
+      </div>
+    </div>
+
+    <footer>Footer</footer>
+
+    <script src="/assets/giclee-home-sections.js"></script>
+    <script src="/assets/giclee-home-stack.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        document.dispatchEvent(new Event('giclee:home-stack-ready'));
+      });
+    </script>
+  </body>
+</html>
