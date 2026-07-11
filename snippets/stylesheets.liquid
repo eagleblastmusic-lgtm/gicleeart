@@ -1,2 +1,4 @@
 {{ 'overflow-list.css' | asset_url | preload_tag: as: 'style' }}
 {{ 'base.css' | asset_url | stylesheet_tag: preload: true }}
+{{ 'giclee-catalog-artist-effects.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'giclee-catalog-artist-effects.js' | asset_url }}" defer></script>

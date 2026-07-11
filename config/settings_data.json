@@ -485,7 +485,14 @@
           "selected_variant_hover_border_color": "#1a1a1a"
         }
       }
-    }
+    },
+    "home_flow_sound_enabled": false,
+    "home_flow_sound_question": "Doświadczyć tej sceny z dźwiękiem?",
+    "home_flow_sound_toggle_label": "Dźwięk",
+    "home_flow_sound_start_label": "Rozpocznij",
+    "home_flow_sound_audio_url": "",
+    "home_flow_sound_volume": 0,
+    "home_flow_sound_auto_muted_fraction": 35
   },
   "presets": {
     "Horizon": {

@@ -1,0 +1,317 @@
+/* Giclée Catalog — warianty wyróżnienia aktywnego artysty.
+ * Wybór: assets/giclee-catalog-submenu-config.json → list.artist_hover_effect.
+ * Wariant classic pozostawia istniejący wygląd z layout/theme.liquid bez zmian.
+ */
+
+/* Wspólna baza wariantów premium. */
+#giclee-catalog-panel:not([data-artist-hover-effect="classic"]) #giclee-artists-list a {
+  position: relative;
+  display: inline-block;
+  font-size: 12.5px;
+  line-height: 1.4;
+  font-weight: 400;
+  color: rgba(230, 225, 215, 0.75);
+  padding: 3px 0;
+  letter-spacing: 0.05em;
+  text-shadow: none;
+  transition:
+    color 360ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 400ms ease,
+    filter 420ms ease,
+    transform 440ms cubic-bezier(0.16, 1, 0.3, 1),
+    letter-spacing 440ms cubic-bezier(0.16, 1, 0.3, 1),
+    text-shadow 400ms ease,
+    padding-left 320ms ease !important;
+}
+
+#giclee-catalog-panel:not([data-artist-hover-effect="classic"]) #giclee-artists-list a:focus-visible {
+  outline: 1px solid rgba(218, 186, 105, 0.46);
+  outline-offset: 4px;
+}
+
+/* ========================================================================== */
+/* Kuratorskie światło                                                       */
+/* ========================================================================== */
+
+#giclee-catalog-panel[data-artist-hover-effect="curatorial_glow"] #giclee-artists-list a {
+  z-index: 0;
+  isolation: isolate;
+}
+
+#giclee-catalog-panel[data-artist-hover-effect="curatorial_glow"] #giclee-artists-list a::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: -5px;
+  right: -7px;
+  top: 50%;
+  height: 20px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(201, 168, 76, 0.10) 0%,
+    rgba(201, 168, 76, 0.035) 48%,
+    transparent 76%
+  );
+  opacity: 0;
+  transform: translateY(-50%) scaleX(0.72);
+  transition:
+    opacity 360ms ease,
+    transform 460ms cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+#giclee-catalog-panel[data-artist-hover-effect="curatorial_glow"] #giclee-artists-list:has(a:hover) a:not(:hover),
+#giclee-catalog-panel[data-artist-hover-effect="curatorial_glow"] #giclee-artists-list:has(a.is-active) a:not(.is-active),
+#giclee-catalog-panel[data-artist-hover-effect="curatorial_glow"] #giclee-artists-list:has(a:focus-visible) a:not(:focus-visible) {
+  opacity: 0.58 !important;
+  color: rgba(210, 205, 195, 0.58) !important;
+}
+
+#giclee-catalog-panel[data-artist-hover-effect="curatorial_glow"] #giclee-artists-list a:hover,
+#giclee-catalog-panel[data-artist-hover-effect="curatorial_glow"] #giclee-artists-list a.is-active,
+#giclee-catalog-panel[data-artist-hover-effect="curatorial_glow"] #giclee-artists-list a:focus-visible {
+  color: rgba(221, 192, 119, 1) !important;
+  opacity: 1 !important;
+  padding-left: 0 !important;
+  letter-spacing: 0.062em !important;
+  text-shadow:
+    0 0 10px rgba(201, 168, 76, 0.10),
+    0 0 22px rgba(201, 168, 76, 0.06) !important;
+}
+
+#giclee-catalog-panel[data-artist-hover-effect="curatorial_glow"] #giclee-artists-list a:hover::after,
+#giclee-catalog-panel[data-artist-hover-effect="curatorial_glow"] #giclee-artists-list a.is-active::after,
+#giclee-catalog-panel[data-artist-hover-effect="curatorial_glow"] #giclee-artists-list a:focus-visible::after {
+  opacity: 1;
+  transform: translateY(-50%) scaleX(1);
+}
+
+/* ========================================================================== */
+/* Głębia ostrości                                                           */
+/* ========================================================================== */
+
+#giclee-catalog-panel[data-artist-hover-effect="depth_of_field"] #giclee-artists-list a {
+  filter: blur(0);
+}
+
+#giclee-catalog-panel[data-artist-hover-effect="depth_of_field"] #giclee-artists-list:has(a:hover) a:not(:hover),
+#giclee-catalog-panel[data-artist-hover-effect="depth_of_field"] #giclee-artists-list:has(a.is-active) a:not(.is-active),
+#giclee-catalog-panel[data-artist-hover-effect="depth_of_field"] #giclee-artists-list:has(a:focus-visible) a:not(:focus-visible) {
+  color: rgba(203, 199, 191, 0.52) !important;
+  opacity: 0.58 !important;
+  filter: blur(0.28px);
+}
+
+#giclee-catalog-panel[data-artist-hover-effect="depth_of_field"] #giclee-artists-list:has(a:hover) .giclee-artists-col:has(a:hover) a:not(:hover),
+#giclee-catalog-panel[data-artist-hover-effect="depth_of_field"] #giclee-artists-list:has(a.is-active) .giclee-artists-col:has(a.is-active) a:not(.is-active),
+#giclee-catalog-panel[data-artist-hover-effect="depth_of_field"] #giclee-artists-list:has(a:focus-visible) .giclee-artists-col:has(a:focus-visible) a:not(:focus-visible) {
+  opacity: 0.48 !important;
+  filter: blur(0.38px);
+}
+
+#giclee-catalog-panel[data-artist-hover-effect="depth_of_field"] #giclee-artists-list a:hover,
+#giclee-catalog-panel[data-artist-hover-effect="depth_of_field"] #giclee-artists-list a.is-active,
+#giclee-catalog-panel[data-artist-hover-effect="depth_of_field"] #giclee-artists-list a:focus-visible {
+  color: rgba(245, 238, 220, 1) !important;
+  opacity: 1 !important;
+  filter: blur(0) !important;
+  padding-left: 0 !important;
+  letter-spacing: 0.065em !important;
+  text-shadow:
+    0 0 8px rgba(231, 203, 138, 0.08),
+    0 0 20px rgba(201, 168, 76, 0.045) !important;
+}
+
+/* ========================================================================== */
+/* Znacznik muzealny                                                         */
+/* ========================================================================== */
+
+#giclee-catalog-panel[data-artist-hover-effect="museum_marker"] .giclee-artists-col {
+  position: relative !important;
+}
+
+#giclee-catalog-panel[data-artist-hover-effect="museum_marker"] #giclee-artists-list:has(a:hover) a:not(:hover),
+#giclee-catalog-panel[data-artist-hover-effect="museum_marker"] #giclee-artists-list:has(a.is-active) a:not(.is-active),
+#giclee-catalog-panel[data-artist-hover-effect="museum_marker"] #giclee-artists-list:has(a:focus-visible) a:not(:focus-visible) {
+  opacity: 0.62 !important;
+  color: rgba(207, 202, 192, 0.57) !important;
+}
+
+#giclee-catalog-panel[data-artist-hover-effect="museum_marker"] #giclee-artists-list a:hover,
+#giclee-catalog-panel[data-artist-hover-effect="museum_marker"] #giclee-artists-list a.is-active,
+#giclee-catalog-panel[data-artist-hover-effect="museum_marker"] #giclee-artists-list a:focus-visible {
+  color: rgba(243, 224, 177, 1) !important;
+  opacity: 1 !important;
+  padding-left: 0 !important;
+  letter-spacing: 0.061em !important;
+  text-shadow: 0 0 12px rgba(201, 168, 76, 0.075) !important;
+}
+
+.giclee-catalog-margin-marker {
+  display: none;
+}
+
+#giclee-catalog-panel[data-artist-hover-effect="museum_marker"] .giclee-catalog-margin-marker {
+  position: absolute;
+  display: block;
+  left: -18px;
+  top: 0;
+  width: 10px;
+  height: 18px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(var(--giclee-marker-y, 0px)) scale(0.82);
+  transition:
+    transform 440ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 220ms ease;
+  will-change: transform;
+}
+
+#giclee-catalog-panel[data-artist-hover-effect="museum_marker"] .giclee-catalog-margin-marker::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 1px;
+  height: 14px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(218, 186, 105, 0.9) 26%,
+    rgba(218, 186, 105, 0.9) 74%,
+    transparent
+  );
+}
+
+#giclee-catalog-panel[data-artist-hover-effect="museum_marker"] .giclee-catalog-margin-marker::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  border: 1px solid rgba(226, 197, 126, 0.95);
+  background: #0c0b09;
+  transform: translateY(-50%) rotate(45deg);
+  box-shadow: 0 0 8px rgba(201, 168, 76, 0.18);
+}
+
+#giclee-catalog-panel[data-artist-hover-effect="museum_marker"] .giclee-catalog-margin-marker.is-visible {
+  opacity: 1;
+  transform: translateY(var(--giclee-marker-y, 0px)) scale(1);
+}
+
+/* ========================================================================== */
+/* Focus obrazu                                                              */
+/* ========================================================================== */
+
+#giclee-catalog-panel[data-artist-hover-effect="preview_focus"] #giclee-artists-list:has(a:hover) a:not(:hover),
+#giclee-catalog-panel[data-artist-hover-effect="preview_focus"] #giclee-artists-list:has(a.is-active) a:not(.is-active),
+#giclee-catalog-panel[data-artist-hover-effect="preview_focus"] #giclee-artists-list:has(a:focus-visible) a:not(:focus-visible) {
+  opacity: 0.57 !important;
+  color: rgba(205, 201, 193, 0.53) !important;
+}
+
+#giclee-catalog-panel[data-artist-hover-effect="preview_focus"] #giclee-artists-list a:hover,
+#giclee-catalog-panel[data-artist-hover-effect="preview_focus"] #giclee-artists-list a.is-active,
+#giclee-catalog-panel[data-artist-hover-effect="preview_focus"] #giclee-artists-list a:focus-visible {
+  color: rgba(246, 242, 231, 1) !important;
+  opacity: 1 !important;
+  padding-left: 0 !important;
+  letter-spacing: 0.06em !important;
+  text-shadow: 0 0 14px rgba(246, 234, 202, 0.055) !important;
+}
+
+#giclee-catalog-panel[data-artist-hover-effect="preview_focus"] #giclee-artist-preview {
+  isolation: isolate;
+  overflow: hidden !important;
+}
+
+#giclee-catalog-panel[data-artist-hover-effect="preview_focus"] #giclee-artist-preview::before {
+  content: "";
+  position: absolute;
+  z-index: 4;
+  inset: 11px;
+  border: 1px solid rgba(225, 211, 174, 0);
+  opacity: 0;
+  transform: scale(0.985);
+  transition:
+    opacity 600ms ease,
+    transform 850ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 650ms ease;
+  pointer-events: none;
+}
+
+#giclee-catalog-panel[data-artist-hover-effect="preview_focus"] #giclee-artist-preview::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    transparent 35%,
+    rgba(229, 205, 147, 0.045) 48%,
+    rgba(255, 238, 191, 0.075) 52%,
+    rgba(229, 205, 147, 0.025) 60%,
+    transparent 76%
+  );
+  opacity: 0;
+  transform: translateX(-14%);
+  transition:
+    opacity 650ms ease,
+    transform 1100ms cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+#giclee-catalog-panel[data-artist-hover-effect="preview_focus"] #giclee-preview-img {
+  z-index: 0;
+  transform: scale(1);
+  transform-origin: center center;
+  filter: brightness(0.985) contrast(1) saturate(0.96);
+  transition:
+    opacity 600ms ease,
+    transform 1200ms cubic-bezier(0.16, 1, 0.3, 1),
+    filter 900ms ease !important;
+  will-change: transform, filter;
+}
+
+#giclee-catalog-panel[data-artist-hover-effect="preview_focus"]:has(#giclee-artists-list a:hover) #giclee-preview-img,
+#giclee-catalog-panel[data-artist-hover-effect="preview_focus"]:has(#giclee-artists-list a.is-active) #giclee-preview-img,
+#giclee-catalog-panel[data-artist-hover-effect="preview_focus"]:has(#giclee-artists-list a:focus-visible) #giclee-preview-img {
+  transform: scale(1.025);
+  filter: brightness(1.025) contrast(1.025) saturate(0.99);
+}
+
+#giclee-catalog-panel[data-artist-hover-effect="preview_focus"]:has(#giclee-artists-list a:hover) #giclee-artist-preview::before,
+#giclee-catalog-panel[data-artist-hover-effect="preview_focus"]:has(#giclee-artists-list a.is-active) #giclee-artist-preview::before,
+#giclee-catalog-panel[data-artist-hover-effect="preview_focus"]:has(#giclee-artists-list a:focus-visible) #giclee-artist-preview::before {
+  opacity: 1;
+  transform: scale(1);
+  border-color: rgba(225, 211, 174, 0.13);
+}
+
+#giclee-catalog-panel[data-artist-hover-effect="preview_focus"]:has(#giclee-artists-list a:hover) #giclee-artist-preview::after,
+#giclee-catalog-panel[data-artist-hover-effect="preview_focus"]:has(#giclee-artists-list a.is-active) #giclee-artist-preview::after,
+#giclee-catalog-panel[data-artist-hover-effect="preview_focus"]:has(#giclee-artists-list a:focus-visible) #giclee-artist-preview::after {
+  opacity: 1;
+  transform: translateX(5%);
+}
+
+/* Dostępność ruchu: stan aktywny pozostaje czytelny, ale bez długich przejść. */
+@media (prefers-reduced-motion: reduce) {
+  #giclee-catalog-panel:not([data-artist-hover-effect="classic"]) #giclee-artists-list a,
+  #giclee-catalog-panel:not([data-artist-hover-effect="classic"]) #giclee-artists-list a::after,
+  #giclee-catalog-panel .giclee-catalog-margin-marker,
+  #giclee-catalog-panel[data-artist-hover-effect="preview_focus"] #giclee-artist-preview::before,
+  #giclee-catalog-panel[data-artist-hover-effect="preview_focus"] #giclee-artist-preview::after,
+  #giclee-catalog-panel[data-artist-hover-effect="preview_focus"] #giclee-preview-img {
+    transition-duration: 0.01ms !important;
+  }
+
+  #giclee-catalog-panel[data-artist-hover-effect="preview_focus"]:has(#giclee-artists-list a:hover) #giclee-preview-img,
+  #giclee-catalog-panel[data-artist-hover-effect="preview_focus"]:has(#giclee-artists-list a.is-active) #giclee-preview-img,
+  #giclee-catalog-panel[data-artist-hover-effect="preview_focus"]:has(#giclee-artists-list a:focus-visible) #giclee-preview-img {
+    transform: none;
+  }
+}

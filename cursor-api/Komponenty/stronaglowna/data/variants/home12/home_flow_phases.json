@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "phases": {
+    "phase:sound-consent": {
+      "enabled": true,
+      "question": "Doświadczyć tej sceny z dźwiękiem?",
+      "toggle_label": "Dźwięk",
+      "start_label": "Rozpocznij",
+      "audio_url": "C:\\Users\\Skarabeusz\\Downloads\\Flow\\Audio\\Audio 1.wav",
+      "volume": 28,
+      "auto_muted_fraction": 35
+    }
+  }
+}

@@ -3,6 +3,7 @@
   "list": {
     "columns": 3,
     "show_header": true,
+    "artist_hover_effect": "classic",
     "hidden_artists_text": "francois-boucher\nwilliam-bradford\npaul-fisher\njean-auguste-ingres\npeder-severin-kryer\nedmund-blair-leighton\ncharles-sillem-lidderdale\ngiordano-luca\nanders-andersen-lundby\njohan-thomas-lundbye\nanton-melbye\njean-francois-millet\nclaude-monet\nthomas-moran\nbartolome-esteban-murillo\nharmenszoon-van-rijn-rembrandt\nguido-reni\naguste-renoir\nwillem-roelofs\ndante-gabriel-rossetti\nrafael-santi\nalfred-sisley\ntycjan-tiziano-vecellio\nclaude-joseph-vernet"
   },
   "animation": {

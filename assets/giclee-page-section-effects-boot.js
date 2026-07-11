@@ -10,7 +10,16 @@
   var desktop = window.matchMedia('(min-width: 750px)').matches;
 
   function sectionEl(key) {
-    return document.getElementById('shopify-section-' + key);
+    var direct = document.getElementById('shopify-section-' + key);
+    if (direct) return direct;
+
+    var suffix = '__' + key;
+    var sections = document.querySelectorAll('[id^="shopify-section-"]');
+    for (var i = 0; i < sections.length; i += 1) {
+      var id = sections[i].id || '';
+      if (id.slice(-suffix.length) === suffix) return sections[i];
+    }
+    return null;
   }
 
   function markSection(section, kind) {
@@ -118,6 +127,17 @@
     );
   }
 
+  function findImageInteractionSurface(media, section) {
+    /* Hero wyłącza pointer-events na siatce mediów. Szukamy najbliższego
+       aktywnego przodka bez zmiany globalnego zachowania linków i przycisków. */
+    var surface = media;
+    while (surface && surface !== section) {
+      if (window.getComputedStyle(surface).pointerEvents !== 'none') return surface;
+      surface = surface.parentElement;
+    }
+    return section;
+  }
+
   function applyImageEffects(section, imageCfg) {
     if (!imageCfg || imageCfg.enabled === false) return;
     if (imageCfg.desktopEnabled === false) return;
@@ -130,16 +150,17 @@
     media.classList.add('giclee-page-fx-media');
 
     var target = media.querySelector('img, picture, video, .background-image-container') || media;
+    var interactionSurface = findImageInteractionSurface(media, section);
     var hoverScale = Number(imageCfg.imageHoverScale) || 1.025;
     var hoverMs = Number(imageCfg.imageHoverDurationMs) || 850;
     media.style.setProperty('--gpf-media-hover-scale', String(hoverScale));
     media.style.setProperty('--gpf-media-hover-duration', hoverMs + 'ms');
 
     if (imageCfg.imageHoverEnabled !== false && finePointer) {
-      media.addEventListener('mouseenter', function () {
+      interactionSurface.addEventListener('mouseenter', function () {
         media.classList.add('is-hover');
       });
-      media.addEventListener('mouseleave', function () {
+      interactionSurface.addEventListener('mouseleave', function () {
         media.classList.remove('is-hover');
       });
     }
@@ -149,35 +170,59 @@
     var maxX = Number(imageCfg.parallaxMaxX) || 16;
     var maxY = Number(imageCfg.parallaxMaxY) || 10;
     var ease = Number(imageCfg.parallaxEase) || 0.075;
+    var returnEase = Number(imageCfg.parallaxReturnEase);
+    if (!isFinite(returnEase)) returnEase = 0.035;
+    returnEase = Math.max(0.01, Math.min(0.10, returnEase));
+    var overscan = Number(imageCfg.parallaxOverscan);
+    if (!isFinite(overscan)) overscan = 1.06;
+    overscan = Math.max(1, Math.min(1.12, overscan));
+    var overscanTransform = ' scale(' + overscan.toFixed(4) + ')';
+    var returning = false;
     var currentX = 0;
     var currentY = 0;
     var targetX = 0;
     var targetY = 0;
     var rafId = 0;
 
+    target.style.transform = 'translate3d(0,0,0)' + overscanTransform;
+
     function tick() {
-      currentX += (targetX - currentX) * ease;
-      currentY += (targetY - currentY) * ease;
+      var frameEase = returning ? returnEase : ease;
+      currentX += (targetX - currentX) * frameEase;
+      currentY += (targetY - currentY) * frameEase;
       target.style.transform =
-        'translate3d(' + currentX.toFixed(2) + 'px,' + currentY.toFixed(2) + 'px,0)';
+        'translate3d(' +
+        currentX.toFixed(2) +
+        'px,' +
+        currentY.toFixed(2) +
+        'px,0)' +
+        overscanTransform;
       if (Math.abs(targetX - currentX) > 0.05 || Math.abs(targetY - currentY) > 0.05) {
         rafId = requestAnimationFrame(tick);
       } else {
+        if (returning) {
+          currentX = 0;
+          currentY = 0;
+          target.style.transform = 'translate3d(0,0,0)' + overscanTransform;
+          returning = false;
+        }
         rafId = 0;
       }
     }
 
-    media.addEventListener('mousemove', function (e) {
+    interactionSurface.addEventListener('mousemove', function (e) {
       var rect = media.getBoundingClientRect();
       if (!rect.width || !rect.height) return;
-      var nx = (e.clientX - rect.left) / rect.width - 0.5;
-      var ny = (e.clientY - rect.top) / rect.height - 0.5;
+      var nx = Math.max(-0.5, Math.min(0.5, (e.clientX - rect.left) / rect.width - 0.5));
+      var ny = Math.max(-0.5, Math.min(0.5, (e.clientY - rect.top) / rect.height - 0.5));
+      returning = false;
       targetX = nx * maxX;
       targetY = ny * maxY;
       if (!rafId) rafId = requestAnimationFrame(tick);
     });
 
-    media.addEventListener('mouseleave', function () {
+    interactionSurface.addEventListener('mouseleave', function () {
+      returning = true;
       targetX = 0;
       targetY = 0;
       if (!rafId) rafId = requestAnimationFrame(tick);
