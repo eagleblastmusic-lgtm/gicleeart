@@ -12,7 +12,17 @@
 4. **`GICLEE_CURSOR_ARCHITECT_CLEAN_PACK_v38.md`** — manifest aktywnych plików paczki.
 5. **`README_GICLEE_CURSOR_ARCHITECT_UPDATE_v38.md`** — ten plik.
 
-**Bez zmian:** guardrails Shopify/GicleeApp, dual-repo routing v3.5, snapshot review workflow, motion/effects, tryby analityczne i Shopify v1.
+**Bez zmian:** numer paczki pozostaje v38; nie twórz v39 przy samym checkpoint refresh.
+
+### Checkpoint refresh — 2026-07-11
+
+- monorepo `master` = `origin/master` @ `2dde9e4` (launcher categories/options/shortcuts/DnD),
+- lokalne markery aplikacji v1.50.0 są zmodyfikowane po HEAD; osobny `gicleeapp/main` @ `a61c0f4` jest starszym snapshotem,
+- launcher Windows ma trwałą decyzję: WinAPI `GetAsyncKeyState` + foreground gating,
+- import patchy w PowerShell używa `git diff --output`, a przy cross-repo oba `--check` przechodzą przed pierwszym apply,
+- FAQ Hero image effects są zastosowane lokalnie, ale pozostają pending do testów i live preview,
+- dirty Home Flow/prehero i pliki runtime muszą być chronione przed `reset`, `clean`, szerokim `restore` i `git add .`,
+- wzorzec efektów grafiki: `image_effect_selector` → `targetSelector`; hover na kontenerze, parallax na wewnętrznym media.
 
 ---
 
@@ -46,8 +56,10 @@ Dodaj **aktywne pliki v3.8** (patrz `GICLEE_CURSOR_ARCHITECT_CLEAN_PACK_v38.md`)
 
 Podłącz prywatne repo review/implementacji (wg zakresu zadania):
 
-- `eagleblastmusic-lgtm/gicleeart-gpt` (remote lokalny: `gpt`)
+- `eagleblastmusic-lgtm/gicleeart-gpt` (kanoniczny alias dokumentacji: `gpt`; aktualna maszyna może mieć też równoważny alias `gicleeart-gpt`)
 - `eagleblastmusic-lgtm/gicleeapp` (remote lokalny: `gicleeapp`)
+
+Przed użyciem aliasu sprawdź `git remote -v`; nie dodawaj duplikatu wskazującego ten sam URL.
 
 Implementacja na branchu: `gpt-work/<task-slug>`. **Main/master nietknięte** bez jednoznacznego polecenia.
 

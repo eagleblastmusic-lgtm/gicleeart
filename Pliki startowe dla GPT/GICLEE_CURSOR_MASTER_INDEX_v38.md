@@ -1,6 +1,6 @@
 # GICLEE CURSOR MASTER INDEX v3.8
 
-Ten plik porządkuje cały system instrukcji Giclée Cursor Architect v3.8 (dual-repo + GPT Git Branch Mode + GicleeApp Studio v1.46.1 / GICLÉE FRAME™ F2.1 done).
+Ten plik porządkuje system Giclée Cursor Architect v3.8. Aktualny checkpoint: monorepo `master` = `origin/master` @ `2dde9e4`; lokalny working tree ma markery GicleeApp v1.50.0, a osobny `gicleeapp/main` pozostaje starszym snapshotem @ `a61c0f4`.
 
 ---
 
@@ -29,19 +29,27 @@ Workflow snapshotów: `GICLEE_GITHUB_SNAPSHOT_REVIEW_WORKFLOW_v35.md`.
 
 **GPT Git Branch Implementation Mode:** implementacja na branchu `gpt-work/<task-slug>` w `gicleeart-gpt` lub `gicleeapp`; import do monorepo; finalny commit lokalny. Kanon: `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md` § GPT GIT BRANCH IMPLEMENTATION MODE; procedura: `GPT_GIT_BRANCH_WORKFLOW.md`.
 
-**Lokalne monorepo:** `C:\Strona\pusty` — `cursor-api/` nie jest osobnym repo. Remotes: `origin` (gicleeart), `gpt` (gicleeart-gpt), `gicleeapp` (gicleeapp).
+**Lokalne monorepo:** `C:\Strona\pusty` — `cursor-api/` nie jest osobnym repo. Kanoniczne aliasy dokumentacji: `origin`, `gpt`, `gicleeapp`; aktualna maszyna ma też alias `gicleeart-gpt` wskazujący ten sam URL co `gpt`. Zawsze zacznij od `git remote -v`.
 
-Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md` oraz `CURRENT_APP_STATE.md` (GitHub gicleeapp **v1.46.1** / `main` @ `ad9fd14`; monorepo origin/master `aab237b`).
+Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w COMPACT v38 oraz `CURRENT_APP_STATE.md` (monorepo HEAD = origin/master `2dde9e4`; lokalne markery v1.50.0 są dirty po HEAD; osobny `gicleeapp/main` = starszy snapshot `a61c0f4`).
 
 **GICLÉE FRAME™:** F2.1 **done** (pushed). Ustanawia wzorzec **`Studio Page Component Editor Pattern`** dla przyszłych edytorów strony w Studio — patrz `gicleeframe-planning.md` §7, link w `admin-components-strategy.md`. **F3** (lokalny zapis draftu RAM) i **F4** (bounded writer): **not started**.
 
 **Katalog:** F1–F4 done. Writer / Shopify: not started (osobna akceptacja).
 
-**Next (choose one — neither started):** (A) cleanup / runtime hygiene working tree · (B) GICLÉE FRAME™ F3 local draft persistence.
+**Current validation queue:** FAQ Hero image effects (tests + live preview) → rozliczenie lokalnego Home Flow/prehero → dopiero potem wąski commit/rollback. GICLÉE FRAME F3 i writer nadal wymagają osobnej decyzji.
 
 **Studio Performance:** główna nitka **6G.5** **PASS / checkpoint** — aktualny stan w `CURRENT_APP_STATE.md`. Diagnoza nowych objawów: **najpierw** bundle Performance Agent (`report.md` / `summary.json`), potem `giclee_app/logs/studio_perf.log` lub raport Cursora — nie od hipotez UI. GitHub connector może być za lokalnym working tree — log/bundle użytkownika wygrywa.
 
 **Performance Agent:** PA-1A–PA-3B **done**; GF-P0.1 **done locally** (fresh run pending); testy 162 passed. Szczegóły: `CURRENT_APP_STATE.md` § Performance Agent + GF-P0.1.
+
+**Reusable decisions added 2026-07-11:**
+- launcher shortcuts on Windows = WinAPI `GetAsyncKeyState` + foreground gating; nie wracać do samych bindingów Tkinter bez testu Windows/TkinterDnD,
+- `launcher_shortcuts.json` i `launcher_layout.json` = lokalny stan użytkownika,
+- import patchy w PowerShell = `git diff --output`, nie `>`,
+- cross-repo = oba `git apply --check` przed pierwszym apply,
+- rollback = dokładne pliki; bez szerokiego `restore -- cursor-api` i bez `git clean`,
+- Theme Page Editor może eksportować `image_effect_selector` → `targetSelector`; hover i parallax muszą mieć osobne elementy transformacji.
 
 **New pacing rule:** group safe planning layers (read-only, data map, draft state, dry-run, readiness, UI change plan, docs/tests); split writer, backup/write/undo, Shopify/sync/deploy, data migrations, and large architecture decisions.
 
@@ -79,7 +87,7 @@ Jeśli instrukcje się nakładają (po POZIOMIE 0):
 
 `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md`
 
-Wygrywa w: roli modelu, formacie odpowiedzi, promptach do Cursor, ochronie projektu, dual-repo routing, **checkpoint GicleeApp Studio v1.41.2**, **GICLÉE FRAME F2.1**, **Studio Page Component Editor Pattern**, **zasady testowania**, **granice Studio**, **pacing rule**.
+Wygrywa w: roli modelu, formacie odpowiedzi, promptach do Cursor, ochronie projektu, dual-repo routing, **bieżącym checkpointcie lokalnym**, **GICLÉE FRAME F2.1**, **Studio Page Component Editor Pattern**, **zasadach testowania**, **granicach Studio**, **pacing rule** i bezpiecznym imporcie patch-first.
 
 Archiwum (nie używać jako Instructions): `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_v3.md`, `*_v34.md`, `*_v35.md`, `*_v36.md`, `*_v37.md`, `COMPACT_8000.md`.
 
@@ -124,7 +132,7 @@ Wygrywają markowo: ton, Fine Art, unikanie taniego e-commerce.
 ## 3. KOLEJNOŚĆ MYŚLENIA
 
 1. **Które repo?** (POZIOM 0)
-2. Czy dotyczy GicleeApp Studio / GICLÉE FRAME / Katalog / **Performance**? (checkpoint v1.46.1; performance **6G.5 PASS/checkpoint** → stan w `CURRENT_APP_STATE.md`; **Performance Agent PA-1A–PA-3B done**; przy objawach → najpierw bundle PA `report.md`/`summary.json` lub `--analyze-latest`, potem `studio_perf.log`)
+2. Czy dotyczy GicleeApp Studio / GICLÉE FRAME / Katalog / **Performance**? (checkpoint lokalny: monorepo `2dde9e4`, dirty markery v1.50.0; performance **6G.5 PASS/checkpoint** → stan w `CURRENT_APP_STATE.md`; przy objawach najpierw bundle PA, potem log)
 3. Co użytkownik chce osiągnąć?
 4. Prompt / kod / efekt / audit / debug?
 5. Czy chronić Shopify / faktury / API?
@@ -178,7 +186,7 @@ Gdy użytkownik pisze **„Aktualizuj pliki startowe”**:
 - `GICLEE_CURSOR_ARCHITECT_CLEAN_PACK_v38.md` — manifest v3.8 + zasada: Cursor nie generuje ZIP
 - `README_GICLEE_CURSOR_ARCHITECT_UPDATE_v38.md` — instrukcja dla użytkownika / Cursor
 
-GPT przygotowuje prompt; Cursor edytuje **tylko źródła `.md`**, raportuje git. **Bez generowania ZIP** (ZIP = Okno rozmowy u użytkownika). Nie mieszać z implementacją feature.
+GPT może przygotować prompt albo — po otrzymaniu świeżego ZIP-a i raportu lokalnego Git — gotowy patch do **źródeł `.md`**. Zawsze: `git apply --check`, bez generowania ZIP-a i bez mieszania z implementacją feature.
 
 ### Efekty premium / Awwwards
 
@@ -206,7 +214,7 @@ Efekt piękny ale ryzykowny → bezpieczniejsza wersja. Efekt tanio → popraw m
 
 Rozwiązania: piękne, premium, bezpieczne, zgodne ze stackiem i marką, wdrażalne przez Cursor.
 
-**Motyw → `gicleeart-gpt`. Aplikacja → `gicleeapp`.** Nie myl repo. **GICLÉE FRAME F2.1 done** — pattern dla przyszłych edytorów strony. **Performance:** główna nitka **6G.5 PASS / checkpoint** (`CURRENT_APP_STATE.md`) — przy objawach diagnoza od bundle PA lub `studio_perf.log`, nie od objawów. **Performance Agent PA-1A–PA-3B done**; GF-P0.1 local pending fresh run. **Next produktowy:** hygiene working tree **or** GICLÉE FRAME F3 (not started). **Katalog writer** — tylko po osobnej akceptacji, bez writer/Save/Shopify bez polecenia.
+**Motyw → `gicleeart-gpt`. Aplikacja → `gicleeapp`. Finalna prawda → lokalne monorepo.** GICLÉE FRAME F2.1 pozostaje wzorcem, performance 6G.5 pozostaje checkpointem. Aktualnie najpierw walidacja FAQ i rozliczenie Home Flow/prehero; bez szerokiego cleanupu. Writer/Save/Shopify tylko po osobnej akceptacji.
 
 ---
 

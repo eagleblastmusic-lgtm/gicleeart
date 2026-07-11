@@ -113,10 +113,10 @@ Folder `C:\Strona\pusty\cursor-api` **nie** jest osobnym lokalnym repozytorium G
 | Remote | URL | Rola |
 |--------|-----|------|
 | `origin` | `https://github.com/eagleblastmusic-lgtm/gicleeart.git` | Właściwa historia lokalnego monorepo |
-| `gpt` | `https://github.com/eagleblastmusic-lgtm/gicleeart-gpt.git` | Snapshot motywu — analiza, review, branchy robocze GPT |
+| `gpt` | `https://github.com/eagleblastmusic-lgtm/gicleeart-gpt.git` | Kanoniczny alias dokumentacji dla snapshota motywu |
 | `gicleeapp` | `https://github.com/eagleblastmusic-lgtm/gicleeapp.git` | Aplikacja lokalnie pod prefiksem `cursor-api/` |
 
-Nie dodawaj nowego remote — wszystkie trzy już istnieją.
+Przed `fetch` zawsze sprawdź `git remote -v`. Na aktualnej maszynie istnieją równolegle aliasy `gpt` i `gicleeart-gpt`, oba wskazujące ten sam snapshot motywu. Preferuj `gpt` w instrukcjach, ale użyj istniejącego równoważnego aliasu zamiast ślepo dodawać duplikat. Nowy remote dodaj dopiero po potwierdzeniu, że żaden istniejący nie wskazuje właściwego URL.
 
 ### Workflow motywu Shopify (remote `gpt`)
 
@@ -146,15 +146,15 @@ GPT tworzy branch np. `gpt-work/studio-component-fix` i **musi podać Base SHA o
 Kanon importu patcha:
 
 ```powershell
-git fetch gicleeapp --prune
-git diff --binary `
-  <BASE_SHA>..<COMMIT_SHA> `
-  > "$env:TEMP\gicleeapp-change.patch"
-git apply --check --directory=cursor-api "$env:TEMP\gicleeapp-change.patch"
-git apply --directory=cursor-api "$env:TEMP\gicleeapp-change.patch"
+git -c maintenance.auto=false -c gc.auto=0 fetch gicleeapp --prune
+$patch = Join-Path $env:TEMP "gicleeapp-change.patch"
+Remove-Item $patch -Force -ErrorAction SilentlyContinue
+git diff --binary --output="$patch" <BASE_SHA>..<COMMIT_SHA> -- <DOKŁADNA_LISTA_PLIKÓW>
+git apply --check --directory=cursor-api "$patch"
+git apply --directory=cursor-api "$patch"
 git status --short
 git diff -- cursor-api
-Remove-Item "$env:TEMP\gicleeapp-change.patch" -ErrorAction SilentlyContinue
+Remove-Item "$patch" -ErrorAction SilentlyContinue
 ```
 
 Skrót `gicleeapp/main...gicleeapp/gpt-work/<branch>` tylko gdy branch bazuje dokładnie na aktualnym `gicleeapp/main`. Inaczej diff względem Base SHA z raportu GPT.
@@ -180,8 +180,18 @@ Mogą być lokalnie zmodyfikowane niezależnie od bieżącego zadania. Przykład
 
 - `cursor-api/Komponenty/integracjagpt/data/gpt_config.json`
 - `cursor-api/Komponenty/dokumentysprzedazy/dane/orders_sync_state.json`
+- `cursor-api/Komponenty/_shared/data/recent_images.json`
+- `cursor-api/giclee_app/data/launcher_shortcuts.json`
+- `cursor-api/giclee_app/data/launcher_layout.json`
+- `cursor-api/Komponenty/*/data/variants/*/section-effects.json` — dane wariantu, tylko gdy świadomie należą do zadania
 
-Zasady: nie resetować bez osobnego polecenia; nie importować wersji z brancha GPT, jeśli nie są świadomą częścią zadania; nie dodawać przypadkowo do commita; unikać `git add .`; używać jawnego `git add <lista-plików>`.
+Zasady: nie resetować bez osobnego polecenia; nie importować wersji z brancha GPT, jeśli nie są świadomą częścią zadania; nie dodawać przypadkowo do commita; unikać `git add .`; używać jawnego `git add <lista-plików>`. Pliki ustawień launchera są lokalnym stanem użytkownika — fizyczne usunięcie kasuje skróty/układ, a import nie może ich nadpisywać.
+
+### Trwałe decyzje implementacyjne — launcher i efekty stron
+
+- **Launcher / Windows:** skróty z `TkinterDnD.Tk` korzystają z WinAPI `GetAsyncKeyState` i foreground gating. Nie zamieniaj na `bind`, `bind_all` ani bindtag bez potwierdzonego testu na realnym Windows + TkinterDnD.
+- **Theme Page Editor / grafiki:** gdy efekt ma dotyczyć konkretnego obrazu, `TemplateZone` może dostarczyć zaufany `image_effect_selector`; eksport frontu dodaje `targetSelector`, a runtime wyszukuje go wyłącznie wewnątrz danej sekcji z bezpiecznym fallbackiem.
+- **Transform ownership:** hover skaluje kontener, parallax przesuwa element wewnętrzny (`img`/`picture`/`video`). Nie zapisuj dwóch niezależnych efektów do `transform` tego samego elementu.
 
 ## GicleeApp push workflow
 
@@ -277,15 +287,13 @@ Komendy aktywujące tryb Veo/Flow: Veo premium · Veo krótko · Veo popraw · T
 ## AKTUALNY CHECKPOINT GICLEEAPP / STUDIO
 
 <!-- gpt-starter:gicleeapp-push:start -->
-Repo kanoniczne: `eagleblastmusic-lgtm/gicleeapp` (monorepo `gicleeart`, branch `master`, app w `cursor-api/`)
+Repozytorium finalne po lokalnej akceptacji: monorepo `C:\Strona\pusty` (`origin`, branch `master`; aplikacja w `cursor-api/`).
 
-GitHub / aktualna wersja aplikacji: **v1.46.1** (`giclee_app/__init__.py`, `package.json`)
-Ostatni push GicleeApp: `ad9fd14` na `main` (2026-07-10 07:37 UTC) — Refresh GicleeApp repository snapshot
-Monorepo origin/master: `aab237b` — robimy integracje na galezi
-Ostatni pushed feature checkpoint aplikacji (F2.1, historia): `4647c1b` — v1.40.1
-Poprzedni checkpoint: `46fc718` — GICLÉE FRAME page inventory RAM editor (v1.40.0)
-Wersja aplikacji: **GicleeApp Studio v1.46.1**
-Branch: GitHub gicleeapp **v1.46.1** / `main` @ `ad9fd14`; monorepo origin/master `aab237b`
+Monorepo HEAD = origin/master: `2dde9e4112bf9a5a532c78f5abba3bf1e46f49a0` — `feat(gicleeapp): add category launcher shortcuts and tile drag-drop` (2026-07-11 01:23:48 +0200).
+
+Lokalny working tree ma markery wersji **v1.50.0** w `giclee_app/__init__.py` i `package.json`, ale oba pliki są zmodyfikowane po HEAD — nie przedstawiaj v1.50.0 jako wersji zawartej w commicie `2dde9e4` bez dodatkowej weryfikacji.
+
+Osobny remote `gicleeapp/main`: `a61c0f4d5b39ea14b74f249865ef39ff477c4ed9` — starszy snapshot, nie bieżące źródło prawdy lokalnego kodu.
 <!-- gpt-starter:gicleeapp-push:end -->
 
 Zamknięte:
@@ -306,16 +314,15 @@ Nie rozpoczęte:
 - F5 / F5.5 preview / Shopify sync-deploy
 - Katalog writer / Shopify integration / migration
 
-Następna rekomendacja:
+Aktualna kolejka walidacji:
 
-**Studio Performance (lokalnie, working tree może wyprzedzać GitHub):**
-- **6G.5** główna nitka GICLÉE FRAME performance — **PASS / checkpoint** (pełny opis: `CURRENT_APP_STATE.md` § Performance). Nie startować kolejnej szerokiej optymalizacji bez wyraźnego objawu po ręcznym teście.
+1. **FAQ Hero image effects** — zmiany są zastosowane lokalnie, ale status pozostaje pending do testu celowanego, `compileall`, `git diff --check` i ręcznego podglądu live.
+2. **Home Flow / prehero** — liczne lokalne nowe pliki i testy; najpierw ustalić ich status, bez `clean`/szerokiego rollbacku.
+3. Dopiero po rozliczeniu aktywnego working tree można planować kolejny produktowy etap.
 
-**Osobne ścieżki produktowe (wybierz jedną — żadna nie rozpoczęta):**
-- **A.** cleanup / runtime hygiene working tree
-- **B.** GICLÉE FRAME™ F3 — lokalny zapis draftów RAM do pliku
+**Studio Performance:** 6G.5 = **PASS / checkpoint**. Nie otwieraj szerokiej optymalizacji bez konkretnego objawu i nowych metryk.
 
-Backlog techniczny (tylko po osobnej akceptacji): Katalog bounded writer (**zero Save**, **zero Shopify/sync/deploy**).
+**GICLÉE FRAME F3, writer, Save, Shopify/sync/deploy:** nadal wymagają osobnej decyzji.
 
 Szczegóły guardrails: `CURRENT_APP_STATE.md`, `gicleeframe-planning.md`.
 
@@ -667,7 +674,7 @@ Katalog bounded writer / save layer — tylko po osobnej akceptacji; nie startuj
 
 Gdy użytkownik napisze **„Aktualizuj pliki startowe”**, **nie implementujesz** funkcji aplikacji ani nie mieszasz tego z writerem, Shopify/sync/deploy, Push GicleeApp ani runtime cleanupem — chyba że użytkownik wyraźnie o to poprosi.
 
-Zamiast tego przygotuj **mały, bezpieczny prompt do Cursora** (lub wykonaj maintenance), który zaktualizuje źródłowe pliki wiedzy w:
+Zamiast tego przygotuj **mały, bezpieczny prompt do Cursora albo gotowy patch maintenance**, który zaktualizuje źródłowe pliki wiedzy w:
 
 `C:\Strona\pusty\Pliki startowe dla GPT`
 
@@ -676,12 +683,13 @@ Cel: lepsze odzwierciedlenie aktualnego checkpointu, routingu, guardrails, pacin
 Po haśle **„Aktualizuj pliki startowe”** zrób to:
 
 1. **Nie zgaduj** dużych zmian — zaproponuj wąski scope.
-2. **Wskaż pliki** do aktualizacji i **dlaczego** (np. `CURRENT_APP_STATE.md`, checkpoint block w COMPACT v38, `GICLEE_CURSOR_MASTER_INDEX_v38.md`, `GICLEE_CURSOR_ARCHITECT_CLEAN_PACK_v38.md`, `README_GICLEE_CURSOR_ARCHITECT_UPDATE_v38.md`).
-3. **Pilnuj** aktualności `CURRENT_APP_STATE.md` (wersja Studio, SHA monorepo / gicleeapp, fazy Katalog, next, guardrails).
-4. W prompcie do Cursora wymagaj: źródło prawdy = pliki `.md`; **ZIP jest outputem programu użytkownika** — Cursor **nie generuje ZIP-a**.
-5. **Nie proś Cursora** o `build_starter_knowledge_zip()`, GUI **Skopiuj .zip** ani ręczną regenerację ZIP — chyba że użytkownik wyraźnie każe.
-6. **Nie bumpuj** paczki v38 → v39 przy samym checkpoint refresh — zmiana nazwy/wersji paczki tylko przy realnej zmianie struktury instrukcji.
-7. W prompcie do Cursora: nie `git add -A`, nie push, nie commit bez raportu, nie dotykaj runtime dirty (`gpt_config.json`, `Komponenty/*/data/`, backupy itd.).
+2. Gdy użytkownik przekazuje świeży ZIP i jawny raport `git log` / wersji / `git status`, traktuj ZIP jako wejściowy snapshot do przygotowania patcha; źródłem prawdy po zastosowaniu nadal jest lokalny folder.
+3. **Wskaż pliki** do aktualizacji i **dlaczego** (np. `CURRENT_APP_STATE.md`, checkpoint block w COMPACT v38, `GICLEE_CURSOR_MASTER_INDEX_v38.md`, `GICLEE_CURSOR_ARCHITECT_CLEAN_PACK_v38.md`, `README_GICLEE_CURSOR_ARCHITECT_UPDATE_v38.md`).
+4. **Pilnuj** aktualności `CURRENT_APP_STATE.md` (wersja Studio, SHA monorepo / gicleeapp, fazy Katalog, next, guardrails).
+5. W prompcie do Cursora wymagaj: źródło prawdy = pliki `.md`; **ZIP jest outputem programu użytkownika** — Cursor **nie generuje ZIP-a**.
+6. **Nie proś Cursora** o `build_starter_knowledge_zip()`, GUI **Skopiuj .zip** ani ręczną regenerację ZIP — chyba że użytkownik wyraźnie każe.
+7. **Nie bumpuj** paczki v38 → v39 przy samym checkpoint refresh — zmiana nazwy/wersji paczki tylko przy realnej zmianie struktury instrukcji.
+8. W prompcie do Cursora lub patchu maintenance: nie `git add -A`, nie push, nie commit, nie dotykaj runtime dirty (`gpt_config.json`, `Komponenty/*/data/`, backupy itd.).
 
 Prompt do Cursora powinien kończyć się raportem: `git status -sb`, `git diff --stat`, lista zmienionych plików źródłowych. **Bez generowania ZIP.**
 

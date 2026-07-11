@@ -15,10 +15,10 @@ Lokalne repozytorium: **`C:\Strona\pusty`** — jedno monorepo. Folder `cursor-a
 | Remote | URL | Rola |
 |--------|-----|------|
 | `origin` | `https://github.com/eagleblastmusic-lgtm/gicleeart.git` | Właściwa historia lokalnego monorepo Giclée Art |
-| `gpt` | `https://github.com/eagleblastmusic-lgtm/gicleeart-gpt.git` | Snapshot motywu Shopify — analiza, review, branchy robocze GPT |
+| `gpt` | `https://github.com/eagleblastmusic-lgtm/gicleeart-gpt.git` | Kanoniczny alias dokumentacji dla snapshota motywu Shopify |
 | `gicleeapp` | `https://github.com/eagleblastmusic-lgtm/gicleeapp.git` | Zawartość aplikacji lokalnie pod prefiksem `cursor-api/` |
 
-Nie dodawaj nowego remote — wszystkie trzy już istnieją.
+Zanim użyjesz nazwy remote, wykonaj `git remote -v`. Aktualna maszyna może mieć dodatkowy alias `gicleeart-gpt` wskazujący ten sam URL co `gpt`. Preferuj `gpt` w dokumentacji, ale nie dodawaj duplikatu, jeśli równoważny remote już istnieje. Nowy remote dodaj tylko wtedy, gdy żaden istniejący alias nie wskazuje właściwego repo.
 
 ```text
 C:\Strona\pusty (monorepo, origin)
@@ -44,19 +44,25 @@ C:\Strona\pusty (monorepo, origin)
 
 ## 3. Workflow branch — motyw Shopify
 
-**Repo:** `eagleblastmusic-lgtm/gicleeart-gpt` (remote `gpt`)
+**Repo:** `eagleblastmusic-lgtm/gicleeart-gpt` (kanoniczny alias w dokumentacji: `gpt`)
 
 1. GPT tworzy branch roboczy, np. `gpt-work/home-stack-fix`.
-2. GPT implementuje wyłącznie pliki związane z zadaniem.
-3. GPT podaje raport (patrz §14).
-4. Użytkownik pobiera zmiany lokalnie:
+2. GPT implementuje wyłącznie pliki związane z zadaniem i podaje Base SHA, Commit SHA oraz dokładną listę plików.
+3. Użytkownik sprawdza aliasy i pobiera branch:
 
 ```powershell
 cd C:\Strona\pusty
-git fetch gpt --prune
+git remote -v
+git -c maintenance.auto=false -c gc.auto=0 fetch gpt --prune
 ```
 
-5. Import **wyłącznie wskazanych plików**:
+Jeżeli alias `gpt` nie istnieje, ale `gicleeart-gpt` wskazuje ten sam URL, użyj istniejącego aliasu w komendach. Nie twórz kolejnego duplikatu.
+
+4. Wybierz sposób importu:
+
+### A. Dokładne pliki przez `git restore`
+
+Stosuj tylko wtedy, gdy wskazane lokalne pliki są czyste i snapshot jest zgodny z bieżącym lokalnym stanem:
 
 ```powershell
 git restore `
@@ -66,7 +72,34 @@ git restore `
      templates/index.json
 ```
 
-6. Kontrola:
+### B. Patch-first — preferowany przy nowszym lub dirty working tree
+
+```powershell
+$patch = Join-Path $env:TEMP "gicleeart-theme-change.patch"
+Remove-Item $patch -Force -ErrorAction SilentlyContinue
+
+git diff `
+  --binary `
+  --output="$patch" `
+  <BASE_SHA>..<COMMIT_SHA> `
+  -- `
+  assets/giclee-home-stack.css `
+  assets/giclee-home-stack.js `
+  templates/index.json
+
+if ($LASTEXITCODE -ne 0 -or -not (Test-Path $patch) -or (Get-Item $patch).Length -eq 0) {
+  throw "Nie udało się utworzyć patcha motywu."
+}
+
+git apply --check "$patch"
+if ($LASTEXITCODE -ne 0) {
+  throw "Patch motywu koliduje z lokalnymi plikami. Niczego nie zastosowano."
+}
+
+git apply "$patch"
+```
+
+5. Kontrola:
 
 ```powershell
 git status --short
@@ -76,7 +109,9 @@ git diff -- `
   templates/index.json
 ```
 
-7. Test lokalny → akceptacja → dopiero wtedy finalny commit w monorepo.
+6. Test lokalny → akceptacja → dopiero wtedy finalny commit w monorepo.
+
+**W PowerShell nie generuj patcha przekierowaniem `>`**. Używaj `git diff --output="$patch"`, aby uniknąć pliku z kodowaniem, którego `git apply` nie rozpozna.
 
 ---
 
@@ -85,75 +120,72 @@ git diff -- `
 **Repo:** `eagleblastmusic-lgtm/gicleeapp` (remote `gicleeapp`)
 
 Ścieżki w repo `gicleeapp` (root):
-
 - `Komponenty/...`
 - `giclee_app/...`
 - `package.json`
 
-Lokalnie odpowiadają im:
+Lokalnie odpowiadają im ścieżki pod `cursor-api/`.
 
-- `cursor-api/Komponenty/...`
-- `cursor-api/giclee_app/...`
-- `cursor-api/package.json`
+**Nie wolno:** merge brancha `gicleeapp` do monorepo, `git checkout gicleeapp/... -- .`, kopiowanie całego repo do root monorepo ani szeroki rollback `cursor-api/`, gdy istnieją niezwiązane lokalne zmiany.
 
-**Nie wolno:** merge brancha `gicleeapp` do monorepo, `git checkout gicleeapp/... -- .` bez prefiksu, kopiować całego repo do root monorepo, tworzyć `Komponenty/` lub `giclee_app/` bezpośrednio w `C:\Strona\pusty`.
-
-1. GPT tworzy branch, np. `gpt-work/studio-component-fix`.
-2. GPT **musi podać Base SHA i Commit SHA** w raporcie.
-3. Użytkownik:
+1. GPT tworzy branch `gpt-work/<task-slug>` i podaje Base SHA, Commit SHA oraz dokładną listę plików.
+2. Użytkownik pobiera branch:
 
 ```powershell
 cd C:\Strona\pusty
-git fetch gicleeapp --prune
+git -c maintenance.auto=false -c gc.auto=0 fetch gicleeapp --prune
 ```
 
-4. **Kanon:** patch z dokładnych SHA (GPT zawsze podaje oba):
+3. Utwórz patch przez `--output`, nie przez `>`:
 
 ```powershell
-git diff --binary `
+$patch = Join-Path $env:TEMP "gicleeapp-change.patch"
+Remove-Item $patch -Force -ErrorAction SilentlyContinue
+
+git diff `
+  --binary `
+  --output="$patch" `
   <BASE_SHA>..<COMMIT_SHA> `
-  > "$env:TEMP\gicleeapp-change.patch"
+  -- `
+  Komponenty/example.py `
+  tests/test_example.py
+
+if ($LASTEXITCODE -ne 0 -or -not (Test-Path $patch) -or (Get-Item $patch).Length -eq 0) {
+  throw "Nie udało się utworzyć patcha GicleeApp."
+}
 ```
 
-**Skrót** (tylko gdy branch bazuje dokładnie na aktualnym `gicleeapp/main`):
+4. Test apply z prefiksem lokalnym:
 
 ```powershell
-git diff --binary `
-  gicleeapp/main...gicleeapp/gpt-work/studio-component-fix `
-  > "$env:TEMP\gicleeapp-change.patch"
+git apply --check --directory=cursor-api "$patch"
+if ($LASTEXITCODE -ne 0) {
+  throw "Patch GicleeApp koliduje z lokalnymi plikami. Niczego nie zastosowano."
+}
 ```
 
-Jeżeli branch powstał na innym commicie niż bieżący `gicleeapp/main`, użyj Base SHA z raportu GPT — nie zakładaj `main`.
-
-5. Test apply:
+5. Po PASS:
 
 ```powershell
-git apply `
-  --check `
-  --directory=cursor-api `
-  "$env:TEMP\gicleeapp-change.patch"
+git apply --directory=cursor-api "$patch"
 ```
 
-6. Po PASS:
-
-```powershell
-git apply `
-  --directory=cursor-api `
-  "$env:TEMP\gicleeapp-change.patch"
-```
-
-7. Kontrola:
+6. Kontrola dokładnego zakresu:
 
 ```powershell
 git status --short
-git diff -- cursor-api
+git diff -- `
+  cursor-api/Komponenty/example.py `
+  cursor-api/tests/test_example.py
 ```
 
-8. Sprzątanie:
+7. Sprzątanie:
 
 ```powershell
-Remove-Item "$env:TEMP\gicleeapp-change.patch" -ErrorAction SilentlyContinue
+Remove-Item "$patch" -ErrorAction SilentlyContinue
 ```
+
+Skrót `gicleeapp/main...gicleeapp/gpt-work/<branch>` jest dozwolony tylko, gdy branch faktycznie bazuje na bieżącym `gicleeapp/main`. Przy rozjechanym snapshocie zawsze używaj jawnego Base SHA z raportu GPT.
 
 ---
 
@@ -161,8 +193,10 @@ Remove-Item "$env:TEMP\gicleeapp-change.patch" -ErrorAction SilentlyContinue
 
 - Importuj **tylko** pliki lub patch wskazany w raporcie GPT.
 - Nie importuj całego snapshota ani całego brancha bez listy plików.
+- Przy zadaniu cross-repo utwórz osobny patch dla GicleeApp i osobny dla motywu. **Oba `git apply --check` muszą przejść przed zastosowaniem któregokolwiek patcha.**
 - Po imporcie zawsze `git status` + `git diff` na zaimportowanym zakresie.
 - Kod z brancha GPT **nie jest finalny** bez lokalnego testu i świadomej akceptacji.
+- Dirty working tree nie jest powodem do `reset`/`clean`; jest sygnałem do jeszcze węższego zakresu patcha i rollbacku.
 
 ---
 
@@ -204,13 +238,15 @@ Po pozytywnym teście:
 git restore -- <ścieżka-do-pliku>
 ```
 
-**Cały import GicleeApp (przed commitem):**
+**Import wielu plików GicleeApp (przed commitem):**
 
 ```powershell
-git restore --source=HEAD --staged --worktree -- cursor-api
+git restore --source=HEAD --staged --worktree -- `
+  cursor-api/Komponenty/example.py `
+  cursor-api/tests/test_example.py
 ```
 
-(lub węższa lista plików z raportu)
+Używaj wyłącznie dokładnej listy zaimportowanych plików. **Nie wykonuj `git restore ... -- cursor-api`**, gdy katalog zawiera inne lokalne zmiany. Nowe pliki utworzone przez patch usuń pojedynczo dopiero po sprawdzeniu listy. `git clean` pozostaje zakazane.
 
 **Po commicie:** `git revert` lub reset tylko po świadomej decyzji użytkownika — nie automatycznie.
 
@@ -237,19 +273,25 @@ Nie zostawiaj patchy w repo ani w stage.
 | `git checkout gicleeapp/... -- .` | Kopiuje do root bez prefiksu |
 | Import całego snapshota | Nadpisuje niezwiązane lokalne zmiany |
 | `git add .` przy imporcie | Ryzyko stage runtime/config |
+| `git diff ... > patch` w Windows PowerShell | Możliwe kodowanie/plik nierozpoznany przez `git apply`; użyj `--output` |
+| `git restore ... -- cursor-api` przy dirty tree | Usuwa również niezwiązane prace lokalne |
+| `git clean` | Ryzyko bezpowrotnego usunięcia nowych plików użytkownika |
 | Merge / force push / deploy bez zgody | Guardrails brancha GPT |
 
 ---
 
 ## 12. Checklist — przed importem
 
-- [ ] Potwierdzone repo (`gpt` vs `gicleeapp`)
+- [ ] `git remote -v` sprawdzone; wybrany istniejący alias wskazuje właściwy URL
+- [ ] Potwierdzone repo (`gpt` / równoważny alias theme vs `gicleeapp`)
 - [ ] Potwierdzony branch `gpt-work/<task-slug>`
 - [ ] Dla GicleeApp: **Base SHA** i **Commit SHA** z raportu GPT
 - [ ] Lista zmienionych plików zgodna z zadaniem
 - [ ] Brak plików runtime/config poza zakresem (`gpt_config.json`, `orders_sync_state.json`, …)
 - [ ] `git fetch <remote> --prune` wykonany
-- [ ] Nie planujesz `merge` ani `pull` całego remote
+- [ ] Patch utworzony przez `git diff --output`, ma niezerowy rozmiar
+- [ ] Dla cross-repo oba patche przechodzą `--check` przed pierwszym `git apply`
+- [ ] Nie planujesz `merge`, `pull`, szerokiego `restore` ani `clean`
 
 ---
 
@@ -270,8 +312,9 @@ GPT przekazuje użytkownikowi:
 
 ```text
 Repo: eagleblastmusic-lgtm/gicleeart-gpt | eagleblastmusic-lgtm/gicleeapp
+Remote alias used locally: gpt | gicleeart-gpt | gicleeapp
 Branch: gpt-work/<task-slug>
-Base SHA: <pełny SHA bazy brancha — obowiązkowy dla gicleeapp>
+Base SHA: <pełny SHA bazy brancha — obowiązkowy dla patch-first>
 Commit SHA: <pełny SHA commita z implementacją>
 Changed files:
   - <ścieżka/względem repo>

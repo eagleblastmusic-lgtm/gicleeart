@@ -1,30 +1,71 @@
 # Current App State
 
 <!-- gpt-starter:gicleeapp-push:start -->
-GicleeApp Studio v1.46.1
+GicleeApp Studio — lokalny working tree ma markery wersji **v1.50.0**.
 
-GitHub / aktualna wersja aplikacji (`eagleblastmusic-lgtm/gicleeapp`):
-v1.46.1 — zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`
-Ostatni push GicleeApp: `ad9fd14` na `main` (2026-07-10 07:37 UTC) — Refresh GicleeApp repository snapshot
+Monorepo `C:\Strona\pusty`:
+- branch: `master`
+- HEAD = `origin/master`: `2dde9e4112bf9a5a532c78f5abba3bf1e46f49a0`
+- commit: `2dde9e4 feat(gicleeapp): add category launcher shortcuts and tile drag-drop`
+- data commita: 2026-07-11 01:23:48 +0200
 
-Monorepo origin/master (projekt / docs):
-aab237b robimy integracje na galezi
+Wersja w aktualnym working tree:
+- `cursor-api/giclee_app/__init__.py`: `1.50.0`
+- `cursor-api/package.json`: `1.50.0`
+- oba pliki są obecnie zmodyfikowane po HEAD, więc **v1.50.0 opisuje lokalny working tree, a nie potwierdzoną zawartość commita `2dde9e4`**.
 
-Previous checkpoint:
-46fc718 feat(studio): add GICLÉE FRAME page inventory RAM editor (v1.40.0)
+Osobny snapshot aplikacji `eagleblastmusic-lgtm/gicleeapp`:
+- `gicleeapp/main`: `a61c0f4d5b39ea14b74f249865ef39ff477c4ed9`
+- commit: `a61c0f4 revert(notatnik): restore branch-only implementation workflow`
+- data: 2026-07-10 21:39:37 +0200
+- ten remote jest starszy od zaakceptowanego lokalnego monorepo i **nie jest źródłem prawdy dla bieżącego working tree**.
 
-Branch status:
-- **GitHub gicleeapp:** v1.46.1 / `main` @ `ad9fd14` (auto-sync po Push GicleeApp, 2026-07-10 07:37 UTC)
-- **monorepo origin/master:** `aab237b` — robimy integracje na galezi
+Remotes lokalne:
+- `origin` → `eagleblastmusic-lgtm/gicleeart`
+- `gicleeapp` → `eagleblastmusic-lgtm/gicleeapp`
+- `gpt` oraz alias `gicleeart-gpt` → `eagleblastmusic-lgtm/gicleeart-gpt`
 
 GPT starter files:
-auto-sync po Push GicleeApp 2026-07-10 07:37 UTC (gicleeapp `ad9fd14`, v1.46.1; paczka v38; źródło = ten folder, nie ZIP)
-
-Recent context:
-- **GitHub gicleeapp:** v1.46.1 / `main` @ `ad9fd14` — auto-sync po Push GicleeApp
-- GICLÉE FRAME™ F2.1: closed + pushed (historycznie v1.40.1 / `4647c1b`; aktualna wersja aplikacji na GitHub jest nowsza)
-- Local runtime/untracked still outside commit and remote (working tree hygiene pending)
+checkpoint odświeżony 2026-07-11 na podstawie świeżego ZIP-a v38 i jawnego raportu lokalnego Git. Źródło edycji pozostaje w `C:\Strona\pusty\Pliki startowe dla GPT`; ZIP jest wyłącznie snapshotem/outputem programu użytkownika.
 <!-- gpt-starter:gicleeapp-push:end -->
+
+
+## Manual checkpoint — 2026-07-11
+
+### Launcher GicleeApp — zaakceptowany lokalnie i wypchnięty w monorepo
+
+Commit `2dde9e4` (`master` = `origin/master`) obejmuje zaakceptowany zakres launchera:
+- nawigacja kategoriami → kafelki komponentów,
+- menu **Opcje** (Token Setup, stan sesji, układ kafelków, skróty),
+- konfigurowalne skróty: litery, cyfry, F1–F12,
+- drag & drop kolejności kategorii i kafelków,
+- ręcznie potwierdzone działanie skrótów na Windows.
+
+Decyzja architektoniczna: skróty launchera na Windows celowo korzystają z pollingu WinAPI `user32.GetAsyncKeyState`, ponieważ `TkinterDnD.Tk` nie dostarczał niezawodnie zdarzeń przez `bind`, `bind_all` ani własne bindtagi. Skróty są aktywne tylko, gdy GicleeApp jest oknem foreground. **Nie zastępuj tego zwykłym bindingiem Tk bez realnego testu regresji Windows + TkinterDnD.**
+
+Lokalny stan użytkownika — nie importować ani nie commitować przypadkowo:
+- `cursor-api/giclee_app/data/launcher_shortcuts.json`
+- `cursor-api/giclee_app/data/launcher_layout.json`
+
+### FAQ — integracja efektów grafiki zastosowana lokalnie, walidacja pending
+
+W working tree są już lokalnie zastosowane zmiany cross-repo dla Hero FAQ:
+- `TemplateZone.image_effect_selector`,
+- eksport zaufanego `targetSelector` do `assets/faq-section-effects.js`,
+- runtime wybierający konkretny kontener grafiki Hero,
+- selektywne ładowanie assetów efektów na szablonie FAQ,
+- rozdzielenie transformacji: hover skaluje kontener, parallax przesuwa wewnętrzny obraz,
+- test `cursor-api/tests/test_faq_hero_image_effect_linking.py`.
+
+Status: **nie oznaczać jako closed/pushed**, dopóki nie przejdą testy Python, `compileall`, `git diff --check` i ręczny podgląd `/pages/faq`. Aktualny working tree zawiera również `assets/faq-section-effects.js` oraz lokalne dane wariantu FAQ.
+
+### Notatnik — wiedza z ręcznie zaakceptowanego workflow
+
+Wcześniej ręcznie potwierdzono działanie: trwałej kolejności notatek per rozdział, sterowania kolejnością, dwukliku dla folderu/nazwy notatki oraz wklejania i wyświetlania obrazów ze schowka. Repo `gicleeapp/main` było później cofnięte do branch-only workflow, dlatego przed kolejną zmianą Notatnika należy najpierw sprawdzić rzeczywisty lokalny kod — nie zakładać, że osobny remote `gicleeapp/main` zawiera zaakceptowany stan.
+
+### Bieżący dirty working tree — ochrona
+
+Poza FAQ working tree zawiera aktywne, niezamknięte prace Home Flow / prehero oraz pliki runtime/config. W szczególności są zmienione lub nowe pliki pod `Komponenty/stronaglowna/`, assety intro-curtain/prehero i testy. **Nie używać `reset`, `clean`, szerokiego `restore -- cursor-api`, `git add .` ani importu całego brancha.** Każdy import/rollback musi podawać dokładną listę plików.
 
 Completed:
 - Background Builder local v1: frozen
@@ -60,11 +101,14 @@ Not started:
 
 Next recommended:
 
-**Studio Performance — GICLÉE FRAME 6G.5:** **PASS / checkpoint** (główna nitka zamknięta — nie startować kolejnej szerokiej optymalizacji bez wyraźnego problemu UX po ręcznym teście).
+**Najpierw domknij istniejący lokalny zakres — bez szerokiego cleanupu:**
+1. FAQ Hero image effects: test celowany + `compileall` + `git diff --check` + ręczny podgląd live.
+2. Home Flow / prehero: ustalić dokładny status lokalnych nowych plików i testów; nie usuwać ich jako „śmieci”.
+3. Dopiero po rozliczeniu aktywnych zmian: jawny, wąski commit lub świadomy rollback dokładnych plików.
 
-**Osobne ścieżki produktowe (choose one — neither started):**
-- **A.** cleanup / runtime hygiene working tree (local M + untracked outside commits)
-- **B.** GICLÉE FRAME™ F3 — lokalny zapis draftów RAM (no writer, no Save, no Shopify)
+**Studio Performance — GICLÉE FRAME 6G.5:** **PASS / checkpoint**. Nie startować kolejnej szerokiej optymalizacji bez konkretnego objawu UX i nowych metryk.
+
+**GICLÉE FRAME™ F3 / writer / Shopify sync-deploy:** nadal nie startować bez osobnej decyzji.
 
 ---
 

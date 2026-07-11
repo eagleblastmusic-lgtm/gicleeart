@@ -333,3 +333,41 @@ Dopiero potem twórz nowe pliki.
 Nie duplikuj modułów scroll/reveal, jeśli istnieje podobny `giclee-*`.
 
 Nie zmieniaj architektury tylko dlatego, że efekt wygląda ciekawie.
+
+---
+
+## 15. TARGETOWANIE KONKRETNEJ GRAFIKI W SEKCJI
+
+Gdy konfiguracja efektów jest zapisana per sekcja, ale sekcja zawiera kilka elementów media albo niestandardowy DOM (np. Shopify Hero), nie zakładaj globalnego selektora obrazu.
+
+Preferowany wzorzec:
+
+1. Rejestr komponentu dostarcza zaufany selektor, np. `image_effect_selector`.
+2. Eksport frontu dodaje go jako `targetSelector`.
+3. Runtime wykonuje `section.querySelector(targetSelector)` — wyłącznie wewnątrz bieżącej sekcji.
+4. Nieprawidłowy selektor jest obsługiwany przez `try/catch` i bezpieczny fallback.
+5. Selektor nie pochodzi z edytowalnych danych użytkownika.
+6. Asset konfiguracyjny i boot są ładowane tylko na właściwym szablonie.
+
+To zapobiega przypięciu parallaxu/hovera do całej sekcji, tekstu albo niewłaściwego obrazu.
+
+## 16. ROZDZIELENIE TRANSFORMACJI HOVER I PARALLAX
+
+Dwa efekty nie powinny niezależnie zapisywać `transform` na tym samym elemencie.
+
+Preferowana własność transformacji:
+
+```text
+kontener media:
+  hover → scale(...)
+
+wewnętrzny img / picture / video:
+  parallax → translate3d(...)
+```
+
+Dodatkowe wymagania:
+- `mousemove` i `mouseleave` podpinaj do kontenera grafiki, nie całej sekcji,
+- po `mouseleave` wróć do pozycji zerowej,
+- parallax tylko desktop + fine pointer,
+- `prefers-reduced-motion` wyłącza oba efekty,
+- nie zmieniaj ustawień kadru (`object-position`, `image_*_object_y`) przy dodawaniu motion.

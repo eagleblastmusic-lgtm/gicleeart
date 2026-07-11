@@ -80,7 +80,7 @@ Te pliki mogą **mieszać routing** (single-repo, stare wersje, duplikaty Instru
 
 | Plik | Uwaga |
 |------|--------|
-| `Wiadomość początkowa.txt` | Osobno od ZIP — checkpoint Studio v1.41.2 |
+| `Wiadomość początkowa.txt` | Osobno od ZIP — aktualizuj z bieżącego lokalnego checkpointu; nie zakładaj starej wersji z archiwum |
 
 ---
 
@@ -145,6 +145,8 @@ Master Index v38 traktuje je jako opcjonalne.
 **Checkpoint refresh 2026-07-08 (strategic direction):** nowe sekcje § Strategic Direction — Giclée Art Studio OS + § Work Planning Rule + § UI / Product Taste Direction w COMPACT v37 i `CURRENT_APP_STATE.md` — kierunek ekosystemu, tempo prac i estetyka produktu dla nowych sesji GPT. Paczka nadal v3.7 — bez bumpu na v38.
 
 **Checkpoint refresh 2026-07-08 (source of truth / decision memory):** nowa sekcja § Source of Truth / Decision Memory w COMPACT v37 i `CURRENT_APP_STATE.md` — GV ≠ GAS 2.0, lokalne pliki ≠ ZIP, szablon modułów, decyzja C#/Python, roadmapa, checkpoint startowy sesji. Paczka nadal v3.7 — bez bumpu na v38.
+
+**Checkpoint refresh 2026-07-11 (launcher / patch safety / FAQ effects):** monorepo `2dde9e4`; lokalne markery v1.50.0 są dirty po HEAD; launcher categories/options/shortcuts/DnD zaakceptowany; WinAPI shortcuts = trwała decyzja; patch w PowerShell przez `--output`; oba cross-repo `--check` przed apply; FAQ `image_effect_selector` / `targetSelector` pending validation; Home Flow/prehero chronione przed szerokim cleanupem. Paczka nadal **v3.8** — bez bumpu na v39.
 
 ## Analyst mode extension
 
