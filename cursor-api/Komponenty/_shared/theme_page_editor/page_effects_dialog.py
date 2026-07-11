@@ -109,6 +109,7 @@ def open_image_effects_dialog(
 ) -> None:
     section_key = zone.section_key
     cfg = load_image_effects_for_section(config, variant_id, section_key)
+    image_field = next((field for field in zone.fields if field.kind == "shopify_image"), None)
 
     dlg = tk.Toplevel(host)
     dlg.title(f"Efekty grafiki — {zone.label}")
@@ -129,7 +130,16 @@ def open_image_effects_dialog(
         text=f"Sekcja: {zone.label} · zapis per wariant → {effects_asset_name_hint(config)}",
         wraplength=520,
         foreground="#555",
-    ).pack(anchor="w", pady=(4, 8))
+    ).pack(anchor="w", pady=(4, 2))
+    if image_field is not None:
+        ttk.Label(
+            pad,
+            text=f"Grafika: {image_field.label}",
+            wraplength=520,
+            foreground="#666",
+        ).pack(anchor="w", pady=(0, 8))
+    else:
+        ttk.Label(pad, text="", padding=0).pack(anchor="w", pady=(0, 6))
 
     notebook = ttk.Notebook(pad)
     notebook.pack(fill="both", expand=True)

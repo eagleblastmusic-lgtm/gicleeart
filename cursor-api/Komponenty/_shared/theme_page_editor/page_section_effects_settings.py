@@ -201,6 +201,17 @@ def export_image_effects_config(cfg: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+def _image_effect_selector_for_section(config: PageEditorConfig, section_key: str) -> str | None:
+    """Zwraca zaufany selektor z rejestru komponentu, nigdy z danych użytkownika."""
+
+    for zone in config.zones:
+        if zone.section_key != section_key:
+            continue
+        selector = (zone.image_effect_selector or "").strip()
+        return selector or None
+    return None
+
+
 def export_section_effects_for_front(
     config: PageEditorConfig,
     variant_id: str,
@@ -215,7 +226,11 @@ def export_section_effects_for_front(
         if isinstance(image_raw, dict):
             image_cfg = _normalize_image_effects(image_raw)
             if image_cfg.get("enabled"):
-                exported["image"] = export_image_effects_config(image_cfg)
+                image_export = export_image_effects_config(image_cfg)
+                target_selector = _image_effect_selector_for_section(config, section_key)
+                if target_selector:
+                    image_export["targetSelector"] = target_selector
+                exported["image"] = image_export
         if exported:
             out[section_key] = exported
     return out

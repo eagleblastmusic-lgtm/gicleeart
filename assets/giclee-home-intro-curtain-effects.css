@@ -1,0 +1,21 @@
+/* Make the live Giclée Art section interactive as soon as the Hero curtain starts opening. */
+html[data-giclee-hero-intro-effects-active='true']
+  #MainContent
+  > .shopify-section.giclee-hero-horizontal-curtain-intro-target[
+    data-giclee-curtain-live-intro='true'
+  ] {
+  pointer-events: auto !important;
+}
+
+html[data-giclee-hero-horizontal-curtain-opening='true']
+  #MainContent
+  > .shopify-section.giclee-hero-horizontal-curtain-source {
+  pointer-events: none !important;
+}
+
+html[data-giclee-hero-intro-effects-active='true']
+  #MainContent
+  > .shopify-section.giclee-hero-horizontal-curtain-intro-target
+  .giclee-home-studio-reveal {
+  animation-play-state: running !important;
+}

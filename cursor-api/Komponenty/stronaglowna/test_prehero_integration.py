@@ -26,6 +26,7 @@ def test_prehero_zone_is_first_and_editable() -> None:
         "prehero_horizontal_curtain_enabled",
         "prehero_hero_hold_screens",
         "prehero_horizontal_curtain_screens",
+        "prehero_intro_hold_screens",
     ]
 
 
@@ -44,6 +45,7 @@ def test_prehero_settings_roundtrip_and_normalization() -> None:
             "prehero_horizontal_curtain_enabled": True,
             "prehero_hero_hold_screens": 1,
             "prehero_horizontal_curtain_screens": 1,
+            "prehero_intro_hold_screens": 1,
         },
     )
 
@@ -58,6 +60,7 @@ def test_prehero_settings_roundtrip_and_normalization() -> None:
     assert config["horizontalCurtainEnabled"] is True
     assert config["heroHoldVh"] == 100
     assert config["heroCurtainVh"] == 100
+    assert config["introHoldVh"] == 100
 
 
 def test_prehero_snippet_injection_is_idempotent() -> None:
@@ -78,6 +81,7 @@ window.GICLEE_HOME_STACK = true;
         "horizontalCurtainEnabled": True,
         "heroHoldVh": 100,
         "heroCurtainVh": 100,
+        "introHoldVh": 100,
         "videoRef": "shopify://files/videos/prehero.mp4",
     }
 
@@ -89,10 +93,12 @@ window.GICLEE_HOME_STACK = true;
     assert first.count("GICLEE_PREHERO_ASSETS_BEGIN") == 1
     assert "window.GICLEE_PREHERO_CONFIG" in first
     assert '"heroHoldVh": 100' in first
+    assert '"introHoldVh": 100' in first
     assert "'prehero.mp4' | file_url" in first
     assert "giclee-home-prehero-reveal.js" in first
     assert "giclee-home-hero-horizontal-curtain.css" in first
     assert "giclee-home-hero-horizontal-curtain.js" in first
+    assert "giclee-home-intro-curtain-effects.js" in first
     assert first.index("GICLEE_PREHERO_CONFIG_BEGIN") < first.index("</script>")
     assert first.index("GICLEE_PREHERO_ASSETS_BEGIN") > first.index("</script>")
 

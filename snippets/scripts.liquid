@@ -41,6 +41,12 @@
   async
 ></script>
 
+{% if request.page_type == 'page' and template.suffix == 'faq' %}
+  <script src="{{ 'faq-section-effects.js' | asset_url }}" defer></script>
+  {{ 'giclee-page-section-effects.css' | asset_url | stylesheet_tag }}
+  <script src="{{ 'giclee-page-section-effects-boot.js' | asset_url }}" defer></script>
+{% endif %}
+
 <link
   rel="modulepreload"
   href="{{ 'utilities.js' | asset_url }}"

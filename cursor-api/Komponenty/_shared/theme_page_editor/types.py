@@ -44,6 +44,9 @@ class TemplateZone:
     section_key: str
     fields: tuple[TemplateField, ...] = field(default_factory=tuple)
     settings_only: bool = False
+    # Opcjonalny, jawny cel efektów grafiki na froncie. Pozostaje pusty dla
+    # istniejących stref, które korzystają z bezpiecznego fallbacku runtime.
+    image_effect_selector: str | None = None
 
 
 def _s(section: str, *parts: str) -> PathKey:

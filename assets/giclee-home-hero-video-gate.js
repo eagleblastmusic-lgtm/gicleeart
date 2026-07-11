@@ -2,19 +2,36 @@
 (function () {
   'use strict';
 
+  var CONFIG = window.GICLEE_PREHERO_CONFIG || {};
   var SCRUB_ROOT_ID = 'giclee-prehero-video-scrub';
   var HERO_CLASS = 'giclee-prehero-hero-rise';
   var PROMPT_CLASS = 'giclee-hero-sound-consent';
   var VIDEO_SELECTOR =
     '.giclee-video-collage video, .giclee-collage__stage video, video.giclee-collage__video';
   var CENTER_TOLERANCE_PX = 2;
-  var AUTO_MUTED_HOLD_FRACTION = 0.35;
+
+  var SOUND_CONSENT_ENABLED = CONFIG.soundConsentEnabled !== false;
+  var SOUND_QUESTION = textConfig(
+    'soundConsentQuestion',
+    'Doświadczyć tej sceny z dźwiękiem?'
+  );
+  var SOUND_TOGGLE_LABEL = textConfig('soundConsentToggleLabel', 'Dźwięk');
+  var SOUND_START_LABEL = textConfig('soundConsentStartLabel', 'Rozpocznij');
+  var SOUND_AUDIO_URL = textConfig('soundConsentAudioUrl', '');
+  var SOUND_VOLUME = numberConfig('soundConsentVolume', 28, 0, 100) / 100;
+  var AUTO_MUTED_HOLD_FRACTION = numberConfig(
+    'soundConsentAutoMutedFraction',
+    0.35,
+    0,
+    1
+  );
 
   var root = document.documentElement;
   var scrubRoot = null;
   var hero = null;
   var videos = [];
   var audioMaster = null;
+  var ambientAudio = null;
   var playbackAllowed = false;
   var hasStarted = false;
   var choiceResolved = false;
@@ -26,8 +43,18 @@
   var prompt = null;
   var toggle = null;
   var toggleState = null;
-  var startButton = null;
   var promptVisible = false;
+
+  function textConfig(key, fallback) {
+    var value = String(CONFIG[key] == null ? '' : CONFIG[key]).trim();
+    return value || fallback;
+  }
+
+  function numberConfig(key, fallback, min, max) {
+    var value = Number(CONFIG[key]);
+    if (!Number.isFinite(value)) value = fallback;
+    return Math.min(max, Math.max(min, value));
+  }
 
   function findHero() {
     var map = window.GICLEE_HOME_SECTIONS || {};
@@ -39,21 +66,19 @@
     );
   }
 
-  function safeSeekStart(video) {
-    if (!video || (!Number.isFinite(video.duration) && video.readyState < 1)) return;
+  function safeSeekStart(media) {
+    if (!media || (!Number.isFinite(media.duration) && media.readyState < 1)) return;
     try {
-      if (Math.abs(video.currentTime) > 0.025) video.currentTime = 0;
-    } catch (error) {
-      /* Metadata may not be available yet. */
-    }
+      if (Math.abs(media.currentTime) > 0.025) media.currentTime = 0;
+    } catch (error) {}
   }
 
-  function pauseAndReset(video) {
-    if (!video) return;
+  function pauseAndReset(media) {
+    if (!media) return;
     try {
-      video.pause();
+      media.pause();
     } catch (error) {}
-    safeSeekStart(video);
+    safeSeekStart(media);
   }
 
   function onPrematurePlay(event) {
@@ -61,36 +86,31 @@
     pauseAndReset(event.currentTarget);
   }
 
+  function usesAmbientAudio() {
+    return !!(soundEnabled && ambientAudio && SOUND_AUDIO_URL);
+  }
+
   function applyVideoSound(video, index) {
     if (!video) return;
-    var audible = soundEnabled && video === audioMaster && index === 0;
+    var audible =
+      soundEnabled && !usesAmbientAudio() && video === audioMaster && index === 0;
 
     video.muted = !audible;
     video.defaultMuted = !audible;
     video.playsInline = true;
     video.setAttribute('playsinline', '');
 
-    if (audible) {
-      video.removeAttribute('muted');
-    } else {
-      video.setAttribute('muted', '');
-    }
+    if (audible) video.removeAttribute('muted');
+    else video.setAttribute('muted', '');
   }
 
   function playVideo(video, index) {
     if (!video) return;
     applyVideoSound(video, index);
-
-    var promise;
     try {
-      promise = video.play();
-    } catch (error) {
-      return;
-    }
-
-    if (promise && typeof promise.catch === 'function') {
-      promise.catch(function () {});
-    }
+      var promise = video.play();
+      if (promise && typeof promise.catch === 'function') promise.catch(function () {});
+    } catch (error) {}
   }
 
   function prepareVideo(video) {
@@ -129,14 +149,36 @@
 
   function collectVideos() {
     if (!hero) return videos;
-
     var found = Array.prototype.slice.call(hero.querySelectorAll(VIDEO_SELECTOR));
     if (!found.length) found = Array.prototype.slice.call(hero.querySelectorAll('video'));
-
     found.forEach(prepareVideo);
     videos = found;
     audioMaster = videos[0] || null;
     return videos;
+  }
+
+  function createAmbientAudio() {
+    if (!SOUND_AUDIO_URL || typeof window.Audio !== 'function') return null;
+    ambientAudio = new Audio(SOUND_AUDIO_URL);
+    ambientAudio.preload = 'auto';
+    ambientAudio.loop = true;
+    ambientAudio.volume = SOUND_VOLUME;
+    ambientAudio.setAttribute('data-giclee-hero-ambient', '1');
+    return ambientAudio;
+  }
+
+  function playAmbient() {
+    if (!usesAmbientAudio()) return;
+    ambientAudio.volume = SOUND_VOLUME;
+    try {
+      var promise = ambientAudio.play();
+      if (promise && typeof promise.catch === 'function') promise.catch(function () {});
+    } catch (error) {}
+  }
+
+  function stopAmbient() {
+    if (!ambientAudio) return;
+    pauseAndReset(ambientAudio);
   }
 
   function horizontalStatus() {
@@ -155,9 +197,7 @@
   function heroIsSettled() {
     if (!scrubRoot || !hero) return false;
     if (scrubRoot.getAttribute('data-hero-rise-complete') !== 'true') return false;
-
-    var rect = hero.getBoundingClientRect();
-    return Math.abs(rect.top) <= CENTER_TOLERANCE_PX;
+    return Math.abs(hero.getBoundingClientRect().top) <= CENTER_TOLERANCE_PX;
   }
 
   function heroIsPlayable() {
@@ -167,6 +207,7 @@
   function decisionWindowExpired() {
     var status = horizontalStatus();
     if (!status || !status.active || !status.holdTravel) return false;
+    if (AUTO_MUTED_HOLD_FRACTION <= 0) return true;
     return status.localScroll >= status.holdTravel * AUTO_MUTED_HOLD_FRACTION;
   }
 
@@ -176,17 +217,20 @@
   }
 
   function setPromptVisible(visible) {
-    promptVisible = !!visible;
-    root.setAttribute('data-giclee-hero-sound-prompt', visible ? 'visible' : 'hidden');
-
+    promptVisible = !!visible && SOUND_CONSENT_ENABLED;
+    root.setAttribute(
+      'data-giclee-hero-sound-prompt',
+      promptVisible ? 'visible' : 'hidden'
+    );
     if (!prompt) return;
-    prompt.setAttribute('aria-hidden', visible ? 'false' : 'true');
-    if ('inert' in prompt) prompt.inert = !visible;
+    prompt.setAttribute('aria-hidden', promptVisible ? 'false' : 'true');
+    if ('inert' in prompt) prompt.inert = !promptVisible;
   }
 
   function createPrompt() {
     var existing = document.querySelector('.' + PROMPT_CLASS);
     if (existing) existing.remove();
+    if (!SOUND_CONSENT_ENABLED) return null;
 
     prompt = document.createElement('div');
     prompt.className = PROMPT_CLASS;
@@ -197,20 +241,20 @@
 
     var question = document.createElement('p');
     question.className = PROMPT_CLASS + '__question';
-    question.textContent = 'Doświadczyć tej sceny z dźwiękiem?';
+    question.textContent = SOUND_QUESTION;
 
     var label = document.createElement('label');
     label.className = PROMPT_CLASS + '__toggle';
 
     var labelText = document.createElement('span');
     labelText.className = PROMPT_CLASS + '__toggle-label';
-    labelText.textContent = 'Dźwięk';
+    labelText.textContent = SOUND_TOGGLE_LABEL;
 
     toggle = document.createElement('input');
     toggle.className = PROMPT_CLASS + '__input';
     toggle.type = 'checkbox';
     toggle.checked = false;
-    toggle.setAttribute('aria-label', 'Włącz dźwięk w filmie');
+    toggle.setAttribute('aria-label', SOUND_TOGGLE_LABEL);
 
     var switchVisual = document.createElement('span');
     switchVisual.className = PROMPT_CLASS + '__switch';
@@ -224,10 +268,10 @@
     label.appendChild(switchVisual);
     label.appendChild(toggleState);
 
-    startButton = document.createElement('button');
+    var startButton = document.createElement('button');
     startButton.className = PROMPT_CLASS + '__start';
     startButton.type = 'button';
-    startButton.textContent = 'Rozpocznij';
+    startButton.textContent = SOUND_START_LABEL;
 
     inner.appendChild(question);
     inner.appendChild(label);
@@ -243,6 +287,7 @@
 
     updateToggleCopy();
     setPromptVisible(false);
+    return prompt;
   }
 
   function startPlayback(withSound, directFromGesture) {
@@ -257,20 +302,27 @@
       pauseAndReset(video);
       applyVideoSound(video, index);
     });
+    stopAmbient();
 
     var begin = function () {
       if (!playbackAllowed || !heroIsPlayable()) return;
       videos.forEach(playVideo);
+      if (soundEnabled) playAmbient();
       hero.setAttribute('data-giclee-hero-video-playback', 'playing');
       hero.setAttribute('data-giclee-hero-video-sound', soundEnabled ? 'on' : 'off');
       window.dispatchEvent(
         new CustomEvent('giclee:hero-video-start', {
-          detail: { soundEnabled: soundEnabled, choiceMode: choiceMode },
+          detail: {
+            soundEnabled: soundEnabled,
+            choiceMode: choiceMode,
+            ambient: usesAmbientAudio(),
+            ambientUrl: SOUND_AUDIO_URL,
+          },
         })
       );
     };
 
-    /* Unmuted playback must be invoked inside the click gesture. */
+    /* Unmuted media and Audio.play() must be invoked inside the click gesture. */
     if (directFromGesture) begin();
     else window.requestAnimationFrame(begin);
   }
@@ -279,6 +331,7 @@
     playbackAllowed = false;
     hasStarted = false;
     collectVideos().forEach(pauseAndReset);
+    stopAmbient();
     if (hero) hero.setAttribute('data-giclee-hero-video-playback', 'waiting');
   }
 
@@ -298,22 +351,18 @@
     if (!playable) {
       setPromptVisible(false);
       if (playbackAllowed) stopPlayback();
-      else {
-        collectVideos().forEach(function (video) {
-          if (!video.paused || video.currentTime > 0.025) pauseAndReset(video);
-        });
-      }
+      else collectVideos().forEach(pauseAndReset);
       return;
     }
 
     if (!choiceResolved) {
-      if (decisionWindowExpired()) {
+      if (!SOUND_CONSENT_ENABLED) {
+        resolveChoice(false, 'disabled');
+      } else if (decisionWindowExpired()) {
         resolveChoice(false, 'auto-muted');
       } else {
         setPromptVisible(true);
-        collectVideos().forEach(function (video) {
-          if (!video.paused || video.currentTime > 0.025) pauseAndReset(video);
-        });
+        collectVideos().forEach(pauseAndReset);
       }
       return;
     }
@@ -331,6 +380,7 @@
     hero = findHero();
     if (!scrubRoot || !hero || !document.body) return;
 
+    createAmbientAudio();
     createPrompt();
     collectVideos();
     stopPlayback();
@@ -360,7 +410,6 @@
       var rect = hero.getBoundingClientRect();
       var status = horizontalStatus();
       var promptRect = prompt ? prompt.getBoundingClientRect() : null;
-
       return {
         ready: true,
         settled: heroIsSettled(),
@@ -370,7 +419,11 @@
         choiceResolved: choiceResolved,
         choiceMode: choiceMode,
         soundEnabled: soundEnabled,
+        soundConsentEnabled: SOUND_CONSENT_ENABLED,
         promptVisible: promptVisible,
+        ambientConfigured: !!SOUND_AUDIO_URL,
+        ambientActive: !!(ambientAudio && !ambientAudio.paused),
+        ambientVolume: SOUND_VOLUME,
         heroRiseComplete:
           scrubRoot.getAttribute('data-hero-rise-complete') === 'true',
         heroTop: Math.round(rect.top * 100) / 100,

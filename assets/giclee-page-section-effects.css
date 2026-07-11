@@ -64,21 +64,22 @@
   --gpf-media-hover-scale: 1.025;
   --gpf-media-hover-duration: 850ms;
   overflow: hidden;
+  transform: translateZ(0);
+  transform-origin: center;
+  transition: transform var(--gpf-media-hover-duration) cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
 }
 
 .giclee-page-fx-media .media-block,
 .giclee-page-fx-media img,
 .giclee-page-fx-media picture,
-.giclee-page-fx-media video {
-  transition: transform var(--gpf-media-hover-duration) cubic-bezier(0.16, 1, 0.3, 1);
+.giclee-page-fx-media video,
+.giclee-page-fx-media .background-image-container {
   will-change: transform;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .giclee-page-fx-media.is-hover .media-block,
-  .giclee-page-fx-media.is-hover img,
-  .giclee-page-fx-media.is-hover picture,
-  .giclee-page-fx-media.is-hover video {
+  .giclee-page-fx-media.is-hover {
     transform: scale(var(--gpf-media-hover-scale));
   }
 }
@@ -91,10 +92,12 @@
     transition: none;
   }
 
+  .giclee-page-fx-media,
   .giclee-page-fx-media .media-block,
   .giclee-page-fx-media img,
   .giclee-page-fx-media picture,
-  .giclee-page-fx-media video {
+  .giclee-page-fx-media video,
+  .giclee-page-fx-media .background-image-container {
     transition: none;
     transform: none !important;
   }
