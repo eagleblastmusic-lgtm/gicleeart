@@ -1,7 +1,6 @@
 """Bootstrap cienkich komponentów stron menu."""
 
 from __future__ import annotations
-
 from pathlib import Path
 
 from Komponenty._shared.theme_page_editor import gui_shell
@@ -11,6 +10,9 @@ from Komponenty._shared.theme_page_editor.types import TemplateZone
 from Komponenty._shared.theme_page_editor.writer_safety import build_safe_page_editor
 from Komponenty._shared.theme_page_editor.writer_safety_runtime_fix import (
     install_deferred_context_fix,
+)
+from Komponenty._shared.theme_page_editor.writer_safety_delta_fix import (
+    install_delta_only_fix,
 )
 
 # Hotfix zgodności: gui_shell używa shopify_ref_label przy budowie miniatur i
@@ -54,4 +56,5 @@ def build_editor_config(
 
 def build_page_ui(host, config: PageEditorConfig, *, inline: bool = False) -> None:
     install_deferred_context_fix()
+    install_delta_only_fix()
     build_safe_page_editor(host, config, inline=inline)
