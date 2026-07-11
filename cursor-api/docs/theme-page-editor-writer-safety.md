@@ -1,83 +1,57 @@
 # Theme Page Editor — Writer Safety WS-1
 
-## Cel
+## Kontrakt operacji
 
-WS-1 rozdziela trzy wcześniej połączone operacje wspólnego edytora stron:
-
-| Operacja | Wariant | Plik motywu | Asset efektów | Shopify |
+| Operacja | Wariant | Plik motywu | Assety | Shopify |
 |---|---:|---:|---:|---:|
-| **Zapisz wersję** | TAK | NIE | NIE | NIE |
-| **Zastosuj wersję do motywu…** | NIE | TAK, bounded | TAK, jawnie | NIE |
-| **Wdróż motyw…** | NIE | NIE | NIE | TAK |
+| Zapisz wersję | TAK | NIE | NIE | NIE |
+| Zastosuj wersję do motywu… | NIE | TAK — bounded delta | jawne | NIE |
+| Wdróż motyw… | NIE | NIE | NIE | TAK |
 
 ## Zapisz wersję
 
-Przycisk zapisuje wyłącznie:
+Zapis dotyczy wyłącznie aktualnego wariantu w `data/variants/<variant_id>/`.
+Nieedytowane pola nie są ponownie serializowane. Dzięki temu zapis jednej kontrolki nie może:
 
-`Komponenty/<komponent>/data/variants/<variant_id>/<plik>.json`
+- usuwać znaczników HTML z innych pól,
+- dodawać domyślnych pól takich jak `image_object_y`,
+- zmieniać pozostałych wariantów,
+- zmieniać pliku motywu ani assetów.
 
-Zapis:
+Przed pierwszym zapisem powstaje osobna baza Apply w:
 
-- dotyczy tylko aktualnie wybranej wersji,
-- tworzy dokładną kopię poprzedniego pliku wariantu,
-- używa SHA-256 do wykrywania zmian wykonanych poza edytorem,
-- zapisuje przez plik tymczasowy i `os.replace`,
-- nie zmienia pliku motywu,
-- nie generuje assetów,
-- nie uruchamia deployu.
+`data/variant_bases/<variant_id>/<template>.json`
 
-Kopie wariantów trafiają do:
-
-`data/variant_backups/<variant_id>/`
-
-## Przełączanie i dodawanie wersji
-
-Przełączenie wersji wczytuje wyłącznie jej dane i aktualizuje lokalny manifest
-komponentu. Nie stosuje wersji do motywu.
-
-`Dodaj nową…` tworzy niezależną kopię katalogu aktualnej wersji. Późniejsze
-zmiany nowej kopii nie modyfikują wersji źródłowej.
-
-Zmiana nazwy modyfikuje wyłącznie etykietę w `manifest.json`.
+Każdy zapis wariantu tworzy dokładny backup poprzedniej wersji i używa zapisu atomowego.
 
 ## Zastosuj wersję do motywu…
 
-Operacja zawsze zaczyna od świeżego pliku motywu odczytanego z dysku.
+Apply nie kopiuje całego wariantu do motywu. Oblicza wyłącznie różnicę:
 
-Następnie:
+`variant_base -> aktualny wariant`
 
-1. wczytuje zapisaną wersję,
-2. stosuje tylko pola zadeklarowane w `config.zones`,
-3. zachowuje niezarządzane sekcje, bloki, pola i kolejność,
-4. pokazuje pełny unified diff,
-5. wymaga frazy `ZASTOSUJ <variant_id>`,
-6. ponownie sprawdza hash każdego celu,
-7. tworzy dokładne kopie bajtowe,
-8. zapisuje atomowo,
-9. nie uruchamia Shopify ani deployu.
+Następnie przenosi tę różnicę na świeżo odczytany plik motywu. Zachowane pozostają:
 
-Kopie zastosowania trafiają do:
+- niezarządzane sekcje,
+- niezarządzane pola i bloki,
+- kolejność elementów,
+- formatowanie HTML w nieedytowanych polach,
+- brakujące opcjonalne pola, których użytkownik nie zmienił.
 
-`data/apply_backups/<variant_id>/`
+Pusty asset efektów nie jest przepisywany tylko po to, aby zmienić identyfikator wariantu.
 
-Jeżeli komponent ma efekty sekcji, asset efektów jest pokazany w tym samym
-podglądzie i objęty tą samą kontrolą hashów. Komponenty `settings_only` nie
-generują pustego assetu efektów.
+Apply pokazuje unified diff, wymaga frazy `ZASTOSUJ <variant_id>`, ponownie kontroluje hashe i tworzy dokładne backupy. Po poprawnym Apply baza wersji przesuwa się do aktualnego wariantu.
 
 ## Wdróż motyw…
 
-Deploy wykorzystuje wyłącznie stan plików motywu znajdujących się już na dysku.
+Deploy wdraża wyłącznie stan plików znajdujących się już na dysku. Nie zapisuje wariantu i nie wykonuje Apply.
 
-Nie zapisuje wersji, nie stosuje wersji i nie generuje assetów. Przed wyborem
-środowiska pokazuje jawne ostrzeżenie, że niezapisane dane edytora nie zostaną
-uwzględnione.
+## Regresje wykryte podczas testów
 
-## Giclée Frame
+### WS-1.1
 
-Dla `Komponenty/gicleeframe`:
+Kontekst przycisków był rozwiązywany przed zakończeniem budowy UI. Poprawiono go na rozwiązywanie w chwili kliknięcia.
 
-- `Wersja 1` i `Wersja 2` pozostają niezależne,
-- `Zapisz wersję` zmienia tylko `data/variants/gfX/page.giclee-frame.json`,
-- `Zastosuj wersję do motywu…` zmienia tylko pola Giclée Frame w
-  `templates/page.giclee-frame.json`,
-- niezarządzane sekcje i ustawienia tego pliku pozostają zachowane.
+### WS-1.2
+
+Pierwszy bounded preview pokazał, że pełne ponowne serializowanie wszystkich kontrolek powodowało dodatkowe zmiany HTML i domyślne `image_object_y`. Wprowadzono minimalny zapis kontrolki oraz Apply wyłącznie na podstawie delta wariantu.
