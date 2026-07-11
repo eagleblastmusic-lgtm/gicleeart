@@ -1,32 +1,29 @@
 # Current App State
 
 <!-- gpt-starter:gicleeapp-push:start -->
-GicleeApp Studio — lokalny working tree ma markery wersji **v1.50.0**.
+GicleeApp Studio v1.51.0
 
-Monorepo `C:\Strona\pusty`:
-- branch: `master`
-- HEAD = `origin/master`: `2dde9e4112bf9a5a532c78f5abba3bf1e46f49a0`
-- commit: `2dde9e4 feat(gicleeapp): add category launcher shortcuts and tile drag-drop`
-- data commita: 2026-07-11 01:23:48 +0200
+GitHub / aktualna wersja aplikacji (`eagleblastmusic-lgtm/gicleeapp`):
+v1.51.0 — zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`
+Ostatni push GicleeApp: `9342f5b` na `main` (2026-07-11 00:52 UTC) — Refresh GicleeApp repository snapshot
 
-Wersja w aktualnym working tree:
-- `cursor-api/giclee_app/__init__.py`: `1.50.0`
-- `cursor-api/package.json`: `1.50.0`
-- oba pliki są obecnie zmodyfikowane po HEAD, więc **v1.50.0 opisuje lokalny working tree, a nie potwierdzoną zawartość commita `2dde9e4`**.
+Monorepo origin/master (projekt / docs):
+e968f6c nowe
 
-Osobny snapshot aplikacji `eagleblastmusic-lgtm/gicleeapp`:
-- `gicleeapp/main`: `a61c0f4d5b39ea14b74f249865ef39ff477c4ed9`
-- commit: `a61c0f4 revert(notatnik): restore branch-only implementation workflow`
-- data: 2026-07-10 21:39:37 +0200
-- ten remote jest starszy od zaakceptowanego lokalnego monorepo i **nie jest źródłem prawdy dla bieżącego working tree**.
+Previous checkpoint:
+46fc718 feat(studio): add GICLÉE FRAME page inventory RAM editor (v1.40.0)
 
-Remotes lokalne:
-- `origin` → `eagleblastmusic-lgtm/gicleeart`
-- `gicleeapp` → `eagleblastmusic-lgtm/gicleeapp`
-- `gpt` oraz alias `gicleeart-gpt` → `eagleblastmusic-lgtm/gicleeart-gpt`
+Branch status:
+- **GitHub gicleeapp:** v1.51.0 / `main` @ `9342f5b` (auto-sync po Push GicleeApp, 2026-07-11 00:52 UTC)
+- **monorepo origin/master:** `e968f6c` — nowe
 
 GPT starter files:
-checkpoint odświeżony 2026-07-11 na podstawie świeżego ZIP-a v38 i jawnego raportu lokalnego Git. Źródło edycji pozostaje w `C:\Strona\pusty\Pliki startowe dla GPT`; ZIP jest wyłącznie snapshotem/outputem programu użytkownika.
+auto-sync po Push GicleeApp 2026-07-11 00:52 UTC (gicleeapp `9342f5b`, v1.51.0; paczka v38; źródło = ten folder, nie ZIP)
+
+Recent context:
+- **GitHub gicleeapp:** v1.51.0 / `main` @ `9342f5b` — auto-sync po Push GicleeApp
+- GICLÉE FRAME™ F2.1: closed + pushed (historycznie v1.40.1 / `4647c1b`; aktualna wersja aplikacji na GitHub jest nowsza)
+- Local runtime/untracked still outside commit and remote (working tree hygiene pending)
 <!-- gpt-starter:gicleeapp-push:end -->
 
 

@@ -287,13 +287,15 @@ Komendy aktywujące tryb Veo/Flow: Veo premium · Veo krótko · Veo popraw · T
 ## AKTUALNY CHECKPOINT GICLEEAPP / STUDIO
 
 <!-- gpt-starter:gicleeapp-push:start -->
-Repozytorium finalne po lokalnej akceptacji: monorepo `C:\Strona\pusty` (`origin`, branch `master`; aplikacja w `cursor-api/`).
+Repo kanoniczne: `eagleblastmusic-lgtm/gicleeapp` (monorepo `gicleeart`, branch `master`, app w `cursor-api/`)
 
-Monorepo HEAD = origin/master: `2dde9e4112bf9a5a532c78f5abba3bf1e46f49a0` — `feat(gicleeapp): add category launcher shortcuts and tile drag-drop` (2026-07-11 01:23:48 +0200).
-
-Lokalny working tree ma markery wersji **v1.50.0** w `giclee_app/__init__.py` i `package.json`, ale oba pliki są zmodyfikowane po HEAD — nie przedstawiaj v1.50.0 jako wersji zawartej w commicie `2dde9e4` bez dodatkowej weryfikacji.
-
-Osobny remote `gicleeapp/main`: `a61c0f4d5b39ea14b74f249865ef39ff477c4ed9` — starszy snapshot, nie bieżące źródło prawdy lokalnego kodu.
+GitHub / aktualna wersja aplikacji: **v1.51.0** (`giclee_app/__init__.py`, `package.json`)
+Ostatni push GicleeApp: `9342f5b` na `main` (2026-07-11 00:52 UTC) — Refresh GicleeApp repository snapshot
+Monorepo origin/master: `e968f6c` — nowe
+Ostatni pushed feature checkpoint aplikacji (F2.1, historia): `4647c1b` — v1.40.1
+Poprzedni checkpoint: `46fc718` — GICLÉE FRAME page inventory RAM editor (v1.40.0)
+Wersja aplikacji: **GicleeApp Studio v1.51.0**
+Branch: GitHub gicleeapp **v1.51.0** / `main` @ `9342f5b`; monorepo origin/master `e968f6c`
 <!-- gpt-starter:gicleeapp-push:end -->
 
 Zamknięte:

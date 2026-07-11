@@ -31,7 +31,7 @@ Workflow snapshotów: `GICLEE_GITHUB_SNAPSHOT_REVIEW_WORKFLOW_v35.md`.
 
 **Lokalne monorepo:** `C:\Strona\pusty` — `cursor-api/` nie jest osobnym repo. Kanoniczne aliasy dokumentacji: `origin`, `gpt`, `gicleeapp`; aktualna maszyna ma też alias `gicleeart-gpt` wskazujący ten sam URL co `gpt`. Zawsze zacznij od `git remote -v`.
 
-Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w COMPACT v38 oraz `CURRENT_APP_STATE.md` (monorepo HEAD = origin/master `2dde9e4`; lokalne markery v1.50.0 są dirty po HEAD; osobny `gicleeapp/main` = starszy snapshot `a61c0f4`).
+Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md` oraz `CURRENT_APP_STATE.md` (GitHub gicleeapp **v1.51.0** / `main` @ `9342f5b`; monorepo origin/master `e968f6c`).
 
 **GICLÉE FRAME™:** F2.1 **done** (pushed). Ustanawia wzorzec **`Studio Page Component Editor Pattern`** dla przyszłych edytorów strony w Studio — patrz `gicleeframe-planning.md` §7, link w `admin-components-strategy.md`. **F3** (lokalny zapis draftu RAM) i **F4** (bounded writer): **not started**.
 
