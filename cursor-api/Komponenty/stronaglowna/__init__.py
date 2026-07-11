@@ -18,30 +18,34 @@ from .home_flow_phase_validation import install_home_flow_phase_validation
 install_home_flow_phase_settings()
 install_home_flow_phase_validation()
 
-# Hotfix musi owinąć bazowy builder przed instalacją Treeview. Przechwytuje
-# oryginalny callback sekcji, zanim Listbox zostanie ukryty przez HOME FLOW.
+# Przechwytujemy oryginalny callback sekcji tylko po to, aby uzyskać bezpośredni
+# dostęp do bazowego renderera _show_zone. Treeview nie steruje już panelem przez
+# event_generate na ukrytym Listboxie.
 from .home_flow_navigation_hotfix import install_home_flow_navigation_hotfix
 
 install_home_flow_navigation_hotfix()
 
-# Warstwy GUI są instalowane przed głównym wrapperem HOME FLOW. Kliknięcie fazy
-# renderuje formularz w tym samym prawym panelu co sekcje. Autorytatywny renderer
-# sekcji gwarantuje, że powrót z GH-Txx zawsze kończy się pełnym formularzem GH-xx.
 from .home_flow_gui import install_home_flow_gui
 from .home_flow_phase_gui import install_home_flow_phase_gui
 from .home_flow_phase_summary import install_home_flow_phase_summaries
 from .home_flow_phase_inline import install_home_flow_phase_inline
 from .home_flow_phase_inline_units import install_inline_phase_units
-from .home_flow_section_render_authority import install_home_flow_section_render_authority
+from .home_flow_direct_navigation import install_home_flow_direct_navigation
+from .home_flow_structure_gui import install_home_flow_structure_gui
+from .home_flow_structure_writer_bridge import install_home_flow_structure_writer_bridge
+from .home_flow_structure_writer_gui import install_home_flow_structure_writer_gui
 from .prehero_video_preview import install_prehero_video_preview
 
 install_home_flow_phase_gui()
 install_home_flow_phase_summaries()
 install_home_flow_phase_inline()
 install_inline_phase_units()
-install_home_flow_section_render_authority()
+install_home_flow_direct_navigation()
 install_prehero_video_preview()
 install_home_flow_gui()
+install_home_flow_structure_gui()
+install_home_flow_structure_writer_bridge()
+install_home_flow_structure_writer_gui()
 
 from . import gui as _gui
 

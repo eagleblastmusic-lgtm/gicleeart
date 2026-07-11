@@ -3,6 +3,9 @@
 Nazwy użytkowe są metadanymi wariantu i nie modyfikują ``templates/index.json``.
 Techniczne identyfikatory pozostają stabilne, natomiast kody ``GH-xx`` i
 ``GH-Txx`` są wyliczane z aktualnej kolejności przy każdym odczycie.
+
+Schema v2 zachowuje nazwy z Etapu 1 i może przechowywać ``structure_draft`` z
+HF-3A. Szkic struktury nie zmienia aktywnej kolejności motywu ani edytora.
 """
 
 from __future__ import annotations
@@ -14,8 +17,9 @@ from typing import Any, Iterable
 
 from .homepage_variants import VARIANTS_ROOT
 
-FLOW_SCHEMA_VERSION = 1
+FLOW_SCHEMA_VERSION = 2
 FLOW_FILENAME = "home_flow.json"
+STRUCTURE_DRAFT_KEY = "structure_draft"
 
 
 @dataclass(frozen=True)
@@ -137,6 +141,43 @@ def _clean_name(raw: Any) -> str:
     return " ".join(str(raw or "").split()).strip()[:120]
 
 
+def _clean_structure_draft(raw: Any) -> dict[str, Any]:
+    """Zachowuje tylko JSON-owe pola szkicu rozpoznawane przez HF-3A."""
+
+    if not isinstance(raw, dict):
+        return {}
+
+    order = raw.get("section_order")
+    custom = raw.get("custom_sections")
+    draft: dict[str, Any] = {}
+
+    if isinstance(order, list):
+        clean_order = [str(value).strip() for value in order if str(value).strip()]
+        if clean_order:
+            draft["section_order"] = clean_order
+
+    if isinstance(custom, list):
+        clean_custom: list[dict[str, str]] = []
+        for row in custom:
+            if not isinstance(row, dict):
+                continue
+            stable_id = str(row.get("stable_id") or "").strip()
+            blueprint_id = str(row.get("blueprint_id") or "").strip()
+            name = _clean_name(row.get("name"))
+            if stable_id and blueprint_id and name:
+                clean_custom.append(
+                    {
+                        "stable_id": stable_id,
+                        "blueprint_id": blueprint_id,
+                        "name": name,
+                    }
+                )
+        if clean_custom:
+            draft["custom_sections"] = clean_custom
+
+    return draft
+
+
 def load_flow_metadata(
     variant_id: str,
     *,
@@ -151,6 +192,7 @@ def load_flow_metadata(
         return {"schema": FLOW_SCHEMA_VERSION, "names": {}}
     if not isinstance(data, dict):
         return {"schema": FLOW_SCHEMA_VERSION, "names": {}}
+
     raw_names = data.get("names")
     names: dict[str, str] = {}
     if isinstance(raw_names, dict):
@@ -159,7 +201,12 @@ def load_flow_metadata(
             name = _clean_name(raw_name)
             if str(stable_id) in known and name:
                 names[str(stable_id)] = name
-    return {"schema": FLOW_SCHEMA_VERSION, "names": names}
+
+    result: dict[str, Any] = {"schema": FLOW_SCHEMA_VERSION, "names": names}
+    draft = _clean_structure_draft(data.get(STRUCTURE_DRAFT_KEY))
+    if draft:
+        result[STRUCTURE_DRAFT_KEY] = draft
+    return result
 
 
 def save_flow_metadata(
@@ -178,8 +225,15 @@ def save_flow_metadata(
             name = _clean_name(raw_name)
             if stable_id in known and name and name != known[stable_id]:
                 names[stable_id] = name
+
+    payload: dict[str, Any] = {"schema": FLOW_SCHEMA_VERSION, "names": names}
+    draft = _clean_structure_draft(
+        metadata.get(STRUCTURE_DRAFT_KEY) if isinstance(metadata, dict) else None
+    )
+    if draft:
+        payload[STRUCTURE_DRAFT_KEY] = draft
+
     path.parent.mkdir(parents=True, exist_ok=True)
-    payload = {"schema": FLOW_SCHEMA_VERSION, "names": names}
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return path
 
@@ -204,6 +258,12 @@ def resolve_flow_items(
     *,
     variants_root: Path | None = None,
 ) -> tuple[HomeFlowItem, ...]:
+    """Zwraca aktywną, kanoniczną oś.
+
+    HF-3A nie stosuje szkicu do aktywnej nawigacji. Dopiero bounded writer z
+    późniejszego etapu będzie mógł zmienić strukturę motywu.
+    """
+
     metadata = load_flow_metadata(variant_id, variants_root=variants_root)
     names = metadata.get("names") if isinstance(metadata, dict) else {}
     resolved = tuple(

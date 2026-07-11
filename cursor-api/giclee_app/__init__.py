@@ -5,4 +5,4 @@ Po starcie wyswietla siatke kafelkow - po jednym dla kazdego komponentu wykryteg
 """
 
 # Trzymaj zgodne z `cursor-api/package.json` (wersja aplikacji desktop).
-__version__ = "1.50.2"
+__version__ = "1.53.0"
