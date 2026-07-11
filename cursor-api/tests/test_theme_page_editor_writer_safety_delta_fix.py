@@ -7,7 +7,10 @@ import json
 from pathlib import Path
 
 from Komponenty._shared.theme_page_editor.config import PageEditorConfig
-from Komponenty._shared.theme_page_editor.service_base import load_zone_values
+from Komponenty._shared.theme_page_editor.service_base import (
+    load_template_from_path,
+    load_zone_values,
+)
 from Komponenty._shared.theme_page_editor.types import TemplateField, TemplateZone
 from Komponenty._shared.theme_page_editor.writer_safety_delta_fix import (
     _base_path,
@@ -205,6 +208,6 @@ def test_apply_updates_theme_and_advances_variant_base(tmp_path: Path) -> None:
     paths = apply_delta_plan(plan, confirmation="ZASTOSUJ t1")
 
     assert paths == (theme_path,)
-    applied = json.loads(theme_path.read_text(encoding="utf-8"))
+    applied = load_template_from_path(theme_path)
     assert applied["sections"]["divider"]["settings"]["thickness"] == 0.6
     assert base_path.read_bytes() == variant_bytes
