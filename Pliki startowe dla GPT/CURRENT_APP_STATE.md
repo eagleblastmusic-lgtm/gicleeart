@@ -3,27 +3,29 @@
 <!-- gpt-starter:gicleeapp-push:start -->
 GicleeApp Studio v1.51.0
 
-GitHub / aktualna wersja aplikacji (`eagleblastmusic-lgtm/gicleeapp`):
-v1.51.0 — zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`
-Ostatni push GicleeApp: `9342f5b` na `main` (2026-07-11 00:52 UTC) — Refresh GicleeApp repository snapshot
+Finalne źródło po lokalnej akceptacji:
+- monorepo `C:\Strona\pusty` / repo `eagleblastmusic-lgtm/gicleeart` / branch `master`,
+- aplikacja znajduje się w `cursor-api/`.
 
-Monorepo origin/master (projekt / docs):
-e968f6c nowe
+Repo wymiany i pushu aplikacji:
+- `eagleblastmusic-lgtm/gicleeapp` / `main` @ `9342f5b` (2026-07-11 00:52 UTC),
+- wersja **v1.51.0** zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`.
 
-Previous checkpoint:
-46fc718 feat(studio): add GICLÉE FRAME page inventory RAM editor (v1.40.0)
+Repo snapshotu motywu do review:
+- `eagleblastmusic-lgtm/gicleeart-gpt`,
+- ostatni zweryfikowany snapshot review: `09aeee3` (2026-07-11 00:53 UTC).
 
-Branch status:
-- **GitHub gicleeapp:** v1.51.0 / `main` @ `9342f5b` (auto-sync po Push GicleeApp, 2026-07-11 00:52 UTC)
-- **monorepo origin/master:** `e968f6c` — nowe
+Monorepo:
+- `e968f6c` jest ostatnim zweryfikowanym checkpointem projektu przed późniejszym odświeżeniem dokumentacji GPT,
+- bieżący HEAD może być nowszy o commit(y) docs-only; przed podaniem aktualnego SHA sprawdź `git log -1 --oneline`.
+
+Historyczne checkpointy:
+- `4647c1b` — GICLÉE FRAME™ F2.1 / v1.40.1,
+- `46fc718` — GICLÉE FRAME page inventory RAM editor / v1.40.0.
 
 GPT starter files:
-auto-sync po Push GicleeApp 2026-07-11 00:52 UTC (gicleeapp `9342f5b`, v1.51.0; paczka v38; źródło = ten folder, nie ZIP)
-
-Recent context:
-- **GitHub gicleeapp:** v1.51.0 / `main` @ `9342f5b` — auto-sync po Push GicleeApp
-- GICLÉE FRAME™ F2.1: closed + pushed (historycznie v1.40.1 / `4647c1b`; aktualna wersja aplikacji na GitHub jest nowsza)
-- Local runtime/untracked still outside commit and remote (working tree hygiene pending)
+- źródło edycji: `C:\Strona\pusty\Pliki startowe dla GPT`,
+- ZIP v38 jest snapshotem/outputem programu użytkownika, nie źródłem edycji.
 <!-- gpt-starter:gicleeapp-push:end -->
 
 
@@ -58,11 +60,40 @@ Status: **nie oznaczać jako closed/pushed**, dopóki nie przejdą testy Python,
 
 ### Notatnik — wiedza z ręcznie zaakceptowanego workflow
 
-Wcześniej ręcznie potwierdzono działanie: trwałej kolejności notatek per rozdział, sterowania kolejnością, dwukliku dla folderu/nazwy notatki oraz wklejania i wyświetlania obrazów ze schowka. Repo `gicleeapp/main` było później cofnięte do branch-only workflow, dlatego przed kolejną zmianą Notatnika należy najpierw sprawdzić rzeczywisty lokalny kod — nie zakładać, że osobny remote `gicleeapp/main` zawiera zaakceptowany stan.
+Ręcznie potwierdzono działanie: trwałej kolejności notatek per rozdział, sterowania kolejnością, dwukliku dla folderu/nazwy notatki oraz wklejania i wyświetlania obrazów ze schowka. Commit `a61c0f4` pozostaje historycznym revertem branch-only, ale aktualny snapshot `gicleeapp/main` @ `9342f5b` ponownie zawiera bieżący kod aplikacji. Przed kolejną zmianą nadal sprawdź rzeczywisty lokalny kod i testy — nie używaj starego revertu jako opisu obecnego `main`.
 
-### Bieżący dirty working tree — ochrona
+### Bieżący working tree — ochrona
 
-Poza FAQ working tree zawiera aktywne, niezamknięte prace Home Flow / prehero oraz pliki runtime/config. W szczególności są zmienione lub nowe pliki pod `Komponenty/stronaglowna/`, assety intro-curtain/prehero i testy. **Nie używać `reset`, `clean`, szerokiego `restore -- cursor-api`, `git add .` ani importu całego brancha.** Każdy import/rollback musi podawać dokładną listę plików.
+Pliki runtime/config i lokalny stan użytkownika mogą pozostawać poza commitem. **Nie używać `reset`, `clean`, szerokiego `restore -- cursor-api`, `git add .` ani importu całego brancha.** Każdy import/rollback musi podawać dokładną listę plików. GICLÉE HOME FLOW / Pre-Hero nie jest już „nierozliczonym dirty work”: fundament v1.51.0 został wdrożony, wypchnięty i ręcznie zaakceptowany; dalsze zmiany mają rozwijać ten checkpoint, a nie odtwarzać jego podstawy.
+
+### GICLÉE HOME FLOW — zaakceptowana architektura v1.51.0
+
+Kanoniczna oś strony głównej:
+- `GH-00` Pre-Hero — Od ekranu do materii
+  - `GH-T01` Portal i tekst (`phase:portal`)
+  - `GH-T02` Wjazd Hero (`phase:hero-rise`)
+- `GH-01` Hero — Kolaż pracowni
+  - `GH-T03` Postój Hero (`phase:hero-hold`)
+  - `GH-T04` Decyzja o dźwięku (`phase:sound-consent`)
+  - `GH-T05` Pozioma kurtyna Hero → Giclée Art (`phase:horizontal-curtain`)
+- `GH-02` Giclée Art — Intro marki
+  - `GH-T06` Postój sekcji (`phase:intro-hold`)
+- `GH-03` Odtwarzanie dzieł
+- `GH-04` Autorska korekcja kolorystyczna
+- `GH-05` Potencjał ukryty w zdjęciu
+- `GH-06` Zobacz różnicę
+- `GH-07` Powiadomienie strony głównej
+
+Trwałe zasady:
+- kody `GH-xx` i `GH-Txx` są wyliczane z kolejności; logika i konfiguracja używają stabilnych ID `section:*` / `phase:*`,
+- nazwy sekcji i faz można edytować per wariant bez zmiany technicznych ID,
+- sekcje i fazy są pełnoprawnymi elementami jednego `Treeview`; oba typy otwierają edytor w tym samym prawym panelu,
+- powrót faza → sekcja wywołuje bezpośredni renderer `_show_zone`; nie steruj panelem przez `event_generate` na ukrytym `Listboxie`,
+- przejście Hero → Intro odsłania prawdziwą sekcję Shopify live; nie twórz klona z usuniętymi skryptami/ID,
+- efekty sekcji Giclée Art startują od pierwszej klatki otwierania kurtyny i nie restartują się przy hand-offie,
+- generator Pre-Hero zna pełny zestaw assetów i blokuje zapis przy brakach,
+- zgoda na dźwięk używa opcjonalnego ambientu z Shopify CDN; lokalny fallback filmu Pre-Hero to `assets/giclee-home-prehero-scrub.mp4`,
+- obecna baza jest zaakceptowana; następny produktowy etap może rozszerzać wstawianie/przesuwanie sekcji i faz, ale nie powinien przepisywać działającej nawigacji od zera.
 
 Completed:
 - Background Builder local v1: frozen
@@ -72,6 +103,7 @@ Completed:
 - Katalog F2 bounded data map: done
 - Katalog local planning layer F3+F4: done (draft state, dry-run, readiness, UI planu zmian)
 - Push GicleeApp hygiene: done
+- **GICLÉE HOME FLOW v1.51.0:** sekcje + fazy w Treeview, edycja faz inline, automatyczna numeracja, pełny generator Pre-Hero, live Intro, ambient i bezpośrednia nawigacja do renderera sekcji — implemented + pushed + ręcznie zaakceptowane.
 - **GicleeApp push workflow:** użytkownik zwykle pushuje lokalną aplikację przyciskiem **„Push GicleeApp do GitHub”** w UI GicleeApp (nie ręcznie przez terminal): `cursor-api` → staging → `eagleblastmusic-lgtm/gicleeapp`; dry-run → audyt → potwierdzenie → commit + push na `main`. Nie dotyczy motywu Shopify, `gicleeart-gpt`, ZIP-a wiedzy ani plików startowych GPT.
 - GICLÉE FRAME™ F2 page inventory + RAM editor foundation (v1.40.0): done
 - GICLÉE FRAME™ F2.1 page editor workflow (v1.40.1): done
@@ -98,10 +130,10 @@ Not started:
 
 Next recommended:
 
-**Najpierw domknij istniejący lokalny zakres — bez szerokiego cleanupu:**
-1. FAQ Hero image effects: test celowany + `compileall` + `git diff --check` + ręczny podgląd live.
-2. Home Flow / prehero: ustalić dokładny status lokalnych nowych plików i testów; nie usuwać ich jako „śmieci”.
-3. Dopiero po rozliczeniu aktywnych zmian: jawny, wąski commit lub świadomy rollback dokładnych plików.
+**Kontynuuj z aktualnego checkpointu — bez szerokiego cleanupu:**
+1. FAQ Hero image effects: jeżeli nie ma nowszego potwierdzenia, wykonaj test celowany + `compileall` + `git diff --check` + ręczny podgląd live.
+2. GICLÉE HOME FLOW: traktuj v1.51.0 jako zaakceptowaną bazę; kolejny etap planuj wyłącznie jako rozszerzenie (np. bezpieczne wstawianie/przesuwanie elementów), nie ponowną implementację fundamentu.
+3. Każdy kolejny commit/rollback ma być jawny i ograniczony do dokładnej listy plików.
 
 **Studio Performance — GICLÉE FRAME 6G.5:** **PASS / checkpoint**. Nie startować kolejnej szerokiej optymalizacji bez konkretnego objawu UX i nowych metryk.
 

@@ -287,15 +287,12 @@ Komendy aktywujące tryb Veo/Flow: Veo premium · Veo krótko · Veo popraw · T
 ## AKTUALNY CHECKPOINT GICLEEAPP / STUDIO
 
 <!-- gpt-starter:gicleeapp-push:start -->
-Repo kanoniczne: `eagleblastmusic-lgtm/gicleeapp` (monorepo `gicleeart`, branch `master`, app w `cursor-api/`)
+Finalne źródło po lokalnej akceptacji: monorepo `C:\Strona\pusty` / `eagleblastmusic-lgtm/gicleeart` / `master`; aplikacja w `cursor-api/`.
 
-GitHub / aktualna wersja aplikacji: **v1.51.0** (`giclee_app/__init__.py`, `package.json`)
-Ostatni push GicleeApp: `9342f5b` na `main` (2026-07-11 00:52 UTC) — Refresh GicleeApp repository snapshot
-Monorepo origin/master: `e968f6c` — nowe
-Ostatni pushed feature checkpoint aplikacji (F2.1, historia): `4647c1b` — v1.40.1
-Poprzedni checkpoint: `46fc718` — GICLÉE FRAME page inventory RAM editor (v1.40.0)
-Wersja aplikacji: **GicleeApp Studio v1.51.0**
-Branch: GitHub gicleeapp **v1.51.0** / `main` @ `9342f5b`; monorepo origin/master `e968f6c`
+Repo wymiany i pushu aplikacji: `eagleblastmusic-lgtm/gicleeapp` / `main` @ `9342f5b` (2026-07-11 00:52 UTC), **GicleeApp Studio v1.51.0**.
+Repo snapshotu motywu do review: `eagleblastmusic-lgtm/gicleeart-gpt`; ostatni zweryfikowany snapshot review `09aeee3` (2026-07-11 00:53 UTC).
+Monorepo `e968f6c` = ostatni zweryfikowany checkpoint projektu przed późniejszym odświeżeniem dokumentacji; bieżący HEAD może być nowszy o commit(y) docs-only — przed cytowaniem sprawdź `git log -1 --oneline`.
+Historyczne checkpointy: `4647c1b` — F2.1 / v1.40.1; `46fc718` — F2 / v1.40.0.
 <!-- gpt-starter:gicleeapp-push:end -->
 
 Zamknięte:
@@ -309,6 +306,14 @@ Zamknięte:
   - settings/reorder jako RAM patch; brak writera / zapisu JSON
 - **Studio Page Component Editor Pattern** — udokumentowany (referencja dla przyszłych edytorów strony)
 - **Performance Agent** PA-1A–PA-3B — **done** lokalnie (testy 162 passed; GF-P0.1 done w kodzie, fresh run pending)
+- **GICLÉE HOME FLOW v1.51.0** — implemented + pushed + ręcznie zaakceptowane:
+  - sekcje `GH-00…GH-07` i fazy `GH-T01…GH-T06` w jednym Treeview,
+  - kody wyliczane z kolejności; stabilne ID `section:*` / `phase:*`,
+  - edycja faz w tym samym prawym panelu co sekcje,
+  - bezpośredni powrót do bazowego renderera `_show_zone` — bez sterowania ukrytym Listboxem,
+  - pełny generator Pre-Hero z kontrolą brakujących assetów,
+  - live Intro bez klonowania sekcji, efekty od pierwszej klatki kurtyny,
+  - opcjonalny ambient Shopify CDN i lokalny fallback `assets/giclee-home-prehero-scrub.mp4`.
 
 Nie rozpoczęte:
 - GICLÉE FRAME F3 (lokalny zapis draftu RAM)
@@ -318,15 +323,27 @@ Nie rozpoczęte:
 
 Aktualna kolejka walidacji:
 
-1. **FAQ Hero image effects** — zmiany są zastosowane lokalnie, ale status pozostaje pending do testu celowanego, `compileall`, `git diff --check` i ręcznego podglądu live.
-2. **Home Flow / prehero** — liczne lokalne nowe pliki i testy; najpierw ustalić ich status, bez `clean`/szerokiego rollbacku.
-3. Dopiero po rozliczeniu aktywnego working tree można planować kolejny produktowy etap.
+1. **FAQ Hero image effects** — jeżeli nie ma nowszego potwierdzenia, status pozostaje pending do testu celowanego, `compileall`, `git diff --check` i ręcznego podglądu live.
+2. **GICLÉE HOME FLOW** — v1.51.0 jest zaakceptowaną bazą; następny etap może rozszerzać wstawianie/przesuwanie elementów, ale nie powinien ponownie budować fundamentu.
+3. Kolejne zmiany i rollbacki wykonuj wyłącznie na jawnej, dokładnej liście plików.
 
 **Studio Performance:** 6G.5 = **PASS / checkpoint**. Nie otwieraj szerokiej optymalizacji bez konkretnego objawu i nowych metryk.
 
 **GICLÉE FRAME F3, writer, Save, Shopify/sync/deploy:** nadal wymagają osobnej decyzji.
 
 Szczegóły guardrails: `CURRENT_APP_STATE.md`, `gicleeframe-planning.md`.
+
+## GICLÉE HOME FLOW — ZASADY TRWAŁE
+
+- Sekcja i faza to dwa różne typy elementów osi; oba są wybierane pojedynczym kliknięciem i edytowane w tym samym prawym panelu.
+- Numerów `GH-xx` / `GH-Txx` nie zapisuj jako technicznych identyfikatorów. Przy wstawieniu nowego elementu numeracja ma przeliczyć się automatycznie, a kod ma nadal odwoływać się do stabilnych ID `section:*` / `phase:*`.
+- Nazwa użytkowa może być edytowana per wariant; hook i stabilne ID pozostają bez zmian.
+- Treeview ma wywoływać prawdziwy renderer sekcji (`_show_zone` lub oficjalny publiczny odpowiednik). Nie generuj zdarzeń na ukrytym `Listboxie` i nie buduj kolejnych hotfixów zależnych od `after_idle`.
+- Złożonych sekcji Shopify nie klonuj do przejść. Kurtyna Hero → Intro ma odsłaniać tę samą, prawdziwą sekcję live z jej ID, tłem, skryptami, hoverami i parallaxem.
+- Efekty Intro startują w pierwszej klatce odsłaniania, pozostają aktywne podczas postoju i nie restartują się przy hand-offie.
+- Zapis motywu musi być blokowany, gdy brakuje któregokolwiek wymaganego assetu Home Flow.
+- Pytanie o dźwięk jest fazą; ambient z osobnego pliku Shopify CDN ma pierwszeństwo przed audio filmów kolażu. Brak zgody lub timeout uruchamia bezpieczny tryb muted.
+- Nie oznaczaj Home Flow jako „unknown dirty work”. Status v1.51.0 = implemented + pushed + ręcznie zaakceptowane; dalsza praca jest rozszerzeniem checkpointu.
 
 ## GICLEEAPP STUDIO PERFORMANCE — CHECKPOINT
 

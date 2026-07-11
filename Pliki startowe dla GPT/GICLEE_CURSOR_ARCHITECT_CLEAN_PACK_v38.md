@@ -146,7 +146,7 @@ Master Index v38 traktuje je jako opcjonalne.
 
 **Checkpoint refresh 2026-07-08 (source of truth / decision memory):** nowa sekcja § Source of Truth / Decision Memory w COMPACT v37 i `CURRENT_APP_STATE.md` — GV ≠ GAS 2.0, lokalne pliki ≠ ZIP, szablon modułów, decyzja C#/Python, roadmapa, checkpoint startowy sesji. Paczka nadal v3.7 — bez bumpu na v38.
 
-**Checkpoint refresh 2026-07-11 (launcher / patch safety / FAQ effects):** monorepo `2dde9e4`; lokalne markery v1.50.0 są dirty po HEAD; launcher categories/options/shortcuts/DnD zaakceptowany; WinAPI shortcuts = trwała decyzja; patch w PowerShell przez `--output`; oba cross-repo `--check` przed apply; FAQ `image_effect_selector` / `targetSelector` pending validation; Home Flow/prehero chronione przed szerokim cleanupem. Paczka nadal **v3.8** — bez bumpu na v39.
+**Checkpoint refresh 2026-07-11 (GicleeApp v1.51.0 / HOME FLOW / patch safety):** repo wymiany/pushu aplikacji `gicleeapp/main` @ `9342f5b`; finalna prawda po lokalnej akceptacji = monorepo `C:\Strona\pusty`; `e968f6c` jest ostatnim zweryfikowanym checkpointem projektu przed docs-only refresh; launcher categories/options/shortcuts/DnD zaakceptowany; WinAPI shortcuts = trwała decyzja; patch w PowerShell przez `--output`; oba cross-repo `--check` przed apply; FAQ `image_effect_selector` / `targetSelector` pending tylko bez nowszego potwierdzenia; GICLÉE HOME FLOW v1.51.0 implemented + pushed + zaakceptowane, a dalsze prace mają rozwijać stabilne ID `section:*` / `phase:*`, live Intro i bezpośredni renderer sekcji. Paczka nadal **v3.8** — bez bumpu na v39.
 
 ## Analyst mode extension
 

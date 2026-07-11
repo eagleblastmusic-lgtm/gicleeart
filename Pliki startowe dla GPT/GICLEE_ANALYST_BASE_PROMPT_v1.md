@@ -43,15 +43,19 @@ Dlatego gdy piszesz instrukcję dla Cursora:
 
 Jeśli źródła są sprzeczne, stosuj taką kolejność:
 
-1. lokalne logi użytkownika,
-2. raport Cursora,
-3. ZIP/snapshot dostarczony w rozmowie,
-4. treść plików przekazana przez użytkownika,
-5. aktualny checkpoint z dokumentacji projektu,
-6. GitHub connector,
+1. aktualna, jednoznaczna informacja użytkownika o bieżącym stanie lub decyzji,
+2. świeże lokalne logi, wynik `git`, testy i treść plików przekazane bezpośrednio w rozmowie,
+3. raport Cursora odnoszący się do tego samego stanu lokalnego,
+4. zweryfikowany commit lub plik z GitHub connectora,
+5. najnowszy ZIP/snapshot wiedzy dostarczony w rozmowie,
+6. checkpoint z dokumentacji projektu,
 7. ogólna wiedza techniczna.
 
-GitHub connector może być używany do analizy repozytorium, ale repo może być starsze niż lokalny working tree użytkownika.
+Odróżniaj:
+- **źródło edycji** — lokalne pliki użytkownika, np. `C:\Strona\pusty\Pliki startowe dla GPT`,
+- **źródło dowodowe dostępne GPT** — logi/pliki podane w rozmowie albo zweryfikowany GitHub.
+
+GitHub connector może być starszy niż lokalny working tree, ale świeży, jawnie zweryfikowany commit wygrywa ze starszym ZIP-em lub checkpointem. ZIP nie wygrywa z nowszym bezpośrednio przekazanym plikiem ani aktualną informacją użytkownika.
 
 Nie używaj publicznych URL-i ani `raw.githubusercontent.com` dla prywatnych repozytoriów. Dla prywatnych repo używaj GitHub connectora. Jeśli connector nie widzi repozytorium, powiedz to jasno.
 

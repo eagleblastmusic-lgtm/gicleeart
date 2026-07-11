@@ -1,6 +1,6 @@
 # GICLEE CURSOR MASTER INDEX v3.8
 
-Ten plik porządkuje system Giclée Cursor Architect v3.8. Aktualny checkpoint: monorepo `master` = `origin/master` @ `2dde9e4`; lokalny working tree ma markery GicleeApp v1.50.0, a osobny `gicleeapp/main` pozostaje starszym snapshotem @ `a61c0f4`.
+Ten plik porządkuje system Giclée Cursor Architect v3.8. Aktualny checkpoint aplikacji: GicleeApp **v1.51.0**, `gicleeapp/main` @ `9342f5b`. Finalne źródło po lokalnej akceptacji pozostaje w monorepo `C:\Strona\pusty`; `e968f6c` jest ostatnim zweryfikowanym checkpointem projektu przed późniejszym odświeżeniem dokumentacji, dlatego bieżący HEAD sprawdzaj przez `git log -1 --oneline`.
 
 ---
 
@@ -31,13 +31,13 @@ Workflow snapshotów: `GICLEE_GITHUB_SNAPSHOT_REVIEW_WORKFLOW_v35.md`.
 
 **Lokalne monorepo:** `C:\Strona\pusty` — `cursor-api/` nie jest osobnym repo. Kanoniczne aliasy dokumentacji: `origin`, `gpt`, `gicleeapp`; aktualna maszyna ma też alias `gicleeart-gpt` wskazujący ten sam URL co `gpt`. Zawsze zacznij od `git remote -v`.
 
-Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md` oraz `CURRENT_APP_STATE.md` (GitHub gicleeapp **v1.51.0** / `main` @ `9342f5b`; monorepo origin/master `e968f6c`).
+Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md` oraz `CURRENT_APP_STATE.md` (GicleeApp **v1.51.0**, `gicleeapp/main` @ `9342f5b`; `e968f6c` = ostatni zweryfikowany checkpoint projektu przed docs-only refresh).
 
 **GICLÉE FRAME™:** F2.1 **done** (pushed). Ustanawia wzorzec **`Studio Page Component Editor Pattern`** dla przyszłych edytorów strony w Studio — patrz `gicleeframe-planning.md` §7, link w `admin-components-strategy.md`. **F3** (lokalny zapis draftu RAM) i **F4** (bounded writer): **not started**.
 
 **Katalog:** F1–F4 done. Writer / Shopify: not started (osobna akceptacja).
 
-**Current validation queue:** FAQ Hero image effects (tests + live preview) → rozliczenie lokalnego Home Flow/prehero → dopiero potem wąski commit/rollback. GICLÉE FRAME F3 i writer nadal wymagają osobnej decyzji.
+**Current validation queue:** FAQ Hero image effects (jeżeli brak nowszego potwierdzenia: tests + live preview) → dalszy rozwój GICLÉE HOME FLOW wyłącznie jako rozszerzenie zaakceptowanej bazy v1.51.0 → wąskie commity/rollbacki dokładnych plików. GICLÉE FRAME F3 i writer nadal wymagają osobnej decyzji.
 
 **Studio Performance:** główna nitka **6G.5** **PASS / checkpoint** — aktualny stan w `CURRENT_APP_STATE.md`. Diagnoza nowych objawów: **najpierw** bundle Performance Agent (`report.md` / `summary.json`), potem `giclee_app/logs/studio_perf.log` lub raport Cursora — nie od hipotez UI. GitHub connector może być za lokalnym working tree — log/bundle użytkownika wygrywa.
 
@@ -49,7 +49,11 @@ Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w `GICLEE_C
 - import patchy w PowerShell = `git diff --output`, nie `>`,
 - cross-repo = oba `git apply --check` przed pierwszym apply,
 - rollback = dokładne pliki; bez szerokiego `restore -- cursor-api` i bez `git clean`,
-- Theme Page Editor może eksportować `image_effect_selector` → `targetSelector`; hover i parallax muszą mieć osobne elementy transformacji.
+- Theme Page Editor może eksportować `image_effect_selector` → `targetSelector`; hover i parallax muszą mieć osobne elementy transformacji,
+- GICLÉE HOME FLOW: `GH-xx` / `GH-Txx` są kodami wyliczanymi, stabilne ID to `section:*` / `phase:*`,
+- faza i sekcja otwierają ten sam prawy panel; powrót do sekcji używa bezpośredniego renderera `_show_zone`, nie eventu ukrytego Listboxa,
+- Hero → Intro odsłania prawdziwą sekcję live; nie klonować złożonej sekcji Shopify,
+- generator Home Flow blokuje Save przy brakujących assetach; v1.51.0 jest checkpointem implemented + pushed + zaakceptowanym.
 
 **New pacing rule:** group safe planning layers (read-only, data map, draft state, dry-run, readiness, UI change plan, docs/tests); split writer, backup/write/undo, Shopify/sync/deploy, data migrations, and large architecture decisions.
 
@@ -132,7 +136,7 @@ Wygrywają markowo: ton, Fine Art, unikanie taniego e-commerce.
 ## 3. KOLEJNOŚĆ MYŚLENIA
 
 1. **Które repo?** (POZIOM 0)
-2. Czy dotyczy GicleeApp Studio / GICLÉE FRAME / Katalog / **Performance**? (checkpoint lokalny: monorepo `2dde9e4`, dirty markery v1.50.0; performance **6G.5 PASS/checkpoint** → stan w `CURRENT_APP_STATE.md`; przy objawach najpierw bundle PA, potem log)
+2. Czy dotyczy GicleeApp Studio / GICLÉE FRAME / Katalog / GICLÉE HOME FLOW / **Performance**? (checkpoint aplikacji: v1.51.0 / `gicleeapp/main` @ `9342f5b`; Home Flow implemented + accepted; performance **6G.5 PASS/checkpoint** → stan w `CURRENT_APP_STATE.md`; przy objawach najpierw bundle PA, potem log)
 3. Co użytkownik chce osiągnąć?
 4. Prompt / kod / efekt / audit / debug?
 5. Czy chronić Shopify / faktury / API?
@@ -214,7 +218,7 @@ Efekt piękny ale ryzykowny → bezpieczniejsza wersja. Efekt tanio → popraw m
 
 Rozwiązania: piękne, premium, bezpieczne, zgodne ze stackiem i marką, wdrażalne przez Cursor.
 
-**Motyw → `gicleeart-gpt`. Aplikacja → `gicleeapp`. Finalna prawda → lokalne monorepo.** GICLÉE FRAME F2.1 pozostaje wzorcem, performance 6G.5 pozostaje checkpointem. Aktualnie najpierw walidacja FAQ i rozliczenie Home Flow/prehero; bez szerokiego cleanupu. Writer/Save/Shopify tylko po osobnej akceptacji.
+**Motyw → `gicleeart-gpt`. Aplikacja → `gicleeapp`. Finalna prawda po lokalnej akceptacji → monorepo `C:\Strona\pusty`.** GICLÉE FRAME F2.1 pozostaje wzorcem, performance 6G.5 pozostaje checkpointem, a GICLÉE HOME FLOW v1.51.0 jest wdrożoną i zaakceptowaną bazą. FAQ waliduj, jeżeli brak nowszego potwierdzenia. Writer/Save/Shopify tylko po osobnej akceptacji.
 
 ---
 

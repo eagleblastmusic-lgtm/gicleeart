@@ -16,12 +16,14 @@
 
 ### Checkpoint refresh — 2026-07-11
 
-- monorepo `master` = `origin/master` @ `2dde9e4` (launcher categories/options/shortcuts/DnD),
-- lokalne markery aplikacji v1.50.0 są zmodyfikowane po HEAD; osobny `gicleeapp/main` @ `a61c0f4` jest starszym snapshotem,
+- GicleeApp **v1.51.0**, repo wymiany/pushu `gicleeapp/main` @ `9342f5b`,
+- finalne źródło po lokalnej akceptacji pozostaje w monorepo `C:\Strona\pusty`; `e968f6c` to ostatni zweryfikowany checkpoint projektu przed późniejszym docs-only refresh, więc bieżący HEAD trzeba sprawdzić lokalnie,
+- repo snapshotu motywu `gicleeart-gpt`; ostatni zweryfikowany snapshot review `09aeee3`,
 - launcher Windows ma trwałą decyzję: WinAPI `GetAsyncKeyState` + foreground gating,
 - import patchy w PowerShell używa `git diff --output`, a przy cross-repo oba `--check` przechodzą przed pierwszym apply,
-- FAQ Hero image effects są zastosowane lokalnie, ale pozostają pending do testów i live preview,
-- dirty Home Flow/prehero i pliki runtime muszą być chronione przed `reset`, `clean`, szerokim `restore` i `git add .`,
+- FAQ Hero image effects pozostają pending tylko wtedy, gdy brak nowszego potwierdzenia testów i live preview,
+- GICLÉE HOME FLOW v1.51.0 jest implemented + pushed + ręcznie zaakceptowane: sekcje i fazy w Treeview, automatyczna numeracja, inline phase editor, pełny generator Pre-Hero, live Intro, ambient i bezpośredni renderer sekcji,
+- pliki runtime/config nadal muszą być chronione przed `reset`, `clean`, szerokim `restore` i `git add .`,
 - wzorzec efektów grafiki: `image_effect_selector` → `targetSelector`; hover na kontenerze, parallax na wewnętrznym media.
 
 ---
