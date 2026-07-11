@@ -287,12 +287,17 @@ Komendy aktywujące tryb Veo/Flow: Veo premium · Veo krótko · Veo popraw · T
 ## AKTUALNY CHECKPOINT GICLEEAPP / STUDIO
 
 <!-- gpt-starter:gicleeapp-push:start -->
-Finalne źródło po lokalnej akceptacji: monorepo `C:\Strona\pusty` / `eagleblastmusic-lgtm/gicleeart` / `master`; aplikacja w `cursor-api/`.
+Repo kanoniczne: `eagleblastmusic-lgtm/gicleeapp` (monorepo `gicleeart`, branch `master`, app w `cursor-api/`)
 
-Repo wymiany i pushu aplikacji: `eagleblastmusic-lgtm/gicleeapp` / `main` @ `9342f5b` (2026-07-11 00:52 UTC), **GicleeApp Studio v1.51.0**.
-Repo snapshotu motywu do review: `eagleblastmusic-lgtm/gicleeart-gpt`; ostatni zweryfikowany snapshot review `09aeee3` (2026-07-11 00:53 UTC).
-Monorepo `e968f6c` = ostatni zweryfikowany checkpoint projektu przed późniejszym odświeżeniem dokumentacji; bieżący HEAD może być nowszy o commit(y) docs-only — przed cytowaniem sprawdź `git log -1 --oneline`.
-Historyczne checkpointy: `4647c1b` — F2.1 / v1.40.1; `46fc718` — F2 / v1.40.0.
+GitHub / aktualna wersja aplikacji: **v1.54.2** (`giclee_app/__init__.py`, `package.json`)
+Ostatni push GicleeApp: `294071e` na `main` (2026-07-11 17:25 UTC) — Refresh GicleeApp repository snapshot
+Monorepo origin/master: `3ccbd19` — feat(home-flow): add direct navigation and bounded structure writer
+Ostatni pushed feature checkpoint aplikacji (F2.1, historia): `4647c1b` — v1.40.1
+Lokalny commit monorepo (push pending): `e46cb49` — feat(writer-safety): isolate variant save and delta-only apply
+Lokalny commit monorepo (push pending): `14a48da` — chore(audit): snapshot submenu and shared theme changes
+Poprzedni checkpoint: `46fc718` — GICLÉE FRAME page inventory RAM editor (v1.40.0)
+Wersja aplikacji: **GicleeApp Studio v1.54.2**
+Branch: GitHub gicleeapp **v1.54.2** / `main` @ `294071e`; monorepo origin/master `3ccbd19`; lokalny monorepo ma commity pending względem origin/master
 <!-- gpt-starter:gicleeapp-push:end -->
 
 Zamknięte:

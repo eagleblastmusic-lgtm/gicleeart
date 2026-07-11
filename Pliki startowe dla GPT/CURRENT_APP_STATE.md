@@ -1,31 +1,36 @@
 # Current App State
 
 <!-- gpt-starter:gicleeapp-push:start -->
-GicleeApp Studio v1.51.0
+GicleeApp Studio v1.54.2
 
-Finalne źródło po lokalnej akceptacji:
-- monorepo `C:\Strona\pusty` / repo `eagleblastmusic-lgtm/gicleeart` / branch `master`,
-- aplikacja znajduje się w `cursor-api/`.
+GitHub / aktualna wersja aplikacji (`eagleblastmusic-lgtm/gicleeapp`):
+v1.54.2 — zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`
+Ostatni push GicleeApp: `294071e` na `main` (2026-07-11 17:25 UTC) — Refresh GicleeApp repository snapshot
 
-Repo wymiany i pushu aplikacji:
-- `eagleblastmusic-lgtm/gicleeapp` / `main` @ `9342f5b` (2026-07-11 00:52 UTC),
-- wersja **v1.51.0** zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`.
+Monorepo origin/master (projekt / docs):
+3ccbd19 feat(home-flow): add direct navigation and bounded structure writer
 
-Repo snapshotu motywu do review:
-- `eagleblastmusic-lgtm/gicleeart-gpt`,
-- ostatni zweryfikowany snapshot review: `09aeee3` (2026-07-11 00:53 UTC).
+Lokalne commity monorepo (nie na origin/master, push pending):
+- `e46cb49` feat(writer-safety): isolate variant save and delta-only apply
+- `14a48da` chore(audit): snapshot submenu and shared theme changes
 
-Monorepo:
-- `e968f6c` jest ostatnim zweryfikowanym checkpointem projektu przed późniejszym odświeżeniem dokumentacji GPT,
-- bieżący HEAD może być nowszy o commit(y) docs-only; przed podaniem aktualnego SHA sprawdź `git log -1 --oneline`.
+Previous checkpoint:
+46fc718 feat(studio): add GICLÉE FRAME page inventory RAM editor (v1.40.0)
 
-Historyczne checkpointy:
-- `4647c1b` — GICLÉE FRAME™ F2.1 / v1.40.1,
-- `46fc718` — GICLÉE FRAME page inventory RAM editor / v1.40.0.
+Branch status:
+- **GitHub gicleeapp:** v1.54.2 / `main` @ `294071e` (auto-sync po Push GicleeApp, 2026-07-11 17:25 UTC)
+- **monorepo origin/master:** `3ccbd19` — feat(home-flow): add direct navigation and bounded structure writer
+- **lokalnie monorepo:** dodatkowe commity względem origin/master — push pending (nie zakładać push monorepo bez potwierdzenia użytkownika)
+  - `e46cb49` feat(writer-safety): isolate variant save and delta-only apply
+  - `14a48da` chore(audit): snapshot submenu and shared theme changes
 
 GPT starter files:
-- źródło edycji: `C:\Strona\pusty\Pliki startowe dla GPT`,
-- ZIP v38 jest snapshotem/outputem programu użytkownika, nie źródłem edycji.
+auto-sync po Push GicleeApp 2026-07-11 17:25 UTC (gicleeapp `294071e`, v1.54.2; paczka v38; źródło = ten folder, nie ZIP)
+
+Recent context:
+- **GitHub gicleeapp:** v1.54.2 / `main` @ `294071e` — auto-sync po Push GicleeApp
+- GICLÉE FRAME™ F2.1: closed + pushed (historycznie v1.40.1 / `4647c1b`; aktualna wersja aplikacji na GitHub jest nowsza)
+- Local runtime/untracked still outside commit and remote (working tree hygiene pending)
 <!-- gpt-starter:gicleeapp-push:end -->
 
 
