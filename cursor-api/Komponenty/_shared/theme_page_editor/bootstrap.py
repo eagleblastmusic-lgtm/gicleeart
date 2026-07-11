@@ -14,6 +14,9 @@ from Komponenty._shared.theme_page_editor.writer_safety_runtime_fix import (
 from Komponenty._shared.theme_page_editor.writer_safety_delta_fix import (
     install_delta_only_fix,
 )
+from Komponenty._shared.theme_page_editor.writer_safety_concurrency_fix import (
+    install_concurrency_fix,
+)
 
 # Hotfix zgodności: gui_shell używa shopify_ref_label przy budowie miniatur i
 # statusu tła, ale starsza powłoka nie importowała tej funkcji bezpośrednio.
@@ -57,4 +60,5 @@ def build_editor_config(
 def build_page_ui(host, config: PageEditorConfig, *, inline: bool = False) -> None:
     install_deferred_context_fix()
     install_delta_only_fix()
+    install_concurrency_fix()
     build_safe_page_editor(host, config, inline=inline)
