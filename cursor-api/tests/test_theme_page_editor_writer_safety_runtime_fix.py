@@ -23,7 +23,9 @@ class _FakeWidget:
 
 class _FakeTtk:
     def Button(self, _master: Any = None, *args: Any, **kwargs: Any) -> _FakeWidget:
-        return _FakeWidget(command=kwargs.get("command"), args=args, **kwargs)
+        payload = dict(kwargs)
+        command = payload.pop("command", None)
+        return _FakeWidget(command=command, args=args, **payload)
 
 
 class _FakeMaster:
