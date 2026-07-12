@@ -5,20 +5,35 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from giclee_app.ui.component_hub import (
+    _CARDS_PER_TICK,
+    _FIRST_VISIBLE_BUDGET_MS,
+    _FIRST_VISIBLE_CARD_COUNT,
+    _IDLE_BATCH_DELAY_MS,
+    _IDLE_BATCH_SIZE,
+    _IDLE_TICK_BUDGET_MS,
+    _REAL_SHELL_FIRST_PAINT_COUNT,
+    _SKELETON_COUNT,
+    _batch_delay_for_start,
+    _batch_size_for_start,
+    _tick_delay_ms,
+)
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_component_hub_has_first_visible_batch_constants() -> None:
-    path = ROOT / "giclee_app" / "ui" / "component_hub.py"
-    text = path.read_text(encoding="utf-8")
+def test_component_hub_has_first_visible_batch_contract() -> None:
+    assert 1 <= _FIRST_VISIBLE_CARD_COUNT <= _SKELETON_COUNT
+    assert _REAL_SHELL_FIRST_PAINT_COUNT == _FIRST_VISIBLE_CARD_COUNT
+    assert _IDLE_BATCH_SIZE >= 1
+    assert _CARDS_PER_TICK == _IDLE_BATCH_SIZE
+    assert _FIRST_VISIBLE_BUDGET_MS > 0
+    assert _IDLE_TICK_BUDGET_MS > 0
 
-    assert "_FIRST_VISIBLE_CARD_COUNT" in text
-    assert "_FIRST_VISIBLE_BUDGET_MS" in text
-    assert "_CARDS_PER_TICK" in text
-    assert "_IDLE_BATCH_SIZE" in text
-    assert "_FIRST_VISIBLE_CARD_COUNT = 2" in text or "_FIRST_VISIBLE_CARD_COUNT = 3" in text
-    assert "_CARDS_PER_TICK = 3" in text or "_CARDS_PER_TICK=3" in text
-    assert "_IDLE_BATCH_SIZE = 3" in text or "_IDLE_BATCH_SIZE=3" in text
+    assert _batch_size_for_start(0) == _FIRST_VISIBLE_CARD_COUNT
+    assert _batch_size_for_start(1) == _IDLE_BATCH_SIZE
+    assert _batch_delay_for_start(0) == 0
+    assert _batch_delay_for_start(1) == _IDLE_BATCH_DELAY_MS
 
 
 def test_component_hub_hover_hydration_is_disabled_by_default() -> None:
@@ -35,12 +50,11 @@ def test_component_hub_hover_hydration_is_disabled_by_default() -> None:
 
 
 def test_component_hub_idle_batches_use_zero_delay_with_budget() -> None:
-    path = ROOT / "giclee_app" / "ui" / "component_hub.py"
-    text = path.read_text(encoding="utf-8")
-
-    assert "_IDLE_BATCH_DELAY_MS = 0" in text or "_IDLE_BATCH_DELAY_MS=0" in text
-    assert "_IDLE_TICK_BUDGET_MS" in text
-    assert "_IDLE_BATCH_SIZE = 3" in text or "_IDLE_BATCH_SIZE=3" in text
+    assert _IDLE_BATCH_DELAY_MS == 0
+    assert _IDLE_TICK_BUDGET_MS > 0
+    assert _IDLE_BATCH_SIZE >= 1
+    assert _batch_delay_for_start(1) == 0
+    assert _tick_delay_ms(first_visible_phase=False) == 0
 
 
 def test_component_hub_uses_tick_budget_for_idle_batches() -> None:
