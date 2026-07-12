@@ -74,64 +74,71 @@ def test_title_drafts_write_external(monkeypatch, tmp_path: Path) -> None:
     import types
     from dataclasses import dataclass, field
 
-    batch_module = types.ModuleType("Komponenty.tytulyai.batch")
+    storage_module_name = "Komponenty.tytulyai.storage"
+    previous_storage = sys.modules.pop(storage_module_name, None)
 
-    @dataclass
-    class BatchItemResult:
-        product_id: int
-        artist: str = ""
-        painting_title: str = ""
-        model_used: str = ""
-        raw_response: str = ""
-        cursor_prompt: str = ""
-        error: str = ""
-        warning: str = ""
-        generated_at: str = ""
+    try:
+        batch_module = types.ModuleType("Komponenty.tytulyai.batch")
 
-    descriptions_module = types.ModuleType("Komponenty.tytulyai.descriptions")
+        @dataclass
+        class BatchItemResult:
+            product_id: int
+            artist: str = ""
+            painting_title: str = ""
+            model_used: str = ""
+            raw_response: str = ""
+            cursor_prompt: str = ""
+            error: str = ""
+            warning: str = ""
+            generated_at: str = ""
 
-    @dataclass
-    class DescriptionVariant:
-        model_used: str = ""
-        akapity: list[str] = field(default_factory=list)
-        raw_response: str = ""
-        error: str = ""
-        generated_at: str = ""
+        descriptions_module = types.ModuleType("Komponenty.tytulyai.descriptions")
 
-    @dataclass
-    class ProductDescriptionDrafts:
-        product_id: int
-        artist: str = ""
-        painting_title: str = ""
-        v1: DescriptionVariant = field(default_factory=DescriptionVariant)
-        v2: DescriptionVariant = field(default_factory=DescriptionVariant)
+        @dataclass
+        class DescriptionVariant:
+            model_used: str = ""
+            akapity: list[str] = field(default_factory=list)
+            raw_response: str = ""
+            error: str = ""
+            generated_at: str = ""
 
-    batch_module.BatchItemResult = BatchItemResult
-    descriptions_module.DescriptionVariant = DescriptionVariant
-    descriptions_module.ProductDescriptionDrafts = ProductDescriptionDrafts
-    monkeypatch.setitem(sys.modules, "Komponenty.tytulyai.batch", batch_module)
-    monkeypatch.setitem(sys.modules, "Komponenty.tytulyai.descriptions", descriptions_module)
-    sys.modules.pop("Komponenty.tytulyai.storage", None)
-    storage = importlib.import_module("Komponenty.tytulyai.storage")
+        @dataclass
+        class ProductDescriptionDrafts:
+            product_id: int
+            artist: str = ""
+            painting_title: str = ""
+            v1: DescriptionVariant = field(default_factory=DescriptionVariant)
+            v2: DescriptionVariant = field(default_factory=DescriptionVariant)
 
-    local, _ = _set_roots(monkeypatch, tmp_path)
-    legacy = tmp_path / "legacy-titles"
-    legacy.mkdir()
-    title_file = legacy / "title_drafts.json"
-    desc_file = legacy / "description_drafts.json"
-    title_file.write_text('{"drafts": {}}', encoding="utf-8")
+        batch_module.BatchItemResult = BatchItemResult
+        descriptions_module.DescriptionVariant = DescriptionVariant
+        descriptions_module.ProductDescriptionDrafts = ProductDescriptionDrafts
+        monkeypatch.setitem(sys.modules, "Komponenty.tytulyai.batch", batch_module)
+        monkeypatch.setitem(sys.modules, "Komponenty.tytulyai.descriptions", descriptions_module)
+        storage = importlib.import_module(storage_module_name)
 
-    monkeypatch.setattr(storage, "_LEGACY_DATA_DIR", legacy)
-    monkeypatch.setattr(storage, "_DEFAULT_TITLE_DRAFTS_FILE", title_file)
-    monkeypatch.setattr(storage, "_DEFAULT_DESCRIPTION_DRAFTS_FILE", desc_file)
-    monkeypatch.setattr(storage, "TITLE_DRAFTS_FILE", title_file)
-    monkeypatch.setattr(storage, "DESCRIPTION_DRAFTS_FILE", desc_file)
-    monkeypatch.setattr(storage, "_TITLE_DRAFTS", data_path("Komponenty/tytulyai/data/title_drafts.json", legacy=title_file))
-    monkeypatch.setattr(storage, "_DESCRIPTION_DRAFTS", data_path("Komponenty/tytulyai/data/description_drafts.json", legacy=desc_file))
+        local, _ = _set_roots(monkeypatch, tmp_path)
+        legacy = tmp_path / "legacy-titles"
+        legacy.mkdir()
+        title_file = legacy / "title_drafts.json"
+        desc_file = legacy / "description_drafts.json"
+        title_file.write_text('{"drafts": {}}', encoding="utf-8")
 
-    storage.save_title_drafts({1: BatchItemResult(product_id=1, painting_title="Nowy")})
-    assert (local / "data/Komponenty/tytulyai/data/title_drafts.json").is_file()
-    assert title_file.read_text(encoding="utf-8") == '{"drafts": {}}'
+        monkeypatch.setattr(storage, "_LEGACY_DATA_DIR", legacy)
+        monkeypatch.setattr(storage, "_DEFAULT_TITLE_DRAFTS_FILE", title_file)
+        monkeypatch.setattr(storage, "_DEFAULT_DESCRIPTION_DRAFTS_FILE", desc_file)
+        monkeypatch.setattr(storage, "TITLE_DRAFTS_FILE", title_file)
+        monkeypatch.setattr(storage, "DESCRIPTION_DRAFTS_FILE", desc_file)
+        monkeypatch.setattr(storage, "_TITLE_DRAFTS", data_path("Komponenty/tytulyai/data/title_drafts.json", legacy=title_file))
+        monkeypatch.setattr(storage, "_DESCRIPTION_DRAFTS", data_path("Komponenty/tytulyai/data/description_drafts.json", legacy=desc_file))
+
+        storage.save_title_drafts({1: BatchItemResult(product_id=1, painting_title="Nowy")})
+        assert (local / "data/Komponenty/tytulyai/data/title_drafts.json").is_file()
+        assert title_file.read_text(encoding="utf-8") == '{"drafts": {}}'
+    finally:
+        sys.modules.pop(storage_module_name, None)
+        if previous_storage is not None:
+            sys.modules[storage_module_name] = previous_storage
 
 
 def test_small_component_stores_write_to_manifest_paths(monkeypatch, tmp_path: Path) -> None:
