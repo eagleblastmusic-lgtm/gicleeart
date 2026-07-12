@@ -16,7 +16,12 @@ def test_katalog_refresh_is_deferred() -> None:
     assert "_refresh_all()" not in init_block
     assert "after(" in text
     assert "studio.katalog.refresh_pipeline.start" in text
-    assert "studio.katalog.refresh.inventory" in text
+    assert 'event_prefix = f"studio.katalog.refresh.{kind}_rows"' in text
+    assert 'f"{event_prefix}.batch"' in text
+    assert 'f"{event_prefix}.done"' in text
+    assert '"inventory",' in text
+    assert '"data_map",' in text
+    assert "studio.katalog.refresh.finalize" in text
     assert "_KATALOG_ROW_BATCH_SIZE" in text
     assert "_fill_rows_batch" in text
     assert "studio.katalog.refresh_pipeline.done" in text

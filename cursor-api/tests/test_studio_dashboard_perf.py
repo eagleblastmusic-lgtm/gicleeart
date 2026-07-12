@@ -43,15 +43,15 @@ def test_status_providers_cache_git_and_shorten_theme_timeout() -> None:
     assert "time.monotonic()" in text
 
 
-def test_dashboard_has_deferred_status_perf_spans() -> None:
+def test_dashboard_has_deferred_status_observability() -> None:
     path = ROOT / "giclee_app" / "ui" / "dashboard.py"
     text = path.read_text(encoding="utf-8")
 
     assert "studio.dashboard.on_show.fast" in text
     assert "studio.dashboard.status.theme_dev.scheduled" in text
-    assert "studio.dashboard.status.theme_dev.deferred" in text
     assert "studio.dashboard.status.theme_dev.done" in text
-    assert "studio.dashboard.status.git.deferred" in text
+    assert "run_async(self, self._fetch_theme_dev_status, self._apply_theme_status)" in text
+    assert "run_async(self, status_providers.github_status, self._apply_git_status)" in text
 
 
 def test_dashboard_uses_async_first_paint_and_deferred_sections() -> None:
