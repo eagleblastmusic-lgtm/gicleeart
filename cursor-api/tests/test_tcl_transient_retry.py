@@ -5,14 +5,17 @@ from pathlib import Path
 
 import pytest
 
-import conftest
+from tools.stage2_tcl_retry import (
+    call_tk_init_with_transient_retry,
+    ci_tcl_retry_enabled,
+)
 
 
 def test_ci_tcl_retry_requires_github_actions_and_library() -> None:
-    assert conftest._ci_tcl_retry_enabled({}) is False
-    assert conftest._ci_tcl_retry_enabled({"GITHUB_ACTIONS": "true"}) is False
+    assert ci_tcl_retry_enabled({}) is False
+    assert ci_tcl_retry_enabled({"GITHUB_ACTIONS": "true"}) is False
     assert (
-        conftest._ci_tcl_retry_enabled(
+        ci_tcl_retry_enabled(
             {"GITHUB_ACTIONS": "TRUE", "TCL_LIBRARY": r"C:\temp\tcl8.6"}
         )
         is True
@@ -36,10 +39,7 @@ def test_exact_init_tcl_failure_is_retried_once(
             raise tk.TclError("Can't find a usable init.tcl in the following directories")
         return "ready"
 
-    assert (
-        conftest._call_tk_init_with_transient_retry(original, object(), (), {})
-        == "ready"
-    )
+    assert call_tk_init_with_transient_retry(original, object(), (), {}) == "ready"
     assert len(calls) == 2
 
 
@@ -51,7 +51,7 @@ def test_non_matching_tcl_error_is_not_retried() -> None:
         raise tk.TclError("no display name and no $DISPLAY environment variable")
 
     with pytest.raises(tk.TclError, match="no display name"):
-        conftest._call_tk_init_with_transient_retry(original, object(), (), {})
+        call_tk_init_with_transient_retry(original, object(), (), {})
     assert len(calls) == 1
 
 
@@ -70,7 +70,7 @@ def test_second_init_tcl_failure_remains_blocking(
         raise tk.TclError("Can't find a usable init.tcl in the following directories")
 
     with pytest.raises(tk.TclError, match="Can't find a usable init.tcl"):
-        conftest._call_tk_init_with_transient_retry(original, object(), (), {})
+        call_tk_init_with_transient_retry(original, object(), (), {})
     assert len(calls) == 2
 
 
