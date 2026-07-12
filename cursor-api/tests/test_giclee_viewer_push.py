@@ -20,6 +20,7 @@ def _init_git_repo(path: Path, *, branch: str = "master") -> None:
 @pytest.fixture
 def viewer_push_env(tmp_path, monkeypatch):
     from Komponenty.integracjagpt import config as cfg
+    from Komponenty.integracjagpt import giclee_viewer_push as gvp
 
     repo = tmp_path / "giclee-viewer"
     repo.mkdir()
@@ -37,13 +38,15 @@ def viewer_push_env(tmp_path, monkeypatch):
         check=True,
         capture_output=True,
     )
+    remote_url = "../giclee-viewer-remote.git"
 
-    monkeypatch.setattr(cfg, "GICLEE_VIEWER_DIR", repo)
-    monkeypatch.setattr(
-        cfg,
-        "GICLEE_VIEWER_REMOTE_URL",
-        str(remote),
-    )
+    for module in (cfg, gvp):
+        monkeypatch.setattr(module, "GICLEE_VIEWER_DIR", repo)
+        monkeypatch.setattr(
+            module,
+            "GICLEE_VIEWER_REMOTE_URL",
+            remote_url,
+        )
     return repo
 
 
@@ -115,6 +118,7 @@ def test_commit_and_push_viewer_push_only(viewer_push_env, monkeypatch) -> None:
         if args[:2] in (["fetch", "origin"], ["push", "-u"], ["push", "origin"]):
             if args[0] == "push":
                 pushed.append(list(args))
+
             class _Proc:
                 returncode = 0
                 stdout = ""
