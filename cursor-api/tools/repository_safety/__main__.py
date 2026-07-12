@@ -1,4 +1,4 @@
-"""CLI for repository safety audit, migration and allowlist snapshot tooling."""
+"""CLI for repository safety audit, migration, runtime-write inventory and snapshot tooling."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .audit import audit_tracked_tree, write_json_report
 from .migration import MIGRATION_PROFILES, build_migration_report, write_migration_json
+from .runtime_writes import audit_runtime_writes, write_runtime_write_json
 from .snapshot import (
     build_snapshot_plan,
     execute_snapshot_copy,
@@ -25,6 +26,18 @@ def _parser() -> argparse.ArgumentParser:
     audit.add_argument("--repo", type=Path, default=Path.cwd())
     audit.add_argument("--json-out", type=Path)
     audit.add_argument("--max-binary-mb", type=int, default=10)
+
+    runtime_writes_parser = subparsers.add_parser(
+        "runtime-writes",
+        help="Inventory Python writes whose targets are derived from the source checkout.",
+    )
+    runtime_writes_parser.add_argument("--repo", type=Path, default=Path.cwd())
+    runtime_writes_parser.add_argument("--json-out", type=Path)
+    runtime_writes_parser.add_argument(
+        "--fail-on-findings",
+        action="store_true",
+        help="Return exit code 1 when review findings are present. Default is diagnostic.",
+    )
 
     migrate = subparsers.add_parser(
         "migrate",
@@ -84,6 +97,15 @@ def main(argv: list[str] | None = None) -> int:
         if args.json_out:
             write_json_report(report, args.json_out)
         return 0 if report.ok else 1
+
+    if args.command == "runtime-writes":
+        report = audit_runtime_writes(args.repo)
+        print(report.format_text(), end="")
+        if args.json_out:
+            write_runtime_write_json(report, args.json_out)
+        if report.parse_errors:
+            return 1
+        return 1 if args.fail_on_findings and report.findings else 0
 
     if args.command == "migrate":
         report = build_migration_report(
