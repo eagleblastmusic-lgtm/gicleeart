@@ -1,6 +1,6 @@
 """Generator pliku HTML z podgladem posta we wszystkich 7 jezykach.
 
-Wyjscie: pojedynczy plik `data/preview.html` zawierajacy:
+Wyjscie: pojedynczy regenerowalny plik HTML w Local AppData; legacy `data/preview.html` pozostaje jedynie historyczna lokalizacja.
 - Zakladki (tabs) dla kazdej wersji jezykowej (PL/EN/DE/FR/ES/NL/IT),
 - Dla kazdej: tytul, summary, body_html (rzeczywiscie wyrenderowany), SEO title/description, tagi,
 - Prosty CSS w stylu bloga (Bodoni Moda + Cormorant - jak motyw Horizon),
@@ -14,8 +14,26 @@ import webbrowser
 from pathlib import Path
 from typing import Any
 
+from giclee_app.app_paths import atomic_write_text, cache_path
+
 _COMPONENT_DIR = Path(__file__).resolve().parent
-_PREVIEW_FILE = _COMPONENT_DIR / "data" / "preview.html"
+_LEGACY_PREVIEW_FILE = _COMPONENT_DIR / "data" / "preview.html"
+_DEFAULT_PREVIEW_FILE = _LEGACY_PREVIEW_FILE
+_PREVIEW_FILE = _DEFAULT_PREVIEW_FILE
+_PREVIEW_CACHE = cache_path(
+    "Komponenty/blog/data/preview.html",
+    legacy=_LEGACY_PREVIEW_FILE,
+)
+
+
+def _resolved_preview_file() -> Path:
+    # Return an explicit override or the external Local AppData cache path.
+
+    current = Path(_PREVIEW_FILE)
+    if current != _DEFAULT_PREVIEW_FILE:
+        return current
+    return _PREVIEW_CACHE.write_path
+
 
 _LANG_LABELS = [
     ("pl", "Polski", "🇵🇱"),
@@ -315,7 +333,7 @@ def build_preview_html(parsed: dict[str, Any]) -> Path:
 
     Zwraca sciezke do wygenerowanego pliku.
     """
-    _PREVIEW_FILE.parent.mkdir(parents=True, exist_ok=True)
+    preview_file = _resolved_preview_file()
 
     langs = parsed.get("languages") or {}
     topic = parsed.get("topic") or ""
@@ -399,8 +417,8 @@ def build_preview_html(parsed: dict[str, Any]) -> Path:
 </html>
 """
 
-    _PREVIEW_FILE.write_text(full, encoding="utf-8")
-    return _PREVIEW_FILE
+    atomic_write_text(preview_file, full)
+    return preview_file
 
 
 def open_preview_in_browser(parsed: dict[str, Any]) -> Path:
