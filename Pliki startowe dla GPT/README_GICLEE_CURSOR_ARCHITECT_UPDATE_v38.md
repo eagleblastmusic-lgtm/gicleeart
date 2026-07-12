@@ -83,6 +83,8 @@ Pełna definicja: sekcja **KOMENDA ROBOCZA** w `GICLEE_CURSOR_ARCHITECT_INSTRUCT
 
 Przy samym checkpoint refresh: aktualizuj `CURRENT_APP_STATE.md` i metadane **v38** — **nie bumpuj** na v39 bez realnej zmiany struktury instrukcji.
 
+**Ostatni checkpoint refresh:** Writer Safety WS-1.3 (2026-07-11) — `CURRENT_APP_STATE.md`, COMPACT v38, MASTER INDEX v38, CLEAN PACK v38, `Wiadomość początkowa.txt`.
+
 ---
 
 ## Nie dodawać do finalnego ZIP (archiwum)

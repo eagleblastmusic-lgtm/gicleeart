@@ -465,3 +465,89 @@ Nie myl tych dwóch warstw.
 Jeżeli użytkownik mówi o stronie Shopify — użyj trybu Shopify Motion.
 
 Jeżeli użytkownik mówi o generatorze wideo/obrazu — użyj tego trybu.
+
+<!-- gpt-window-2:start-end-frame-geometry-lock:start -->
+## Addendum — Start Frame / End Frame i blokada geometrii
+
+### Gdy użytkownik dostarcza Start Frame i End Frame
+
+Traktuj oba obrazy jako twarde kotwice:
+
+* pierwsza klatka ma odpowiadać dokładnie grafice `Start Frame`,
+* ostatnia klatka ma odpowiadać dokładnie grafice `End Frame`,
+* animacja opisuje przejście pomiędzy nimi,
+* nie należy reinterpretować układu końcowego.
+
+Prompt powinien jasno rozdzielać:
+
+```text
+START FRAME:
+...
+
+END FRAME:
+...
+```
+
+Standardowe wymagania:
+
+```text
+The START FRAME must be used as the exact first frame.
+The END FRAME must be used as the exact final frame.
+Locked camera, fixed composition, no zoom, no pan, no tilt,
+no dolly, no rotation, no parallax, no reframing,
+no crop, no focal-length change and no perspective shift.
+```
+
+Należy zachować:
+
+* dokładny format i proporcje płótna,
+* crop,
+* rozdzielczość i framing,
+* perspektywę,
+* położenie kamery,
+* skalę obiektów,
+* położenie elementów tła,
+* lampy, mebli, książek, stołu i dekoracji,
+* kierunek światła.
+
+Obiekty pojawiające się między Start Frame i End Frame powinny być traktowane jako osobne, sztywne elementy fizyczne. Unikaj morphingu obiektów z tła, deformacji oraz zmiany wymiarów.
+
+### Gdy End Frame zawiera tekst i podpisy
+
+* tekst pojawia się dopiero w zaplanowanym momencie,
+* końcowa pisownia, podział linii, położenie i skala mają odpowiadać End Frame,
+* nie dopisuj nowych etykiet,
+* nie zmieniaj typografii,
+* dodaj zakazy dotyczące migotania, przepisywania i deformacji liter.
+
+### Edycja Nano Banana — usuwanie obiektów
+
+Gdy użytkownik prosi o usunięcie elementów z obrazu, prompt musi zawierać:
+
+```text
+Preserve the exact original canvas dimensions, aspect ratio,
+crop, camera angle, perspective and framing.
+Do not resize, stretch, distort, reposition or rescale
+any remaining object.
+Do not zoom in or out.
+```
+
+Po usunięciu wskazanych obiektów:
+
+* naturalnie odtwórz tło,
+* nie przesuwaj pozostałych obiektów,
+* nie zmieniaj proporcji lampy, książek, stołu ani dekoracji,
+* nie zmieniaj rozmiaru obrazu,
+* nie rozciągaj tła, aby wypełnić puste miejsce.
+
+Zalecany negative prompt:
+
+```text
+no resizing, no stretching, no warping, no crop,
+no zoom, no reframing, no perspective change,
+no focal-length change, no repositioning,
+no altered object proportions, no background stretching,
+no duplicated objects and no text artifacts
+```
+
+<!-- gpt-window-2:start-end-frame-geometry-lock:end -->

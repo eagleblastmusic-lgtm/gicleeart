@@ -287,12 +287,16 @@ Komendy aktywujące tryb Veo/Flow: Veo premium · Veo krótko · Veo popraw · T
 ## AKTUALNY CHECKPOINT GICLEEAPP / STUDIO
 
 <!-- gpt-starter:gicleeapp-push:start -->
-Finalne źródło po lokalnej akceptacji: monorepo `C:\Strona\pusty` / `eagleblastmusic-lgtm/gicleeart` / `master`; aplikacja w `cursor-api/`.
+Repo kanoniczne: `eagleblastmusic-lgtm/gicleeapp` (monorepo `gicleeart`, branch `master`, app w `cursor-api/`)
 
-Repo wymiany i pushu aplikacji: `eagleblastmusic-lgtm/gicleeapp` / `main` @ `9342f5b` (2026-07-11 00:52 UTC), **GicleeApp Studio v1.51.0**.
-Repo snapshotu motywu do review: `eagleblastmusic-lgtm/gicleeart-gpt`; ostatni zweryfikowany snapshot review `09aeee3` (2026-07-11 00:53 UTC).
-Monorepo `e968f6c` = ostatni zweryfikowany checkpoint projektu przed późniejszym odświeżeniem dokumentacji; bieżący HEAD może być nowszy o commit(y) docs-only — przed cytowaniem sprawdź `git log -1 --oneline`.
-Historyczne checkpointy: `4647c1b` — F2.1 / v1.40.1; `46fc718` — F2 / v1.40.0.
+GitHub / aktualna wersja aplikacji: **v1.54.2** (`giclee_app/__init__.py`, `package.json`) — ostatni push
+Ostatni push GicleeApp: `294071e` na `main` (2026-07-11 17:25 UTC) — Refresh GicleeApp repository snapshot
+Monorepo origin/master: `3ccbd19` — feat(home-flow): add direct navigation and bounded structure writer
+Writer Safety clean worktree: `C:\Strona\pusty-ws12-clean` · `local/writer-safety-ws12-clean` · WS-1.3 @ `1364aea` (lokalny, nie wypchnięty) · wersja walidacji **v1.54.3** · working tree **CLEAN**
+Ostatni pushed feature checkpoint aplikacji (F2.1, historia): `4647c1b` — v1.40.1
+Poprzedni checkpoint: `46fc718` — GICLÉE FRAME page inventory RAM editor (v1.40.0)
+Wersja aplikacji (Writer Safety clean): **GicleeApp Studio v1.54.3** · GitHub gicleeapp **v1.54.2** / `main` @ `294071e`
+Branch: monorepo origin/master `3ccbd19`; Writer Safety w osobnym clean worktree; oryginalny `C:\Strona\pusty` ma niezwiązane zmiany
 <!-- gpt-starter:gicleeapp-push:end -->
 
 Zamknięte:
@@ -314,6 +318,7 @@ Zamknięte:
   - pełny generator Pre-Hero z kontrolą brakujących assetów,
   - live Intro bez klonowania sekcji, efekty od pierwszej klatki kurtyny,
   - opcjonalny ambient Shopify CDN i lokalny fallback `assets/giclee-home-prehero-scrub.mp4`.
+- **Writer Safety WS-1…WS-1.3** — **done / tested locally** w czystym worktree `C:\Strona\pusty-ws12-clean` @ `1364aea` (v1.54.3); szczegóły: `CURRENT_APP_STATE.md` § Writer Safety; push/merge/deploy **nie wykonane**
 
 Nie rozpoczęte:
 - GICLÉE FRAME F3 (lokalny zapis draftu RAM)
@@ -329,7 +334,7 @@ Aktualna kolejka walidacji:
 
 **Studio Performance:** 6G.5 = **PASS / checkpoint**. Nie otwieraj szerokiej optymalizacji bez konkretnego objawu i nowych metryk.
 
-**GICLÉE FRAME F3, writer, Save, Shopify/sync/deploy:** nadal wymagają osobnej decyzji.
+**GICLÉE FRAME F3, writer, Save, Shopify/sync/deploy:** nadal wymagają osobnej decyzji (Writer Safety lokalnie done — publikacja czystego ciągu `d7790d0`→`1364aea` wymaga osobnej zgody).
 
 Szczegóły guardrails: `CURRENT_APP_STATE.md`, `gicleeframe-planning.md`.
 
