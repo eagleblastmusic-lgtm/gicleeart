@@ -1,16 +1,22 @@
 name: Apply blog preview cache patch
 
 on:
-  push:
+  pull_request:
     branches:
-      - gpt-work/runtime-foundation-blog-preview-cache
+      - master
+    types:
+      - opened
+      - reopened
+      - synchronize
 
 permissions:
   contents: write
 
 jobs:
   apply-patch:
-    if: github.actor != 'github-actions[bot]'
+    if: >-
+      github.actor != 'github-actions[bot]' &&
+      github.head_ref == 'gpt-work/runtime-foundation-blog-preview-cache'
     runs-on: [self-hosted, Windows, X64, giclee-ci]
     timeout-minutes: 20
     env:
@@ -18,9 +24,10 @@ jobs:
       PYTHONDONTWRITEBYTECODE: "1"
 
     steps:
-      - name: Checkout branch
+      - name: Checkout head branch
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
 
       - name: Set up Python
@@ -67,4 +74,4 @@ jobs:
             cursor-api/docs/repository_safety/BLOG_PREVIEW_CACHE.md
           git diff --cached --check
           git commit -m "refactor(runtime): externalize blog preview cache"
-          git push origin "HEAD:$env:GITHUB_REF_NAME"
+          git push origin "HEAD:$env:GITHUB_HEAD_REF"
