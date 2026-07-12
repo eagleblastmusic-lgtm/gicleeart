@@ -7,10 +7,12 @@ import pytest
 from giclee_app.app_paths import (
     AppPath,
     atomic_write_text,
+    backup_path,
     cache_path,
     config_path,
     data_path,
     local_root,
+    log_path,
     roaming_root,
 )
 
@@ -32,6 +34,10 @@ def test_external_roots_use_explicit_test_overrides(monkeypatch: pytest.MonkeyPa
     assert config_path("Komponenty/demo/data/settings.json").write_path == (
         roaming / "config" / "Komponenty" / "demo" / "data" / "settings.json"
     )
+    assert log_path("Komponenty/demo/events.jsonl").write_path == (
+        local / "logs" / "Komponenty" / "demo" / "events.jsonl"
+    )
+    assert backup_path("daily.zip").write_path == local / "backups" / "daily.zip"
 
 
 def test_read_prefers_external_then_falls_back_to_legacy(
