@@ -1,4 +1,8 @@
-"""Trwaly zapis promptow w JSON."""
+"""Trwały zapis promptów i załączników poza repozytorium.
+
+AppData jest lokalizacją nadrzędną, a stare pliki pozostają fallbackiem
+tylko do odczytu. Import, zapis i usuwanie dotyczą wyłącznie AppData.
+"""
 
 from __future__ import annotations
 
@@ -9,12 +13,30 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from giclee_app.app_paths import atomic_write_text, data_path
 
-DATA_DIR = Path(__file__).resolve().parent / "data"
-PROMPTS_FILE = DATA_DIR / "prompts.json"
-CONTEXT_IMAGES_DIR = DATA_DIR / "context_images"
-CONTEXT_FILES_DIR = DATA_DIR / "context_files"
-CONTEXT_VIDEOS_DIR = DATA_DIR / "context_videos"
+
+_LEGACY_DATA_DIR = Path(__file__).resolve().parent / "data"
+_DEFAULT_PROMPTS_FILE = _LEGACY_DATA_DIR / "prompts.json"
+_DEFAULT_CONTEXT_IMAGES_DIR = _LEGACY_DATA_DIR / "context_images"
+_DEFAULT_CONTEXT_FILES_DIR = _LEGACY_DATA_DIR / "context_files"
+_DEFAULT_CONTEXT_VIDEOS_DIR = _LEGACY_DATA_DIR / "context_videos"
+
+# Compatibility aliases retained for existing tests and temporary tools.
+DATA_DIR = _LEGACY_DATA_DIR
+PROMPTS_FILE = _DEFAULT_PROMPTS_FILE
+CONTEXT_IMAGES_DIR = _DEFAULT_CONTEXT_IMAGES_DIR
+CONTEXT_FILES_DIR = _DEFAULT_CONTEXT_FILES_DIR
+CONTEXT_VIDEOS_DIR = _DEFAULT_CONTEXT_VIDEOS_DIR
+
+_PROMPTS = data_path(
+    "Komponenty/bazapromptow/data/prompts.json",
+    legacy=_DEFAULT_PROMPTS_FILE,
+)
+_CONTEXT_ROOT = data_path(
+    "Komponenty/bazapromptow/data/.path",
+    legacy=_LEGACY_DATA_DIR / ".path",
+)
 CONTEXT_IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp"}
 CONTEXT_VIDEO_SUFFIXES = {".mp4", ".webm", ".mov", ".avi", ".mkv", ".m4v", ".wmv"}
 CONTEXT_FILE_BLOCKED_SUFFIXES = {
@@ -42,6 +64,83 @@ FOLDER_ALL = "__all__"
 FOLDER_UNCATEGORIZED = "__none__"
 DEFAULT_FOLDER_ID = "strona-glowna"
 DEFAULT_FOLDER_LABEL = "Strona Główna"
+
+
+def _default_layout_active() -> bool:
+    return Path(DATA_DIR) == _LEGACY_DATA_DIR
+
+
+def _prompts_read_path() -> Path:
+    if Path(PROMPTS_FILE) != _DEFAULT_PROMPTS_FILE:
+        return Path(PROMPTS_FILE)
+    if not _default_layout_active():
+        return Path(DATA_DIR) / "prompts.json"
+    return _PROMPTS.read_path()
+
+
+def _prompts_write_path() -> Path:
+    if Path(PROMPTS_FILE) != _DEFAULT_PROMPTS_FILE:
+        return Path(PROMPTS_FILE)
+    if not _default_layout_active():
+        return Path(DATA_DIR) / "prompts.json"
+    return _PROMPTS.write_path
+
+
+def _external_data_dir() -> Path:
+    if not _default_layout_active():
+        return Path(DATA_DIR)
+    return _CONTEXT_ROOT.write_path.parent
+
+
+def _context_override_dir(kind: str) -> Path | None:
+    current = {
+        "context_images": Path(CONTEXT_IMAGES_DIR),
+        "context_files": Path(CONTEXT_FILES_DIR),
+        "context_videos": Path(CONTEXT_VIDEOS_DIR),
+    }[kind]
+    default = {
+        "context_images": _DEFAULT_CONTEXT_IMAGES_DIR,
+        "context_files": _DEFAULT_CONTEXT_FILES_DIR,
+        "context_videos": _DEFAULT_CONTEXT_VIDEOS_DIR,
+    }[kind]
+    if current != default:
+        return current
+    if not _default_layout_active():
+        return Path(DATA_DIR) / kind
+    return None
+
+
+def _safe_context_rel(rel_path: str) -> Path:
+    normalized = rel_path.replace("\\", "/").strip().lstrip("/")
+    parts = [part for part in normalized.split("/") if part not in ("", ".")]
+    if not parts or any(part == ".." for part in parts):
+        raise ValueError(f"Niebezpieczna ścieżka kontekstu: {rel_path!r}")
+    return Path(*parts)
+
+
+def _context_write_path(rel_path: str) -> Path:
+    relative = _safe_context_rel(rel_path)
+    kind = relative.parts[0]
+    override = _context_override_dir(kind)
+    if override is not None:
+        return override.joinpath(*relative.parts[1:])
+    return _external_data_dir() / relative
+
+
+def _context_read_path(rel_path: str) -> Path:
+    external = _context_write_path(rel_path)
+    if external.exists():
+        return external
+    if _default_layout_active():
+        legacy = _LEGACY_DATA_DIR / _safe_context_rel(rel_path)
+        if legacy.exists():
+            return legacy
+    return external
+
+
+def _context_write_dir(kind: str) -> Path:
+    override = _context_override_dir(kind)
+    return override if override is not None else _external_data_dir() / kind
 
 
 @dataclass
@@ -287,11 +386,11 @@ def ensure_default_folders(store: PromptStore) -> PromptStore:
 
 
 def load_prompts() -> PromptStore:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    if not PROMPTS_FILE.is_file():
+    path = _prompts_read_path()
+    if not path.is_file():
         return ensure_default_folders(PromptStore())
     try:
-        data = json.loads(PROMPTS_FILE.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
         if isinstance(data, dict):
             return PromptStore.from_dict(data)
     except (OSError, json.JSONDecodeError, TypeError, ValueError):
@@ -300,10 +399,9 @@ def load_prompts() -> PromptStore:
 
 
 def save_prompts(store: PromptStore) -> None:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    PROMPTS_FILE.write_text(
+    atomic_write_text(
+        _prompts_write_path(),
         json.dumps(store.to_dict(), ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
     )
 
 
@@ -352,7 +450,7 @@ def normalize_video_preview_range(
 
 
 def context_image_path(rel_path: str) -> Path:
-    return DATA_DIR / rel_path.replace("\\", "/")
+    return _context_read_path(rel_path)
 
 
 def context_file_path(rel_path: str) -> Path:
@@ -395,11 +493,11 @@ def import_context_image(prompt_id: str, source: Path) -> str:
         raise ValueError(f"Nieobsługiwany format obrazu. Dozwolone: {allowed}")
     if not source.is_file():
         raise ValueError(f"Plik nie istnieje: {source}")
-    dest_dir = CONTEXT_IMAGES_DIR / prompt_id
+    dest_dir = _context_write_dir("context_images") / prompt_id
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest_name = f"{uuid.uuid4().hex[:12]}{suffix}"
     rel = f"context_images/{prompt_id}/{dest_name}"
-    dest = context_image_path(rel)
+    dest = _context_write_path(rel)
     shutil.copy2(source, dest)
     return rel
 
@@ -413,11 +511,11 @@ def import_context_image_pil(prompt_id: str, image: object) -> str:
 
     if not isinstance(image, Image.Image):
         raise TypeError("Oczekiwano obrazu PIL.Image")
-    dest_dir = CONTEXT_IMAGES_DIR / prompt_id
+    dest_dir = _context_write_dir("context_images") / prompt_id
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest_name = f"{uuid.uuid4().hex[:12]}.png"
     rel = f"context_images/{prompt_id}/{dest_name}"
-    dest = context_image_path(rel)
+    dest = _context_write_path(rel)
     to_save = image
     if to_save.mode not in ("RGB", "RGBA", "L"):
         to_save = to_save.convert("RGB")
@@ -430,13 +528,13 @@ def import_context_file(prompt_id: str, source: Path) -> str:
     suffix = source.suffix.lower()
     if suffix in CONTEXT_IMAGE_SUFFIXES:
         raise ValueError("To jest grafika — użyj sekcji «Grafiki kontekstu».")
-    dest_dir = CONTEXT_FILES_DIR / prompt_id
+    dest_dir = _context_write_dir("context_files") / prompt_id
     dest_dir.mkdir(parents=True, exist_ok=True)
     stem = source.stem[:48] or "plik"
     safe_stem = "".join(ch if ch.isalnum() or ch in "-_" else "_" for ch in stem)
     dest_name = f"{safe_stem}_{uuid.uuid4().hex[:8]}{suffix or '.bin'}"
     rel = f"context_files/{prompt_id}/{dest_name}"
-    dest = context_file_path(rel)
+    dest = _context_write_path(rel)
     shutil.copy2(source, dest)
     return rel
 
@@ -444,27 +542,27 @@ def import_context_file(prompt_id: str, source: Path) -> str:
 def import_context_video(prompt_id: str, source: Path) -> str:
     _validate_context_video_source(source)
     suffix = source.suffix.lower()
-    dest_dir = CONTEXT_VIDEOS_DIR / prompt_id
+    dest_dir = _context_write_dir("context_videos") / prompt_id
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest_name = f"{uuid.uuid4().hex[:12]}{suffix}"
     rel = f"context_videos/{prompt_id}/{dest_name}"
-    dest = context_video_path(rel)
+    dest = _context_write_path(rel)
     shutil.copy2(source, dest)
     try:
         from .media_preview import extract_video_poster
 
-        extract_video_poster(dest, context_video_poster_path(rel))
+        extract_video_poster(dest, _context_video_poster_write_path(rel))
     except Exception:
         pass
     return rel
 
 
 def delete_context_image_file(rel_path: str) -> None:
-    path = context_image_path(rel_path)
+    path = _context_write_path(rel_path)
     if path.is_file():
         path.unlink(missing_ok=True)
     prompt_dir = path.parent
-    if prompt_dir.is_dir() and prompt_dir != CONTEXT_IMAGES_DIR:
+    if prompt_dir.is_dir() and prompt_dir != _context_write_dir("context_images"):
         try:
             next(prompt_dir.iterdir())
         except StopIteration:
@@ -472,11 +570,11 @@ def delete_context_image_file(rel_path: str) -> None:
 
 
 def delete_context_file(rel_path: str) -> None:
-    path = context_file_path(rel_path)
+    path = _context_write_path(rel_path)
     if path.is_file():
         path.unlink(missing_ok=True)
     prompt_dir = path.parent
-    if prompt_dir.is_dir() and prompt_dir != CONTEXT_FILES_DIR:
+    if prompt_dir.is_dir() and prompt_dir != _context_write_dir("context_files"):
         try:
             next(prompt_dir.iterdir())
         except StopIteration:
@@ -484,7 +582,7 @@ def delete_context_file(rel_path: str) -> None:
 
 
 def context_video_path(rel_path: str) -> Path:
-    return context_file_path(rel_path)
+    return _context_read_path(rel_path)
 
 
 def context_video_poster_path(video_rel: str) -> Path:
@@ -492,15 +590,20 @@ def context_video_poster_path(video_rel: str) -> Path:
     return video.with_name(f"{video.stem}_poster.jpg")
 
 
+def _context_video_poster_write_path(video_rel: str) -> Path:
+    video = _context_write_path(video_rel)
+    return video.with_name(f"{video.stem}_poster.jpg")
+
+
 def delete_context_video_file(rel_path: str) -> None:
-    path = context_video_path(rel_path)
-    poster = context_video_poster_path(rel_path)
+    path = _context_write_path(rel_path)
+    poster = _context_video_poster_write_path(rel_path)
     if poster.is_file():
         poster.unlink(missing_ok=True)
     if path.is_file():
         path.unlink(missing_ok=True)
     prompt_dir = path.parent
-    if prompt_dir.is_dir() and prompt_dir != CONTEXT_VIDEOS_DIR:
+    if prompt_dir.is_dir() and prompt_dir != _context_write_dir("context_videos"):
         try:
             next(prompt_dir.iterdir())
         except StopIteration:
@@ -511,7 +614,7 @@ def delete_prompt_context_videos(prompt_id: str, videos: list[str] | None = None
     if videos:
         for rel in videos:
             delete_context_video_file(rel)
-    prompt_dir = CONTEXT_VIDEOS_DIR / prompt_id
+    prompt_dir = _context_write_dir("context_videos") / prompt_id
     if prompt_dir.is_dir():
         shutil.rmtree(prompt_dir, ignore_errors=True)
 
@@ -520,7 +623,7 @@ def delete_prompt_context_images(prompt_id: str, images: list[str] | None = None
     if images:
         for rel in images:
             delete_context_image_file(rel)
-    prompt_dir = CONTEXT_IMAGES_DIR / prompt_id
+    prompt_dir = _context_write_dir("context_images") / prompt_id
     if prompt_dir.is_dir():
         shutil.rmtree(prompt_dir, ignore_errors=True)
 
@@ -529,7 +632,7 @@ def delete_prompt_context_files(prompt_id: str, files: list[str] | None = None) 
     if files:
         for rel in files:
             delete_context_file(rel)
-    prompt_dir = CONTEXT_FILES_DIR / prompt_id
+    prompt_dir = _context_write_dir("context_files") / prompt_id
     if prompt_dir.is_dir():
         shutil.rmtree(prompt_dir, ignore_errors=True)
 

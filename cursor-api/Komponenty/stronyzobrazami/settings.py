@@ -6,7 +6,17 @@ import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
-_SETTINGS_PATH = Path(__file__).resolve().parent / "data" / "settings.json"
+from giclee_app.app_paths import atomic_write_text, config_path
+
+_LEGACY_SETTINGS_PATH = Path(__file__).resolve().parent / "data" / "settings.json"
+_SETTINGS_PATH = _LEGACY_SETTINGS_PATH
+_SETTINGS = config_path("Komponenty/stronyzobrazami/data/settings.json", legacy=_LEGACY_SETTINGS_PATH)
+
+
+def _settings_path(*, for_write: bool) -> Path:
+    if Path(_SETTINGS_PATH) != _LEGACY_SETTINGS_PATH:
+        return Path(_SETTINGS_PATH)
+    return _SETTINGS.write_path if for_write else _SETTINGS.read_path()
 
 
 @dataclass
@@ -19,10 +29,11 @@ class ModuleSettings:
 
 
 def load_settings() -> ModuleSettings:
-    if not _SETTINGS_PATH.is_file():
+    path = _settings_path(for_write=False)
+    if not path.is_file():
         return ModuleSettings()
     try:
-        raw = json.loads(_SETTINGS_PATH.read_text(encoding="utf-8"))
+        raw = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError, json.JSONDecodeError):
         return ModuleSettings()
     if not isinstance(raw, dict):
@@ -40,8 +51,4 @@ def load_settings() -> ModuleSettings:
 
 
 def save_settings(settings: ModuleSettings) -> None:
-    _SETTINGS_PATH.parent.mkdir(parents=True, exist_ok=True)
-    _SETTINGS_PATH.write_text(
-        json.dumps(asdict(settings), ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    atomic_write_text(_settings_path(for_write=True), json.dumps(asdict(settings), ensure_ascii=False, indent=2) + "\n")

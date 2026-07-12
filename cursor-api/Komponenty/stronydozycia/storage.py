@@ -9,8 +9,18 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-DATA_DIR = Path(__file__).resolve().parent / "data"
-PAGES_FILE = DATA_DIR / "pages.json"
+from giclee_app.app_paths import atomic_write_text, data_path
+
+_LEGACY_DATA_DIR = Path(__file__).resolve().parent / "data"
+DATA_DIR = _LEGACY_DATA_DIR
+PAGES_FILE = _LEGACY_DATA_DIR / "pages.json"
+_STORE_PATH = data_path("Komponenty/stronydozycia/data/pages.json", legacy=PAGES_FILE)
+
+
+def _store_path(*, for_write: bool) -> Path:
+    if Path(PAGES_FILE) != _LEGACY_DATA_DIR / "pages.json":
+        return Path(PAGES_FILE)
+    return _STORE_PATH.write_path if for_write else _STORE_PATH.read_path()
 
 CATEGORY_INSPIRATIONS = "Inspiracje WWW"
 
@@ -153,10 +163,11 @@ def _page_from_dict(row: dict[str, Any]) -> PageEntry | None:
 
 
 def load_pages() -> PageStore:
-    if not PAGES_FILE.is_file():
+    path = _store_path(for_write=False)
+    if not path.is_file():
         return PageStore()
     try:
-        data = json.loads(PAGES_FILE.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError, TypeError, ValueError):
         return PageStore()
     raw_pages = data.get("pages") if isinstance(data, dict) else None
@@ -181,13 +192,9 @@ def load_pages() -> PageStore:
 
 
 def save_pages(store: PageStore) -> None:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
     payload = {
         "version": 1,
         "categories": list(store.categories),
         "pages": [_page_to_dict(p) for p in store.sorted()],
     }
-    PAGES_FILE.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    atomic_write_text(_store_path(for_write=True), json.dumps(payload, ensure_ascii=False, indent=2) + "\n")

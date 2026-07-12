@@ -1,23 +1,8 @@
 """Persystencja danych komponentu Blog.
 
-Pliki zapisywane w `Komponenty/blog/data/`:
-- topics.json         - lista propozycji tematow
-- articles_cache.json - ostatnio zaciagnieta lista postow z Shopify (snapshot)
-
-Format topics.json:
-    {
-      "topics": [
-        {
-          "id": "uuid-like-string",
-          "title": "Tytul propozycji",
-          "reason": "Krotkie uzasadnienie dlaczego warto napisac",
-          "keywords": ["reprodukcja", "art deco", "..."],
-          "created_at": "2026-04-20T10:00:00",
-          "used": false
-        },
-        ...
-      ]
-    }
+Odczyt preferuje lokalizacje AppData utworzone przez Stage 1E. Stare pliki w
+`Komponenty/blog/data/` pozostają tymczasowym fallbackiem tylko do odczytu.
+Każdy nowy zapis trafia wyłącznie poza repozytorium.
 """
 
 from __future__ import annotations
@@ -30,14 +15,18 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from giclee_app.app_paths import atomic_write_text, cache_path, data_path
+
 _COMPONENT_DIR = Path(__file__).resolve().parent
-_DATA_DIR = _COMPONENT_DIR / "data"
-_TOPICS_FILE = _DATA_DIR / "topics.json"
-_ARTICLES_CACHE_FILE = _DATA_DIR / "articles_cache.json"
-
-
-def _ensure_dir() -> None:
-    _DATA_DIR.mkdir(parents=True, exist_ok=True)
+_LEGACY_DATA_DIR = _COMPONENT_DIR / "data"
+_TOPICS = data_path(
+    "Komponenty/blog/data/topics.json",
+    legacy=_LEGACY_DATA_DIR / "topics.json",
+)
+_ARTICLES_CACHE = cache_path(
+    "Komponenty/blog/data/articles_cache.json",
+    legacy=_LEGACY_DATA_DIR / "articles_cache.json",
+)
 
 
 @dataclass
@@ -65,12 +54,13 @@ class TopicProposal:
 # Topics (propozycje)
 # ---------------------------------------------------------------------------
 
+
 def load_topics() -> list[TopicProposal]:
-    _ensure_dir()
-    if not _TOPICS_FILE.is_file():
+    path = _TOPICS.read_path()
+    if not path.is_file():
         return []
     try:
-        data = json.loads(_TOPICS_FILE.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return []
     raw = data.get("topics", []) if isinstance(data, dict) else []
@@ -78,28 +68,30 @@ def load_topics() -> list[TopicProposal]:
     for item in raw:
         if not isinstance(item, dict):
             continue
-        out.append(TopicProposal(
-            id=str(item.get("id") or uuid.uuid4().hex[:12]),
-            title=str(item.get("title") or "").strip(),
-            reason=str(item.get("reason") or "").strip(),
-            keywords=[str(k).strip() for k in (item.get("keywords") or []) if str(k).strip()],
-            created_at=str(item.get("created_at") or ""),
-            used=bool(item.get("used", False)),
-        ))
+        out.append(
+            TopicProposal(
+                id=str(item.get("id") or uuid.uuid4().hex[:12]),
+                title=str(item.get("title") or "").strip(),
+                reason=str(item.get("reason") or "").strip(),
+                keywords=[str(k).strip() for k in (item.get("keywords") or []) if str(k).strip()],
+                created_at=str(item.get("created_at") or ""),
+                used=bool(item.get("used", False)),
+            )
+        )
     return [t for t in out if t.title]
 
 
 def save_topics(topics: list[TopicProposal]) -> None:
-    _ensure_dir()
     payload = {"topics": [asdict(t) for t in topics]}
-    _TOPICS_FILE.write_text(
+    atomic_write_text(
+        _TOPICS.write_path,
         json.dumps(payload, indent=2, ensure_ascii=False),
-        encoding="utf-8",
     )
 
 
 def add_topics(new_items: list[TopicProposal]) -> int:
     """Dodaje tematy, pomijajac duplikaty po znormalizowanym tytule. Zwraca ile dodano."""
+
     existing = load_topics()
     seen = {t.title.strip().lower() for t in existing}
     added = 0
@@ -127,9 +119,9 @@ def remove_topic(topic_id: str) -> bool:
 def mark_topic_used(topic_id: str, used: bool = True) -> bool:
     topics = load_topics()
     changed = False
-    for t in topics:
-        if t.id == topic_id:
-            t.used = used
+    for topic in topics:
+        if topic.id == topic_id:
+            topic.used = used
             changed = True
             break
     if changed:
@@ -141,12 +133,13 @@ def mark_topic_used(topic_id: str, used: bool = True) -> bool:
 # Articles cache (snapshot obecnych postow)
 # ---------------------------------------------------------------------------
 
+
 def load_articles_cache() -> dict[str, Any]:
-    _ensure_dir()
-    if not _ARTICLES_CACHE_FILE.is_file():
+    path = _ARTICLES_CACHE.read_path()
+    if not path.is_file():
         return {"fetched_at": 0, "articles": []}
     try:
-        data = json.loads(_ARTICLES_CACHE_FILE.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(data, dict):
             return {"fetched_at": 0, "articles": []}
         return data
@@ -155,9 +148,8 @@ def load_articles_cache() -> dict[str, Any]:
 
 
 def save_articles_cache(articles: list[dict[str, Any]]) -> None:
-    _ensure_dir()
     payload = {"fetched_at": int(time.time()), "articles": articles}
-    _ARTICLES_CACHE_FILE.write_text(
+    atomic_write_text(
+        _ARTICLES_CACHE.write_path,
         json.dumps(payload, indent=2, ensure_ascii=False),
-        encoding="utf-8",
     )

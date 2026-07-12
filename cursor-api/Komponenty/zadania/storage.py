@@ -43,15 +43,27 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from giclee_app.app_paths import atomic_write_text, cache_path, data_path
+
 _COMPONENT_DIR = Path(__file__).resolve().parent
-_DATA_DIR = _COMPONENT_DIR / "data"
-_TASKS_FILE = _DATA_DIR / "tasks.json"
-_SIGNALS_FILE = _DATA_DIR / "signals_cache.json"
-_REMINDERS_FILE = _DATA_DIR / "reminders.json"
+_LEGACY_DATA_DIR = _COMPONENT_DIR / "data"
+_DATA_DIR = _LEGACY_DATA_DIR
+_TASKS_FILE = _LEGACY_DATA_DIR / "tasks.json"
+_SIGNALS_FILE = _LEGACY_DATA_DIR / "signals_cache.json"
+_REMINDERS_FILE = _LEGACY_DATA_DIR / "reminders.json"
+_TASKS = data_path("Komponenty/zadania/data/tasks.json", legacy=_TASKS_FILE)
+_SIGNALS = cache_path("Komponenty/zadania/data/signals_cache.json", legacy=_SIGNALS_FILE)
+_REMINDERS = data_path("Komponenty/zadania/data/reminders.json", legacy=_REMINDERS_FILE)
+
+
+def _resolved_path(current: Path, default: Path, app_path, *, for_write: bool) -> Path:
+    if Path(current) != default:
+        return Path(current)
+    return app_path.write_path if for_write else app_path.read_path()
 
 
 def _ensure_dir() -> None:
-    _DATA_DIR.mkdir(parents=True, exist_ok=True)
+    _TASKS.write_path.parent.mkdir(parents=True, exist_ok=True)
 
 
 def _now_iso() -> str:
@@ -267,11 +279,11 @@ def _from_dict(d: dict[str, Any]) -> Task:
 # ---------------------------------------------------------------------------
 
 def load_tasks() -> list[Task]:
-    _ensure_dir()
-    if not _TASKS_FILE.is_file():
+    path = _resolved_path(_TASKS_FILE, _LEGACY_DATA_DIR / "tasks.json", _TASKS, for_write=False)
+    if not path.is_file():
         return []
     try:
-        data = json.loads(_TASKS_FILE.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return []
     raw = data.get("tasks", []) if isinstance(data, dict) else []
@@ -279,12 +291,9 @@ def load_tasks() -> list[Task]:
 
 
 def save_tasks(tasks: list[Task]) -> None:
-    _ensure_dir()
     payload = {"tasks": [asdict(t) for t in tasks]}
-    _TASKS_FILE.write_text(
-        json.dumps(payload, indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
+    path = _resolved_path(_TASKS_FILE, _LEGACY_DATA_DIR / "tasks.json", _TASKS, for_write=True)
+    atomic_write_text(path, json.dumps(payload, indent=2, ensure_ascii=False))
 
 
 def add_tasks(new_items: list[Task], *, dedup_key: str = "title+due") -> int:
@@ -374,11 +383,11 @@ def remove_task(task_id: str) -> bool:
 # ---------------------------------------------------------------------------
 
 def load_signals_cache() -> dict[str, Any]:
-    _ensure_dir()
-    if not _SIGNALS_FILE.is_file():
+    path = _resolved_path(_SIGNALS_FILE, _LEGACY_DATA_DIR / "signals_cache.json", _SIGNALS, for_write=False)
+    if not path.is_file():
         return {"fetched_at": 0, "signals": {}}
     try:
-        data = json.loads(_SIGNALS_FILE.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(data, dict):
             return {"fetched_at": 0, "signals": {}}
         return data
@@ -387,12 +396,9 @@ def load_signals_cache() -> dict[str, Any]:
 
 
 def save_signals_cache(signals: dict[str, Any]) -> None:
-    _ensure_dir()
     payload = {"fetched_at": int(time.time()), "signals": signals}
-    _SIGNALS_FILE.write_text(
-        json.dumps(payload, indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
+    path = _resolved_path(_SIGNALS_FILE, _LEGACY_DATA_DIR / "signals_cache.json", _SIGNALS, for_write=True)
+    atomic_write_text(path, json.dumps(payload, indent=2, ensure_ascii=False))
 
 
 # ---------------------------------------------------------------------------
@@ -400,22 +406,19 @@ def save_signals_cache(signals: dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 
 def load_reminders() -> dict[str, Any]:
-    _ensure_dir()
-    if not _REMINDERS_FILE.is_file():
+    path = _resolved_path(_REMINDERS_FILE, _LEGACY_DATA_DIR / "reminders.json", _REMINDERS, for_write=False)
+    if not path.is_file():
         return {}
     try:
-        data = json.loads(_REMINDERS_FILE.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
         return data if isinstance(data, dict) else {}
     except (OSError, json.JSONDecodeError):
         return {}
 
 
 def save_reminders(data: dict[str, Any]) -> None:
-    _ensure_dir()
-    _REMINDERS_FILE.write_text(
-        json.dumps(data, indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
+    path = _resolved_path(_REMINDERS_FILE, _LEGACY_DATA_DIR / "reminders.json", _REMINDERS, for_write=True)
+    atomic_write_text(path, json.dumps(data, indent=2, ensure_ascii=False))
 
 
 def mark_reminder_shown(key: str, value: str) -> None:

@@ -6,7 +6,15 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .store import data_dir
+from .store import (
+    load_settings,
+    save_cost_lines,
+    save_helpers,
+    save_materials,
+    save_price_table,
+    save_settings,
+    save_wood_defaults,
+)
 
 try:
     import openpyxl
@@ -42,8 +50,6 @@ def import_from_xlsm(source: str | Path) -> dict[str, int]:
     if not path.is_file():
         raise FileNotFoundError(f"Nie znaleziono pliku: {path}")
 
-    out = data_dir()
-    out.mkdir(parents=True, exist_ok=True)
     wb = openpyxl.load_workbook(path, data_only=True)
 
     ws = wb["CENNIK MATERIAŁÓW"]
@@ -103,13 +109,7 @@ def import_from_xlsm(source: str | Path) -> dict[str, int]:
     }
 
     ws4 = wb["CENNIK"]
-    existing_settings: dict[str, Any] = {}
-    settings_path = out / "settings.json"
-    if settings_path.is_file():
-        try:
-            existing_settings = json.loads(settings_path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
-            existing_settings = {}
+    existing_settings: dict[str, Any] = load_settings()
     settings = {
         "profile": ws4.cell(9, 4).value,
         "frame_type": ws4.cell(5, 5).value,
@@ -160,15 +160,12 @@ def import_from_xlsm(source: str | Path) -> dict[str, int]:
             section = "shipping"
         cost_lines.append({"name": label, "section": section, "costs": costs})
 
-    def dump(name: str, payload: Any) -> None:
-        (out / name).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-
-    dump("materials.json", materials)
-    dump("helpers.json", helpers)
-    dump("price_table.json", price_table)
-    dump("wood_defaults.json", wood_defaults)
-    dump("settings.json", settings)
-    dump("cost_lines.json", cost_lines)
+    save_materials(materials)
+    save_helpers(helpers)
+    save_price_table(price_table)
+    save_wood_defaults(wood_defaults)
+    save_settings(settings)
+    save_cost_lines(cost_lines)
 
     wb.close()
     return {

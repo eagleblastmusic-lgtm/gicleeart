@@ -6,12 +6,22 @@ import json
 from pathlib import Path
 from typing import Literal
 
+from giclee_app.app_paths import atomic_write_text, config_path
+
 CarouselVersion = Literal["Karuzela1", "Karuzela2"]
 ShowcaseLook = Literal["V1", "V2", "V3"]
 SHOWCASE_LOOKS = frozenset({"V1", "V2", "V3"})
 
 _COMPONENT_DIR = Path(__file__).resolve().parent
-_SETTINGS_FILE = _COMPONENT_DIR / "settings.json"
+_LEGACY_SETTINGS_FILE = _COMPONENT_DIR / "settings.json"
+_SETTINGS_FILE = _LEGACY_SETTINGS_FILE
+_SETTINGS = config_path("Komponenty/karuzela/settings.json", legacy=_LEGACY_SETTINGS_FILE)
+
+
+def _settings_path(*, for_write: bool) -> Path:
+    if Path(_SETTINGS_FILE) != _LEGACY_SETTINGS_FILE:
+        return Path(_SETTINGS_FILE)
+    return _SETTINGS.write_path if for_write else _SETTINGS.read_path()
 _THEME_ASSETS_DIR = _COMPONENT_DIR.parents[2] / "assets"
 _THEME_CONFIG_FILE = _THEME_ASSETS_DIR / "giclee-carousel-config.js"
 
@@ -25,21 +35,18 @@ HOVER_BLUR_STORAGE_KEY = "giclee-karuzela-hover-blur"
 
 
 def load_settings() -> dict:
-    if not _SETTINGS_FILE.is_file():
+    path = _settings_path(for_write=False)
+    if not path.is_file():
         return {}
     try:
-        data = json.loads(_SETTINGS_FILE.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
         return data if isinstance(data, dict) else {}
     except (OSError, json.JSONDecodeError):
         return {}
 
 
 def save_settings(data: dict) -> None:
-    _SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    _SETTINGS_FILE.write_text(
-        json.dumps(data, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    atomic_write_text(_settings_path(for_write=True), json.dumps(data, ensure_ascii=False, indent=2) + "\n")
 
 
 def get_carousel_version() -> CarouselVersion:

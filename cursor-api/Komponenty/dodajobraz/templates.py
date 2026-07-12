@@ -37,13 +37,31 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from giclee_app.app_paths import atomic_write_text, config_path
+
 from . import shopify_client as sc
 
 # Importujemy tylko wartosc, nie zeby inportowac cale create.py
 REFERENCE_PRODUCT_ID = 15524677845340
 
-_DATA_DIR = Path(__file__).resolve().parent / "data"
-_TEMPLATES_FILE = _DATA_DIR / "variant_templates.json"
+_LEGACY_DATA_DIR = Path(__file__).resolve().parent / "data"
+_LEGACY_TEMPLATES_FILE = _LEGACY_DATA_DIR / "variant_templates.json"
+_DATA_DIR = _LEGACY_DATA_DIR
+_TEMPLATES_FILE = _LEGACY_TEMPLATES_FILE
+
+
+def _templates_path(*, for_write: bool = False) -> Path:
+    data_dir = Path(_DATA_DIR)
+    current = Path(_TEMPLATES_FILE)
+    if data_dir != _LEGACY_DATA_DIR and current == _LEGACY_TEMPLATES_FILE:
+        current = data_dir / "variant_templates.json"
+    if current != _LEGACY_TEMPLATES_FILE:
+        return current
+    app_path = config_path(
+        "Komponenty/dodajobraz/data/variant_templates.json",
+        legacy=_LEGACY_TEMPLATES_FILE,
+    )
+    return app_path.write_path if for_write else app_path.read_path()
 
 # Pola wariantu, ktore kopiujemy z Shopify / trzymamy lokalnie.
 _COPY_KEYS: tuple[str, ...] = (
@@ -97,7 +115,7 @@ class VariantTemplate:
 # ---------------------------------------------------------------------------
 
 def _ensure_dir() -> None:
-    _DATA_DIR.mkdir(parents=True, exist_ok=True)
+    _templates_path(for_write=True).parent.mkdir(parents=True, exist_ok=True)
 
 
 def _from_dict(d: dict[str, Any]) -> VariantTemplate:
@@ -115,10 +133,11 @@ def _from_dict(d: dict[str, Any]) -> VariantTemplate:
 
 def load_templates() -> list[VariantTemplate]:
     _ensure_dir()
-    if not _TEMPLATES_FILE.is_file():
+    path = _templates_path()
+    if not path.is_file():
         return []
     try:
-        data = json.loads(_TEMPLATES_FILE.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return []
     raw = data.get("templates", []) if isinstance(data, dict) else []
@@ -155,9 +174,9 @@ def save_templates(templates: list[VariantTemplate]) -> None:
     if templates and not default_seen:
         templates[0].is_default = True
     payload = {"templates": [asdict(t) for t in templates]}
-    _TEMPLATES_FILE.write_text(
+    atomic_write_text(
+        _templates_path(for_write=True),
         json.dumps(payload, indent=2, ensure_ascii=False),
-        encoding="utf-8",
     )
 
 

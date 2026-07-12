@@ -13,12 +13,22 @@ from datetime import datetime, timezone
 from html.parser import HTMLParser
 from pathlib import Path
 
+from giclee_app.app_paths import atomic_write_text, data_path
+
 from .env_config import client_orders_base_dir
 from .imap_client import fetch_message_html
 
 USER_AGENT = "GicleeApp/1.0 (poczta-zamowienia)"
-_DATA_DIR = Path(__file__).resolve().parent / "data"
-_PROCESSED_FILE = _DATA_DIR / "processed_client_orders.json"
+_LEGACY_DATA_DIR = Path(__file__).resolve().parent / "data"
+_DATA_DIR = _LEGACY_DATA_DIR
+_PROCESSED_FILE = _LEGACY_DATA_DIR / "processed_client_orders.json"
+_PROCESSED = data_path("Komponenty/poczta/data/processed_client_orders.json", legacy=_PROCESSED_FILE)
+
+
+def _processed_path(*, for_write: bool) -> Path:
+    if Path(_PROCESSED_FILE) != _LEGACY_DATA_DIR / "processed_client_orders.json":
+        return Path(_PROCESSED_FILE)
+    return _PROCESSED.write_path if for_write else _PROCESSED.read_path()
 
 # Windows nie pozwala na „:” w nazwie folderu — używamy wariantu bez dwukropka.
 _FOLDER_PREFIX = "Numer zamówienia"
@@ -394,11 +404,11 @@ def _build_client_txt(order: ParsedClientOrder) -> str:
 
 
 def _load_processed() -> dict[str, object]:
-    _DATA_DIR.mkdir(parents=True, exist_ok=True)
-    if not _PROCESSED_FILE.is_file():
+    path = _processed_path(for_write=False)
+    if not path.is_file():
         return {"uids": [], "orders": {}}
     try:
-        raw = json.loads(_PROCESSED_FILE.read_text(encoding="utf-8"))
+        raw = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return {"uids": [], "orders": {}}
     if not isinstance(raw, dict):
@@ -409,8 +419,7 @@ def _load_processed() -> dict[str, object]:
 
 
 def _save_processed(data: dict[str, object]) -> None:
-    _DATA_DIR.mkdir(parents=True, exist_ok=True)
-    _PROCESSED_FILE.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    atomic_write_text(_processed_path(for_write=True), json.dumps(data, indent=2, ensure_ascii=False))
 
 
 def is_uid_processed(uid: str) -> bool:

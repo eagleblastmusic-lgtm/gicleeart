@@ -9,8 +9,18 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-DATA_DIR = Path(__file__).resolve().parent / "data"
-SITES_FILE = DATA_DIR / "sites.json"
+from giclee_app.app_paths import atomic_write_text, data_path
+
+_LEGACY_DATA_DIR = Path(__file__).resolve().parent / "data"
+DATA_DIR = _LEGACY_DATA_DIR
+SITES_FILE = _LEGACY_DATA_DIR / "sites.json"
+_STORE_PATH = data_path("Komponenty/stronyzobrazami/data/sites.json", legacy=SITES_FILE)
+
+
+def _store_path(*, for_write: bool) -> Path:
+    if Path(SITES_FILE) != _LEGACY_DATA_DIR / "sites.json":
+        return Path(SITES_FILE)
+    return _STORE_PATH.write_path if for_write else _STORE_PATH.read_path()
 
 DEFAULT_CATEGORIES: tuple[str, ...] = (
     "Muzeum",
@@ -141,10 +151,11 @@ def _site_from_dict(row: dict[str, Any]) -> SiteEntry | None:
 
 
 def load_sites() -> SiteStore:
-    if not SITES_FILE.is_file():
+    path = _store_path(for_write=False)
+    if not path.is_file():
         return SiteStore()
     try:
-        data = json.loads(SITES_FILE.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError, TypeError, ValueError):
         return SiteStore()
     raw_sites = data.get("sites") if isinstance(data, dict) else None
@@ -169,13 +180,9 @@ def load_sites() -> SiteStore:
 
 
 def save_sites(store: SiteStore) -> None:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
     payload = {
         "version": 1,
         "categories": list(store.categories),
         "sites": [_site_to_dict(s) for s in store.sorted()],
     }
-    SITES_FILE.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    atomic_write_text(_store_path(for_write=True), json.dumps(payload, ensure_ascii=False, indent=2) + "\n")

@@ -17,7 +17,21 @@ from dataclasses import dataclass, asdict, field
 from pathlib import Path
 from typing import Any
 
-CONFIG_PATH = Path(__file__).resolve().parent / "markets_config.json"
+from giclee_app.app_paths import atomic_write_text, config_path
+
+_LEGACY_CONFIG_PATH = Path(__file__).resolve().parent / "markets_config.json"
+CONFIG_PATH = _LEGACY_CONFIG_PATH
+
+
+def _config_file(*, for_write: bool = False) -> Path:
+    current = Path(CONFIG_PATH)
+    if current != _LEGACY_CONFIG_PATH:
+        return current
+    app_path = config_path(
+        "Komponenty/dodajobraz/markets_config.json",
+        legacy=_LEGACY_CONFIG_PATH,
+    )
+    return app_path.write_path if for_write else app_path.read_path()
 
 
 @dataclass
@@ -50,15 +64,16 @@ class Market:
 
 
 def _read_raw() -> dict:
-    if not CONFIG_PATH.is_file():
-        raise FileNotFoundError(f"Brak pliku konfiguracji: {CONFIG_PATH}")
-    return json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+    path = _config_file()
+    if not path.is_file():
+        raise FileNotFoundError(f"Brak pliku konfiguracji: {path}")
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def _write_raw(data: dict) -> None:
-    CONFIG_PATH.write_text(
+    atomic_write_text(
+        _config_file(for_write=True),
         json.dumps(data, ensure_ascii=False, indent=2),
-        encoding="utf-8",
     )
 
 

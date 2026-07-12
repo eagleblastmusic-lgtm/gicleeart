@@ -11,7 +11,12 @@ import json
 from pathlib import Path
 from typing import Any
 
+from giclee_app.app_paths import atomic_write_text
+
+from .homepage_variants import variant_file_path
 from .service import _data_dir
+
+_LEGACY_DATA_DIR = _data_dir()
 
 GRADIENT_PRESETS: tuple[str, ...] = (
     "none",
@@ -134,8 +139,11 @@ def apply_studio_reveal_preset(name: str) -> dict[str, Any]:
     return normalize_studio_reveal_config(merged)
 
 
-def studio_reveal_config_path(variant_id: str) -> Path:
-    return _data_dir() / "variants" / variant_id / "studio-reveal.json"
+def studio_reveal_config_path(variant_id: str, *, for_write: bool = False) -> Path:
+    current = _data_dir()
+    if current != _LEGACY_DATA_DIR:
+        return current / "variants" / variant_id / "studio-reveal.json"
+    return variant_file_path(variant_id, "studio-reveal.json", for_write=for_write)
 
 
 def normalize_studio_reveal_config(raw: Any) -> dict[str, Any]:
@@ -200,9 +208,8 @@ def save_studio_reveal_config(variant_id: str, cfg: dict[str, Any]) -> dict[str,
     errors = validate_studio_reveal_config(normalized)
     if errors:
         raise ValueError("\n".join(errors))
-    path = studio_reveal_config_path(variant_id)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(normalized, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    path = studio_reveal_config_path(variant_id, for_write=True)
+    atomic_write_text(path, json.dumps(normalized, ensure_ascii=False, indent=2) + "\n")
     return normalized
 
 

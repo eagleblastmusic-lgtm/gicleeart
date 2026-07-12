@@ -26,6 +26,8 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from tkinter import colorchooser, messagebox, simpledialog, ttk
 
+from giclee_app.app_paths import atomic_write_text, data_path
+
 try:
     from Komponenty._shared.toast import show_toast
 except ImportError:  # pragma: no cover
@@ -34,7 +36,17 @@ except ImportError:  # pragma: no cover
 
 
 _COMPONENT_DIR = Path(__file__).resolve().parent
-_DATA_DIR = _COMPONENT_DIR / "dane"
+_LEGACY_DATA_DIR = _COMPONENT_DIR / "dane"
+_DATA_DIR = _LEGACY_DATA_DIR
+_DATA_ROOT = data_path("Komponenty/planer/dane/.path", legacy=_LEGACY_DATA_DIR / ".path")
+
+
+def _using_default_data_dir() -> bool:
+    return Path(_DATA_DIR) == _LEGACY_DATA_DIR
+
+
+def _write_data_dir() -> Path:
+    return _DATA_ROOT.write_path.parent if _using_default_data_dir() else Path(_DATA_DIR)
 
 # Priorytety: (key, symbol, color_text, label).
 _PRIORITIES = [
@@ -80,8 +92,15 @@ def _parse_date(s: str) -> date | None:
     return None
 
 
-def _file_for_date(d: date) -> Path:
-    return _DATA_DIR / f"{d.isoformat()}.json"
+def _file_for_date(d: date, *, for_write: bool = False) -> Path:
+    name = f"{d.isoformat()}.json"
+    if not _using_default_data_dir():
+        return Path(_DATA_DIR) / name
+    external = _write_data_dir() / name
+    if for_write or external.exists():
+        return external
+    legacy = _LEGACY_DATA_DIR / name
+    return legacy if legacy.exists() else external
 
 
 def _load_tasks(d: date) -> list[dict]:
@@ -110,17 +129,14 @@ def _load_tasks(d: date) -> list[dict]:
 
 
 def _save_tasks(d: date, tasks: list[dict]) -> None:
-    _DATA_DIR.mkdir(parents=True, exist_ok=True)
-    p = _file_for_date(d)
+    p = _file_for_date(d, for_write=True)
     payload = {
         "date": d.isoformat(),
         "tasks": tasks,
         "saved_at": datetime.now().isoformat(timespec="seconds"),
     }
     try:
-        p.write_text(
-            json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8"
-        )
+        atomic_write_text(p, json.dumps(payload, indent=2, ensure_ascii=False))
     except OSError as e:
         messagebox.showerror("Planer", f"Nie udalo sie zapisac:\n{e}")
 
@@ -154,7 +170,7 @@ class PlanerView(ttk.Frame):
         self.priority_filter: tk.StringVar = tk.StringVar(value="(wszystkie)")
         self.sort_mode: tk.StringVar = tk.StringVar(value="Recznie")
 
-        _DATA_DIR.mkdir(parents=True, exist_ok=True)
+        _write_data_dir().mkdir(parents=True, exist_ok=True)
         self._build()
         self._load_for_date()
 
@@ -881,13 +897,14 @@ class PlanerView(ttk.Frame):
             import subprocess as _sp
             import sys as _sys
 
-            _DATA_DIR.mkdir(parents=True, exist_ok=True)
+            data_dir = _write_data_dir()
+            data_dir.mkdir(parents=True, exist_ok=True)
             if _sys.platform.startswith("win"):
-                _os.startfile(str(_DATA_DIR))  # noqa: S606
+                _os.startfile(str(data_dir))  # noqa: S606
             elif _sys.platform == "darwin":
-                _sp.Popen(["open", str(_DATA_DIR)])  # noqa: S607
+                _sp.Popen(["open", str(data_dir)])  # noqa: S607
             else:
-                _sp.Popen(["xdg-open", str(_DATA_DIR)])  # noqa: S607
+                _sp.Popen(["xdg-open", str(data_dir)])  # noqa: S607
         except OSError as e:
             messagebox.showerror("Planer", f"Nie udalo sie otworzyc folderu:\n{e}")
 

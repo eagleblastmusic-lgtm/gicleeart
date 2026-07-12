@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from Komponenty.dodajobraz import shopify_client as sc
+from giclee_app.app_paths import atomic_write_text, cache_path
 from Komponenty.tldobio.service import (
     _node_to_collection_base,
     _paginate_collections_graphql,
@@ -23,8 +24,14 @@ METAFIELD_KEY_QUOTES = "collection_quotes"
 METAFIELD_TYPE_QUOTES = "json"
 
 _COMPONENT_DIR = Path(__file__).resolve().parent
-_DATA_DIR = _COMPONENT_DIR / "data"
-_DATA_FILE = _DATA_DIR / "collection_quotes.json"
+_LEGACY_DATA_DIR = _COMPONENT_DIR / "data"
+_LEGACY_DATA_FILE = _LEGACY_DATA_DIR / "collection_quotes.json"
+_DATA_DIR = _LEGACY_DATA_DIR
+_DATA_FILE = _LEGACY_DATA_FILE
+_CACHE = cache_path(
+    "Komponenty/karuzela/data/collection_quotes.json",
+    legacy=_LEGACY_DATA_FILE,
+)
 
 Logger = Callable[[str], None]
 _DEFINITION_ENSURED = False
@@ -85,11 +92,22 @@ def quotes_status_label(quotes: list[str]) -> str:
     return str(n)
 
 
+def _cache_file(*, for_write: bool) -> Path:
+    current_file = Path(_DATA_FILE)
+    current_dir = Path(_DATA_DIR)
+    if current_file != _LEGACY_DATA_FILE:
+        return current_file
+    if current_dir != _LEGACY_DATA_DIR:
+        return current_dir / _LEGACY_DATA_FILE.name
+    return _CACHE.write_path if for_write else _CACHE.read_path()
+
+
 def load_local_cache() -> dict[str, Any]:
-    if not _DATA_FILE.is_file():
+    path = _cache_file(for_write=False)
+    if not path.is_file():
         return {"version": 2, "quotes": {}, "catalog": []}
     try:
-        data = json.loads(_DATA_FILE.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(data, dict):
             return {"version": 2, "quotes": {}, "catalog": []}
         data.setdefault("version", 2)
@@ -101,11 +119,10 @@ def load_local_cache() -> dict[str, Any]:
 
 
 def save_local_cache(data: dict[str, Any]) -> None:
-    _DATA_DIR.mkdir(parents=True, exist_ok=True)
     data["version"] = 2
-    _DATA_FILE.write_text(
+    atomic_write_text(
+        _cache_file(for_write=True),
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
     )
 
 

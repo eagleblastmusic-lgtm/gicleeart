@@ -13,6 +13,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from giclee_app.app_paths import atomic_write_text
+
 from .final_difference_settings import (
     FINAL_DIFFERENCE_DEFAULTS,
     load_final_difference_config,
@@ -23,7 +25,10 @@ from .section_bg_effects_settings import (
     load_section_bg_effects_for_hook,
     save_section_bg_effects_for_hook,
 )
+from .homepage_variants import variant_file_path
 from .service import _data_dir
+
+_LEGACY_DATA_DIR = _data_dir()
 from .studio_reveal_settings import (
     STUDIO_REVEAL_DEFAULTS,
     load_studio_reveal_config,
@@ -74,8 +79,11 @@ _PARALLAX_KEYS = (
 )
 
 
-def section_effects_path(variant_id: str) -> Path:
-    return _data_dir() / "variants" / variant_id / "section-effects.json"
+def section_effects_path(variant_id: str, *, for_write: bool = False) -> Path:
+    current = _data_dir()
+    if current != _LEGACY_DATA_DIR:
+        return current / "variants" / variant_id / "section-effects.json"
+    return variant_file_path(variant_id, "section-effects.json", for_write=for_write)
 
 
 def load_section_effects_file(variant_id: str) -> dict[str, dict[str, Any]]:
@@ -96,9 +104,8 @@ def load_section_effects_file(variant_id: str) -> dict[str, dict[str, Any]]:
 
 
 def save_section_effects_file(variant_id: str, data: dict[str, dict[str, Any]]) -> None:
-    path = section_effects_path(variant_id)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    path = section_effects_path(variant_id, for_write=True)
+    atomic_write_text(path, json.dumps(data, ensure_ascii=False, indent=2) + "\n")
 
 
 def _pick(cfg: dict[str, Any], keys: tuple[str, ...]) -> dict[str, Any]:

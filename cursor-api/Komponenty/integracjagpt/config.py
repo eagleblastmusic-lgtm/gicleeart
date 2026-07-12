@@ -6,13 +6,26 @@ import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
+from giclee_app.app_paths import atomic_write_text, config_path, data_path
+
 COMPONENT_DIR = Path(__file__).resolve().parent
 CURSOR_API_DIR = COMPONENT_DIR.parents[1]
 THEME_ROOT = COMPONENT_DIR.parents[2]  # …/pusty (motyw Shopify)
 MIRROR_DIR = CURSOR_API_DIR / ".gpt_mirror"
-DATA_DIR = COMPONENT_DIR / "data"
-CONFIG_FILE = DATA_DIR / "gpt_config.json"
-# Lokalne nagrania wideo (poza lustrem GPT / review-demos).
+_LEGACY_DATA_DIR = COMPONENT_DIR / "data"
+_LEGACY_CONFIG_FILE = _LEGACY_DATA_DIR / "gpt_config.json"
+_RUNTIME_DATA = data_path(
+    "Komponenty/integracjagpt/data/.path",
+    legacy=_LEGACY_DATA_DIR / ".path",
+)
+_CONFIG = config_path(
+    "Komponenty/integracjagpt/data/gpt_config.json",
+    legacy=_LEGACY_CONFIG_FILE,
+)
+# Runtime ZIP-y i nagrania trafiają do Local AppData. CONFIG_FILE pozostaje
+# kompatybilnym sentinelem dla testów, ale load/save rozwiązuje go przez AppPath.
+DATA_DIR = _RUNTIME_DATA.write_path.parent
+CONFIG_FILE = _LEGACY_CONFIG_FILE
 VIDEOS_DIR = DATA_DIR / "nagrania"
 REVIEW_DEMOS_DIR = THEME_ROOT / "docs" / "review-demos"
 GPT_STARTER_DIR = THEME_ROOT / "Pliki startowe dla GPT"
@@ -308,21 +321,32 @@ def default_config() -> GptConfig:
     )
 
 
+def _config_read_path() -> Path:
+    if Path(CONFIG_FILE) != _LEGACY_CONFIG_FILE:
+        return Path(CONFIG_FILE)
+    return _CONFIG.read_path()
+
+
+def _config_write_path() -> Path:
+    if Path(CONFIG_FILE) != _LEGACY_CONFIG_FILE:
+        return Path(CONFIG_FILE)
+    return _CONFIG.write_path
+
+
 def load_config() -> GptConfig:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    if not CONFIG_FILE.is_file():
+    path = _config_read_path()
+    if not path.is_file():
         cfg = default_config()
         save_config(cfg)
         return cfg
-    raw = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
+    raw = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(raw, dict):
         return default_config()
     return GptConfig.from_dict(raw)
 
 
 def save_config(cfg: GptConfig) -> None:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    CONFIG_FILE.write_text(
+    atomic_write_text(
+        _config_write_path(),
         json.dumps(cfg.to_dict(), ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
     )

@@ -1,4 +1,9 @@
-"""Persystencja KPiR — JSON."""
+"""Persystencja KPiR poza repozytorium.
+
+AppData jest lokalizacją nadrzędną. Stare pliki pozostają tymczasowym
+fallbackiem tylko do odczytu, a wszystkie nowe zapisy i eksporty trafiają
+poza checkout źródłowy.
+"""
 
 from __future__ import annotations
 
@@ -7,6 +12,8 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+from giclee_app.app_paths import AppPath, atomic_write_text, config_path, data_path
 
 from .models import (
     ChangeLogEntry,
@@ -27,28 +34,90 @@ from .models import (
 )
 
 _COMPONENT_DIR = Path(__file__).resolve().parent
-_DATA_DIR = _COMPONENT_DIR / "dane"
-_DOCUMENTS_DIR = _COMPONENT_DIR / "documents"
-_SETTINGS_FILE = _DATA_DIR / "kpir_settings.json"
-_DB_FILE = _DATA_DIR / "kpir.json"
-_CHANGELOG_FILE = _DATA_DIR / "kpir_changelog.jsonl"
+_LEGACY_DATA_DIR = _COMPONENT_DIR / "dane"
+_LEGACY_DOCUMENTS_DIR = _COMPONENT_DIR / "documents"
+_DEFAULT_SETTINGS_FILE = _LEGACY_DATA_DIR / "kpir_settings.json"
+_DEFAULT_DB_FILE = _LEGACY_DATA_DIR / "kpir.json"
+_DEFAULT_CHANGELOG_FILE = _LEGACY_DATA_DIR / "kpir_changelog.jsonl"
+
+# Compatibility aliases retained for existing verification helpers that
+# intentionally redirect storage to a temporary directory.
+_DATA_DIR = _LEGACY_DATA_DIR
+_DOCUMENTS_DIR = _LEGACY_DOCUMENTS_DIR
+_SETTINGS_FILE = _DEFAULT_SETTINGS_FILE
+_DB_FILE = _DEFAULT_DB_FILE
+_CHANGELOG_FILE = _DEFAULT_CHANGELOG_FILE
+
+_SETTINGS = config_path(
+    "Komponenty/kpir/dane/kpir_settings.json",
+    legacy=_DEFAULT_SETTINGS_FILE,
+)
+_DB = data_path(
+    "Komponenty/kpir/dane/kpir.json",
+    legacy=_DEFAULT_DB_FILE,
+)
+_CHANGELOG = data_path(
+    "Komponenty/kpir/dane/kpir_changelog.jsonl",
+    legacy=_DEFAULT_CHANGELOG_FILE,
+)
+_DOCUMENTS_MARKER = data_path(
+    "Komponenty/kpir/documents/.path",
+    legacy=_LEGACY_DOCUMENTS_DIR / ".path",
+)
+
+
+def _compat_data_path(current: Path, default: Path, name: str) -> Path | None:
+    current = Path(current)
+    if current != default:
+        return current
+    if Path(_DATA_DIR) != _LEGACY_DATA_DIR:
+        return Path(_DATA_DIR) / name
+    return None
+
+
+def _read_path(current: Path, default: Path, spec: AppPath, name: str) -> Path:
+    override = _compat_data_path(current, default, name)
+    return override if override is not None else spec.read_path()
+
+
+def _write_path(current: Path, default: Path, spec: AppPath, name: str) -> Path:
+    override = _compat_data_path(current, default, name)
+    return override if override is not None else spec.write_path
+
+
+def _documents_base() -> Path:
+    if Path(_DOCUMENTS_DIR) != _LEGACY_DOCUMENTS_DIR:
+        return Path(_DOCUMENTS_DIR)
+    return _DOCUMENTS_MARKER.write_path.parent
 
 
 def ensure_dirs() -> None:
-    _DATA_DIR.mkdir(parents=True, exist_ok=True)
+    _write_path(_DB_FILE, _DEFAULT_DB_FILE, _DB, "kpir.json").parent.mkdir(parents=True, exist_ok=True)
+    _write_path(
+        _SETTINGS_FILE,
+        _DEFAULT_SETTINGS_FILE,
+        _SETTINGS,
+        "kpir_settings.json",
+    ).parent.mkdir(parents=True, exist_ok=True)
     for sub in ("sales", "costs", "invoices", "corrections", "kpir", "exports", "inventory", "fixed_assets"):
-        (_DOCUMENTS_DIR / sub).mkdir(parents=True, exist_ok=True)
+        (_documents_base() / sub).mkdir(parents=True, exist_ok=True)
 
 
 def documents_dir_for(sub: str, year: int, month: int) -> Path:
-    """documents/<sub>/YYYY/MM/"""
-    ensure_dirs()
-    path = _DOCUMENTS_DIR / sub / f"{year:04d}" / f"{month:02d}"
+    """Zwraca zewnętrzny katalog `documents/<sub>/YYYY/MM/`."""
+
+    path = _documents_base() / sub / f"{year:04d}" / f"{month:02d}"
     path.mkdir(parents=True, exist_ok=True)
     return path
 
 
 def _read_json(path: Path, default: Any) -> Any:
+    if Path(path) == Path(_SETTINGS_FILE):
+        path = _read_path(_SETTINGS_FILE, _DEFAULT_SETTINGS_FILE, _SETTINGS, "kpir_settings.json")
+    elif Path(path) == Path(_DB_FILE):
+        path = _read_path(_DB_FILE, _DEFAULT_DB_FILE, _DB, "kpir.json")
+    else:
+        path = Path(path)
     if not path.is_file():
         return default
     try:
@@ -58,8 +127,16 @@ def _read_json(path: Path, default: Any) -> Any:
 
 
 def _write_json(path: Path, data: Any) -> None:
-    ensure_dirs()
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    if Path(path) == Path(_SETTINGS_FILE):
+        path = _write_path(_SETTINGS_FILE, _DEFAULT_SETTINGS_FILE, _SETTINGS, "kpir_settings.json")
+    elif Path(path) == Path(_DB_FILE):
+        path = _write_path(_DB_FILE, _DEFAULT_DB_FILE, _DB, "kpir.json")
+    else:
+        path = Path(path)
+    atomic_write_text(
+        path,
+        json.dumps(data, ensure_ascii=False, indent=2),
+    )
 
 
 def load_settings() -> KpirSettings:
@@ -338,9 +415,18 @@ def is_order_skipped(shopify_order_id: int) -> bool:
 
 
 def append_changelog(entry: ChangeLogEntry) -> None:
-    ensure_dirs()
-    with _CHANGELOG_FILE.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(entry.to_dict(), ensure_ascii=False) + "\n")
+    override = _compat_data_path(
+        _CHANGELOG_FILE,
+        _DEFAULT_CHANGELOG_FILE,
+        "kpir_changelog.jsonl",
+    )
+    if override is None:
+        path = _CHANGELOG.seed_from_legacy()
+    else:
+        path = override
+        path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(entry.to_dict(), ensure_ascii=False) + "\n")
 
 
 def new_changelog_id() -> str:
@@ -348,10 +434,16 @@ def new_changelog_id() -> str:
 
 
 def list_changelog_for_entry(entry_id: str) -> list[ChangeLogEntry]:
-    if not _CHANGELOG_FILE.is_file():
+    path = _read_path(
+        _CHANGELOG_FILE,
+        _DEFAULT_CHANGELOG_FILE,
+        _CHANGELOG,
+        "kpir_changelog.jsonl",
+    )
+    if not path.is_file():
         return []
     out: list[ChangeLogEntry] = []
-    for line in _CHANGELOG_FILE.read_text(encoding="utf-8").splitlines():
+    for line in path.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
         try:

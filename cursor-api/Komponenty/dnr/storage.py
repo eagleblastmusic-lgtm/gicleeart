@@ -1,4 +1,8 @@
-"""Persystencja DNR — JSON."""
+"""Persystencja DNR — JSON poza repozytorium.
+
+AppData jest lokalizacją nadrzędną. Stare pliki w komponencie są używane tylko
+jako tymczasowy fallback odczytu; zapis i eksport zawsze trafiają do AppData.
+"""
 
 from __future__ import annotations
 
@@ -6,21 +10,39 @@ import json
 from pathlib import Path
 from typing import Any
 
+from giclee_app.app_paths import AppPath, atomic_write_text, config_path, data_path
+
 from .models import CostEntry, DnrSettings, SaleEntry
 
 _COMPONENT_DIR = Path(__file__).resolve().parent
-_DATA_DIR = _COMPONENT_DIR / "dane"
-_DOCUMENTS_DIR = _COMPONENT_DIR / "documents"
-_SETTINGS_FILE = _DATA_DIR / "dnr_settings.json"
-_DB_FILE = _DATA_DIR / "dnr.json"
+_LEGACY_DATA_DIR = _COMPONENT_DIR / "dane"
+_LEGACY_DOCUMENTS_DIR = _COMPONENT_DIR / "documents"
+_SETTINGS = config_path(
+    "Komponenty/dnr/dane/dnr_settings.json",
+    legacy=_LEGACY_DATA_DIR / "dnr_settings.json",
+)
+_DB = data_path(
+    "Komponenty/dnr/dane/dnr.json",
+    legacy=_LEGACY_DATA_DIR / "dnr.json",
+)
+_DOCUMENTS = data_path(
+    "Komponenty/dnr/documents/.path",
+    legacy=_LEGACY_DOCUMENTS_DIR / ".path",
+)
+
+
+def _documents_dir() -> Path:
+    return _DOCUMENTS.write_path.parent
 
 
 def ensure_dirs() -> None:
-    _DATA_DIR.mkdir(parents=True, exist_ok=True)
-    (_DOCUMENTS_DIR / "exports").mkdir(parents=True, exist_ok=True)
+    _DB.write_path.parent.mkdir(parents=True, exist_ok=True)
+    _SETTINGS.write_path.parent.mkdir(parents=True, exist_ok=True)
+    (_documents_dir() / "exports").mkdir(parents=True, exist_ok=True)
 
 
-def _read_json(path: Path, default: Any) -> Any:
+def _read_json(spec: AppPath, default: Any) -> Any:
+    path = spec.read_path()
     if not path.is_file():
         return default
     try:
@@ -29,29 +51,31 @@ def _read_json(path: Path, default: Any) -> Any:
         return default
 
 
-def _write_json(path: Path, data: Any) -> None:
-    ensure_dirs()
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+def _write_json(spec: AppPath, data: Any) -> None:
+    atomic_write_text(
+        spec.write_path,
+        json.dumps(data, ensure_ascii=False, indent=2),
+    )
 
 
 def load_settings() -> DnrSettings:
-    raw = _read_json(_SETTINGS_FILE, {})
+    raw = _read_json(_SETTINGS, {})
     return DnrSettings.from_dict(raw if isinstance(raw, dict) else {})
 
 
 def save_settings(settings: DnrSettings) -> None:
-    _write_json(_SETTINGS_FILE, settings.to_dict())
+    _write_json(_SETTINGS, settings.to_dict())
 
 
 def load_db() -> dict[str, Any]:
-    raw = _read_json(_DB_FILE, {"next_sale_id": 1, "next_cost_id": 1, "sales": [], "costs": []})
+    raw = _read_json(_DB, {"next_sale_id": 1, "next_cost_id": 1, "sales": [], "costs": []})
     if not isinstance(raw, dict):
         return {"next_sale_id": 1, "next_cost_id": 1, "sales": [], "costs": []}
     return raw
 
 
 def save_db(db: dict[str, Any]) -> None:
-    _write_json(_DB_FILE, db)
+    _write_json(_DB, db)
 
 
 def new_sale_id() -> str:
@@ -75,9 +99,9 @@ def list_sales() -> list[SaleEntry]:
 
 
 def get_sale(sale_id: str) -> SaleEntry | None:
-    for s in list_sales():
-        if s.id == sale_id:
-            return s
+    for sale in list_sales():
+        if sale.id == sale_id:
+            return sale
     return None
 
 
@@ -98,7 +122,7 @@ def save_sale(entry: SaleEntry) -> None:
 def delete_sale_record(sale_id: str) -> bool:
     db = load_db()
     rows = db.get("sales") or []
-    filtered = [r for r in rows if r.get("id") != sale_id]
+    filtered = [row for row in rows if row.get("id") != sale_id]
     if len(filtered) == len(rows):
         return False
     db["sales"] = filtered
@@ -107,18 +131,18 @@ def delete_sale_record(sale_id: str) -> bool:
 
 
 def sale_for_invoice(invoice_id: str) -> SaleEntry | None:
-    for s in list_sales():
-        if s.invoice_id == invoice_id:
-            return s
+    for sale in list_sales():
+        if sale.invoice_id == invoice_id:
+            return sale
     return None
 
 
 def sale_for_shopify_order(shopify_order_id: int) -> SaleEntry | None:
     if not shopify_order_id:
         return None
-    for s in list_sales():
-        if s.shopify_order_id == shopify_order_id:
-            return s
+    for sale in list_sales():
+        if sale.shopify_order_id == shopify_order_id:
+            return sale
     return None
 
 
@@ -127,9 +151,9 @@ def list_costs() -> list[CostEntry]:
 
 
 def get_cost(cost_id: str) -> CostEntry | None:
-    for c in list_costs():
-        if c.id == cost_id:
-            return c
+    for cost in list_costs():
+        if cost.id == cost_id:
+            return cost
     return None
 
 
@@ -150,7 +174,7 @@ def save_cost(entry: CostEntry) -> None:
 def delete_cost_record(cost_id: str) -> bool:
     db = load_db()
     rows = db.get("costs") or []
-    filtered = [r for r in rows if r.get("id") != cost_id]
+    filtered = [row for row in rows if row.get("id") != cost_id]
     if len(filtered) == len(rows):
         return False
     db["costs"] = filtered
@@ -159,7 +183,6 @@ def delete_cost_record(cost_id: str) -> bool:
 
 
 def exports_dir(year: int) -> Path:
-    ensure_dirs()
-    path = _DOCUMENTS_DIR / "exports" / f"{year:04d}"
+    path = _documents_dir() / "exports" / f"{year:04d}"
     path.mkdir(parents=True, exist_ok=True)
     return path

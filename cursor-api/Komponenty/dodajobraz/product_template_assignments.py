@@ -14,10 +14,28 @@ import json
 from pathlib import Path
 from typing import Any
 
+from giclee_app.app_paths import atomic_write_text, data_path
+
 from . import templates as variant_templates
 
-_DATA_DIR = Path(__file__).resolve().parent / "data"
-_ASSIGNMENTS_FILE = _DATA_DIR / "product_template_assignments.json"
+_LEGACY_DATA_DIR = Path(__file__).resolve().parent / "data"
+_LEGACY_ASSIGNMENTS_FILE = _LEGACY_DATA_DIR / "product_template_assignments.json"
+_DATA_DIR = _LEGACY_DATA_DIR
+_ASSIGNMENTS_FILE = _LEGACY_ASSIGNMENTS_FILE
+
+
+def _assignments_path(*, for_write: bool = False) -> Path:
+    data_dir = Path(_DATA_DIR)
+    current = Path(_ASSIGNMENTS_FILE)
+    if data_dir != _LEGACY_DATA_DIR and current == _LEGACY_ASSIGNMENTS_FILE:
+        current = data_dir / "product_template_assignments.json"
+    if current != _LEGACY_ASSIGNMENTS_FILE:
+        return current
+    app_path = data_path(
+        "Komponenty/dodajobraz/data/product_template_assignments.json",
+        legacy=_LEGACY_ASSIGNMENTS_FILE,
+    )
+    return app_path.write_path if for_write else app_path.read_path()
 
 
 def _variant_key(v: dict[str, Any]) -> tuple[str, ...]:
@@ -30,15 +48,16 @@ def _variant_key(v: dict[str, Any]) -> tuple[str, ...]:
 
 
 def _ensure_dir() -> None:
-    _DATA_DIR.mkdir(parents=True, exist_ok=True)
+    _assignments_path(for_write=True).parent.mkdir(parents=True, exist_ok=True)
 
 
 def load_assignments() -> dict[int, str]:
     _ensure_dir()
-    if not _ASSIGNMENTS_FILE.is_file():
+    path = _assignments_path()
+    if not path.is_file():
         return {}
     try:
-        data = json.loads(_ASSIGNMENTS_FILE.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return {}
     raw = data.get("assignments") if isinstance(data, dict) else {}
@@ -61,9 +80,9 @@ def save_assignments(assignments: dict[int, str]) -> None:
     payload = {
         "assignments": {str(pid): tid for pid, tid in sorted(assignments.items())},
     }
-    _ASSIGNMENTS_FILE.write_text(
+    atomic_write_text(
+        _assignments_path(for_write=True),
         json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
     )
 
 

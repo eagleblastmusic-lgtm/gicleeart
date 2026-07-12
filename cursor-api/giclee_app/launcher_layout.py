@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from .app_paths import atomic_write_text, config_path
 from .component_loader import Component
 
 SECTION_OTHER = "Inne"
@@ -31,8 +32,12 @@ DEFAULT_SECTIONS: list[tuple[str, list[str]]] = [
 ]
 
 
-def _layout_path() -> Path:
-    return Path(__file__).resolve().parent / "data" / "launcher_layout.json"
+_LEGACY_LAYOUT_PATH = Path(__file__).resolve().parent / "data" / "launcher_layout.json"
+_LAYOUT = config_path("giclee_app/data/launcher_layout.json", legacy=_LEGACY_LAYOUT_PATH)
+
+
+def _layout_path(*, for_write: bool = False) -> Path:
+    return _LAYOUT.write_path if for_write else _LAYOUT.read_path()
 
 
 def section_titles(sections: list[tuple[str, list[str]]] | None = None) -> list[str]:
@@ -109,12 +114,7 @@ def load_layout() -> LauncherLayout:
 
 
 def save_layout(layout: LauncherLayout) -> None:
-    path = _layout_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(layout.to_dict(), ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    atomic_write_text(_layout_path(for_write=True), json.dumps(layout.to_dict(), ensure_ascii=False, indent=2) + "\n")
 
 
 def build_default_layout(

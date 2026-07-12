@@ -12,9 +12,11 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+from giclee_app.app_paths import atomic_write_text
+
 from . import platforms_cykl as _cp
 from .meta_publisher import GRAPH_BASE
-from .storage import _CREDS_FILE, load_meta_credentials
+from .storage import _credentials_file, load_meta_credentials
 
 KNOWN_CRED_KEYS = frozenset({"page_id", "access_token", "ig_user_id"})
 DEFAULT_TOKEN_LIFETIME_DAYS = 60
@@ -26,7 +28,7 @@ class ChannelTokenStatus:
     label: str
     configured: bool
     is_valid: bool | None
-    expires_at: int | None  # unix; None = nieznane; 0 = bez daty (page token)
+    expires_at: int | None
     days_left: int | None
     detail: str = ""
 
@@ -75,7 +77,6 @@ def meta_app_credentials() -> tuple[str, str]:
 
 
 def discover_app_id_from_credentials() -> str:
-    """App ID z debug_token na zapisanym tokenie (bez App Secret)."""
     try:
         creds = load_meta_credentials()
         for code in ("fb_pl", "fb_en", "ig_pl", "ig_en"):
@@ -93,7 +94,10 @@ def discover_app_id_from_credentials() -> str:
 
 
 def save_meta_app_credentials(app_id: str, app_secret: str) -> None:
-    """Zapisuje META_APP_ID i META_APP_SECRET do cursor-api/.env."""
+    """Zapisuje META_APP_ID i META_APP_SECRET do cursor-api/.env.
+
+    Ten wspoldzielony kontrakt .env pozostaje poza zakresem Stage 1E.6.
+    """
     app_id = (app_id or "").strip()
     app_secret = (app_secret or "").strip()
     if not app_id or not app_secret:
@@ -133,7 +137,6 @@ def save_meta_app_credentials(app_id: str, app_secret: str) -> None:
 
 
 def debug_access_token(token: str) -> dict:
-    """Wywoluje Graph API debug_token. Zwraca pole `data` lub pusty dict."""
     token = (token or "").strip()
     if not token:
         return {}
@@ -159,29 +162,26 @@ def debug_access_token(token: str) -> dict:
 def _expires_unix(data: dict) -> int | None:
     exp = data.get("expires_at")
     if exp is None:
-        da = data.get("data_access_expires_at")
-        exp = da
+        exp = data.get("data_access_expires_at")
     try:
-        val = int(exp)
+        return int(exp)
     except (TypeError, ValueError):
         return None
-    return val
 
 
 def _days_left_from_expires(expires_at: int | None) -> int | None:
-    if expires_at is None:
+    if expires_at is None or expires_at == 0:
         return None
-    if expires_at == 0:
-        return None  # bez daty wygaśnięcia
     now = datetime.now(timezone.utc).timestamp()
     return max(0, int((expires_at - now) // 86400))
 
 
 def _read_raw_creds() -> dict:
-    if not _CREDS_FILE.is_file():
+    path = _credentials_file()
+    if not path.is_file():
         return {}
     try:
-        raw = json.loads(_CREDS_FILE.read_text(encoding="utf-8"))
+        raw = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return {}
     return raw if isinstance(raw, dict) else {}
@@ -199,13 +199,12 @@ def _estimate_days_from_checked(checked_iso: str) -> int | None:
 
 
 def _latest_renewal_iso(raw: dict, entry: dict | None = None) -> str:
-    """Najnowsza znana data odnowy (per kanał lub globalna)."""
     candidates: list[str] = []
     if isinstance(entry, dict):
         for key in ("renewed_at", "checked_at"):
-            v = str(entry.get(key) or "").strip()
-            if v:
-                candidates.append(v)
+            value = str(entry.get(key) or "").strip()
+            if value:
+                candidates.append(value)
     root = str(raw.get("token_renewed_at") or raw.get("renewed_at") or "").strip()
     if root:
         candidates.append(root)
@@ -222,7 +221,6 @@ def _estimate_days_from_renewal(raw: dict, entry: dict | None = None) -> int | N
 
 
 def analyze_meta_tokens(*, live_debug: bool = True) -> MetaTokenReport:
-    """Analizuje 4 kanaly — najkrotszy pozostaly czas w days_left_min."""
     raw = _read_raw_creds()
     creds = load_meta_credentials()
     seen_tokens: dict[str, dict] = {}
@@ -324,7 +322,6 @@ def analyze_meta_tokens(*, live_debug: bool = True) -> MetaTokenReport:
 
 
 def refresh_token_metadata_in_file(*, mark_renewed: bool = False) -> None:
-    """Po zapisie tokenow — aktualizuje expires_at / checked_at / renewed_at w pliku creds."""
     raw = _read_raw_creds()
     if not raw:
         return
@@ -362,7 +359,10 @@ def refresh_token_metadata_in_file(*, mark_renewed: bool = False) -> None:
         raw[code] = entry
         changed = True
     if changed:
-        _CREDS_FILE.write_text(json.dumps(raw, indent=2, ensure_ascii=False), encoding="utf-8")
+        atomic_write_text(
+            _credentials_file(for_write=True),
+            json.dumps(raw, indent=2, ensure_ascii=False),
+        )
 
 
 def status_label_and_color(report: MetaTokenReport) -> tuple[str, str]:

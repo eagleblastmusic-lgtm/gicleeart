@@ -34,7 +34,11 @@ from .home_flow_structure import (
     load_structure_draft,
     validate_structure_draft,
 )
-from .homepage_variants import VARIANTS_ROOT, _load_json_file
+from .homepage_variants import (
+    _load_json_file,
+    variant_dir_path,
+    variant_file_path,
+)
 from .registry import zone_by_id
 from .service import INDEX_HEADER
 
@@ -48,21 +52,25 @@ class StructureWriterError(RuntimeError):
     """Kontrolowany błąd bounded writer-a."""
 
 
-def _variant_root(variant_id: str, *, variants_root: Path | None = None) -> Path:
-    root = Path(variants_root) if variants_root is not None else VARIANTS_ROOT
-    return root / str(variant_id)
+def _variant_root(
+    variant_id: str,
+    *,
+    variants_root: Path | None = None,
+    for_write: bool = False,
+) -> Path:
+    return variant_dir_path(variant_id, for_write=for_write, variants_root=variants_root)
 
 
-def variant_index_path(variant_id: str, *, variants_root: Path | None = None) -> Path:
-    return _variant_root(variant_id, variants_root=variants_root) / "index.json"
+def variant_index_path(variant_id: str, *, variants_root: Path | None = None, for_write: bool = False) -> Path:
+    return variant_file_path(variant_id, "index.json", for_write=for_write, variants_root=variants_root)
 
 
-def writer_state_path(variant_id: str, *, variants_root: Path | None = None) -> Path:
-    return _variant_root(variant_id, variants_root=variants_root) / WRITER_STATE_FILENAME
+def writer_state_path(variant_id: str, *, variants_root: Path | None = None, for_write: bool = False) -> Path:
+    return variant_file_path(variant_id, WRITER_STATE_FILENAME, for_write=for_write, variants_root=variants_root)
 
 
 def writer_backup_dir(variant_id: str, *, variants_root: Path | None = None) -> Path:
-    return _variant_root(variant_id, variants_root=variants_root) / WRITER_BACKUP_DIRNAME
+    return _variant_root(variant_id, variants_root=variants_root, for_write=True) / WRITER_BACKUP_DIRNAME
 
 
 def _sha256_bytes(data: bytes) -> str:
@@ -352,13 +360,14 @@ def apply_structure_draft_to_variant(
         messages = [str(row.get("message")) for row in plan.get("issues") or [] if row.get("severity") == "blocker"] or ["Brak bezpiecznej zmiany do zapisania."]
         raise StructureWriterError("\n".join(messages))
 
-    index_path = variant_index_path(variant_id, variants_root=variants_root)
-    before_bytes = index_path.read_bytes()
+    source_index_path = variant_index_path(variant_id, variants_root=variants_root)
+    index_path = variant_index_path(variant_id, variants_root=variants_root, for_write=True)
+    before_bytes = source_index_path.read_bytes()
     before_hash = _sha256_bytes(before_bytes)
     if before_hash != plan.get("source_sha256"):
         raise StructureWriterError("index.json zmienił się podczas przygotowania operacji. Zapis przerwany.")
 
-    template = copy.deepcopy(_load_json_file(index_path))
+    template = copy.deepcopy(_load_json_file(source_index_path))
     template["order"] = list(plan["target_order"])
     after_bytes = _serialize_index(template)
     after_hash = _sha256_bytes(after_bytes)
@@ -371,9 +380,10 @@ def apply_structure_draft_to_variant(
         backup_path.unlink(missing_ok=True)
         raise StructureWriterError("Weryfikacja dokładnego backupu nie powiodła się.")
 
-    variant_root = _variant_root(variant_id, variants_root=variants_root)
-    state_path = writer_state_path(variant_id, variants_root=variants_root)
-    previous_state = state_path.read_bytes() if state_path.is_file() else None
+    variant_root = _variant_root(variant_id, variants_root=variants_root, for_write=True)
+    state_read_path = writer_state_path(variant_id, variants_root=variants_root)
+    state_path = writer_state_path(variant_id, variants_root=variants_root, for_write=True)
+    previous_state = state_read_path.read_bytes() if state_read_path.is_file() else None
     try:
         _atomic_write_bytes(index_path, after_bytes)
         if sha256_file(index_path) != after_hash:
@@ -416,7 +426,7 @@ def undo_last_structure_write(variant_id: str, *, variants_root: Path | None = N
         raise StructureWriterError(str(status.get("reason") or "Undo jest niedostępne."))
 
     state = dict(status["state"])
-    index_path = variant_index_path(variant_id, variants_root=variants_root)
+    index_path = variant_index_path(variant_id, variants_root=variants_root, for_write=True)
     backup_path = Path(str(status["backup_path"]))
     backup_bytes = backup_path.read_bytes()
     before_hash = str(state["before_sha256"])
@@ -429,7 +439,7 @@ def undo_last_structure_write(variant_id: str, *, variants_root: Path | None = N
 
     state["undone_at"] = datetime.now(timezone.utc).isoformat()
     state["undo_result_sha256"] = before_hash
-    _atomic_write_json(writer_state_path(variant_id, variants_root=variants_root), state)
+    _atomic_write_json(writer_state_path(variant_id, variants_root=variants_root, for_write=True), state)
     return {
         "variant_id": str(variant_id),
         "index_path": str(index_path),
