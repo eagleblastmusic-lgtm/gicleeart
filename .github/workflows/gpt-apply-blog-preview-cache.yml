@@ -45,12 +45,24 @@ jobs:
           New-Item -ItemType Directory -Path $reportRoot -Force | Out-Null
           Start-Transcript -LiteralPath "$reportRoot\apply.txt" -Force
           try {
+            Set-Location -LiteralPath $env:GITHUB_WORKSPACE
+            Write-Host "cwd=$(Get-Location)"
+            Write-Host "workspace=$env:GITHUB_WORKSPACE"
+
             $patcher = ".github/scripts/gpt-apply-blog-preview-cache.py"
             $patcherText = Get-Content -LiteralPath $patcher -Raw
             $patcherText = $patcherText.Replace("REPO_ROOT = Path(__file__).resolve().parents[2]", "REPO_ROOT = Path.cwd().resolve()")
+            if ($patcherText -notmatch "REPO_ROOT = Path\.cwd\(\)\.resolve\(\)") {
+              throw "Failed to replace REPO_ROOT anchor in patcher"
+            }
             Set-Content -LiteralPath $patcher -Value $patcherText -Encoding utf8
+            Select-String -LiteralPath $patcher -Pattern "REPO_ROOT"
 
+            python -c "import os; print('python cwd=' + os.getcwd())"
             python $patcher
+
+            Get-ChildItem -LiteralPath $env:RUNNER_WORKSPACE -Recurse -Filter "test_blog_preview_appdata_cache.py" -ErrorAction SilentlyContinue |
+              ForEach-Object { Write-Host "found test: $($_.FullName)" }
 
             $expected = @(
               "cursor-api/Komponenty/blog/preview.py",
