@@ -1,25 +1,12 @@
 """Automatyczne backupy danych aplikacji Giclee.
 
 Cel: raz dziennie zipujemy wszystkie wazne pliki (dane komponentow, notatki,
-konfiguracje) do `backups/YYYY-MM-DD.zip`. Trzymamy maksymalnie N ostatnich
-zipow (domyslnie 14).
+konfiguracje) do zewnetrznego AppData `backups/YYYY-MM-DD.zip`. Trzymamy
+maksymalnie N ostatnich zipow (domyslnie 14).
 
-Co backupujemy (wzgledem `cursor-api/`):
-- `Komponenty/*/dane/*.json`        (zamowienia produkcji, planer, zadania, finanse)
-- `Komponenty/*/data/*.json`        (dodajobraz templates, fx cache, socialmedia)
-- `Komponenty/notatnik/notatki/`    (wszystkie notatki .md + ukryte .favorites.json)
-- `Komponenty/*/markets_config.json`
-- `shopify.app.toml`                (konfig OAuth)
-- `.env.example`                    (NIE .env - zawiera sekrety, nie backup-ujemy)
-
-Wywolanie:
-    from Komponenty._shared.backup import run_daily_backup_if_needed
-    run_daily_backup_if_needed()
-
-Launcher wola to raz przy starcie - backup odpalany tylko jesli dzisiaj jeszcze
-nie byl zrobiony (state w `backups/.last_run.json`).
+Zakres zbieranych plikow i kontrakt restore pozostaja bez zmian. Istniejace
+`cursor-api/backups` jest tylko read-only fallbackiem dla stanu i listy archiwow.
 """
-
 from __future__ import annotations
 
 import json
@@ -28,10 +15,16 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Callable
 
+from giclee_app.app_paths import atomic_write_text, backup_path, bucket_root
+
 # Cursor-api/ (2 poziomy w gore: _shared -> Komponenty -> cursor-api)
 _CURSOR_API_DIR = Path(__file__).resolve().parents[2]
-_BACKUPS_DIR = _CURSOR_API_DIR / "backups"
-_STATE_FILE = _BACKUPS_DIR / ".last_run.json"
+_LEGACY_BACKUPS_DIR = _CURSOR_API_DIR / "backups"
+_LEGACY_STATE_FILE = _LEGACY_BACKUPS_DIR / ".last_run.json"
+
+# Kompatybilne punkty podmiany dla starszych testow. None = dynamiczny AppData.
+_BACKUPS_DIR: Path | None = None
+_STATE_FILE: Path | None = None
 
 # Wzorce co backupujemy (relative do cursor-api/)
 _INCLUDE_PATTERNS: list[str] = [
@@ -48,13 +41,31 @@ _INCLUDE_PATTERNS: list[str] = [
 
 # Co jawnie POMIJAMY (nawet jesli pasuje do powyzszego)
 _EXCLUDE_PATTERNS: list[str] = [
-    "Komponenty/zadania/data/signals_cache.json",  # cache Shopify - niepotrzebny
-    "Komponenty/blog/data/articles_cache.json",    # cache Shopify
-    "Komponenty/blog/data/preview.html",           # transient
-    "Komponenty/*/data/fx_cache.json",             # FX cache - regeneruje sie
+    "Komponenty/zadania/data/signals_cache.json",
+    "Komponenty/blog/data/articles_cache.json",
+    "Komponenty/blog/data/preview.html",
+    "Komponenty/*/data/fx_cache.json",
 ]
 
-_MAX_BACKUPS = 14  # trzymamy ostatnie N dni
+_MAX_BACKUPS = 14
+
+
+def _backups_dir() -> Path:
+    return Path(_BACKUPS_DIR) if _BACKUPS_DIR is not None else bucket_root("backups")
+
+
+def _state_read_file() -> Path:
+    if _STATE_FILE is not None:
+        return Path(_STATE_FILE)
+    return backup_path(".last_run.json", legacy=_LEGACY_STATE_FILE).read_path()
+
+
+def _state_write_file() -> Path:
+    if _STATE_FILE is not None:
+        target = Path(_STATE_FILE)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        return target
+    return backup_path(".last_run.json", legacy=_LEGACY_STATE_FILE).ensure_parent()
 
 
 def _collect_files() -> list[Path]:
@@ -64,7 +75,6 @@ def _collect_files() -> list[Path]:
         for p in _CURSOR_API_DIR.glob(pattern):
             if p.is_file():
                 files.add(p)
-    # Filtruj wykluczenia
     excluded: set[Path] = set()
     for pattern in _EXCLUDE_PATTERNS:
         for p in _CURSOR_API_DIR.glob(pattern):
@@ -74,27 +84,28 @@ def _collect_files() -> list[Path]:
 
 
 def _read_state() -> dict:
-    if not _STATE_FILE.is_file():
+    state_file = _state_read_file()
+    if not state_file.is_file():
         return {}
     try:
-        return json.loads(_STATE_FILE.read_text(encoding="utf-8"))
+        return json.loads(state_file.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return {}
 
 
 def _write_state(state: dict) -> None:
-    _BACKUPS_DIR.mkdir(parents=True, exist_ok=True)
-    _STATE_FILE.write_text(
+    atomic_write_text(
+        _state_write_file(),
         json.dumps(state, indent=2, ensure_ascii=False),
-        encoding="utf-8",
     )
 
 
 def _rotate_old_backups(keep: int = _MAX_BACKUPS) -> int:
-    """Usuwa najstarsze zipy zostawiajac `keep` najnowszych. Zwraca liczbe usunietych."""
-    if not _BACKUPS_DIR.is_dir():
+    """Usuwa najstarsze zewnetrzne zipy; legacy backupow nie modyfikuje."""
+    backups_dir = _backups_dir()
+    if not backups_dir.is_dir():
         return 0
-    zips = sorted(_BACKUPS_DIR.glob("*.zip"), key=lambda p: p.name)
+    zips = sorted(backups_dir.glob("*.zip"), key=lambda p: p.name)
     removed = 0
     while len(zips) > keep:
         oldest = zips.pop(0)
@@ -107,11 +118,11 @@ def _rotate_old_backups(keep: int = _MAX_BACKUPS) -> int:
 
 
 def create_backup(*, logger: Callable[[str], None] | None = None) -> Path | None:
-    """Tworzy zip z biezacym stanem i zwraca sciezke (albo None przy bledzie)."""
-    _BACKUPS_DIR.mkdir(parents=True, exist_ok=True)
+    """Tworzy zip w zewnetrznym AppData i zwraca sciezke (albo None)."""
+    backups_dir = _backups_dir()
+    backups_dir.mkdir(parents=True, exist_ok=True)
     today = date.today().isoformat()
-    target = _BACKUPS_DIR / f"{today}.zip"
-    # Jesli dzisiejszy zip juz istnieje - nadpisujemy (swiezsza wersja w ciagu dnia)
+    target = backups_dir / f"{today}.zip"
     files = _collect_files()
     if not files:
         if logger:
@@ -127,7 +138,6 @@ def create_backup(*, logger: Callable[[str], None] | None = None) -> Path | None
                     if logger:
                         logger(f"[backup] pominieto {f}: {e}")
                     continue
-            # Metadata manifest
             manifest = {
                 "created_at": datetime.now().isoformat(timespec="seconds"),
                 "cursor_api_dir": str(_CURSOR_API_DIR),
@@ -148,7 +158,7 @@ def create_backup(*, logger: Callable[[str], None] | None = None) -> Path | None
 def run_daily_backup_if_needed(
     *, logger: Callable[[str], None] | None = None,
 ) -> Path | None:
-    """Wykonuje backup tylko jesli dzisiaj jeszcze nie byl zrobiony. Idempotentne."""
+    """Wykonuje backup tylko jesli dzisiaj jeszcze nie byl zrobiony."""
     state = _read_state()
     today = date.today().isoformat()
     if state.get("last_backup_date") == today:
@@ -173,9 +183,9 @@ def restore_from_backup(
     target_dir: Path | None = None,
     logger: Callable[[str], None] | None = None,
 ) -> int:
-    """Rozpakowuje backup do `target_dir` (domyslnie cursor-api/). Zwraca liczbe plikow.
+    """Rozpakowuje backup do `target_dir` (domyslnie cursor-api/).
 
-    UWAGA: **NADPISUJE** istniejace pliki. Wolaj po potwierdzeniu uzytkownika.
+    UWAGA: nadpisuje istniejace pliki. Wolaj po potwierdzeniu uzytkownika.
     """
     target_dir = target_dir or _CURSOR_API_DIR
     count = 0
@@ -184,7 +194,7 @@ def restore_from_backup(
             if member == "_backup_manifest.json":
                 continue
             if member.startswith("/") or ".." in member.split("/"):
-                continue  # bezpieczenstwo: path traversal
+                continue
             zf.extract(member, path=target_dir)
             count += 1
     if logger:
@@ -193,11 +203,14 @@ def restore_from_backup(
 
 
 def list_backups() -> list[dict]:
-    """Zwraca liste wszystkich backupow z meta-danymi."""
-    if not _BACKUPS_DIR.is_dir():
-        return []
+    """Zwraca zewnetrzne backupy; legacy tylko gdy zewnetrznych jeszcze brak."""
+    backups_dir = _backups_dir()
+    zips = sorted(backups_dir.glob("*.zip"), reverse=True) if backups_dir.is_dir() else []
+    if not zips and _LEGACY_BACKUPS_DIR.is_dir():
+        zips = sorted(_LEGACY_BACKUPS_DIR.glob("*.zip"), reverse=True)
+
     out: list[dict] = []
-    for z in sorted(_BACKUPS_DIR.glob("*.zip"), reverse=True):
+    for z in zips:
         try:
             st = z.stat()
             out.append({

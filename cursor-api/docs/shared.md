@@ -11,7 +11,7 @@ Folder: `cursor-api/Komponenty/_shared/`
 | Moduł | Rola | Używany przez |
 |-------|------|---------------|
 | `auth.py` | Hasło startowe aplikacji | GicleeApp, komponenty wrażliwe |
-| `activity_log.py` | Dziennik zdarzeń JSONL | Wszystkie komponenty (log akcji) |
+| `activity_log.py` | Dziennik zdarzeń JSONL w zewnętrznym AppData | Wszystkie komponenty (log akcji) |
 | `activity_log_ui.py` | Okno podglądu + kopiowanie | GicleeApp toolbar |
 | `task_notify.py` | Dźwięk po zakończeniu batcha | `dodajobraz`, inne kolejki |
 | `fx_rates.py` | Kursy NBP (cache 24h) | Dialog rynków w `dodajobraz` |
@@ -20,9 +20,20 @@ Folder: `cursor-api/Komponenty/_shared/`
 | `help_dialog.py` | Okno pomocy | Komponenty z HELP_TEXT |
 | `tree_sort.py` | Sortowanie Treeview | `produkcja`, planery |
 | `toast.py`, `notifications.py` | Powiadomienia UI | Różne GUI |
-| `backup.py` | Kopie zapasowe danych | Opcjonalnie komponenty |
+| `backup.py` | Kopie zapasowe; nowe ZIP-y i stan harmonogramu w AppData | Launcher |
 
-Dane: `Komponenty/_shared/data/` — `activity_log.jsonl`, `fx_cache.json`
+---
+
+## Zewnętrzne ścieżki runtime
+
+Wspólny resolver znajduje się w `giclee_app/app_paths.py`.
+
+- dane i cache: `%LOCALAPPDATA%\GicleeArt\GicleeApp\data\`,
+- logi: `%LOCALAPPDATA%\GicleeArt\GicleeApp\logs\`,
+- backupy: `%LOCALAPPDATA%\GicleeArt\GicleeApp\backups\`,
+- konfiguracja: `%APPDATA%\GicleeArt\GicleeApp\config\`.
+
+Odczyt pozostaje kompatybilny z istniejącymi plikami przy kodzie, ale nowe zapisy nie mogą modyfikować legacy source tree. Testy mogą nadpisać korzenie przez `GICLEEAPP_LOCAL_ROOT` i `GICLEEAPP_ROAMING_ROOT`.
 
 ---
 
@@ -31,11 +42,19 @@ Dane: `Komponenty/_shared/data/` — `activity_log.jsonl`, `fx_cache.json`
 Format: JSONL, jedna linia = jedno zdarzenie.
 
 ```python
-from Komponenty._shared.activity_log import log_activity
-log_activity("dodajobraz", "Utworzono produkt", detail="Hans Dahl - Babie lato")
+from Komponenty._shared.activity_log import append_activity
+append_activity("dodajobraz", "Utworzono produkt", detail="Hans Dahl - Babie lato")
 ```
 
+Przy pierwszym zapisie istniejący legacy `Komponenty/_shared/data/activity_log.jsonl` jest kopiowany jednokrotnie do zewnętrznego katalogu logów. Plik legacy pozostaje nietknięty.
+
 Podgląd: GicleeApp → **Dziennik akcji**
+
+---
+
+## backup
+
+Nowe archiwa i `.last_run.json` są zapisywane poza repozytorium. Lista backupów korzysta z legacy `cursor-api/backups/` tylko wtedy, gdy nie ma jeszcze zewnętrznych archiwów. Zakres zbieranych plików oraz kontrakt ręcznego restore nie zostały zmienione w tym etapie.
 
 ---
 
