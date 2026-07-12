@@ -4,11 +4,13 @@ from __future__ import annotations
 
 from Komponenty._shared.theme_page_editor.types import TemplateField, TemplateZone
 
+from .effects import ARTIST_HOVER_EFFECT_FIELD_ID, ARTIST_HOVER_EFFECT_FIELD_LABEL
+
 PAGE_ZONES: tuple[TemplateZone, ...] = (
     TemplateZone(
         zone_id="list",
         label="Lista artystów",
-        description="Układ kolumn i ukryci autorzy w panelu Katalog oraz menu mobilnym.",
+        description="Układ kolumn, efekt aktywnego artysty i ukryci autorzy w panelu Katalog oraz menu mobilnym.",
         section_key="list",
         settings_only=True,
         fields=(
@@ -20,11 +22,22 @@ PAGE_ZONES: tuple[TemplateZone, ...] = (
                 ("list", "show_header"),
             ),
             TemplateField(
+                ARTIST_HOVER_EFFECT_FIELD_ID,
+                ARTIST_HOVER_EFFECT_FIELD_LABEL,
+                "artist_effect",  # type: ignore[arg-type] — renderer komponentu tworzy readonly Combobox.
+                ("list", ARTIST_HOVER_EFFECT_FIELD_ID),
+                hint="Sposób wyróżnienia nazwy artysty i podglądu dzieła po najechaniu.",
+            ),
+            TemplateField(
                 "hidden_artists_text",
                 "Ukryci artyści (handle kolekcji)",
-                "body",
+                "text",
                 ("list", "hidden_artists_text"),
-                hint="Jeden handle Shopify na linię (np. claude-monet). Kolekcja nadal działa pod bezpośrednim URL.",
+                hint=(
+                    "Jeden handle Shopify na linię (np. claude-monet). "
+                    "Pole jest zapisywane jako czysty tekst, bez konwersji do HTML. "
+                    "Kolekcja nadal działa pod bezpośrednim URL."
+                ),
             ),
         ),
     ),

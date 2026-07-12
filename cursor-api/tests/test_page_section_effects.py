@@ -86,13 +86,19 @@ def test_zone_has_text_and_image_effects():
 
 def test_save_text_and_image_roundtrip(page_config: PageEditorConfig):
     text_cfg = dict(STUDIO_REVEAL_DEFAULTS, enabled=True, copyHoverScale=1.03)
-    image_cfg = dict(PAGE_IMAGE_EFFECT_DEFAULTS, parallaxEnabled=True, imageHoverScale=1.04)
+    image_cfg = dict(
+        PAGE_IMAGE_EFFECT_DEFAULTS,
+        parallaxEnabled=True,
+        parallaxReturnEase=0.042,
+        imageHoverScale=1.04,
+    )
     save_text_effects_for_section(page_config, "gf1", "section_ABC", text_cfg)
     save_image_effects_for_section(page_config, "gf1", "section_ABC", image_cfg)
 
     loaded = load_section_effects_config(page_config, "gf1")
     assert loaded["section_ABC"]["text"]["copyHoverScale"] == 1.03
     assert loaded["section_ABC"]["image"]["parallaxEnabled"] is True
+    assert loaded["section_ABC"]["image"]["parallaxReturnEase"] == 0.042
     assert loaded["section_ABC"]["image"]["imageHoverScale"] == 1.04
 
 
@@ -116,8 +122,15 @@ def test_export_section_effects_for_front_skips_disabled(page_config: PageEditor
 
 
 def test_export_image_effects_config():
-    out = export_image_effects_config({"parallaxEnabled": True, "parallaxOverscan": 108})
+    out = export_image_effects_config(
+        {
+            "parallaxEnabled": True,
+            "parallaxReturnEase": 0.042,
+            "parallaxOverscan": 108,
+        }
+    )
     assert out["enabled"] is True
+    assert out["parallaxReturnEase"] == 0.042
     assert out["parallaxOverscan"] == 1.08
 
 
@@ -125,12 +138,23 @@ def test_normalize_section_effects_entry():
     raw = {
         "section_X": {
             "text": {"enabled": True, "gradientPreset": "unknown"},
-            "image": {"parallaxEnabled": True, "imageHoverScale": 9},
+            "image": {
+                "parallaxEnabled": True,
+                "parallaxReturnEase": 9,
+                "imageHoverScale": 9,
+            },
         }
     }
     out = normalize_section_effects_entry(raw)
     assert out["section_X"]["text"]["enabled"] is True
+    assert out["section_X"]["image"]["parallaxReturnEase"] == 0.10
     assert out["section_X"]["image"]["imageHoverScale"] == 1.08
+
+
+def test_missing_return_ease_uses_backward_compatible_default():
+    raw = {"section_X": {"image": {"parallaxEnabled": True}}}
+    out = normalize_section_effects_entry(raw)
+    assert out["section_X"]["image"]["parallaxReturnEase"] == 0.035
 
 
 def test_write_page_section_effects_asset(page_config: PageEditorConfig, tmp_path: Path, monkeypatch):

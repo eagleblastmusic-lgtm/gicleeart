@@ -24,12 +24,13 @@ from .types import TemplateZone
 PAGE_IMAGE_EFFECT_DEFAULTS: dict[str, Any] = {
     **SECTION_BG_EFFECTS_DEFAULTS,
     "parallaxEnabled": False,
+    "parallaxReturnEase": 0.035,
     "imageHoverEnabled": True,
     "imageHoverScale": 1.025,
     "imageHoverDurationMs": 850,
 }
 
-PAGE_IMAGE_FLOAT_KEYS = ("parallaxEase", "imageHoverScale")
+PAGE_IMAGE_FLOAT_KEYS = ("parallaxEase", "parallaxReturnEase", "imageHoverScale")
 PAGE_IMAGE_INT_KEYS = (
     "parallaxMaxX",
     "parallaxMaxY",
@@ -78,6 +79,18 @@ def _normalize_image_effects(raw: Any) -> dict[str, Any]:
                 merged[key] = float(raw[key])
             except (TypeError, ValueError):
                 pass
+    merged["parallaxReturnEase"] = max(
+        0.01,
+        min(
+            0.10,
+            float(
+                merged.get(
+                    "parallaxReturnEase",
+                    PAGE_IMAGE_EFFECT_DEFAULTS["parallaxReturnEase"],
+                )
+            ),
+        ),
+    )
     merged["imageHoverScale"] = max(1.0, min(1.08, float(merged.get("imageHoverScale", 1.025))))
     merged["imageHoverDurationMs"] = max(400, min(1600, int(merged.get("imageHoverDurationMs", 850))))
     merged["enabled"] = bool(merged.get("parallaxEnabled")) or bool(merged.get("imageHoverEnabled"))
@@ -193,6 +206,9 @@ def export_image_effects_config(cfg: dict[str, Any]) -> dict[str, Any]:
         "parallaxMaxX": int(normalized.get("parallaxMaxX", 16)),
         "parallaxMaxY": int(normalized.get("parallaxMaxY", 10)),
         "parallaxEase": float(normalized.get("parallaxEase", 0.075)),
+        "parallaxReturnEase": float(
+            normalized.get("parallaxReturnEase", PAGE_IMAGE_EFFECT_DEFAULTS["parallaxReturnEase"])
+        ),
         "parallaxOverscan": round(int(normalized.get("parallaxOverscan", 106)) / 100, 4),
         "imageHoverEnabled": bool(normalized.get("imageHoverEnabled")),
         "imageHoverScale": float(normalized.get("imageHoverScale", 1.025)),

@@ -163,7 +163,8 @@
         "blurred_reflection": true,
         "reflection_opacity": 50,
         "padding-block-start": 40,
-        "padding-block-end": 40
+        "padding-block-end": 40,
+        "image_1_object_y": 50
       }
     },
     "divider_YLiHg7": {

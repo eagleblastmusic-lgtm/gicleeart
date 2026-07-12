@@ -2,26 +2,12 @@
 <script>
 window.GICLEE_HOME_SECTIONS = {"hero": "slideshow_4LMfx7", "intro": "section_ThWw4Q", "restoration": "section_XwRNDp", "color-correction": "section_bj9cY3", "potential": "section_p9Kcm6", "see-difference": "section_P9LgB3"};
 window.GICLEE_HOME_STACK = true;
+
+/* GICLEE_PREHERO_CONFIG_BEGIN */
 window.GICLEE_HOME_SECTION_SCROLL_DISABLED = true;
 window.GICLEE_HOME_SCROLL_CONFIG = Object.assign({}, window.GICLEE_HOME_SCROLL_CONFIG || {}, { enabled: false });
-window.GICLEE_PREHERO_CONFIG = {
-  enabled: true,
-  scrollHeightVh: 600,
-  revealOverlapVh: 200,
-  heroRiseVh: 100,
-  copyEnabled: true,
-  copyLines: [
-    "Fotografia i obraz zaczynają żyć w pełni",
-    "dopiero wtedy, gdy opuszczają ekran",
-    "i stają się częścią świata fizycznego."
-  ],
-  horizontalCurtainEnabled: true,
-  heroHoldVh: 100,
-  heroCurtainVh: 100,
-  introHoldVh: 100
-};
+window.GICLEE_PREHERO_CONFIG = {"enabled": true, "scrollHeightVh": 600, "revealOverlapVh": 200, "heroRiseVh": 100, "copyEnabled": true, "copyLines": ["Fotografia i obraz zaczynają żyć w pełni", "dopiero wtedy, gdy opuszczają ekran", "i stają się częścią świata fizycznego."], "horizontalCurtainEnabled": true, "heroHoldVh": 100, "heroCurtainVh": 100, "introHoldVh": 100, "soundConsentEnabled": false, "soundConsentQuestion": "Doświadczyć tej sceny z dźwiękiem?", "soundConsentToggleLabel": "Dźwięk", "soundConsentStartLabel": "Rozpocznij", "soundConsentAudioUrl": "", "soundConsentVolume": 0, "soundConsentAutoMutedFraction": 0.35};
 window.GICLEE_PREHERO_SCRUB_VIDEO_URL = {{ 'giclee-home-prehero-scrub.mp4' | asset_url | json }};
-
 (function () {
   function disableHomeSectionScroll() {
     var api = window.GICLEE_HOME_SECTION_SCROLL;
@@ -30,15 +16,13 @@ window.GICLEE_PREHERO_SCRUB_VIDEO_URL = {{ 'giclee-home-prehero-scrub.mp4' | ass
     document.documentElement.classList.remove('giclee-home-section-scroll');
   }
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () {
-      requestAnimationFrame(disableHomeSectionScroll);
-    }, { once: true });
-  } else {
-    requestAnimationFrame(disableHomeSectionScroll);
-  }
+    document.addEventListener('DOMContentLoaded', function () { requestAnimationFrame(disableHomeSectionScroll); }, { once: true });
+  } else { requestAnimationFrame(disableHomeSectionScroll); }
   window.addEventListener('load', disableHomeSectionScroll, { once: true });
 })();
+/* GICLEE_PREHERO_CONFIG_END */
 </script>
+{% comment %} GICLEE_PREHERO_ASSETS_BEGIN {% endcomment %}
 {{ 'giclee-home-prehero-scrub.css' | asset_url | stylesheet_tag }}
 {{ 'giclee-home-prehero-chrome.css' | asset_url | stylesheet_tag }}
 {{ 'giclee-home-prehero-reveal.css' | asset_url | stylesheet_tag }}
@@ -48,12 +32,15 @@ window.GICLEE_PREHERO_SCRUB_VIDEO_URL = {{ 'giclee-home-prehero-scrub.mp4' | ass
 {{ 'giclee-home-hero-horizontal-curtain-matte.css' | asset_url | stylesheet_tag }}
 {{ 'giclee-home-hero-utility-bar.css' | asset_url | stylesheet_tag }}
 {{ 'giclee-home-hero-sound-consent.css' | asset_url | stylesheet_tag }}
+{{ 'giclee-home-intro-curtain-effects.css' | asset_url | stylesheet_tag }}
 <script src="{{ 'giclee-home-prehero-scrub.js' | asset_url }}" defer></script>
 <script src="{{ 'giclee-home-prehero-chrome.js' | asset_url }}" defer></script>
 <script src="{{ 'giclee-home-prehero-reveal.js' | asset_url }}" defer></script>
 <script src="{{ 'giclee-home-hero-video-gate.js' | asset_url }}" defer></script>
 <script src="{{ 'giclee-home-hero-horizontal-curtain.js' | asset_url }}" defer></script>
+<script src="{{ 'giclee-home-intro-curtain-effects.js' | asset_url }}" defer></script>
 <script src="{{ 'giclee-home-hero-utility-bar.js' | asset_url }}" defer></script>
+{% comment %} GICLEE_PREHERO_ASSETS_END {% endcomment %}
 <style>
   html:not(.giclee-home-stack-ready) #MainContent > .shopify-section:not(#shopify-section-slideshow_4LMfx7) {
     opacity: 0 !important;
