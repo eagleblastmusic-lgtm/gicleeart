@@ -1,5 +1,4 @@
 """Dopasowanie nazw artystow — diakrytyki, transliteracja, aliasy Wikidata, warianty imion."""
-
 from __future__ import annotations
 
 import re
@@ -40,7 +39,10 @@ def name_variants(name: str, *, wikidata_qid: str = "", fetch_wikidata: bool = T
     if qid.startswith("Q"):
         for label in wikidata_artists.labels_for_qid(qid, fetch=fetch_wikidata):
             _add(label)
-    elif fetch_wikidata and raw:
+    elif fetch_wikidata and raw and len(_split_parts(raw)) >= 2:
+        # Fuzzy wbsearchentities dla pojedynczego nazwiska moze zwrocic inna
+        # osobe o podobnej nazwie (np. Monet -> Moneta). Aliasy bez QID sa
+        # bezpiecznie rozszerzane tylko dla nazw wieloczlonowych.
         for label in wikidata_artists.labels_for_query(raw, fetch=True):
             _add(label)
 
