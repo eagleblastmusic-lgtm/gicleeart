@@ -1,12 +1,14 @@
 name: Stage 2 CI Baseline
 
 on:
-  push:
-    branches:
-      - 'gpt-work/**'
   pull_request:
     branches:
       - master
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
   workflow_dispatch:
 
 permissions:
@@ -19,7 +21,7 @@ concurrency:
 jobs:
   hermetic-smoke:
     name: Hermetic smoke (Windows / Python 3.13)
-    runs-on: [self-hosted, Windows, X64, giclee-ci]
+    runs-on: windows-latest
     timeout-minutes: 20
     env:
       PYTHONUTF8: "1"
@@ -108,6 +110,9 @@ jobs:
 
   tk-gui-diagnostic:
     name: Tk GUI smoke (diagnostic)
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
     runs-on: [self-hosted, Windows, X64, giclee-ci]
     timeout-minutes: 25
     env:
@@ -225,6 +230,9 @@ jobs:
 
   full-baseline-diagnostic:
     name: Full pytest baseline (diagnostic)
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
     runs-on: [self-hosted, Windows, X64, giclee-ci]
     timeout-minutes: 45
     env:
