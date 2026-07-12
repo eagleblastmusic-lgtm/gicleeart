@@ -71,10 +71,13 @@ def test_read_app_version(starter_env) -> None:
 def test_sync_starter_files_after_gicleeapp_push(starter_env) -> None:
     from Komponenty.integracjagpt import starter_checkpoint as sc
 
-    _, starter, _ = starter_env
+    source, starter, theme = starter_env
     result = sc.sync_starter_files_after_gicleeapp_push(
         gicleeapp_sha="abc1234567890",
         commit_message="Refresh GicleeApp repository snapshot",
+        starter_dir=starter,
+        source_dir=source,
+        theme_root=theme,
         pushed_at=datetime(2026, 7, 7, 12, 0, tzinfo=timezone.utc),
     )
     assert result.ok
