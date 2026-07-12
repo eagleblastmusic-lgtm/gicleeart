@@ -86,6 +86,7 @@ jobs:
             "tests/test_resend_diagnostic_script.py",
             "tests/test_stage1e_external_stores_3.py::test_title_drafts_write_external",
             "tests/test_stage1e_external_stores_3.py::test_launcher_config_reads_legacy_and_writes_roaming",
+            "tests/test_tile_grid_appdata_settings.py",
             "tests/test_tytulyai_storage.py",
             "tests/test_studio_component_hub.py::test_filtered_components_without_gui"
           )

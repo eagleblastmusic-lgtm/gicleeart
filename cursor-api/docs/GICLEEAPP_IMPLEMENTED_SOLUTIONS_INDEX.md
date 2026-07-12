@@ -202,7 +202,7 @@ Launcher skanuje `Komponenty/` co **~3 s** — nowy folder pojawia się automaty
 | Potrzeba | Moduł | API |
 |----------|-------|-----|
 | Inline shell (nagłówek + wstecz) | [`inline_view_shell.py`](../Komponenty/_shared/inline_view_shell.py) | `mount_inline_view(parent, on_back, title=..., build_content=...)` |
-| Mini-siatka kafelków w inline | [`tile_grid.py`](../Komponenty/_shared/tile_grid.py) | siatka + `settings.json` |
+| Mini-siatka kafelków w inline | [`tile_grid.py`](../Komponenty/_shared/tile_grid.py) | siatka + external-first `settings.json` w roaming AppData |
 | Centrowanie modala | [`window_geometry.py`](../Komponenty/_shared/window_geometry.py) | `position_toplevel_screen_center(win, w, h)` |
 | Scroll myszką | [`tk_scroll.py`](../Komponenty/_shared/tk_scroll.py) | binding kółka dla Canvas |
 | Theme page editor | [`theme_page_editor/`](../Komponenty/_shared/theme_page_editor/) | `bootstrap.build_page_ui()` |
@@ -255,7 +255,12 @@ Wzorce referencyjne: `theme_page_editor/gui_shell.py`, `dodajobraz/price_change_
 | `data/*.json` | `Komponenty/<folder>/data/` | **legacy read path**: `stronaglowna`, `bazapromptow`, `integracjagpt`, `blog` |
 | `dane/*.json` | `Komponenty/<folder>/dane/` | **legacy read path**: `dnr`, `kpir`, `dokumentysprzedazy`, `produkcja` |
 | `storage.py` | w folderze komponentu | `load_*` / `save_*` — wzorzec per moduł |
-| `settings.json` | w folderze komponentu | konsumenci `tile_grid` |
+| `settings.json` | `%APPDATA%/GicleeArt/GicleeApp/config/Komponenty/<component>/` | `tile_grid`: external-first, legacy source-tree read-only |
+
+`tile_grid` wyznacza stabilny klucz od najbliższego katalogu `Komponenty`.
+Aktualni konsumenci `InlineTileView` to `obrazy`, `cenyMarketing` i
+`ksiegowosc`. Publiczne API `load_settings(component_dir)` oraz
+`save_settings(component_dir, data)` pozostaje bez zmian.
 
 ### Wzorce zapisu
 
