@@ -19,7 +19,7 @@ concurrency:
 jobs:
   hermetic-smoke:
     name: Hermetic smoke (Windows / Python 3.13)
-    runs-on: windows-latest
+    runs-on: [self-hosted, Windows, X64, giclee-ci]
     timeout-minutes: 20
     env:
       PYTHONUTF8: "1"
@@ -108,7 +108,7 @@ jobs:
 
   tk-gui-diagnostic:
     name: Tk GUI smoke (diagnostic)
-    runs-on: windows-latest
+    runs-on: [self-hosted, Windows, X64, giclee-ci]
     timeout-minutes: 25
     env:
       PYTHONUTF8: "1"
@@ -225,7 +225,7 @@ jobs:
 
   full-baseline-diagnostic:
     name: Full pytest baseline (diagnostic)
-    runs-on: windows-latest
+    runs-on: [self-hosted, Windows, X64, giclee-ci]
     timeout-minutes: 45
     env:
       PYTHONUTF8: "1"
