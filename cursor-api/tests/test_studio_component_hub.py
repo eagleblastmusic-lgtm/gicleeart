@@ -11,13 +11,21 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from giclee_app.studio.component_index import StudioComponentIndex
 from giclee_app.ui.component_hub import (
+    _CARDS_PER_TICK,
     _FIRST_PAINT_DELAY_MS,
+    _FIRST_VISIBLE_BUDGET_MS,
     _FIRST_VISIBLE_CARD_COUNT,
+    _IDLE_BATCH_DELAY_MS,
     _IDLE_BATCH_SIZE,
+    _IDLE_TICK_BUDGET_MS,
     _LOADING_TEXT,
     _PREPARE_TEXT,
+    _REAL_SHELL_FIRST_PAINT_COUNT,
     _SEARCH_DEBOUNCE_MS,
     _SKELETON_COUNT,
+    _batch_delay_for_start,
+    _batch_size_for_start,
+    _tick_delay_ms,
 )
 
 
@@ -65,20 +73,28 @@ def test_component_hub_accepts_component_index() -> None:
 def test_lazy_render_has_batching() -> None:
     path = Path(__file__).resolve().parents[1] / "giclee_app" / "ui" / "component_hub.py"
     text = path.read_text(encoding="utf-8")
-    assert "_FIRST_VISIBLE_CARD_COUNT" in text
-    assert "_IDLE_BATCH_SIZE" in text
-    assert _FIRST_VISIBLE_CARD_COUNT == 2
-    assert _IDLE_BATCH_SIZE == 3
-    assert "_CARDS_PER_TICK" in text
-    assert "_IDLE_TICK_BUDGET_MS" in text
-    assert "_batch_size_for_start" in text
+
+    assert 1 <= _FIRST_VISIBLE_CARD_COUNT <= _SKELETON_COUNT
+    assert _REAL_SHELL_FIRST_PAINT_COUNT == _FIRST_VISIBLE_CARD_COUNT
+    assert _IDLE_BATCH_SIZE >= 1
+    assert _CARDS_PER_TICK == _IDLE_BATCH_SIZE
+    assert _FIRST_VISIBLE_BUDGET_MS > 0
+    assert _IDLE_TICK_BUDGET_MS > 0
+    assert _IDLE_BATCH_DELAY_MS == 0
+
+    assert _batch_size_for_start(0) == _FIRST_VISIBLE_CARD_COUNT
+    assert _batch_size_for_start(1) == _IDLE_BATCH_SIZE
+    assert _batch_delay_for_start(0) == 0
+    assert _batch_delay_for_start(1) == _IDLE_BATCH_DELAY_MS
+    assert _tick_delay_ms(first_visible_phase=True) == 0
+    assert _tick_delay_ms(first_visible_phase=False) == _IDLE_BATCH_DELAY_MS
+
     assert "_render_generation" in text
     assert "_pending_render_after_id" in text
     assert _LOADING_TEXT in text
     assert "_batch_build_cards" in text
     assert "_append_cards_to_grid" in text
     assert "_sync_skeleton_slots" in text
-    assert "_FIRST_VISIBLE_BUDGET_MS" in text
     assert "ComponentCardShell" in text
     assert "_hydrate_queue" in text
 
