@@ -34,8 +34,12 @@ def gicleeapp_env(tmp_path, monkeypatch):
 
     source = tmp_path / "cursor-api"
     staging = tmp_path / "staging"
+    starter = tmp_path / "Pliki startowe dla GPT"
+    theme = tmp_path / "monorepo"
     source.mkdir()
     staging.mkdir()
+    starter.mkdir()
+    theme.mkdir()
 
     _init_git_repo(
         staging,
@@ -51,6 +55,8 @@ def gicleeapp_env(tmp_path, monkeypatch):
 
     monkeypatch.setattr(cfg, "CURSOR_API_DIR", source)
     monkeypatch.setattr(cfg, "GICLEEAPP_STAGING_DIR", staging)
+    monkeypatch.setattr(cfg, "GPT_STARTER_DIR", starter)
+    monkeypatch.setattr(cfg, "THEME_ROOT", theme)
 
     subprocess.run(["git", "add", "-A"], cwd=staging, check=True, capture_output=True)
     subprocess.run(
@@ -213,8 +219,7 @@ def test_commit_and_push_triggers_starter_sync(gicleeapp_env, monkeypatch, tmp_p
     from Komponenty.integracjagpt import starter_checkpoint as sc
 
     _, staging = gicleeapp_env
-    starter = tmp_path / "Pliki startowe dla GPT"
-    starter.mkdir()
+    starter = Path(cfg.GPT_STARTER_DIR)
     (starter / "CURRENT_APP_STATE.md").write_text(
         f"# Current App State\n\n{sc.MARKER_START}\nold\n{sc.MARKER_END}\n",
         encoding="utf-8",
