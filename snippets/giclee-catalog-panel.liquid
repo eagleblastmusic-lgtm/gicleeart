@@ -1,0 +1,14 @@
+{% comment %}
+  Moduł panelu Katalog.
+  part: "styles" ładuje style; part: "script" uruchamia panel w dotychczasowym miejscu layoutu.
+{% endcomment %}
+{%- case part -%}
+  {%- when 'styles' -%}
+    {{ 'giclee-catalog-panel.css' | asset_url | stylesheet_tag }}
+    {{ 'giclee-catalog-artist-effects.css' | asset_url | stylesheet_tag }}
+  {%- when 'script' -%}
+    <script
+      src="{{ 'giclee-catalog-panel.js' | asset_url }}"
+      data-config-url="{{ 'giclee-catalog-submenu-config.json' | asset_url | escape }}"
+    ></script>
+{%- endcase -%}

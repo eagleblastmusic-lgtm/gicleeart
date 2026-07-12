@@ -10,7 +10,6 @@ from Komponenty._shared.toast import show_toast
 from Komponenty._shared.window_geometry import position_toplevel_screen_center
 from Komponenty.stronaglowna.effect_form_controls import EffectControlGroup, bind_master_toggle
 from Komponenty.stronaglowna.home_effect_panels import build_scroll_reveal_tab
-from Komponenty.stronaglowna.section_effects_gui import build_parallax_tab
 
 from .config import PageEditorConfig
 from .page_section_effects_settings import (
@@ -22,6 +21,139 @@ from .page_section_effects_settings import (
     write_page_section_effects_asset,
 )
 from .types import TemplateZone
+
+
+def _build_image_parallax_slider_tab(
+    notebook: ttk.Notebook,
+    cfg: dict[str, Any],
+    *,
+    tab_label: str,
+) -> dict[str, Any]:
+    """Panel parallax grafiki z niezależnymi suwakami ruchu i powrotu."""
+
+    parallax_var = tk.BooleanVar(value=bool(cfg.get("parallaxEnabled", False)))
+    tab = ttk.Frame(notebook, padding=(8, 8))
+    notebook.add(tab, text=tab_label)
+
+    parallax_cb = ttk.Checkbutton(
+        tab,
+        text="Parallax grafiki włączony (mysz, desktop)",
+        variable=parallax_var,
+    )
+    parallax_cb.pack(anchor="w", pady=(0, 8))
+
+    hint_label = ttk.Label(
+        tab,
+        text="Subtelny ruch grafiki od kursora. Wyłączony na mobile i przy prefers-reduced-motion.",
+        wraplength=540,
+        foreground="#555",
+    )
+    hint_label.pack(anchor="w", pady=(0, 8))
+
+    grid = ttk.LabelFrame(tab, text="Parametry parallax", padding=(10, 10))
+    grid.pack(fill="x")
+    grid.columnconfigure(1, weight=1)
+
+    slider_vars: dict[str, tk.DoubleVar] = {}
+    int_keys = {"parallaxMaxX", "parallaxMaxY", "parallaxOverscan"}
+    float_keys = {"parallaxEase", "parallaxReturnEase"}
+    param_controls = EffectControlGroup()
+
+    def _slider(
+        row: int,
+        key: str,
+        label: str,
+        lo: float,
+        hi: float,
+        *,
+        decimals: int,
+    ) -> None:
+        raw_value = cfg.get(key, PAGE_IMAGE_EFFECT_DEFAULTS[key])
+        try:
+            initial = float(raw_value)
+        except (TypeError, ValueError):
+            initial = float(PAGE_IMAGE_EFFECT_DEFAULTS[key])
+        initial = max(lo, min(hi, initial))
+
+        value_var = tk.DoubleVar(value=initial)
+        display_var = tk.StringVar()
+        slider_vars[key] = value_var
+
+        lbl = ttk.Label(grid, text=label)
+        lbl.grid(row=row, column=0, sticky="w", pady=5)
+
+        scale = ttk.Scale(
+            grid,
+            variable=value_var,
+            from_=lo,
+            to=hi,
+            orient="horizontal",
+        )
+        scale.grid(row=row, column=1, sticky="ew", padx=(12, 10), pady=5)
+
+        value_lbl = ttk.Label(grid, textvariable=display_var, width=7, anchor="e")
+        value_lbl.grid(row=row, column=2, sticky="e", pady=5)
+
+        def _sync_display(*_args: object) -> None:
+            value = max(lo, min(hi, float(value_var.get())))
+            if decimals:
+                display_var.set(f"{value:.{decimals}f}")
+            else:
+                display_var.set(str(int(round(value))))
+
+        value_var.trace_add("write", _sync_display)
+        _sync_display()
+        param_controls.add_all([lbl, scale, value_lbl])
+
+    _slider(0, "parallaxMaxX", "Max przesunięcie X (px):", 0, 40, decimals=0)
+    _slider(1, "parallaxMaxY", "Max przesunięcie Y (px):", 0, 28, decimals=0)
+    _slider(2, "parallaxEase", "Wygładzanie ruchu (lerp):", 0.03, 0.15, decimals=3)
+    _slider(
+        3,
+        "parallaxReturnEase",
+        "Wygładzanie powrotu (lerp):",
+        0.01,
+        0.10,
+        decimals=3,
+    )
+    _slider(4, "parallaxOverscan", "Overscan grafiki (%):", 100, 112, decimals=0)
+
+    instructions = ttk.LabelFrame(tab, text="Jak regulować", padding=(10, 8))
+    instructions.pack(fill="x", pady=(10, 0))
+    ttk.Label(
+        instructions,
+        text=(
+            "• Max X / Y — określa siłę przesunięcia grafiki.\n"
+            "• Wygładzanie ruchu — niżej = wolniejsze podążanie za kursorem.\n"
+            "• Wygładzanie powrotu — niżej = łagodniejszy powrót po wyjechaniu kursora.\n"
+            "• Overscan — zapas powiększenia; zwiększ, jeśli przy ruchu widać krawędzie.\n"
+            "Polecany punkt startowy: X 16 · Y 10 · ruch 0.075 · powrót 0.035 · overscan 106."
+        ),
+        wraplength=540,
+        justify="left",
+        foreground="#555",
+    ).pack(anchor="w")
+    param_controls.add(hint_label)
+    bind_master_toggle(parallax_var, param_controls)
+
+    def collect_parallax() -> dict[str, Any]:
+        out: dict[str, Any] = {"parallaxEnabled": parallax_var.get()}
+        for key in int_keys:
+            out[key] = int(round(slider_vars[key].get()))
+        for key in float_keys:
+            out[key] = round(float(slider_vars[key].get()), 3)
+        return out
+
+    def restore_defaults() -> None:
+        parallax_var.set(bool(PAGE_IMAGE_EFFECT_DEFAULTS["parallaxEnabled"]))
+        for key, var in slider_vars.items():
+            var.set(float(PAGE_IMAGE_EFFECT_DEFAULTS[key]))
+
+    return {
+        "collect_parallax": collect_parallax,
+        "parallax_var": parallax_var,
+        "restore_defaults": restore_defaults,
+    }
 
 
 def open_text_effects_dialog(
@@ -115,7 +247,7 @@ def open_image_effects_dialog(
     dlg.title(f"Efekty grafiki — {zone.label}")
     dlg.transient(host)
     dlg.grab_set()
-    position_toplevel_screen_center(dlg, 560, 620)
+    position_toplevel_screen_center(dlg, 620, 680)
 
     pad = ttk.Frame(dlg, padding=(12, 10))
     pad.pack(fill="both", expand=True)
@@ -144,7 +276,7 @@ def open_image_effects_dialog(
     notebook = ttk.Notebook(pad)
     notebook.pack(fill="both", expand=True)
 
-    parallax_panel = build_parallax_tab(
+    parallax_panel = _build_image_parallax_slider_tab(
         notebook,
         cfg,
         tab_label="Parallax grafiki",
@@ -154,8 +286,10 @@ def open_image_effects_dialog(
     notebook.add(hover_tab, text="Hover grafiki")
 
     hover_enabled_var = tk.BooleanVar(value=bool(cfg.get("imageHoverEnabled", True)))
-    hover_scale_var = tk.StringVar(value=str(cfg.get("imageHoverScale", 1.025)))
-    hover_duration_var = tk.StringVar(value=str(cfg.get("imageHoverDurationMs", 850)))
+    hover_scale_var = tk.DoubleVar(value=float(cfg.get("imageHoverScale", 1.025)))
+    hover_duration_var = tk.DoubleVar(value=float(cfg.get("imageHoverDurationMs", 850)))
+    hover_scale_display_var = tk.StringVar()
+    hover_duration_display_var = tk.StringVar()
     hover_controls = EffectControlGroup()
 
     ttk.Checkbutton(hover_tab, text="Hover grafiki włączony", variable=hover_enabled_var).pack(
@@ -168,47 +302,86 @@ def open_image_effects_dialog(
         foreground="#555",
     ).pack(anchor="w", pady=(4, 10))
 
-    hover_grid = ttk.LabelFrame(hover_tab, text="Parametry hover", padding=(10, 8))
+    hover_grid = ttk.LabelFrame(hover_tab, text="Parametry hover", padding=(10, 10))
     hover_grid.pack(fill="x")
+    hover_grid.columnconfigure(1, weight=1)
 
     scale_lbl = ttk.Label(hover_grid, text="Skala hover:")
-    scale_lbl.grid(row=0, column=0, sticky="w", pady=2)
-    scale_spin = ttk.Spinbox(
+    scale_lbl.grid(row=0, column=0, sticky="w", pady=5)
+    scale_slider = ttk.Scale(
         hover_grid,
-        textvariable=hover_scale_var,
+        variable=hover_scale_var,
         from_=1.0,
         to=1.08,
-        increment=0.001,
-        width=8,
-        format="%.3f",
+        orient="horizontal",
     )
-    scale_spin.grid(row=0, column=1, sticky="w", padx=(10, 0), pady=2)
-    duration_lbl = ttk.Label(hover_grid, text="Czas animacji (ms):")
-    duration_lbl.grid(row=1, column=0, sticky="w", pady=2)
-    duration_spin = ttk.Spinbox(
+    scale_slider.grid(row=0, column=1, sticky="ew", padx=(12, 10), pady=5)
+    scale_value_lbl = ttk.Label(
         hover_grid,
-        textvariable=hover_duration_var,
+        textvariable=hover_scale_display_var,
+        width=7,
+        anchor="e",
+    )
+    scale_value_lbl.grid(row=0, column=2, sticky="e", pady=5)
+
+    duration_lbl = ttk.Label(hover_grid, text="Czas animacji (ms):")
+    duration_lbl.grid(row=1, column=0, sticky="w", pady=5)
+    duration_slider = ttk.Scale(
+        hover_grid,
+        variable=hover_duration_var,
         from_=400,
         to=1600,
-        increment=25,
-        width=8,
+        orient="horizontal",
     )
-    duration_spin.grid(row=1, column=1, sticky="w", padx=(10, 0), pady=2)
-    hover_controls.add_all([scale_lbl, scale_spin, duration_lbl, duration_spin])
+    duration_slider.grid(row=1, column=1, sticky="ew", padx=(12, 10), pady=5)
+    duration_value_lbl = ttk.Label(
+        hover_grid,
+        textvariable=hover_duration_display_var,
+        width=7,
+        anchor="e",
+    )
+    duration_value_lbl.grid(row=1, column=2, sticky="e", pady=5)
+
+    def _sync_hover_displays(*_args: object) -> None:
+        hover_scale_display_var.set(f"{hover_scale_var.get():.3f}")
+        hover_duration_display_var.set(str(int(round(hover_duration_var.get()))))
+
+    hover_scale_var.trace_add("write", _sync_hover_displays)
+    hover_duration_var.trace_add("write", _sync_hover_displays)
+    _sync_hover_displays()
+
+    hover_controls.add_all(
+        [
+            scale_lbl,
+            scale_slider,
+            scale_value_lbl,
+            duration_lbl,
+            duration_slider,
+            duration_value_lbl,
+        ]
+    )
     bind_master_toggle(hover_enabled_var, hover_controls)
+
+    hover_instructions = ttk.LabelFrame(hover_tab, text="Jak regulować", padding=(10, 8))
+    hover_instructions.pack(fill="x", pady=(10, 0))
+    ttk.Label(
+        hover_instructions,
+        text=(
+            "• Skala hover — określa siłę powiększenia; 1.000 oznacza brak zoomu.\n"
+            "• Czas animacji — niżej = szybsza reakcja, wyżej = wolniejsze i łagodniejsze przejście.\n"
+            "Polecany punkt startowy: skala 1.025 · czas 850 ms."
+        ),
+        wraplength=540,
+        justify="left",
+        foreground="#555",
+    ).pack(anchor="w")
 
     def _collect() -> dict[str, Any]:
         merged = dict(PAGE_IMAGE_EFFECT_DEFAULTS)
         merged.update(parallax_panel["collect_parallax"]())
         merged["imageHoverEnabled"] = hover_enabled_var.get()
-        try:
-            merged["imageHoverScale"] = float(hover_scale_var.get())
-        except ValueError:
-            merged["imageHoverScale"] = PAGE_IMAGE_EFFECT_DEFAULTS["imageHoverScale"]
-        try:
-            merged["imageHoverDurationMs"] = int(hover_duration_var.get())
-        except ValueError:
-            merged["imageHoverDurationMs"] = PAGE_IMAGE_EFFECT_DEFAULTS["imageHoverDurationMs"]
+        merged["imageHoverScale"] = round(float(hover_scale_var.get()), 3)
+        merged["imageHoverDurationMs"] = int(round(hover_duration_var.get()))
         merged["enabled"] = bool(merged.get("parallaxEnabled")) or bool(merged.get("imageHoverEnabled"))
         return merged
 
@@ -228,10 +401,10 @@ def open_image_effects_dialog(
 
     def _restore() -> None:
         defaults = dict(PAGE_IMAGE_EFFECT_DEFAULTS)
-        parallax_panel["parallax_var"].set(bool(defaults.get("parallaxEnabled")))
+        parallax_panel["restore_defaults"]()
         hover_enabled_var.set(bool(defaults.get("imageHoverEnabled")))
-        hover_scale_var.set(str(defaults.get("imageHoverScale")))
-        hover_duration_var.set(str(defaults.get("imageHoverDurationMs")))
+        hover_scale_var.set(float(defaults.get("imageHoverScale", 1.025)))
+        hover_duration_var.set(float(defaults.get("imageHoverDurationMs", 850)))
 
     btn_row = ttk.Frame(pad)
     btn_row.pack(fill="x", pady=(10, 0))
