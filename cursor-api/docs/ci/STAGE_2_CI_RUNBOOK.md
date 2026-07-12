@@ -14,9 +14,31 @@ The current workflow is:
 
 ### Hermetic smoke
 
-The blocking smoke job runs on Windows with Python 3.13 and validates the focused repository-safety, Studio category, packaging, external-store and Studio navigation contracts.
+The blocking smoke job runs on Windows with Python 3.13 and validates deterministic contracts that do not create a real Tk root:
 
-It must remain green before a Stage 2 PR can be considered merge-ready.
+- repository-safety tracked-cleanup rules;
+- Studio category defaults and overrides;
+- PyInstaller resource packaging;
+- import-safe Resend diagnostics;
+- external AppData store isolation;
+- TytułyAI storage round-trips;
+- Component Hub filtering without GUI.
+
+It must remain green before a Stage 2 PR can be considered merge-ready. Do not add tests that instantiate `tkinter.Tk`, `customtkinter.CTk` or the full Studio application to this blocking job.
+
+### Tk GUI smoke
+
+The Tk GUI job is diagnostic and non-blocking while the hosted Windows/Python 3.13 Tcl/Tk environment is unstable.
+
+It performs an explicit Tk-root capability probe, records Tcl/Tk details, and then runs selected Component Hub, inline lifecycle and Giclée Frame GUI tests. Probe output, JUnit and pytest logs are uploaded even when the environment fails.
+
+A red Tk diagnostic must be classified as one of:
+
+- runner Tcl/Tk installation failure;
+- deterministic test-contract failure;
+- product regression.
+
+Do not change production code to hide a broken Tcl/Tk runner.
 
 ### Full pytest baseline
 
@@ -61,7 +83,7 @@ Automated tests must not use:
 
 Tests requiring Git behavior must use temporary local repositories. Shopify-related tests must use fixtures, stubs or temporary theme roots.
 
-## Local focused reproduction
+## Local blocking-smoke reproduction
 
 From `cursor-api` in an isolated environment:
 
@@ -73,15 +95,35 @@ python -m pytest -q `
   tests/test_repository_safety_tracked_cleanup.py `
   tests/test_studio_categories.py `
   tests/test_giclee_app_packaging.py `
+  tests/test_resend_diagnostic_script.py `
+  tests/test_stage1e_external_stores_3.py::test_title_drafts_write_external `
   tests/test_stage1e_external_stores_3.py::test_launcher_config_reads_legacy_and_writes_roaming `
-  tests/test_studio_component_hub.py::test_filtered_components_without_gui `
-  tests/test_studio_component_hub.py::test_pin_toggle_does_not_rebuild_card_cache `
-  tests/test_studio_component_hub.py::test_hub_search_during_partial_render `
-  tests/test_studio_launcher_inline.py::test_return_from_inline_restores_hub_tiles `
-  tests/test_studio_launcher_inline.py::test_return_from_inline_with_inline_resize_restores_hub
+  tests/test_tytulyai_storage.py `
+  tests/test_studio_component_hub.py::test_filtered_components_without_gui
 ```
 
 Do not run this command against unisolated environment variables.
+
+## Local Tk GUI reproduction
+
+First verify that Tk can create and destroy a root:
+
+```powershell
+python -c "import tkinter as tk; root=tk.Tk(); root.withdraw(); print(root.tk.call('info','patchlevel')); print(root.tk.globalgetvar('tcl_library')); root.destroy()"
+```
+
+Only after the probe succeeds, run the selected GUI set:
+
+```powershell
+python -m pytest -q `
+  tests/test_studio_component_hub.py::test_pin_toggle_does_not_rebuild_card_cache `
+  tests/test_studio_component_hub.py::test_hub_search_during_partial_render `
+  tests/test_studio_launcher_inline.py::test_return_from_inline_restores_hub_tiles `
+  tests/test_studio_launcher_inline.py::test_return_from_inline_with_inline_resize_restores_hub `
+  tests/test_studio_gicleeframe_visual_ready.py::test_gicleeframe_section_reentry_uses_minimal_cache
+```
+
+A failed capability probe is an environment result, not permission to weaken product behavior or blanket-skip all GUI tests.
 
 ## Local full baseline reproduction
 
@@ -103,10 +145,9 @@ Any unexpected modification is a blocker.
 
 GitHub Actions uploads:
 
-- JUnit XML;
-- complete pytest text output;
-- a separate artifact for the focused smoke job;
-- a separate artifact for the full baseline diagnostic.
+- a blocking-smoke artifact with JUnit and complete pytest output;
+- a Tk GUI diagnostic artifact with capability-probe output, JUnit when available and complete pytest output;
+- a full-baseline artifact with JUnit and complete pytest output.
 
 Artifacts are evidence for the exact workflow run and must be reviewed before changing a failing contract.
 
@@ -114,9 +155,11 @@ Artifacts are evidence for the exact workflow run and must be reviewed before ch
 
 GUI/Tk tests require an explicit environment contract.
 
-Do not modify production code to hide a broken Tcl/Tk installation. Diagnose the runner first. GUI tests may be separated into a dedicated job using a Python installation with working Tcl/Tk.
+Do not modify production code to hide a broken Tcl/Tk installation. The dedicated diagnostic job must perform a Tk-root capability check before executing GUI tests.
 
-A skip is permitted only when the job performs an explicit Tk-root capability check and records the reason. Do not apply a blanket GUI skip.
+A skip is permitted only when a specific test has a documented platform contract and the environment check records the reason. Do not apply a blanket GUI skip.
+
+The blocking hermetic smoke must remain independent of Tcl/Tk root creation.
 
 ## Async UI testing strategy
 
