@@ -52,11 +52,17 @@ jobs:
             $patcher = ".github/scripts/gpt-apply-blog-preview-cache.py"
             $patcherText = Get-Content -LiteralPath $patcher -Raw
             $patcherText = $patcherText.Replace("REPO_ROOT = Path(__file__).resolve().parents[2]", "REPO_ROOT = Path.cwd().resolve()")
+            $patcherText = $patcherText.Replace('    """Return an explicit override or the external Local AppData cache path."""', '    # Return an explicit override or the external Local AppData cache path.')
             if ($patcherText -notmatch "REPO_ROOT = Path\.cwd\(\)\.resolve\(\)") {
               throw "Failed to replace REPO_ROOT anchor in patcher"
             }
             Set-Content -LiteralPath $patcher -Value $patcherText -Encoding utf8
             Select-String -LiteralPath $patcher -Pattern "REPO_ROOT"
+
+            python -m py_compile $patcher
+            if ($LASTEXITCODE -ne 0) {
+              throw "Patcher syntax validation failed"
+            }
 
             python -c "import os; print('python cwd=' + os.getcwd())"
             python $patcher 2>&1 | Tee-Object -FilePath "$reportRoot\patcher.txt"
