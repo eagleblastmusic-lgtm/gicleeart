@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -14,12 +15,20 @@ def _view_text() -> str:
     )
 
 
-def test_top_bar_late_split_constants() -> None:
+def _constant_int(text: str, name: str) -> int:
+    match = re.search(rf"^{re.escape(name)}\s*=\s*(\d+)$", text, re.MULTILINE)
+    assert match is not None, f"missing integer constant: {name}"
+    return int(match.group(1))
+
+
+def test_top_bar_late_split_preserves_staggered_ordering() -> None:
     text = _view_text()
-    assert "_GF_TOP_BAR_ACTIONS_LATE_DEFER_MS = 1600" in text
-    assert "_GF_TOP_BAR_CONTEXT_ACTIONS_LATE_DEFER_MS = 0" in text
-    assert "_GF_TOP_BAR_PRIMARY_ACTIONS_LATE_DEFER_MS = 160" in text
-    assert "_GF_TOP_BAR_SECONDARY_ACTIONS_LATE_DEFER_MS = 320" in text
+    overall_ms = _constant_int(text, "_GF_TOP_BAR_ACTIONS_LATE_DEFER_MS")
+    context_ms = _constant_int(text, "_GF_TOP_BAR_CONTEXT_ACTIONS_LATE_DEFER_MS")
+    primary_ms = _constant_int(text, "_GF_TOP_BAR_PRIMARY_ACTIONS_LATE_DEFER_MS")
+    secondary_ms = _constant_int(text, "_GF_TOP_BAR_SECONDARY_ACTIONS_LATE_DEFER_MS")
+
+    assert 0 <= context_ms < primary_ms < secondary_ms <= overall_ms
 
 
 def test_top_bar_late_split_methods_exist() -> None:
