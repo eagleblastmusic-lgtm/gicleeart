@@ -1,0 +1,202 @@
+name: Stage 2 CI Baseline
+
+on:
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stage2-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hermetic-smoke:
+    name: Hermetic smoke (Windows / Python 3.13)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      PYTHONUTF8: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+      LOCALAPPDATA: '${{ runner.temp }}\gicleeapp-smoke\LocalAppData'
+      APPDATA: '${{ runner.temp }}\gicleeapp-smoke\AppData'
+      GICLEEAPP_LOCAL_ROOT: '${{ runner.temp }}\gicleeapp-smoke\LocalRoot'
+      GICLEEAPP_ROAMING_ROOT: '${{ runner.temp }}\gicleeapp-smoke\RoamingRoot'
+      PYTHONPYCACHEPREFIX: '${{ runner.temp }}\gicleeapp-smoke\pycache'
+      GPT_STARTER_DIR: '${{ runner.temp }}\gicleeapp-smoke\starter-files'
+      THEME_ROOT: '${{ runner.temp }}\gicleeapp-smoke\theme-root'
+      TEMP: '${{ runner.temp }}\gicleeapp-smoke\temp'
+      TMP: '${{ runner.temp }}\gicleeapp-smoke\temp'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: cursor-api/requirements-dev.txt
+
+      - name: Prepare isolated runtime directories
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          @(
+            $env:LOCALAPPDATA,
+            $env:APPDATA,
+            $env:GICLEEAPP_LOCAL_ROOT,
+            $env:GICLEEAPP_ROAMING_ROOT,
+            $env:PYTHONPYCACHEPREFIX,
+            $env:GPT_STARTER_DIR,
+            $env:THEME_ROOT,
+            $env:TEMP,
+            $env:TMP
+          ) | ForEach-Object {
+            New-Item -ItemType Directory -Path $_ -Force | Out-Null
+          }
+
+      - name: Install test dependencies
+        working-directory: cursor-api
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+          python -m pip check
+
+      - name: Run Stage 2 hermetic smoke
+        working-directory: cursor-api
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $reportRoot = Join-Path $env:RUNNER_TEMP "stage2-smoke-reports"
+          New-Item -ItemType Directory -Path $reportRoot -Force | Out-Null
+
+          $targets = @(
+            "tests/test_repository_safety_tracked_cleanup.py",
+            "tests/test_studio_categories.py",
+            "tests/test_giclee_app_packaging.py",
+            "tests/test_stage1e_external_stores_3.py::test_launcher_config_reads_legacy_and_writes_roaming",
+            "tests/test_studio_component_hub.py::test_filtered_components_without_gui",
+            "tests/test_studio_component_hub.py::test_pin_toggle_does_not_rebuild_card_cache",
+            "tests/test_studio_component_hub.py::test_hub_search_during_partial_render",
+            "tests/test_studio_launcher_inline.py::test_return_from_inline_restores_hub_tiles",
+            "tests/test_studio_launcher_inline.py::test_return_from_inline_with_inline_resize_restores_hub"
+          )
+
+          python -m pytest -q `
+            --junitxml="$reportRoot\junit.xml" `
+            @targets 2>&1 | Tee-Object -FilePath "$reportRoot\pytest.txt"
+
+          $exitCode = $LASTEXITCODE
+          if ($exitCode -ne 0) {
+            exit $exitCode
+          }
+
+      - name: Upload hermetic smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage2-hermetic-smoke-${{ github.run_id }}
+          path: ${{ runner.temp }}\stage2-smoke-reports
+          if-no-files-found: error
+          retention-days: 14
+
+  full-baseline-diagnostic:
+    name: Full pytest baseline (diagnostic)
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      PYTHONUTF8: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+      LOCALAPPDATA: '${{ runner.temp }}\gicleeapp-full\LocalAppData'
+      APPDATA: '${{ runner.temp }}\gicleeapp-full\AppData'
+      GICLEEAPP_LOCAL_ROOT: '${{ runner.temp }}\gicleeapp-full\LocalRoot'
+      GICLEEAPP_ROAMING_ROOT: '${{ runner.temp }}\gicleeapp-full\RoamingRoot'
+      PYTHONPYCACHEPREFIX: '${{ runner.temp }}\gicleeapp-full\pycache'
+      GPT_STARTER_DIR: '${{ runner.temp }}\gicleeapp-full\starter-files'
+      THEME_ROOT: '${{ runner.temp }}\gicleeapp-full\theme-root'
+      TEMP: '${{ runner.temp }}\gicleeapp-full\temp'
+      TMP: '${{ runner.temp }}\gicleeapp-full\temp'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: cursor-api/requirements-dev.txt
+
+      - name: Prepare isolated runtime directories
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          @(
+            $env:LOCALAPPDATA,
+            $env:APPDATA,
+            $env:GICLEEAPP_LOCAL_ROOT,
+            $env:GICLEEAPP_ROAMING_ROOT,
+            $env:PYTHONPYCACHEPREFIX,
+            $env:GPT_STARTER_DIR,
+            $env:THEME_ROOT,
+            $env:TEMP,
+            $env:TMP
+          ) | ForEach-Object {
+            New-Item -ItemType Directory -Path $_ -Force | Out-Null
+          }
+
+      - name: Install test dependencies
+        working-directory: cursor-api
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+          python -m pip check
+
+      - name: Run full pytest baseline
+        id: full_pytest
+        continue-on-error: true
+        working-directory: cursor-api
+        shell: pwsh
+        run: |
+          $reportRoot = Join-Path $env:RUNNER_TEMP "stage2-full-baseline-reports"
+          New-Item -ItemType Directory -Path $reportRoot -Force | Out-Null
+
+          python -m pytest -q `
+            --junitxml="$reportRoot\junit.xml" 2>&1 |
+            Tee-Object -FilePath "$reportRoot\pytest.txt"
+
+          $exitCode = $LASTEXITCODE
+          "exit_code=$exitCode" >> $env:GITHUB_OUTPUT
+          exit $exitCode
+
+      - name: Write diagnostic summary
+        if: always()
+        shell: pwsh
+        run: |
+          @"
+          ## Stage 2 full baseline
+
+          - pytest step outcome: `${{ steps.full_pytest.outcome }}`
+          - pytest exit code: `${{ steps.full_pytest.outputs.exit_code }}`
+          - mode: diagnostic and temporarily non-blocking
+          - runtime roots: isolated under `runner.temp`
+          "@ >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Upload full baseline evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage2-full-baseline-${{ github.run_id }}
+          path: ${{ runner.temp }}\stage2-full-baseline-reports
+          if-no-files-found: error
+          retention-days: 14
