@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from giclee_app.component_loader import discover_components, find_components_dir
 from giclee_app.studio.categories import (
+    DEFAULT_CATEGORIES_PATH,
     NAV_CATEGORIES,
     VALID_CATEGORY_IDS,
     _ensure_mapping_loaded,
@@ -28,8 +29,9 @@ def test_valid_category_ids_exclude_dashboard_from_json_keys() -> None:
 
 
 def test_no_duplicate_folders_in_json() -> None:
-    path = Path(__file__).resolve().parents[1] / "giclee_app" / "data" / "studio_categories.json"
-    data = json.loads(path.read_text(encoding="utf-8"))
+    data = json.loads(
+        DEFAULT_CATEGORIES_PATH.read_text(encoding="utf-8")
+    )
     seen: set[str] = set()
     cats = data.get("categories", {})
     assert isinstance(cats, dict)
@@ -99,7 +101,10 @@ def test_category_for_folder_loop_no_reload(monkeypatch) -> None:  # noqa: ANN00
 
     def counting_read(self: Path, *args, **kwargs):  # noqa: ANN001, ANN002
         nonlocal load_count
-        if self.name == "studio_categories.json":
+        if self.name in {
+            "studio_categories.json",
+            DEFAULT_CATEGORIES_PATH.name,
+        }:
             load_count += 1
         return original(self, *args, **kwargs)
 

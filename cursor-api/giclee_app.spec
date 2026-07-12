@@ -26,6 +26,7 @@ a = Analysis(
     datas=[
         # Caly pakiet komponentow (Python uruchamia je osobnym interpreterem)
         (str(ROOT / "Komponenty"), "Komponenty"),
+        (str(ROOT / "giclee_app" / "resources"), "giclee_app/resources"),
         (str(ROOT / "CHECKLIST_SETUP.md"), "."),
     ],
     hiddenimports=[
