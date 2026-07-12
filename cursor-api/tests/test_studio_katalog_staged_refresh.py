@@ -37,11 +37,37 @@ def _immediate_after(view, delay_ms: int, callback) -> None:  # noqa: ARG001
     view._run_if_alive(callback)
 
 
-def _bind_after(view, mode: str):
+def _run_async_now(
+    widget,
+    func,
+    on_done,
+    *,
+    on_error=None,
+    poll_ms: int = 40,
+) -> None:  # noqa: ANN001, ARG001
+    """Deterministycznie wykonaj granicę worker/UI bez zmiany kodu produkcyjnego."""
+    try:
+        result = func()
+    except BaseException as exc:  # noqa: BLE001
+        if on_error is not None:
+            on_error(exc)
+        return
+    on_done(result)
+
+
+def _bind_after(view, mode: str, monkeypatch=None):  # noqa: ANN001
     if mode == "noop":
         view._safe_after = lambda delay_ms, callback: _noop_after(view, delay_ms, callback)
-    else:
-        view._safe_after = lambda delay_ms, callback: _immediate_after(view, delay_ms, callback)
+        return
+
+    if monkeypatch is None:
+        raise AssertionError("immediate mode requires monkeypatch")
+
+    monkeypatch.setattr(
+        "giclee_app.ui.katalog_view.run_async",
+        _run_async_now,
+    )
+    view._safe_after = lambda delay_ms, callback: _immediate_after(view, delay_ms, callback)
 
 
 def test_refresh_all_does_not_immediately_set_data_loaded(tmp_path: Path) -> None:
@@ -75,10 +101,13 @@ def test_refresh_all_skips_second_start_while_in_progress(tmp_path: Path, monkey
         root.destroy()
 
 
-def test_refresh_pipeline_finalize_sets_loaded_and_clears_pending(tmp_path: Path) -> None:
+def test_refresh_pipeline_finalize_sets_loaded_and_clears_pending(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
     root, view = _make_view(tmp_path)
     try:
-        _bind_after(view, "immediate")
+        _bind_after(view, "immediate", monkeypatch)
         view._refresh_all()
         assert view._data_loaded is True
         assert view._refresh_in_progress is False
@@ -128,7 +157,7 @@ def test_refresh_pipeline_error_soft_fails(tmp_path: Path, monkeypatch) -> None:
             "giclee_app.ui.katalog_view.build_katalog_inventory",
             boom,
         )
-        _bind_after(view, "immediate")
+        _bind_after(view, "immediate", monkeypatch)
         view._refresh_all()
         assert view._refresh_in_progress is False
         assert view._data_loaded is False
@@ -145,10 +174,13 @@ def test_build_helpers_still_work_for_pipeline_data(tmp_path: Path) -> None:
     assert dm.legacy_katalog is not None
 
 
-def test_batch_row_fill_creates_complete_inventory_rows(tmp_path: Path) -> None:
+def test_batch_row_fill_creates_complete_inventory_rows(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
     root, view = _make_view(tmp_path)
     try:
-        _bind_after(view, "immediate")
+        _bind_after(view, "immediate", monkeypatch)
         view._refresh_all()
         assert view._inventory_frame is not None
         expected = len(inventory_display_rows(view._last_inventory))
@@ -167,7 +199,7 @@ def test_deferred_done_logs_after_pipeline_not_at_start(tmp_path: Path, monkeypa
             "giclee_app.ui.katalog_view.log_event",
             lambda name, **kwargs: events.append(name),  # noqa: ARG005
         )
-        _bind_after(view, "immediate")
+        _bind_after(view, "immediate", monkeypatch)
         view._refresh_all()
         assert "studio.katalog.refresh_pipeline.done" in events
         assert events.index("studio.katalog.refresh.deferred_done") > events.index(
