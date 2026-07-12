@@ -59,8 +59,24 @@ jobs:
         working-directory: cursor-api
         shell: pwsh
         run: |
-          $ErrorActionPreference = "Stop"
-          python -m pytest -q tests/test_blog_preview_appdata_cache.py
+          $ErrorActionPreference = "Continue"
+          $reportRoot = Join-Path $env:RUNNER_TEMP "blog-preview-focused"
+          New-Item -ItemType Directory -Path $reportRoot -Force | Out-Null
+          python -m pytest -q tests/test_blog_preview_appdata_cache.py 2>&1 |
+            Tee-Object -FilePath "$reportRoot\pytest.txt"
+          $exitCode = $LASTEXITCODE
+          if ($exitCode -ne 0) {
+            exit $exitCode
+          }
+
+      - name: Upload focused evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blog-preview-focused-${{ github.run_id }}
+          path: ${{ runner.temp }}\blog-preview-focused
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Commit exact application changes
         shell: pwsh
