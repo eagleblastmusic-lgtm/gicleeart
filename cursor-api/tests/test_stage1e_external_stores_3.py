@@ -74,8 +74,13 @@ def test_title_drafts_write_external(monkeypatch, tmp_path: Path) -> None:
     import types
     from dataclasses import dataclass, field
 
+    package = importlib.import_module("Komponenty.tytulyai")
     storage_module_name = "Komponenty.tytulyai.storage"
+    missing = object()
     previous_storage = sys.modules.pop(storage_module_name, None)
+    previous_storage_attribute = getattr(package, "storage", missing)
+    if previous_storage_attribute is not missing:
+        delattr(package, "storage")
 
     try:
         batch_module = types.ModuleType("Komponenty.tytulyai.batch")
@@ -139,6 +144,12 @@ def test_title_drafts_write_external(monkeypatch, tmp_path: Path) -> None:
         sys.modules.pop(storage_module_name, None)
         if previous_storage is not None:
             sys.modules[storage_module_name] = previous_storage
+
+        if previous_storage_attribute is missing:
+            if hasattr(package, "storage"):
+                delattr(package, "storage")
+        else:
+            setattr(package, "storage", previous_storage_attribute)
 
 
 def test_small_component_stores_write_to_manifest_paths(monkeypatch, tmp_path: Path) -> None:
