@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - gpt-work/stage2-ci-gicleeframe-current-contracts
+  pull_request:
+    branches:
+      - master
 
 permissions:
   contents: read
