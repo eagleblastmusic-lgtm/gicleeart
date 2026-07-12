@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import os
+import time
+import tkinter as tk
 import urllib.request
-from collections.abc import Generator
-from typing import Any
+from collections.abc import Callable, Generator, Mapping
+from pathlib import Path
+from typing import Any, TypeVar
 
 import pytest
 
@@ -12,6 +16,81 @@ _ARTIC_TEST_NODE = (
     "tests/test_stronyzobrazami_search.py::test_artic_fetch_with_referer"
 )
 _ARTIC_JPEG = b"\xff\xd8fixture-jpeg"
+_TCL_INIT_SIGNATURE = "Can't find a usable init.tcl"
+_T = TypeVar("_T")
+
+
+def _ci_tcl_retry_enabled(environ: Mapping[str, str] | None = None) -> bool:
+    env = environ if environ is not None else os.environ
+    return (
+        str(env.get("GITHUB_ACTIONS", "")).strip().casefold() == "true"
+        and bool(str(env.get("TCL_LIBRARY", "")).strip())
+    )
+
+
+def _is_transient_tcl_init_error(exc: BaseException) -> bool:
+    message = str(exc)
+    return _TCL_INIT_SIGNATURE in message and "init.tcl" in message
+
+
+def _wait_for_tcl_init_readable() -> None:
+    library = os.environ.get("TCL_LIBRARY", "").strip()
+    if not library:
+        return
+
+    init_file = Path(library) / "init.tcl"
+    for delay in (0.0, 0.05, 0.15):
+        if delay:
+            time.sleep(delay)
+        try:
+            init_file.read_bytes()
+            return
+        except OSError:
+            continue
+
+    # Nie maskuj problemu. Druga próba Tk zgłosi pełny TclError, ale krótki
+    # read probe daje systemowi plików czas na zwolnienie przejściowej blokady.
+
+
+def _call_tk_init_with_transient_retry(
+    original: Callable[..., _T],
+    instance: object,
+    args: tuple[object, ...],
+    kwargs: dict[str, object],
+) -> _T:
+    try:
+        return original(instance, *args, **kwargs)
+    except tk.TclError as exc:
+        if not _is_transient_tcl_init_error(exc):
+            raise
+        _wait_for_tcl_init_readable()
+        # Dokładnie jedna dodatkowa próba. Każdy kolejny błąd pozostaje
+        # normalnym, blokującym failure testu.
+        return original(instance, *args, **kwargs)
+
+
+@pytest.fixture(autouse=True)
+def _retry_transient_tcl_init_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> Generator[None, None, None]:
+    """Retry one exact init.tcl read failure only on GitHub Actions."""
+
+    if not _ci_tcl_retry_enabled():
+        yield
+        return
+
+    original_init = tk.Tk.__init__
+
+    def _wrapped_init(self: tk.Tk, *args: object, **kwargs: object) -> None:
+        _call_tk_init_with_transient_retry(
+            original_init,
+            self,
+            args,
+            kwargs,
+        )
+
+    monkeypatch.setattr(tk.Tk, "__init__", _wrapped_init)
+    yield
 
 
 @pytest.fixture(autouse=True)
