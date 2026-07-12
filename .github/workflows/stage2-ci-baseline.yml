@@ -24,15 +24,6 @@ jobs:
     env:
       PYTHONUTF8: "1"
       PYTHONDONTWRITEBYTECODE: "1"
-      LOCALAPPDATA: '${{ runner.temp }}\gicleeapp-smoke\LocalAppData'
-      APPDATA: '${{ runner.temp }}\gicleeapp-smoke\AppData'
-      GICLEEAPP_LOCAL_ROOT: '${{ runner.temp }}\gicleeapp-smoke\LocalRoot'
-      GICLEEAPP_ROAMING_ROOT: '${{ runner.temp }}\gicleeapp-smoke\RoamingRoot'
-      PYTHONPYCACHEPREFIX: '${{ runner.temp }}\gicleeapp-smoke\pycache'
-      GPT_STARTER_DIR: '${{ runner.temp }}\gicleeapp-smoke\starter-files'
-      THEME_ROOT: '${{ runner.temp }}\gicleeapp-smoke\theme-root'
-      TEMP: '${{ runner.temp }}\gicleeapp-smoke\temp'
-      TMP: '${{ runner.temp }}\gicleeapp-smoke\temp'
 
     steps:
       - name: Checkout
@@ -49,18 +40,24 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          @(
-            $env:LOCALAPPDATA,
-            $env:APPDATA,
-            $env:GICLEEAPP_LOCAL_ROOT,
-            $env:GICLEEAPP_ROAMING_ROOT,
-            $env:PYTHONPYCACHEPREFIX,
-            $env:GPT_STARTER_DIR,
-            $env:THEME_ROOT,
-            $env:TEMP,
-            $env:TMP
-          ) | ForEach-Object {
-            New-Item -ItemType Directory -Path $_ -Force | Out-Null
+
+          $runtimeRoot = Join-Path $env:RUNNER_TEMP "gicleeapp-smoke"
+          $paths = [ordered]@{
+            LOCALAPPDATA = Join-Path $runtimeRoot "LocalAppData"
+            APPDATA = Join-Path $runtimeRoot "AppData"
+            GICLEEAPP_LOCAL_ROOT = Join-Path $runtimeRoot "LocalRoot"
+            GICLEEAPP_ROAMING_ROOT = Join-Path $runtimeRoot "RoamingRoot"
+            PYTHONPYCACHEPREFIX = Join-Path $runtimeRoot "pycache"
+            GPT_STARTER_DIR = Join-Path $runtimeRoot "starter-files"
+            THEME_ROOT = Join-Path $runtimeRoot "theme-root"
+            TEMP = Join-Path $runtimeRoot "temp"
+            TMP = Join-Path $runtimeRoot "temp"
+          }
+
+          foreach ($entry in $paths.GetEnumerator()) {
+            Add-Content -LiteralPath $env:GITHUB_ENV -Value "$($entry.Key)=$($entry.Value)"
+            Set-Item -Path "Env:$($entry.Key)" -Value $entry.Value
+            New-Item -ItemType Directory -Path $entry.Value -Force | Out-Null
           }
 
       - name: Install test dependencies
@@ -117,15 +114,6 @@ jobs:
     env:
       PYTHONUTF8: "1"
       PYTHONDONTWRITEBYTECODE: "1"
-      LOCALAPPDATA: '${{ runner.temp }}\gicleeapp-full\LocalAppData'
-      APPDATA: '${{ runner.temp }}\gicleeapp-full\AppData'
-      GICLEEAPP_LOCAL_ROOT: '${{ runner.temp }}\gicleeapp-full\LocalRoot'
-      GICLEEAPP_ROAMING_ROOT: '${{ runner.temp }}\gicleeapp-full\RoamingRoot'
-      PYTHONPYCACHEPREFIX: '${{ runner.temp }}\gicleeapp-full\pycache'
-      GPT_STARTER_DIR: '${{ runner.temp }}\gicleeapp-full\starter-files'
-      THEME_ROOT: '${{ runner.temp }}\gicleeapp-full\theme-root'
-      TEMP: '${{ runner.temp }}\gicleeapp-full\temp'
-      TMP: '${{ runner.temp }}\gicleeapp-full\temp'
 
     steps:
       - name: Checkout
@@ -142,18 +130,24 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          @(
-            $env:LOCALAPPDATA,
-            $env:APPDATA,
-            $env:GICLEEAPP_LOCAL_ROOT,
-            $env:GICLEEAPP_ROAMING_ROOT,
-            $env:PYTHONPYCACHEPREFIX,
-            $env:GPT_STARTER_DIR,
-            $env:THEME_ROOT,
-            $env:TEMP,
-            $env:TMP
-          ) | ForEach-Object {
-            New-Item -ItemType Directory -Path $_ -Force | Out-Null
+
+          $runtimeRoot = Join-Path $env:RUNNER_TEMP "gicleeapp-full"
+          $paths = [ordered]@{
+            LOCALAPPDATA = Join-Path $runtimeRoot "LocalAppData"
+            APPDATA = Join-Path $runtimeRoot "AppData"
+            GICLEEAPP_LOCAL_ROOT = Join-Path $runtimeRoot "LocalRoot"
+            GICLEEAPP_ROAMING_ROOT = Join-Path $runtimeRoot "RoamingRoot"
+            PYTHONPYCACHEPREFIX = Join-Path $runtimeRoot "pycache"
+            GPT_STARTER_DIR = Join-Path $runtimeRoot "starter-files"
+            THEME_ROOT = Join-Path $runtimeRoot "theme-root"
+            TEMP = Join-Path $runtimeRoot "temp"
+            TMP = Join-Path $runtimeRoot "temp"
+          }
+
+          foreach ($entry in $paths.GetEnumerator()) {
+            Add-Content -LiteralPath $env:GITHUB_ENV -Value "$($entry.Key)=$($entry.Value)"
+            Set-Item -Path "Env:$($entry.Key)" -Value $entry.Value
+            New-Item -ItemType Directory -Path $entry.Value -Force | Out-Null
           }
 
       - name: Install test dependencies
@@ -192,7 +186,7 @@ jobs:
           - pytest step outcome: ${{ steps.full_pytest.outcome }}
           - pytest exit code: ${{ steps.full_pytest.outputs.exit_code }}
           - mode: diagnostic and temporarily non-blocking
-          - runtime roots: isolated under runner.temp
+          - runtime roots: isolated under RUNNER_TEMP
           "@ >> $env:GITHUB_STEP_SUMMARY
 
       - name: Upload full baseline evidence
