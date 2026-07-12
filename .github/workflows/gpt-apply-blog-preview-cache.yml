@@ -41,31 +41,46 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $patcher = ".github/scripts/gpt-apply-blog-preview-cache.py"
-          $patcherText = Get-Content -LiteralPath $patcher -Raw
-          $patcherText = $patcherText.Replace(
-            "REPO_ROOT = Path(__file__).resolve().parents[2]",
-            "REPO_ROOT = Path.cwd().resolve()"
-          )
-          Set-Content -LiteralPath $patcher -Value $patcherText -Encoding utf8
+          $reportRoot = Join-Path $env:RUNNER_TEMP "blog-preview-apply"
+          New-Item -ItemType Directory -Path $reportRoot -Force | Out-Null
+          Start-Transcript -LiteralPath "$reportRoot\apply.txt" -Force
+          try {
+            $patcher = ".github/scripts/gpt-apply-blog-preview-cache.py"
+            $patcherText = Get-Content -LiteralPath $patcher -Raw
+            $patcherText = $patcherText.Replace("REPO_ROOT = Path(__file__).resolve().parents[2]", "REPO_ROOT = Path.cwd().resolve()")
+            Set-Content -LiteralPath $patcher -Value $patcherText -Encoding utf8
 
-          python $patcher
+            python $patcher
 
-          $expected = @(
-            "cursor-api/Komponenty/blog/preview.py",
-            "cursor-api/tests/test_blog_preview_appdata_cache.py",
-            "cursor-api/docs/repository_safety/BLOG_PREVIEW_CACHE.md"
-          )
-          foreach ($path in $expected) {
-            if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
-              throw "Patcher did not create expected file: $path"
+            $expected = @(
+              "cursor-api/Komponenty/blog/preview.py",
+              "cursor-api/tests/test_blog_preview_appdata_cache.py",
+              "cursor-api/docs/repository_safety/BLOG_PREVIEW_CACHE.md"
+            )
+            foreach ($path in $expected) {
+              Write-Host "$path exists=$(Test-Path -LiteralPath $path -PathType Leaf)"
+              if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+                throw "Patcher did not create expected file: $path"
+              }
             }
+
+            python -m compileall -q `
+              cursor-api/Komponenty/blog/preview.py `
+              cursor-api/tests/test_blog_preview_appdata_cache.py
+            git diff --check
+          }
+          finally {
+            Stop-Transcript
           }
 
-          python -m compileall -q `
-            cursor-api/Komponenty/blog/preview.py `
-            cursor-api/tests/test_blog_preview_appdata_cache.py
-          git diff --check
+      - name: Upload apply evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blog-preview-apply-${{ github.run_id }}
+          path: ${{ runner.temp }}\blog-preview-apply
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Install test dependencies
         working-directory: cursor-api
