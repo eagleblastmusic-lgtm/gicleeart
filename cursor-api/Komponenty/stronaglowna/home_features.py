@@ -327,7 +327,7 @@ def restore_backup(timestamp: str, *, variant_id: str | None = None) -> None:
     if variant_id:
         from .homepage_variants import _variant_dir
 
-        variant_root = _variant_dir(variant_id)
+        variant_root = _variant_dir(variant_id, for_write=True)
         variant_root.mkdir(parents=True, exist_ok=True)
         shutil.copy2(index_src, variant_root / "index.json")
         if settings_src.is_file():

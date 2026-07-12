@@ -7,11 +7,26 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
+from giclee_app.app_paths import atomic_write_text, data_path
+
 from .shopify_orders import fetch_orders, order_to_row
 from .storage import invoice_by_order_id
 
 _COMPONENT_DIR = Path(__file__).resolve().parent
-_SYNC_STATE_FILE = _COMPONENT_DIR / "dane" / "orders_sync_state.json"
+_LEGACY_SYNC_STATE_FILE = _COMPONENT_DIR / "dane" / "orders_sync_state.json"
+_SYNC_STATE_FILE = _LEGACY_SYNC_STATE_FILE
+_SYNC_STATE = data_path(
+    "Komponenty/dokumentysprzedazy/dane/orders_sync_state.json",
+    legacy=_LEGACY_SYNC_STATE_FILE,
+)
+
+
+def _sync_state_path(*, for_write: bool) -> Path:
+    explicit = Path(_SYNC_STATE_FILE)
+    if explicit != _LEGACY_SYNC_STATE_FILE:
+        return explicit
+    return _SYNC_STATE.write_path if for_write else _SYNC_STATE.read_path()
+
 
 _OnNewOrders = Callable[[list[dict[str, Any]]], None]
 _callbacks: list[_OnNewOrders] = []
@@ -25,19 +40,19 @@ def register_on_new_orders(callback: _OnNewOrders | None) -> None:
 
 
 def _load_state() -> dict[str, Any]:
-    if not _SYNC_STATE_FILE.is_file():
+    path = _sync_state_path(for_write=False)
+    if not path.is_file():
         return {}
     try:
-        return json.loads(_SYNC_STATE_FILE.read_text(encoding="utf-8"))
+        return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return {}
 
 
 def _save_state(state: dict[str, Any]) -> None:
-    _SYNC_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    _SYNC_STATE_FILE.write_text(
+    atomic_write_text(
+        _sync_state_path(for_write=True),
         json.dumps(state, ensure_ascii=False, indent=2),
-        encoding="utf-8",
     )
 
 

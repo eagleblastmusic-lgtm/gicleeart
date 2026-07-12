@@ -7,8 +7,26 @@ import re
 from pathlib import Path
 from typing import Any
 
-_DATA_DIR = Path(__file__).resolve().parent / "data"
-_PRICES_FILE = _DATA_DIR / "market_variant_prices.json"
+from giclee_app.app_paths import atomic_write_text, config_path
+
+_LEGACY_DATA_DIR = Path(__file__).resolve().parent / "data"
+_LEGACY_PRICES_FILE = _LEGACY_DATA_DIR / "market_variant_prices.json"
+_DATA_DIR = _LEGACY_DATA_DIR
+_PRICES_FILE = _LEGACY_PRICES_FILE
+
+
+def _prices_path(*, for_write: bool = False) -> Path:
+    data_dir = Path(_DATA_DIR)
+    current = Path(_PRICES_FILE)
+    if data_dir != _LEGACY_DATA_DIR and current == _LEGACY_PRICES_FILE:
+        current = data_dir / "market_variant_prices.json"
+    if current != _LEGACY_PRICES_FILE:
+        return current
+    app_path = config_path(
+        "Komponenty/dodajobraz/data/market_variant_prices.json",
+        legacy=_LEGACY_PRICES_FILE,
+    )
+    return app_path.write_path if for_write else app_path.read_path()
 
 
 def group_key(wood: str, size: str) -> str:
@@ -23,11 +41,11 @@ def parse_group_key(key: str) -> tuple[str, str] | None:
 
 
 def _read_raw() -> dict[str, Any]:
-    _DATA_DIR.mkdir(parents=True, exist_ok=True)
-    if not _PRICES_FILE.is_file():
+    path = _prices_path()
+    if not path.is_file():
         return {"markets": {}}
     try:
-        data = json.loads(_PRICES_FILE.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return {"markets": {}}
     if not isinstance(data, dict):
@@ -38,10 +56,9 @@ def _read_raw() -> dict[str, Any]:
 
 
 def _write_raw(data: dict[str, Any]) -> None:
-    _DATA_DIR.mkdir(parents=True, exist_ok=True)
-    _PRICES_FILE.write_text(
+    atomic_write_text(
+        _prices_path(for_write=True),
         json.dumps(data, ensure_ascii=False, indent=2),
-        encoding="utf-8",
     )
 
 

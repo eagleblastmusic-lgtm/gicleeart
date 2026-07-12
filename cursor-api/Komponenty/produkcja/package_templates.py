@@ -19,9 +19,19 @@ from datetime import datetime
 from pathlib import Path
 from typing import Iterable
 
+from giclee_app.app_paths import atomic_write_text, config_path
+
 _COMPONENT_DIR = Path(__file__).resolve().parent
-_DATA_DIR = _COMPONENT_DIR / "dane"
-_FILE = _DATA_DIR / "package_templates.json"
+_LEGACY_DATA_DIR = _COMPONENT_DIR / "dane"
+_DATA_DIR = _LEGACY_DATA_DIR
+_FILE = _LEGACY_DATA_DIR / "package_templates.json"
+_TEMPLATES = config_path("Komponenty/produkcja/dane/package_templates.json", legacy=_FILE)
+
+
+def _templates_path(*, for_write: bool) -> Path:
+    if Path(_FILE) != _LEGACY_DATA_DIR / "package_templates.json":
+        return Path(_FILE)
+    return _TEMPLATES.write_path if for_write else _TEMPLATES.read_path()
 
 
 DEFAULTS: dict[str, dict[str, float]] = {
@@ -58,8 +68,7 @@ class Template:
 
 
 def _ensure_file() -> None:
-    _DATA_DIR.mkdir(parents=True, exist_ok=True)
-    if not _FILE.is_file():
+    if not _templates_path(for_write=False).is_file():
         now = datetime.now().isoformat(timespec="seconds")
         payload = {
             "templates": [
@@ -67,13 +76,13 @@ def _ensure_file() -> None:
                 for k, v in DEFAULTS.items()
             ],
         }
-        _FILE.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+        atomic_write_text(_templates_path(for_write=True), json.dumps(payload, indent=2, ensure_ascii=False))
 
 
 def _raw_templates() -> list[dict]:
     _ensure_file()
     try:
-        data = json.loads(_FILE.read_text(encoding="utf-8"))
+        data = json.loads(_templates_path(for_write=False).read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return []
     raw = data.get("templates") if isinstance(data, dict) else None
@@ -120,12 +129,8 @@ def get_template(key: str) -> Template | None:
 
 
 def save_templates(templates: Iterable[Template]) -> None:
-    _DATA_DIR.mkdir(parents=True, exist_ok=True)
     payload = {"templates": [asdict(t) for t in templates]}
-    _FILE.write_text(
-        json.dumps(payload, indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
+    atomic_write_text(_templates_path(for_write=True), json.dumps(payload, indent=2, ensure_ascii=False))
 
 
 def upsert_template(

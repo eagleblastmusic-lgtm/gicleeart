@@ -1,4 +1,9 @@
-"""Persystencja — ustawienia, faktury, kursy, zdarzenia."""
+"""Persystencja dokumentów sprzedaży poza repozytorium.
+
+AppData jest lokalizacją nadrzędną. Stare pliki pozostają tymczasowym fallbackiem
+wyłącznie do odczytu; wszystkie nowe JSON-y, zdarzenia i PDF-y trafiają do
+Local AppData.
+"""
 
 from __future__ import annotations
 
@@ -8,35 +13,58 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from giclee_app.app_paths import AppPath, atomic_write_text, cache_path, data_path
+
 from .models import InvoiceRecord, InvoiceSettings
 
 _COMPONENT_DIR = Path(__file__).resolve().parent
-_DATA_DIR = _COMPONENT_DIR / "dane"
-_DOCUMENTS_DIR = _COMPONENT_DIR / "documents" / "invoices"
-_SETTINGS_FILE = _DATA_DIR / "invoice_settings.json"
-_INVOICES_FILE = _DATA_DIR / "invoices.json"
-_EXCHANGE_RATES_FILE = _DATA_DIR / "exchange_rates.json"
-_EVENTS_FILE = _DATA_DIR / "invoice_events.jsonl"
+_LEGACY_DATA_DIR = _COMPONENT_DIR / "dane"
+_LEGACY_DOCUMENTS_DIR = _COMPONENT_DIR / "documents" / "invoices"
+_SETTINGS = data_path(
+    "Komponenty/dokumentysprzedazy/dane/invoice_settings.json",
+    legacy=_LEGACY_DATA_DIR / "invoice_settings.json",
+)
+_INVOICES = data_path(
+    "Komponenty/dokumentysprzedazy/dane/invoices.json",
+    legacy=_LEGACY_DATA_DIR / "invoices.json",
+)
+_EXCHANGE_RATES = cache_path(
+    "Komponenty/dokumentysprzedazy/dane/exchange_rates.json",
+    legacy=_LEGACY_DATA_DIR / "exchange_rates.json",
+)
+_EVENTS = data_path(
+    "Komponenty/dokumentysprzedazy/dane/invoice_events.jsonl",
+    legacy=_LEGACY_DATA_DIR / "invoice_events.jsonl",
+)
+_DOCUMENTS_MARKER = data_path(
+    "Komponenty/dokumentysprzedazy/documents/invoices/.path",
+    legacy=_LEGACY_DOCUMENTS_DIR / ".path",
+)
+
+
+def _documents_dir() -> Path:
+    return _DOCUMENTS_MARKER.write_path.parent
 
 
 def ensure_dirs() -> None:
-    _DATA_DIR.mkdir(parents=True, exist_ok=True)
-    _DOCUMENTS_DIR.mkdir(parents=True, exist_ok=True)
+    _SETTINGS.write_path.parent.mkdir(parents=True, exist_ok=True)
+    _DOCUMENTS_MARKER.write_path.parent.mkdir(parents=True, exist_ok=True)
 
 
 def documents_dir_for_date(iso_date: str) -> Path:
-    """documents/invoices/YYYY/MM/"""
-    ensure_dirs()
+    """Zwraca zewnętrzny katalog `documents/invoices/YYYY/MM/`."""
+
     try:
         dt = datetime.fromisoformat(iso_date[:10])
     except ValueError:
         dt = datetime.now()
-    path = _DOCUMENTS_DIR / f"{dt.year:04d}" / f"{dt.month:02d}"
+    path = _documents_dir() / f"{dt.year:04d}" / f"{dt.month:02d}"
     path.mkdir(parents=True, exist_ok=True)
     return path
 
 
-def _read_json(path: Path, default: Any) -> Any:
+def _read_json(spec: AppPath, default: Any) -> Any:
+    path = spec.read_path()
     if not path.is_file():
         return default
     try:
@@ -45,16 +73,18 @@ def _read_json(path: Path, default: Any) -> Any:
         return default
 
 
-def _write_json(path: Path, data: Any) -> None:
-    ensure_dirs()
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+def _write_json(spec: AppPath, data: Any) -> None:
+    atomic_write_text(
+        spec.write_path,
+        json.dumps(data, ensure_ascii=False, indent=2),
+    )
 
 
 def load_settings() -> InvoiceSettings:
     from Komponenty._shared.accounting_mode_sync import sync_invoice_settings_from_kpir
     from .numbering import migrate_numbering_series, reconcile_all_series
 
-    raw = _read_json(_SETTINGS_FILE, {})
+    raw = _read_json(_SETTINGS, {})
     settings = InvoiceSettings.from_dict(raw if isinstance(raw, dict) else {})
     settings = migrate_numbering_series(settings)
     settings = reconcile_all_series(settings)
@@ -69,18 +99,18 @@ def save_settings(settings: InvoiceSettings) -> None:
     from .numbering import reconcile_all_series
 
     settings = reconcile_all_series(settings)
-    _write_json(_SETTINGS_FILE, settings.to_dict())
+    _write_json(_SETTINGS, settings.to_dict())
 
 
 def load_invoices_db() -> dict[str, Any]:
-    raw = _read_json(_INVOICES_FILE, {"next_id": 1, "invoices": []})
+    raw = _read_json(_INVOICES, {"next_id": 1, "invoices": []})
     if not isinstance(raw, dict):
         return {"next_id": 1, "invoices": []}
     return raw
 
 
 def save_invoices_db(db: dict[str, Any]) -> None:
-    _write_json(_INVOICES_FILE, db)
+    _write_json(_INVOICES, db)
 
 
 def list_invoices() -> list[InvoiceRecord]:
@@ -89,26 +119,27 @@ def list_invoices() -> list[InvoiceRecord]:
 
 
 def invoice_by_order_id(shopify_order_id: int) -> InvoiceRecord | None:
-    for inv in list_invoices():
-        if inv.shopify_order_id == shopify_order_id and inv.doc_kind == "invoice" and inv.status in (
-            "issued", "corrected"
+    for invoice in list_invoices():
+        if invoice.shopify_order_id == shopify_order_id and invoice.doc_kind == "invoice" and invoice.status in (
+            "issued",
+            "corrected",
         ):
-            return inv
+            return invoice
     return None
 
 
 def invoices_for_order(shopify_order_id: int) -> list[InvoiceRecord]:
-    return [i for i in list_invoices() if i.shopify_order_id == shopify_order_id]
+    return [invoice for invoice in list_invoices() if invoice.shopify_order_id == shopify_order_id]
 
 
 def list_manual_invoices() -> list[InvoiceRecord]:
-    return [i for i in list_invoices() if not i.shopify_order_id]
+    return [invoice for invoice in list_invoices() if not invoice.shopify_order_id]
 
 
 def get_invoice(invoice_id: str) -> InvoiceRecord | None:
-    for inv in list_invoices():
-        if inv.id == invoice_id:
-            return inv
+    for invoice in list_invoices():
+        if invoice.id == invoice_id:
+            return invoice
     return None
 
 
@@ -129,7 +160,7 @@ def save_invoice(record: InvoiceRecord) -> None:
 def delete_invoice_record(invoice_id: str) -> bool:
     db = load_invoices_db()
     rows = db.get("invoices") or []
-    filtered = [r for r in rows if r.get("id") != invoice_id]
+    filtered = [row for row in rows if row.get("id") != invoice_id]
     if len(filtered) == len(rows):
         return False
     db["invoices"] = filtered
@@ -139,8 +170,9 @@ def delete_invoice_record(invoice_id: str) -> bool:
 
 def invoices_correcting(invoice_id: str) -> list[InvoiceRecord]:
     return [
-        i for i in list_invoices()
-        if i.corrected_from_invoice_id == invoice_id and i.status != "cancelled"
+        invoice
+        for invoice in list_invoices()
+        if invoice.corrected_from_invoice_id == invoice_id and invoice.status != "cancelled"
     ]
 
 
@@ -153,14 +185,14 @@ def new_invoice_id() -> str:
 
 
 def load_exchange_rates_cache() -> list[dict[str, Any]]:
-    raw = _read_json(_EXCHANGE_RATES_FILE, {"rates": []})
+    raw = _read_json(_EXCHANGE_RATES, {"rates": []})
     if isinstance(raw, dict):
         return list(raw.get("rates") or [])
     return []
 
 
 def save_exchange_rates_cache(rates: list[dict[str, Any]]) -> None:
-    _write_json(_EXCHANGE_RATES_FILE, {"rates": rates})
+    _write_json(_EXCHANGE_RATES, {"rates": rates})
 
 
 def find_cached_rate(currency: str, rate_date: str) -> dict[str, Any] | None:
@@ -174,16 +206,16 @@ def find_cached_rate(currency: str, rate_date: str) -> dict[str, Any] | None:
 def store_exchange_rate(row: dict[str, Any]) -> None:
     rates = load_exchange_rates_cache()
     key = (str(row.get("currency") or "").upper(), str(row.get("rate_date") or ""))
-    rates = [r for r in rates if (
-        str(r.get("currency") or "").upper(),
-        str(r.get("rate_date") or ""),
-    ) != key]
+    rates = [
+        item
+        for item in rates
+        if (str(item.get("currency") or "").upper(), str(item.get("rate_date") or "")) != key
+    ]
     rates.append(row)
     save_exchange_rates_cache(rates)
 
 
 def append_event(action: str, invoice_id: str, *, details: str = "", actor: str = "user") -> None:
-    ensure_dirs()
     entry = {
         "id": str(uuid.uuid4()),
         "action": action,
@@ -192,15 +224,17 @@ def append_event(action: str, invoice_id: str, *, details: str = "", actor: str 
         "details": details,
         "at": datetime.now().isoformat(timespec="seconds"),
     }
-    with _EVENTS_FILE.open("a", encoding="utf-8") as fh:
-        fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    path = _EVENTS.seed_from_legacy()
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
 
 def list_events(invoice_id: str | None = None) -> list[dict[str, Any]]:
-    if not _EVENTS_FILE.is_file():
+    path = _EVENTS.read_path()
+    if not path.is_file():
         return []
     out: list[dict[str, Any]] = []
-    for line in _EVENTS_FILE.read_text(encoding="utf-8").splitlines():
+    for line in path.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
         try:

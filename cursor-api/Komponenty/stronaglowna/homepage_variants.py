@@ -9,6 +9,8 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+from giclee_app.app_paths import atomic_write_text, data_path
+
 from .home_features import write_home_assets
 from .service import (
     INDEX_HEADER,
@@ -22,8 +24,75 @@ from .service import (
     save_theme_settings,
 )
 
-VARIANTS_ROOT = _data_dir() / "variants"
-MANIFEST_PATH = VARIANTS_ROOT / "manifest.json"
+_LEGACY_VARIANTS_ROOT = _data_dir() / "variants"
+_VARIANTS_SENTINEL = data_path(
+    "Komponenty/stronaglowna/data/variants/.path",
+    legacy=_LEGACY_VARIANTS_ROOT / ".path",
+)
+
+# Compatibility sentinel: existing tests/tools may monkeypatch VARIANTS_ROOT.
+# In the default layout all writes resolve dynamically through AppData.
+VARIANTS_ROOT = _LEGACY_VARIANTS_ROOT
+MANIFEST_PATH = _LEGACY_VARIANTS_ROOT / "manifest.json"
+
+
+def _explicit_variants_root() -> Path | None:
+    current = Path(VARIANTS_ROOT)
+    return current if current != _LEGACY_VARIANTS_ROOT else None
+
+
+def variants_write_root() -> Path:
+    explicit = _explicit_variants_root()
+    return explicit if explicit is not None else _VARIANTS_SENTINEL.write_path.parent
+
+
+def variants_read_roots() -> tuple[Path, ...]:
+    explicit = _explicit_variants_root()
+    if explicit is not None:
+        return (explicit,)
+    external = _VARIANTS_SENTINEL.write_path.parent
+    if external == _LEGACY_VARIANTS_ROOT:
+        return (external,)
+    return (external, _LEGACY_VARIANTS_ROOT)
+
+
+def variant_file_path(
+    variant_id: str,
+    filename: str,
+    *,
+    for_write: bool = False,
+    variants_root: Path | None = None,
+) -> Path:
+    if variants_root is not None:
+        return Path(variants_root) / str(variant_id) / filename
+    explicit = _explicit_variants_root()
+    if explicit is not None:
+        return explicit / str(variant_id) / filename
+
+    external = variants_write_root() / str(variant_id) / filename
+    if for_write or external.exists():
+        return external
+    legacy = _LEGACY_VARIANTS_ROOT / str(variant_id) / filename
+    return legacy if legacy.exists() else external
+
+
+def variants_file_path(
+    relative: str,
+    *,
+    for_write: bool = False,
+    variants_root: Path | None = None,
+) -> Path:
+    if variants_root is not None:
+        return Path(variants_root) / relative
+    explicit = _explicit_variants_root()
+    if explicit is not None:
+        return explicit / relative
+
+    external = variants_write_root() / relative
+    if for_write or external.exists():
+        return external
+    legacy = _LEGACY_VARIANTS_ROOT / relative
+    return legacy if legacy.exists() else external
 
 DEFAULT_VARIANTS: tuple[dict[str, str], ...] = (
     {"id": "home1", "label": "Strona Główna 1"},
@@ -72,8 +141,26 @@ def set_variant_home_stack(variant_id: str, enabled: bool) -> None:
     raise ValueError(f"Nieznany wariant: {variant_id}")
 
 
-def _variant_dir(variant_id: str) -> Path:
-    return VARIANTS_ROOT / variant_id
+def variant_dir_path(
+    variant_id: str,
+    *,
+    for_write: bool = False,
+    variants_root: Path | None = None,
+) -> Path:
+    if variants_root is not None:
+        return Path(variants_root) / str(variant_id)
+    explicit = _explicit_variants_root()
+    if explicit is not None:
+        return explicit / str(variant_id)
+    external = variants_write_root() / str(variant_id)
+    if for_write or external.exists():
+        return external
+    legacy = _LEGACY_VARIANTS_ROOT / str(variant_id)
+    return legacy if legacy.exists() else external
+
+
+def _variant_dir(variant_id: str, *, for_write: bool = False) -> Path:
+    return variant_dir_path(variant_id, for_write=for_write)
 
 
 def _load_json_file(path: Path) -> dict[str, Any]:
@@ -85,15 +172,15 @@ def _load_json_file(path: Path) -> dict[str, Any]:
 
 
 def _save_json_file(path: Path, data: dict[str, Any], *, header: str = "") -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
     body = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
-    path.write_text(header + body, encoding="utf-8")
+    atomic_write_text(path, header + body)
 
 
 def load_manifest() -> dict[str, Any]:
-    if not MANIFEST_PATH.is_file():
+    path = variants_file_path("manifest.json")
+    if not path.is_file():
         return {"active": "home1", "variants": list(DEFAULT_VARIANTS)}
-    data = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+    data = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
         raise ValueError("manifest.json — nieprawidłowy format.")
     variants = data.get("variants")
@@ -107,8 +194,10 @@ def load_manifest() -> dict[str, Any]:
 
 
 def save_manifest(manifest: dict[str, Any]) -> None:
-    VARIANTS_ROOT.mkdir(parents=True, exist_ok=True)
-    MANIFEST_PATH.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    atomic_write_text(
+        variants_file_path("manifest.json", for_write=True),
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+    )
 
 
 def list_variants() -> list[dict[str, str]]:
@@ -150,7 +239,7 @@ def save_variant_data(
     from .service import repair_color_correction_cta_blocks
 
     repair_color_correction_cta_blocks(template)
-    root = _variant_dir(variant_id)
+    root = _variant_dir(variant_id, for_write=True)
     root.mkdir(parents=True, exist_ok=True)
     _save_json_file(root / "index.json", template, header=INDEX_HEADER)
     _save_json_file(root / "settings.json", settings, header=SETTINGS_HEADER)
@@ -164,9 +253,8 @@ def save_variant_data(
 
 
 def load_variant_data(variant_id: str) -> tuple[dict[str, Any], dict[str, Any]]:
-    root = _variant_dir(variant_id)
-    index_path = root / "index.json"
-    settings_path = root / "settings.json"
+    index_path = variant_file_path(variant_id, "index.json")
+    settings_path = variant_file_path(variant_id, "settings.json")
     if not index_path.is_file() or not settings_path.is_file():
         raise FileNotFoundError(f"Brak danych wariantu «{variant_label(variant_id)}».")
     template, settings = _load_json_file(index_path), _load_json_file(settings_path)
@@ -197,8 +285,8 @@ def repair_cloned_boomerang_loop(source_id: str, target_id: str) -> bool:
     if not p_forward or not p_boom or not p_loop:
         return False
 
-    target_file = _variant_dir(target_id) / "index.json"
-    source_file = _variant_dir(source_id) / "index.json"
+    target_file = variant_file_path(target_id, "index.json")
+    source_file = variant_file_path(source_id, "index.json")
     if not target_file.is_file() or not source_file.is_file():
         return False
 
@@ -215,7 +303,7 @@ def repair_cloned_boomerang_loop(source_id: str, target_id: str) -> bool:
         return False
 
     path_set(target_t, p_loop, source_loop)
-    _save_json_file(target_file, target_t, header=INDEX_HEADER)
+    _save_json_file(variant_file_path(target_id, "index.json", for_write=True), target_t, header=INDEX_HEADER)
     return True
 
 
@@ -252,8 +340,10 @@ def next_variant_id() -> str:
         match = _VARIANT_ID_RE.match(row["id"])
         if match:
             max_n = max(max_n, int(match.group(1)))
-    if VARIANTS_ROOT.is_dir():
-        for child in VARIANTS_ROOT.iterdir():
+    for root in variants_read_roots():
+        if not root.is_dir():
+            continue
+        for child in root.iterdir():
             if child.is_dir():
                 match = _VARIANT_ID_RE.match(child.name)
                 if match:
@@ -297,7 +387,7 @@ def rename_variant_label(variant_id: str, label: str) -> None:
 
 def duplicate_variant(source_id: str, target_id: str, *, label: str) -> None:
     src = _variant_dir(source_id)
-    dst = _variant_dir(target_id)
+    dst = _variant_dir(target_id, for_write=True)
     if dst.exists():
         shutil.rmtree(dst)
     if src.is_dir():
@@ -315,7 +405,13 @@ def duplicate_variant(source_id: str, target_id: str, *, label: str) -> None:
 
 def ensure_variants_initialized() -> dict[str, Any]:
     """Pierwsze uruchomienie: home1 z motywu, home2 jako kopia home1."""
-    if MANIFEST_PATH.is_file() and _variant_dir("home1").is_dir() and _variant_dir("home2").is_dir():
+    if (
+        variants_file_path("manifest.json").is_file()
+        and variant_file_path("home1", "index.json").is_file()
+        and variant_file_path("home1", "settings.json").is_file()
+        and variant_file_path("home2", "index.json").is_file()
+        and variant_file_path("home2", "settings.json").is_file()
+    ):
         repair_cloned_boomerang_loop("home1", "home2")
         if _variant_dir("home3").is_dir():
             repair_cloned_boomerang_loop("home2", "home3")
@@ -323,7 +419,7 @@ def ensure_variants_initialized() -> dict[str, Any]:
             repair_cloned_boomerang_loop("home3", "home4")
         return load_manifest()
 
-    VARIANTS_ROOT.mkdir(parents=True, exist_ok=True)
+    variants_write_root().mkdir(parents=True, exist_ok=True)
     template = load_index_template()
     settings = load_theme_settings()
     save_variant_data("home1", template, settings)
@@ -339,7 +435,7 @@ def apply_variant_to_theme(variant_id: str) -> None:
     template, settings = load_variant_data(variant_id)
     save_index_template(copy.deepcopy(template))
     save_theme_settings(copy.deepcopy(settings))
-    mobile_src = _variant_dir(variant_id) / "mobile_hero.webp"
+    mobile_src = variant_file_path(variant_id, "mobile_hero.webp")
     if mobile_src.is_file():
         shutil.copy2(mobile_src, mobile_hero_path())
     mobile_name = mobile_hero_path().name if mobile_hero_path().is_file() else None

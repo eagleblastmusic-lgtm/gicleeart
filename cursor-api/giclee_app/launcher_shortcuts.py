@@ -7,6 +7,8 @@ from pathlib import Path
 import tkinter as tk
 from typing import Mapping
 
+from .app_paths import atomic_write_text, config_path
+
 
 DEFAULT_LAUNCHER_SHORTCUTS: dict[str, str] = {
     "i": "integracjagpt",
@@ -17,8 +19,12 @@ DEFAULT_LAUNCHER_SHORTCUTS: dict[str, str] = {
 LAUNCHER_KEY_SHORTCUTS: dict[str, str] = dict(DEFAULT_LAUNCHER_SHORTCUTS)
 
 
-def _shortcuts_path() -> Path:
-    return Path(__file__).resolve().parent / "data" / "launcher_shortcuts.json"
+_LEGACY_SHORTCUTS_PATH = Path(__file__).resolve().parent / "data" / "launcher_shortcuts.json"
+_SHORTCUTS = config_path("giclee_app/data/launcher_shortcuts.json", legacy=_LEGACY_SHORTCUTS_PATH)
+
+
+def _shortcuts_path(*, for_write: bool = False) -> Path:
+    return _SHORTCUTS.write_path if for_write else _SHORTCUTS.read_path()
 
 
 def normalize_shortcut_key(value: str) -> str | None:
@@ -52,11 +58,11 @@ def shortcut_display_label(key: str) -> str:
 def load_launcher_shortcuts(path: Path | None = None) -> dict[str, str]:
     """Ładuje skróty; brak lub uszkodzony plik przywraca domyślne mapowanie."""
 
-    config_path = path or _shortcuts_path()
-    if not config_path.is_file():
+    config_path_value = path or _shortcuts_path()
+    if not config_path_value.is_file():
         return dict(DEFAULT_LAUNCHER_SHORTCUTS)
     try:
-        data = json.loads(config_path.read_text(encoding="utf-8"))
+        data = json.loads(config_path_value.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError, TypeError, ValueError):
         return dict(DEFAULT_LAUNCHER_SHORTCUTS)
 
@@ -83,7 +89,7 @@ def save_launcher_shortcuts(
 ) -> None:
     """Zapisuje konfigurację atomowo w `giclee_app/data/launcher_shortcuts.json`."""
 
-    config_path = path or _shortcuts_path()
+    config_path_value = path or _shortcuts_path(for_write=True)
     clean: dict[str, str] = {}
     for key, folder in shortcuts.items():
         normalized = normalize_shortcut_key(str(key))
@@ -92,21 +98,14 @@ def save_launcher_shortcuts(
             continue
         clean[normalized] = folder_name
 
-    config_path.parent.mkdir(parents=True, exist_ok=True)
-    tmp_path = config_path.with_name(f"{config_path.name}.tmp")
-    tmp_path.write_text(
+    atomic_write_text(
+        config_path_value,
         json.dumps(
-            {
-                "version": 1,
-                "shortcuts": dict(sorted(clean.items())),
-            },
+            {"version": 1, "shortcuts": dict(sorted(clean.items()))},
             ensure_ascii=False,
             indent=2,
-        )
-        + "\n",
-        encoding="utf-8",
+        ) + "\n",
     )
-    tmp_path.replace(config_path)
 
 
 def assign_component_shortcut(

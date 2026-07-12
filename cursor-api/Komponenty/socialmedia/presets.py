@@ -1,16 +1,7 @@
-"""Biblioteka preset\u00f3w generatora tre\u015bci.
+"""Content-generator preset library.
 
-Preset zapisuje zestaw ustawien uzytkownika, aby nie klikac w kolko tego samego:
-- nazwa presetu
-- platformy (lista kodow, np. ["ig_feed", "ig_stories"])
-- jezyk (kod z platforms.LANGUAGES, moze byc "oba")
-- ton / styl (free-text, trafia do "Dodatkowego kontekstu" w prompcie)
-- temat (opcjonalny; jesli pusty, uzywa biezacego z formularza)
-- link docelowy (opcjonalny)
-- tryb (single / series)
-- liczba postow w serii (domyslnie 5)
-
-Dane: `Komponenty/socialmedia/data/content_presets.json`.
+Legacy presets stay readable from the source checkout. New mutable preset
+writes go to Roaming AppData configuration.
 """
 
 from __future__ import annotations
@@ -22,9 +13,27 @@ from datetime import datetime
 from pathlib import Path
 from typing import Iterable
 
+from giclee_app.app_paths import atomic_write_text, config_path
+
 _COMPONENT_DIR = Path(__file__).resolve().parent
-_DATA_DIR = _COMPONENT_DIR / "data"
-_FILE = _DATA_DIR / "content_presets.json"
+_LEGACY_DATA_DIR = _COMPONENT_DIR / "data"
+_LEGACY_FILE = _LEGACY_DATA_DIR / "content_presets.json"
+
+# Backward-compatible constants for current tests/tools.
+_DATA_DIR = _LEGACY_DATA_DIR
+_FILE = _LEGACY_FILE
+
+
+def _preset_file(*, for_write: bool = False) -> Path:
+    current = Path(_FILE)
+    legacy = Path(_LEGACY_DATA_DIR) / "content_presets.json"
+    if current != legacy:
+        return current
+    app_path = config_path(
+        "Komponenty/socialmedia/data/content_presets.json",
+        legacy=legacy,
+    )
+    return app_path.write_path if for_write else app_path.read_path()
 
 
 @dataclass
@@ -36,7 +45,7 @@ class Preset:
     tone: str = ""
     topic: str = ""
     link: str = ""
-    mode: str = "single"   # single | series
+    mode: str = "single"
     series_count: int = 5
     created_at: str = ""
     updated_at: str = ""
@@ -69,16 +78,12 @@ class Preset:
         )
 
 
-def _ensure_dir() -> None:
-    _DATA_DIR.mkdir(parents=True, exist_ok=True)
-
-
 def _load_raw() -> list[dict]:
-    _ensure_dir()
-    if not _FILE.is_file():
+    path = _preset_file()
+    if not path.is_file():
         return []
     try:
-        data = json.loads(_FILE.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return []
     raw = data.get("presets") if isinstance(data, dict) else None
@@ -108,11 +113,10 @@ def load_presets() -> list[Preset]:
 
 
 def save_presets(presets: Iterable[Preset]) -> None:
-    _ensure_dir()
     payload = {"presets": [asdict(p) for p in presets]}
-    _FILE.write_text(
+    atomic_write_text(
+        _preset_file(for_write=True),
         json.dumps(payload, indent=2, ensure_ascii=False),
-        encoding="utf-8",
     )
 
 

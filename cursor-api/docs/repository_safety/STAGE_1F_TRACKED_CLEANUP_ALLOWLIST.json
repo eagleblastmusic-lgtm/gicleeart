@@ -1,0 +1,928 @@
+{
+  "schema_version": 1,
+  "stage": "1F.1",
+  "title": "Tracked local-data cleanup allowlist",
+  "repository": "eagleblastmusic-lgtm/gicleeapp",
+  "base_sha": "d10fe0060e70f659083db33f0c93a72dbdfe2f6c",
+  "source_audit": {
+    "tracked_files": 1463,
+    "blocker_findings": 114,
+    "unique_blocker_paths": 111
+  },
+  "copy_gates": {
+    "critical_copy_verified": "177/177",
+    "archive_items_verified": 342,
+    "cache_items_verified": 15,
+    "archive_cache_total_verified": 357
+  },
+  "counts": {
+    "BACKUP": 36,
+    "CACHE": 3,
+    "GENERATED": 2,
+    "PRIVATE": 23,
+    "RUNTIME": 46,
+    "SECRET": 1
+  },
+  "migratable_paths": 109,
+  "generated_paths": 2,
+  "paths": [
+    {
+      "path": ".npmrc",
+      "classification": "SECRET",
+      "rules": [
+        "SECRET_LOCAL_ONLY"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "10.0.0",
+      "classification": "GENERATED",
+      "rules": [
+        "ACCIDENTAL_ARTIFACT_10_0_0",
+        "GENERATED_ARTIFACT"
+      ],
+      "copy_required": false
+    },
+    {
+      "path": "Komponenty/_shared/data/recent_images.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/bazapromptow/data/prompts.json",
+      "classification": "PRIVATE",
+      "rules": [
+        "PRIVATE_USER_DATA"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/blog/data/topics.json",
+      "classification": "PRIVATE",
+      "rules": [
+        "PRIVATE_USER_DATA"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/dnr/dane/dnr.json",
+      "classification": "PRIVATE",
+      "rules": [
+        "PRIVATE_USER_DATA"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/dnr/dane/dnr_settings.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_CONFIG_RUNTIME"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/dodajobraz/data/compare_versions.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/dodajobraz/data/description_bez_16_marks.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/dodajobraz/data/description_compare_llm.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/dodajobraz/data/description_do_tlumaczenia_marks.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/dodajobraz/data/description_from_image_marks.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/dodajobraz/data/description_gpt_translation_marks.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/dodajobraz/data/description_pl_pending_marks.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/dodajobraz/data/description_resume_flag.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/dodajobraz/data/description_sonnet_translation_marks.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/dodajobraz/data/description_translations_sent_marks.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/dodajobraz/data/description_update_marks.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/dodajobraz/data/description_update_prefs.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/dodajobraz/data/title_update_marks.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/dodajobraz/data/variant_templates.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_CONFIG_RUNTIME"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/dodajobraz/data/zoom_upload_history.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/dokumentysprzedazy/dane/exports/sales_2026_06.csv",
+      "classification": "PRIVATE",
+      "rules": [
+        "PII_DATA_COLUMNS",
+        "PRIVATE_USER_DATA"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/dokumentysprzedazy/dane/invoice_events.jsonl",
+      "classification": "PRIVATE",
+      "rules": [
+        "PRIVATE_USER_DATA"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/dokumentysprzedazy/dane/invoice_settings.json",
+      "classification": "PRIVATE",
+      "rules": [
+        "PII_DATA_COLUMNS",
+        "PRIVATE_USER_DATA"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/dokumentysprzedazy/dane/invoices.json",
+      "classification": "PRIVATE",
+      "rules": [
+        "PRIVATE_USER_DATA"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/dokumentysprzedazy/dane/orders_sync_state.json",
+      "classification": "PRIVATE",
+      "rules": [
+        "PRIVATE_USER_DATA"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/faq/data/backups/page.faq-20260708-200323.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/faq/data/backups/page.faq-20260708-200422.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/faq/data/backups/page.faq-20260708-200513.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/faq/data/backups/page.faq-20260708-200915.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/faq/data/backups/page.faq-20260708-201213.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/faq/data/backups/page.faq-20260711-015717.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/kalkulacja/data/cost_lines.json",
+      "classification": "PRIVATE",
+      "rules": [
+        "PRIVATE_USER_DATA"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/kalkulacja/data/helpers.json",
+      "classification": "PRIVATE",
+      "rules": [
+        "PRIVATE_USER_DATA"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/kalkulacja/data/materials.json",
+      "classification": "PRIVATE",
+      "rules": [
+        "PRIVATE_USER_DATA"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/kalkulacja/data/price_table.json",
+      "classification": "PRIVATE",
+      "rules": [
+        "PRIVATE_USER_DATA"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/kalkulacja/data/sales_mix.json",
+      "classification": "PRIVATE",
+      "rules": [
+        "PRIVATE_USER_DATA"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/kalkulacja/data/settings.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_CONFIG_RUNTIME"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/kalkulacja/data/wood_defaults.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_CONFIG_RUNTIME"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/karuzela/data/collection_quotes.json",
+      "classification": "CACHE",
+      "rules": [
+        "LOCAL_CACHE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/karuzela/settings.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_CONFIG_RUNTIME"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/kontakt/data/backups/page.contact-20260708-155716.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/kontakt/data/backups/page.contact-20260708-160013.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/kpir/dane/kpir.json",
+      "classification": "PRIVATE",
+      "rules": [
+        "PRIVATE_USER_DATA"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/losujobraz/data/backups/page.losuj-produkt-20260708-161335.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/losujobraz/data/backups/page.losuj-produkt-20260708-161424.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/losujobraz/data/backups/page.losuj-produkt-20260708-162532.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/losujobraz/data/backups/page.losuj-produkt-20260708-163912.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/losujobraz/data/backups/page.losuj-produkt-20260708-164058.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/losujobraz/data/backups/page.losuj-produkt-20260708-164156.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/losujobraz/data/backups/page.losuj-produkt-20260708-164216.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/losujobraz/data/backups/page.losuj-produkt-20260708-164903.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/losujobraz/data/backups/page.losuj-produkt-20260708-171505.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/losujobraz/data/backups/page.losuj-produkt-20260708-173017.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/losujobraz/data/backups/page.losuj-produkt-20260708-173458.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/losujobraz/data/backups/page.losuj-produkt-20260708-173523.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/losujobraz/data/backups/page.losuj-produkt-20260708-173557.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/losujobraz/data/backups/page.losuj-produkt-20260708-173801.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/losujobraz/data/backups/page.losuj-produkt-20260708-174744.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/losujobraz/data/backups/page.losuj-produkt-20260708-175552.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/losujobraz/data/backups/page.losuj-produkt-20260708-181233.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/losujobraz/data/backups/page.losuj-produkt-20260708-181724.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/losujobraz/data/backups/page.losuj-produkt-20260708-202235.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/planer/dane/2026-04-18.json",
+      "classification": "PRIVATE",
+      "rules": [
+        "PRIVATE_USER_DATA"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/planer/dane/2026-04-20.json",
+      "classification": "PRIVATE",
+      "rules": [
+        "PRIVATE_USER_DATA"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/planer/dane/2026-04-22.json",
+      "classification": "PRIVATE",
+      "rules": [
+        "PRIVATE_USER_DATA"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/planer/dane/2026-07-01.json",
+      "classification": "PRIVATE",
+      "rules": [
+        "PRIVATE_USER_DATA"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/poczta/data/processed_client_orders.json",
+      "classification": "PRIVATE",
+      "rules": [
+        "PRIVATE_USER_DATA"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/produkcja/dane/package_templates.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_CONFIG_RUNTIME"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/socialmedia/data/cykl/config.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_CONFIG_RUNTIME"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/socialmedia/data/cykl/generation_state.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/socialmedia/data/cykl/queue.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/stronaglowna/data/variants/home1/index.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/stronaglowna/data/variants/home1/settings.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/stronaglowna/data/variants/home2/index.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/stronaglowna/data/variants/home2/settings.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/stronaglowna/data/variants/home3/index.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/stronaglowna/data/variants/home3/settings.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/stronaglowna/data/variants/home4/index.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/stronaglowna/data/variants/home4/settings.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/stronaglowna/data/variants/home5/index.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/stronaglowna/data/variants/home5/settings.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/stronaglowna/data/variants/home6/index.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/stronaglowna/data/variants/home6/settings.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/stronaglowna/data/variants/home7/index.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/stronaglowna/data/variants/home7/settings.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/stronaglowna/data/variants/home8/index.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/stronaglowna/data/variants/home8/settings.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/stronydozycia/data/pages.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/stronyzobrazami/data/settings.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_CONFIG_RUNTIME"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/stronyzobrazami/data/sites.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_RUNTIME_STATE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/submenukatalog/data/backups/giclee-catalog-submenu-config-20260711-041938.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/submenukatalog/data/backups/giclee-catalog-submenu-config-20260711-041954.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/submenukatalog/data/backups/giclee-catalog-submenu-config-20260711-042010.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/submenukatalog/data/backups/giclee-catalog-submenu-config-20260711-042026.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/submenukatalog/data/backups/giclee-catalog-submenu-config-20260711-042127.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/submenukatalog/data/backups/giclee-catalog-submenu-config-20260711-042300.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/submenukatalog/data/backups/giclee-catalog-submenu-config-20260711-042327.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/submenukatalog/data/backups/giclee-catalog-submenu-config-20260711-042352.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/submenukatalog/data/backups/giclee-catalog-submenu-config-20260711-042437.json",
+      "classification": "BACKUP",
+      "rules": [
+        "LOCAL_BACKUP"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/tldobio/data/collections.json",
+      "classification": "CACHE",
+      "rules": [
+        "LOCAL_CACHE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/tldobio/data/vincent-van-gogh-bio-test.jpg",
+      "classification": "CACHE",
+      "rules": [
+        "LOCAL_CACHE"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/tytulyai/data/description_drafts.json",
+      "classification": "PRIVATE",
+      "rules": [
+        "PRIVATE_USER_DATA"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/tytulyai/data/title_drafts.json",
+      "classification": "PRIVATE",
+      "rules": [
+        "PRIVATE_USER_DATA"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/zadania/data/reminders.json",
+      "classification": "PRIVATE",
+      "rules": [
+        "PRIVATE_USER_DATA"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "Komponenty/zadania/data/tasks.json",
+      "classification": "PRIVATE",
+      "rules": [
+        "PRIVATE_USER_DATA"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "_dup_result.txt",
+      "classification": "GENERATED",
+      "rules": [
+        "GENERATED_ARTIFACT"
+      ],
+      "copy_required": false
+    },
+    {
+      "path": "giclee_app/data/launcher_layout.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_CONFIG_RUNTIME"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "giclee_app/data/launcher_shortcuts.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_CONFIG_RUNTIME"
+      ],
+      "copy_required": true
+    },
+    {
+      "path": "giclee_app/data/studio_categories.json",
+      "classification": "RUNTIME",
+      "rules": [
+        "LOCAL_CONFIG_RUNTIME"
+      ],
+      "copy_required": true
+    }
+  ],
+  "safety": {
+    "operation": "remove from Git tracking on a dedicated branch",
+    "source_history_rewrite": false,
+    "appdata_delete": false,
+    "shopify_mutation": false,
+    "merge_authorized": false
+  }
+}

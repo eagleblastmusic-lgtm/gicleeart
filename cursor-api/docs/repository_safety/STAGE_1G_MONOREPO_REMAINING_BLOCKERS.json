@@ -1,0 +1,1440 @@
+{
+  "schema_version": 1,
+  "purpose": "Explicit pre-existing monorepo blocker baseline after the bounded Stage 1F.1 import.",
+  "monorepo_base": "3ccbd19ebe77b4aadf9403e271d821c3dd28bf2e",
+  "cleanup_manifest_paths": 111,
+  "cleanup_paths_removed_from_index": 99,
+  "cleanup_paths_already_absent": 12,
+  "remaining_blocker_count": 203,
+  "remaining_warning_count": 0,
+  "remaining_blockers_by_rule": {
+    "GENERATED_ARTIFACT": 1,
+    "LOCAL_BACKUP": 190,
+    "LOCAL_CONFIG_RUNTIME": 2,
+    "LOCAL_RUNTIME_STATE": 10
+  },
+  "blockers": [
+    {
+      "severity": "BLOCKER",
+      "rule_id": "GENERATED_ARTIFACT",
+      "path": "Komponenty/stronaglowna/data/backups/.gitkeep",
+      "message": "Generated, temporary or build artifact.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260702-200310.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260702-201030.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260702-221036.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260702-221443.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260702-221448.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260702-221751.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260702-221907.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260702-222620.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260702-222949.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260702-223216.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260702-223837.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260702-223919.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260702-231951.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260703-032129.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260703-052306.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260703-052334.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260703-052401.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260703-052456.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260703-052541.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260703-053655.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260703-055033.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260703-211747.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260703-215335.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260703-215715.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260703-220242.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260703-220255.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260703-234136.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260704-012518.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260704-020513.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260704-021443.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260704-024215.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260704-024229.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260704-040355.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260704-040458.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260704-043535.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260704-044130.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260704-174716.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260704-174802.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260704-174832.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260705-005937.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260705-005942.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260705-032734.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260705-032917.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260706-021451.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260706-021555.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260706-021944.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260706-023924.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260706-032735.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260706-032910.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260706-033017.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260706-043748-pre-restore.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260708-204353.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260708-205800.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260708-205900.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260708-205912.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260708-205927.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260708-212955.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260708-213111.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260708-213207.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260708-223534.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260708-225231.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260709-001037.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260709-001240.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260709-001530.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260709-001557.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260709-001809.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260709-001857.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260709-002010.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260709-002415.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260709-130804.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260709-131907.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260709-131936.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260709-132017.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260709-132230.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260709-132553.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260709-132652.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260709-133113.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260709-133142.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260709-133203.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260709-142403.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260709-142455.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260710-022328.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260710-022457.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260710-022622.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260710-022708.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260710-042714.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260710-042737.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260710-042757.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260710-042813.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260710-042837.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260710-042932.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260710-043001.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260710-043409.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260710-043454.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260710-045647.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260710-045711.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260710-045803.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260710-045826.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/index-20260710-045841.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260702-200310.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260702-201030.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260702-221036.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260702-221443.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260702-221448.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260702-221751.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260702-221907.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260702-222620.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260702-222949.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260702-223216.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260702-223837.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260702-223919.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260702-231951.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260703-032129.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260703-052306.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260703-052334.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260703-052401.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260703-052456.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260703-052541.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260703-053655.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260703-055033.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260703-211747.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260703-215335.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260703-215715.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260703-220242.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260703-220255.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260703-234136.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260704-012518.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260704-020513.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260704-021443.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260704-024215.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260704-024229.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260704-040355.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260704-040458.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260704-043535.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260704-044130.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260704-174716.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260704-174802.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260704-174832.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260705-005937.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260705-005942.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260705-032734.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260705-032917.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260708-204353.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260708-205800.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260708-205900.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260708-205912.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260708-205927.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260708-212955.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260708-213111.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260708-213207.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260708-223534.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260708-225231.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260709-001037.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260709-001240.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260709-001530.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260709-001557.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260709-001809.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260709-001857.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260709-002010.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260709-002415.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260709-130804.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260709-131907.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260709-131936.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260709-132017.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260709-132230.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260709-132553.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260709-132652.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260709-133113.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260709-133142.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260709-133203.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260709-142403.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260709-142455.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260710-022328.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260710-022457.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260710-022622.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260710-022708.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260710-042714.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260710-042737.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260710-042757.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260710-042813.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260710-042837.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260710-042932.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260710-043001.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260710-043409.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260710-043454.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260710-045647.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260710-045711.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260710-045803.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260710-045826.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_BACKUP",
+      "path": "Komponenty/stronaglowna/data/backups/settings-20260710-045841.json",
+      "message": "Backup artifacts must not be tracked or synchronized.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_CONFIG_RUNTIME",
+      "path": "Komponenty/integracjagpt/data/gpt_config.json",
+      "message": "Mutable local application configuration.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_CONFIG_RUNTIME",
+      "path": "Komponenty/kpir/dane/kpir_settings.json",
+      "message": "Mutable local application configuration.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_RUNTIME_STATE",
+      "path": "Komponenty/stronaglowna/data/variants/home10/index.json",
+      "message": "Mutable runtime state is not source code.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_RUNTIME_STATE",
+      "path": "Komponenty/stronaglowna/data/variants/home10/settings.json",
+      "message": "Mutable runtime state is not source code.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_RUNTIME_STATE",
+      "path": "Komponenty/stronaglowna/data/variants/home11/index.json",
+      "message": "Mutable runtime state is not source code.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_RUNTIME_STATE",
+      "path": "Komponenty/stronaglowna/data/variants/home11/settings.json",
+      "message": "Mutable runtime state is not source code.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_RUNTIME_STATE",
+      "path": "Komponenty/stronaglowna/data/variants/home12/index.json",
+      "message": "Mutable runtime state is not source code.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_RUNTIME_STATE",
+      "path": "Komponenty/stronaglowna/data/variants/home12/settings.json",
+      "message": "Mutable runtime state is not source code.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_RUNTIME_STATE",
+      "path": "Komponenty/stronaglowna/data/variants/home9/index.json",
+      "message": "Mutable runtime state is not source code.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_RUNTIME_STATE",
+      "path": "Komponenty/stronaglowna/data/variants/home9/settings.json",
+      "message": "Mutable runtime state is not source code.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_RUNTIME_STATE",
+      "path": "Komponenty/wspolpraca/data/variants/manifest.json",
+      "message": "Mutable runtime state is not source code.",
+      "line": null
+    },
+    {
+      "severity": "BLOCKER",
+      "rule_id": "LOCAL_RUNTIME_STATE",
+      "path": "Komponenty/wspolpraca/data/variants/ws1/page.wspolpraca.json",
+      "message": "Mutable runtime state is not source code.",
+      "line": null
+    }
+  ],
+  "warnings": []
+}

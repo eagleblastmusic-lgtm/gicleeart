@@ -11,7 +11,12 @@ import json
 from pathlib import Path
 from typing import Any
 
+from giclee_app.app_paths import atomic_write_text
+
+from .homepage_variants import variant_file_path
 from .service import _data_dir
+
+_LEGACY_DATA_DIR = _data_dir()
 
 MOBILE_MODES: tuple[str, ...] = ("native", "soft", "disabled")
 REDUCED_MOTION_MODES: tuple[str, ...] = ("instant", "off")
@@ -91,8 +96,11 @@ def apply_scroll_preset(name: str) -> dict[str, Any]:
 _BOOL_KEYS = ("enabled", "desktopEnabled", "headingSettle", "debug")
 
 
-def scroll_config_path(variant_id: str) -> Path:
-    return _data_dir() / "variants" / variant_id / "scroll.json"
+def scroll_config_path(variant_id: str, *, for_write: bool = False) -> Path:
+    current = _data_dir()
+    if current != _LEGACY_DATA_DIR:
+        return current / "variants" / variant_id / "scroll.json"
+    return variant_file_path(variant_id, "scroll.json", for_write=for_write)
 
 
 def normalize_scroll_config(raw: Any) -> dict[str, Any]:
@@ -167,10 +175,6 @@ def save_scroll_config(variant_id: str, cfg: dict[str, Any]) -> dict[str, Any]:
     errors = validate_scroll_config(normalized)
     if errors:
         raise ValueError("Nieprawidłowa konfiguracja przewijania:\n- " + "\n- ".join(errors))
-    path = scroll_config_path(variant_id)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(normalized, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    path = scroll_config_path(variant_id, for_write=True)
+    atomic_write_text(path, json.dumps(normalized, ensure_ascii=False, indent=2) + "\n")
     return normalized

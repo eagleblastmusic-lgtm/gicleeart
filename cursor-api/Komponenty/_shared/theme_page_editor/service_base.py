@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import json
-import shutil
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Callable
+
+from giclee_app.app_paths import atomic_write_bytes, backup_path
 
 from Komponenty.stronaglowna.service import (
     cdn_url_to_shopify_ref,
@@ -66,8 +67,27 @@ def component_data_dir(config: PageEditorConfig) -> Path:
     return config.component_dir / "data"
 
 
+def backup_write_dir_for(
+    config: PageEditorConfig, category: str = "backups"
+) -> Path:
+    """Return the external writable directory for editor backup category."""
+
+    marker = backup_path(
+        f"Komponenty/{config.component_id}/data/{category}/.backup-root"
+    )
+    return marker.write_path.parent
+
+
 def backups_dir_for(config: PageEditorConfig) -> Path:
-    return component_data_dir(config) / "backups"
+    """Prefer external backups, with the source directory as read-only fallback."""
+
+    external = backup_write_dir_for(config)
+    if external.is_dir():
+        return external
+    legacy = component_data_dir(config) / "backups"
+    if legacy.is_dir():
+        return legacy
+    return external
 
 
 def variants_root_for(config: PageEditorConfig) -> Path:
@@ -116,10 +136,9 @@ def backup_file(path: Path, config: PageEditorConfig, *, logger: Logger | None =
     if not path.is_file():
         raise FileNotFoundError(f"Brak pliku do kopii: {path}")
     ts = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
-    backup_dir = backups_dir_for(config)
-    backup_dir.mkdir(parents=True, exist_ok=True)
+    backup_dir = backup_write_dir_for(config)
     stamped = backup_dir / f"{path.stem}-{ts}{path.suffix}"
-    shutil.copy2(path, stamped)
+    atomic_write_bytes(stamped, path.read_bytes())
     _log(logger, f"Kopia zapasowa: {stamped.name}")
     return stamped
 
@@ -404,6 +423,7 @@ __all__ = [
     "apply_zone_values",
     "backup_before_save",
     "backup_file",
+    "backup_write_dir_for",
     "backups_dir_for",
     "component_data_dir",
     "deploy_theme",

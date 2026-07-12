@@ -11,6 +11,8 @@ import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+
+from giclee_app.app_paths import atomic_write_text, data_path
 from typing import Any
 
 from .r2_storage import R2Config, _load_dotenv_into_environ, _s3_client, load_r2_config
@@ -87,8 +89,21 @@ def format_bytes(n: int) -> str:
     return f"{n} B"
 
 
-def _zoom_history_path() -> Path:
-    return Path(__file__).resolve().parent / "data" / "zoom_upload_history.json"
+_LEGACY_ZOOM_HISTORY_FILE = (
+    Path(__file__).resolve().parent / "data" / "zoom_upload_history.json"
+)
+_ZOOM_HISTORY_FILE = _LEGACY_ZOOM_HISTORY_FILE
+
+
+def _zoom_history_path(*, for_write: bool = False) -> Path:
+    current = Path(_ZOOM_HISTORY_FILE)
+    if current != _LEGACY_ZOOM_HISTORY_FILE:
+        return current
+    app_path = data_path(
+        "Komponenty/dodajobraz/data/zoom_upload_history.json",
+        legacy=_LEGACY_ZOOM_HISTORY_FILE,
+    )
+    return app_path.write_path if for_write else app_path.read_path()
 
 
 def _default_zoom_estimate_bytes() -> int:
@@ -108,12 +123,12 @@ def record_zoom_upload(*, total_bytes: int, handle: str) -> None:
     """Zapisuje rozmiar ostatniego uploadu zoom (do szacunku w GUI)."""
     if total_bytes <= 0:
         return
-    path = _zoom_history_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
+    read_path = _zoom_history_path()
+    write_path = _zoom_history_path(for_write=True)
     rows: list[dict[str, Any]] = []
-    if path.is_file():
+    if read_path.is_file():
         try:
-            rows = json.loads(path.read_text(encoding="utf-8"))
+            rows = json.loads(read_path.read_text(encoding="utf-8"))
             if not isinstance(rows, list):
                 rows = []
         except (json.JSONDecodeError, OSError):
@@ -126,7 +141,7 @@ def record_zoom_upload(*, total_bytes: int, handle: str) -> None:
         }
     )
     rows = rows[-ZOOM_HISTORY_MAX:]
-    path.write_text(json.dumps(rows, ensure_ascii=False, indent=0), encoding="utf-8")
+    atomic_write_text(write_path, json.dumps(rows, ensure_ascii=False, indent=0))
 
 
 def _load_recent_upload_byte_sizes(max_entries: int = ZOOM_HISTORY_RECENT) -> list[int]:

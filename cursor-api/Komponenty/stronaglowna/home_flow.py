@@ -15,7 +15,9 @@ import json
 from pathlib import Path
 from typing import Any, Iterable
 
-from .homepage_variants import VARIANTS_ROOT
+from giclee_app.app_paths import atomic_write_text
+
+from .homepage_variants import variant_file_path
 
 FLOW_SCHEMA_VERSION = 2
 FLOW_FILENAME = "home_flow.json"
@@ -132,9 +134,18 @@ DEFAULT_FLOW_ITEMS: tuple[HomeFlowItem, ...] = (
 )
 
 
-def flow_path(variant_id: str, *, variants_root: Path | None = None) -> Path:
-    root = Path(variants_root) if variants_root is not None else VARIANTS_ROOT
-    return root / str(variant_id) / FLOW_FILENAME
+def flow_path(
+    variant_id: str,
+    *,
+    variants_root: Path | None = None,
+    for_write: bool = False,
+) -> Path:
+    return variant_file_path(
+        str(variant_id),
+        FLOW_FILENAME,
+        for_write=for_write,
+        variants_root=variants_root,
+    )
 
 
 def _clean_name(raw: Any) -> str:
@@ -215,7 +226,7 @@ def save_flow_metadata(
     *,
     variants_root: Path | None = None,
 ) -> Path:
-    path = flow_path(variant_id, variants_root=variants_root)
+    path = flow_path(variant_id, variants_root=variants_root, for_write=True)
     raw_names = metadata.get("names") if isinstance(metadata, dict) else {}
     known = {item.stable_id: item.default_name for item in DEFAULT_FLOW_ITEMS}
     names: dict[str, str] = {}
@@ -233,8 +244,7 @@ def save_flow_metadata(
     if draft:
         payload[STRUCTURE_DRAFT_KEY] = draft
 
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    atomic_write_text(path, json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
     return path
 
 

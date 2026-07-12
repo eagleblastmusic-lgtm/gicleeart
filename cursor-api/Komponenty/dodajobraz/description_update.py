@@ -7,6 +7,8 @@ import re
 from pathlib import Path
 from typing import Any, Callable, Iterable, Literal
 
+from giclee_app.app_paths import atomic_write_text, data_path
+
 from . import shopify_client as sc
 from .collection_control import collection_title_matches_expected
 from .body_i18n import translate_field_value_or_pl
@@ -48,30 +50,55 @@ LOCALE_LABELS: dict[str, str] = {
 
 Logger = Callable[[str], None] | None
 
+_LEGACY_DATA_DIR = Path(__file__).resolve().parent / "data"
+
+
+def _runtime_data_file(path: Path, *, for_write: bool = False) -> Path:
+    """Resolve a DodajObraz mutable JSON path without writing to source.
+
+    Existing tests and tools may monkeypatch a concrete file constant. Such an
+    explicit override remains authoritative. In the default layout AppData wins
+    for reads, while the source-tree file is a read-only legacy fallback.
+    """
+
+    current = Path(path)
+    legacy = _LEGACY_DATA_DIR / current.name
+    if current != legacy:
+        return current
+    app_path = data_path(
+        f"Komponenty/dodajobraz/data/{current.name}",
+        legacy=legacy,
+    )
+    return app_path.write_path if for_write else app_path.read_path()
+
+
 _AKAPITY_MAX = 4
 _DESCRIPTION_UPDATE_MARKS_FILE = (
-    Path(__file__).resolve().parent / "data" / "description_update_marks.json"
+    _LEGACY_DATA_DIR / "description_update_marks.json"
 )
 _DESCRIPTION_PL_PENDING_MARKS_FILE = (
-    Path(__file__).resolve().parent / "data" / "description_pl_pending_marks.json"
+    _LEGACY_DATA_DIR / "description_pl_pending_marks.json"
 )
 _DESCRIPTION_GPT_TRANSLATION_MARKS_FILE = (
-    Path(__file__).resolve().parent / "data" / "description_gpt_translation_marks.json"
+    _LEGACY_DATA_DIR / "description_gpt_translation_marks.json"
 )
 _DESCRIPTION_SONNET_TRANSLATION_MARKS_FILE = (
-    Path(__file__).resolve().parent / "data" / "description_sonnet_translation_marks.json"
+    _LEGACY_DATA_DIR / "description_sonnet_translation_marks.json"
 )
 _DESCRIPTION_FROM_IMAGE_MARKS_FILE = (
-    Path(__file__).resolve().parent / "data" / "description_from_image_marks.json"
+    _LEGACY_DATA_DIR / "description_from_image_marks.json"
 )
 _DESCRIPTION_DO_TLUMACZENIA_MARKS_FILE = (
-    Path(__file__).resolve().parent / "data" / "description_do_tlumaczenia_marks.json"
+    _LEGACY_DATA_DIR / "description_do_tlumaczenia_marks.json"
+)
+_DESCRIPTION_TRANSLATIONS_SENT_MARKS_FILE = (
+    _LEGACY_DATA_DIR / "description_translations_sent_marks.json"
 )
 _DESCRIPTION_BEZ_16_MARKS_FILE = (
-    Path(__file__).resolve().parent / "data" / "description_bez_16_marks.json"
+    _LEGACY_DATA_DIR / "description_bez_16_marks.json"
 )
 _TITLE_UPDATE_MARKS_FILE = (
-    Path(__file__).resolve().parent / "data" / "title_update_marks.json"
+    _LEGACY_DATA_DIR / "title_update_marks.json"
 )
 DESCRIPTION_UPDATED_LABEL = "Po aktualizacji"
 DESCRIPTION_PL_PENDING_LABEL = "PL bez tlumaczen"
@@ -166,13 +193,13 @@ CHECKMARK_TREE_LABEL = "\u2713"
 TITLE_UPDATED_LABEL = "Tytuł zmieniony"
 
 _DESCRIPTION_RESUME_FLAG_FILE = (
-    Path(__file__).resolve().parent / "data" / "description_resume_flag.json"
+    _LEGACY_DATA_DIR / "description_resume_flag.json"
 )
 
 
 def load_description_update_marks() -> set[int]:
     """Zestaw product_id oznaczonych w oknie «Aktualizuj opis» jako «opis po aktualizacji»."""
-    path = _DESCRIPTION_UPDATE_MARKS_FILE
+    path = _runtime_data_file(_DESCRIPTION_UPDATE_MARKS_FILE)
     if not path.is_file():
         return set()
     try:
@@ -191,10 +218,9 @@ def load_description_update_marks() -> set[int]:
 
 
 def save_description_update_marks(product_ids: set[int]) -> None:
-    path = _DESCRIPTION_UPDATE_MARKS_FILE
-    path.parent.mkdir(parents=True, exist_ok=True)
+    path = _runtime_data_file(_DESCRIPTION_UPDATE_MARKS_FILE, for_write=True)
     payload = sorted(product_ids)
-    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    atomic_write_text(path, json.dumps(payload, indent=2, ensure_ascii=False) + "\n")
 
 
 def set_description_update_mark(product_id: int, *, marked: bool) -> None:
@@ -267,7 +293,7 @@ def update_description_marks_after_save(
 
 def load_description_resume_flag() -> int | None:
     """product_id pozycji oznaczonej flaga «tu skonczylem» (jedna na cala liste)."""
-    path = _DESCRIPTION_RESUME_FLAG_FILE
+    path = _runtime_data_file(_DESCRIPTION_RESUME_FLAG_FILE)
     if not path.is_file():
         return None
     try:
@@ -287,12 +313,11 @@ def load_description_resume_flag() -> int | None:
 
 def set_description_resume_flag(product_id: int | None) -> None:
     """Ustawia lub czysci flage wznowienia (tylko jeden produkt naraz)."""
-    path = _DESCRIPTION_RESUME_FLAG_FILE
-    path.parent.mkdir(parents=True, exist_ok=True)
+    path = _runtime_data_file(_DESCRIPTION_RESUME_FLAG_FILE, for_write=True)
     if product_id is None:
-        path.write_text("null\n", encoding="utf-8")
+        atomic_write_text(path, "null\n")
         return
-    path.write_text(json.dumps(int(product_id)) + "\n", encoding="utf-8")
+    atomic_write_text(path, json.dumps(int(product_id)) + "\n")
 
 
 def toggle_description_resume_flag(product_id: int) -> bool:
@@ -307,6 +332,7 @@ def toggle_description_resume_flag(product_id: int) -> bool:
 
 
 def _load_marks_file(path: Path) -> set[int]:
+    path = _runtime_data_file(path)
     if not path.is_file():
         return set()
     try:
@@ -325,9 +351,9 @@ def _load_marks_file(path: Path) -> set[int]:
 
 
 def _save_marks_file(path: Path, product_ids: set[int]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
+    path = _runtime_data_file(path, for_write=True)
     payload = sorted(product_ids)
-    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    atomic_write_text(path, json.dumps(payload, indent=2, ensure_ascii=False) + "\n")
 
 
 def load_title_update_marks() -> set[int]:
@@ -499,6 +525,7 @@ def toggle_description_from_image_mark(product_id: int) -> bool:
 
 def _load_do_tlumaczenia_marks_raw(path: Path) -> set[int]:
     """Wczytuje oznaczenia «do tlumaczenia» (lista product_id lub stary format per-jezyk)."""
+    path = _runtime_data_file(path)
     if not path.is_file():
         return set()
     try:
@@ -532,7 +559,7 @@ def _load_do_tlumaczenia_marks_raw(path: Path) -> set[int]:
 
 def load_description_do_tlumaczenia_marks() -> set[int]:
     """Produkty recznie oznaczone ptaszkiem «do tlumaczenia» (domyslnie brak)."""
-    path = _DESCRIPTION_DO_TLUMACZENIA_MARKS_FILE
+    path = _runtime_data_file(_DESCRIPTION_DO_TLUMACZENIA_MARKS_FILE)
     marks = _load_do_tlumaczenia_marks_raw(path)
     if path.is_file():
         try:
@@ -627,7 +654,7 @@ def toggle_description_bez_16_mark(product_id: int) -> bool:
 
 
 _COMPARE_VERSIONS_FILE = (
-    Path(__file__).resolve().parent / "data" / "compare_versions.json"
+    _LEGACY_DATA_DIR / "compare_versions.json"
 )
 COMPARE_VERSION_SLOTS = 10
 COMPARE_VERSION_LABELS: tuple[str, ...] = (
@@ -661,7 +688,7 @@ COMPARE_LLM_VERSION_IDX: dict[str, int] = {
     "gpt": 4,
 }
 _DESCRIPTION_COMPARE_LLM_FILE = (
-    Path(__file__).resolve().parent / "data" / "description_compare_llm.json"
+    _LEGACY_DATA_DIR / "description_compare_llm.json"
 )
 
 
@@ -683,7 +710,7 @@ def compare_default_version_for_provider(provider: str) -> int:
 
 def load_description_compare_llm() -> str:
     """Ostatnio wybrany model LLM w oknie «Aktualizuj opis» (domyslny slot porownywarki)."""
-    path = _DESCRIPTION_COMPARE_LLM_FILE
+    path = _runtime_data_file(_DESCRIPTION_COMPARE_LLM_FILE)
     if not path.is_file():
         return COMPARE_LLM_PROVIDERS[0]
     try:
@@ -699,22 +726,21 @@ def load_description_compare_llm() -> str:
 def save_description_compare_llm(provider: str) -> None:
     if provider not in COMPARE_LLM_VERSION_IDX:
         provider = COMPARE_LLM_PROVIDERS[0]
-    path = _DESCRIPTION_COMPARE_LLM_FILE
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
+    path = _runtime_data_file(_DESCRIPTION_COMPARE_LLM_FILE, for_write=True)
+    atomic_write_text(
+        path,
         json.dumps({"provider": provider}, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
     )
 
 
 _DESCRIPTION_UPDATE_PREFS_FILE = (
-    Path(__file__).resolve().parent / "data" / "description_update_prefs.json"
+    _LEGACY_DATA_DIR / "description_update_prefs.json"
 )
 
 
 def load_description_auto_copy_prompt() -> bool:
     """Czy po zaznaczeniu produktu auto-kopiowac prompt do nowego opisu."""
-    path = _DESCRIPTION_UPDATE_PREFS_FILE
+    path = _runtime_data_file(_DESCRIPTION_UPDATE_PREFS_FILE)
     if not path.is_file():
         return True
     try:
@@ -727,11 +753,10 @@ def load_description_auto_copy_prompt() -> bool:
 
 
 def save_description_auto_copy_prompt(enabled: bool) -> None:
-    path = _DESCRIPTION_UPDATE_PREFS_FILE
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
+    path = _runtime_data_file(_DESCRIPTION_UPDATE_PREFS_FILE, for_write=True)
+    atomic_write_text(
+        path,
         json.dumps({"auto_copy_prompt": bool(enabled)}, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
     )
 
 
@@ -746,7 +771,7 @@ def _normalize_compare_slot_versions(raw: Any) -> list[str]:
 
 def load_compare_versions() -> dict[int, dict[str, Any]]:
     """Wczytuje zapisane wersje porownywarki: product_id -> locale -> bucket."""
-    path = _COMPARE_VERSIONS_FILE
+    path = _runtime_data_file(_COMPARE_VERSIONS_FILE)
     if not path.is_file():
         return {}
     try:
@@ -795,8 +820,7 @@ def load_compare_versions() -> dict[int, dict[str, Any]]:
 
 def save_compare_versions(store: dict[int, dict[str, Any]]) -> None:
     """Zapisuje wersje porownywarki na dysk."""
-    path = _COMPARE_VERSIONS_FILE
-    path.parent.mkdir(parents=True, exist_ok=True)
+    path = _runtime_data_file(_COMPARE_VERSIONS_FILE, for_write=True)
     payload: dict[str, dict[str, dict[str, dict[str, Any]]]] = {}
     for pid, locales in (store or {}).items():
         try:
@@ -823,9 +847,9 @@ def save_compare_versions(store: dict[int, dict[str, Any]]) -> None:
                 }
         if loc_payload:
             payload[pid_key] = loc_payload
-    path.write_text(
+    atomic_write_text(
+        path,
         json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
     )
 
 

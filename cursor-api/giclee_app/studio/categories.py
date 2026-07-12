@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from ..app_paths import config_path
 from ..component_loader import Component
 
 VALID_CATEGORY_IDS = frozenset({
@@ -35,7 +36,15 @@ NAV_CATEGORIES: list[tuple[str, str, str]] = [
     ("system", "System", "⚙"),
 ]
 
-_CATEGORIES_PATH = Path(__file__).resolve().parents[1] / "data" / "studio_categories.json"
+_LEGACY_CATEGORIES_PATH = Path(__file__).resolve().parents[1] / "data" / "studio_categories.json"
+_CATEGORIES_PATH = _LEGACY_CATEGORIES_PATH
+_CATEGORIES = config_path("giclee_app/data/studio_categories.json", legacy=_LEGACY_CATEGORIES_PATH)
+
+
+def _categories_path() -> Path:
+    if Path(_CATEGORIES_PATH) != _LEGACY_CATEGORIES_PATH:
+        return Path(_CATEGORIES_PATH)
+    return _CATEGORIES.read_path()
 
 # Cache mapy kategorii (wczytywany raz z JSON).
 _cached_default_category: str | None = None
@@ -60,9 +69,10 @@ def _ensure_mapping_loaded() -> tuple[str, dict[str, str]]:
     folder_to_cat: dict[str, str] = {}
     labels: dict[str, str] = {}
 
-    if _CATEGORIES_PATH.is_file():
+    path = _categories_path()
+    if path.is_file():
         try:
-            data = json.loads(_CATEGORIES_PATH.read_text(encoding="utf-8"))
+            data = json.loads(path.read_text(encoding="utf-8"))
             if isinstance(data, dict):
                 default = str(data.get("default_category") or "system")
                 cats = data.get("categories")

@@ -1,30 +1,7 @@
-"""Persystencja postow social media - kolejka planera.
+"""Persistence for the Social Media planner queue.
 
-Pliki w `Komponenty/socialmedia/data/`:
-- posts.json   - wszystkie zaplanowane/gotowe/opublikowane posty.
-
-Format pojedynczego posta:
-    {
-      "id": "uuid12",
-      "platform": "ig_feed" | "ig_stories" | ... (kod z platforms.PLATFORMS),
-      "language": "pl" | "en",
-      "topic": "krotki temat (input uzytkownika, opcjonalnie)",
-      "title": "tytul (Pinterest) / opcjonalne dla reszty",
-      "caption": "glowny tekst posta",
-      "on_screen_text": ["napis 1", "napis 2"],   # tylko dla Reels/TikTok
-      "hashtags": ["#gicleeart", "#foo"],
-      "image_hint": "sugestia co ma byc na zdjeciu",
-      "image_path": "absolutna lokalna sciezka albo URL",
-      "link": "URL docelowy (Pinterest, FB)",
-      "music_hint": "sugestia dzwieku (Reels/TikTok)",
-      "series_id": "",        # jesli post nalezy do serii - wspolny id
-      "scheduled_at": "2026-04-22T10:00:00",  # ISO local, opcjonalnie
-      "status": "pending" | "in_progress" | "done" | "skipped",
-      "notes": "",
-      "created_at": "...",
-      "updated_at": "...",
-      "from_task_id": "",    # jesli post powstal z zadania (komponent zadania)
-    }
+Legacy data stays readable from ``Komponenty/socialmedia/data/posts.json``.
+All new writes go to Local AppData through ``giclee_app.app_paths``.
 """
 
 from __future__ import annotations
@@ -36,13 +13,31 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from giclee_app.app_paths import atomic_write_text, data_path
+
 _COMPONENT_DIR = Path(__file__).resolve().parent
-_DATA_DIR = _COMPONENT_DIR / "data"
-_POSTS_FILE = _DATA_DIR / "posts.json"
+_LEGACY_DATA_DIR = _COMPONENT_DIR / "data"
+_LEGACY_POSTS_FILE = _LEGACY_DATA_DIR / "posts.json"
+
+# Backward-compatible public/module constants used by existing tools and tests.
+_DATA_DIR = _LEGACY_DATA_DIR
+_POSTS_FILE = _LEGACY_POSTS_FILE
+
+
+def _posts_file(*, for_write: bool = False) -> Path:
+    current = Path(_POSTS_FILE)
+    legacy = Path(_LEGACY_DATA_DIR) / "posts.json"
+    if current != legacy:
+        return current
+    app_path = data_path(
+        "Komponenty/socialmedia/data/posts.json",
+        legacy=legacy,
+    )
+    return app_path.write_path if for_write else app_path.read_path()
 
 
 def _ensure_dir() -> None:
-    _DATA_DIR.mkdir(parents=True, exist_ok=True)
+    _posts_file(for_write=True).parent.mkdir(parents=True, exist_ok=True)
 
 
 def _now_iso() -> str:
@@ -65,7 +60,7 @@ class Post:
     music_hint: str = ""
     series_id: str = ""
     scheduled_at: str = ""
-    status: str = "pending"   # pending | in_progress | done | skipped
+    status: str = "pending"
     notes: str = ""
     created_at: str = ""
     updated_at: str = ""
@@ -147,16 +142,12 @@ def _post_from_dict(d: dict[str, Any]) -> Post:
     )
 
 
-# ---------------------------------------------------------------------------
-# CRUD
-# ---------------------------------------------------------------------------
-
 def load_posts() -> list[Post]:
-    _ensure_dir()
-    if not _POSTS_FILE.is_file():
+    path = _posts_file()
+    if not path.is_file():
         return []
     try:
-        data = json.loads(_POSTS_FILE.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return []
     raw = data.get("posts", []) if isinstance(data, dict) else []
@@ -164,11 +155,10 @@ def load_posts() -> list[Post]:
 
 
 def save_posts(posts: list[Post]) -> None:
-    _ensure_dir()
     payload = {"posts": [asdict(p) for p in posts]}
-    _POSTS_FILE.write_text(
+    atomic_write_text(
+        _posts_file(for_write=True),
         json.dumps(payload, indent=2, ensure_ascii=False),
-        encoding="utf-8",
     )
 
 

@@ -13,6 +13,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from giclee_app.app_paths import atomic_write_text
+
 from . import homepage_variants
 from . import prehero_integration as prehero
 from .home_flow import DEFAULT_FLOW_ITEMS
@@ -59,9 +61,18 @@ PHASE_LABELS: dict[str, str] = {
 }
 
 
-def phase_path(variant_id: str, *, variants_root: Path | None = None) -> Path:
-    root = Path(variants_root) if variants_root is not None else homepage_variants.VARIANTS_ROOT
-    return root / str(variant_id) / PHASE_FILENAME
+def phase_path(
+    variant_id: str,
+    *,
+    variants_root: Path | None = None,
+    for_write: bool = False,
+) -> Path:
+    return homepage_variants.variant_file_path(
+        str(variant_id),
+        PHASE_FILENAME,
+        for_write=for_write,
+        variants_root=variants_root,
+    )
 
 
 def _bounded_int(raw: Any, default: int, minimum: int, maximum: int) -> int:
@@ -153,23 +164,21 @@ def save_phase_metadata(
     *,
     variants_root: Path | None = None,
 ) -> Path:
-    path = phase_path(variant_id, variants_root=variants_root)
+    path = phase_path(variant_id, variants_root=variants_root, for_write=True)
     raw_phases = metadata.get("phases") if isinstance(metadata, dict) else {}
     phases: dict[str, dict[str, Any]] = {}
     if isinstance(raw_phases, dict):
         for stable_id, raw in raw_phases.items():
             if stable_id in PHASE_LABELS and isinstance(raw, dict):
                 phases[stable_id] = _normalize_phase(stable_id, raw)
-    path.parent.mkdir(parents=True, exist_ok=True)
     payload = {"schema": PHASE_SCHEMA_VERSION, "phases": phases}
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    atomic_write_text(path, json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
     return path
 
 
 def _raw_variant_data(variant_id: str) -> tuple[dict[str, Any], dict[str, Any]]:
-    root = homepage_variants.VARIANTS_ROOT / variant_id
-    index_path = root / "index.json"
-    settings_path = root / "settings.json"
+    index_path = homepage_variants.variant_file_path(variant_id, "index.json")
+    settings_path = homepage_variants.variant_file_path(variant_id, "settings.json")
     if not index_path.is_file() or not settings_path.is_file():
         return homepage_variants.load_index_template(), homepage_variants.load_theme_settings()
     return (
