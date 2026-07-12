@@ -31,11 +31,18 @@ def viewer_push_env(tmp_path, monkeypatch):
     subprocess.run(["git", "add", "-A"], cwd=repo, check=True, capture_output=True)
     subprocess.run(["git", "commit", "-m", "init"], cwd=repo, check=True, capture_output=True)
 
+    remote = tmp_path / "giclee-viewer-remote.git"
+    subprocess.run(
+        ["git", "init", "--bare", "-b", "master", str(remote)],
+        check=True,
+        capture_output=True,
+    )
+
     monkeypatch.setattr(cfg, "GICLEE_VIEWER_DIR", repo)
     monkeypatch.setattr(
         cfg,
         "GICLEE_VIEWER_REMOTE_URL",
-        "https://github.com/eagleblastmusic-lgtm/giclee-viewer.git",
+        str(remote),
     )
     return repo
 

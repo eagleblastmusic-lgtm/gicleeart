@@ -24,6 +24,21 @@ def variant_dir(tmp_path, monkeypatch):
     return tmp_path / "variants" / "home9"
 
 
+def _write_disabled_prehero_settings(theme_root) -> None:
+    config_dir = theme_root / "config"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    (config_dir / "settings_data.json").write_text(
+        json.dumps(
+            {
+                "current": {
+                    "prehero_enabled": False,
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
 def test_defaults_are_valid():
     assert validate_scroll_config(dict(SCROLL_DEFAULTS)) == []
 
@@ -138,6 +153,7 @@ def test_write_home_assets_embeds_motion_dynamics(tmp_path, monkeypatch):
     monkeypatch.setattr(service, "theme_root", lambda: tmp_path)
     monkeypatch.setattr(home_features, "theme_root", lambda: tmp_path)
     monkeypatch.setattr(home_features, "mobile_hero_path", lambda: tmp_path / "assets" / "MALE_ORG.webp")
+    _write_disabled_prehero_settings(tmp_path)
 
     cfg = dict(SCROLL_DEFAULTS, enabled=False, minDuration=900, motionDynamics=85)
     home_features.write_home_assets({}, stack_enabled=True, scroll_config=cfg)
@@ -157,6 +173,7 @@ def test_write_home_assets_embeds_scroll_config(tmp_path, monkeypatch):
     monkeypatch.setattr(service, "theme_root", lambda: tmp_path)
     monkeypatch.setattr(home_features, "theme_root", lambda: tmp_path)
     monkeypatch.setattr(home_features, "mobile_hero_path", lambda: tmp_path / "assets" / "MALE_ORG.webp")
+    _write_disabled_prehero_settings(tmp_path)
 
     cfg = dict(SCROLL_DEFAULTS, enabled=False, minDuration=900)
     home_features.write_home_assets({}, stack_enabled=True, scroll_config=cfg)
