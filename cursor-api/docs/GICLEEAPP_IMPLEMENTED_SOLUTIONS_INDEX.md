@@ -2,7 +2,7 @@
 
 Hub warstwy API: [`README.md`](README.md) · Launcher: [`../giclee_app/docs/README.md`](../giclee_app/docs/README.md) · Logika per komponent: [`komponenty/README.md`](komponenty/README.md) · Moduły `_shared`: [`shared.md`](shared.md)
 
-**Ostatnia aktualizacja indeksu:** 2026-07-10
+**Ostatnia aktualizacja indeksu:** 2026-07-12
 
 ---
 
@@ -251,8 +251,9 @@ Wzorce referencyjne: `theme_page_editor/gui_shell.py`, `dodajobraz/price_change_
 
 | Wzorzec | Lokalizacja | Przykłady komponentów |
 |---------|-------------|----------------------|
-| `data/*.json` | `Komponenty/<folder>/data/` | `stronaglowna`, `bazapromptow`, `integracjagpt`, `blog` |
-| `dane/*.json` | `Komponenty/<folder>/dane/` | `dnr`, `kpir`, `dokumentysprzedazy`, `produkcja` |
+| `AppPath` / `data_path` / `config_path` / `cache_path` / `log_path` / `backup_path` | [`giclee_app/app_paths.py`](../giclee_app/app_paths.py) → zewnętrzne AppData, legacy tylko do odczytu | Nowe i migrowane mutable stores |
+| `data/*.json` | `Komponenty/<folder>/data/` | **legacy read path**: `stronaglowna`, `bazapromptow`, `integracjagpt`, `blog` |
+| `dane/*.json` | `Komponenty/<folder>/dane/` | **legacy read path**: `dnr`, `kpir`, `dokumentysprzedazy`, `produkcja` |
 | `storage.py` | w folderze komponentu | `load_*` / `save_*` — wzorzec per moduł |
 | `settings.json` | w folderze komponentu | konsumenci `tile_grid` |
 
@@ -260,11 +261,12 @@ Wzorce referencyjne: `theme_page_editor/gui_shell.py`, `dodajobraz/price_change_
 
 | Wzorzec | Gdzie | Kiedy używać |
 |---------|-------|--------------|
-| Prosty `json.dumps` → `write_text` | większość `storage.py` | Niskie ryzyko, małe pliki |
-| Atomic: `.tmp` → `replace()` | [`nazwijobraz/disk_cache.py`](../Komponenty/nazwijobraz/disk_cache.py), [`giclee_app/studio/state.py`](../giclee_app/studio/state.py) | Crash-safe |
+| AppData + legacy read fallback | [`giclee_app/app_paths.py`](../giclee_app/app_paths.py) | Mutable runtime/config/log/backups; nowe zapisy poza source checkout |
+| Prosty `json.dumps` → `write_text` | większość `storage.py` | Niskie ryzyko, małe pliki legacy — migrować przez `AppPath` |
+| Atomic: `.tmp` → `replace()` | [`giclee_app/app_paths.py`](../giclee_app/app_paths.py), [`nazwijobraz/disk_cache.py`](../Komponenty/nazwijobraz/disk_cache.py), [`giclee_app/studio/state.py`](../giclee_app/studio/state.py) | Crash-safe |
 | Backup przed zapisem szablonu | [`theme_page_editor/service_base.py`](../Komponenty/_shared/theme_page_editor/service_base.py) | `backup_before_save()` → `index-YYYYMMDD-HHMMSS.json` |
 | Studio bounded writer | [`giclee_app/studio/background_save_writer.py`](../giclee_app/studio/background_save_writer.py) | Tylko flow Studio background — patrz [`studio-save-pattern.md`](../giclee_app/docs/studio-save-pattern.md) |
-| Dzienny zip wszystkich `data/` | [`backup.py`](../Komponenty/_shared/backup.py) | `run_daily_backup_if_needed()` z launchera → `cursor-api/backups/` |
+| Dzienny zip wszystkich `data/` | [`backup.py`](../Komponenty/_shared/backup.py) | `run_daily_backup_if_needed()` z launchera → `%LOCALAPPDATA%\GicleeArt\GicleeApp\backups\` |
 
 Kopie `stronaglowna`: `Komponenty/stronaglowna/data/backups/`.
 
@@ -274,7 +276,7 @@ Kopie `stronaglowna`: `Komponenty/stronaglowna/data/backups/`.
 
 | Typ | Ścieżka / moduł | API / zastosowanie |
 |-----|-----------------|-------------------|
-| **Dziennik akcji (JSONL)** | [`activity_log.py`](../Komponenty/_shared/activity_log.py) → `_shared/data/activity_log.jsonl` | `append_activity(component, message, level="info", detail="")` |
+| **Dziennik akcji (JSONL)** | [`activity_log.py`](../Komponenty/_shared/activity_log.py) → `%LOCALAPPDATA%\GicleeArt\GicleeApp\logs\Komponenty\_shared\activity_log.jsonl` | `append_activity(component, message, level="info", detail="")`; copy-on-first-append z legacy |
 | Podgląd UI dziennika | [`activity_log_ui.py`](../Komponenty/_shared/activity_log_ui.py) | GicleeApp toolbar → „Dziennik akcji” |
 | Stdout subprocess | `cursor-api/logs/<folder>.log` | [`launcher_delegate.py`](../giclee_app/launcher_delegate.py) |
 | Log w GUI (wątki) | callbacki w komponencie | `enqueue_log`, `append_log`, `set_status` |
@@ -291,6 +293,7 @@ Kopie `stronaglowna`: `Komponenty/stronaglowna/data/backups/`.
 
 | Potrzeba | Istniejące rozwiązanie | Uwagi |
 |----------|------------------------|-------|
+| **Zewnętrzne mutable paths** | [`giclee_app/app_paths.py`](../giclee_app/app_paths.py) | `AppPath`, `data_path`, `config_path`, `cache_path`, `log_path`, `backup_path`, atomic writes |
 | **Drag & drop plików** | [`_shared/tkdnd_safe.py`](../Komponenty/_shared/tkdnd_safe.py) | `register_drop_target(widget, on_drop=...)`, `parse_dnd_files(event.data)`, `dnd_files_available()` |
 | **Log JSONL akcji** | [`_shared/activity_log.py`](../Komponenty/_shared/activity_log.py) | `append_activity(...)` — nie twórz własnego JSONL |
 | **Toast po akcji** | [`_shared/toast.py`](../Komponenty/_shared/toast.py) | `show_toast(parent, text)` |
