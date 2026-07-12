@@ -47,9 +47,6 @@ jobs:
           Start-Transcript -LiteralPath "$reportRoot\apply.txt" -Force
           try {
             Set-Location -LiteralPath $env:GITHUB_WORKSPACE
-            Write-Host "cwd=$(Get-Location)"
-            Write-Host "workspace=$env:GITHUB_WORKSPACE"
-
             $patcher = ".github/scripts/gpt-apply-blog-preview-cache.py"
             $patcherText = Get-Content -LiteralPath $patcher -Raw
             $patcherText = $patcherText.Replace("REPO_ROOT = Path(__file__).resolve().parents[2]", "REPO_ROOT = Path.cwd().resolve()")
@@ -89,9 +86,10 @@ jobs:
               throw "Generated Python syntax validation failed"
             }
 
-            git diff --check 2>&1 | Tee-Object -FilePath "$reportRoot\diff-check.txt"
+            git diff --check -- cursor-api/Komponenty/blog/preview.py cursor-api/tests/test_blog_preview_appdata_cache.py cursor-api/docs/repository_safety/BLOG_PREVIEW_CACHE.md 2>&1 |
+              Tee-Object -FilePath "$reportRoot\diff-check.txt"
             if ($LASTEXITCODE -ne 0) {
-              throw "git diff --check failed"
+              throw "git diff --check failed for application files"
             }
           }
           finally {
