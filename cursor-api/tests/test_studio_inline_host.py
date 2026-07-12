@@ -7,7 +7,7 @@ import sys
 import tkinter as tk
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -178,15 +178,15 @@ def test_inline_host_passes_on_open_component_to_builder() -> None:
     mod = SimpleNamespace(build_view=ok_builder)
     cb = lambda f: None
     try:
-        with patch("giclee_app.ui.inline_host.importlib.import_module", return_value=mod):
-            InlineHostView(
-                root,
-                comp,
-                on_back=lambda: None,
-                on_open_component=cb,
-            )
-            root.update_idletasks()
-            assert seen == [cb]
+        host = InlineHostView(
+            root,
+            comp,
+            on_back=lambda: None,
+            on_open_component=cb,
+        )
+        host._on_module_ready(mod)
+        root.update_idletasks()
+        assert seen == [cb]
     finally:
         root.destroy()
 
@@ -205,11 +205,11 @@ def test_inline_host_internal_typeerror_no_opened() -> None:
     mod = SimpleNamespace(build_view=bad_builder)
     opened = MagicMock()
     try:
-        with patch("giclee_app.ui.inline_host.importlib.import_module", return_value=mod):
-            host = InlineHostView(root, comp, on_back=lambda: None, on_opened=opened)
-            root.update_idletasks()
-            assert host.load_ok is False
-            opened.assert_not_called()
+        host = InlineHostView(root, comp, on_back=lambda: None, on_opened=opened)
+        host._on_module_ready(mod)
+        root.update_idletasks()
+        assert host.load_ok is False
+        opened.assert_not_called()
     finally:
         root.destroy()
 
@@ -243,11 +243,11 @@ def test_inline_host_missing_build_view_shows_error() -> None:
     mod = SimpleNamespace()
     opened = MagicMock()
     try:
-        with patch("giclee_app.ui.inline_host.importlib.import_module", return_value=mod):
-            host = InlineHostView(root, comp, on_back=lambda: None, on_opened=opened)
-            root.update_idletasks()
-            assert host.load_ok is False
-            opened.assert_not_called()
+        host = InlineHostView(root, comp, on_back=lambda: None, on_opened=opened)
+        host._on_module_ready(mod)
+        root.update_idletasks()
+        assert host.load_ok is False
+        opened.assert_not_called()
     finally:
         root.destroy()
 
@@ -266,11 +266,11 @@ def test_inline_host_build_exception_no_opened() -> None:
     mod = SimpleNamespace(build_view=bad_builder)
     opened = MagicMock()
     try:
-        with patch("giclee_app.ui.inline_host.importlib.import_module", return_value=mod):
-            host = InlineHostView(root, comp, on_back=lambda: None, on_opened=opened)
-            root.update_idletasks()
-            assert host.load_ok is False
-            opened.assert_not_called()
+        host = InlineHostView(root, comp, on_back=lambda: None, on_opened=opened)
+        host._on_module_ready(mod)
+        root.update_idletasks()
+        assert host.load_ok is False
+        opened.assert_not_called()
     finally:
         root.destroy()
 
@@ -289,11 +289,11 @@ def test_inline_host_success_calls_on_opened() -> None:
     mod = SimpleNamespace(build_view=ok_builder)
     opened = MagicMock()
     try:
-        with patch("giclee_app.ui.inline_host.importlib.import_module", return_value=mod):
-            host = InlineHostView(root, comp, on_back=lambda: None, on_opened=opened)
-            root.update_idletasks()
-            assert host.load_ok is True
-            opened.assert_called_once_with(comp)
+        host = InlineHostView(root, comp, on_back=lambda: None, on_opened=opened)
+        host._on_module_ready(mod)
+        root.update_idletasks()
+        assert host.load_ok is True
+        opened.assert_called_once_with(comp)
     finally:
         root.destroy()
 
