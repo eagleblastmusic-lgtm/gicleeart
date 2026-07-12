@@ -114,20 +114,28 @@ Najważniejsze zasady pracy:
 Aktualny checkpoint, który powinien być widoczny w `CURRENT_APP_STATE.md`:
 
 <!-- gpt-starter:gicleeapp-push:start -->
-- GicleeApp Studio v1.46.1
+- GicleeApp Studio v1.54.3 (Writer Safety clean worktree) · GitHub gicleeapp v1.54.2
 
-- GitHub / aktualna wersja aplikacji: v1.46.1 — zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`
+- GitHub / aktualna wersja aplikacji: v1.54.2 — zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json` (ostatni push)
 
-- Ostatni push GicleeApp: ad9fd14 na main (2026-07-10 07:37 UTC) — Refresh GicleeApp repository snapshot
+- Ostatni push GicleeApp: 294071e na main (2026-07-11 17:25 UTC) — Refresh GicleeApp repository snapshot
 
-- Monorepo origin/master: aab237b robimy integracje na galezi
+- Monorepo origin/master: 3ccbd19 feat(home-flow): add direct navigation and bounded structure writer
+
+- Writer Safety clean worktree: C:\Strona\pusty-ws12-clean · local/writer-safety-ws12-clean · WS-1.3 @ 1364aea (lokalny, nie wypchnięty) · working tree CLEAN · wersja walidacji v1.54.3
 
 - Ostatni pushed feature checkpoint aplikacji (F2.1, historia): 4647c1b feat(studio): GICLÉE FRAME F2.1 editor workflow polish (v1.40.1)
 
 - Branch:
-  - GitHub gicleeapp: v1.46.1 / main @ ad9fd14 (auto-sync po Push GicleeApp)
-  - monorepo origin/master: aab237b (docs / projekt)
+  - GitHub gicleeapp: v1.54.2 / main @ 294071e (auto-sync po Push GicleeApp)
+  - monorepo origin/master: 3ccbd19 (docs / projekt)
+  - Writer Safety: clean worktree @ 1364aea — bez pushu na GitHub
+  - oryginalny C:\Strona\pusty: niezwiązane zmiany; nie traktować audit/submenu-homeflow-20260711-1622 jako źródła Writer Safety
 <!-- gpt-starter:gicleeapp-push:end -->
+
+- Writer Safety WS-1…WS-1.3: DONE / TESTED LOCALLY (szczegóły: CURRENT_APP_STATE.md § Writer Safety)
+
+- Draft PR #1 gpt-work/writer-safety-ws1-clean @ 492e516: OPEN / DRAFT / UNMERGED
 
 - Background Builder local v1: frozen
 
@@ -157,7 +165,7 @@ Aktualny checkpoint, który powinien być widoczny w `CURRENT_APP_STATE.md`:
   - `1/9` coverage = weak evidence; stary bundle ≠ błąd narzędzia; `SCENARIO_LOG_NOT_CONFIRMED` = jakość sesji
   - Generowanie bundle: `--parse-only`, `--manual`, `--run`
 
-- Guardrails: zero Save / zero writer / zero Shopify-sync-deploy / zero mutacji Komponenty/* z panelu Studio
+- Guardrails: Writer Safety lokalnie done — bez push/merge/deploy/Shopify bez zgody; zero mutacji Komponenty/* z panelu Studio poza kontrolowanym Writer Safety w clean worktree
 
 **Giclee Viewer** (`eagleblastmusic-lgtm/giclee-viewer` · lokalnie `C:\Strona\giclee-viewer`):
 

@@ -31,7 +31,9 @@ Workflow snapshotów: `GICLEE_GITHUB_SNAPSHOT_REVIEW_WORKFLOW_v35.md`.
 
 **Lokalne monorepo:** `C:\Strona\pusty` — `cursor-api/` nie jest osobnym repo. Kanoniczne aliasy dokumentacji: `origin`, `gpt`, `gicleeapp`; aktualna maszyna ma też alias `gicleeart-gpt` wskazujący ten sam URL co `gpt`. Zawsze zacznij od `git remote -v`.
 
-Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md` oraz `CURRENT_APP_STATE.md` (GicleeApp **v1.51.0**, `gicleeapp/main` @ `9342f5b`; `e968f6c` = ostatni zweryfikowany checkpoint projektu przed docs-only refresh).
+Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md` oraz `CURRENT_APP_STATE.md` (GitHub gicleeapp **v1.54.2** / `main` @ `294071e`; Writer Safety clean **v1.54.3** @ `1364aea`; monorepo origin/master `3ccbd19`).
+
+**Writer Safety (Theme Page Editor):** WS-1…WS-1.3 **done / tested locally** w `C:\Strona\pusty-ws12-clean` · draft PR #1 (`gpt-work/writer-safety-ws1-clean` @ `492e516`) OPEN/DRAFT/UNMERGED · push/merge/deploy **nie wykonane**. Szczegóły: `CURRENT_APP_STATE.md` § Writer Safety.
 
 **GICLÉE FRAME™:** F2.1 **done** (pushed). Ustanawia wzorzec **`Studio Page Component Editor Pattern`** dla przyszłych edytorów strony w Studio — patrz `gicleeframe-planning.md` §7, link w `admin-components-strategy.md`. **F3** (lokalny zapis draftu RAM) i **F4** (bounded writer): **not started**.
 
@@ -218,7 +220,7 @@ Efekt piękny ale ryzykowny → bezpieczniejsza wersja. Efekt tanio → popraw m
 
 Rozwiązania: piękne, premium, bezpieczne, zgodne ze stackiem i marką, wdrażalne przez Cursor.
 
-**Motyw → `gicleeart-gpt`. Aplikacja → `gicleeapp`. Finalna prawda po lokalnej akceptacji → monorepo `C:\Strona\pusty`.** GICLÉE FRAME F2.1 pozostaje wzorcem, performance 6G.5 pozostaje checkpointem, a GICLÉE HOME FLOW v1.51.0 jest wdrożoną i zaakceptowaną bazą. FAQ waliduj, jeżeli brak nowszego potwierdzenia. Writer/Save/Shopify tylko po osobnej akceptacji.
+**Motyw → `gicleeart-gpt`. Aplikacja → `gicleeapp`. Finalna prawda po lokalnej akceptacji → monorepo `C:\Strona\pusty`.** Writer Safety WS-1.3 done lokalnie w czystym worktree — bez push/merge/deploy bez zgody. GICLÉE FRAME F2.1 pozostaje wzorcem, performance 6G.5 pozostaje checkpointem, a GICLÉE HOME FLOW v1.51.0 jest wdrożoną i zaakceptowaną bazą. FAQ waliduj, jeżeli brak nowszego potwierdzenia. Writer/Save/Shopify tylko po osobnej akceptacji.
 
 ---
 

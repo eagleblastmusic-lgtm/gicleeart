@@ -148,6 +148,8 @@ Master Index v38 traktuje je jako opcjonalne.
 
 **Checkpoint refresh 2026-07-11 (GicleeApp v1.51.0 / HOME FLOW / patch safety):** repo wymiany/pushu aplikacji `gicleeapp/main` @ `9342f5b`; finalna prawda po lokalnej akceptacji = monorepo `C:\Strona\pusty`; `e968f6c` jest ostatnim zweryfikowanym checkpointem projektu przed docs-only refresh; launcher categories/options/shortcuts/DnD zaakceptowany; WinAPI shortcuts = trwała decyzja; patch w PowerShell przez `--output`; oba cross-repo `--check` przed apply; FAQ `image_effect_selector` / `targetSelector` pending tylko bez nowszego potwierdzenia; GICLÉE HOME FLOW v1.51.0 implemented + pushed + zaakceptowane, a dalsze prace mają rozwijać stabilne ID `section:*` / `phase:*`, live Intro i bezpośredni renderer sekcji. Paczka nadal **v3.8** — bez bumpu na v39.
 
+**Checkpoint refresh 2026-07-11 (Writer Safety WS-1.3):** clean worktree `C:\Strona\pusty-ws12-clean` @ `1364aea` (v1.54.3); WS-1…WS-1.3 done/tested locally; draft PR #1 @ `492e516` OPEN/DRAFT/UNMERGED; GitHub gicleeapp nadal v1.54.2 @ `294071e`; push/merge/deploy nie wykonane. Paczka nadal **v3.8** — bez bumpu na v39.
+
 ## Analyst mode extension
 
 Paczka zawiera dodatkowy zestaw trybów analitycznych `GICLEE_ANALYST_*_v1.md`.
