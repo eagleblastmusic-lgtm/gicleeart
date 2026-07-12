@@ -1,6 +1,9 @@
 name: Stage 2 CI Baseline
 
 on:
+  push:
+    branches:
+      - 'gpt-work/**'
   pull_request:
     branches:
       - master
@@ -186,10 +189,10 @@ jobs:
           @"
           ## Stage 2 full baseline
 
-          - pytest step outcome: `${{ steps.full_pytest.outcome }}`
-          - pytest exit code: `${{ steps.full_pytest.outputs.exit_code }}`
+          - pytest step outcome: ${{ steps.full_pytest.outcome }}
+          - pytest exit code: ${{ steps.full_pytest.outputs.exit_code }}
           - mode: diagnostic and temporarily non-blocking
-          - runtime roots: isolated under `runner.temp`
+          - runtime roots: isolated under runner.temp
           "@ >> $env:GITHUB_STEP_SUMMARY
 
       - name: Upload full baseline evidence
