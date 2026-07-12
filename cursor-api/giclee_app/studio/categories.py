@@ -36,9 +36,21 @@ NAV_CATEGORIES: list[tuple[str, str, str]] = [
     ("system", "System", "⚙"),
 ]
 
-_LEGACY_CATEGORIES_PATH = Path(__file__).resolve().parents[1] / "data" / "studio_categories.json"
+DEFAULT_CATEGORIES_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "resources"
+    / "studio_categories.default.json"
+)
+_LEGACY_CATEGORIES_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "data"
+    / "studio_categories.json"
+)
 _CATEGORIES_PATH = _LEGACY_CATEGORIES_PATH
-_CATEGORIES = config_path("giclee_app/data/studio_categories.json", legacy=_LEGACY_CATEGORIES_PATH)
+_CATEGORIES = config_path(
+    "giclee_app/data/studio_categories.json",
+    legacy=_LEGACY_CATEGORIES_PATH,
+)
 
 
 def _categories_path() -> Path:
@@ -60,34 +72,84 @@ def clear_categories_cache() -> None:
     _cached_category_labels = None
 
 
+def _load_mapping_from_path(
+    path: Path,
+) -> tuple[str, dict[str, str], dict[str, str]] | None:
+    if not path.is_file():
+        return None
+
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, TypeError, ValueError):
+        return None
+
+    if not isinstance(data, dict):
+        return None
+
+    cats = data.get("categories")
+
+    if not isinstance(cats, dict):
+        return None
+
+    default = str(data.get("default_category") or "system")
+    folder_to_cat: dict[str, str] = {}
+    labels: dict[str, str] = {}
+
+    for cat_id, row in cats.items():
+        if cat_id == "dashboard" or not isinstance(row, dict):
+            continue
+
+        if row.get("label"):
+            labels[str(cat_id)] = str(row["label"])
+
+        folders = row.get("folders")
+
+        if not isinstance(folders, list):
+            continue
+
+        for folder in folders:
+            folder_to_cat[str(folder)] = str(cat_id)
+
+    return default, folder_to_cat, labels
+
+
+def _mapping_source_paths() -> tuple[Path, ...]:
+    paths: list[Path] = []
+
+    for path in (
+        _categories_path(),
+        Path(_LEGACY_CATEGORIES_PATH),
+        DEFAULT_CATEGORIES_PATH,
+    ):
+        if path not in paths:
+            paths.append(path)
+
+    return tuple(paths)
+
+
 def _ensure_mapping_loaded() -> tuple[str, dict[str, str]]:
     global _cached_default_category, _cached_folder_to_category, _cached_category_labels
     if _cached_folder_to_category is not None and _cached_default_category is not None:
         return _cached_default_category, _cached_folder_to_category
 
-    default = "system"
-    folder_to_cat: dict[str, str] = {}
-    labels: dict[str, str] = {}
+    loaded: tuple[
+        str,
+        dict[str, str],
+        dict[str, str],
+    ] | None = None
 
-    path = _categories_path()
-    if path.is_file():
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-            if isinstance(data, dict):
-                default = str(data.get("default_category") or "system")
-                cats = data.get("categories")
-                if isinstance(cats, dict):
-                    for cat_id, row in cats.items():
-                        if cat_id == "dashboard" or not isinstance(row, dict):
-                            continue
-                        if row.get("label"):
-                            labels[str(cat_id)] = str(row["label"])
-                        folders = row.get("folders")
-                        if isinstance(folders, list):
-                            for folder in folders:
-                                folder_to_cat[str(folder)] = str(cat_id)
-        except (OSError, json.JSONDecodeError, TypeError, ValueError):
-            pass
+    for path in _mapping_source_paths():
+        loaded = _load_mapping_from_path(path)
+
+        if loaded is not None:
+            break
+
+    if loaded is None:
+        default = "system"
+        folder_to_cat: dict[str, str] = {}
+        labels: dict[str, str] = {}
+    else:
+        default, folder_to_cat, labels = loaded
 
     _cached_default_category = default
     _cached_folder_to_category = folder_to_cat
