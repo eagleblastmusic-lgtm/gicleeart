@@ -218,7 +218,10 @@ def test_launcher_config_reads_legacy_and_writes_roaming(monkeypatch, tmp_path: 
     monkeypatch.setattr(categories, "_CATEGORIES_PATH", categories_legacy)
     monkeypatch.setattr(categories, "_CATEGORIES", config_path("giclee_app/data/studio_categories.json", legacy=categories_legacy))
     categories.clear_categories_cache()
-    assert categories.category_for_folder("missing") == "content"
+    try:
+        assert categories.category_for_folder("missing") == "content"
+    finally:
+        categories.clear_categories_cache()
 
     assert (roaming / "config/giclee_app/data/launcher_layout.json").is_file()
     assert (roaming / "config/giclee_app/data/launcher_shortcuts.json").is_file()
