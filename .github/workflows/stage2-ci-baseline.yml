@@ -113,6 +113,7 @@ jobs:
     needs: hermetic-smoke
     if: >-
       always() &&
+      !cancelled() &&
       (
         github.event_name == 'workflow_dispatch' ||
         (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
@@ -157,6 +158,10 @@ jobs:
             Set-Item -Path "Env:$($entry.Key)" -Value $entry.Value
             New-Item -ItemType Directory -Path $entry.Value -Force | Out-Null
           }
+
+      - name: Prepare isolated Tcl/Tk runtime
+        shell: pwsh
+        run: .\.github\scripts\prepare-tk-runtime.ps1 -RuntimeName "tk-gui"
 
       - name: Install test dependencies
         working-directory: cursor-api
@@ -237,6 +242,7 @@ jobs:
     needs: tk-gui-diagnostic
     if: >-
       always() &&
+      !cancelled() &&
       (
         github.event_name == 'workflow_dispatch' ||
         (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
@@ -282,6 +288,10 @@ jobs:
             New-Item -ItemType Directory -Path $entry.Value -Force | Out-Null
           }
 
+      - name: Prepare isolated Tcl/Tk runtime
+        shell: pwsh
+        run: .\.github\scripts\prepare-tk-runtime.ps1 -RuntimeName "full-baseline"
+
       - name: Install test dependencies
         working-directory: cursor-api
         shell: pwsh
@@ -293,7 +303,6 @@ jobs:
 
       - name: Run full pytest baseline
         id: full_pytest
-        continue-on-error: true
         working-directory: cursor-api
         shell: pwsh
         run: |
@@ -317,7 +326,7 @@ jobs:
 
           - pytest step outcome: ${{ steps.full_pytest.outcome }}
           - pytest exit code: ${{ steps.full_pytest.outputs.exit_code }}
-          - mode: diagnostic and temporarily non-blocking
+          - mode: blocking baseline; evidence is uploaded on every outcome
           - runtime roots: isolated under RUNNER_TEMP
           "@ >> $env:GITHUB_STEP_SUMMARY
 
