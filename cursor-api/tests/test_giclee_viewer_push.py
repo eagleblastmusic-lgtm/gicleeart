@@ -38,13 +38,14 @@ def viewer_push_env(tmp_path, monkeypatch):
         check=True,
         capture_output=True,
     )
+    remote_url = "../giclee-viewer-remote.git"
 
     for module in (cfg, gvp):
         monkeypatch.setattr(module, "GICLEE_VIEWER_DIR", repo)
         monkeypatch.setattr(
             module,
             "GICLEE_VIEWER_REMOTE_URL",
-            str(remote),
+            remote_url,
         )
     return repo
 
