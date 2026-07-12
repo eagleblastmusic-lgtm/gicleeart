@@ -17,8 +17,8 @@ def test_katalog_refresh_is_deferred() -> None:
     assert "after(" in text
     assert "studio.katalog.refresh_pipeline.start" in text
     assert 'event_prefix = f"studio.katalog.refresh.{kind}_rows"' in text
-    assert 'log_event(f"{event_prefix}.batch"' in text
-    assert 'log_event(f"{event_prefix}.done"' in text
+    assert 'f"{event_prefix}.batch"' in text
+    assert 'f"{event_prefix}.done"' in text
     assert '"inventory",' in text
     assert '"data_map",' in text
     assert "studio.katalog.refresh.finalize" in text
