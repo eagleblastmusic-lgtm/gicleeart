@@ -3,9 +3,9 @@
 Tworzy widok z paskiem [<- Powrot] [Tytul] [... Ustawienia] + siatka kafelkow,
 ktorych klikniecie wywoluje callback (np. otworzenie folderu / pliku / toast).
 
-Persystencja "settings": JSON w `Komponenty/<komponent>/settings.json`.
-Domyslne wartosci pochodza z definicji TileSpec.target_path; uzytkownik moze
-nadpisac w dialogu ustawien.
+Persystencja "settings": legacy read z `Komponenty/<komponent>/settings.json`,
+a nowe zapisy w roaming AppData przez `giclee_app.app_paths`. Domyslne wartosci
+pochodza z definicji TileSpec.target_path; uzytkownik moze nadpisac je w dialogu.
 """
 
 from __future__ import annotations
@@ -20,6 +20,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 from typing import Any
+
+from giclee_app.app_paths import AppPath, atomic_write_text, config_path
 
 from Komponenty._shared.toast import show_toast
 from Komponenty._shared.window_geometry import position_toplevel_screen_center
@@ -65,22 +67,81 @@ def open_path_in_os(path: str) -> tuple[bool, str]:
     return True, str(p)
 
 
+_COMPONENTS_DIR_NAME = "Komponenty"
+_SETTINGS_FILENAME = "settings.json"
+_INVALID_RUNTIME_CHARS = frozenset('<>:"/\\|?*')
+
+
+def _portable_parts(path: Path) -> tuple[str, ...]:
+    raw = str(path).replace("\\", "/")
+    return tuple(part for part in raw.split("/") if part not in ("", "."))
+
+
+def _safe_runtime_segment(value: str) -> bool:
+    return (
+        bool(value)
+        and value not in (".", "..")
+        and not any(char in _INVALID_RUNTIME_CHARS or ord(char) < 32 for char in value)
+    )
+
+
+def _fallback_component_name(parts: tuple[str, ...]) -> str:
+    candidate = (parts[-1] if parts else "component").strip()
+    cleaned = "".join(
+        "_" if char in _INVALID_RUNTIME_CHARS or ord(char) < 32 else char
+        for char in candidate
+    ).strip(" .")
+    return cleaned if _safe_runtime_segment(cleaned) else "component"
+
+
+def component_settings_relative_path(component_dir: Path) -> str:
+    """Return a stable, safe AppData-relative path for a component settings file."""
+
+    parts = _portable_parts(Path(component_dir).expanduser())
+    markers = [
+        index
+        for index, part in enumerate(parts)
+        if part.casefold() == _COMPONENTS_DIR_NAME.casefold()
+    ]
+    if markers:
+        relative_parts = parts[markers[-1] + 1 :]
+        if relative_parts and all(_safe_runtime_segment(part) for part in relative_parts):
+            return "/".join(
+                (_COMPONENTS_DIR_NAME, *relative_parts, _SETTINGS_FILENAME)
+            )
+
+    fallback = _fallback_component_name(parts)
+    return "/".join((_COMPONENTS_DIR_NAME, fallback, _SETTINGS_FILENAME))
+
+
+def component_settings_path(component_dir: Path) -> AppPath:
+    """Resolve external settings with a read-only source-tree fallback."""
+
+    component_root = Path(component_dir).expanduser()
+    legacy = component_root / _SETTINGS_FILENAME
+    return config_path(
+        component_settings_relative_path(component_root),
+        legacy=legacy,
+    )
+
+
 def load_settings(component_dir: Path) -> dict[str, Any]:
-    p = component_dir / "settings.json"
-    if not p.is_file():
+    path = component_settings_path(component_dir).read_path()
+    if not path.is_file():
         return {}
     try:
-        return json.loads(p.read_text(encoding="utf-8")) or {}
+        data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return {}
+    return data if isinstance(data, dict) else {}
 
 
 def save_settings(component_dir: Path, data: dict[str, Any]) -> None:
-    p = component_dir / "settings.json"
-    try:
-        p.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-    except OSError:
-        pass
+    target = component_settings_path(component_dir).write_path
+    atomic_write_text(
+        target,
+        json.dumps(data, indent=2, ensure_ascii=False),
+    )
 
 
 class InlineTileView:
