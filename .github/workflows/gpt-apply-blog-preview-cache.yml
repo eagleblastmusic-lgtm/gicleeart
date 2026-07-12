@@ -41,6 +41,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $false
           $reportRoot = Join-Path $env:RUNNER_TEMP "blog-preview-apply"
           New-Item -ItemType Directory -Path $reportRoot -Force | Out-Null
           Start-Transcript -LiteralPath "$reportRoot\apply.txt" -Force
@@ -57,23 +58,16 @@ jobs:
               throw "Failed to replace REPO_ROOT anchor in patcher"
             }
             Set-Content -LiteralPath $patcher -Value $patcherText -Encoding utf8
-            Select-String -LiteralPath $patcher -Pattern "REPO_ROOT"
 
-            python -m py_compile $patcher
+            python -m py_compile $patcher 2>&1 | Tee-Object -FilePath "$reportRoot\patcher-compile.txt"
             if ($LASTEXITCODE -ne 0) {
               throw "Patcher syntax validation failed"
             }
 
-            python -c "import os; print('python cwd=' + os.getcwd())"
             python $patcher 2>&1 | Tee-Object -FilePath "$reportRoot\patcher.txt"
-            $patchExit = $LASTEXITCODE
-            Write-Host "patcher exit=$patchExit"
-            if ($patchExit -ne 0) {
-              throw "Patcher failed with exit code $patchExit"
+            if ($LASTEXITCODE -ne 0) {
+              throw "Patcher execution failed"
             }
-
-            Get-ChildItem -LiteralPath $env:RUNNER_WORKSPACE -Recurse -Filter "test_blog_preview_appdata_cache.py" -ErrorAction SilentlyContinue |
-              ForEach-Object { Write-Host "found test: $($_.FullName)" }
 
             $expected = @(
               "cursor-api/Komponenty/blog/preview.py",
@@ -81,19 +75,21 @@ jobs:
               "cursor-api/docs/repository_safety/BLOG_PREVIEW_CACHE.md"
             )
             foreach ($path in $expected) {
-              Write-Host "$path exists=$(Test-Path -LiteralPath $path -PathType Leaf)"
               if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
                 throw "Patcher did not create expected file: $path"
               }
+              Copy-Item -LiteralPath $path -Destination $reportRoot -Force
             }
 
-            python -m compileall -q `
+            python -m py_compile `
               cursor-api/Komponenty/blog/preview.py `
-              cursor-api/tests/test_blog_preview_appdata_cache.py
+              cursor-api/tests/test_blog_preview_appdata_cache.py 2>&1 |
+              Tee-Object -FilePath "$reportRoot\generated-compile.txt"
             if ($LASTEXITCODE -ne 0) {
-              throw "compileall failed"
+              throw "Generated Python syntax validation failed"
             }
-            git diff --check
+
+            git diff --check 2>&1 | Tee-Object -FilePath "$reportRoot\diff-check.txt"
             if ($LASTEXITCODE -ne 0) {
               throw "git diff --check failed"
             }
