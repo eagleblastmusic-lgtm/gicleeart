@@ -43,7 +43,15 @@ if (-not $safeRuntimeName) {
     $safeRuntimeName = "job"
 }
 
-$targetRoot = Join-Path $env:RUNNER_TEMP "python-tcl-runtime-$safeRuntimeName"
+$identityParts = @($safeRuntimeName)
+foreach ($value in @($env:GITHUB_RUN_ID, $env:GITHUB_RUN_ATTEMPT, $env:GITHUB_JOB)) {
+    $clean = (($value | Out-String).Trim() -replace '[^A-Za-z0-9_.-]', '-')
+    if ($clean) {
+        $identityParts += $clean
+    }
+}
+$safeIdentity = $identityParts -join "-"
+$targetRoot = Join-Path $env:RUNNER_TEMP "python-tcl-runtime-$safeIdentity"
 $copySucceeded = $false
 $lastCopyError = $null
 
@@ -111,6 +119,7 @@ if ($env:GITHUB_STEP_SUMMARY) {
 - Python: `$pythonExe`
 - source: `$sourceRoot`
 - isolated copy: `$targetRoot`
+- run identity: `$safeIdentity`
 - TCL_LIBRARY: `$targetTcl`
 - TK_LIBRARY: `$targetTk`
 "@ | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY

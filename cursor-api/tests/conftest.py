@@ -2,16 +2,46 @@
 
 from __future__ import annotations
 
+import tkinter as tk
 import urllib.request
 from collections.abc import Generator
 from typing import Any
 
 import pytest
 
+from tools.stage2_tcl_retry import (
+    call_tk_init_with_transient_retry,
+    ci_tcl_retry_enabled,
+)
+
 _ARTIC_TEST_NODE = (
     "tests/test_stronyzobrazami_search.py::test_artic_fetch_with_referer"
 )
 _ARTIC_JPEG = b"\xff\xd8fixture-jpeg"
+
+
+@pytest.fixture(autouse=True)
+def _retry_transient_tcl_init_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> Generator[None, None, None]:
+    """Retry one exact init.tcl read failure only on GitHub Actions."""
+
+    if not ci_tcl_retry_enabled():
+        yield
+        return
+
+    original_init = tk.Tk.__init__
+
+    def _wrapped_init(self: tk.Tk, *args: object, **kwargs: object) -> None:
+        call_tk_init_with_transient_retry(
+            original_init,
+            self,
+            args,
+            kwargs,
+        )
+
+    monkeypatch.setattr(tk.Tk, "__init__", _wrapped_init)
+    yield
 
 
 @pytest.fixture(autouse=True)
