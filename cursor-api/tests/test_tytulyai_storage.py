@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import sys
 from pathlib import Path
 
@@ -39,6 +40,18 @@ def test_description_drafts_v1_v2_roundtrip(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(st, "DATA_DIR", tmp_path)
     monkeypatch.setattr(st, "DESCRIPTION_DRAFTS_FILE", tmp_path / "description_drafts.json")
 
+    assert st.DescriptionVariant is DescriptionVariant, (
+        "storage imported a different DescriptionVariant: "
+        f"storage={st.DescriptionVariant!r} "
+        f"storage_source={inspect.getsourcefile(st.DescriptionVariant)!r} "
+        f"current={DescriptionVariant!r} "
+        f"current_source={inspect.getsourcefile(DescriptionVariant)!r}"
+    )
+    assert hasattr(st.DescriptionVariant, "ok"), (
+        "storage DescriptionVariant lost the ok property: "
+        f"class_dict={sorted(st.DescriptionVariant.__dict__)}"
+    )
+
     drafts = {
         55: ProductDescriptionDrafts(
             product_id=55,
@@ -58,6 +71,12 @@ def test_description_drafts_v1_v2_roundtrip(tmp_path, monkeypatch) -> None:
     }
     st.save_description_drafts(drafts)
     loaded = st.load_description_drafts()
+    assert type(loaded[55].v1) is DescriptionVariant, (
+        "storage returned a different variant class: "
+        f"loaded_type={type(loaded[55].v1)!r} "
+        f"loaded_source={inspect.getsourcefile(type(loaded[55].v1))!r} "
+        f"expected={DescriptionVariant!r}"
+    )
     assert loaded[55].v1.ok
     assert loaded[55].v2.ok
     assert loaded[55].v2.akapity[0] == "B1"
