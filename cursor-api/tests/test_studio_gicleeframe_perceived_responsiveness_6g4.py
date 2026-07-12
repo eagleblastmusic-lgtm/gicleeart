@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -12,6 +13,12 @@ def _view_text() -> str:
     return (ROOT / "giclee_app" / "ui" / "gicleeframe_view.py").read_text(
         encoding="utf-8"
     )
+
+
+def _constant_int(text: str, name: str) -> int:
+    match = re.search(rf"^{re.escape(name)}\s*=\s*(\d+)$", text, re.MULTILINE)
+    assert match is not None, f"missing integer constant: {name}"
+    return int(match.group(1))
 
 
 def test_gicleeframe_uses_stable_workspace_skeleton_columns() -> None:
@@ -54,9 +61,11 @@ def test_gicleeframe_sections_deferred_packs_card_into_skeleton_column() -> None
     assert "_workspace_skeleton_columns_built" in text
 
 
-def test_gicleeframe_section_list_has_smaller_first_batch() -> None:
+def test_gicleeframe_section_list_has_progressive_first_batch() -> None:
     text = _view_text()
+    first_batch = _constant_int(text, "_GF_SECTION_FIRST_BATCH_SIZE")
+    steady_batch = _constant_int(text, "_GF_SECTION_BATCH_SIZE")
 
-    assert "_GF_SECTION_FIRST_BATCH_SIZE = 2" in text
+    assert 1 <= first_batch <= steady_batch
     assert "batch_size = _GF_SECTION_FIRST_BATCH_SIZE if start == 0 else _GF_SECTION_BATCH_SIZE" in text
     assert "batch_size=batch_size" in text

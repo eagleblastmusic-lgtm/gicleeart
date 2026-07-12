@@ -62,16 +62,26 @@ def test_init_refresh_light_deferred_runs_after_early_lane_queue() -> None:
     )
 
 
-def test_init_refresh_light_deferred_preserves_inventory_spans() -> None:
+def test_init_refresh_light_preserves_async_inventory_and_finalize_span() -> None:
     text = _view_text()
 
-    start = text.index("def _run_init_refresh_light_deferred")
-    end = text.index("def _bootstrap_section_list_after_inventory_light", start)
-    body = text[start:end]
+    run_start = text.index("def _run_init_refresh_light_deferred")
+    run_end = text.index("def _finish_init_refresh_light", run_start)
+    run_body = text[run_start:run_end]
 
-    assert 'span("studio.gicleeframe.init_refresh.light")' in body
-    assert "self._refresh_inventory_light(warn_if_draft=False)" in body
-    assert "self._bootstrap_section_list_after_inventory_light()" in body
+    assert "run_async(" in run_body
+    assert "build_gicleeframe_page_inventory(find_components_dir())" in run_body
+    assert "self._finish_init_refresh_light" in run_body
+    assert "on_error=" in run_body
+
+    finish_start = run_end
+    finish_end = text.index("def _bootstrap_section_list_after_inventory_light", finish_start)
+    finish_body = text[finish_start:finish_end]
+
+    assert 'span("studio.gicleeframe.init_refresh.light")' in finish_body
+    assert "self._refresh_inventory_light(" in finish_body
+    assert "prebuilt_inventory=prebuilt_inventory" in finish_body
+    assert "self._bootstrap_section_list_after_inventory_light()" in finish_body
 
 
 def test_bootstrap_section_list_after_inventory_light_lazy_shell_path() -> None:

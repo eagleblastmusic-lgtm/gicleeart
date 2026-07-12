@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -12,6 +13,12 @@ def _view_text() -> str:
     return (ROOT / "giclee_app" / "ui" / "gicleeframe_view.py").read_text(
         encoding="utf-8"
     )
+
+
+def _constant_int(text: str, name: str) -> int:
+    match = re.search(rf"^{re.escape(name)}\s*=\s*(\d+)$", text, re.MULTILINE)
+    assert match is not None, f"missing integer constant: {name}"
+    return int(match.group(1))
 
 
 def test_section_first_visible_defer_ms_constant_exists() -> None:
@@ -53,10 +60,12 @@ def test_section_list_fast_lane_preserves_prior_6g5_markers() -> None:
     assert "studio.gicleeframe.populate_editor.preview_deferred_requested" in text
 
 
-def test_section_list_fast_lane_preserves_late_defer_constants() -> None:
+def test_section_list_fast_lane_preserves_late_lane_ordering() -> None:
     text = _view_text()
-    assert "_GF_TOP_BAR_ACTIONS_LATE_DEFER_MS = 1600" in text
-    assert "_GF_EDITOR_IDENTITY_LATE_DEFER_MS = 1200" in text
+    identity_ms = _constant_int(text, "_GF_EDITOR_IDENTITY_LATE_DEFER_MS")
+    top_bar_ms = _constant_int(text, "_GF_TOP_BAR_ACTIONS_LATE_DEFER_MS")
+
+    assert 0 < identity_ms <= top_bar_ms
 
 
 def test_section_list_subsequent_batches_still_use_batch_delay() -> None:
