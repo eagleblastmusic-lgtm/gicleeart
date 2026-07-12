@@ -38,6 +38,18 @@ def save() -> None:
     assert _rules(source) == [("DIRECT_SOURCE_PATH_WRITE", "open")]
 
 
+def test_path_open_write_mode_is_reported() -> None:
+    source = """
+from pathlib import Path
+STORE = Path(__file__).resolve().parent / "state.json"
+
+def save() -> None:
+    with STORE.open("w", encoding="utf-8") as handle:
+        handle.write("x")
+"""
+    assert _rules(source) == [("DIRECT_SOURCE_PATH_WRITE", "STORE.open")]
+
+
 def test_app_path_factory_breaks_legacy_source_propagation() -> None:
     source = """
 from pathlib import Path

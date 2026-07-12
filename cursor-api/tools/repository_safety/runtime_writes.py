@@ -201,10 +201,15 @@ def _rooted_names(body: list[ast.stmt], inherited: set[str]) -> set[str]:
     return rooted
 
 
-def _literal_mode(call: ast.Call, *, default: str = "r") -> str:
+def _literal_mode(
+    call: ast.Call,
+    *,
+    positional_index: int,
+    default: str = "r",
+) -> str:
     node: ast.AST | None = None
-    if len(call.args) >= 2:
-        node = call.args[1]
+    if len(call.args) > positional_index:
+        node = call.args[positional_index]
     for keyword in call.keywords:
         if keyword.arg == "mode":
             node = keyword.value
@@ -262,7 +267,9 @@ def _scan_scope(rel: str, body: list[ast.stmt], inherited: set[str]) -> list[Run
         if short in _DIRECT_PATH_METHODS and receiver is not None:
             symbols = _source_symbols(receiver, rooted)
             if symbols:
-                if short == "open" and not _is_write_mode(_literal_mode(node)):
+                if short == "open" and not _is_write_mode(
+                    _literal_mode(node, positional_index=0)
+                ):
                     continue
                 findings.append(
                     _finding(
@@ -277,7 +284,7 @@ def _scan_scope(rel: str, body: list[ast.stmt], inherited: set[str]) -> list[Run
                 continue
 
         if dotted in {"open", "builtins.open"}:
-            if not node.args or not _is_write_mode(_literal_mode(node)):
+            if not node.args or not _is_write_mode(_literal_mode(node, positional_index=1)):
                 continue
             symbols = _source_symbols(node.args[0], rooted)
             if symbols:
