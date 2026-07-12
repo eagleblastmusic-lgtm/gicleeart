@@ -1,32 +1,65 @@
 # Current App State
 
 <!-- gpt-starter:gicleeapp-push:start -->
-GicleeApp Studio v1.51.0
+GicleeApp Studio v1.53.0
 
-Finalne źródło po lokalnej akceptacji:
-- monorepo `C:\Strona\pusty` / repo `eagleblastmusic-lgtm/gicleeart` / branch `master`,
-- aplikacja znajduje się w `cursor-api/`.
+Aktualne ?r?d?o pracy po bezpiecznym reconciliation:
+- aktywny workspace: `C:\Strona\gicleeart-active-master-20260712`,
+- repo: `eagleblastmusic-lgtm/gicleeart`,
+- branch bazowy: `master`,
+- aplikacja znajduje si? w `cursor-api/`,
+- aktualny `master` po PR #4: `a9ca6530b886cd5f00f259c0765b52db6171d049`.
+
+Zintegrowane checkpointy repozytorium:
+- PR #2 / Stage 1A?1F repository safety: `7e30035334235d5582769560a06cf6d36f35040a`,
+- PR #3 / catalog panel, submenu, FAQ i page effects: `f56a5cbe1a7905d5000cd24be31a25f535aff1bf`,
+- PR #4 / siedem plik?w startowych GPT v38: `a9ca6530b886cd5f00f259c0765b52db6171d049`.
+
+Zachowane archiwum starego checkoutu:
+- `C:\Strona\pusty`,
+- branch `audit/submenu-homeflow-20260711-1622`,
+- HEAD `69a796274de9b9fdee2418707d8dc356b7732e07`,
+- 33 dirty paths zachowane bez modyfikacji,
+- bundle, binary patch i snapshot plik?w znajduj? si? w `AppData\Local\GicleeArt\SafetySnapshots`.
 
 Repo wymiany i pushu aplikacji:
-- `eagleblastmusic-lgtm/gicleeapp` / `main` @ `9342f5b` (2026-07-11 00:52 UTC),
-- wersja **v1.51.0** zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`.
-
-Repo snapshotu motywu do review:
-- `eagleblastmusic-lgtm/gicleeart-gpt`,
-- ostatni zweryfikowany snapshot review: `09aeee3` (2026-07-11 00:53 UTC).
-
-Monorepo:
-- `e968f6c` jest ostatnim zweryfikowanym checkpointem projektu przed późniejszym odświeżeniem dokumentacji GPT,
-- bieżący HEAD może być nowszy o commit(y) docs-only; przed podaniem aktualnego SHA sprawdź `git log -1 --oneline`.
-
-Historyczne checkpointy:
-- `4647c1b` — GICLÉE FRAME™ F2.1 / v1.40.1,
-- `46fc718` — GICLÉE FRAME page inventory RAM editor / v1.40.0.
+- `eagleblastmusic-lgtm/gicleeapp` / `main` pozostaje osobnym workflow pushowanym z UI GicleeApp,
+- przed podaniem jego bie??cego SHA sprawd? stan repo; nie wyprowadzaj go z SHA monorepo.
 
 GPT starter files:
-- źródło edycji: `C:\Strona\pusty\Pliki startowe dla GPT`,
-- ZIP v38 jest snapshotem/outputem programu użytkownika, nie źródłem edycji.
+- aktualne ?r?d?o edycji: `C:\Strona\gicleeart-active-master-20260712\Pliki startowe dla GPT`,
+- `CURRENT_APP_STATE.md` jest plikiem single-writer i jest aktualizowany jako ostatni,
+- ZIP v38 jest snapshotem/outputem programu u?ytkownika, nie ?r?d?em edycji,
+- w ramach reconciliation nie wygenerowano nowego ZIP-a.
 <!-- gpt-starter:gicleeapp-push:end -->
+
+## Repository reconciliation checkpoint ? 2026-07-12
+
+Status: **RECOVERY CLOSED / ETAP 2 READY**.
+
+Zako?czone:
+- PR #1 zamkni?ty jako **SUPERSEDED**, bez merge,
+- PR #2 scalony ? repository safety Stage 1A?1F,
+- PR #3 scalony ? panel katalogu, submenu, FAQ, page effects i Home Flow data,
+- PR #4 scalony ? siedem plik?w startowych GPT v38,
+- utworzony czysty aktywny worktree z aktualnego `master`,
+- stary checkout i wszystkie 33 dirty paths zachowane w snapshotach bezpiecze?stwa.
+
+Walidacja recovery:
+- Stage 1A?1F: **127 passed, 1 warning**, compileall PASS,
+- odzyskany panel/submenu/page effects: **14 targeted tests passed**,
+- JavaScript syntax PASS,
+- `git diff --check` PASS,
+- szerszy przebieg: **1605 passed, 32 failed, 1 skipped**; pozosta?e b??dy nie zosta?y formalnie zbaselinowane na czystym `master` i nie by?y naprawiane w recovery.
+
+Granice bezpiecze?stwa:
+- brak automatycznego deployu Shopify,
+- brak runtime/config/backups w commitach recovery,
+- brak generowania ZIP-a wiedzy,
+- nie u?ywa? starego `C:\Strona\pusty` jako aktywnego workspace do nowych zmian,
+- nowe funkcje rozpoczyna? z aktualnego `master` na w?skich branchach i osobnych PR-ach.
+
+Ten checkpoint ma pierwsze?stwo nad wcze?niejszymi sekcjami manualnymi, gdy opisuj? starszy branch, stary `master` lub nierozliczony working tree.
 
 
 ## Manual checkpoint — 2026-07-11
