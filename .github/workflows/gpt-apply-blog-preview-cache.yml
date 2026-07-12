@@ -41,7 +41,27 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          python .github/scripts/gpt-apply-blog-preview-cache.py
+          $patcher = ".github/scripts/gpt-apply-blog-preview-cache.py"
+          $patcherText = Get-Content -LiteralPath $patcher -Raw
+          $patcherText = $patcherText.Replace(
+            "REPO_ROOT = Path(__file__).resolve().parents[2]",
+            "REPO_ROOT = Path.cwd().resolve()"
+          )
+          Set-Content -LiteralPath $patcher -Value $patcherText -Encoding utf8
+
+          python $patcher
+
+          $expected = @(
+            "cursor-api/Komponenty/blog/preview.py",
+            "cursor-api/tests/test_blog_preview_appdata_cache.py",
+            "cursor-api/docs/repository_safety/BLOG_PREVIEW_CACHE.md"
+          )
+          foreach ($path in $expected) {
+            if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+              throw "Patcher did not create expected file: $path"
+            }
+          }
+
           python -m compileall -q `
             cursor-api/Komponenty/blog/preview.py `
             cursor-api/tests/test_blog_preview_appdata_cache.py
