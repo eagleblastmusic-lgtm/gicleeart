@@ -7,17 +7,54 @@ import re
 import urllib.parse
 from pathlib import Path
 
+from giclee_app.app_paths import atomic_write_text, cache_path
+
 from .http import get_json
 from .text_norm import norm_search_text
 
 WIKIDATA_API = "https://www.wikidata.org/w/api.php"
-CACHE_DIR = Path(__file__).resolve().parents[1] / "data" / "cache"
-CACHE_FILE = CACHE_DIR / "wikidata_artist_aliases.json"
 
+_LEGACY_CACHE_DIR = Path(__file__).resolve().parents[1] / "data" / "cache"
+_LEGACY_CACHE_FILE = _LEGACY_CACHE_DIR / "wikidata_artist_aliases.json"
+
+# Zachowane punkty podmiany dla istniejacych testow i jawnych callerow.
+_DEFAULT_CACHE_DIR = _LEGACY_CACHE_DIR
+_DEFAULT_CACHE_FILE = _LEGACY_CACHE_FILE
+CACHE_DIR = _DEFAULT_CACHE_DIR
+CACHE_FILE = _DEFAULT_CACHE_FILE
+
+_RUNTIME_RELATIVE = (
+    "Komponenty/stronyzobrazami/data/cache/wikidata_artist_aliases.json"
+)
 _SEARCH_LANGS = ("en", "pl", "fr", "de", "it", "es", "ru", "nl", "pt", "sv", "ja", "zh")
 
 _qid_labels: dict[str, list[str]] | None = None
 _query_labels: dict[str, list[str]] | None = None
+
+
+def _cache_store():
+    return cache_path(_RUNTIME_RELATIVE, legacy=_LEGACY_CACHE_FILE)
+
+
+def _override_cache_file() -> Path | None:
+    cache_file = Path(CACHE_FILE)
+    if cache_file != _DEFAULT_CACHE_FILE:
+        return cache_file
+
+    cache_dir = Path(CACHE_DIR)
+    if cache_dir != _DEFAULT_CACHE_DIR:
+        return cache_dir / _LEGACY_CACHE_FILE.name
+    return None
+
+
+def _read_cache_file() -> Path:
+    override = _override_cache_file()
+    return override if override is not None else _cache_store().read_path()
+
+
+def _write_cache_file() -> Path:
+    override = _override_cache_file()
+    return override if override is not None else _cache_store().write_path
 
 
 def _load_cache() -> tuple[dict[str, list[str]], dict[str, list[str]]]:
@@ -26,9 +63,10 @@ def _load_cache() -> tuple[dict[str, list[str]], dict[str, list[str]]]:
         return _qid_labels, _query_labels
     _qid_labels = {}
     _query_labels = {}
-    if CACHE_FILE.is_file():
+    path = _read_cache_file()
+    if path.is_file():
         try:
-            raw = json.loads(CACHE_FILE.read_text(encoding="utf-8"))
+            raw = json.loads(path.read_text(encoding="utf-8"))
             if isinstance(raw, dict):
                 qids = raw.get("qids") or {}
                 queries = raw.get("queries") or {}
@@ -44,10 +82,9 @@ def _load_cache() -> tuple[dict[str, list[str]], dict[str, list[str]]]:
 
 def _save_cache() -> None:
     qids, queries = _load_cache()
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    CACHE_FILE.write_text(
+    atomic_write_text(
+        _write_cache_file(),
         json.dumps({"qids": qids, "queries": queries}, ensure_ascii=False, indent=0),
-        encoding="utf-8",
     )
 
 

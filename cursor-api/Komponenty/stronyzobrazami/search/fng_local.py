@@ -8,6 +8,8 @@ import ssl
 import urllib.request
 from pathlib import Path
 
+from giclee_app.app_paths import atomic_write_bytes, cache_path
+
 from .artist_match import artist_index_tokens, artist_match, index_lookup_fuzzy
 from .env_keys import fng_api_key
 from .filters import maybe_add_hit, scan_cap
@@ -16,12 +18,45 @@ from .score import apply_scores
 from .text_norm import norm_search_text
 from .types import ArtworkHit
 
-CACHE_DIR = Path(__file__).resolve().parents[1] / "data" / "cache"
-FNG_OBJECTS_GZ = CACHE_DIR / "fng_objects.json.gz"
+_LEGACY_CACHE_DIR = Path(__file__).resolve().parents[1] / "data" / "cache"
+_LEGACY_FNG_OBJECTS_GZ = _LEGACY_CACHE_DIR / "fng_objects.json.gz"
+
+# Zachowane punkty podmiany dla istniejacych testow i jawnych callerow.
+_DEFAULT_CACHE_DIR = _LEGACY_CACHE_DIR
+_DEFAULT_FNG_OBJECTS_GZ = _LEGACY_FNG_OBJECTS_GZ
+CACHE_DIR = _DEFAULT_CACHE_DIR
+FNG_OBJECTS_GZ = _DEFAULT_FNG_OBJECTS_GZ
+
+_RUNTIME_RELATIVE = "Komponenty/stronyzobrazami/data/cache/fng_objects.json.gz"
 FNG_OBJECTS_URL = "https://kokoelma.kansallisgalleria.fi/api/v1/objects"
 
 _rows: list[dict[str, object]] | None = None
 _artist_index: dict[str, set[int]] | None = None
+
+
+def _cache_store():
+    return cache_path(_RUNTIME_RELATIVE, legacy=_LEGACY_FNG_OBJECTS_GZ)
+
+
+def _override_cache_file() -> Path | None:
+    cache_file = Path(FNG_OBJECTS_GZ)
+    if cache_file != _DEFAULT_FNG_OBJECTS_GZ:
+        return cache_file
+
+    cache_dir = Path(CACHE_DIR)
+    if cache_dir != _DEFAULT_CACHE_DIR:
+        return cache_dir / _LEGACY_FNG_OBJECTS_GZ.name
+    return None
+
+
+def _read_cache_file() -> Path:
+    override = _override_cache_file()
+    return override if override is not None else _cache_store().read_path()
+
+
+def _write_cache_file() -> Path:
+    override = _override_cache_file()
+    return override if override is not None else _cache_store().write_path
 
 
 def reset_fng_cache_for_tests() -> None:
@@ -31,19 +66,20 @@ def reset_fng_cache_for_tests() -> None:
 
 
 def fng_cache_ready() -> bool:
-    return FNG_OBJECTS_GZ.is_file() and FNG_OBJECTS_GZ.stat().st_size > 100
+    path = _read_cache_file()
+    return path.is_file() and path.stat().st_size > 100
 
 
 def ensure_fng_cache(*, timeout: float = 600.0) -> Path:
     """Pobiera pelna liste obiektow (raz, ~270 MB skompresowane)."""
-    if fng_cache_ready() and FNG_OBJECTS_GZ.stat().st_size > 1_000_000:
-        return FNG_OBJECTS_GZ
+    current = _read_cache_file()
+    if current.is_file() and current.stat().st_size > 1_000_000:
+        return current
 
     key = fng_api_key()
     if not key:
         raise RuntimeError("Brak FNG_API_KEY w cursor-api/.env")
 
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
     req = urllib.request.Request(
         FNG_OBJECTS_URL,
         headers={
@@ -58,9 +94,12 @@ def ensure_fng_cache(*, timeout: float = 600.0) -> Path:
         raw = resp.read()
     if not raw:
         raise RuntimeError("Pusta odpowiedz FNG /v1/objects")
-    FNG_OBJECTS_GZ.write_bytes(raw if raw[:2] == b"\x1f\x8b" else gzip.compress(raw))
+
+    target = _write_cache_file()
+    payload = raw if raw[:2] == b"\x1f\x8b" else gzip.compress(raw)
+    atomic_write_bytes(target, payload)
     reset_fng_cache_for_tests()
-    return FNG_OBJECTS_GZ
+    return target
 
 
 def _pick_text(block: object) -> str:
@@ -111,9 +150,11 @@ def _load_rows() -> list[dict[str, object]]:
     global _rows
     if _rows is not None:
         return _rows
-    if not FNG_OBJECTS_GZ.is_file():
-        ensure_fng_cache()
-    with gzip.open(FNG_OBJECTS_GZ, "rt", encoding="utf-8") as fh:
+
+    path = _read_cache_file()
+    if not path.is_file():
+        path = ensure_fng_cache()
+    with gzip.open(path, "rt", encoding="utf-8") as fh:
         data = json.load(fh)
     if not isinstance(data, list):
         raise RuntimeError("Niepoprawny format cache FNG")
