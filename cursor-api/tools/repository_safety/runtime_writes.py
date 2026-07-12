@@ -66,7 +66,22 @@ _KNOWN_PATH_CALLS: dict[str, tuple[int, ...]] = {
     "shutil.rmtree": (0,),
 }
 _WRITER_NAME = re.compile(
-    r"(?i)(?:^|_)(?:append|copy|dump|export|move|persist|rename|replace|save|store|write)(?:_|$)"
+    r"(?i)(?:^|_)(?:dump|export|persist|save|store|write)(?:_|$)"
+)
+_PATH_CALLS = frozenset(
+    {
+        "Path",
+        "PurePath",
+        "PurePosixPath",
+        "PureWindowsPath",
+        "absolute",
+        "expanduser",
+        "joinpath",
+        "resolve",
+        "with_name",
+        "with_stem",
+        "with_suffix",
+    }
 )
 _WRITE_MODES = frozenset({"a", "w", "x", "+"})
 
@@ -155,14 +170,96 @@ def _scope_nodes(body: list[ast.stmt]) -> Iterable[ast.AST]:
             stack.append(child)
 
 
-def _source_symbols(node: ast.AST | None, rooted: set[str], *, assignment: bool = False) -> set[str]:
+def _safe_factory_aliases(body: list[ast.stmt], inherited: set[str]) -> set[str]:
+    aliases = set(inherited) | set(_SAFE_PATH_FACTORIES)
+    assignments: list[tuple[set[str], ast.AST]] = []
+
+    for node in _scope_nodes(body):
+        if isinstance(node, ast.Assign):
+            targets: set[str] = set()
+            for target in node.targets:
+                targets.update(_target_names(target))
+            assignments.append((targets, node.value))
+        elif isinstance(node, ast.AnnAssign) and node.value is not None:
+            assignments.append((_target_names(node.target), node.value))
+
+    def _is_safe_factory_expression(node: ast.AST) -> bool:
+        if isinstance(node, ast.Name):
+            return node.id in aliases
+        if isinstance(node, ast.IfExp):
+            return _is_safe_factory_expression(node.body) and _is_safe_factory_expression(node.orelse)
+        return False
+
+    changed = True
+    while changed:
+        changed = False
+        for targets, value in assignments:
+            if not targets or not _is_safe_factory_expression(value):
+                continue
+            missing = targets - aliases
+            if missing:
+                aliases.update(missing)
+                changed = True
+    return aliases
+
+
+def _path_symbols(
+    node: ast.AST | None,
+    rooted: set[str],
+    safe_factories: set[str],
+) -> set[str]:
+    """Return source-root symbols only when *node* still represents a path."""
+
     if node is None:
         return set()
-    if assignment and isinstance(node, ast.Call):
-        name = _dotted_name(node.func).rsplit(".", 1)[-1]
-        if name in _SAFE_PATH_FACTORIES:
+    if isinstance(node, ast.Name):
+        if node.id == "__file__":
+            return {"__file__"}
+        return {node.id} if node.id in rooted else set()
+    if isinstance(node, ast.Constant):
+        return set()
+    if isinstance(node, ast.Attribute):
+        return _path_symbols(node.value, rooted, safe_factories)
+    if isinstance(node, ast.Subscript):
+        return _path_symbols(node.value, rooted, safe_factories)
+    if isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Div, ast.Add)):
+        return _path_symbols(node.left, rooted, safe_factories) | _path_symbols(
+            node.right, rooted, safe_factories
+        )
+    if isinstance(node, ast.IfExp):
+        return _path_symbols(node.body, rooted, safe_factories) | _path_symbols(
+            node.orelse, rooted, safe_factories
+        )
+    if isinstance(node, (ast.Tuple, ast.List, ast.Set)):
+        symbols: set[str] = set()
+        for item in node.elts:
+            symbols.update(_path_symbols(item, rooted, safe_factories))
+        return symbols
+    if isinstance(node, ast.Call):
+        dotted = _dotted_name(node.func)
+        short = dotted.rsplit(".", 1)[-1]
+        if short in safe_factories:
             return set()
+        if short not in _PATH_CALLS and dotted not in {
+            "os.path.abspath",
+            "os.path.join",
+            "os.path.realpath",
+        }:
+            return set()
+        symbols = (
+            _path_symbols(node.func.value, rooted, safe_factories)
+            if isinstance(node.func, ast.Attribute)
+            else set()
+        )
+        for argument in node.args:
+            symbols.update(_path_symbols(argument, rooted, safe_factories))
+        return symbols
+    return set()
 
+
+def _source_symbols(node: ast.AST | None, rooted: set[str]) -> set[str]:
+    if node is None:
+        return set()
     symbols: set[str] = set()
     for child in ast.walk(node):
         if isinstance(child, ast.Name):
@@ -173,7 +270,11 @@ def _source_symbols(node: ast.AST | None, rooted: set[str], *, assignment: bool 
     return symbols
 
 
-def _rooted_names(body: list[ast.stmt], inherited: set[str]) -> set[str]:
+def _rooted_names(
+    body: list[ast.stmt],
+    inherited: set[str],
+    safe_factories: set[str],
+) -> set[str]:
     rooted = set(inherited)
     assignments: list[tuple[set[str], ast.AST]] = []
 
@@ -192,7 +293,7 @@ def _rooted_names(body: list[ast.stmt], inherited: set[str]) -> set[str]:
     while changed:
         changed = False
         for targets, value in assignments:
-            if not targets or not _source_symbols(value, rooted, assignment=True):
+            if not targets or not _path_symbols(value, rooted, safe_factories):
                 continue
             missing = targets - rooted
             if missing:
@@ -252,8 +353,14 @@ def _finding(
     )
 
 
-def _scan_scope(rel: str, body: list[ast.stmt], inherited: set[str]) -> list[RuntimeWriteFinding]:
-    rooted = _rooted_names(body, inherited)
+def _scan_scope(
+    rel: str,
+    body: list[ast.stmt],
+    inherited: set[str],
+    inherited_safe_factories: set[str] | None = None,
+) -> list[RuntimeWriteFinding]:
+    safe_factories = _safe_factory_aliases(body, inherited_safe_factories or set())
+    rooted = _rooted_names(body, inherited, safe_factories)
     findings: list[RuntimeWriteFinding] = []
 
     for node in _scope_nodes(body):
@@ -303,7 +410,7 @@ def _scan_scope(rel: str, body: list[ast.stmt], inherited: set[str]) -> list[Run
         path_args = _call_path_arguments(node, dotted)
         symbols: set[str] = set()
         for argument in path_args:
-            symbols.update(_source_symbols(argument, rooted))
+            symbols.update(_path_symbols(argument, rooted, safe_factories))
         if symbols:
             findings.append(
                 _finding(
@@ -317,14 +424,18 @@ def _scan_scope(rel: str, body: list[ast.stmt], inherited: set[str]) -> list[Run
             )
             continue
 
-        if short in _SAFE_PATH_FACTORIES or not _WRITER_NAME.search(short):
+        if (
+            short in safe_factories
+            or "_" not in short
+            or not _WRITER_NAME.search(short)
+        ):
             continue
 
         symbols = set()
         for argument in node.args:
-            symbols.update(_source_symbols(argument, rooted))
+            symbols.update(_path_symbols(argument, rooted, safe_factories))
         for keyword in node.keywords:
-            symbols.update(_source_symbols(keyword.value, rooted))
+            symbols.update(_path_symbols(keyword.value, rooted, safe_factories))
         if symbols:
             findings.append(
                 _finding(
@@ -339,9 +450,9 @@ def _scan_scope(rel: str, body: list[ast.stmt], inherited: set[str]) -> list[Run
 
     for statement in body:
         if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            findings.extend(_scan_scope(rel, statement.body, rooted))
+            findings.extend(_scan_scope(rel, statement.body, rooted, safe_factories))
         elif isinstance(statement, ast.ClassDef):
-            findings.extend(_scan_scope(rel, statement.body, rooted))
+            findings.extend(_scan_scope(rel, statement.body, rooted, safe_factories))
     return findings
 
 
@@ -350,7 +461,7 @@ def scan_python_source(rel: str, text: str) -> tuple[list[RuntimeWriteFinding], 
         tree = ast.parse(text, filename=rel)
     except SyntaxError as exc:
         return [], f"{rel}:{exc.lineno or 0}: {exc.msg}"
-    findings = _scan_scope(rel, tree.body, set())
+    findings = _scan_scope(rel, tree.body, set(), set())
     unique = {
         (item.path, item.line, item.rule_id, item.call, item.source_symbols): item
         for item in findings

@@ -78,6 +78,65 @@ def save() -> None:
     assert _rules(source) == [("SOURCE_PATH_PASSED_TO_WRITER", "save_json")]
 
 
+def test_in_memory_append_is_not_treated_as_writer() -> None:
+    source = """
+from pathlib import Path
+ROOT = Path(__file__).resolve().parent
+
+def collect() -> list[str]:
+    rows = []
+    rows.append(str(ROOT))
+    return rows
+"""
+    assert _rules(source) == []
+
+
+def test_reader_result_does_not_propagate_path_taint() -> None:
+    source = """
+from pathlib import Path
+STORE = Path(__file__).resolve().parent / "state.json"
+
+def load_json(path):
+    return {}
+
+def save_payload(payload):
+    pass
+
+data = load_json(STORE)
+save_payload(data)
+"""
+    assert _rules(source) == []
+
+
+def test_nested_safe_factory_write_path_is_not_reported() -> None:
+    source = """
+from pathlib import Path
+from giclee_app.app_paths import atomic_write_text, log_path
+
+LEGACY = Path(__file__).resolve().parent / "activity.jsonl"
+TARGET = log_path("logs/activity.jsonl", legacy=LEGACY).write_path
+
+def save() -> None:
+    atomic_write_text(TARGET, "x")
+"""
+    assert _rules(source) == []
+
+
+def test_dynamic_safe_factory_alias_is_not_reported() -> None:
+    source = """
+from pathlib import Path
+from giclee_app.app_paths import config_path, data_path
+
+LEGACY = Path(__file__).resolve().parent / "state.json"
+factory = config_path if True else data_path
+STORE = factory("state.json", legacy=LEGACY).write_path
+
+def save() -> None:
+    STORE.write_text("x", encoding="utf-8")
+"""
+    assert _rules(source) == []
+
+
 def test_user_selected_path_is_not_reported() -> None:
     source = """
 from pathlib import Path
