@@ -1,5 +1,4 @@
 """Dopasowanie nazw artystow — diakrytyki, transliteracja, aliasy Wikidata, warianty imion."""
-
 from __future__ import annotations
 
 import re
@@ -15,6 +14,11 @@ _FUZZY_MIN = 4
 def _split_parts(text: str) -> list[str]:
     n = norm_search_text(text)
     return [p for p in re.split(r"[\s,]+", n) if len(p) >= _MIN_TOKEN]
+
+
+def _name_part_count(text: str) -> int:
+    """Liczba rzeczywistych czlonow nazwy, takze krotszych niz token indeksu."""
+    return len([p for p in re.split(r"[\s,]+", norm_search_text(text)) if p])
 
 
 def name_variants(name: str, *, wikidata_qid: str = "", fetch_wikidata: bool = True) -> list[str]:
@@ -40,7 +44,11 @@ def name_variants(name: str, *, wikidata_qid: str = "", fetch_wikidata: bool = T
     if qid.startswith("Q"):
         for label in wikidata_artists.labels_for_qid(qid, fetch=fetch_wikidata):
             _add(label)
-    elif fetch_wikidata and raw:
+    elif fetch_wikidata and raw and _name_part_count(raw) >= 2:
+        # Fuzzy wbsearchentities dla pojedynczego nazwiska moze zwrocic inna
+        # osobe o podobnej nazwie (np. Monet -> Moneta). Aliasy bez QID sa
+        # bezpiecznie rozszerzane tylko dla nazw wieloczlonowych, rowniez gdy
+        # jeden czlon jest krotki (np. El Greco).
         for label in wikidata_artists.labels_for_query(raw, fetch=True):
             _add(label)
 
