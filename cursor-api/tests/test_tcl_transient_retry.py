@@ -84,3 +84,19 @@ def test_prepare_script_uses_unique_github_run_identity() -> None:
     assert "$env:GITHUB_RUN_ATTEMPT" in script
     assert "$env:GITHUB_JOB" in script
     assert '"python-tcl-runtime-$safeIdentity"' in script
+
+
+def test_prepare_script_verifies_complete_tk_runtime_and_widget_preflight() -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    script = (repo_root / ".github" / "scripts" / "prepare-tk-runtime.ps1").read_text(
+        encoding="utf-8"
+    )
+
+    assert "Get-RuntimeManifest" in script
+    assert "Compare-Object -ReferenceObject $sourceManifest" in script
+    assert 'Join-Path $targetTk "spinbox.tcl"' in script
+    assert 'Join-Path $targetTk "ttk\\defaults.tcl"' in script
+    assert 'globalgetvar("tk_library")' in script
+    assert "tk.Spinbox(root)" in script
+    assert "ttk.Style(root)" in script
+    assert "robocopy" in script
