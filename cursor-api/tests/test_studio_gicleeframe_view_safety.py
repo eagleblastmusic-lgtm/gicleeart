@@ -18,6 +18,9 @@ from giclee_app.ui.gicleeframe_view_page_readiness import (
 from giclee_app.ui.gicleeframe_view_structure_dry_run import (
     GicleeFrameStructureDryRunMixin,
 )
+from giclee_app.ui.gicleeframe_view_readiness_row import (
+    GicleeFrameReadinessRowMixin,
+)
 from giclee_app.ui.gicleeframe_view_safety import (
     GicleeFrameSafetyCardMixin,
     _SAFETY_CHECKLIST,
@@ -174,6 +177,7 @@ def test_safety_mixin_is_wired_into_gicleeframe_view_mro() -> None:
     assert GicleeFramePageReadinessMixin in GicleeFrameView.__mro__
     assert GicleeFrameStructureDryRunMixin in GicleeFrameView.__mro__
     assert GicleeFrameSafetyCardMixin in GicleeFrameView.__mro__
+    assert GicleeFrameReadinessRowMixin in GicleeFrameView.__mro__
     assert "_build_safety_card" not in GicleeFrameView.__dict__
     assert (
         GicleeFrameView._build_safety_card

@@ -74,6 +74,7 @@ from .gicleeframe_view_structure_dry_run import (
     GicleeFrameStructureDryRunMixin,
 )
 from .gicleeframe_view_safety import GicleeFrameSafetyCardMixin
+from .gicleeframe_view_readiness_row import GicleeFrameReadinessRowMixin
 from .gicleeframe_view_models import (
     PageContextRowSpec,
     SectionVisualCacheEntry,
@@ -115,8 +116,6 @@ from .gicleeframe_view_primitives import (
     _make_status_pill,
     _make_surface,
 )
-from .widgets import status_color
-
 _BACK_LABEL = "Wróć do huba"
 _GF_LOADING_OVERLAY_TEXT = "Przygotowuję GICLÉE FRAME…"
 _GF_ATOMIC_SWAP_STATUS_TEXT = "Przygotowuję sekcję…"
@@ -261,6 +260,7 @@ class GicleeFrameView(
     GicleeFramePageReadinessMixin,
     GicleeFrameStructureDryRunMixin,
     GicleeFrameSafetyCardMixin,
+    GicleeFrameReadinessRowMixin,
     ctk.CTkScrollableFrame,
 ):
     uses_async_first_paint = True
@@ -8451,20 +8451,4 @@ class GicleeFrameView(
             self._on_status(
                 f"Wyczyszczono wariant RAM: {self._page_draft.draft_name} · nic nie zapisano"
             )
-
-    def _pack_readiness_row(
-        self,
-        parent: ctk.CTkFrame,
-        label: str,
-        value: str,
-        ok: bool | None,
-    ) -> None:
-        frame = ctk.CTkFrame(parent, fg_color="transparent")
-        frame.pack(fill="x", pady=2)
-        ctk.CTkLabel(frame, text="●", text_color=status_color(ok), width=20).pack(side="left")
-        ctk.CTkLabel(
-            frame, text=label, width=180, anchor="w",
-            font=theme.get_font(11), text_color=theme.TextMuted,
-        ).pack(side="left")
-        ctk.CTkLabel(frame, text=value, anchor="w", font=theme.get_font(11, "bold")).pack(side="left")
 

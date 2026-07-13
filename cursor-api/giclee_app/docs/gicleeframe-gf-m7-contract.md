@@ -1,6 +1,6 @@
 # GF-M7 — Shared Readiness Row Renderer Extraction Contract
 
-Status: **BOUNDARY SEEDED — MRO INTEGRATION PENDING**
+Status: **COMPLETED — MRO INTEGRATED**
 
 Repository: `eagleblastmusic-lgtm/gicleeart`
 Base branch: `master`
@@ -197,7 +197,7 @@ No `.github`, workflow, version, Shopify/theme, starter-file or ZIP changes.
 
 ## 11. Required validation
 
-Before integration push:
+Integration validation:
 
 - `py_compile` for host and all five mixin modules;
 - new readiness-row boundary tests;

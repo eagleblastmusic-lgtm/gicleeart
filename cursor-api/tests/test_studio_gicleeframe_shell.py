@@ -44,6 +44,12 @@ _SAFETY_VIEW_PATH = (
     / "ui"
     / "gicleeframe_view_safety.py"
 )
+_READINESS_ROW_VIEW_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "giclee_app"
+    / "ui"
+    / "gicleeframe_view_readiness_row.py"
+)
 _NEW_PLANNING_MODULES = (
     "gicleeframe_brief.py",
     "gicleeframe_draft_state.py",
@@ -384,6 +390,26 @@ def test_safety_view_source_contract() -> None:
 def test_safety_view_source_no_write_or_network() -> None:
     _assert_no_writes_in_source(_SAFETY_VIEW_PATH)
     text = _SAFETY_VIEW_PATH.read_text(encoding="utf-8")
+    for forbidden_text in (
+        "after(",
+        "after_idle(",
+        "after_cancel(",
+    ):
+        assert forbidden_text not in text
+
+
+def test_readiness_row_view_source_contract() -> None:
+    text = _READINESS_ROW_VIEW_PATH.read_text(encoding="utf-8")
+    assert "_pack_readiness_row" in text
+    assert "status_color(ok)" in text
+    assert 'text="●"' in text
+    assert "width=180" in text
+    assert 'theme.get_font(11, "bold")' in text
+
+
+def test_readiness_row_view_source_no_write_or_network() -> None:
+    _assert_no_writes_in_source(_READINESS_ROW_VIEW_PATH)
+    text = _READINESS_ROW_VIEW_PATH.read_text(encoding="utf-8")
     for forbidden_text in (
         "after(",
         "after_idle(",

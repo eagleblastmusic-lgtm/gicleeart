@@ -13,8 +13,17 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from giclee_app.ui import gicleeframe_view_readiness_row as row_module
+from giclee_app.ui.gicleeframe_view import GicleeFrameView
+from giclee_app.ui.gicleeframe_view_brand import GicleeFrameBrandPanelMixin
+from giclee_app.ui.gicleeframe_view_page_readiness import (
+    GicleeFramePageReadinessMixin,
+)
 from giclee_app.ui.gicleeframe_view_readiness_row import (
     GicleeFrameReadinessRowMixin,
+)
+from giclee_app.ui.gicleeframe_view_safety import GicleeFrameSafetyCardMixin
+from giclee_app.ui.gicleeframe_view_structure_dry_run import (
+    GicleeFrameStructureDryRunMixin,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -162,3 +171,18 @@ def test_pack_readiness_row_preserves_widget_order_and_layout(
         "font": bold_font,
     }
     assert value.pack_kwargs == {"side": "left"}
+
+
+def test_readiness_row_mixin_is_wired_into_gicleeframe_view_mro() -> None:
+    assert GicleeFrameBrandPanelMixin in GicleeFrameView.__mro__
+    assert GicleeFramePageReadinessMixin in GicleeFrameView.__mro__
+    assert GicleeFrameStructureDryRunMixin in GicleeFrameView.__mro__
+    assert GicleeFrameSafetyCardMixin in GicleeFrameView.__mro__
+    assert GicleeFrameReadinessRowMixin in GicleeFrameView.__mro__
+    assert "_pack_readiness_row" not in GicleeFrameView.__dict__
+    assert (
+        GicleeFrameView._pack_readiness_row
+        is GicleeFrameReadinessRowMixin._pack_readiness_row
+    )
+    assert "_build_control_column" in GicleeFrameView.__dict__
+    assert "_toggle_f1_section" in GicleeFrameView.__dict__
