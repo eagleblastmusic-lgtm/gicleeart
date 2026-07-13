@@ -19,7 +19,7 @@ from Komponenty._shared.window_geometry import position_toplevel_screen_center
 from .calibrate import batch_calibrate_directory
 from .compare import compare_images
 from .optimize import optimize_to_file
-from .paths import TEST_PHOTOS_DIR, WW_PAIRS_DIR, ensure_data_dirs
+from .paths import ensure_data_dirs, test_photos_dir, ww_pairs_dir
 from .whitewall_collect import collect_pairs_for_directory
 
 APP_TITLE = "Optymalizacja druku"
@@ -37,7 +37,8 @@ Pojedynczy plik → zapis z wybranym strength. Wymaga `GEMINI_API_KEY` w
 
 ## Zakladka «Zestaw testowy»
 
-1. Wrzuc **wlasne** zdjecia do folderu `data/test_photos/` (patrz README.txt).
+1. Wrzuc **wlasne** zdjecia do folderu wskazanego w polu. Domyslny workspace
+   znajduje sie w Local AppData, poza checkoutem projektu.
 2. Kliknij **Zbierz pary z Whitewall** — Playwright uploaduje kazdy plik do
    konfiguratora Whitewall i pobiera pary: `original.jpg` (WW enhancement=0,
    ten sam kadr co ww70), `ww70.jpg`, `ww100.jpg`.
@@ -73,6 +74,8 @@ def _open_folder(path: Path) -> None:
 class PrintOptimizeApp:
     def __init__(self, root: tk.Misc) -> None:
         ensure_data_dirs()
+        default_test_photos = test_photos_dir()
+        default_ww_pairs = ww_pairs_dir()
         self.root = root
         self.root.title(APP_TITLE)
         position_toplevel_screen_center(self.root, 980, 760)
@@ -86,11 +89,11 @@ class PrintOptimizeApp:
         self.strength_var = tk.IntVar(value=70)
         self.use_gemini_var = tk.BooleanVar(value=True)
 
-        self.test_in_var = tk.StringVar(value=str(TEST_PHOTOS_DIR))
-        self.pairs_out_var = tk.StringVar(value=str(WW_PAIRS_DIR))
+        self.test_in_var = tk.StringVar(value=str(default_test_photos))
+        self.pairs_out_var = tk.StringVar(value=str(default_ww_pairs))
         self.visible_browser_var = tk.BooleanVar(value=False)
 
-        self.pairs_dir_var = tk.StringVar(value=str(WW_PAIRS_DIR))
+        self.pairs_dir_var = tk.StringVar(value=str(default_ww_pairs))
         self.cal_strength_var = tk.IntVar(value=70)
         self.cal_ref_var = tk.IntVar(value=70)
         self.cal_gemini_var = tk.BooleanVar(value=True)
@@ -165,7 +168,7 @@ class PrintOptimizeApp:
     def _build_tab_collect(self, tab: ttk.Frame) -> None:
         tab.columnconfigure(1, weight=1)
         intro = (
-            "Wrzuc wlasne zdjecia testowe do folderu wejsciowego (patrz README.txt), "
+            "Wrzuc wlasne zdjecia testowe do folderu wejsciowego, "
             "potem zbierz pary original / ww70 / ww100 z Whitewall."
         )
         ttk.Label(tab, text=intro, wraplength=820, justify="left").grid(
@@ -197,8 +200,8 @@ class PrintOptimizeApp:
         ttk.Button(bf, text="Zbierz pary z Whitewall", command=self._run_collect).pack(side="left")
         ttk.Button(
             bf,
-            text="Otworz README testow",
-            command=lambda: _open_folder(TEST_PHOTOS_DIR),
+            text="Otworz folder testow",
+            command=lambda: _open_folder(Path(self.test_in_var.get())),
         ).pack(side="left", padx=8)
 
     def _build_tab_calibrate(self, tab: ttk.Frame) -> None:
@@ -377,7 +380,7 @@ class PrintOptimizeApp:
         if not images:
             messagebox.showwarning(
                 APP_TITLE,
-                f"Brak obrazow w {inp}\n\nDodaj pliki testowe (patrz README.txt).",
+                f"Brak obrazow w {inp}\n\nDodaj pliki do wybranego folderu zdjec testowych.",
             )
             return
 
