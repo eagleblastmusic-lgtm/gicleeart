@@ -5,7 +5,8 @@ Status: **COMPLETED — MRO INTEGRATED**
 Repository: `eagleblastmusic-lgtm/gicleeart`  
 Base branch: `master`  
 Exact base SHA: `280258fe51dcf779b352e24417aa94740fb3a87a`  
-Work branch: `gpt-work/gicleeframe-modularization-m3-brand-panel`
+Work branch: `gpt-work/gicleeframe-modularization-m3-brand-panel`  
+Integration commit SHA: `3ba73fdfdcaa3fb3d942bfaa0c14e3586713d526`
 
 ## 1. Discovery decision
 
@@ -19,9 +20,9 @@ The F1 brand panel is the smallest coherent stateful UI boundary found by discov
 - it is separate from the F2 page editor and page draft;
 - it performs no file write, network operation or Shopify mutation;
 - it does not own selection scheduling, performance lanes, cache or lifecycle;
-- it can be moved without changing visible copy, layout or behavior.
+- it was moved without changing visible copy, layout or behavior.
 
-## 2. Target architecture
+## 2. Resulting architecture
 
 Created:
 
@@ -34,7 +35,7 @@ Shape:
 - methods moved byte-for-byte where practical;
 - no import from `gicleeframe_view.py`, avoiding an import cycle;
 - the host view retains lifecycle, scheduler and shared helper ownership;
-- final integration requires `GicleeFrameView` to inherit the mixin before `ctk.CTkScrollableFrame`.
+- `GicleeFrameView` inherits the mixin before `ctk.CTkScrollableFrame`.
 
 `gicleeframe_view.py` remains the public import location for `GicleeFrameView`.
 
@@ -57,21 +58,21 @@ The adapter `_toggle_f1_section` remains in `gicleeframe_view.py`. Discovery sho
 
 The shared `_pack_readiness_row` also remains in the host because both F1 brand readiness and F2 page readiness consume it.
 
-## 4. Imports expected to move during integration
+## 4. Imports moved during integration
 
-Move F1-only imports out of `gicleeframe_view.py` when they have no remaining consumer there, including relevant symbols from:
+F1-only imports were removed from `gicleeframe_view.py` after their consumers moved to the new module, including relevant symbols from:
 
 - `gicleeframe_brief`;
 - `gicleeframe_draft_state`;
 - `gicleeframe_dry_run`;
 - the brand part of `gicleeframe_readiness`;
-- UI helpers used exclusively by the brand panel.
+- `SectionHeader`, which is now consumed by the brand panel module.
 
-Keep imports required by the retained `_toggle_f1_section` adapter, F2 page readiness and shared helpers. Do not move F2/page-editor imports.
+Imports required by the retained `_toggle_f1_section` adapter, F2 page readiness and shared helpers remain in the host. No unrelated F2/page-editor imports were moved.
 
 ## 5. Compatibility contracts
 
-The implementation must preserve:
+The implementation preserves:
 
 - `GicleeFrameView` public import path and class identity;
 - launcher routing;
@@ -82,28 +83,27 @@ The implementation must preserve:
 - no writer, F3/F4, save, sync, upload, publish or deploy capability;
 - no change to selection, page-context, preview, layer-nav or details-on-demand flows;
 - no change to timing constants, `after()` delays, scheduler ownership or cancellation;
-- no change to performance telemetry outside import/module attribution required by the extraction.
+- no change to performance telemetry outside module attribution required by the extraction.
 
 ## 6. Source-text tests
 
-Several tests inspect `gicleeframe_view.py` directly. Update them only where ownership genuinely moved.
+Several tests inspect `gicleeframe_view.py` directly. Only assertions whose ownership genuinely moved were updated.
 
-Rules:
+Rules retained:
 
-- do not satisfy source-text assertions with comments or dead aliases;
-- point moved F1 panel assertions at `gicleeframe_view_brand.py` or at the combined source set;
-- keep the lazy/progressive expand adapter and its event assertion pointed at `gicleeframe_view.py`;
-- keep F2, selection, scheduler and lifecycle assertions pointed at `gicleeframe_view.py`;
-- preserve meaningful assertions for lazy F1 behavior and event names;
-- add an identity/MRO test proving the moved methods are provided by `GicleeFrameBrandPanelMixin` and available on `GicleeFrameView` after integration.
+- no comments or dead aliases were added to satisfy source-text assertions;
+- moved F1 panel assertions read `gicleeframe_view_brand.py`;
+- the lazy/progressive expand adapter and its event assertion remain pointed at `gicleeframe_view.py`;
+- F2, selection, scheduler and lifecycle assertions remain pointed at `gicleeframe_view.py`;
+- identity/MRO tests prove that moved methods are provided by `GicleeFrameBrandPanelMixin` and resolve on `GicleeFrameView`.
 
-## 7. New tests
+## 7. Tests added and completed
 
 Created:
 
 `cursor-api/tests/test_studio_gicleeframe_view_brand.py`
 
-Current boundary coverage:
+Coverage:
 
 1. module imports without importing `Komponenty.*`;
 2. no `open`, `write_text`, `requests`, `shutil`, subprocess or Shopify operations;
@@ -112,52 +112,45 @@ Current boundary coverage:
 5. F1 labels and deferred event marker remain present;
 6. expand/collapse adapter remains host-owned;
 7. shared readiness-row renderer remains host-owned;
-8. no boot, selection, page-context, cache, details-on-demand or lifecycle methods moved into the mixin.
-
-Still required after wiring:
-
-- assert the mixin is present in `GicleeFrameView.__mro__`;
-- assert each moved method resolves from `GicleeFrameBrandPanelMixin` on `GicleeFrameView`;
-- update directly affected source-text tests to inspect the correct owner.
+8. no boot, selection, page-context, cache, details-on-demand or lifecycle methods moved into the mixin;
+9. mixin is present in `GicleeFrameView.__mro__`;
+10. each moved method resolves from `GicleeFrameBrandPanelMixin` and is absent from `GicleeFrameView.__dict__`;
+11. directly affected source-text tests inspect the correct owner.
 
 ## 8. Exact durable allowlist
 
-Expected maximum durable scope:
+Final durable scope:
 
 1. `cursor-api/giclee_app/ui/gicleeframe_view.py`
 2. `cursor-api/giclee_app/ui/gicleeframe_view_brand.py`
 3. `cursor-api/tests/test_studio_gicleeframe_view_brand.py`
-4. only directly affected existing Giclée Frame source-text tests
+4. `cursor-api/tests/test_studio_gicleeframe_shell.py`
 5. `cursor-api/giclee_app/docs/gicleeframe-planning.md`
 6. this contract document
 
-No `.github` changes. No workflow changes. No version bump unless an existing repository policy explicitly requires it for this refactor.
+No `.github` changes. No workflow changes. No version bump.
 
-## 9. Required validation
+## 9. Validation evidence
 
-Before push of the integration commit:
+Local integration validation reported on commit `3ba73fdfdcaa3fb3d942bfaa0c14e3586713d526`:
 
-- compile changed production modules;
-- new brand-boundary tests including final MRO assertions;
-- `test_studio_gicleeframe_shell.py`;
-- `test_studio_gicleeframe_lazy_shell_6g2.py`;
-- `test_studio_gicleeframe_lifecycle.py`;
-- relevant visual-ready/startup tests;
-- `pytest -k gicleeframe`;
-- runtime-write inventory test;
-- `git diff --check`;
-- exact changed-file allowlist review.
+- `py_compile`: PASS;
+- boundary/shell/lazy-shell/progressive-boot/lifecycle: `37 passed`;
+- `pytest -q -k gicleeframe`: `344 passed, 1479 deselected`;
+- runtime-write inventory: `12 passed`;
+- `git diff --check`: PASS;
+- worktree: clean;
+- `gicleeframe_view.py`: `6 insertions, 262 deletions` in the integration commit;
+- no deploy, Shopify mutation or workflow changes.
 
-CI pipeline after integration push:
+Required CI pipeline before merge:
 
-1. draft Hermetic;
-2. artifact review;
-3. mark ready only after Hermetic success;
-4. Tk GUI smoke and Tcl/Tk probe;
-5. full baseline;
-6. inventory and parse-error artifact review;
-7. exact-head final review;
-8. squash merge with `expected_head_sha` only after the full contract passes.
+1. exact-head Hermetic smoke and artifact review;
+2. Tk GUI smoke and Tcl/Tk probe;
+3. full baseline;
+4. runtime-write inventory and parse-error artifact review;
+5. exact-head final review;
+6. squash merge with `expected_head_sha` only after the full contract passes.
 
 ## 10. Explicit exclusions
 
