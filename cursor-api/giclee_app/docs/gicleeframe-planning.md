@@ -344,7 +344,6 @@ Kolejne kroki modularizacji (`GF-M2+`) — osobne PR-y. **GF-M1 nie uruchamia F3
 - Layout token `_STRUCTURE_DRY_RUN_WRAPLENGTH = 292` pozostaje w mixin module; `_CONTROL_COL_MINSIZE` pozostaje w hoście.
 - Host nadal posiada:
   - kompozycję kolumny kontrolnej `_build_control_column` (structure → readiness → safety),
-  - kartę safety `_build_safety_card`,
   - implementację inventory `_refresh_inventory`,
   - wspólny renderer readiness `_pack_readiness_row`,
   - etykietę command bar `CHECK_STRUCTURE_LABEL`.
@@ -352,4 +351,30 @@ Kolejne kroki modularizacji (`GF-M2+`) — osobne PR-y. **GF-M1 nie uruchamia F3
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M6+** — osobne PR-y.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M7+** — osobne PR-y.
+
+---
+
+## 17. GF-M6 — F2 Safety Card Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** wydzielenie statycznej karty bezpieczeństwa **F2** (RAM-only) z `ui/gicleeframe_view.py` do osobnego modułu, bez zmiany UI/tekstu/layoutu oraz bez naruszania lifecycle, schedulerów, telemetry i selection/performance lane hosta.
+
+### Wynik
+
+- **Karta safety** przeniesiona do `ui/gicleeframe_view_safety.py` jako `GicleeFrameSafetyCardMixin`.
+- **Mixin nie posiada lifecycle** ani `__init__` i **nie dziedziczy** po widżecie Tk.
+- Przeniesiono dokładnie jedną metodę: `_build_safety_card`.
+- Moduł safety jest właścicielem `_SAFETY_TITLE`, `_SAFETY_CHECKLIST` i `_SAFETY_ROW_WRAPLENGTH = 276`.
+- Host `GicleeFrameView` dziedziczy `GicleeFrameBrandPanelMixin`, `GicleeFramePageReadinessMixin`, `GicleeFrameStructureDryRunMixin` i `GicleeFrameSafetyCardMixin` przed `ctk.CTkScrollableFrame`.
+- Host nadal posiada:
+  - kompozycję kolumny kontrolnej `_build_control_column` (structure → readiness → safety),
+  - token layoutu `_CONTROL_COL_MINSIZE`,
+  - implementację inventory `_refresh_inventory`,
+  - wspólny renderer readiness `_pack_readiness_row`.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M7+** — osobne PR-y.

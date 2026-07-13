@@ -73,6 +73,7 @@ from .gicleeframe_view_page_readiness import GicleeFramePageReadinessMixin
 from .gicleeframe_view_structure_dry_run import (
     GicleeFrameStructureDryRunMixin,
 )
+from .gicleeframe_view_safety import GicleeFrameSafetyCardMixin
 from .gicleeframe_view_models import (
     PageContextRowSpec,
     SectionVisualCacheEntry,
@@ -99,7 +100,6 @@ from .gicleeframe_view_primitives import (
     _GF_PREVIEW_MAT,
     _GF_PREVIEW_PAPER,
     _GF_SUCCESS,
-    _build_safety_row,
     _element_pill_colors,
     _f2_entry_kwargs,
     _f2_menu_kwargs,
@@ -162,16 +162,9 @@ _CONTROL_COL_MINSIZE = 320
 _EDITOR_HERO_PREVIEW_HEIGHT = 118
 _SECTION_ROW_HEIGHT = 64
 _SECTION_LABEL_MAX_CHARS = 42
-_SAFETY_TITLE = "Bezpieczeństwo"
 _PREVIEW_SETTINGS_CAPTION = "Podgląd ustawień"
 _LAYER_NAV_TITLE = "Warstwy sekcji"
 _IMAGE_SOURCE_TITLE = "Źródło grafiki"
-_SAFETY_CHECKLIST: tuple[tuple[str, str], ...] = (
-    ("RAM-only", "Zmiany tylko w pamięci sesji"),
-    ("Brak zapisu motywu", "Panel nie zapisuje plików motywu"),
-    ("Sync/deploy zablokowane", "Synchronizacja i wdrożenie wyłączone"),
-    ("F3/F4 osobna decyzja", "Lokalny zapis i writer — po akceptacji"),
-)
 
 _PROGRESSIVE_BOOT_ENV = "GICLEE_GF_PROGRESSIVE_BOOT"
 _EAGER_BOOT_ENV = "GICLEE_GF_EAGER_BOOT"
@@ -267,6 +260,7 @@ class GicleeFrameView(
     GicleeFrameBrandPanelMixin,
     GicleeFramePageReadinessMixin,
     GicleeFrameStructureDryRunMixin,
+    GicleeFrameSafetyCardMixin,
     ctk.CTkScrollableFrame,
 ):
     uses_async_first_paint = True
@@ -2666,21 +2660,6 @@ class GicleeFrameView(
         self._build_control_readiness_card(col)
         self._build_safety_card(col)
         return col
-
-    def _build_safety_card(self, parent: ctk.CTkFrame) -> None:
-        card = _make_gf_card(parent, variant="panel_deep", radius=16)
-        card.pack(fill="x")
-        _make_card_title(card, _SAFETY_TITLE).pack(
-            fill="x", padx=_CARD_PAD_X, pady=(12, 8),
-        )
-        for title, detail in _SAFETY_CHECKLIST:
-            _build_safety_row(
-                card,
-                title,
-                detail,
-                wraplength=_CONTROL_COL_MINSIZE - 44,
-            )
-        ctk.CTkLabel(card, text="", height=4).pack()
 
     def _build_page_top_bar(self, parent: ctk.CTkFrame) -> None:
         """Legacy hook — ops bar moved to _build_command_bar."""

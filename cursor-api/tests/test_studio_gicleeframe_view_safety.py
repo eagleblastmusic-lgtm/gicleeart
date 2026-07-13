@@ -10,6 +10,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from giclee_app.ui import gicleeframe_view_safety as safety_module
+from giclee_app.ui.gicleeframe_view import GicleeFrameView
+from giclee_app.ui.gicleeframe_view_brand import GicleeFrameBrandPanelMixin
+from giclee_app.ui.gicleeframe_view_page_readiness import (
+    GicleeFramePageReadinessMixin,
+)
+from giclee_app.ui.gicleeframe_view_structure_dry_run import (
+    GicleeFrameStructureDryRunMixin,
+)
 from giclee_app.ui.gicleeframe_view_safety import (
     GicleeFrameSafetyCardMixin,
     _SAFETY_CHECKLIST,
@@ -159,3 +167,16 @@ def test_safety_card_preserves_layout_copy_and_row_order(monkeypatch) -> None:
     assert labels[0].parent is card
     assert labels[0].kwargs == {"text": "", "height": 4}
     assert labels[0].pack_calls == [{}]
+
+
+def test_safety_mixin_is_wired_into_gicleeframe_view_mro() -> None:
+    assert GicleeFrameBrandPanelMixin in GicleeFrameView.__mro__
+    assert GicleeFramePageReadinessMixin in GicleeFrameView.__mro__
+    assert GicleeFrameStructureDryRunMixin in GicleeFrameView.__mro__
+    assert GicleeFrameSafetyCardMixin in GicleeFrameView.__mro__
+    assert "_build_safety_card" not in GicleeFrameView.__dict__
+    assert (
+        GicleeFrameView._build_safety_card
+        is GicleeFrameSafetyCardMixin._build_safety_card
+    )
+    assert "_build_control_column" in GicleeFrameView.__dict__

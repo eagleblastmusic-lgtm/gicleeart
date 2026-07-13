@@ -1,6 +1,6 @@
 # GF-M6 — F2 Safety Card Extraction Contract
 
-Status: **BOUNDARY SEEDED — MRO INTEGRATION PENDING**
+Status: **COMPLETED — MRO INTEGRATED**
 
 Repository: `eagleblastmusic-lgtm/gicleeart`
 Base branch: `master`
@@ -91,24 +91,17 @@ Retain `ctk`, `_CARD_PAD_X`, `_make_card_title`, `_make_gf_card` and other primi
 
 ## 7. Source-text tests
 
-`test_studio_gicleeframe_shell.py` currently expects safety ownership and copy in the host source.
+`test_studio_gicleeframe_shell.py` ownership-sensitive assertions were updated after MRO wiring:
 
-Update only ownership-sensitive assertions:
-
-- `_build_safety_card`, `_SAFETY_TITLE`, `_SAFETY_CHECKLIST`, `_build_safety_row` usage and safety-only copy move to `gicleeframe_view_safety.py`;
+- `_build_safety_card`, `_SAFETY_TITLE`, `_SAFETY_CHECKLIST`, `_build_safety_row` usage and safety-only copy live in `gicleeframe_view_safety.py`;
 - `_build_control_column`, `_CONTROL_COL_MINSIZE` and control-column ordering remain host assertions;
-- do not satisfy tests with comments, dead aliases or copied strings;
-- add no-write/no-network/no-scheduler guardrails for the new module.
+- no-write/no-network/no-scheduler guardrails added for the safety module.
 
-Existing page-readiness and structure-dry-run tests that assert `_build_safety_card` is host-owned become directly affected and must be updated narrowly after MRO wiring.
+Page-readiness and structure-dry-run host-ownership tests no longer assert `_build_safety_card` in `GicleeFrameView.__dict__`.
 
-## 8. New tests
+## 8. Tests
 
-Create:
-
-`cursor-api/tests/test_studio_gicleeframe_view_safety.py`
-
-Minimum coverage:
+`cursor-api/tests/test_studio_gicleeframe_view_safety.py` covers:
 
 1. module imports without `Komponenty.*`;
 2. no writes, network, subprocess, dialogs, Shopify or scheduler ownership;
@@ -118,8 +111,8 @@ Minimum coverage:
 6. `_SAFETY_ROW_WRAPLENGTH == 276`;
 7. rendering calls the existing safety-row primitive four times with unchanged title/detail pairs and wraplength;
 8. card variant, radius, packing and bottom spacer are preserved;
-9. MRO contains all four mixins after wiring;
-10. `_build_safety_card` resolves from `GicleeFrameSafetyCardMixin` and is absent from `GicleeFrameView.__dict__` after wiring;
+9. MRO contains all four mixins;
+10. `_build_safety_card` resolves from `GicleeFrameSafetyCardMixin` and is absent from `GicleeFrameView.__dict__`;
 11. `_build_control_column` remains host-owned.
 
 ## 9. Exact durable allowlist
