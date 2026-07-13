@@ -290,7 +290,7 @@ Kolejne kroki modularizacji (`GF-M2+`) — osobne PR-y. **GF-M1 nie uruchamia F3
 - **Zero** zmian RAM draft, writera, zapisu do plików motywu, Shopify sync/deploy/mutation
 - Re-eksport przez `gicleeframe_view.py` zachowany — `from giclee_app.ui.gicleeframe_view import _make_gf_card, _GF_PANEL` nadal działa i wskazuje ten sam obiekt co w `gicleeframe_view_primitives`
 - Moduł primitives importuje wyłącznie `Callable`, `customtkinter`, `theme` — bez os/sys/time/tkinter/Komponenty/I/O/sieci/subprocess
-- **`GF-M2 nie uruchamia F3/F4 ani writera**
+- **GF-M2 nie uruchamia F3/F4 ani writera.**
 
 ### Dalsze etapy
 
