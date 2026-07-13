@@ -26,6 +26,12 @@ _PRIMITIVES_PATH = (
     / "ui"
     / "gicleeframe_view_primitives.py"
 )
+_PAGE_READINESS_VIEW_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "giclee_app"
+    / "ui"
+    / "gicleeframe_view_page_readiness.py"
+)
 _NEW_PLANNING_MODULES = (
     "gicleeframe_brief.py",
     "gicleeframe_draft_state.py",
@@ -112,8 +118,6 @@ def test_view_source_f21_editor_labels() -> None:
     assert "SECTION_LIST_DRAG_HINT" in text
     assert "reorder_page_blocks" in text
     assert "_structure_dry_run_btn" in text
-    assert "_toggle_page_readiness" in text
-    assert "_PAGE_READINESS_TITLE" in text
     assert "_build_control_column" in text
     assert "_build_safety_card" in text
     assert "SECTION_LIST_TITLE" in text
@@ -320,3 +324,14 @@ def test_planning_modules_source_guardrails() -> None:
 
 def test_primitives_source_no_write_or_network() -> None:
     _assert_no_writes_in_source(_PRIMITIVES_PATH)
+
+
+def test_page_readiness_view_source_contract() -> None:
+    text = _PAGE_READINESS_VIEW_PATH.read_text(encoding="utf-8")
+    assert "_toggle_page_readiness" in text
+    assert "_PAGE_READINESS_TITLE" in text
+    assert "Readiness (strona)" in text
+
+
+def test_page_readiness_view_source_no_write_or_network() -> None:
+    _assert_no_writes_in_source(_PAGE_READINESS_VIEW_PATH)

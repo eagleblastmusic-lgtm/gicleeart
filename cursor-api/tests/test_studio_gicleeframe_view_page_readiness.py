@@ -10,6 +10,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from giclee_app.studio.gicleeframe_readiness import GicleeFramePageReadiness
+from giclee_app.ui.gicleeframe_view import GicleeFrameView
+from giclee_app.ui.gicleeframe_view_brand import GicleeFrameBrandPanelMixin
 from giclee_app.ui.gicleeframe_view_page_readiness import (
     GicleeFramePageReadinessMixin,
     _PAGE_READINESS_TITLE,
@@ -196,3 +198,24 @@ def test_shared_row_renderer_and_control_orchestration_remain_host_dependencies(
     assert "_run_structure_dry_run" not in GicleeFramePageReadinessMixin.__dict__
     source = inspect.getsource(GicleeFramePageReadinessMixin._fill_page_readiness)
     assert "self._pack_readiness_row" in source
+
+
+def test_page_readiness_mixin_is_wired_into_gicleeframe_view_mro() -> None:
+    assert GicleeFrameBrandPanelMixin in GicleeFrameView.__mro__
+    assert GicleeFramePageReadinessMixin in GicleeFrameView.__mro__
+
+
+def test_page_readiness_methods_resolve_from_mixin_on_gicleeframe_view() -> None:
+    for name in _EXPECTED_METHODS:
+        assert hasattr(GicleeFrameView, name)
+        assert name not in GicleeFrameView.__dict__
+        assert getattr(GicleeFrameView, name) is getattr(GicleeFramePageReadinessMixin, name)
+
+
+def test_control_orchestration_and_shared_renderer_remain_host_owned() -> None:
+    assert "_build_control_column" in GicleeFrameView.__dict__
+    assert "_build_control_structure_card" in GicleeFrameView.__dict__
+    assert "_build_safety_card" in GicleeFrameView.__dict__
+    assert "_run_structure_dry_run" in GicleeFrameView.__dict__
+    assert "_pack_readiness_row" in GicleeFrameView.__dict__
+    assert "_reset_structure_dry_run_display" in GicleeFrameView.__dict__
