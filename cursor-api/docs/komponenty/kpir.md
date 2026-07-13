@@ -159,6 +159,28 @@ Pełny import z API KSeF — poza zakresem (ręczne numery + monitor B2B w compl
 - Przychody: ujemne kwoty (`correction_service.py`)
 - Koszty: `create_cost_correction`
 
+## Persystencja i ownership danych
+
+Kod: `storage.py`.
+
+| Magazyn | Bucket | Aktywna lokalizacja |
+|---------|--------|---------------------|
+| `settings` | Roaming AppData / `config` | `Komponenty/kpir/dane/kpir_settings.json` |
+| `db` | Local AppData / `data` | `Komponenty/kpir/dane/kpir.json` |
+| `changelog` | Local AppData / `data` | `Komponenty/kpir/dane/kpir_changelog.jsonl` |
+| dokumenty i eksporty | Local AppData / `data` | `Komponenty/kpir/documents/` |
+
+Zasady:
+
+- AppData jest nadrzędnym miejscem odczytu i jedynym domyślnym miejscem zapisu;
+- legacy w checkoutcie pozostaje fallbackiem tylko do odczytu;
+- changelog append-only może zostać jednorazowo skopiowany przez `seed_from_legacy()`, bez usuwania źródła;
+- jawne override’y `_SETTINGS_FILE`, `_DB_FILE`, `_CHANGELOG_FILE`, `_DATA_DIR` i `_DOCUMENTS_DIR` pozostają dostępne dla testów oraz narzędzi;
+- writery używają nazwanych granic `settings/db/changelog`, a nie source-derived argumentów `Path`;
+- brak automatycznej migracji, scalania, kasowania i nadpisywania legacy.
+
+Pełny kontrakt: `docs/repository_safety/KPIR_STORE_RESOLVER_CLARITY.md`.
+
 ## Testy
 
 ```powershell
@@ -166,7 +188,7 @@ cd cursor-api
 python -m Komponenty.kpir.verify_kpir
 ```
 
-Nowe testy: `test_annual_income_formula`, `test_official_export_csv`, `test_pkpir_annual_package`, `test_ksef_sync_to_kpir`, `test_sales_register_booking`.
+Nowe testy: `test_annual_income_formula`, `test_official_export_csv`, `test_pkpir_annual_package`, `test_ksef_sync_to_kpir`, `test_sales_register_booking`, `test_kpir_store_resolver_clarity`.
 
 ## Twoja ścieżka (bez księgowego)
 
