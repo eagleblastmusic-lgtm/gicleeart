@@ -1,0 +1,56 @@
+name: Switch Stage 2 to GitHub-hosted Windows
+
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.head_ref == 'gpt-work/ci-github-hosted-windows'
+    runs-on: windows-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Apply exact runner replacement
+        shell: pwsh
+        run: .\.github\scripts\gpt-switch-stage2-to-hosted.ps1
+
+      - name: Validate scoped diff
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          git diff --check
+          $changed = @(git diff --name-only)
+          if ($changed.Count -ne 1 -or $changed[0] -ne ".github/workflows/stage2-ci-baseline.yml") {
+            throw "Unexpected changed files: $($changed -join ', ')"
+          }
+
+          $content = Get-Content -LiteralPath ".github/workflows/stage2-ci-baseline.yml" -Raw
+          $hostedCount = ([regex]::Matches($content, [regex]::Escape("    runs-on: windows-latest"))).Count
+          if ($hostedCount -ne 3) {
+            throw "Expected exactly 3 windows-latest jobs, found $hostedCount."
+          }
+
+      - name: Commit Stage 2 runner change
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- ".github/workflows/stage2-ci-baseline.yml"
+          git commit -m "ci: use GitHub-hosted Windows runners"
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
