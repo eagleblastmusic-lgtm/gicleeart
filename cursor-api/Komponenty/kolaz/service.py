@@ -8,21 +8,47 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Callable
 
+from giclee_app.app_paths import data_path
 from Komponenty.dodajobraz import shopify_client as sc
 from Komponenty.tldobio.service import upload_bio_background
 
 from .compositor import CollageImage, CollageSettings, ExportFormat, render_collage, save_collage
 
 _COMPONENT_DIR = Path(__file__).resolve().parent
-_EXPORT_DIR = _COMPONENT_DIR / "data" / "exports"
+_DEFAULT_EXPORT_DIR = _COMPONENT_DIR / "data" / "exports"
+_EXPORT_DIR = _DEFAULT_EXPORT_DIR
+_RUNTIME_EXPORT_DIR = "Komponenty/kolaz/data/exports"
 _ALLOWED_LOCAL = {".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff", ".bmp"}
 
 Progress = Callable[[str], None]
 
 
+def _explicit_exports_dir_override(*, for_write: bool) -> Path | None:
+    """Return the current explicit test/tool override, if one is active."""
+
+    current = Path(globals()["_EXPORT_DIR"])
+    default = Path(globals()["_DEFAULT_EXPORT_DIR"])
+    if current == default:
+        return None
+    if for_write:
+        current.mkdir(parents=True, exist_ok=True)
+    return current
+
+
 def exports_dir() -> Path:
-    _EXPORT_DIR.mkdir(parents=True, exist_ok=True)
-    return _EXPORT_DIR
+    """Return the application-owned writable export/staging directory."""
+
+    override = _explicit_exports_dir_override(for_write=True)
+    if override is not None:
+        return override
+
+    marker = data_path(
+        f"{_RUNTIME_EXPORT_DIR}/.path",
+        legacy=Path(globals()["_DEFAULT_EXPORT_DIR"]) / ".path",
+    )
+    path = marker.write_path.parent
+    path.mkdir(parents=True, exist_ok=True)
+    return path
 
 
 def is_local_image(path: Path) -> bool:
@@ -86,6 +112,19 @@ def load_local_images(paths: list[Path]) -> list[CollageImage]:
     return out
 
 
+def _available_export_path(path: Path) -> Path:
+    """Return a deterministic non-existing sibling for automatic exports."""
+
+    candidate = Path(path)
+    if not candidate.exists():
+        return candidate
+    for index in range(2, 10_000):
+        suffixed = candidate.with_name(f"{candidate.stem}-{index}{candidate.suffix}")
+        if not suffixed.exists():
+            return suffixed
+    raise FileExistsError(f"Nie znaleziono wolnej nazwy eksportu obok: {candidate}")
+
+
 def default_export_path(
     *,
     handle_or_name: str,
@@ -94,7 +133,7 @@ def default_export_path(
     stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
     ext = {"jpeg": "jpg", "webp": "webp", "png": "png"}[fmt]
     name = f"{slugify_filename(handle_or_name)}-{stamp}.{ext}"
-    return exports_dir() / name
+    return _available_export_path(exports_dir() / name)
 
 
 def build_collage(
@@ -112,9 +151,8 @@ def export_collage(
     quality: int = 88,
     basename: str = "kolaz",
 ) -> Path:
-    dest = path or default_export_path(handle_or_name=basename, fmt=fmt)
-    q = quality
-    return save_collage(image, dest, fmt=fmt, quality=q)
+    dest = Path(path) if path is not None else default_export_path(handle_or_name=basename, fmt=fmt)
+    return save_collage(image, dest, fmt=fmt, quality=quality)
 
 
 def upload_collage_as_bio_background(
