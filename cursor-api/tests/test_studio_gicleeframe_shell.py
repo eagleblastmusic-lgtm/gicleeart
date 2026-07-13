@@ -57,6 +57,12 @@ _TOP_BAR_VIEW_PATH = (
     / "ui"
     / "gicleeframe_view_top_bar.py"
 )
+_RAM_VARIANTS_VIEW_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "giclee_app"
+    / "ui"
+    / "gicleeframe_view_ram_variants.py"
+)
 _NEW_PLANNING_MODULES = (
     "gicleeframe_brief.py",
     "gicleeframe_draft_state.py",
@@ -124,9 +130,7 @@ def test_view_source_f21_editor_labels() -> None:
     assert "_section_list_trigger" in text
     assert "DEFAULT_VARIANT_NAME" in text
     assert "WORKING_VARIANT_LABEL" in text
-    assert "working_variant_menu_label" in text
     assert "+ Dodaj wariant" not in text
-    assert "RENAME_VARIANT_LABEL" in text
     assert "APPLY_RAM_DRAFT_LABEL" in text
     assert "editor_field_visibility" in text
     assert "editor_context_rows" in text
@@ -436,3 +440,35 @@ def test_top_bar_view_source_contract() -> None:
 
 def test_top_bar_view_source_no_write_or_network() -> None:
     _assert_no_writes_in_source(_TOP_BAR_VIEW_PATH)
+
+
+def test_ram_variants_view_source_contract() -> None:
+    text = _RAM_VARIANTS_VIEW_PATH.read_text(encoding="utf-8")
+    assert "GicleeFrameRamVariantMixin" in text
+    assert "working_variant_menu_label" in text
+    assert "RENAME_VARIANT_LABEL" in text
+    assert "PAGE_SOURCE_FILE" in text
+    assert "RAM_ONLY_STATUS" in text
+    assert "variant_environment_tag" in text
+    assert "merge_inventory_with_draft" in text
+    for method in (
+        "_sync_working_variant_menu",
+        "_on_working_variant_selected",
+        "_update_top_bar",
+        "_add_ram_variant",
+        "_duplicate_ram_variant",
+        "_rename_ram_variant",
+        "_clear_page_draft",
+    ):
+        assert method in text
+
+
+def test_ram_variants_view_source_no_write_or_network() -> None:
+    _assert_no_writes_in_source(_RAM_VARIANTS_VIEW_PATH)
+    text = _RAM_VARIANTS_VIEW_PATH.read_text(encoding="utf-8")
+    for forbidden_text in (
+        "after(",
+        "after_idle(",
+        "after_cancel(",
+    ):
+        assert forbidden_text not in text
