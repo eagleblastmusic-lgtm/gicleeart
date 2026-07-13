@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from giclee_app.component_loader import Component
-from giclee_app.launcher_logs import (
+from giclee_app.component_logs import (
     DEFAULT_COMPONENT_LOGS_DIR,
     component_log_write_path,
 )
