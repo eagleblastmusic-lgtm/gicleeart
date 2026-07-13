@@ -2171,7 +2171,7 @@ class ProdukcjaView(ttk.Frame):
             f"Zarchiwizowano: {result['archived']} zamowien\n"
             f"Pozostalo aktywnych/zrealizowanych: {result['kept']}\n"
             f"Bledne daty: {result['errors']}\n\n"
-            f"Archiwa sa w: {_data_dir_path()}\archive_YYYY.json.",
+            f"Archiwa sa w: {_data_dir_path() / 'archive_YYYY.json'}.",
             parent=self.winfo_toplevel(),
         )
 
@@ -2276,7 +2276,7 @@ z separatorem `;` i BOM UTF-8 (otwiera sie poprawnie w Excelu).
 ## Dane
 - Wszystkie zamowienia: Local AppData `Komponenty/produkcja/dane/zamowienia.json`.
 - Stan sync Shopify: `Komponenty/produkcja/dane/sync_state.json`.
-- Mozesz backupowac/wersjonowac te pliki w git.
+- Mozesz backupowac te pliki; nie sa wersjonowane w git.
 """
 
 
