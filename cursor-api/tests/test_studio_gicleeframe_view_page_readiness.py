@@ -16,6 +16,13 @@ from giclee_app.ui.gicleeframe_view_page_readiness import (
     GicleeFramePageReadinessMixin,
     _PAGE_READINESS_TITLE,
 )
+from giclee_app.ui.gicleeframe_view_readiness_row import (
+    GicleeFrameReadinessRowMixin,
+)
+from giclee_app.ui.gicleeframe_view_safety import GicleeFrameSafetyCardMixin
+from giclee_app.ui.gicleeframe_view_structure_dry_run import (
+    GicleeFrameStructureDryRunMixin,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 READINESS_PATH = (
@@ -203,6 +210,9 @@ def test_shared_row_renderer_and_control_orchestration_remain_host_dependencies(
 def test_page_readiness_mixin_is_wired_into_gicleeframe_view_mro() -> None:
     assert GicleeFrameBrandPanelMixin in GicleeFrameView.__mro__
     assert GicleeFramePageReadinessMixin in GicleeFrameView.__mro__
+    assert GicleeFrameStructureDryRunMixin in GicleeFrameView.__mro__
+    assert GicleeFrameSafetyCardMixin in GicleeFrameView.__mro__
+    assert GicleeFrameReadinessRowMixin in GicleeFrameView.__mro__
 
 
 def test_page_readiness_methods_resolve_from_mixin_on_gicleeframe_view() -> None:
@@ -212,6 +222,10 @@ def test_page_readiness_methods_resolve_from_mixin_on_gicleeframe_view() -> None
         assert getattr(GicleeFrameView, name) is getattr(GicleeFramePageReadinessMixin, name)
 
 
-def test_control_orchestration_and_shared_renderer_remain_host_owned() -> None:
+def test_control_orchestration_remains_host_owned_and_renderer_resolves_from_mixin() -> None:
     assert "_build_control_column" in GicleeFrameView.__dict__
-    assert "_pack_readiness_row" in GicleeFrameView.__dict__
+    assert "_pack_readiness_row" not in GicleeFrameView.__dict__
+    assert (
+        GicleeFrameView._pack_readiness_row
+        is GicleeFrameReadinessRowMixin._pack_readiness_row
+    )

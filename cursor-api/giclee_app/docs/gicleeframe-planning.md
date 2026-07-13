@@ -307,6 +307,7 @@ Kolejne kroki modularizacji (`GF-M2+`) — osobne PR-y. **GF-M1 nie uruchamia F3
 - Host `GicleeFrameView` nadal posiada:
   - adapter expand/collapse `_toggle_f1_section` (w tym event `studio.gicleeframe.f1.build_on_expand`),
   - wspólny renderer readiness `_pack_readiness_row`.
+- **Nota historyczna (GF-M7):** renderer pozostawał w hoście do GF-M7; ownership przeniesiono do `GicleeFrameReadinessRowMixin`.
 - Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
 
 ---
@@ -325,6 +326,7 @@ Kolejne kroki modularizacji (`GF-M2+`) — osobne PR-y. **GF-M1 nie uruchamia F3
 - Host nadal posiada:
   - kompozycję kolumny kontrolnej `_build_control_column`,
   - wspólny renderer readiness `_pack_readiness_row`.
+- **Nota historyczna (GF-M7):** renderer pozostawał w hoście do GF-M7; ownership przeniesiono do `GicleeFrameReadinessRowMixin`.
 - Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
 
 ---
@@ -347,11 +349,12 @@ Kolejne kroki modularizacji (`GF-M2+`) — osobne PR-y. **GF-M1 nie uruchamia F3
   - implementację inventory `_refresh_inventory`,
   - wspólny renderer readiness `_pack_readiness_row`,
   - etykietę command bar `CHECK_STRUCTURE_LABEL`.
+- **Nota historyczna (GF-M7):** renderer pozostawał w hoście do GF-M7; ownership przeniesiono do `GicleeFrameReadinessRowMixin`.
 - Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M7+** — osobne PR-y.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M8+** — osobne PR-y.
 
 ---
 
@@ -373,8 +376,35 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M7+** — osobne
   - token layoutu `_CONTROL_COL_MINSIZE`,
   - implementację inventory `_refresh_inventory`,
   - wspólny renderer readiness `_pack_readiness_row`.
+- **Nota historyczna (GF-M7):** renderer pozostawał w hoście do GF-M7; ownership przeniesiono do `GicleeFrameReadinessRowMixin`.
 - Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M7+** — osobne PR-y.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M8+** — osobne PR-y.
+
+---
+
+## 18. GF-M7 — Shared Readiness Row Renderer Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** wydzielenie wspólnego renderera wiersza readiness używanego przez F1 Brand Panel i F2 Page Readiness Panel, bez zmiany UI/tekstu/layoutu oraz bez naruszania lifecycle, schedulerów, telemetry i selection/performance lane hosta.
+
+### Wynik
+
+- **Renderer readiness row** przeniesiony do `ui/gicleeframe_view_readiness_row.py` jako `GicleeFrameReadinessRowMixin`.
+- **Mixin nie posiada lifecycle** ani `__init__` i **nie dziedziczy** po widżecie Tk.
+- Przeniesiono dokładnie jedną metodę: `_pack_readiness_row`.
+- Host `GicleeFrameView` dziedziczy pięć mixinów panelowych plus `GicleeFrameReadinessRowMixin` przed `ctk.CTkScrollableFrame`.
+- F1 i F2 nadal wywołują `self._pack_readiness_row(...)` bez zmian; rozwiązanie przez MRO.
+- Host nadal posiada:
+  - kompozycję kolumny kontrolnej `_build_control_column`,
+  - adapter expand/collapse `_toggle_f1_section`,
+  - lifecycle, schedulery, telemetry, inventory i pozostałe lane'y wydajnościowe.
+- Import `status_color` usunięty z hosta po ekstrakcji (jedyny konsument).
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M8+** — osobne PR-y.

@@ -17,6 +17,9 @@ from giclee_app.ui.gicleeframe_view_brand import (
     _PLACEMENT_PLACEHOLDER,
     _VARIANT_PLACEHOLDER,
 )
+from giclee_app.ui.gicleeframe_view_readiness_row import (
+    GicleeFrameReadinessRowMixin,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 BRAND_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_brand.py"
@@ -108,7 +111,7 @@ def test_expand_collapse_adapter_remains_outside_brand_mixin() -> None:
     assert "command=self._toggle_f1_section" in full
 
 
-def test_shared_readiness_row_renderer_remains_host_owned() -> None:
+def test_shared_readiness_row_renderer_remains_outside_brand_mixin() -> None:
     assert "_pack_readiness_row" not in GicleeFrameBrandPanelMixin.__dict__
     source = inspect.getsource(GicleeFrameBrandPanelMixin._fill_brand_readiness)
     assert "self._pack_readiness_row" in source
@@ -128,5 +131,9 @@ def test_brand_methods_resolve_from_mixin_on_gicleeframe_view() -> None:
 def test_expand_and_readiness_adapters_remain_host_owned() -> None:
     assert "_toggle_f1_section" in GicleeFrameView.__dict__
     assert "_toggle_f1_section" not in GicleeFrameBrandPanelMixin.__dict__
-    assert "_pack_readiness_row" in GicleeFrameView.__dict__
+    assert "_pack_readiness_row" not in GicleeFrameView.__dict__
+    assert (
+        GicleeFrameView._pack_readiness_row
+        is GicleeFrameReadinessRowMixin._pack_readiness_row
+    )
     assert "_pack_readiness_row" not in GicleeFrameBrandPanelMixin.__dict__
