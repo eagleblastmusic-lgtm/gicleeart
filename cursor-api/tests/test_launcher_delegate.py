@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from giclee_app.component_loader import Component, discover_components, find_components_dir
@@ -44,7 +46,11 @@ def test_launch_inline_blocked() -> None:
 
 
 @patch("giclee_app.launcher_delegate.subprocess.Popen")
-def test_launch_subprocess_ok(mock_popen: object) -> None:
+def test_launch_subprocess_ok(
+    mock_popen: object,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
     class FakeProc:
         pid = 12345
 
@@ -52,11 +58,18 @@ def test_launch_subprocess_ok(mock_popen: object) -> None:
             return 0
 
     mock_popen.return_value = FakeProc()
+    logs_dir = tmp_path / "logs"
+    monkeypatch.setattr("giclee_app.launcher_delegate._LOGS_DIR", logs_dir)
     comp = _subprocess_component()
+
     result = launch(comp)
+
     assert result.outcome == LaunchOutcome.OK
     assert result.pid == 12345
     mock_popen.assert_called_once()
+    log_file = logs_dir / "dodajobraz.log"
+    assert log_file.is_file()
+    assert "start (studio)" in log_file.read_text(encoding="utf-8")
 
 
 def test_launch_url_no_url() -> None:
