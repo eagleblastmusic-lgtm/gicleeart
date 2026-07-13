@@ -5,7 +5,7 @@ from __future__ import annotations
 import tkinter as tk
 import webbrowser
 from collections.abc import Callable
-from tkinter import messagebox, ttk
+from tkinter import messagebox, simpledialog, ttk
 
 from Komponenty._shared.toast import show_toast
 from Komponenty._shared.window_geometry import position_toplevel_screen_center
@@ -15,7 +15,10 @@ from .quotes_gui import build_quotes_panel
 from .service import (
     SHOWCASE_LOOK_STORAGE_KEY,
     STORAGE_KEY,
+    THEME_APPLY_CONFIRMATION,
+    apply_theme_config_plan,
     build_preview_url,
+    build_theme_config_plan,
     get_carousel_version,
     get_hover_blur,
     get_preview_url,
@@ -24,8 +27,8 @@ from .service import (
 )
 
 APP_TITLE = "Karuzela — sekcja «Wybrane dzieła»"
-_SETTINGS_SIZE = (700, 720)
-_SETTINGS_MINSIZE = (540, 560)
+_SETTINGS_SIZE = (700, 760)
+_SETTINGS_MINSIZE = (540, 600)
 _QUOTES_SIZE = (1120, 740)
 _QUOTES_MINSIZE = (900, 580)
 
@@ -164,8 +167,8 @@ def _build_settings_panel(
     ttk.Label(
         url_frame,
         text=(
-            "Po Zapisz aktualizowany jest assets/giclee-carousel-config.js "
-            "(domyślne ustawienia po wdrożeniu motywu).\n"
+            "Zapisz aktualizuje wyłącznie lokalne ustawienia aplikacji. "
+            "Plik assets/giclee-carousel-config.js zmienia dopiero osobna akcja „Zastosuj do motywu…”.\n"
             f"Podgląd w przeglądarce ustawia localStorage: {STORAGE_KEY}, "
             f"{SHOWCASE_LOOK_STORAGE_KEY}."
         ),
@@ -203,18 +206,68 @@ def _build_settings_panel(
         version, look = form
         _persist(version, look)
         hover = "wł." if hover_blur_var.get() else "wył."
-        show_toast(host, f"Zapisano: {version}, wygląd {look}, hover-blur {hover}")
-        if messagebox.askyesno(
-            "Karuzela — zapisano",
-            f"Zapisano {version} + wygląd {look} (hover-blur {hover}).\n\n"
-            "Otworzyć podgląd w przeglądarce?\n"
-            "(Wymaga wdrożenia motywu: giclee-carousel-config.js, "
-            "giclee-karuzela.js, CSS sekcji.)",
+        show_toast(host, f"Zapisano lokalnie: {version}, wygląd {look}, hover-blur {hover}")
+
+    def _apply_theme() -> None:
+        form = _read_form()
+        if not form:
+            return
+        version, look = form
+        _persist(version, look)
+        try:
+            plan = build_theme_config_plan(
+                version,  # type: ignore[arg-type]
+                look,  # type: ignore[arg-type]
+                hover_blur_var.get(),
+            )
+        except Exception as exc:
+            messagebox.showerror("Karuzela — plan zapisu", str(exc), parent=host)
+            return
+
+        if not plan.changed:
+            messagebox.showinfo(
+                "Karuzela — motyw bez zmian",
+                f"Plik jest już zgodny z wybranymi ustawieniami:\n{plan.path}",
+                parent=host,
+            )
+            return
+
+        preview = plan.diff_text
+        if len(preview) > 7000:
+            preview = preview[:7000] + "\n\n…diff skrócony…"
+        if not messagebox.askyesno(
+            "Karuzela — podgląd zmiany motywu",
+            f"Cel:\n{plan.path}\n\n"
+            f"SHA przed: {plan.before_sha256 or 'brak pliku'}\n"
+            f"SHA po: {plan.after_sha256}\n\n"
+            f"{preview}\n\n"
+            "Kontynuować do potwierdzenia zapisu?",
             parent=host,
         ):
-            webbrowser.open(
-                build_preview_url(version, look, hover_blur_var.get())  # type: ignore[arg-type]
-            )
+            return
+
+        confirmation = simpledialog.askstring(
+            "Karuzela — potwierdzenie writer-a",
+            f"Wpisz dokładnie:\n{THEME_APPLY_CONFIRMATION}",
+            parent=host,
+        )
+        if confirmation is None:
+            return
+        try:
+            result = apply_theme_config_plan(plan, confirmation=confirmation)
+        except Exception as exc:
+            messagebox.showerror("Karuzela — zapis motywu", str(exc), parent=host)
+            return
+
+        backup_text = str(result.backup_path) if result.backup_path else "nie utworzono (brak pliku przed zmianą)"
+        messagebox.showinfo(
+            "Karuzela — zastosowano do motywu",
+            f"Zapisano:\n{result.path}\n\n"
+            f"Kopia bezpieczeństwa:\n{backup_text}\n\n"
+            "Zmiana jest lokalna. Deploy motywu nie został wykonany.",
+            parent=host,
+        )
+        show_toast(host, "Zastosowano konfigurację Karuzeli do lokalnego pliku motywu")
 
     def _open_preview() -> None:
         form = _read_form()
@@ -229,6 +282,7 @@ def _build_settings_panel(
 
     ttk.Button(btns, text="Cytaty…", command=on_open_quotes).pack(side="left", padx=(0, 8))
     ttk.Button(btns, text="Zapisz", command=_save).pack(side="left", padx=(0, 8))
+    ttk.Button(btns, text="Zastosuj do motywu…", command=_apply_theme).pack(side="left", padx=(0, 8))
 
     right_btns = ttk.Frame(btns)
     right_btns.pack(side="right")
