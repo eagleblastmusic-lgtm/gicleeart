@@ -72,6 +72,30 @@ def _runtime_data_file(path: Path, *, for_write: bool = False) -> Path:
     return app_path.write_path if for_write else app_path.read_path()
 
 
+_RUNTIME_FILE_CONSTANT_RE = re.compile(r"^_[A-Z0-9_]+_FILE$")
+
+
+def _runtime_data_file_for_constant(
+    constant_name: str,
+    *,
+    for_write: bool = False,
+) -> Path:
+    """Resolve the current value of a mutable-file module constant.
+
+    The indirection keeps monkeypatched file constants authoritative without
+    passing a source-derived ``Path`` into write-like helpers.
+    """
+
+    name = str(constant_name).strip()
+    if not _RUNTIME_FILE_CONSTANT_RE.fullmatch(name):
+        raise ValueError(f"Unsafe description runtime file constant: {constant_name!r}")
+    try:
+        configured = globals()[name]
+    except KeyError as exc:
+        raise KeyError(f"Unknown description runtime file constant: {name}") from exc
+    return _runtime_data_file(Path(configured), for_write=for_write)
+
+
 _AKAPITY_MAX = 4
 _DESCRIPTION_UPDATE_MARKS_FILE = (
     _LEGACY_DATA_DIR / "description_update_marks.json"
@@ -251,11 +275,11 @@ def toggle_description_update_mark(product_id: int) -> bool:
 
 def load_description_pl_pending_marks() -> set[int]:
     """Produkty z zaktualizowanym opisem PL, bez kompletu tlumaczen."""
-    return _load_marks_file(_DESCRIPTION_PL_PENDING_MARKS_FILE)
+    return _load_marks_file("_DESCRIPTION_PL_PENDING_MARKS_FILE")
 
 
 def save_description_pl_pending_marks(product_ids: set[int]) -> None:
-    _save_marks_file(_DESCRIPTION_PL_PENDING_MARKS_FILE, product_ids)
+    _save_marks_file("_DESCRIPTION_PL_PENDING_MARKS_FILE", product_ids)
 
 
 def set_description_pl_pending_mark(product_id: int, *, marked: bool) -> None:
@@ -331,8 +355,8 @@ def toggle_description_resume_flag(product_id: int) -> bool:
     return True
 
 
-def _load_marks_file(path: Path) -> set[int]:
-    path = _runtime_data_file(path)
+def _load_marks_file(file_constant: str) -> set[int]:
+    path = _runtime_data_file_for_constant(file_constant)
     if not path.is_file():
         return set()
     try:
@@ -350,19 +374,19 @@ def _load_marks_file(path: Path) -> set[int]:
     return out
 
 
-def _save_marks_file(path: Path, product_ids: set[int]) -> None:
-    path = _runtime_data_file(path, for_write=True)
+def _save_marks_file(file_constant: str, product_ids: set[int]) -> None:
+    path = _runtime_data_file_for_constant(file_constant, for_write=True)
     payload = sorted(product_ids)
     atomic_write_text(path, json.dumps(payload, indent=2, ensure_ascii=False) + "\n")
 
 
 def load_title_update_marks() -> set[int]:
     """Zestaw product_id, dla ktorych tytul produktu juz zostal zmieniony w sklepie."""
-    return _load_marks_file(_TITLE_UPDATE_MARKS_FILE)
+    return _load_marks_file("_TITLE_UPDATE_MARKS_FILE")
 
 
 def save_title_update_marks(product_ids: set[int]) -> None:
-    _save_marks_file(_TITLE_UPDATE_MARKS_FILE, product_ids)
+    _save_marks_file("_TITLE_UPDATE_MARKS_FILE", product_ids)
 
 
 def set_title_update_mark(product_id: int, *, marked: bool) -> None:
@@ -408,11 +432,11 @@ def set_title_update_marks_batch(
 
 def load_description_gpt_translation_marks() -> set[int]:
     """Produkty oznaczone recznie jako «tlumaczenie GPT»."""
-    return _load_marks_file(_DESCRIPTION_GPT_TRANSLATION_MARKS_FILE)
+    return _load_marks_file("_DESCRIPTION_GPT_TRANSLATION_MARKS_FILE")
 
 
 def save_description_gpt_translation_marks(product_ids: set[int]) -> None:
-    _save_marks_file(_DESCRIPTION_GPT_TRANSLATION_MARKS_FILE, product_ids)
+    _save_marks_file("_DESCRIPTION_GPT_TRANSLATION_MARKS_FILE", product_ids)
 
 
 def set_description_gpt_translation_marks_batch(
@@ -447,11 +471,11 @@ def toggle_description_gpt_translation_mark(product_id: int) -> bool:
 
 def load_description_sonnet_translation_marks() -> set[int]:
     """Produkty oznaczone recznie jako «tlumaczenie Sonnet»."""
-    return _load_marks_file(_DESCRIPTION_SONNET_TRANSLATION_MARKS_FILE)
+    return _load_marks_file("_DESCRIPTION_SONNET_TRANSLATION_MARKS_FILE")
 
 
 def save_description_sonnet_translation_marks(product_ids: set[int]) -> None:
-    _save_marks_file(_DESCRIPTION_SONNET_TRANSLATION_MARKS_FILE, product_ids)
+    _save_marks_file("_DESCRIPTION_SONNET_TRANSLATION_MARKS_FILE", product_ids)
 
 
 def set_description_sonnet_translation_marks_batch(
@@ -486,11 +510,11 @@ def toggle_description_sonnet_translation_mark(product_id: int) -> bool:
 
 def load_description_from_image_marks() -> set[int]:
     """Produkty oznaczone recznie jako «opis z obrazu»."""
-    return _load_marks_file(_DESCRIPTION_FROM_IMAGE_MARKS_FILE)
+    return _load_marks_file("_DESCRIPTION_FROM_IMAGE_MARKS_FILE")
 
 
 def save_description_from_image_marks(product_ids: set[int]) -> None:
-    _save_marks_file(_DESCRIPTION_FROM_IMAGE_MARKS_FILE, product_ids)
+    _save_marks_file("_DESCRIPTION_FROM_IMAGE_MARKS_FILE", product_ids)
 
 
 def set_description_from_image_marks_batch(
@@ -572,7 +596,7 @@ def load_description_do_tlumaczenia_marks() -> set[int]:
 
 
 def save_description_do_tlumaczenia_marks(product_ids: set[int]) -> None:
-    _save_marks_file(_DESCRIPTION_DO_TLUMACZENIA_MARKS_FILE, product_ids)
+    _save_marks_file("_DESCRIPTION_DO_TLUMACZENIA_MARKS_FILE", product_ids)
 
 
 def set_description_do_tlumaczenia_mark(product_id: int, *, marked: bool) -> None:
@@ -616,11 +640,11 @@ def toggle_description_do_tlumaczenia_mark(product_id: int) -> bool:
 
 def load_description_bez_16_marks() -> set[int]:
     """Produkty oznaczone recznie ptaszkiem «Bez 1-6» (bez slotow wersji 1–6 w porownywarce)."""
-    return _load_marks_file(_DESCRIPTION_BEZ_16_MARKS_FILE)
+    return _load_marks_file("_DESCRIPTION_BEZ_16_MARKS_FILE")
 
 
 def save_description_bez_16_marks(product_ids: set[int]) -> None:
-    _save_marks_file(_DESCRIPTION_BEZ_16_MARKS_FILE, product_ids)
+    _save_marks_file("_DESCRIPTION_BEZ_16_MARKS_FILE", product_ids)
 
 
 def set_description_bez_16_marks_batch(
