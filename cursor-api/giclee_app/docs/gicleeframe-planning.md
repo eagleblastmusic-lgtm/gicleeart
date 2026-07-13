@@ -354,7 +354,7 @@ Kolejne kroki modularizacji (`GF-M2+`) — osobne PR-y. **GF-M1 nie uruchamia F3
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M8+** — osobne PR-y.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M9+** — osobne PR-y.
 
 ---
 
@@ -381,7 +381,7 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M8+** — osobne
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M8+** — osobne PR-y.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M9+** — osobne PR-y.
 
 ---
 
@@ -407,4 +407,30 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M8+** — osobne
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M8+** — osobne PR-y.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M9+** — osobne PR-y.
+
+---
+
+## 19. GF-M8 — Top Bar Subsystem Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** pierwszy średni pakiet modularizacji po serii małych granic GF-M3–GF-M7 — ekstrakcja kompletnego subsystemu top bara (context bar, command bar, staggered late-build scheduling) bez zmiany UI, timingów, telemetry i integracji atomic reveal.
+
+### Wynik
+
+- **Top bar subsystem** przeniesiony do `ui/gicleeframe_view_top_bar.py` jako `GicleeFrameTopBarMixin`.
+- Przeniesiono dokładnie **11 metod** oraz **6 stałych** subsystemowych (`_BACK_LABEL`, `_SHELL_STATUS_CHIP`, `_GF_TOP_BAR_*`).
+- Mixin **nie posiada lifecycle** ani `__init__`, **nie dziedziczy** po widżecie Tk; **używa `after()`** jako część granicy schedulera.
+- Host `GicleeFrameView` dziedziczy sześć mixinów panelowych plus `GicleeFrameTopBarMixin` przed `ctk.CTkScrollableFrame`.
+- Host nadal posiada:
+  - `__init__` i inicjalizację pól widgetów top bara,
+  - `_build_shell` i wywołanie `_schedule_top_bar_actions_late_build()`,
+  - `_ensure_top_bar_actions_for_atomic_reveal`, atomic-reveal orchestration,
+  - suppression guards (`_should_suppress_visible_prewarm`, `_log_visible_prewarm_suppressed`),
+  - **RAM workflow** (warianty, menu, nawigacja, inventory adaptery) — kandydat następnej większej paczki.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M9+** — osobne PR-y. RAM workflow pozostaje host-owned.

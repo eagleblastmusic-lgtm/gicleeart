@@ -23,6 +23,7 @@ from giclee_app.ui.gicleeframe_view_safety import GicleeFrameSafetyCardMixin
 from giclee_app.ui.gicleeframe_view_structure_dry_run import (
     GicleeFrameStructureDryRunMixin,
 )
+from giclee_app.ui.gicleeframe_view_top_bar import GicleeFrameTopBarMixin
 
 ROOT = Path(__file__).resolve().parents[1]
 READINESS_PATH = (
@@ -213,6 +214,7 @@ def test_page_readiness_mixin_is_wired_into_gicleeframe_view_mro() -> None:
     assert GicleeFrameStructureDryRunMixin in GicleeFrameView.__mro__
     assert GicleeFrameSafetyCardMixin in GicleeFrameView.__mro__
     assert GicleeFrameReadinessRowMixin in GicleeFrameView.__mro__
+    assert GicleeFrameTopBarMixin in GicleeFrameView.__mro__
 
 
 def test_page_readiness_methods_resolve_from_mixin_on_gicleeframe_view() -> None:

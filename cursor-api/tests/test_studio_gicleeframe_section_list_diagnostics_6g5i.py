@@ -14,6 +14,13 @@ def _view_text() -> str:
     )
 
 
+def _combined_text() -> str:
+    top_bar = (ROOT / "giclee_app" / "ui" / "gicleeframe_view_top_bar.py").read_text(
+        encoding="utf-8"
+    )
+    return _view_text() + "\n" + top_bar
+
+
 def test_section_list_incremental_scheduled_event_exists() -> None:
     text = _view_text()
     assert "studio.gicleeframe.section_list.incremental_scheduled" in text
@@ -58,7 +65,7 @@ def test_section_list_column_ready_for_rows_event_exists() -> None:
 
 
 def test_section_list_diagnostics_preserves_prior_6g5_markers() -> None:
-    text = _view_text()
+    text = _combined_text()
     assert "studio.gicleeframe.section_list.first_visible_ready" in text
     assert "studio.gicleeframe.visual.perceived_ready" in text
     assert "studio.gicleeframe.top_bar.actions_late_scheduled" in text

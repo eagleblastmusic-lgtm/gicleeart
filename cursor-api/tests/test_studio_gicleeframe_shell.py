@@ -10,7 +10,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from giclee_app.studio.gicleeframe_brief import status_strip, WORKFLOW_SUMMARY
-from giclee_app.ui.gicleeframe_view import GicleeFrameView, _BACK_LABEL
+from giclee_app.ui.gicleeframe_view import GicleeFrameView
+from giclee_app.ui.gicleeframe_view_top_bar import _BACK_LABEL
 
 _STUDIO_ROOT = Path(__file__).resolve().parents[1] / "giclee_app" / "studio"
 _VIEW_PATH = Path(__file__).resolve().parents[1] / "giclee_app" / "ui" / "gicleeframe_view.py"
@@ -49,6 +50,12 @@ _READINESS_ROW_VIEW_PATH = (
     / "giclee_app"
     / "ui"
     / "gicleeframe_view_readiness_row.py"
+)
+_TOP_BAR_VIEW_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "giclee_app"
+    / "ui"
+    / "gicleeframe_view_top_bar.py"
 )
 _NEW_PLANNING_MODULES = (
     "gicleeframe_brief.py",
@@ -106,9 +113,6 @@ def test_view_source_no_komponenty_imports() -> None:
 
 def test_view_source_no_forbidden_action_buttons() -> None:
     text = _VIEW_PATH.read_text(encoding="utf-8")
-    assert _BACK_LABEL in text
-    assert "_SHELL_STATUS_CHIP" in text
-    assert "RAM-only · bez zapisu" in text
     for pattern in _FORBIDDEN_BUTTON_PATTERNS:
         assert not re.search(pattern, text), f"Forbidden button pattern found: {pattern}"
 
@@ -121,9 +125,7 @@ def test_view_source_f21_editor_labels() -> None:
     assert "DEFAULT_VARIANT_NAME" in text
     assert "WORKING_VARIANT_LABEL" in text
     assert "working_variant_menu_label" in text
-    assert "ADD_VARIANT_RAM_LABEL" in text
     assert "+ Dodaj wariant" not in text
-    assert "DUPLICATE_VARIANT_LABEL" in text
     assert "RENAME_VARIANT_LABEL" in text
     assert "APPLY_RAM_DRAFT_LABEL" in text
     assert "editor_field_visibility" in text
@@ -140,7 +142,6 @@ def test_view_source_f21_editor_labels() -> None:
     assert "_CONTROL_COL_MINSIZE" in text
     assert "SECTION_LIST_TITLE" in text
     assert "APPLY_RAM_MICROCOPY" in text
-    assert "PANEL_STATUS_UNSAVED" in text
     assert "_make_primary_button" in text
     assert "_build_setting_group_card" in text
     assert "divider_setting_groups" in text
@@ -309,8 +310,6 @@ def test_view_source_plan_section() -> None:
     assert "evaluate_gicleeframe_readiness" in brand
     assert "READINESS_SECTION_LABEL" in brand
     text = host
-    assert "REFRESH_INVENTORY_LABEL" in text
-    assert "CHECK_STRUCTURE_LABEL" in text
     assert "DRAFT_RAM_DISCLAIMER" in text
 
 
@@ -416,3 +415,24 @@ def test_readiness_row_view_source_no_write_or_network() -> None:
         "after_cancel(",
     ):
         assert forbidden_text not in text
+
+
+def test_top_bar_view_source_contract() -> None:
+    text = _TOP_BAR_VIEW_PATH.read_text(encoding="utf-8")
+    assert "_build_context_bar" in text
+    assert "_build_command_bar" in text
+    assert "_schedule_top_bar_actions_late_build" in text
+    assert "_BACK_LABEL" in text
+    assert "_SHELL_STATUS_CHIP" in text
+    assert "RAM-only · bez zapisu" in text
+    assert "Warianty RAM" in text
+    assert "Inventory i kontrola" in text
+    assert "ADD_VARIANT_RAM_LABEL" in text
+    assert "REFRESH_INVENTORY_LABEL" in text
+    assert "CHECK_STRUCTURE_LABEL" in text
+    assert "PANEL_STATUS_UNSAVED" in text
+    assert "_GF_TOP_BAR_ACTIONS_LATE_DEFER_MS = 200" in text
+
+
+def test_top_bar_view_source_no_write_or_network() -> None:
+    _assert_no_writes_in_source(_TOP_BAR_VIEW_PATH)

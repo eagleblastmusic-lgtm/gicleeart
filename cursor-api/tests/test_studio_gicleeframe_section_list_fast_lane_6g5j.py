@@ -15,6 +15,16 @@ def _view_text() -> str:
     )
 
 
+def _top_bar_text() -> str:
+    return (ROOT / "giclee_app" / "ui" / "gicleeframe_view_top_bar.py").read_text(
+        encoding="utf-8"
+    )
+
+
+def _combined_text() -> str:
+    return _view_text() + "\n" + _top_bar_text()
+
+
 def _constant_int(text: str, name: str) -> int:
     match = re.search(rf"^{re.escape(name)}\s*=\s*(\d+)$", text, re.MULTILINE)
     assert match is not None, f"missing integer constant: {name}"
@@ -38,7 +48,7 @@ def test_section_list_incremental_scheduled_uses_fast_lane_defer() -> None:
     text = _view_text()
 
     start = text.index("def _schedule_section_list_incremental")
-    end = text.index("def _build_context_bar", start)
+    end = text.index("def _build_page_editor_section", start)
     body = text[start:end]
 
     assert "studio.gicleeframe.section_list.incremental_scheduled" in body
@@ -48,7 +58,7 @@ def test_section_list_incremental_scheduled_uses_fast_lane_defer() -> None:
 
 
 def test_section_list_fast_lane_preserves_prior_6g5_markers() -> None:
-    text = _view_text()
+    text = _combined_text()
     assert "studio.gicleeframe.section_list.column_ready_for_rows" in text
     assert "studio.gicleeframe.section_list.incremental_enter" in text
     assert "studio.gicleeframe.section_list.first_batch_start" in text
@@ -63,7 +73,7 @@ def test_section_list_fast_lane_preserves_prior_6g5_markers() -> None:
 def test_section_list_fast_lane_preserves_late_lane_ordering() -> None:
     text = _view_text()
     identity_ms = _constant_int(text, "_GF_EDITOR_IDENTITY_LATE_DEFER_MS")
-    top_bar_ms = _constant_int(text, "_GF_TOP_BAR_ACTIONS_LATE_DEFER_MS")
+    top_bar_ms = _constant_int(_top_bar_text(), "_GF_TOP_BAR_ACTIONS_LATE_DEFER_MS")
 
     assert 0 < identity_ms <= top_bar_ms
 

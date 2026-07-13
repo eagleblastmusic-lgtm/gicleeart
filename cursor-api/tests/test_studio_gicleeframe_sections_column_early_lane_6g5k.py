@@ -15,6 +15,16 @@ def _view_text() -> str:
     )
 
 
+def _top_bar_text() -> str:
+    return (ROOT / "giclee_app" / "ui" / "gicleeframe_view_top_bar.py").read_text(
+        encoding="utf-8"
+    )
+
+
+def _combined_text() -> str:
+    return _view_text() + "\n" + _top_bar_text()
+
+
 def _constant_int(text: str, name: str) -> int:
     match = re.search(rf"^{re.escape(name)}\s*=\s*(\d+)$", text, re.MULTILINE)
     assert match is not None, f"missing integer constant: {name}"
@@ -108,13 +118,13 @@ def test_sections_column_early_lane_preserves_fast_lane_constants() -> None:
 def test_sections_column_early_lane_preserves_late_lane_ordering() -> None:
     text = _view_text()
     identity_ms = _constant_int(text, "_GF_EDITOR_IDENTITY_LATE_DEFER_MS")
-    top_bar_ms = _constant_int(text, "_GF_TOP_BAR_ACTIONS_LATE_DEFER_MS")
+    top_bar_ms = _constant_int(_top_bar_text(), "_GF_TOP_BAR_ACTIONS_LATE_DEFER_MS")
 
     assert 0 < identity_ms <= top_bar_ms
 
 
 def test_sections_column_early_lane_preserves_late_startup_markers() -> None:
-    text = _view_text()
+    text = _combined_text()
     assert "studio.gicleeframe.top_bar.actions_late_scheduled" in text
     assert "studio.gicleeframe.editor.fields_lazy_startup" in text
     assert "studio.gicleeframe.editor.identity_card_lazy_startup" in text
