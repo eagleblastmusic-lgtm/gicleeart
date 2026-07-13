@@ -13,9 +13,13 @@ from pathlib import Path
 from typing import Any
 
 from giclee_app.component_loader import Component
+from giclee_app.launcher_logs import (
+    DEFAULT_COMPONENT_LOGS_DIR,
+    component_log_write_path,
+)
 from giclee_app.runtime import get_component_cwd, resolve_python_interpreter
 
-_LOGS_DIR = Path(__file__).resolve().parents[1] / "logs"
+_LOGS_DIR = DEFAULT_COMPONENT_LOGS_DIR
 
 INLINE_MESSAGE = (
     "Ten komponent inline powinien otworzyć się w Studio. "
@@ -40,8 +44,7 @@ class LaunchResult:
 
 
 def component_log_path(comp: Component) -> Path:
-    _LOGS_DIR.mkdir(parents=True, exist_ok=True)
-    return _LOGS_DIR / f"{comp.folder_name}.log"
+    return component_log_write_path(comp.folder_name, logs_dir=_LOGS_DIR)
 
 
 def build_subprocess_cmd(comp: Component) -> tuple[list[str] | None, str]:
