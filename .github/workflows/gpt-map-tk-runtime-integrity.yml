@@ -25,18 +25,50 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           $out = Join-Path $env:RUNNER_TEMP "tk-runtime-map.txt"
-          "=== Tcl/Tk environment references ===" | Set-Content -LiteralPath $out -Encoding utf8
-          Get-ChildItem -Recurse -File -Include *.py,*.ps1,*.yml,*.yaml |
-            Where-Object { $_.FullName -notmatch '\\.git\\' } |
-            Select-String -Pattern "TCL_LIBRARY|TK_LIBRARY|python-tcl-runtime|prepare-tk-runtime|tk8\\.6|tcl8\\.6|spinbox\\.tcl|defaults\\.tcl" -AllMatches |
-            ForEach-Object { "$($_.Path):$($_.LineNumber):$($_.Line)" } |
-            Add-Content -LiteralPath $out -Encoding utf8
+          @'
+          from __future__ import annotations
 
-          "`n=== Temp cleanup and directory deletion patterns ===" | Add-Content -LiteralPath $out -Encoding utf8
-          Get-ChildItem -LiteralPath "cursor-api/tests" -Recurse -File -Filter *.py |
-            Select-String -Pattern "rmtree|Remove-Item|unlink|shutil|tempfile|RUNNER_TEMP|glob\\(|iterdir\\(|cleanup" -AllMatches |
-            ForEach-Object { "$($_.Path):$($_.LineNumber):$($_.Line)" } |
-            Add-Content -LiteralPath $out -Encoding utf8
+          import os
+          import re
+          from pathlib import Path
+
+          root = Path.cwd()
+          out = Path(os.environ["RUNNER_TEMP"]) / "tk-runtime-map.txt"
+          refs = re.compile(
+              r"TCL_LIBRARY|TK_LIBRARY|python-tcl-runtime|prepare-tk-runtime|"
+              r"tk8\.6|tcl8\.6|spinbox\.tcl|defaults\.tcl"
+          )
+          cleanup = re.compile(
+              r"rmtree|Remove-Item|unlink|shutil|tempfile|RUNNER_TEMP|"
+              r"glob\(|iterdir\(|cleanup"
+          )
+
+          def collect(paths: list[Path], pattern: re.Pattern[str]) -> list[str]:
+              found: list[str] = []
+              for path in sorted(paths):
+                  try:
+                      text = path.read_text(encoding="utf-8")
+                  except (OSError, UnicodeDecodeError):
+                      continue
+                  for lineno, line in enumerate(text.splitlines(), 1):
+                      if pattern.search(line):
+                          found.append(f"{path.as_posix()}:{lineno}:{line}")
+              return found
+
+          all_files = [
+              path
+              for suffix in ("*.py", "*.ps1", "*.yml", "*.yaml")
+              for path in root.rglob(suffix)
+              if ".git" not in path.parts
+          ]
+          test_files = list((root / "cursor-api" / "tests").rglob("*.py"))
+          lines = ["=== Tcl/Tk environment references ==="]
+          lines.extend(collect(all_files, refs))
+          lines.append("")
+          lines.append("=== Temp cleanup and directory deletion patterns ===")
+          lines.extend(collect(test_files, cleanup))
+          out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+          '@ | python -
 
       - name: Upload map
         uses: actions/upload-artifact@v4
