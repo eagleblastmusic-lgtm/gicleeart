@@ -30,6 +30,10 @@ IMAGES_DIR = _DATA_DIR / "Obrazy"
 
 _RUNTIME_ROOT = "Komponenty/socialmedia/data/cykl"
 _PathBucket = Literal["data", "config"]
+_DIRECTORY_CONSTANTS = {
+    "DATA_DIR": ("_DATA_DIR", "_LEGACY_DATA_DIR", ""),
+    "IMAGES_DIR": ("IMAGES_DIR", "_LEGACY_DATA_DIR", "Obrazy"),
+}
 
 
 def _runtime_file(
@@ -83,13 +87,39 @@ def _credentials_file(*, for_write: bool = False) -> Path:
     )
 
 
+def _explicit_directory_override(
+    constant_name: str,
+    *,
+    for_write: bool,
+) -> Path | None:
+    """Return a validated explicit directory override, if one is active."""
+
+    name = str(constant_name).strip()
+    try:
+        current_name, legacy_root_name, relative_legacy = _DIRECTORY_CONSTANTS[name]
+    except KeyError as exc:
+        raise ValueError(f"Unsafe Social Media cycle directory constant: {constant_name!r}") from exc
+
+    try:
+        current = Path(globals()[current_name])
+        legacy = Path(globals()[legacy_root_name])
+    except KeyError as exc:  # pragma: no cover - guarded by the static mapping
+        raise RuntimeError(f"Incomplete Social Media cycle directory mapping for {name}") from exc
+
+    if relative_legacy:
+        legacy = legacy / relative_legacy
+    if current == legacy:
+        return None
+    if for_write:
+        current.mkdir(parents=True, exist_ok=True)
+    return current
+
+
 def data_dir(*, for_write: bool = False) -> Path:
-    current = Path(_DATA_DIR)
+    override = _explicit_directory_override("DATA_DIR", for_write=for_write)
+    if override is not None:
+        return override
     legacy = Path(_LEGACY_DATA_DIR)
-    if current != legacy:
-        if for_write:
-            current.mkdir(parents=True, exist_ok=True)
-        return current
     app_path = data_path(_RUNTIME_ROOT, legacy=legacy)
     path = app_path.write_path if for_write else app_path.read_path()
     if for_write:
@@ -98,12 +128,10 @@ def data_dir(*, for_write: bool = False) -> Path:
 
 
 def images_dir(*, for_write: bool = False) -> Path:
-    current = Path(IMAGES_DIR)
+    override = _explicit_directory_override("IMAGES_DIR", for_write=for_write)
+    if override is not None:
+        return override
     legacy = Path(_LEGACY_DATA_DIR) / "Obrazy"
-    if current != legacy:
-        if for_write:
-            current.mkdir(parents=True, exist_ok=True)
-        return current
     app_path = data_path(f"{_RUNTIME_ROOT}/Obrazy", legacy=legacy)
     path = app_path.write_path if for_write else app_path.read_path()
     if for_write:
