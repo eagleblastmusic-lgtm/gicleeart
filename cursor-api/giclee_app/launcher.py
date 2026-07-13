@@ -31,6 +31,11 @@ from .launcher_layout import (
     resolve_sections,
 )
 from .launcher_options import show_launcher_options
+from .launcher_logs import (
+    DEFAULT_COMPONENT_LOGS_DIR,
+    component_log_read_path,
+    component_log_write_path,
+)
 from .launcher_shortcuts import (
     LAUNCHER_KEY_SHORTCUTS,
     dialog_blocks_shortcuts,
@@ -58,7 +63,7 @@ LAUNCHER_MIN_HEIGHT = 640
 _LAUNCHER_AUTH_ENABLED = False
 
 # Logi subprocess-ow komponentow (stdout/stderr przekierowany tutaj)
-_LOGS_DIR = Path(__file__).resolve().parents[1] / "logs"
+_LOGS_DIR = DEFAULT_COMPONENT_LOGS_DIR
 
 _TILES_PER_ROW = 3
 _TILE_W = 280
@@ -556,8 +561,10 @@ class GicleeApp:
             m.grab_release()
 
     def _component_log_path(self, comp: Component) -> Path:
-        _LOGS_DIR.mkdir(parents=True, exist_ok=True)
-        return _LOGS_DIR / f"{comp.folder_name}.log"
+        return component_log_read_path(comp.folder_name, logs_dir=_LOGS_DIR)
+
+    def _component_log_write_path(self, comp: Component) -> Path:
+        return component_log_write_path(comp.folder_name, logs_dir=_LOGS_DIR)
 
     def _show_component_log(self, comp: Component) -> None:
         path = self._component_log_path(comp)
@@ -626,7 +633,7 @@ class GicleeApp:
         ttk.Button(btn_row, text="Zamknij", command=win.destroy).pack(side="right")
 
     def _clear_component_log(self, comp: Component) -> None:
-        path = self._component_log_path(comp)
+        path = self._component_log_write_path(comp)
         if path.is_file():
             try:
                 path.write_text("", encoding="utf-8")
@@ -840,7 +847,7 @@ class GicleeApp:
             return
         cmd = [*prefix, "-m", comp.module_path]
         # Przekierowanie stdout/stderr do logs/<component>.log (append)
-        log_path = self._component_log_path(comp)
+        log_path = self._component_log_write_path(comp)
         try:
             log_f = open(log_path, "a", encoding="utf-8", buffering=1)
             from datetime import datetime as _dt
