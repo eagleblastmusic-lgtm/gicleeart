@@ -14,6 +14,12 @@ from giclee_app.ui.gicleeframe_view import GicleeFrameView, _BACK_LABEL
 
 _STUDIO_ROOT = Path(__file__).resolve().parents[1] / "giclee_app" / "studio"
 _VIEW_PATH = Path(__file__).resolve().parents[1] / "giclee_app" / "ui" / "gicleeframe_view.py"
+_PRIMITIVES_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "giclee_app"
+    / "ui"
+    / "gicleeframe_view_primitives.py"
+)
 _NEW_PLANNING_MODULES = (
     "gicleeframe_brief.py",
     "gicleeframe_draft_state.py",
@@ -157,11 +163,13 @@ def test_view_source_f223_first_screen_composition() -> None:
 
 def test_view_source_f224_visual_tokens() -> None:
     text = _VIEW_PATH.read_text(encoding="utf-8")
+    primitives_text = _PRIMITIVES_PATH.read_text(encoding="utf-8")
     assert "F2.2.4" in text
     assert "_GF_PREVIEW_PAPER" in text
     assert "_make_gf_card" in text
     assert "_section_kind_copy" in text
     assert "APPLY_RAM_DRAFT_LABEL" in text
+    assert '_GF_PREVIEW_PAPER = "#2e2e32"' in primitives_text
     assert "write_text" not in text
     assert _self_method_calls(text, "_build_action_dock") == []
     for pattern in _FORBIDDEN_BUTTON_PATTERNS:
@@ -194,6 +202,7 @@ def test_view_source_f226_child_layer_and_color() -> None:
     from giclee_app.studio.gicleeframe_page_draft import APPLY_RAM_DRAFT_LABEL
 
     text = _VIEW_PATH.read_text(encoding="utf-8")
+    primitives_text = _PRIMITIVES_PATH.read_text(encoding="utf-8")
     assert "F2.2.6" in text
     assert "_LAYER_NAV_TITLE" in text
     assert "_IMAGE_SOURCE_TITLE" in text
@@ -203,8 +212,9 @@ def test_view_source_f226_child_layer_and_color() -> None:
     assert "_selected_layer_items" in text
     assert "_build_image_preview_structure" in text
     assert "_image_ref_label" in text
-    assert '_GF_PANEL = "#1e1e21"' in text
-    assert '_GF_GOLD = "#b8a878"' in text
+    assert '_GF_PANEL = "#1e1e21"' in primitives_text
+    assert '_GF_GOLD = "#b8a878"' in primitives_text
+    assert '_GF_PANEL = "#1e1e21"' not in text
     assert "panel_deep" in text
     assert "Grafika sekcji" in text
     assert "Źródło grafiki" in text
@@ -298,3 +308,7 @@ def _assert_no_writes_in_source(path: Path) -> None:
 def test_planning_modules_source_guardrails() -> None:
     for name in _NEW_PLANNING_MODULES:
         _assert_no_writes_in_source(_STUDIO_ROOT / name)
+
+
+def test_primitives_source_no_write_or_network() -> None:
+    _assert_no_writes_in_source(_PRIMITIVES_PATH)

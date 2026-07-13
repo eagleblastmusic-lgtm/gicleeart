@@ -48,6 +48,7 @@ Disclaimer F2: **„Zmiany są tylko lokalnym draftem w pamięci — nic nie zap
 | `studio/gicleeframe_page_dry_run.py` | **F2** — dry-run struktury + guardrails |
 | `ui/gicleeframe_view.py` | Widok CTk: **F2.1 edytor strony** (top bar / trigger / edytor) + F1 komponent marki |
 | `ui/gicleeframe_view_models.py` | **GF-M1** — czyste kontrakty widoku (dataclass + helpery tekstowe, bez UI) |
+| `ui/gicleeframe_view_primitives.py` | **GF-M2** — bezstanowe prymitywy UI i lokalne tokeny wizualne |
 | `launcher_studio.py` | Routing: `gicleeframe` → `GicleeFrameView` |
 
 ---
@@ -268,3 +269,29 @@ Logi perf (`GICLEE_STUDIO_PERF=1`): `select_element.immediate_ready`, `populate_
 ### Dalsze etapy
 
 Kolejne kroki modularizacji (`GF-M2+`) — osobne PR-y. **GF-M1 nie uruchamia F3/F4 ani writera.**
+
+---
+
+## 13. GF-M2 — Stateless UI Primitives Extraction
+
+**Cel:** drugi krok modularizacji `GicleeFrameView` — ekstrakcja bezstanowych prymitywów UI i lokalnych tokenów wizualnych do osobnego modułu bez zmiany zachowania ani wyglądu.
+
+### Przeniesione tokeny (19)
+
+`_BTN_HEIGHT`, `_CARD_PAD_X`, `_CARD_PAD_Y`, `_GF_BG`, `_GF_PANEL`, `_GF_CARD`, `_GF_CARD_SOFT`, `_GF_FIELD`, `_GF_FIELD_HOVER`, `_GF_BORDER`, `_GF_BORDER_WARM`, `_GF_GOLD_SOFT`, `_GF_GOLD`, `_GF_MUTED`, `_GF_PREVIEW_BG`, `_GF_PREVIEW_PAPER`, `_GF_PREVIEW_MAT`, `_GF_SUCCESS`, `_GF_DANGER`
+
+### Przeniesione funkcje (15)
+
+`_f2_entry_kwargs`, `_make_surface`, `_make_card`, `_make_gf_card`, `_make_section_caption`, `_make_card_title`, `_make_section_title`, `_make_status_pill`, `_make_pill`, `_make_empty_state`, `_build_safety_row`, `_make_secondary_button`, `_make_primary_button`, `_f2_menu_kwargs`, `_element_pill_colors`
+
+### Gwarancje GF-M2
+
+- **Zero** zmian UI, layoutu, tekstów, kolorów, wymiarów, timingów, schedulerów, performance lane i telemetry
+- **Zero** zmian RAM draft, writera, zapisu do plików motywu, Shopify sync/deploy/mutation
+- Re-eksport przez `gicleeframe_view.py` zachowany — `from giclee_app.ui.gicleeframe_view import _make_gf_card, _GF_PANEL` nadal działa i wskazuje ten sam obiekt co w `gicleeframe_view_primitives`
+- Moduł primitives importuje wyłącznie `Callable`, `customtkinter`, `theme` — bez os/sys/time/tkinter/Komponenty/I/O/sieci/subprocess
+- **GF-M2 nie uruchamia F3/F4 ani writera.**
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M3+** — osobne PR-y.
