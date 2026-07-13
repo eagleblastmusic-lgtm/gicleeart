@@ -24,6 +24,22 @@ function Get-RequiredRuntimeDirectory {
     return $match
 }
 
+function Get-RuntimeManifest {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Root
+    )
+
+    return @(
+        Get-ChildItem -LiteralPath $Root -Recurse -File |
+            ForEach-Object {
+                $relative = [System.IO.Path]::GetRelativePath($Root, $_.FullName).Replace("\", "/")
+                "$relative|$($_.Length)"
+            } |
+            Sort-Object
+    )
+}
+
 $pythonExe = (& python -c "import sys; print(sys.executable)").Trim()
 if (-not $pythonExe) {
     throw "Nie udalo sie ustalic sciezki interpretera Python."
@@ -37,6 +53,10 @@ if (-not (Test-Path -LiteralPath $sourceRoot -PathType Container)) {
 
 $sourceTcl = Get-RequiredRuntimeDirectory -Root $sourceRoot -RequiredFile "init.tcl"
 $sourceTk = Get-RequiredRuntimeDirectory -Root $sourceRoot -RequiredFile "tk.tcl"
+$sourceManifest = Get-RuntimeManifest -Root $sourceRoot
+if ($sourceManifest.Count -eq 0) {
+    throw "Manifest zrodlowego runtime Tcl/Tk jest pusty: $sourceRoot"
+}
 
 $safeRuntimeName = ($RuntimeName -replace '[^A-Za-z0-9_.-]', '-')
 if (-not $safeRuntimeName) {
@@ -59,22 +79,35 @@ for ($attempt = 1; $attempt -le 3; $attempt++) {
     try {
         Remove-Item -LiteralPath $targetRoot -Recurse -Force -ErrorAction SilentlyContinue
         New-Item -ItemType Directory -Path $targetRoot -Force | Out-Null
-        Copy-Item -Path (Join-Path $sourceRoot "*") -Destination $targetRoot -Recurse -Force
+
+        & robocopy $sourceRoot $targetRoot /E /COPY:DAT /DCOPY:DAT /R:3 /W:1 /NFL /NDL /NJH /NJS /NP | Out-Null
+        $robocopyExit = $LASTEXITCODE
+        if ($robocopyExit -ge 8) {
+            throw "Robocopy zakonczyl sie kodem $robocopyExit."
+        }
 
         $targetTcl = Join-Path $targetRoot $sourceTcl.Name
         $targetTk = Join-Path $targetRoot $sourceTk.Name
-        $targetInit = Join-Path $targetTcl "init.tcl"
-        $targetTkInit = Join-Path $targetTk "tk.tcl"
-
-        if (-not (Test-Path -LiteralPath $targetInit -PathType Leaf)) {
-            throw "Kopia runtime nie zawiera init.tcl: $targetInit"
+        $requiredFiles = @(
+            (Join-Path $targetTcl "init.tcl"),
+            (Join-Path $targetTk "tk.tcl"),
+            (Join-Path $targetTk "spinbox.tcl"),
+            (Join-Path $targetTk "ttk\defaults.tcl")
+        )
+        foreach ($requiredFile in $requiredFiles) {
+            if (-not (Test-Path -LiteralPath $requiredFile -PathType Leaf)) {
+                throw "Kopia runtime nie zawiera wymaganego pliku: $requiredFile"
+            }
+            Get-Content -LiteralPath $requiredFile -TotalCount 1 -ErrorAction Stop | Out-Null
         }
-        if (-not (Test-Path -LiteralPath $targetTkInit -PathType Leaf)) {
-            throw "Kopia runtime nie zawiera tk.tcl: $targetTkInit"
+
+        $targetManifest = Get-RuntimeManifest -Root $targetRoot
+        $manifestDiff = @(Compare-Object -ReferenceObject $sourceManifest -DifferenceObject $targetManifest)
+        if ($manifestDiff.Count -ne 0) {
+            $preview = ($manifestDiff | Select-Object -First 10 | Out-String).Trim()
+            throw "Manifest kopii Tcl/Tk rozni sie od zrodla. Pierwsze roznice: $preview"
         }
 
-        Get-Content -LiteralPath $targetInit -TotalCount 1 -ErrorAction Stop | Out-Null
-        Get-Content -LiteralPath $targetTkInit -TotalCount 1 -ErrorAction Stop | Out-Null
         $copySucceeded = $true
         break
     }
@@ -87,7 +120,7 @@ for ($attempt = 1; $attempt -le 3; $attempt++) {
 }
 
 if (-not $copySucceeded) {
-    throw "Nie udalo sie przygotowac izolowanej kopii Tcl/Tk po 3 probach: $lastCopyError"
+    throw "Nie udalo sie przygotowac kompletnej kopii Tcl/Tk po 3 probach: $lastCopyError"
 }
 
 $env:TCL_LIBRARY = $targetTcl
@@ -97,14 +130,35 @@ Add-Content -LiteralPath $env:GITHUB_ENV -Value "TK_LIBRARY=$targetTk"
 
 @'
 import os
+from pathlib import Path
 import tkinter as tk
+from tkinter import ttk
 
+
+def normalized(value: str) -> str:
+    return os.path.normcase(os.path.normpath(str(Path(value).resolve())))
+
+
+expected_tcl = normalized(os.environ["TCL_LIBRARY"])
+expected_tk = normalized(os.environ["TK_LIBRARY"])
 root = tk.Tk()
 root.withdraw()
+actual_tcl = normalized(str(root.tk.globalgetvar("tcl_library")))
+actual_tk = normalized(str(root.tk.globalgetvar("tk_library")))
+if actual_tcl != expected_tcl:
+    raise RuntimeError(f"Unexpected tcl_library: {actual_tcl!r} != {expected_tcl!r}")
+if actual_tk != expected_tk:
+    raise RuntimeError(f"Unexpected tk_library: {actual_tk!r} != {expected_tk!r}")
+spinbox = tk.Spinbox(root)
+spinbox.destroy()
+style = ttk.Style(root)
+if not style.theme_names():
+    raise RuntimeError("Tk ttk runtime reported no themes")
 print("tk_patchlevel=" + str(root.tk.call("info", "patchlevel")))
-print("tcl_library=" + str(root.tk.globalgetvar("tcl_library")))
-print("env_TCL_LIBRARY=" + str(os.environ.get("TCL_LIBRARY", "")))
-print("env_TK_LIBRARY=" + str(os.environ.get("TK_LIBRARY", "")))
+print("tcl_library=" + actual_tcl)
+print("tk_library=" + actual_tk)
+print("env_TCL_LIBRARY=" + expected_tcl)
+print("env_TK_LIBRARY=" + expected_tk)
 root.destroy()
 '@ | python -
 
@@ -120,7 +174,10 @@ if ($env:GITHUB_STEP_SUMMARY) {
 - source: `$sourceRoot`
 - isolated copy: `$targetRoot`
 - run identity: `$safeIdentity`
+- manifest entries: $($sourceManifest.Count)
 - TCL_LIBRARY: `$targetTcl`
 - TK_LIBRARY: `$targetTk`
+- required Tk scripts: verified
+- Tk/ttk widget preflight: passed
 "@ | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
 }
