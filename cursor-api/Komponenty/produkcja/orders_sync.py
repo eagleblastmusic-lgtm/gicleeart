@@ -18,7 +18,10 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from giclee_app.app_paths import atomic_write_text
+
 from Komponenty.dodajobraz import shopify_client as sc
+from Komponenty.produkcja import production_store
 from Komponenty.produkcja.frame_variant import (
     combined_label,
     legacy_compact_label,
@@ -30,52 +33,78 @@ from Komponenty.produkcja.passepartout import parse_passepartout_from_line
 _detect_frame_variant = legacy_compact_label
 
 _COMPONENT_DIR = Path(__file__).resolve().parent
-_DATA_DIR = _COMPONENT_DIR / "dane"
-_ORDERS_FILE = _DATA_DIR / "zamowienia.json"
-_SYNC_STATE_FILE = _DATA_DIR / "sync_state.json"
+_LEGACY_DATA_DIR = _COMPONENT_DIR / "dane"
+_DATA_DIR = _LEGACY_DATA_DIR
+_LEGACY_ORDERS_FILE = _LEGACY_DATA_DIR / "zamowienia.json"
+_ORDERS_FILE = _LEGACY_ORDERS_FILE
+_LEGACY_SYNC_STATE_FILE = _LEGACY_DATA_DIR / "sync_state.json"
+_SYNC_STATE_FILE = _LEGACY_SYNC_STATE_FILE
+
+
+def _data_dir_override() -> Path | None:
+    current = Path(_DATA_DIR)
+    return current if current != _LEGACY_DATA_DIR else None
+
+
+def _orders_path(*, for_write: bool) -> Path:
+    explicit = Path(_ORDERS_FILE)
+    if explicit != _LEGACY_ORDERS_FILE:
+        return explicit
+    override = _data_dir_override()
+    if override is not None:
+        return override / "zamowienia.json"
+    return production_store.orders_write_path() if for_write else production_store.orders_read_path()
+
+
+def _sync_state_path(*, for_write: bool) -> Path:
+    explicit = Path(_SYNC_STATE_FILE)
+    if explicit != _LEGACY_SYNC_STATE_FILE:
+        return explicit
+    override = _data_dir_override()
+    if override is not None:
+        return override / "sync_state.json"
+    return (
+        production_store.sync_state_write_path()
+        if for_write
+        else production_store.sync_state_read_path()
+    )
 
 # Heurystyka: rozpoznajemy ze product_type z Shopify to obraz wg
 # nazwy/tagow. Mozna rozszerzyc w przyszlosci.
 _IS_PAINTING_RE = re.compile(r"(obraz|painting|canvas|reprodukcja)", re.IGNORECASE)
 
 
-def _ensure_dir() -> None:
-    _DATA_DIR.mkdir(parents=True, exist_ok=True)
-
-
 def _load_db() -> dict[str, Any]:
-    _ensure_dir()
-    if not _ORDERS_FILE.is_file():
+    path = _orders_path(for_write=False)
+    if not path.is_file():
         return {"next_id": 1, "orders": []}
     try:
-        return json.loads(_ORDERS_FILE.read_text(encoding="utf-8"))
+        return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return {"next_id": 1, "orders": []}
 
 
 def _save_db(db: dict[str, Any]) -> None:
-    _ensure_dir()
-    _ORDERS_FILE.write_text(
-        json.dumps(db, indent=2, ensure_ascii=False),
-        encoding="utf-8",
+    atomic_write_text(
+        _orders_path(for_write=True),
+        json.dumps(db, indent=2, ensure_ascii=False) + "\n",
     )
 
 
 def _load_sync_state() -> dict[str, Any]:
-    _ensure_dir()
-    if not _SYNC_STATE_FILE.is_file():
+    path = _sync_state_path(for_write=False)
+    if not path.is_file():
         return {}
     try:
-        return json.loads(_SYNC_STATE_FILE.read_text(encoding="utf-8"))
+        return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return {}
 
 
 def _save_sync_state(state: dict[str, Any]) -> None:
-    _ensure_dir()
-    _SYNC_STATE_FILE.write_text(
-        json.dumps(state, indent=2, ensure_ascii=False),
-        encoding="utf-8",
+    atomic_write_text(
+        _sync_state_path(for_write=True),
+        json.dumps(state, indent=2, ensure_ascii=False) + "\n",
     )
 
 
@@ -279,9 +308,8 @@ def sync_orders(
 
 
 def reset_sync_state() -> None:
-    """Kasuje state - przy nastepnej sync pobierzemy cala historie (since_days)."""
-    if _SYNC_STATE_FILE.is_file():
-        _SYNC_STATE_FILE.unlink()
+    """Resetuje state bez ponownego odslaniania legacy fallbacku."""
+    atomic_write_text(_sync_state_path(for_write=True), "{}\n")
 
 
 def get_sync_state() -> dict[str, Any]:

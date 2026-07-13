@@ -46,13 +46,29 @@ from urllib.parse import parse_qs, urlparse
 _CURSOR_API = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_CURSOR_API))
 
+from giclee_app.app_paths import atomic_write_text  # noqa: E402
+
 from Komponenty._shared import auth  # noqa: E402
+from Komponenty.produkcja import production_store  # noqa: E402
 from Komponenty.produkcja import retention, shipping  # noqa: E402
 from Komponenty.produkcja.frame_variant import migrate_order_frame_fields  # noqa: E402
 from Komponenty.produkcja.shopify_links import admin_order_url  # noqa: E402
 
-_ORDERS_FILE = _CURSOR_API / "Komponenty" / "produkcja" / "dane" / "zamowienia.json"
+_LEGACY_DATA_DIR = _CURSOR_API / "Komponenty" / "produkcja" / "dane"
+_DATA_DIR = _LEGACY_DATA_DIR
+_LEGACY_ORDERS_FILE = _LEGACY_DATA_DIR / "zamowienia.json"
+_ORDERS_FILE = _LEGACY_ORDERS_FILE
 _SESSION_FILE = _CURSOR_API / ".shopify_session.json"
+
+
+def _orders_path(*, for_write: bool) -> Path:
+    explicit = Path(_ORDERS_FILE)
+    if explicit != _LEGACY_ORDERS_FILE:
+        return explicit
+    current_dir = Path(_DATA_DIR)
+    if current_dir != _LEGACY_DATA_DIR:
+        return current_dir / "zamowienia.json"
+    return production_store.orders_write_path() if for_write else production_store.orders_read_path()
 
 
 def _session_shop_domain() -> str:
@@ -78,10 +94,11 @@ _PAINT_CURE_SECONDS = 72 * 3600
 
 
 def _load_db() -> dict:
-    if not _ORDERS_FILE.is_file():
+    path = _orders_path(for_write=False)
+    if not path.is_file():
         return {"next_id": 1, "orders": []}
     try:
-        db = json.loads(_ORDERS_FILE.read_text(encoding="utf-8"))
+        db = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return {"next_id": 1, "orders": []}
     for o in db.get("orders") or []:
@@ -90,9 +107,9 @@ def _load_db() -> dict:
 
 
 def _save_db(db: dict) -> None:
-    _ORDERS_FILE.write_text(
-        json.dumps(db, indent=2, ensure_ascii=False),
-        encoding="utf-8",
+    atomic_write_text(
+        _orders_path(for_write=True),
+        json.dumps(db, indent=2, ensure_ascii=False) + "\n",
     )
 
 
