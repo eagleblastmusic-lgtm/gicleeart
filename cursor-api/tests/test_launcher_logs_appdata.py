@@ -12,8 +12,10 @@ def _configure_paths(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> tuple[Path, Path]:
+    local_root = tmp_path / "local-root"
     legacy_dir = tmp_path / "repo" / "cursor-api" / "logs"
-    external_dir = tmp_path / "local-root" / "logs" / "components"
+    external_dir = local_root / "logs" / "components"
+    monkeypatch.setenv("GICLEEAPP_LOCAL_ROOT", str(local_root))
     monkeypatch.setattr(launcher_logs, "LEGACY_COMPONENT_LOGS_DIR", legacy_dir)
     monkeypatch.setattr(launcher_logs, "DEFAULT_COMPONENT_LOGS_DIR", external_dir)
     return legacy_dir, external_dir
