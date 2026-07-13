@@ -86,16 +86,17 @@ Preserve exactly:
 - no changes to timing constants, `after()`, scheduler ownership, telemetry or performance lanes;
 - no writer, persistence, sync, upload, publish, deploy or Shopify mutation.
 
-## 6. Imports expected to move
+## 6. Import ownership after extraction
 
 Move from `gicleeframe_view.py` only symbols with no remaining host consumer after extraction:
 
-- `CHECK_STRUCTURE_LABEL`;
 - `STRUCTURE_EMPTY_STATE`;
 - `build_page_structure_dry_run`;
 - `format_structure_dry_run_summary`;
 - `evaluate_gicleeframe_page_readiness`;
 - `format_page_readiness_block`.
+
+Retain `CHECK_STRUCTURE_LABEL` in `gicleeframe_view.py`, because the host-owned command bar still uses it for the structure-check action after the method implementation moves to the mixin.
 
 Retain all primitives and theme imports still consumed elsewhere in the host. In particular, do not remove `_make_gf_card`, `_make_card_title`, `_make_secondary_button`, `_make_empty_state` or `theme` solely because the moved methods use them.
 
@@ -106,7 +107,7 @@ Retain all primitives and theme imports still consumed elsewhere in the host. In
 Update only ownership-sensitive assertions:
 
 - structure-card, reset, action and structure-only copy move to `gicleeframe_view_structure_dry_run.py`;
-- `_build_control_column`, `_build_safety_card`, `_CONTROL_COL_MINSIZE` and safety assertions remain in `gicleeframe_view.py`;
+- `CHECK_STRUCTURE_LABEL`, `_build_control_column`, `_build_safety_card`, `_CONTROL_COL_MINSIZE` and safety assertions remain in `gicleeframe_view.py`;
 - do not satisfy tests with comments, dead aliases or copied strings;
 - add no-write/no-network/no-scheduler guardrails for the new module.
 
