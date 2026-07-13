@@ -29,8 +29,8 @@ def _configure_default_paths(
 
     monkeypatch.setenv("GICLEEAPP_LOCAL_ROOT", str(local_root))
     monkeypatch.setattr(perf, "_LEGACY_LOG_PATH", legacy)
-    monkeypatch.setattr(perf, "_DEFAULT_LOG_PATH", legacy)
-    monkeypatch.setattr(perf, "_LOG_PATH", legacy)
+    monkeypatch.setattr(perf, "_DEFAULT_LOG_PATH", external)
+    monkeypatch.setattr(perf, "_LOG_PATH", external)
     return legacy, external
 
 
