@@ -20,7 +20,7 @@ _ENV_FLAG = "GICLEE_STUDIO_PERF"
 _LEGACY_LOG_PATH = Path(__file__).resolve().parents[1] / "logs" / "studio_perf.log"
 _DEFAULT_LOG_PATH = _LEGACY_LOG_PATH
 _LOG_PATH = _DEFAULT_LOG_PATH
-_LOG_RELATIVE_PATH = "giclee_app/logs/studio_perf.log"
+_LOG_RELATIVE_PATH = "giclee_app/studio_perf.log"
 
 
 def _store():
