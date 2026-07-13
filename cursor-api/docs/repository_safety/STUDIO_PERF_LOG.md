@@ -7,7 +7,7 @@ inside the source checkout.
 ## Runtime contract
 
 - new writes target:
-  `%LOCALAPPDATA%/GicleeArt/GicleeApp/logs/giclee_app/logs/studio_perf.log`,
+  `%LOCALAPPDATA%/GicleeArt/GicleeApp/logs/giclee_app/studio_perf.log`,
 - normal resolution uses `giclee_app.app_paths.log_path`,
 - the historical `giclee_app/logs/studio_perf.log` file is copied once on the
   first external append when no external log exists,
