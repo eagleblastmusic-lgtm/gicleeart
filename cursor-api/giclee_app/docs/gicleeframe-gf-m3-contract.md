@@ -1,6 +1,6 @@
 # GF-M3 — F1 Brand Panel Extraction Contract
 
-Status: **IMPLEMENTATION PENDING**
+Status: **BOUNDARY SEEDED — MRO INTEGRATION PENDING**
 
 Repository: `eagleblastmusic-lgtm/gicleeart`  
 Base branch: `master`  
@@ -23,34 +23,41 @@ The F1 brand panel is the smallest coherent stateful UI boundary found by discov
 
 ## 2. Target architecture
 
-Create:
+Created:
 
 `cursor-api/giclee_app/ui/gicleeframe_view_brand.py`
 
-Preferred shape:
+Shape:
 
 - a narrow mixin named `GicleeFrameBrandPanelMixin`, with no `__init__`;
+- no Tk/widget base class;
 - methods moved byte-for-byte where practical;
-- explicit type-only host attributes or a small Protocol only when it improves checking without runtime coupling;
-- no import from `gicleeframe_view.py` to avoid a cycle;
-- `GicleeFrameView` inherits the mixin before `ctk.CTkScrollableFrame`.
+- no import from `gicleeframe_view.py`, avoiding an import cycle;
+- the host view retains lifecycle, scheduler and shared helper ownership;
+- final integration requires `GicleeFrameView` to inherit the mixin before `ctk.CTkScrollableFrame`.
 
 `gicleeframe_view.py` remains the public import location for `GicleeFrameView`.
 
-## 3. Candidate ownership
+## 3. Exact ownership boundary
 
-Move only F1-brand-specific behavior, after verifying the exact current method set on the pinned base:
+The mixin owns exactly:
 
-- F1 placeholder/full/deferred panel construction;
-- F1 expand/collapse handling;
-- brand variant and placement callbacks;
-- brand plan clear action;
-- brand dry-run action;
-- brand readiness rendering that is not shared with page readiness.
+1. `_build_f1_brand_section_placeholder`
+2. `_build_f1_brand_section_deferred`
+3. `_build_f1_brand_section_full`
+4. `_build_f1_brand_section_panel_content`
+5. `_build_rules_section`
+6. `_clear_brand_plan`
+7. `_fill_brand_readiness`
+8. `_on_brand_variant`
+9. `_on_brand_placement`
+10. `_run_brand_dry_run`
 
-Keep shared helpers in the main view unless discovery proves a smaller neutral shared boundary. In particular, do not move a helper merely because F1 calls it when it is also used by the F2 page readiness panel.
+The adapter `_toggle_f1_section` remains in `gicleeframe_view.py`. Discovery showed that it directly owns the lazy/progressive boot gate and the `studio.gicleeframe.f1.build_on_expand` event. Keeping that adapter in the host prevents boot-policy duplication and preserves scheduler/telemetry ownership.
 
-## 4. Imports expected to move
+The shared `_pack_readiness_row` also remains in the host because both F1 brand readiness and F2 page readiness consume it.
+
+## 4. Imports expected to move during integration
 
 Move F1-only imports out of `gicleeframe_view.py` when they have no remaining consumer there, including relevant symbols from:
 
@@ -60,7 +67,7 @@ Move F1-only imports out of `gicleeframe_view.py` when they have no remaining co
 - the brand part of `gicleeframe_readiness`;
 - UI helpers used exclusively by the brand panel.
 
-Do not move F2/page-editor imports.
+Keep imports required by the retained `_toggle_f1_section` adapter, F2 page readiness and shared helpers. Do not move F2/page-editor imports.
 
 ## 5. Compatibility contracts
 
@@ -79,31 +86,39 @@ The implementation must preserve:
 
 ## 6. Source-text tests
 
-Several tests inspect `gicleeframe_view.py` directly. Update them only where the ownership genuinely moved.
+Several tests inspect `gicleeframe_view.py` directly. Update them only where ownership genuinely moved.
 
 Rules:
 
 - do not satisfy source-text assertions with comments or dead aliases;
-- point F1-specific assertions at `gicleeframe_view_brand.py` or at the combined source set;
+- point moved F1 panel assertions at `gicleeframe_view_brand.py` or at the combined source set;
+- keep the lazy/progressive expand adapter and its event assertion pointed at `gicleeframe_view.py`;
 - keep F2, selection, scheduler and lifecycle assertions pointed at `gicleeframe_view.py`;
-- preserve meaningful assertions for the lazy F1 behavior and its event names;
-- add an identity/MRO test proving the moved methods are provided by `GicleeFrameBrandPanelMixin` and available on `GicleeFrameView`.
+- preserve meaningful assertions for lazy F1 behavior and event names;
+- add an identity/MRO test proving the moved methods are provided by `GicleeFrameBrandPanelMixin` and available on `GicleeFrameView` after integration.
 
 ## 7. New tests
 
-Create:
+Created:
 
 `cursor-api/tests/test_studio_gicleeframe_view_brand.py`
 
-Minimum coverage:
+Current boundary coverage:
 
 1. module imports without importing `Komponenty.*`;
 2. no `open`, `write_text`, `requests`, `shutil`, subprocess or Shopify operations;
 3. mixin has no `__init__` and does not subclass a Tk widget;
-4. expected F1 methods are owned by the mixin and resolve on `GicleeFrameView`;
-5. F1 labels and event markers remain present in the correct module;
-6. brand dry-run and clear callbacks retain RAM-only behavior;
-7. no boot, selection, page-context, cache, details-on-demand or lifecycle methods moved into the mixin.
+4. exact ten-method ownership;
+5. F1 labels and deferred event marker remain present;
+6. expand/collapse adapter remains host-owned;
+7. shared readiness-row renderer remains host-owned;
+8. no boot, selection, page-context, cache, details-on-demand or lifecycle methods moved into the mixin.
+
+Still required after wiring:
+
+- assert the mixin is present in `GicleeFrameView.__mro__`;
+- assert each moved method resolves from `GicleeFrameBrandPanelMixin` on `GicleeFrameView`;
+- update directly affected source-text tests to inspect the correct owner.
 
 ## 8. Exact durable allowlist
 
@@ -120,10 +135,10 @@ No `.github` changes. No workflow changes. No version bump unless an existing re
 
 ## 9. Required validation
 
-Before push:
+Before push of the integration commit:
 
 - compile changed production modules;
-- new brand-boundary tests;
+- new brand-boundary tests including final MRO assertions;
 - `test_studio_gicleeframe_shell.py`;
 - `test_studio_gicleeframe_lazy_shell_6g2.py`;
 - `test_studio_gicleeframe_lifecycle.py`;
@@ -133,7 +148,7 @@ Before push:
 - `git diff --check`;
 - exact changed-file allowlist review.
 
-CI pipeline after push:
+CI pipeline after integration push:
 
 1. draft Hermetic;
 2. artifact review;
