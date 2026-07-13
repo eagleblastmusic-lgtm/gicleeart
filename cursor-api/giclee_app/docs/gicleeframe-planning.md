@@ -292,10 +292,6 @@ Kolejne kroki modularizacji (`GF-M2+`) — osobne PR-y. **GF-M1 nie uruchamia F3
 - Moduł primitives importuje wyłącznie `Callable`, `customtkinter`, `theme` — bez os/sys/time/tkinter/Komponenty/I/O/sieci/subprocess
 - **GF-M2 nie uruchamia F3/F4 ani writera.**
 
-### Dalsze etapy
-
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M3+** — osobne PR-y.
-
 ---
 
 ## 14. GF-M3 — F1 Brand Panel Extraction
@@ -312,3 +308,26 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M3+** — osobne
   - adapter expand/collapse `_toggle_f1_section` (w tym event `studio.gicleeframe.f1.build_on_expand`),
   - wspólny renderer readiness `_pack_readiness_row`.
 - Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+---
+
+## 15. GF-M4 — F2 Page Readiness Panel Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** wydzielenie panelu readiness strony **F2** (RAM-only) z `ui/gicleeframe_view.py` do osobnego modułu, bez zmiany UI/tekstu/layoutu oraz bez naruszania lifecycle, schedulerów, telemetry i selection/performance lane hosta.
+
+### Wynik
+
+- **Panel readiness strony** przeniesiony do `ui/gicleeframe_view_page_readiness.py` jako `GicleeFramePageReadinessMixin`.
+- **Mixin nie posiada lifecycle** ani `__init__` i **nie dziedziczy** po widżecie Tk.
+- Host `GicleeFrameView` dziedziczy `GicleeFrameBrandPanelMixin` i `GicleeFramePageReadinessMixin` przed `ctk.CTkScrollableFrame`.
+- Host nadal posiada:
+  - kompozycję kolumny kontrolnej `_build_control_column`,
+  - structure dry-run `_run_structure_dry_run`,
+  - wspólny renderer readiness `_pack_readiness_row`.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M5+** — osobne PR-y.
