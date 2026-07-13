@@ -16,7 +16,7 @@ Funkcjonalnosci:
 - Przycisk 'Pobierz z Shopify' - sync zamowien z sklepu.
 - Eksport CSV listy zamowien.
 - Alerty opoznionych (>14 dni nie-wyslane) - czerwone tlo.
-- Single-source-of-truth: `Komponenty/produkcja/dane/zamowienia.json`.
+- Single-source-of-truth: Local AppData `Komponenty/produkcja/dane/zamowienia.json`.
 
 Wszystko zapisuje sie po kazdej zmianie (auto-save).
 Polling zamowien z Shopify obsluguje launcher (co 5 min) przez `orders_sync.py`.
@@ -37,6 +37,8 @@ from pathlib import Path
 from tkinter import filedialog, messagebox, scrolledtext, simpledialog, ttk
 from typing import Any
 
+from giclee_app.app_paths import atomic_write_text
+
 try:
     from Komponenty._shared.toast import show_toast
 except ImportError:  # pragma: no cover
@@ -44,6 +46,7 @@ except ImportError:  # pragma: no cover
         print(f"[toast] {text}")
 
 from Komponenty._shared.window_geometry import position_toplevel_screen_center
+from Komponenty.produkcja import production_store
 from Komponenty.produkcja.frame_variant import (
     combobox_values_with_current,
     load_frame_field_options,
@@ -54,8 +57,27 @@ from Komponenty.produkcja.passepartout import PASSEPARTOUT_DEFAULT, PASSEPARTOUT
 
 
 _COMPONENT_DIR = Path(__file__).resolve().parent
-_DATA_DIR = _COMPONENT_DIR / "dane"
-_ORDERS_FILE = _DATA_DIR / "zamowienia.json"
+_LEGACY_DATA_DIR = _COMPONENT_DIR / "dane"
+_DATA_DIR = _LEGACY_DATA_DIR
+_LEGACY_ORDERS_FILE = _LEGACY_DATA_DIR / "zamowienia.json"
+_ORDERS_FILE = _LEGACY_ORDERS_FILE
+
+
+def _data_dir_path() -> Path:
+    current = Path(_DATA_DIR)
+    if current != _LEGACY_DATA_DIR:
+        return current
+    return production_store.data_directory()
+
+
+def _orders_path(*, for_write: bool) -> Path:
+    explicit = Path(_ORDERS_FILE)
+    if explicit != _LEGACY_ORDERS_FILE:
+        return explicit
+    current_dir = Path(_DATA_DIR)
+    if current_dir != _LEGACY_DATA_DIR:
+        return current_dir / "zamowienia.json"
+    return production_store.orders_write_path() if for_write else production_store.orders_read_path()
 
 # Podpowiedzi listy (jak w sklepie — drewno / rozmiar / kolor osobno)
 # Utwardzanie farby - 72 godziny (dokladne liczenie do sekundy).
@@ -110,18 +132,17 @@ _RAMKA_STEPS: list[_StepDef] = [
 
 
 def _ensure_storage() -> None:
-    _DATA_DIR.mkdir(parents=True, exist_ok=True)
-    if not _ORDERS_FILE.exists():
-        _ORDERS_FILE.write_text(
-            json.dumps({"next_id": 1, "orders": []}, indent=2, ensure_ascii=False),
-            encoding="utf-8",
+    if not _orders_path(for_write=False).exists():
+        atomic_write_text(
+            _orders_path(for_write=True),
+            json.dumps({"next_id": 1, "orders": []}, indent=2, ensure_ascii=False) + "\n",
         )
 
 
 def _load_db() -> dict[str, Any]:
     _ensure_storage()
     try:
-        data = json.loads(_ORDERS_FILE.read_text(encoding="utf-8"))
+        data = json.loads(_orders_path(for_write=False).read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         data = {}
     if not isinstance(data, dict):
@@ -139,11 +160,10 @@ def _load_db() -> dict[str, Any]:
 
 
 def _save_db(db: dict[str, Any]) -> None:
-    _ensure_storage()
     try:
-        _ORDERS_FILE.write_text(
-            json.dumps(db, indent=2, ensure_ascii=False),
-            encoding="utf-8",
+        atomic_write_text(
+            _orders_path(for_write=True),
+            json.dumps(db, indent=2, ensure_ascii=False) + "\n",
         )
     except OSError as e:
         messagebox.showerror("Produkcja", f"Nie udalo sie zapisac:\n{e}")
@@ -2151,7 +2171,7 @@ class ProdukcjaView(ttk.Frame):
             f"Zarchiwizowano: {result['archived']} zamowien\n"
             f"Pozostalo aktywnych/zrealizowanych: {result['kept']}\n"
             f"Bledne daty: {result['errors']}\n\n"
-            f"Archiwa sa w Komponenty/produkcja/dane/archive_YYYY.json.",
+            f"Archiwa sa w: {_data_dir_path()}\archive_YYYY.json.",
             parent=self.winfo_toplevel(),
         )
 
@@ -2194,11 +2214,11 @@ class ProdukcjaView(ttk.Frame):
             import sys as _sys
 
             if _sys.platform.startswith("win"):
-                _os.startfile(str(_DATA_DIR))  # noqa: S606
+                _os.startfile(str(_data_dir_path()))  # noqa: S606
             elif _sys.platform == "darwin":
-                _sp.Popen(["open", str(_DATA_DIR)])  # noqa: S607
+                _sp.Popen(["open", str(_data_dir_path())])  # noqa: S607
             else:
-                _sp.Popen(["xdg-open", str(_DATA_DIR)])  # noqa: S607
+                _sp.Popen(["xdg-open", str(_data_dir_path())])  # noqa: S607
         except OSError as e:
             messagebox.showerror("Produkcja", f"Nie udalo sie otworzyc folderu:\n{e}")
 
@@ -2254,7 +2274,7 @@ Przycisk **⬇ Eksport CSV** zapisuje biezaca liste (po filtrach) do pliku CSV
 z separatorem `;` i BOM UTF-8 (otwiera sie poprawnie w Excelu).
 
 ## Dane
-- Wszystkie zamowienia: `Komponenty/produkcja/dane/zamowienia.json`.
+- Wszystkie zamowienia: Local AppData `Komponenty/produkcja/dane/zamowienia.json`.
 - Stan sync Shopify: `Komponenty/produkcja/dane/sync_state.json`.
 - Mozesz backupowac/wersjonowac te pliki w git.
 """
