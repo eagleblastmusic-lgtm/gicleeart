@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from giclee_app import launcher_logs
+from giclee_app import component_logs
 from tools.repository_safety.runtime_writes import scan_python_source
 
 
@@ -16,8 +16,8 @@ def _configure_paths(
     legacy_dir = tmp_path / "repo" / "cursor-api" / "logs"
     external_dir = local_root / "logs" / "components"
     monkeypatch.setenv("GICLEEAPP_LOCAL_ROOT", str(local_root))
-    monkeypatch.setattr(launcher_logs, "LEGACY_COMPONENT_LOGS_DIR", legacy_dir)
-    monkeypatch.setattr(launcher_logs, "DEFAULT_COMPONENT_LOGS_DIR", external_dir)
+    monkeypatch.setattr(component_logs, "LEGACY_COMPONENT_LOGS_DIR", legacy_dir)
+    monkeypatch.setattr(component_logs, "DEFAULT_COMPONENT_LOGS_DIR", external_dir)
     return legacy_dir, external_dir
 
 
@@ -32,7 +32,7 @@ def test_external_log_takes_precedence_for_reads(
     external = external_dir / "dodajobraz.log"
     external.write_text("external", encoding="utf-8")
 
-    result = launcher_logs.component_log_read_path("dodajobraz")
+    result = component_logs.component_log_read_path("dodajobraz")
 
     assert result == external
 
@@ -46,7 +46,7 @@ def test_missing_external_reads_legacy_without_side_effects(
     legacy = legacy_dir / "dodajobraz.log"
     legacy.write_text("legacy", encoding="utf-8")
 
-    result = launcher_logs.component_log_read_path("dodajobraz")
+    result = component_logs.component_log_read_path("dodajobraz")
 
     assert result == legacy
     assert not external_dir.exists()
@@ -62,7 +62,7 @@ def test_first_write_seeds_legacy_once_and_preserves_source(
     legacy.write_text("legacy history\n", encoding="utf-8")
     before = legacy.read_bytes()
 
-    target = launcher_logs.component_log_write_path("dodajobraz")
+    target = component_logs.component_log_write_path("dodajobraz")
     with target.open("a", encoding="utf-8") as handle:
         handle.write("new event\n")
 
@@ -71,7 +71,7 @@ def test_first_write_seeds_legacy_once_and_preserves_source(
     assert legacy.read_bytes() == before
     assert list(target.parent.glob(f".{target.name}.*.tmp")) == []
 
-    second = launcher_logs.component_log_write_path("dodajobraz")
+    second = component_logs.component_log_write_path("dodajobraz")
     assert second == target
     assert second.read_text(encoding="utf-8") == "legacy history\nnew event\n"
 
@@ -83,11 +83,11 @@ def test_explicit_logs_dir_override_remains_supported(
     _configure_paths(monkeypatch, tmp_path)
     override = tmp_path / "override-logs"
 
-    write_path = launcher_logs.component_log_write_path(
+    write_path = component_logs.component_log_write_path(
         "produkcja",
         logs_dir=override,
     )
-    read_path = launcher_logs.component_log_read_path(
+    read_path = component_logs.component_log_read_path(
         "produkcja",
         logs_dir=override,
     )
@@ -104,7 +104,7 @@ def test_unsafe_component_folder_is_rejected(
     _configure_paths(monkeypatch, tmp_path)
 
     with pytest.raises(ValueError, match="Unsafe component folder name"):
-        launcher_logs.component_log_write_path("../escape")
+        component_logs.component_log_write_path("../escape")
 
 
 def test_runtime_write_inventory_no_longer_flags_launcher_logs() -> None:
@@ -112,7 +112,7 @@ def test_runtime_write_inventory_no_longer_flags_launcher_logs() -> None:
     targets = [
         "giclee_app/launcher.py",
         "giclee_app/launcher_delegate.py",
-        "giclee_app/launcher_logs.py",
+        "giclee_app/component_logs.py",
     ]
 
     for relative in targets:
