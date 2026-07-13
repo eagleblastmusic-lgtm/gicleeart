@@ -14,6 +14,12 @@ from giclee_app.ui.gicleeframe_view import GicleeFrameView, _BACK_LABEL
 
 _STUDIO_ROOT = Path(__file__).resolve().parents[1] / "giclee_app" / "studio"
 _VIEW_PATH = Path(__file__).resolve().parents[1] / "giclee_app" / "ui" / "gicleeframe_view.py"
+_BRAND_PANEL_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "giclee_app"
+    / "ui"
+    / "gicleeframe_view_brand.py"
+)
 _PRIMITIVES_PATH = (
     Path(__file__).resolve().parents[1]
     / "giclee_app"
@@ -275,13 +281,15 @@ def test_import_gicleeframe_view_module() -> None:
 
 
 def test_view_source_plan_section() -> None:
-    text = _VIEW_PATH.read_text(encoding="utf-8")
-    assert "PLAN_SECTION_TITLE" in text
-    assert "CHECK_PLAN_LABEL" in text
-    assert "CLEAR_PLAN_LABEL" in text
-    assert "build_gicleeframe_plan_dry_run" in text
-    assert "evaluate_gicleeframe_readiness" in text
-    assert "READINESS_SECTION_LABEL" in text
+    host = _VIEW_PATH.read_text(encoding="utf-8")
+    brand = _BRAND_PANEL_PATH.read_text(encoding="utf-8")
+    assert "PLAN_SECTION_TITLE" in brand
+    assert "CHECK_PLAN_LABEL" in brand
+    assert "CLEAR_PLAN_LABEL" in brand
+    assert "build_gicleeframe_plan_dry_run" in brand
+    assert "evaluate_gicleeframe_readiness" in brand
+    assert "READINESS_SECTION_LABEL" in brand
+    text = host
     assert "REFRESH_INVENTORY_LABEL" in text
     assert "CHECK_STRUCTURE_LABEL" in text
     assert "DRAFT_RAM_DISCLAIMER" in text

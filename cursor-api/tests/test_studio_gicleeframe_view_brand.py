@@ -9,6 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from giclee_app.ui.gicleeframe_view import GicleeFrameView
 from giclee_app.ui.gicleeframe_view_brand import (
     GicleeFrameBrandPanelMixin,
     _F1_BRAND_TITLE,
@@ -111,3 +112,21 @@ def test_shared_readiness_row_renderer_remains_host_owned() -> None:
     assert "_pack_readiness_row" not in GicleeFrameBrandPanelMixin.__dict__
     source = inspect.getsource(GicleeFrameBrandPanelMixin._fill_brand_readiness)
     assert "self._pack_readiness_row" in source
+
+
+def test_brand_panel_mixin_is_wired_into_gicleeframe_view_mro() -> None:
+    assert GicleeFrameBrandPanelMixin in GicleeFrameView.__mro__
+
+
+def test_brand_methods_resolve_from_mixin_on_gicleeframe_view() -> None:
+    for name in _EXPECTED_METHODS:
+        assert hasattr(GicleeFrameView, name)
+        assert name not in GicleeFrameView.__dict__
+        assert getattr(GicleeFrameView, name) is getattr(GicleeFrameBrandPanelMixin, name)
+
+
+def test_expand_and_readiness_adapters_remain_host_owned() -> None:
+    assert "_toggle_f1_section" in GicleeFrameView.__dict__
+    assert "_toggle_f1_section" not in GicleeFrameBrandPanelMixin.__dict__
+    assert "_pack_readiness_row" in GicleeFrameView.__dict__
+    assert "_pack_readiness_row" not in GicleeFrameBrandPanelMixin.__dict__

@@ -295,3 +295,20 @@ Kolejne kroki modularizacji (`GF-M2+`) — osobne PR-y. **GF-M1 nie uruchamia F3
 ### Dalsze etapy
 
 Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M3+** — osobne PR-y.
+
+---
+
+## 14. GF-M3 — F1 Brand Panel Extraction
+
+**Status:** zakończone.
+
+**Cel:** wydzielenie panelu planowania marki **F1** (RAM-only) z `ui/gicleeframe_view.py` do osobnego modułu, bez zmiany UI/tekstu/layoutu oraz bez naruszania lifecycle, schedulerów, telemetry i selection/performance lane hosta.
+
+### Wynik
+
+- **Panel F1** przeniesiony do `ui/gicleeframe_view_brand.py` jako `GicleeFrameBrandPanelMixin`.
+- **Mixin nie posiada lifecycle** ani `__init__` i **nie dziedziczy** po widżecie Tk.
+- Host `GicleeFrameView` nadal posiada:
+  - adapter expand/collapse `_toggle_f1_section` (w tym event `studio.gicleeframe.f1.build_on_expand`),
+  - wspólny renderer readiness `_pack_readiness_row`.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
