@@ -18,11 +18,11 @@ Sekcja launchera GicleeApp: **Administracja strony** (kafelek «Karuzela»).
 
 | Plik | Rola |
 |------|------|
-| `Komponenty/karuzela/gui.py` | Panel — radio Karuzela1/2 + V1/V2/V3, podgląd, przycisk **Cytaty** |
+| `Komponenty/karuzela/gui.py` | Panel — radio Karuzela1/2 + V1/V2/V3, podgląd, jawne zastosowanie do motywu, przycisk **Cytaty** |
 | `Komponenty/karuzela/quotes_gui.py` | Widok cytatów — lista kolekcji, edycja tekstu (przejście w tym samym oknie) |
 | `Komponenty/karuzela/quotes_service.py` | Metafield + cache lokalny |
-| `Komponenty/karuzela/service.py` | `settings.json`, `assets/giclee-carousel-config.js` |
-| `Komponenty/karuzela/settings.json` | `carousel_version`, `showcase_look`, `hover_blur_enabled`, URL podglądu |
+| `Komponenty/karuzela/service.py` | Ustawienia aplikacji + bounded writer `assets/giclee-carousel-config.js` |
+| `Komponenty/karuzela/settings.json` | Legacy fallback; aktywny zapis trafia do Roaming AppData |
 | `assets/giclee-karuzela.js` | Router + `data-giclee-showcase-look` na `<html>` |
 | `assets/giclee-carousel-config.js` | Domyślne wartości po deploy motywu |
 | `assets/giclee-artist-collection-showcase.css` | V2 = domyślne tokeny; V1/V3 = override `[data-giclee-showcase-look]` |
@@ -34,12 +34,39 @@ Sekcja launchera GicleeApp: **Administracja strony** (kafelek «Karuzela»).
 
 1. GicleeApp → kafelek **Karuzela**.
 2. **Zachowanie:** Karuzela1 lub Karuzela2.
-3. **Wygląd sekcji:** V1 (ciemniejsze, sprzed korekty), V2 (jaśniejsze z teksturą) lub **V3** (spokojniejsze, mniej kontrastu — karuzela na pierwszym planie).
-4. **Zapisz** — `settings.json` + `giclee-carousel-config.js`.
-5. **Otwórz podgląd** — URL z `?giclee_karuzela=` i `?giclee_showcase_look=` (+ localStorage).
-6. **Cytaty…** — przejście do widoku cytatów w tym samym oknie (wiele cytatów per kolekcja, metafield `custom.collection_quotes`); na storefront losowy cytat przy wejściu na autora.
+3. **Wygląd sekcji:** V1, V2 lub V3.
+4. **Zapisz** — zapisuje wyłącznie ustawienia aplikacji poza repozytorium.
+5. **Otwórz podgląd** — zapisuje ustawienia aplikacji i otwiera URL z parametrami `giclee_karuzela`, `giclee_showcase_look` i `giclee_hover_blur`; nie zmienia pliku motywu.
+6. **Zastosuj do motywu…** — osobny writer z podglądem diffu, SHA przed/po, frazą `ZASTOSUJ KARUZELĘ`, stale-state check i kopią bezpieczeństwa poza repo.
+7. Po zastosowaniu do pliku lokalnego użytkownik osobno decyduje o deployu motywu. Komponent nie uruchamia deployu ani Shopify mutation.
+8. **Cytaty…** — przejście do widoku cytatów w tym samym oknie.
 
 Domyślny URL podglądu: `https://gicleeart.eu/collections/jacob-van-ruisdael`.
+
+---
+
+## Writer Safety dla konfiguracji motywu
+
+Zwykłe zapisy ustawień nigdy nie dotykają `assets/giclee-carousel-config.js`.
+
+Jawna akcja writer-a przebiega w dwóch fazach:
+
+1. `build_theme_config_plan(...)`:
+   - rozwiązuje dokładnie jeden dozwolony cel,
+   - czyta stan bieżący,
+   - generuje deterministyczny kandydat,
+   - oblicza SHA-256,
+   - buduje unified diff,
+   - nie tworzy katalogów i niczego nie zapisuje;
+2. `apply_theme_config_plan(...)`:
+   - wymaga dokładnej frazy `ZASTOSUJ KARUZELĘ`,
+   - sprawdza, czy cel nie został zmieniony po preview,
+   - blokuje plan przekierowany na inny plik,
+   - tworzy dokładną kopię wersji „przed” w Local AppData `backups/Komponenty/karuzela/theme_config/`,
+   - wykonuje zapis atomowy,
+   - odczytuje plik ponownie i weryfikuje końcowy SHA.
+
+Brak zmian nie tworzy backupu i nie przepisuje pliku.
 
 ---
 
@@ -49,39 +76,35 @@ Domyślny URL podglądu: `https://gicleeart.eu/collections/jacob-van-ruisdael`.
 |---------|-------------|
 | Metafield (lista) | `custom.collection_quotes` (type `json`, storefront `PUBLIC_READ`) |
 | Metafield (legacy) | `custom.collection_quote` — pierwszy cytat z listy (kompatybilność) |
-| Cache lokalny | `Komponenty/karuzela/data/collection_quotes.json` (wersja 2, pole `quotes: []`, snapshot `catalog`) |
+| Cache lokalny | Local AppData, legacy fallback `Komponenty/karuzela/data/collection_quotes.json` |
 
 **Wydajność:** lista kolekcji + oba metafieldy cytatów w **jednym** przebiegu GraphQL. Przy starcie UI — ostatni snapshot z cache, potem odświeżenie w tle.
 
 **GUI:** lista cytatów per kolekcja — **Dodaj cytat**, **Usuń zaznaczony**, edytor, **Zapisz cytaty**. Kolumna statusu pokazuje liczbę cytatów.
 
-**Storefront:** overlay w sekcji galerii — przy zmianie autora wybierany cytat z listy, **najpierw ten, którego użytkownik jeszcze nie widział** (localStorage `giclee-gacs-seen-quotes`; po obejrzeniu wszystkich — cykl od nowa). Stały do następnej zmiany autora. Fallback: pojedynczy `collection_quote`. Pliki: `giclee-showcase-slide-overlays.js`, `giclee-artist-showcase-artist-json.liquid`, `giclee-artist-collection-showcase.liquid`.
+**Storefront:** overlay w sekcji galerii — przy zmianie autora wybierany cytat z listy, najpierw ten, którego użytkownik jeszcze nie widział. Fallback: pojedynczy `collection_quote`.
 
-Przy pierwszym zapisie komponent tworzy definicję metafield (GraphQL). Wzorzec jak [`tldobio.md`](tldobio.md).
+Przy pierwszym zapisie komponent tworzy definicję metafield GraphQL. Ten writer Shopify pozostaje osobnym workflow i nie jest częścią zastosowania konfiguracji karuzeli do lokalnego pliku motywu.
 
 ---
 
-## Persystencja (kolejność)
+## Persystencja na storefront
 
 **Karuzela1/2:** URL `?giclee_karuzela=` → `localStorage` `giclee-carousel-version` → `__GICLEE_CAROUSEL_DEFAULT` → Karuzela1.
 
 **Wygląd V1/V2/V3:** URL `?giclee_showcase_look=` → `localStorage` `giclee-showcase-look` → `__GICLEE_SHOWCASE_LOOK_DEFAULT` → V2.
 
-| Wersja | Opis |
-|--------|------|
-| V1 | Ciemniejsze tło sprzed korekty balansu |
-| V2 | Jaśniejsze tło z większą teksturą (domyślne) |
-| V3 | Widoczne tło, ~12% mniej kontrastu/nasycenia — uspokojone względem karuzeli |
+**Rozmycie tła:** URL `?giclee_hover_blur=on|off` → `localStorage` `giclee-karuzela-hover-blur` → `__GICLEE_HOVER_BLUR_ENABLED` → domyślnie wł.
 
-**Rozmycie tła (hover):** URL `?giclee_hover_blur=on|off` → `localStorage` `giclee-karuzela-hover-blur` → `__GICLEE_HOVER_BLUR_ENABLED` → domyślnie wł. Storefront: klasa `is-gac-k2-hover-blur` na sekcji przy hoverze obrazu (blur 6px); wyłączone na touch i `prefers-reduced-motion`.
-
-**API w przeglądarce:** `GicleeKaruzela.setVersion('Karuzela2')`, `GicleeKaruzela.setShowcaseLook('V3')`, `GicleeKaruzela.setHoverBlur(true)` — przeładowuje stronę.
+**API w przeglądarce:** `GicleeKaruzela.setVersion('Karuzela2')`, `GicleeKaruzela.setShowcaseLook('V3')`, `GicleeKaruzela.setHoverBlur(true)`.
 
 ---
 
 ## Deploy motywu
 
-Po **Zapisz** w GicleeApp wdrożyć m.in.:
+Po jawnej akcji **Zastosuj do motywu…** plik jest zmieniony wyłącznie lokalnie. Deploy pozostaje osobną, świadomą operacją.
+
+Do wdrożenia mogą należeć:
 
 - `assets/giclee-carousel-config.js`
 - `assets/giclee-karuzela.js`
