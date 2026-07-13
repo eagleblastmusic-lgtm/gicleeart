@@ -31,7 +31,7 @@ from .launcher_layout import (
     resolve_sections,
 )
 from .launcher_options import show_launcher_options
-from .launcher_logs import (
+from .component_logs import (
     DEFAULT_COMPONENT_LOGS_DIR,
     component_log_read_path,
     component_log_write_path,
