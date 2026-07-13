@@ -21,7 +21,7 @@ concurrency:
 jobs:
   hermetic-smoke:
     name: Hermetic smoke (Windows / Python 3.13)
-    runs-on: [self-hosted, Windows, X64, giclee-ci]
+    runs-on: windows-latest
     timeout-minutes: 20
     env:
       PYTHONUTF8: "1"
@@ -119,7 +119,7 @@ jobs:
         github.event_name == 'workflow_dispatch' ||
         (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
       )
-    runs-on: [self-hosted, Windows, X64, giclee-ci]
+    runs-on: windows-latest
     timeout-minutes: 25
     env:
       PYTHONUTF8: "1"
@@ -248,7 +248,7 @@ jobs:
         github.event_name == 'workflow_dispatch' ||
         (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
       )
-    runs-on: [self-hosted, Windows, X64, giclee-ci]
+    runs-on: windows-latest
     timeout-minutes: 45
     env:
       PYTHONUTF8: "1"
