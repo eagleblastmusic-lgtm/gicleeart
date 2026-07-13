@@ -15,19 +15,36 @@ from giclee_app.app_paths import data_path
 COMPONENT_DIR = Path(__file__).resolve().parent
 DATA_DIR = COMPONENT_DIR / "data"
 
-_DEFAULT_TEST_PHOTOS_DIR = DATA_DIR / "test_photos"
-_DEFAULT_WW_PAIRS_DIR = DATA_DIR / "ww_pairs"
+_LEGACY_TEST_PHOTOS_DIR = DATA_DIR / "test_photos"
+_LEGACY_WW_PAIRS_DIR = DATA_DIR / "ww_pairs"
+_RUNTIME_ROOT = "Komponenty/print_optimize/data"
+
+
+def _runtime_default(leaf: str, *, legacy: Path) -> Path:
+    return data_path(f"{_RUNTIME_ROOT}/{leaf}", legacy=legacy).write_path
+
+
+_DEFAULT_TEST_PHOTOS_DIR = _runtime_default("test_photos", legacy=_LEGACY_TEST_PHOTOS_DIR)
+_DEFAULT_WW_PAIRS_DIR = _runtime_default("ww_pairs", legacy=_LEGACY_WW_PAIRS_DIR)
 
 # Publiczne stałe pozostają kompatybilnymi punktami override dla testów i
-# narzędzi. Gdy nie zostały zmienione, resolvery kierują domyślny workspace do
-# Local AppData zamiast zapisywać w checkoutcie.
+# narzędzi. Ich wartości domyślne są już poza checkoutem.
 TEST_PHOTOS_DIR = _DEFAULT_TEST_PHOTOS_DIR
 WW_PAIRS_DIR = _DEFAULT_WW_PAIRS_DIR
 
-_RUNTIME_ROOT = "Komponenty/print_optimize/data"
 _DIRECTORY_CONSTANTS = {
-    "TEST_PHOTOS_DIR": ("TEST_PHOTOS_DIR", "_DEFAULT_TEST_PHOTOS_DIR", "test_photos"),
-    "WW_PAIRS_DIR": ("WW_PAIRS_DIR", "_DEFAULT_WW_PAIRS_DIR", "ww_pairs"),
+    "TEST_PHOTOS_DIR": (
+        "TEST_PHOTOS_DIR",
+        "_DEFAULT_TEST_PHOTOS_DIR",
+        "_LEGACY_TEST_PHOTOS_DIR",
+        "test_photos",
+    ),
+    "WW_PAIRS_DIR": (
+        "WW_PAIRS_DIR",
+        "_DEFAULT_WW_PAIRS_DIR",
+        "_LEGACY_WW_PAIRS_DIR",
+        "ww_pairs",
+    ),
 }
 
 
@@ -40,7 +57,7 @@ def _explicit_directory_override(
 
     name = str(constant_name).strip()
     try:
-        current_name, default_name, _leaf = _DIRECTORY_CONSTANTS[name]
+        current_name, default_name, _legacy_name, _leaf = _DIRECTORY_CONSTANTS[name]
     except KeyError as exc:
         raise ValueError(f"Niebezpieczna stała katalogu Print Optimize: {constant_name!r}") from exc
 
@@ -62,9 +79,8 @@ def _workspace_dir(constant_name: str, *, for_write: bool) -> Path:
     if override is not None:
         return override
 
-    _current_name, default_name, leaf = _DIRECTORY_CONSTANTS[constant_name]
-    legacy = Path(globals()[default_name])
-    path = data_path(f"{_RUNTIME_ROOT}/{leaf}", legacy=legacy).write_path
+    _current_name, _default_name, legacy_name, leaf = _DIRECTORY_CONSTANTS[constant_name]
+    path = _runtime_default(leaf, legacy=Path(globals()[legacy_name]))
     if for_write:
         path.mkdir(parents=True, exist_ok=True)
     return path
