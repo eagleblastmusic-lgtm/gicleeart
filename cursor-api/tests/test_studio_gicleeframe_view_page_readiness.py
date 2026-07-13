@@ -214,8 +214,5 @@ def test_page_readiness_methods_resolve_from_mixin_on_gicleeframe_view() -> None
 
 def test_control_orchestration_and_shared_renderer_remain_host_owned() -> None:
     assert "_build_control_column" in GicleeFrameView.__dict__
-    assert "_build_control_structure_card" in GicleeFrameView.__dict__
     assert "_build_safety_card" in GicleeFrameView.__dict__
-    assert "_run_structure_dry_run" in GicleeFrameView.__dict__
     assert "_pack_readiness_row" in GicleeFrameView.__dict__
-    assert "_reset_structure_dry_run_display" in GicleeFrameView.__dict__

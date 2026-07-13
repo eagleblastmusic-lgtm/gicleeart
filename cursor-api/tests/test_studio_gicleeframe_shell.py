@@ -32,6 +32,12 @@ _PAGE_READINESS_VIEW_PATH = (
     / "ui"
     / "gicleeframe_view_page_readiness.py"
 )
+_STRUCTURE_DRY_RUN_VIEW_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "giclee_app"
+    / "ui"
+    / "gicleeframe_view_structure_dry_run.py"
+)
 _NEW_PLANNING_MODULES = (
     "gicleeframe_brief.py",
     "gicleeframe_draft_state.py",
@@ -120,11 +126,11 @@ def test_view_source_f21_editor_labels() -> None:
     assert "_structure_dry_run_btn" in text
     assert "_build_control_column" in text
     assert "_build_safety_card" in text
+    assert "_CONTROL_COL_MINSIZE" in text
     assert "SECTION_LIST_TITLE" in text
     assert "APPLY_RAM_MICROCOPY" in text
     assert "PANEL_STATUS_UNSAVED" in text
     assert "_make_primary_button" in text
-    assert "STRUCTURE_EMPTY_STATE" in text
     assert "_build_setting_group_card" in text
     assert "divider_setting_groups" in text
     assert "_make_empty_state" in text
@@ -335,3 +341,24 @@ def test_page_readiness_view_source_contract() -> None:
 
 def test_page_readiness_view_source_no_write_or_network() -> None:
     _assert_no_writes_in_source(_PAGE_READINESS_VIEW_PATH)
+
+
+def test_structure_dry_run_view_source_contract() -> None:
+    text = _STRUCTURE_DRY_RUN_VIEW_PATH.read_text(encoding="utf-8")
+    assert "_build_control_structure_card" in text
+    assert "_reset_structure_dry_run_display" in text
+    assert "_run_structure_dry_run" in text
+    assert "STRUCTURE_EMPTY_STATE" in text
+    assert "_STRUCTURE_DRY_RUN_WRAPLENGTH = 292" in text
+    assert "Podgląd struktury" in text
+
+
+def test_structure_dry_run_view_source_no_write_or_network() -> None:
+    _assert_no_writes_in_source(_STRUCTURE_DRY_RUN_VIEW_PATH)
+    text = _STRUCTURE_DRY_RUN_VIEW_PATH.read_text(encoding="utf-8")
+    for forbidden_text in (
+        "after(",
+        "after_idle(",
+        "after_cancel(",
+    ):
+        assert forbidden_text not in text
