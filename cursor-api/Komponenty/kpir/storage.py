@@ -11,7 +11,7 @@ import json
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from giclee_app.app_paths import AppPath, atomic_write_text, config_path, data_path
 
@@ -65,23 +65,62 @@ _DOCUMENTS_MARKER = data_path(
     legacy=_LEGACY_DOCUMENTS_DIR / ".path",
 )
 
+_StoreName = Literal["settings", "db", "changelog"]
+_STORE_SPECS: dict[_StoreName, tuple[str, str, AppPath, str]] = {
+    "settings": (
+        "_SETTINGS_FILE",
+        "_DEFAULT_SETTINGS_FILE",
+        _SETTINGS,
+        "kpir_settings.json",
+    ),
+    "db": (
+        "_DB_FILE",
+        "_DEFAULT_DB_FILE",
+        _DB,
+        "kpir.json",
+    ),
+    "changelog": (
+        "_CHANGELOG_FILE",
+        "_DEFAULT_CHANGELOG_FILE",
+        _CHANGELOG,
+        "kpir_changelog.jsonl",
+    ),
+}
 
-def _compat_data_path(current: Path, default: Path, name: str) -> Path | None:
-    current = Path(current)
+
+def _store_spec(name: _StoreName) -> tuple[str, str, AppPath, str]:
+    try:
+        return _STORE_SPECS[name]
+    except KeyError as exc:  # pragma: no cover - Literal + explicit tests
+        raise ValueError(f"Nieznany magazyn KPiR: {name!r}") from exc
+
+
+def _compat_store_override(name: _StoreName) -> Path | None:
+    """Zwróć jawny override testowy/narzędziowy, jeśli jest aktywny."""
+
+    current_name, default_name, _spec, filename = _store_spec(name)
+    current = Path(globals()[current_name])
+    default = Path(globals()[default_name])
     if current != default:
         return current
     if Path(_DATA_DIR) != _LEGACY_DATA_DIR:
-        return Path(_DATA_DIR) / name
+        return Path(_DATA_DIR) / filename
     return None
 
 
-def _read_path(current: Path, default: Path, spec: AppPath, name: str) -> Path:
-    override = _compat_data_path(current, default, name)
+def _read_store_path(name: _StoreName) -> Path:
+    """AppData-first read z read-only fallbackiem do legacy."""
+
+    _current_name, _default_name, spec, _filename = _store_spec(name)
+    override = _compat_store_override(name)
     return override if override is not None else spec.read_path()
 
 
-def _write_path(current: Path, default: Path, spec: AppPath, name: str) -> Path:
-    override = _compat_data_path(current, default, name)
+def _write_store_path(name: _StoreName) -> Path:
+    """Jedyna granica zapisu dla plikowych magazynów KPiR."""
+
+    _current_name, _default_name, spec, _filename = _store_spec(name)
+    override = _compat_store_override(name)
     return override if override is not None else spec.write_path
 
 
@@ -92,14 +131,18 @@ def _documents_base() -> Path:
 
 
 def ensure_dirs() -> None:
-    _write_path(_DB_FILE, _DEFAULT_DB_FILE, _DB, "kpir.json").parent.mkdir(parents=True, exist_ok=True)
-    _write_path(
-        _SETTINGS_FILE,
-        _DEFAULT_SETTINGS_FILE,
-        _SETTINGS,
-        "kpir_settings.json",
-    ).parent.mkdir(parents=True, exist_ok=True)
-    for sub in ("sales", "costs", "invoices", "corrections", "kpir", "exports", "inventory", "fixed_assets"):
+    _write_store_path("db").parent.mkdir(parents=True, exist_ok=True)
+    _write_store_path("settings").parent.mkdir(parents=True, exist_ok=True)
+    for sub in (
+        "sales",
+        "costs",
+        "invoices",
+        "corrections",
+        "kpir",
+        "exports",
+        "inventory",
+        "fixed_assets",
+    ):
         (_documents_base() / sub).mkdir(parents=True, exist_ok=True)
 
 
@@ -111,13 +154,8 @@ def documents_dir_for(sub: str, year: int, month: int) -> Path:
     return path
 
 
-def _read_json(path: Path, default: Any) -> Any:
-    if Path(path) == Path(_SETTINGS_FILE):
-        path = _read_path(_SETTINGS_FILE, _DEFAULT_SETTINGS_FILE, _SETTINGS, "kpir_settings.json")
-    elif Path(path) == Path(_DB_FILE):
-        path = _read_path(_DB_FILE, _DEFAULT_DB_FILE, _DB, "kpir.json")
-    else:
-        path = Path(path)
+def _read_json(store_name: Literal["settings", "db"], default: Any) -> Any:
+    path = _read_store_path(store_name)
     if not path.is_file():
         return default
     try:
@@ -126,30 +164,24 @@ def _read_json(path: Path, default: Any) -> Any:
         return default
 
 
-def _write_json(path: Path, data: Any) -> None:
-    if Path(path) == Path(_SETTINGS_FILE):
-        path = _write_path(_SETTINGS_FILE, _DEFAULT_SETTINGS_FILE, _SETTINGS, "kpir_settings.json")
-    elif Path(path) == Path(_DB_FILE):
-        path = _write_path(_DB_FILE, _DEFAULT_DB_FILE, _DB, "kpir.json")
-    else:
-        path = Path(path)
+def _write_json(store_name: Literal["settings", "db"], data: Any) -> None:
     atomic_write_text(
-        path,
+        _write_store_path(store_name),
         json.dumps(data, ensure_ascii=False, indent=2),
     )
 
 
 def load_settings() -> KpirSettings:
-    raw = _read_json(_SETTINGS_FILE, {})
+    raw = _read_json("settings", {})
     return KpirSettings.from_dict(raw if isinstance(raw, dict) else {})
 
 
 def save_settings(settings: KpirSettings) -> None:
-    _write_json(_SETTINGS_FILE, settings.to_dict())
+    _write_json("settings", settings.to_dict())
 
 
-def load_db() -> dict[str, Any]:
-    raw = _read_json(_DB_FILE, {
+def _empty_db() -> dict[str, Any]:
+    return {
         "next_entry_id": 1,
         "next_cost_id": 1,
         "next_recurring_id": 1,
@@ -167,292 +199,16 @@ def load_db() -> dict[str, Any]:
         "vehicles": [],
         "mileage_log": [],
         "fx_settlements": [],
-    })
-    if not isinstance(raw, dict):
-        return {
-            "next_entry_id": 1,
-            "next_cost_id": 1,
-            "next_recurring_id": 1,
-            "entries": [],
-            "costs": [],
-            "recurring": [],
-            "month_closures": [],
-            "skipped_orders": [],
-            "inventories": [],
-            "fixed_assets": [],
-            "sales_register": [],
-            "goods_receipts_pending": [],
-            "year_closures": [],
-            "intangible_assets": [],
-            "vehicles": [],
-            "mileage_log": [],
-            "fx_settlements": [],
-        }
-    return raw
+    }
+
+
+def load_db() -> dict[str, Any]:
+    raw = _read_json("db", _empty_db())
+    return raw if isinstance(raw, dict) else _empty_db()
 
 
 def save_db(db: dict[str, Any]) -> None:
-    _write_json(_DB_FILE, db)
-
-
-def list_entries() -> list[KpirEntry]:
-    db = load_db()
-    return [KpirEntry.from_dict(x) for x in (db.get("entries") or [])]
-
-
-def get_entry(entry_id: str) -> KpirEntry | None:
-    for e in list_entries():
-        if e.id == entry_id:
-            return e
-    return None
-
-
-def save_entry(entry: KpirEntry) -> None:
-    db = load_db()
-    rows = db.setdefault("entries", [])
-    replaced = False
-    for idx, row in enumerate(rows):
-        if row.get("id") == entry.id:
-            rows[idx] = entry.to_dict()
-            replaced = True
-            break
-    if not replaced:
-        rows.append(entry.to_dict())
-    save_db(db)
-
-
-def new_entry_id() -> str:
-    db = load_db()
-    n = int(db.get("next_entry_id") or 1)
-    db["next_entry_id"] = n + 1
-    save_db(db)
-    return f"KPIR-{n:06d}"
-
-
-def new_entry_number(year: int | None = None) -> str:
-    y = year or datetime.now().year
-    db = load_db()
-    key = f"entry_seq_{y}"
-    n = int(db.get(key) or 1)
-    db[key] = n + 1
-    save_db(db)
-    return f"K/{y}/{n:04d}"
-
-
-def list_costs() -> list[CostRecord]:
-    db = load_db()
-    return [CostRecord.from_dict(x) for x in (db.get("costs") or [])]
-
-
-def get_cost(cost_id: str) -> CostRecord | None:
-    for c in list_costs():
-        if c.id == cost_id:
-            return c
-    return None
-
-
-def save_cost(cost: CostRecord) -> None:
-    db = load_db()
-    rows = db.setdefault("costs", [])
-    replaced = False
-    for idx, row in enumerate(rows):
-        if row.get("id") == cost.id:
-            rows[idx] = cost.to_dict()
-            replaced = True
-            break
-    if not replaced:
-        rows.append(cost.to_dict())
-    save_db(db)
-
-
-def delete_cost_record(cost_id: str) -> bool:
-    """Usuwa koszt z bazy. Zwraca False, gdy nie znaleziono."""
-    db = load_db()
-    rows = db.get("costs") or []
-    filtered = [r for r in rows if r.get("id") != cost_id]
-    if len(filtered) == len(rows):
-        return False
-    db["costs"] = filtered
-    save_db(db)
-    return True
-
-
-def delete_entry_record(entry_id: str) -> bool:
-    """Usuwa wpis KPiR z bazy (np. po usunięciu faktury testowej)."""
-    db = load_db()
-    rows = db.get("entries") or []
-    filtered = [r for r in rows if r.get("id") != entry_id]
-    if len(filtered) == len(rows):
-        return False
-    db["entries"] = filtered
-    save_db(db)
-    return True
-
-
-def new_cost_id() -> str:
-    db = load_db()
-    n = int(db.get("next_cost_id") or 1)
-    db["next_cost_id"] = n + 1
-    save_db(db)
-    return f"COST-{n:06d}"
-
-
-def list_recurring() -> list[RecurringCost]:
-    db = load_db()
-    return [RecurringCost.from_dict(x) for x in (db.get("recurring") or [])]
-
-
-def save_recurring(item: RecurringCost) -> None:
-    db = load_db()
-    rows = db.setdefault("recurring", [])
-    replaced = False
-    for idx, row in enumerate(rows):
-        if row.get("id") == item.id:
-            rows[idx] = item.to_dict()
-            replaced = True
-            break
-    if not replaced:
-        rows.append(item.to_dict())
-    save_db(db)
-
-
-def delete_recurring(item_id: str) -> None:
-    db = load_db()
-    db["recurring"] = [x for x in (db.get("recurring") or []) if x.get("id") != item_id]
-    save_db(db)
-
-
-def new_recurring_id() -> str:
-    db = load_db()
-    n = int(db.get("next_recurring_id") or 1)
-    db["next_recurring_id"] = n + 1
-    save_db(db)
-    return f"REC-{n:06d}"
-
-
-def list_month_closures() -> list[MonthClosure]:
-    db = load_db()
-    return [MonthClosure.from_dict(x) for x in (db.get("month_closures") or [])]
-
-
-def get_month_closure(year: int, month: int) -> MonthClosure | None:
-    for m in list_month_closures():
-        if m.year == year and m.month == month:
-            return m
-    return None
-
-
-def save_month_closure(closure: MonthClosure) -> None:
-    db = load_db()
-    rows = db.setdefault("month_closures", [])
-    replaced = False
-    for idx, row in enumerate(rows):
-        if row.get("year") == closure.year and row.get("month") == closure.month:
-            rows[idx] = closure.to_dict()
-            replaced = True
-            break
-    if not replaced:
-        rows.append(closure.to_dict())
-    save_db(db)
-
-
-def is_month_closed(year: int, month: int) -> bool:
-    mc = get_month_closure(year, month)
-    return bool(mc and mc.is_closed)
-
-
-def entries_for_order(shopify_order_id: int) -> list[KpirEntry]:
-    return [
-        e for e in list_entries()
-        if e.shopify_order_id == shopify_order_id and e.status in ("posted", "corrected", "draft")
-    ]
-
-
-def posted_entry_for_order(shopify_order_id: int) -> KpirEntry | None:
-    for e in list_entries():
-        if (
-            e.shopify_order_id == shopify_order_id
-            and e.entry_type == "revenue"
-            and e.status in ("posted", "corrected")
-            and e.source in ("shopify", "invoice")
-        ):
-            return e
-    return None
-
-
-def posted_entry_for_invoice(invoice_id: str) -> KpirEntry | None:
-    for e in list_entries():
-        if e.invoice_id == invoice_id and e.status in ("posted", "corrected"):
-            return e
-    return None
-
-
-def posted_entry_for_dnr_sale(dnr_sale_id: str) -> KpirEntry | None:
-    for e in list_entries():
-        if e.dnr_sale_id == dnr_sale_id and e.status in ("posted", "corrected"):
-            return e
-    return None
-
-
-def posted_entry_for_dnr_cost(dnr_cost_id: str) -> KpirEntry | None:
-    for e in list_entries():
-        if e.dnr_cost_id == dnr_cost_id and e.status in ("posted", "corrected"):
-            return e
-    return None
-
-
-def skip_order(shopify_order_id: int) -> None:
-    db = load_db()
-    skipped = set(db.get("skipped_orders") or [])
-    skipped.add(shopify_order_id)
-    db["skipped_orders"] = sorted(skipped)
-    save_db(db)
-
-
-def is_order_skipped(shopify_order_id: int) -> bool:
-    db = load_db()
-    return shopify_order_id in (db.get("skipped_orders") or [])
-
-
-def append_changelog(entry: ChangeLogEntry) -> None:
-    override = _compat_data_path(
-        _CHANGELOG_FILE,
-        _DEFAULT_CHANGELOG_FILE,
-        "kpir_changelog.jsonl",
-    )
-    if override is None:
-        path = _CHANGELOG.seed_from_legacy()
-    else:
-        path = override
-        path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(entry.to_dict(), ensure_ascii=False) + "\n")
-
-
-def new_changelog_id() -> str:
-    return str(uuid.uuid4())[:12]
-
-
-def list_changelog_for_entry(entry_id: str) -> list[ChangeLogEntry]:
-    path = _read_path(
-        _CHANGELOG_FILE,
-        _DEFAULT_CHANGELOG_FILE,
-        _CHANGELOG,
-        "kpir_changelog.jsonl",
-    )
-    if not path.is_file():
-        return []
-    out: list[ChangeLogEntry] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        if not line.strip():
-            continue
-        try:
-            data = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        if data.get("entry_id") == entry_id:
-            out.append(ChangeLogEntry.from_dict(data))
-    return out
+    _write_json("db", db)
 
 
 def _list_collection(key: str, model_cls):
@@ -480,6 +236,214 @@ def _next_seq(key: str, prefix: str) -> str:
     db[key] = n + 1
     save_db(db)
     return f"{prefix}-{n:06d}"
+
+
+def list_entries() -> list[KpirEntry]:
+    return _list_collection("entries", KpirEntry)
+
+
+def get_entry(entry_id: str) -> KpirEntry | None:
+    for entry in list_entries():
+        if entry.id == entry_id:
+            return entry
+    return None
+
+
+def save_entry(entry: KpirEntry) -> None:
+    _save_collection_item("entries", entry)
+
+
+def new_entry_id() -> str:
+    return _next_seq("next_entry_id", "KPIR")
+
+
+def new_entry_number(year: int | None = None) -> str:
+    selected_year = year or datetime.now().year
+    db = load_db()
+    key = f"entry_seq_{selected_year}"
+    number = int(db.get(key) or 1)
+    db[key] = number + 1
+    save_db(db)
+    return f"K/{selected_year}/{number:04d}"
+
+
+def list_costs() -> list[CostRecord]:
+    return _list_collection("costs", CostRecord)
+
+
+def get_cost(cost_id: str) -> CostRecord | None:
+    for cost in list_costs():
+        if cost.id == cost_id:
+            return cost
+    return None
+
+
+def save_cost(cost: CostRecord) -> None:
+    _save_collection_item("costs", cost)
+
+
+def delete_cost_record(cost_id: str) -> bool:
+    """Usuwa koszt z bazy. Zwraca False, gdy nie znaleziono."""
+
+    db = load_db()
+    rows = db.get("costs") or []
+    filtered = [row for row in rows if row.get("id") != cost_id]
+    if len(filtered) == len(rows):
+        return False
+    db["costs"] = filtered
+    save_db(db)
+    return True
+
+
+def delete_entry_record(entry_id: str) -> bool:
+    """Usuwa wpis KPiR z bazy (np. po usunięciu faktury testowej)."""
+
+    db = load_db()
+    rows = db.get("entries") or []
+    filtered = [row for row in rows if row.get("id") != entry_id]
+    if len(filtered) == len(rows):
+        return False
+    db["entries"] = filtered
+    save_db(db)
+    return True
+
+
+def new_cost_id() -> str:
+    return _next_seq("next_cost_id", "COST")
+
+
+def list_recurring() -> list[RecurringCost]:
+    return _list_collection("recurring", RecurringCost)
+
+
+def save_recurring(item: RecurringCost) -> None:
+    _save_collection_item("recurring", item)
+
+
+def delete_recurring(item_id: str) -> None:
+    db = load_db()
+    db["recurring"] = [
+        row for row in (db.get("recurring") or []) if row.get("id") != item_id
+    ]
+    save_db(db)
+
+
+def new_recurring_id() -> str:
+    return _next_seq("next_recurring_id", "REC")
+
+
+def list_month_closures() -> list[MonthClosure]:
+    return _list_collection("month_closures", MonthClosure)
+
+
+def get_month_closure(year: int, month: int) -> MonthClosure | None:
+    for closure in list_month_closures():
+        if closure.year == year and closure.month == month:
+            return closure
+    return None
+
+
+def save_month_closure(closure: MonthClosure) -> None:
+    db = load_db()
+    rows = db.setdefault("month_closures", [])
+    for idx, row in enumerate(rows):
+        if row.get("year") == closure.year and row.get("month") == closure.month:
+            rows[idx] = closure.to_dict()
+            save_db(db)
+            return
+    rows.append(closure.to_dict())
+    save_db(db)
+
+
+def is_month_closed(year: int, month: int) -> bool:
+    closure = get_month_closure(year, month)
+    return bool(closure and closure.is_closed)
+
+
+def entries_for_order(shopify_order_id: int) -> list[KpirEntry]:
+    return [
+        entry
+        for entry in list_entries()
+        if entry.shopify_order_id == shopify_order_id
+        and entry.status in ("posted", "corrected", "draft")
+    ]
+
+
+def posted_entry_for_order(shopify_order_id: int) -> KpirEntry | None:
+    for entry in list_entries():
+        if (
+            entry.shopify_order_id == shopify_order_id
+            and entry.entry_type == "revenue"
+            and entry.status in ("posted", "corrected")
+            and entry.source in ("shopify", "invoice")
+        ):
+            return entry
+    return None
+
+
+def posted_entry_for_invoice(invoice_id: str) -> KpirEntry | None:
+    for entry in list_entries():
+        if entry.invoice_id == invoice_id and entry.status in ("posted", "corrected"):
+            return entry
+    return None
+
+
+def posted_entry_for_dnr_sale(dnr_sale_id: str) -> KpirEntry | None:
+    for entry in list_entries():
+        if entry.dnr_sale_id == dnr_sale_id and entry.status in ("posted", "corrected"):
+            return entry
+    return None
+
+
+def posted_entry_for_dnr_cost(dnr_cost_id: str) -> KpirEntry | None:
+    for entry in list_entries():
+        if entry.dnr_cost_id == dnr_cost_id and entry.status in ("posted", "corrected"):
+            return entry
+    return None
+
+
+def skip_order(shopify_order_id: int) -> None:
+    db = load_db()
+    skipped = set(db.get("skipped_orders") or [])
+    skipped.add(shopify_order_id)
+    db["skipped_orders"] = sorted(skipped)
+    save_db(db)
+
+
+def is_order_skipped(shopify_order_id: int) -> bool:
+    return shopify_order_id in (load_db().get("skipped_orders") or [])
+
+
+def append_changelog(entry: ChangeLogEntry) -> None:
+    override = _compat_store_override("changelog")
+    if override is None:
+        path = _CHANGELOG.seed_from_legacy()
+    else:
+        path = override
+        path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(entry.to_dict(), ensure_ascii=False) + "\n")
+
+
+def new_changelog_id() -> str:
+    return str(uuid.uuid4())[:12]
+
+
+def list_changelog_for_entry(entry_id: str) -> list[ChangeLogEntry]:
+    path = _read_store_path("changelog")
+    if not path.is_file():
+        return []
+    output: list[ChangeLogEntry] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        try:
+            data = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if data.get("entry_id") == entry_id:
+            output.append(ChangeLogEntry.from_dict(data))
+    return output
 
 
 def list_inventories() -> list[InventoryRecord]:
@@ -604,9 +568,9 @@ def list_year_closures() -> list[YearClosure]:
 
 
 def get_year_closure(year: int) -> YearClosure | None:
-    for yc in list_year_closures():
-        if yc.year == year:
-            return yc
+    for closure in list_year_closures():
+        if closure.year == year:
+            return closure
     return None
 
 
@@ -614,17 +578,15 @@ def save_year_closure(closure: YearClosure) -> None:
     db = load_db()
     rows = db.setdefault("year_closures", [])
     data = closure.to_dict()
-    replaced = False
     for idx, row in enumerate(rows):
         if row.get("year") == closure.year:
             rows[idx] = data
-            replaced = True
-            break
-    if not replaced:
-        rows.append(data)
+            save_db(db)
+            return
+    rows.append(data)
     save_db(db)
 
 
 def is_year_closed(year: int) -> bool:
-    yc = get_year_closure(year)
-    return bool(yc and yc.is_closed)
+    closure = get_year_closure(year)
+    return bool(closure and closure.is_closed)
