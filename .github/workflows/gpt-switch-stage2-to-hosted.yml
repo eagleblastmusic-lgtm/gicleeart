@@ -45,12 +45,24 @@ jobs:
             throw "Expected exactly 3 windows-latest jobs, found $hostedCount."
           }
 
-      - name: Commit Stage 2 runner change
+      - name: Commit transferable workflow blob
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
+          $generatedDir = ".github/generated"
+          $generatedPath = Join-Path $generatedDir "stage2-ci-baseline.yml"
+          New-Item -ItemType Directory -Path $generatedDir -Force | Out-Null
+          Copy-Item -LiteralPath ".github/workflows/stage2-ci-baseline.yml" -Destination $generatedPath -Force
+          git restore -- ".github/workflows/stage2-ci-baseline.yml"
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- ".github/workflows/stage2-ci-baseline.yml"
-          git commit -m "ci: use GitHub-hosted Windows runners"
+          git add -- $generatedPath
+
+          $staged = @(git diff --cached --name-only)
+          if ($staged.Count -ne 1 -or $staged[0] -ne ".github/generated/stage2-ci-baseline.yml") {
+            throw "Unexpected staged files: $($staged -join ', ')"
+          }
+
+          git commit -m "ci: stage hosted runner workflow blob"
           git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
