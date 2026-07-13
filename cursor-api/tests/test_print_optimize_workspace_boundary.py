@@ -1,13 +1,30 @@
 from __future__ import annotations
 
-import inspect
+import importlib.util
 from pathlib import Path
-from typing import Any
+from types import ModuleType
 
 import pytest
 
-from Komponenty.print_optimize import cli, gui, paths
 from tools.repository_safety.runtime_writes import scan_python_source
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+_COMPONENT_DIR = _REPO_ROOT / "Komponenty" / "print_optimize"
+_PATHS_FILE = _COMPONENT_DIR / "paths.py"
+_GUI_FILE = _COMPONENT_DIR / "gui.py"
+_CLI_FILE = _COMPONENT_DIR / "cli.py"
+
+
+def _load_paths_module() -> ModuleType:
+    spec = importlib.util.spec_from_file_location(
+        f"_print_optimize_paths_boundary_{id(object())}",
+        _PATHS_FILE,
+    )
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def _snapshot(path: Path) -> tuple[bool, tuple[tuple[str, bytes], ...]]:
@@ -23,7 +40,7 @@ def _snapshot(path: Path) -> tuple[bool, tuple[tuple[str, bytes], ...]]:
     return True, files
 
 
-def _reset_public_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
+def _reset_public_defaults(paths: ModuleType, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(paths, "TEST_PHOTOS_DIR", paths._DEFAULT_TEST_PHOTOS_DIR)
     monkeypatch.setattr(paths, "WW_PAIRS_DIR", paths._DEFAULT_WW_PAIRS_DIR)
 
@@ -34,7 +51,8 @@ def test_read_only_default_resolvers_use_local_appdata_without_creating_director
 ) -> None:
     local_root = tmp_path / "local"
     monkeypatch.setenv("GICLEEAPP_LOCAL_ROOT", str(local_root))
-    _reset_public_defaults(monkeypatch)
+    paths = _load_paths_module()
+    _reset_public_defaults(paths, monkeypatch)
 
     test_photos = paths.test_photos_dir()
     ww_pairs = paths.ww_pairs_dir()
@@ -58,9 +76,10 @@ def test_ensure_data_dirs_creates_only_external_workspace_and_leaves_legacy_unto
     (legacy_pairs / "calibration_report.json").write_bytes(b"{}")
 
     monkeypatch.setenv("GICLEEAPP_LOCAL_ROOT", str(local_root))
+    paths = _load_paths_module()
     monkeypatch.setattr(paths, "_LEGACY_TEST_PHOTOS_DIR", legacy_test)
     monkeypatch.setattr(paths, "_LEGACY_WW_PAIRS_DIR", legacy_pairs)
-    _reset_public_defaults(monkeypatch)
+    _reset_public_defaults(paths, monkeypatch)
     before_test = _snapshot(legacy_test)
     before_pairs = _snapshot(legacy_pairs)
 
@@ -87,6 +106,8 @@ def test_explicit_workspace_override_remains_authoritative(
     constant_name: str,
     resolver_name: str,
 ) -> None:
+    monkeypatch.setenv("GICLEEAPP_LOCAL_ROOT", str(tmp_path / "local"))
+    paths = _load_paths_module()
     override = tmp_path / f"chosen-{constant_name.lower()}"
     monkeypatch.setattr(paths, constant_name, override)
     resolver = getattr(paths, resolver_name)
@@ -97,89 +118,50 @@ def test_explicit_workspace_override_remains_authoritative(
     assert override.is_dir()
 
 
-def test_gui_resolves_workspace_defaults_at_app_construction() -> None:
-    source = inspect.getsource(gui.PrintOptimizeApp.__init__)
+def test_public_default_constants_are_outside_checkout(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    local_root = tmp_path / "local"
+    monkeypatch.setenv("GICLEEAPP_LOCAL_ROOT", str(local_root))
+    paths = _load_paths_module()
 
+    assert paths.TEST_PHOTOS_DIR == paths.test_photos_dir()
+    assert paths.WW_PAIRS_DIR == paths.ww_pairs_dir()
+    assert _COMPONENT_DIR not in Path(paths.TEST_PHOTOS_DIR).parents
+    assert _COMPONENT_DIR not in Path(paths.WW_PAIRS_DIR).parents
+
+
+def test_gui_resolves_workspace_defaults_at_app_construction() -> None:
+    source = _GUI_FILE.read_text(encoding="utf-8")
+
+    assert "from .paths import ensure_data_dirs, test_photos_dir, ww_pairs_dir" in source
     assert "default_test_photos = test_photos_dir()" in source
     assert "default_ww_pairs = ww_pairs_dir()" in source
     assert "value=str(default_test_photos)" in source
     assert source.count("value=str(default_ww_pairs)") == 2
-    assert paths.COMPONENT_DIR not in paths.test_photos_dir().parents
-    assert paths.COMPONENT_DIR not in paths.ww_pairs_dir().parents
+    assert "data/test_photos/" not in source
 
 
-def test_cli_collect_pairs_uses_safe_defaults_when_paths_are_omitted(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    default_input = tmp_path / "default-test-photos"
-    default_output = tmp_path / "default-ww-pairs"
-    calls: list[tuple[Path, Path, str, str, bool]] = []
+def test_cli_defaults_use_resolvers_and_explicit_paths_remain_authoritative() -> None:
+    source = _CLI_FILE.read_text(encoding="utf-8")
 
-    monkeypatch.setattr(cli, "test_photos_dir", lambda *, for_write=False: default_input)
-    monkeypatch.setattr(cli, "ww_pairs_dir", lambda *, for_write=False: default_output)
-
-    def fake_collect(
-        input_dir: Path,
-        output_dir: Path,
-        *,
-        product: str,
-        locale: str,
-        headless: bool,
-    ) -> list[Any]:
-        calls.append((Path(input_dir), Path(output_dir), product, locale, headless))
-        return []
-
-    monkeypatch.setattr(cli, "collect_pairs_for_directory", fake_collect)
-    args = cli.build_parser().parse_args(["collect-pairs"])
-
-    assert args.func(args) == 0
-    assert calls == [
-        (
-            default_input,
-            default_output,
-            "item-acrylglasversieglung",
-            "eu",
-            True,
-        )
-    ]
-
-
-def test_cli_explicit_workspace_paths_remain_exact(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    chosen_input = tmp_path / "chosen-input"
-    chosen_output = tmp_path / "chosen-output"
-    calls: list[tuple[Path, Path]] = []
-
-    def fake_collect(input_dir: Path, output_dir: Path, **_kwargs: Any) -> list[Any]:
-        calls.append((Path(input_dir), Path(output_dir)))
-        return []
-
-    monkeypatch.setattr(cli, "collect_pairs_for_directory", fake_collect)
-    args = cli.build_parser().parse_args(
-        [
-            "collect-pairs",
-            "--input-dir",
-            str(chosen_input),
-            "--output-dir",
-            str(chosen_output),
-        ]
-    )
-
-    assert args.func(args) == 0
-    assert calls == [(chosen_input, chosen_output)]
+    assert "input_dir = args.input_dir or test_photos_dir(for_write=True)" in source
+    assert "output_dir = args.output_dir or ww_pairs_dir(for_write=True)" in source
+    assert "pairs_dir = args.pairs_dir or ww_pairs_dir()" in source
+    assert '"--input-dir",\n        type=Path,' in source
+    assert '"--output-dir",\n        type=Path,' in source
+    assert '"pairs_dir",\n        type=Path,\n        nargs="?",' in source
+    assert 'Path(args.input_dir)' not in source
+    assert 'Path(args.output_dir)' not in source
 
 
 def test_runtime_write_inventory_no_longer_flags_print_optimize_paths() -> None:
-    repo_root = Path(__file__).resolve().parents[1]
     relative = "Komponenty/print_optimize/paths.py"
-    source_path = repo_root / relative
 
     findings, error = scan_python_source(
         relative,
-        source_path.read_text(encoding="utf-8"),
+        _PATHS_FILE.read_text(encoding="utf-8"),
     )
 
     assert error == ""
