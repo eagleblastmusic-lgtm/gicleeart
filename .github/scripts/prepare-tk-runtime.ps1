@@ -125,8 +125,12 @@ if (-not $copySucceeded) {
 
 $env:TCL_LIBRARY = $targetTcl
 $env:TK_LIBRARY = $targetTk
+$env:GICLEEAPP_TCL_SOURCE_LIBRARY = $sourceTcl.FullName
+$env:GICLEEAPP_TK_SOURCE_LIBRARY = $sourceTk.FullName
 Add-Content -LiteralPath $env:GITHUB_ENV -Value "TCL_LIBRARY=$targetTcl"
 Add-Content -LiteralPath $env:GITHUB_ENV -Value "TK_LIBRARY=$targetTk"
+Add-Content -LiteralPath $env:GITHUB_ENV -Value "GICLEEAPP_TCL_SOURCE_LIBRARY=$($sourceTcl.FullName)"
+Add-Content -LiteralPath $env:GITHUB_ENV -Value "GICLEEAPP_TK_SOURCE_LIBRARY=$($sourceTk.FullName)"
 
 @'
 import os
@@ -141,6 +145,15 @@ def normalized(value: str) -> str:
 
 expected_tcl = normalized(os.environ["TCL_LIBRARY"])
 expected_tk = normalized(os.environ["TK_LIBRARY"])
+source_tcl = normalized(os.environ["GICLEEAPP_TCL_SOURCE_LIBRARY"])
+source_tk = normalized(os.environ["GICLEEAPP_TK_SOURCE_LIBRARY"])
+for required in (
+    Path(source_tcl) / "init.tcl",
+    Path(source_tk) / "tk.tcl",
+    Path(source_tk) / "spinbox.tcl",
+    Path(source_tk) / "ttk" / "defaults.tcl",
+):
+    required.read_bytes()
 root = tk.Tk()
 root.withdraw()
 actual_tcl = normalized(str(root.tk.globalgetvar("tcl_library")))
@@ -159,6 +172,8 @@ print("tcl_library=" + actual_tcl)
 print("tk_library=" + actual_tk)
 print("env_TCL_LIBRARY=" + expected_tcl)
 print("env_TK_LIBRARY=" + expected_tk)
+print("source_TCL_LIBRARY=" + source_tcl)
+print("source_TK_LIBRARY=" + source_tk)
 root.destroy()
 '@ | python -
 
@@ -177,6 +192,8 @@ if ($env:GITHUB_STEP_SUMMARY) {
 - manifest entries: $($sourceManifest.Count)
 - TCL_LIBRARY: `$targetTcl`
 - TK_LIBRARY: `$targetTk`
+- fallback TCL_LIBRARY: `$($sourceTcl.FullName)`
+- fallback TK_LIBRARY: `$($sourceTk.FullName)`
 - required Tk scripts: verified
 - Tk/ttk widget preflight: passed
 "@ | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
