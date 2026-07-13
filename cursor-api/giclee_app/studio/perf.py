@@ -17,10 +17,13 @@ from typing import Any, Iterator
 from giclee_app.app_paths import log_path
 
 _ENV_FLAG = "GICLEE_STUDIO_PERF"
-_LEGACY_LOG_PATH = Path(__file__).resolve().parents[1] / "logs" / "studio_perf.log"
-_DEFAULT_LOG_PATH = _LEGACY_LOG_PATH
-_LOG_PATH = _DEFAULT_LOG_PATH
 _LOG_RELATIVE_PATH = "giclee_app/studio_perf.log"
+_LEGACY_LOG_PATH = Path(__file__).resolve().parents[1] / "logs" / "studio_perf.log"
+_DEFAULT_LOG_PATH = log_path(
+    _LOG_RELATIVE_PATH,
+    legacy=_LEGACY_LOG_PATH,
+).write_path
+_LOG_PATH = _DEFAULT_LOG_PATH
 
 
 def _store():
