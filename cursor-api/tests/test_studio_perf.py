@@ -25,13 +25,7 @@ def _configure_default_paths(
         / "logs"
         / "studio_perf.log"
     )
-    external = (
-        local_root
-        / "logs"
-        / "giclee_app"
-        / "logs"
-        / "studio_perf.log"
-    )
+    external = local_root / "logs" / "giclee_app" / "studio_perf.log"
 
     monkeypatch.setenv("GICLEEAPP_LOCAL_ROOT", str(local_root))
     monkeypatch.setattr(perf, "_LEGACY_LOG_PATH", legacy)
