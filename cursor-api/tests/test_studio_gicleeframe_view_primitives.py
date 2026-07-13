@@ -63,6 +63,8 @@ _FUNCTION_NAMES = (
     "_element_pill_colors",
 )
 
+_VIEW_REEXPORT_EXCLUDED_AFTER_GF_M6 = frozenset({"_build_safety_row"})
+
 _EXPECTED_TOKEN_VALUES = {
     "_BTN_HEIGHT": 28,
     "_CARD_PAD_X": 14,
@@ -143,6 +145,9 @@ def test_primitives_all_is_immutable_tuple_of_34() -> None:
 
 def test_view_reexports_all_functions_with_identity() -> None:
     for name in _FUNCTION_NAMES:
+        if name in _VIEW_REEXPORT_EXCLUDED_AFTER_GF_M6:
+            assert not hasattr(view, name)
+            continue
         assert getattr(view, name) is getattr(primitives, name), name
 
 

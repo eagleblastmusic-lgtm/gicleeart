@@ -264,5 +264,4 @@ def test_structure_methods_resolve_from_mixin_on_gicleeframe_view() -> None:
 
 def test_control_orchestration_and_inventory_remain_host_owned() -> None:
     assert "_build_control_column" in GicleeFrameView.__dict__
-    assert "_build_safety_card" in GicleeFrameView.__dict__
     assert "_refresh_inventory" in GicleeFrameView.__dict__

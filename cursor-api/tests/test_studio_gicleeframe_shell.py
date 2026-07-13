@@ -38,6 +38,12 @@ _STRUCTURE_DRY_RUN_VIEW_PATH = (
     / "ui"
     / "gicleeframe_view_structure_dry_run.py"
 )
+_SAFETY_VIEW_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "giclee_app"
+    / "ui"
+    / "gicleeframe_view_safety.py"
+)
 _NEW_PLANNING_MODULES = (
     "gicleeframe_brief.py",
     "gicleeframe_draft_state.py",
@@ -125,7 +131,6 @@ def test_view_source_f21_editor_labels() -> None:
     assert "reorder_page_blocks" in text
     assert "_structure_dry_run_btn" in text
     assert "_build_control_column" in text
-    assert "_build_safety_card" in text
     assert "_CONTROL_COL_MINSIZE" in text
     assert "SECTION_LIST_TITLE" in text
     assert "APPLY_RAM_MICROCOPY" in text
@@ -138,7 +143,6 @@ def test_view_source_f21_editor_labels() -> None:
     assert "_build_section_identity_card" in text
     assert "_build_action_dock" in text
     assert "_PREVIEW_SETTINGS_CAPTION" in text
-    assert "_build_safety_row" in text
     assert "_pack_field_vertical" in text
     assert "_update_section_preview" in text
 
@@ -157,7 +161,6 @@ def test_view_source_f222_premium_copy() -> None:
     assert "_PREVIEW_SETTINGS_CAPTION" in text
     assert "Podgląd ustawień" in text
     assert "RAM-only" in text
-    assert "Brak zapisu motywu" in text
     assert "Widoczna" in text
     for pattern in _FORBIDDEN_BUTTON_PATTERNS:
         assert not re.search(pattern, text), f"Forbidden button pattern found: {pattern}"
@@ -254,7 +257,7 @@ def test_view_source_f221_setting_groups() -> None:
 
 
 def test_view_source_allows_informational_sync_blocked_text() -> None:
-    text = _VIEW_PATH.read_text(encoding="utf-8")
+    text = _SAFETY_VIEW_PATH.read_text(encoding="utf-8")
     assert "zablokowane" in text.lower() or "Zablokowane" in text
 
 
@@ -356,6 +359,31 @@ def test_structure_dry_run_view_source_contract() -> None:
 def test_structure_dry_run_view_source_no_write_or_network() -> None:
     _assert_no_writes_in_source(_STRUCTURE_DRY_RUN_VIEW_PATH)
     text = _STRUCTURE_DRY_RUN_VIEW_PATH.read_text(encoding="utf-8")
+    for forbidden_text in (
+        "after(",
+        "after_idle(",
+        "after_cancel(",
+    ):
+        assert forbidden_text not in text
+
+
+def test_safety_view_source_contract() -> None:
+    text = _SAFETY_VIEW_PATH.read_text(encoding="utf-8")
+    assert "_build_safety_card" in text
+    assert "_SAFETY_TITLE" in text
+    assert "_SAFETY_CHECKLIST" in text
+    assert "_SAFETY_ROW_WRAPLENGTH = 276" in text
+    assert "_build_safety_row" in text
+    assert "Bezpieczeństwo" in text
+    assert "RAM-only" in text
+    assert "Brak zapisu motywu" in text
+    assert "Sync/deploy zablokowane" in text
+    assert "F3/F4 osobna decyzja" in text
+
+
+def test_safety_view_source_no_write_or_network() -> None:
+    _assert_no_writes_in_source(_SAFETY_VIEW_PATH)
+    text = _SAFETY_VIEW_PATH.read_text(encoding="utf-8")
     for forbidden_text in (
         "after(",
         "after_idle(",
