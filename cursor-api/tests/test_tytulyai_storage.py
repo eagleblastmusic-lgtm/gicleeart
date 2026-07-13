@@ -113,6 +113,9 @@ def test_title_draft_store_resolves_current_monkeypatched_constant(
                 product_id=31,
                 artist="Monet",
                 painting_title="Impresja",
+                model_used="gemini-test",
+                raw_response='{"title":"Impresja"}',
+                cursor_prompt="prompt-test",
                 generated_at="2026-07-13",
             )
         }
