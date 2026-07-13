@@ -1,0 +1,54 @@
+name: Map production persistence contracts
+
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions:
+  contents: read
+
+jobs:
+  map:
+    if: github.head_ref == 'gpt-work/runtime-foundation-production-store'
+    runs-on: windows-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build production persistence map
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          New-Item -ItemType Directory -Path "reports" -Force | Out-Null
+          $out = "reports/production-persistence-map.txt"
+
+          "=== Relevant test files ===" | Set-Content -LiteralPath $out -Encoding UTF8
+          git ls-files "cursor-api/tests/*.py" |
+            Select-String -Pattern "produkcja|production|orders|retention|web_server|zamowienia" |
+            ForEach-Object { $_.Line } |
+            Add-Content -LiteralPath $out -Encoding UTF8
+
+          "`n=== Test references ===" | Add-Content -LiteralPath $out -Encoding UTF8
+          git grep -n -E "_ORDERS_FILE|_DATA_DIR|_SYNC_STATE_FILE|archive_old_orders|reset_sync_state|sync_orders|zamowienia.json|archive_[0-9]" -- "cursor-api/tests/*.py" 2>$null |
+            Add-Content -LiteralPath $out -Encoding UTF8
+
+          "`n=== Production persistence references ===" | Add-Content -LiteralPath $out -Encoding UTF8
+          git grep -n -E "_ORDERS_FILE|_DATA_DIR|_SYNC_STATE_FILE|zamowienia.json|archive_.*json" -- "cursor-api/Komponenty/produkcja/*.py" 2>$null |
+            Add-Content -LiteralPath $out -Encoding UTF8
+
+          Get-Content -LiteralPath $out
+
+      - name: Upload map
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-persistence-map-${{ github.run_id }}
+          path: reports/production-persistence-map.txt
+          if-no-files-found: error
+          retention-days: 14
