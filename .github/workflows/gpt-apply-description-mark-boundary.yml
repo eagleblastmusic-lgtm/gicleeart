@@ -1,0 +1,114 @@
+name: Apply description mark boundary
+
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      PYTHONUTF8: "1"
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: cursor-api/requirements-dev.txt
+
+      - name: Prepare isolated runtime directories
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $root = Join-Path $env:RUNNER_TEMP "description-mark-boundary"
+          $paths = [ordered]@{
+            GICLEEAPP_LOCAL_ROOT = Join-Path $root "local"
+            GICLEEAPP_ROAMING_ROOT = Join-Path $root "roaming"
+            LOCALAPPDATA = Join-Path $root "LocalAppData"
+            APPDATA = Join-Path $root "AppData"
+            TEMP = Join-Path $root "temp"
+            TMP = Join-Path $root "temp"
+          }
+          foreach ($entry in $paths.GetEnumerator()) {
+            Add-Content -LiteralPath $env:GITHUB_ENV -Value "$($entry.Key)=$($entry.Value)"
+            Set-Item -Path "Env:$($entry.Key)" -Value $entry.Value
+            New-Item -ItemType Directory -Path $entry.Value -Force | Out-Null
+          }
+
+      - name: Apply exact description mark patch
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          python cursor-api/tools/gpt/patch_description_mark_boundary.py
+
+      - name: Validate syntax and scoped diff
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          python -m py_compile cursor-api/Komponenty/dodajobraz/description_update.py
+          $changed = @(git diff --name-only)
+          if ($changed.Count -gt 0) {
+            if ($changed.Count -ne 1 -or $changed[0] -ne "cursor-api/Komponenty/dodajobraz/description_update.py") {
+              throw "Unexpected patch diff: $($changed -join ', ')"
+            }
+          }
+
+      - name: Install focused test dependencies
+        working-directory: cursor-api
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+          python -m pip check
+
+      - name: Run focused description mark tests
+        working-directory: cursor-api
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $report = Join-Path $env:RUNNER_TEMP "description-mark-focused.txt"
+          python -m pytest -q `
+            tests/test_description_update_marks.py `
+            tests/test_stage1e_external_stores_5_dodajobraz.py::test_description_runtime_state_reads_legacy_and_writes_local_appdata `
+            tests/test_description_mark_store_boundary.py 2>&1 | Tee-Object -FilePath $report
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Commit product patch
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          git add -- cursor-api/Komponenty/dodajobraz/description_update.py
+          if (git diff --cached --quiet) {
+            Write-Host "No product patch to commit."
+            exit 0
+          }
+          git config user.name "gpt-runtime-foundation"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "refactor(runtime): harden description mark store boundary"
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
+
+      - name: Upload focused evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: description-mark-focused-${{ github.run_id }}
+          path: ${{ runner.temp }}/description-mark-focused.txt
+          if-no-files-found: warn
+          retention-days: 14
