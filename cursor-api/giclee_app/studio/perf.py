@@ -14,8 +14,27 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator
 
+from giclee_app.app_paths import log_path
+
 _ENV_FLAG = "GICLEE_STUDIO_PERF"
-_LOG_PATH = Path(__file__).resolve().parents[1] / "logs" / "studio_perf.log"
+_LEGACY_LOG_PATH = Path(__file__).resolve().parents[1] / "logs" / "studio_perf.log"
+_DEFAULT_LOG_PATH = _LEGACY_LOG_PATH
+_LOG_PATH = _DEFAULT_LOG_PATH
+_LOG_RELATIVE_PATH = "giclee_app/logs/studio_perf.log"
+
+
+def _store():
+    return log_path(_LOG_RELATIVE_PATH, legacy=_LEGACY_LOG_PATH)
+
+
+def _write_path() -> Path:
+    """Resolve an explicit override or the external append-only log path."""
+
+    current = Path(_LOG_PATH)
+    if current != _DEFAULT_LOG_PATH:
+        current.parent.mkdir(parents=True, exist_ok=True)
+        return current
+    return _store().seed_from_legacy()
 
 
 def is_enabled() -> bool:
@@ -41,7 +60,6 @@ def log_event(event: str, *, elapsed_ms: float | None = None, **fields: Any) -> 
         return
 
     try:
-        _LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
         payload = {
             "ts": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
             "event": str(event),
@@ -51,7 +69,7 @@ def log_event(event: str, *, elapsed_ms: float | None = None, **fields: Any) -> 
         for key, value in fields.items():
             payload[str(key)] = _safe_value(value)
 
-        with _LOG_PATH.open("a", encoding="utf-8") as f:
+        with _write_path().open("a", encoding="utf-8") as f:
             f.write(json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n")
     except Exception:
         # Performance diagnostics must never affect Studio.
