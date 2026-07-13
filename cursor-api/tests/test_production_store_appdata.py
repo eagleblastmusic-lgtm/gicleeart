@@ -157,6 +157,14 @@ def test_explicit_file_and_directory_overrides_remain_supported(
     assert (retention_override / "archive_2024.json").is_file()
 
 
+def test_production_ui_copy_uses_safe_external_path_language() -> None:
+    source = Path(view.__file__).read_text(encoding="utf-8")
+
+    assert r"\archive_YYYY.json" not in source
+    assert "wersjonowac te pliki w git" not in view._PRODUKCJA_HELP
+    assert "nie sa wersjonowane w git" in view._PRODUKCJA_HELP
+
+
 def test_runtime_write_inventory_no_longer_flags_production_store() -> None:
     repo_root = Path(__file__).resolve().parents[1]
     targets = [
