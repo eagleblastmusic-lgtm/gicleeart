@@ -20,11 +20,42 @@ DESCRIPTION_DRAFTS_FILE = _DEFAULT_DESCRIPTION_DRAFTS_FILE
 _TITLE_DRAFTS = data_path("Komponenty/tytulyai/data/title_drafts.json", legacy=_DEFAULT_TITLE_DRAFTS_FILE)
 _DESCRIPTION_DRAFTS = data_path("Komponenty/tytulyai/data/description_drafts.json", legacy=_DEFAULT_DESCRIPTION_DRAFTS_FILE)
 
+_DRAFT_FILE_CONSTANTS = {
+    "TITLE_DRAFTS_FILE": ("_DEFAULT_TITLE_DRAFTS_FILE", "_TITLE_DRAFTS"),
+    "DESCRIPTION_DRAFTS_FILE": (
+        "_DEFAULT_DESCRIPTION_DRAFTS_FILE",
+        "_DESCRIPTION_DRAFTS",
+    ),
+}
+
 
 def _resolved_path(path: Path, default: Path, app_path, *, for_write: bool) -> Path:
     if Path(path) != default:
         return Path(path)
     return app_path.write_path if for_write else app_path.read_path()
+
+
+def _resolved_draft_path_for_constant(
+    constant_name: str,
+    *,
+    for_write: bool,
+) -> Path:
+    """Resolve the current draft-file constant through its AppData boundary."""
+
+    name = str(constant_name).strip()
+    try:
+        default_name, app_path_name = _DRAFT_FILE_CONSTANTS[name]
+    except KeyError as exc:
+        raise ValueError(f"Unsafe Tytuly AI draft file constant: {constant_name!r}") from exc
+
+    try:
+        current = Path(globals()[name])
+        default = Path(globals()[default_name])
+        app_path = globals()[app_path_name]
+    except KeyError as exc:  # pragma: no cover - guarded by the static mapping
+        raise RuntimeError(f"Incomplete Tytuly AI draft store mapping for {name}") from exc
+
+    return _resolved_path(current, default, app_path, for_write=for_write)
 
 
 def _title_to_dict(item: BatchItemResult) -> dict[str, Any]:
@@ -110,7 +141,8 @@ def _description_from_dict(row: dict[str, Any]) -> ProductDescriptionDrafts:
     )
 
 
-def _load_drafts_file(path: Path, from_dict: Any) -> dict[int, Any]:
+def _load_drafts_file(file_constant: str, from_dict: Any) -> dict[int, Any]:
+    path = _resolved_draft_path_for_constant(file_constant, for_write=False)
     if not path.is_file():
         return {}
     try:
@@ -133,27 +165,33 @@ def _load_drafts_file(path: Path, from_dict: Any) -> dict[int, Any]:
     return out
 
 
-def _save_drafts_file(path: Path, drafts: dict[int, Any], to_dict: Any) -> None:
+def _save_drafts_file(
+    file_constant: str,
+    drafts: dict[int, Any],
+    to_dict: Any,
+) -> None:
     payload = {
         "version": 2,
         "drafts": {str(pid): to_dict(item) for pid, item in sorted(drafts.items())},
     }
-    default = _DEFAULT_TITLE_DRAFTS_FILE if Path(path).name == "title_drafts.json" else _DEFAULT_DESCRIPTION_DRAFTS_FILE
-    app_path = _TITLE_DRAFTS if default == _DEFAULT_TITLE_DRAFTS_FILE else _DESCRIPTION_DRAFTS
-    atomic_write_text(_resolved_path(path, default, app_path, for_write=True), json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
+    path = _resolved_draft_path_for_constant(file_constant, for_write=True)
+    atomic_write_text(
+        path,
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+    )
 
 
 def load_title_drafts() -> dict[int, BatchItemResult]:
-    return _load_drafts_file(_resolved_path(TITLE_DRAFTS_FILE, _DEFAULT_TITLE_DRAFTS_FILE, _TITLE_DRAFTS, for_write=False), _title_from_dict)
+    return _load_drafts_file("TITLE_DRAFTS_FILE", _title_from_dict)
 
 
 def save_title_drafts(drafts: dict[int, BatchItemResult]) -> None:
-    _save_drafts_file(TITLE_DRAFTS_FILE, drafts, _title_to_dict)
+    _save_drafts_file("TITLE_DRAFTS_FILE", drafts, _title_to_dict)
 
 
 def load_description_drafts() -> dict[int, ProductDescriptionDrafts]:
-    return _load_drafts_file(_resolved_path(DESCRIPTION_DRAFTS_FILE, _DEFAULT_DESCRIPTION_DRAFTS_FILE, _DESCRIPTION_DRAFTS, for_write=False), _description_from_dict)
+    return _load_drafts_file("DESCRIPTION_DRAFTS_FILE", _description_from_dict)
 
 
 def save_description_drafts(drafts: dict[int, ProductDescriptionDrafts]) -> None:
-    _save_drafts_file(DESCRIPTION_DRAFTS_FILE, drafts, _description_to_dict)
+    _save_drafts_file("DESCRIPTION_DRAFTS_FILE", drafts, _description_to_dict)
