@@ -8,7 +8,7 @@ be written to `cursor-api/logs` inside the source checkout.
 
 - new logs target:
   `%LOCALAPPDATA%/GicleeArt/GicleeApp/logs/components/<folder>.log`,
-- both launch paths use the shared `giclee_app.launcher_logs` helper,
+- both launch paths use the shared `giclee_app.component_logs` helper,
 - normal resolution uses `giclee_app.app_paths.log_path`,
 - reading is external-first and falls back to the historical
   `cursor-api/logs/<folder>.log` without creating directories,
@@ -24,11 +24,14 @@ be written to `cursor-api/logs` inside the source checkout.
 
 ## Shared helper
 
-`giclee_app/launcher_logs.py` exposes separate read and write resolution:
+`giclee_app/component_logs.py` exposes separate read and write resolution:
 
 - `component_log_read_path()` has no write side effects,
 - `component_log_write_path()` prepares the external path and performs one-time
   legacy seeding.
+
+The neutral helper name also preserves the import boundary enforced for
+`launcher_delegate.py`: the delegate must not import the classic launcher module.
 
 This distinction keeps **Pokaż log** read-only while launches and **Wyczyść log**
 operate on application-owned runtime data.
@@ -43,4 +46,5 @@ operate on application-owned runtime data.
 4. explicit logs-directory overrides,
 5. rejection of path traversal,
 6. isolated delegate subprocess logging,
-7. removal of launcher log findings from runtime-write inventory.
+7. preservation of the launcher/delegate import boundary,
+8. removal of launcher log findings from runtime-write inventory.
