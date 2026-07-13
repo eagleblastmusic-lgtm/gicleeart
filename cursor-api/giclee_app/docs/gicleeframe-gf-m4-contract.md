@@ -2,9 +2,9 @@
 
 Status: **COMPLETED — MRO INTEGRATED**
 
-Repository: `eagleblastmusic-lgtm/gicleeart`  
-Base branch: `master`  
-Exact base SHA: `3515d50419c20e168fc37ec5061ad073fe28ddd5`  
+Repository: `eagleblastmusic-lgtm/gicleeart`
+Base branch: `master`
+Exact base SHA: `3515d50419c20e168fc37ec5061ad073fe28ddd5`
 Work branch: `gpt-work/gicleeframe-modularization-m4-page-readiness`
 
 ## 1. Discovery decision
