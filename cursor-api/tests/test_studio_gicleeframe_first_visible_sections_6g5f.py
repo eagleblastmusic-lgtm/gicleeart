@@ -15,6 +15,12 @@ def _view_text() -> str:
     )
 
 
+def _top_bar_text() -> str:
+    return (ROOT / "giclee_app" / "ui" / "gicleeframe_view_top_bar.py").read_text(
+        encoding="utf-8"
+    )
+
+
 def _constant_int(text: str, name: str) -> int:
     match = re.search(rf"^{re.escape(name)}\s*=\s*(\d+)$", text, re.MULTILINE)
     assert match is not None, f"missing integer constant: {name}"
@@ -65,7 +71,7 @@ def test_identity_card_late_defer_follows_prewarm_lane() -> None:
     text = _view_text()
     prewarm_ms = _constant_int(text, "_GF_EDITOR_IDENTITY_PREWARM_AFTER_PERCEIVED_MS")
     identity_ms = _constant_int(text, "_GF_EDITOR_IDENTITY_LATE_DEFER_MS")
-    top_bar_ms = _constant_int(text, "_GF_TOP_BAR_ACTIONS_LATE_DEFER_MS")
+    top_bar_ms = _constant_int(_top_bar_text(), "_GF_TOP_BAR_ACTIONS_LATE_DEFER_MS")
 
     assert 0 < prewarm_ms < identity_ms <= top_bar_ms
 

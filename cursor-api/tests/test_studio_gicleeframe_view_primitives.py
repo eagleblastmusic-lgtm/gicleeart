@@ -63,7 +63,11 @@ _FUNCTION_NAMES = (
     "_element_pill_colors",
 )
 
-_VIEW_REEXPORT_EXCLUDED_AFTER_GF_M6 = frozenset({"_build_safety_row"})
+_VIEW_REEXPORT_EXCLUDED_AFTER_GF_M6 = frozenset({
+    "_build_safety_row",
+    "_make_section_caption",
+    "_make_status_pill",
+})
 
 _EXPECTED_TOKEN_VALUES = {
     "_BTN_HEIGHT": 28,

@@ -14,8 +14,14 @@ def _view_text() -> str:
     )
 
 
+def _top_bar_text() -> str:
+    return (ROOT / "giclee_app" / "ui" / "gicleeframe_view_top_bar.py").read_text(
+        encoding="utf-8"
+    )
+
+
 def test_startup_hotspot_context_bar_spans_exist() -> None:
-    text = _view_text()
+    text = _top_bar_text()
     assert "studio.gicleeframe.build.context_bar." in text
     assert "studio.gicleeframe.build.context_bar.frame" in text
     assert "studio.gicleeframe.build.context_bar.title" in text
@@ -24,7 +30,7 @@ def test_startup_hotspot_context_bar_spans_exist() -> None:
 
 
 def test_startup_hotspot_command_bar_spans_exist() -> None:
-    text = _view_text()
+    text = _top_bar_text()
     assert "studio.gicleeframe.build.command_bar." in text
     assert "studio.gicleeframe.build.command_bar.frame" in text
     assert "studio.gicleeframe.build.command_bar.primary_actions" in text

@@ -15,6 +15,12 @@ def _view_text() -> str:
     )
 
 
+def _top_bar_text() -> str:
+    return (ROOT / "giclee_app" / "ui" / "gicleeframe_view_top_bar.py").read_text(
+        encoding="utf-8"
+    )
+
+
 def _constant_int(text: str, name: str) -> int:
     match = re.search(rf"^{re.escape(name)}\s*=\s*(\d+)$", text, re.MULTILINE)
     assert match is not None, f"missing integer constant: {name}"
@@ -22,26 +28,28 @@ def _constant_int(text: str, name: str) -> int:
 
 
 def test_top_bar_lazy_actions_contract_and_methods_exist() -> None:
-    text = _view_text()
+    text = _top_bar_text()
     overall_ms = _constant_int(text, "_GF_TOP_BAR_ACTIONS_LATE_DEFER_MS")
     secondary_ms = _constant_int(text, "_GF_TOP_BAR_SECONDARY_ACTIONS_LATE_DEFER_MS")
 
     assert 0 < secondary_ms <= overall_ms
     assert "_schedule_top_bar_actions_late_build" in text
     assert "_start_top_bar_actions_late_build" in text
-    assert "_top_bar_actions_late_started = False" in text
-    assert "_top_bar_actions_late_done = False" in text
+
+    host = _view_text()
+    assert "_top_bar_actions_late_started = False" in host
+    assert "_top_bar_actions_late_done = False" in host
 
 
 def test_top_bar_lazy_startup_events_exist() -> None:
-    text = _view_text()
+    text = _top_bar_text()
     assert "studio.gicleeframe.context_bar.actions_lazy_startup" in text
     assert "studio.gicleeframe.command_bar.primary_actions_lazy_startup" in text
     assert "studio.gicleeframe.command_bar.secondary_actions_lazy_startup" in text
 
 
 def test_top_bar_late_build_events_exist() -> None:
-    text = _view_text()
+    text = _top_bar_text()
     assert "studio.gicleeframe.top_bar.actions_late_start" in text
     assert "studio.gicleeframe.top_bar.actions_late_done" in text
     assert "studio.gicleeframe.build.context_bar.actions_late" in text
@@ -50,7 +58,7 @@ def test_top_bar_late_build_events_exist() -> None:
 
 
 def test_startup_path_keeps_diagnostic_spans_for_placeholders() -> None:
-    text = _view_text()
+    text = _top_bar_text()
     assert "studio.gicleeframe.build.context_bar.actions" in text
     assert "studio.gicleeframe.build.command_bar.primary_actions" in text
     assert "studio.gicleeframe.build.command_bar.secondary_actions" in text
@@ -63,7 +71,7 @@ def test_build_shell_schedules_top_bar_late_build() -> None:
 
 
 def test_startup_uses_placeholders_not_full_actions() -> None:
-    text = _view_text()
+    text = _top_bar_text()
 
     ctx_start = text.index("def _build_context_bar")
     ctx_end = text.index("def _build_context_bar_actions_placeholder")
