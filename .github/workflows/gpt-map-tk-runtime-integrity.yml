@@ -1,0 +1,47 @@
+name: Map Tcl Tk runtime integrity
+
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions:
+  contents: read
+
+jobs:
+  map:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Map Tcl Tk references and cleanup patterns
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $out = Join-Path $env:RUNNER_TEMP "tk-runtime-map.txt"
+          "=== Tcl/Tk environment references ===" | Set-Content -LiteralPath $out -Encoding utf8
+          Get-ChildItem -Recurse -File -Include *.py,*.ps1,*.yml,*.yaml |
+            Where-Object { $_.FullName -notmatch '\\.git\\' } |
+            Select-String -Pattern "TCL_LIBRARY|TK_LIBRARY|python-tcl-runtime|prepare-tk-runtime|tk8\\.6|tcl8\\.6|spinbox\\.tcl|defaults\\.tcl" -AllMatches |
+            ForEach-Object { "$($_.Path):$($_.LineNumber):$($_.Line)" } |
+            Add-Content -LiteralPath $out -Encoding utf8
+
+          "`n=== Temp cleanup and directory deletion patterns ===" | Add-Content -LiteralPath $out -Encoding utf8
+          Get-ChildItem -LiteralPath "cursor-api/tests" -Recurse -File -Filter *.py |
+            Select-String -Pattern "rmtree|Remove-Item|unlink|shutil|tempfile|RUNNER_TEMP|glob\\(|iterdir\\(|cleanup" -AllMatches |
+            ForEach-Object { "$($_.Path):$($_.LineNumber):$($_.Line)" } |
+            Add-Content -LiteralPath $out -Encoding utf8
+
+      - name: Upload map
+        uses: actions/upload-artifact@v4
+        with:
+          name: tk-runtime-map-${{ github.run_id }}
+          path: ${{ runner.temp }}/tk-runtime-map.txt
+          if-no-files-found: error
+          retention-days: 14
