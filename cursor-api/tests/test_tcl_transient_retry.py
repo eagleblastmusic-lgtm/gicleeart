@@ -10,6 +10,7 @@ from tools.stage2_tcl_retry import (
     activate_preflighted_source_runtime,
     call_tk_init_with_transient_retry,
     ci_tcl_retry_enabled,
+    is_transient_tcl_runtime_error,
 )
 
 
@@ -43,6 +44,18 @@ def test_exact_init_tcl_failure_is_retried_once(
 
     assert call_tk_init_with_transient_retry(original, object(), (), {}) == "ready"
     assert len(calls) == 2
+
+
+def test_runtime_detector_accepts_init_and_tk_signatures_only() -> None:
+    assert is_transient_tcl_runtime_error(
+        tk.TclError("Can't find a usable init.tcl in the following directories")
+    )
+    assert is_transient_tcl_runtime_error(
+        tk.TclError("Can't find a usable tk.tcl in the following directories")
+    )
+    assert not is_transient_tcl_runtime_error(
+        tk.TclError("no display name and no $DISPLAY environment variable")
+    )
 
 
 def test_non_matching_tcl_error_is_not_retried() -> None:
@@ -93,6 +106,7 @@ def test_repeated_copied_runtime_failure_switches_to_preflighted_source(
     (source_tk / "tk.tcl").write_text("# tk", encoding="utf-8")
     (source_tk / "spinbox.tcl").write_text("# spinbox", encoding="utf-8")
     (source_tk / "ttk" / "defaults.tcl").write_text("# ttk", encoding="utf-8")
+    (source_tk / "ttk" / "winTheme.tcl").write_text("# win", encoding="utf-8")
 
     monkeypatch.setenv("TCL_LIBRARY", str(copied_tcl))
     monkeypatch.setenv("TK_LIBRARY", str(copied_tk))
@@ -105,7 +119,7 @@ def test_repeated_copied_runtime_failure_switches_to_preflighted_source(
         active = os.environ["TCL_LIBRARY"]
         calls.append(active)
         if Path(active) == copied_tcl:
-            raise tk.TclError("Can't find a usable init.tcl in the following directories")
+            raise tk.TclError("Can't find a usable tk.tcl in the following directories")
         return "ready-from-source"
 
     assert (
