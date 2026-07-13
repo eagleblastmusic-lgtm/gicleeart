@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from pathlib import Path
 from typing import Any
 
@@ -96,11 +97,15 @@ def test_explicit_workspace_override_remains_authoritative(
     assert override.is_dir()
 
 
-def test_public_gui_defaults_are_external_workspace_paths() -> None:
-    assert Path(gui.TEST_PHOTOS_DIR) == Path(paths.TEST_PHOTOS_DIR)
-    assert Path(gui.WW_PAIRS_DIR) == Path(paths.WW_PAIRS_DIR)
-    assert paths.COMPONENT_DIR not in Path(gui.TEST_PHOTOS_DIR).parents
-    assert paths.COMPONENT_DIR not in Path(gui.WW_PAIRS_DIR).parents
+def test_gui_resolves_workspace_defaults_at_app_construction() -> None:
+    source = inspect.getsource(gui.PrintOptimizeApp.__init__)
+
+    assert "default_test_photos = test_photos_dir()" in source
+    assert "default_ww_pairs = ww_pairs_dir()" in source
+    assert "value=str(default_test_photos)" in source
+    assert source.count("value=str(default_ww_pairs)") == 2
+    assert paths.COMPONENT_DIR not in paths.test_photos_dir().parents
+    assert paths.COMPONENT_DIR not in paths.ww_pairs_dir().parents
 
 
 def test_cli_collect_pairs_uses_safe_defaults_when_paths_are_omitted(
