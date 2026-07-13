@@ -47,6 +47,7 @@ Disclaimer F2: **„Zmiany są tylko lokalnym draftem w pamięci — nic nie zap
 | `studio/gicleeframe_page_settings.py` | **F2.1** — specyfikacja pól `settings` sekcji (divider / media) |
 | `studio/gicleeframe_page_dry_run.py` | **F2** — dry-run struktury + guardrails |
 | `ui/gicleeframe_view.py` | Widok CTk: **F2.1 edytor strony** (top bar / trigger / edytor) + F1 komponent marki |
+| `ui/gicleeframe_view_models.py` | **GF-M1** — czyste kontrakty widoku (dataclass + helpery tekstowe, bez UI) |
 | `launcher_studio.py` | Routing: `gicleeframe` → `GicleeFrameView` |
 
 ---
@@ -241,3 +242,29 @@ Lista sekcji **domyślnie nie zwija się** po kliknięciu wiersza (szybkie przec
 Dropdown sekcji reużywa istniejących wierszy (`section_dropdown.rows_reused`) zamiast przebudowywać listę przy każdym otwarciu.
 
 Logi perf (`GICLEE_STUDIO_PERF=1`): `select_element.immediate_ready`, `populate_editor.deferred`, `populate_editor.deferred_stale`, `page_context.stable_defer_stale`.
+
+---
+
+## 12. GF-M1 — Pure View Contracts Extraction
+
+**Cel:** pierwszy, najmniejszy krok modularizacji `GicleeFrameView` — ekstrakcja czystych kontraktów widoku do osobnego modułu bez zmiany zachowania.
+
+### Przeniesione symbole
+
+| Symbol | Nowy moduł |
+|--------|------------|
+| `PageContextRowSpec` | `ui/gicleeframe_view_models.py` |
+| `SectionVisualCacheEntry` | `ui/gicleeframe_view_models.py` |
+| `_ellipsize` | `ui/gicleeframe_view_models.py` |
+| `_section_kind_copy` | `ui/gicleeframe_view_models.py` |
+
+### Gwarancje GF-M1
+
+- **Zero** zmian behavior / layout / performance / timingów / schedulerów
+- **Zero** zmian RAM draft, writera, zapisu do plików motywu, Shopify sync/deploy/mutation
+- Re-eksport przez `gicleeframe_view.py` zachowany — `from giclee_app.ui.gicleeframe_view import SectionVisualCacheEntry` nadal działa
+- Moduł models importuje wyłącznie `dataclass`, `PageSettingField`, `MergedPageElement` — bez tkinter/customtkinter/Komponenty/I/O/sieci
+
+### Dalsze etapy
+
+Kolejne kroki modularizacji (`GF-M2+`) — osobne PR-y. **GF-M1 nie uruchamia F3/F4 ani writera.**
