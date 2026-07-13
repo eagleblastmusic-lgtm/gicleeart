@@ -44,7 +44,6 @@ from giclee_app.studio.gicleeframe_page_draft import (
     SECTION_LIST_DRAG_HINT,
     SECTION_LIST_TITLE,
     SECTION_VISIBLE_RAM,
-    STRUCTURE_EMPTY_STATE,
     WORKING_VARIANT_LABEL,
     EditorFieldVisibility,
     editor_context_rows,
@@ -59,10 +58,6 @@ from giclee_app.studio.gicleeframe_page_draft import (
     SectionTreeRow,
     working_variant_menu_label,
 )
-from giclee_app.studio.gicleeframe_page_dry_run import (
-    build_page_structure_dry_run,
-    format_structure_dry_run_summary,
-)
 from giclee_app.studio.gicleeframe_page_inventory import (
     PageInventoryReport,
     build_gicleeframe_page_inventory,
@@ -72,14 +67,12 @@ from giclee_app.studio.gicleeframe_page_settings import (
     PageSettingField,
     divider_setting_groups,
 )
-from giclee_app.studio.gicleeframe_readiness import (
-    evaluate_gicleeframe_page_readiness,
-    format_page_readiness_block,
-)
-
 from . import theme
 from .gicleeframe_view_brand import GicleeFrameBrandPanelMixin
 from .gicleeframe_view_page_readiness import GicleeFramePageReadinessMixin
+from .gicleeframe_view_structure_dry_run import (
+    GicleeFrameStructureDryRunMixin,
+)
 from .gicleeframe_view_models import (
     PageContextRowSpec,
     SectionVisualCacheEntry,
@@ -273,6 +266,7 @@ def _lazy_shell_enabled() -> bool:
 class GicleeFrameView(
     GicleeFrameBrandPanelMixin,
     GicleeFramePageReadinessMixin,
+    GicleeFrameStructureDryRunMixin,
     ctk.CTkScrollableFrame,
 ):
     uses_async_first_paint = True
@@ -2673,28 +2667,6 @@ class GicleeFrameView(
         self._build_safety_card(col)
         return col
 
-    def _build_control_structure_card(self, parent: ctk.CTkFrame) -> None:
-        structure_card = _make_gf_card(parent, variant="panel_deep", radius=16)
-        structure_card.pack(fill="x", pady=(0, 10))
-        _make_card_title(
-            structure_card,
-            "Podgląd struktury",
-            "Kontrola struktury aktualnego wariantu RAM.",
-        ).pack(fill="x", padx=_CARD_PAD_X, pady=(12, 6))
-        self._structure_dry_run_btn = _make_secondary_button(
-            structure_card,
-            CHECK_STRUCTURE_LABEL,
-            self._run_structure_dry_run,
-            subtle=True,
-        )
-        self._structure_dry_run_btn.pack(anchor="w", padx=_CARD_PAD_X, pady=(0, 8))
-        self._structure_dry_label = _make_empty_state(
-            structure_card,
-            STRUCTURE_EMPTY_STATE,
-            wraplength=_CONTROL_COL_MINSIZE - 28,
-        )
-        self._structure_dry_label.pack(fill="x", padx=_CARD_PAD_X, pady=(0, 12))
-
     def _build_safety_card(self, parent: ctk.CTkFrame) -> None:
         card = _make_gf_card(parent, variant="panel_deep", radius=16)
         card.pack(fill="x")
@@ -2891,13 +2863,6 @@ class GicleeFrameView(
         if fields.visible and self._visible_row is None:
             self._visible_row = self._editor_header_visible_row
         self._hide_editor_field_placeholder_if_needed()
-
-    def _reset_structure_dry_run_display(self) -> None:
-        if self._structure_dry_label:
-            self._structure_dry_label.configure(
-                text=STRUCTURE_EMPTY_STATE,
-                text_color=theme.TextMuted,
-            )
 
     def _toggle_f1_section(self) -> None:
         if self._f1_panel is None:
@@ -8507,21 +8472,6 @@ class GicleeFrameView(
             self._on_status(
                 f"Wyczyszczono wariant RAM: {self._page_draft.draft_name} · nic nie zapisano"
             )
-
-    def _run_structure_dry_run(self) -> None:
-        if self._inventory is None:
-            self._refresh_inventory(warn_if_draft=False)
-        inv = self._inventory
-        if inv is None:
-            return
-        dry = build_page_structure_dry_run(inv, self._page_draft)
-        ready = evaluate_gicleeframe_page_readiness(inv, dry)
-        full = format_structure_dry_run_summary(dry) + "\n\n" + format_page_readiness_block(ready)
-        if self._structure_dry_label:
-            self._structure_dry_label.configure(text=full, text_color=theme.TextPrimary)
-        self._fill_page_readiness(ready)
-        if self._on_status:
-            self._on_status(dry.status_badge)
 
     def _pack_readiness_row(
         self,

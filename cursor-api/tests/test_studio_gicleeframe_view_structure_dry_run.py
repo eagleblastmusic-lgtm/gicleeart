@@ -12,6 +12,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from giclee_app.studio.gicleeframe_page_draft import STRUCTURE_EMPTY_STATE
 from giclee_app.ui import gicleeframe_view_structure_dry_run as structure_module
+from giclee_app.ui.gicleeframe_view import GicleeFrameView
+from giclee_app.ui.gicleeframe_view_brand import GicleeFrameBrandPanelMixin
+from giclee_app.ui.gicleeframe_view_page_readiness import (
+    GicleeFramePageReadinessMixin,
+)
 from giclee_app.ui.gicleeframe_view_structure_dry_run import (
     GicleeFrameStructureDryRunMixin,
     _STRUCTURE_DRY_RUN_WRAPLENGTH,
@@ -239,3 +244,25 @@ def test_structure_dry_run_stops_when_refresh_still_has_no_inventory(
     mixin._run_structure_dry_run()
 
     assert called is False
+
+
+def test_structure_mixin_is_wired_into_gicleeframe_view_mro() -> None:
+    assert GicleeFrameBrandPanelMixin in GicleeFrameView.__mro__
+    assert GicleeFramePageReadinessMixin in GicleeFrameView.__mro__
+    assert GicleeFrameStructureDryRunMixin in GicleeFrameView.__mro__
+
+
+def test_structure_methods_resolve_from_mixin_on_gicleeframe_view() -> None:
+    for name in _EXPECTED_METHODS:
+        assert hasattr(GicleeFrameView, name)
+        assert name not in GicleeFrameView.__dict__
+        assert getattr(GicleeFrameView, name) is getattr(
+            GicleeFrameStructureDryRunMixin,
+            name,
+        )
+
+
+def test_control_orchestration_and_inventory_remain_host_owned() -> None:
+    assert "_build_control_column" in GicleeFrameView.__dict__
+    assert "_build_safety_card" in GicleeFrameView.__dict__
+    assert "_refresh_inventory" in GicleeFrameView.__dict__
