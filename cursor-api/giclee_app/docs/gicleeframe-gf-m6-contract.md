@@ -11,7 +11,7 @@ Work branch: `gpt-work/gicleeframe-modularization-m6-safety-card`
 
 GF-M6 extracts the smallest coherent F2 boundary remaining after GF-M5: the static **Safety Card** rendered at the bottom of the control column.
 
-The boundary owns only the safety-card construction, safety copy and its local wraplength token. It does not own control-column composition, structure dry-run, page readiness, inventory, lifecycle, schedulers, selection, page context, preview, layer navigation, cache, editor population or RAM-variant actions.
+The boundary owns only the safety-card construction, safety copy and its local wraplength token. It does not own control-column composition, structure dry run, page readiness, inventory, lifecycle, schedulers, selection, page context, preview, layer navigation, cache, editor population or RAM-variant actions.
 
 Rejected for this stage:
 
@@ -77,13 +77,19 @@ Preserve exactly:
 - no timing constants, `after()`, scheduler ownership, telemetry or performance-lane changes;
 - no writer, persistence, sync, upload, publish, deploy or Shopify mutation.
 
+### GF-M2 re-export evolution
+
+GF-M2 preserved explicit host re-exports for all primitives as a compatibility bridge during the initial extraction. GF-M6 intentionally retires only the private host re-export `gicleeframe_view._build_safety_row`, because the sole production consumer moves with the safety card into `gicleeframe_view_safety.py`.
+
+The canonical primitive remains unchanged and directly importable from `gicleeframe_view_primitives._build_safety_row`. All other GF-M2 host re-exports remain identity-compatible. The primitives contract test records this single scoped supersession and asserts that the retired host alias is absent rather than silently weakening coverage.
+
 ## 6. Import ownership after extraction
 
 Remove from `gicleeframe_view.py` only symbols with no remaining host consumer after extraction:
 
 - `_SAFETY_TITLE`;
 - `_SAFETY_CHECKLIST`;
-- `_build_safety_row` import.
+- `_build_safety_row` import and private host re-export.
 
 Retain `_CONTROL_COL_MINSIZE` in the host.
 
@@ -98,6 +104,8 @@ Retain `ctk`, `_CARD_PAD_X`, `_make_card_title`, `_make_gf_card` and other primi
 - no-write/no-network/no-scheduler guardrails added for the safety module.
 
 Page-readiness and structure-dry-run host-ownership tests no longer assert `_build_safety_card` in `GicleeFrameView.__dict__`.
+
+`test_studio_gicleeframe_view_primitives.py` continues to verify identity for every retained GF-M2 host re-export and explicitly verifies that `_build_safety_row` is no longer exposed from `gicleeframe_view.py` after GF-M6.
 
 ## 8. Tests
 
@@ -115,6 +123,8 @@ Page-readiness and structure-dry-run host-ownership tests no longer assert `_bui
 10. `_build_safety_card` resolves from `GicleeFrameSafetyCardMixin` and is absent from `GicleeFrameView.__dict__`;
 11. `_build_control_column` remains host-owned.
 
+The existing primitives test additionally covers the scoped retirement of the `_build_safety_row` host re-export while retaining identity checks for every other exported primitive.
+
 ## 9. Exact durable allowlist
 
 Maximum durable scope:
@@ -124,8 +134,9 @@ Maximum durable scope:
 3. `cursor-api/tests/test_studio_gicleeframe_view_safety.py`
 4. `cursor-api/tests/test_studio_gicleeframe_shell.py`
 5. directly affected existing Giclée Frame ownership tests, only where `_build_safety_card` host ownership is now obsolete
-6. `cursor-api/giclee_app/docs/gicleeframe-planning.md`
-7. this contract document
+6. `cursor-api/tests/test_studio_gicleeframe_view_primitives.py`, only for the scoped GF-M2 re-export supersession
+7. `cursor-api/giclee_app/docs/gicleeframe-planning.md`
+8. this contract document
 
 No `.github`, workflow, version, starter-file or ZIP changes.
 
