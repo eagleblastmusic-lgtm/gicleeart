@@ -37,90 +37,91 @@ if (-not (Test-Path -LiteralPath $sourceRoot -PathType Container)) {
 
 $sourceTcl = Get-RequiredRuntimeDirectory -Root $sourceRoot -RequiredFile "init.tcl"
 $sourceTk = Get-RequiredRuntimeDirectory -Root $sourceRoot -RequiredFile "tk.tcl"
+$requiredFiles = @(
+    (Join-Path $sourceTcl.FullName "init.tcl"),
+    (Join-Path $sourceTk.FullName "tk.tcl"),
+    (Join-Path $sourceTk.FullName "spinbox.tcl"),
+    (Join-Path $sourceTk.FullName "ttk\defaults.tcl"),
+    (Join-Path $sourceTk.FullName "ttk\winTheme.tcl")
+)
 
-$safeRuntimeName = ($RuntimeName -replace '[^A-Za-z0-9_.-]', '-')
-if (-not $safeRuntimeName) {
-    $safeRuntimeName = "job"
-}
-
-$identityParts = @($safeRuntimeName)
-foreach ($value in @($env:GITHUB_RUN_ID, $env:GITHUB_RUN_ATTEMPT, $env:GITHUB_JOB)) {
-    $clean = (($value | Out-String).Trim() -replace '[^A-Za-z0-9_.-]', '-')
-    if ($clean) {
-        $identityParts += $clean
+foreach ($requiredFile in $requiredFiles) {
+    if (-not (Test-Path -LiteralPath $requiredFile -PathType Leaf)) {
+        throw "Runtime setup-python nie zawiera wymaganego pliku: $requiredFile"
     }
-}
-$safeIdentity = $identityParts -join "-"
-$targetRoot = Join-Path $env:RUNNER_TEMP "python-tcl-runtime-$safeIdentity"
-$copySucceeded = $false
-$lastCopyError = $null
-
-for ($attempt = 1; $attempt -le 3; $attempt++) {
-    try {
-        Remove-Item -LiteralPath $targetRoot -Recurse -Force -ErrorAction SilentlyContinue
-        New-Item -ItemType Directory -Path $targetRoot -Force | Out-Null
-        Copy-Item -Path (Join-Path $sourceRoot "*") -Destination $targetRoot -Recurse -Force
-
-        $targetTcl = Join-Path $targetRoot $sourceTcl.Name
-        $targetTk = Join-Path $targetRoot $sourceTk.Name
-        $targetInit = Join-Path $targetTcl "init.tcl"
-        $targetTkInit = Join-Path $targetTk "tk.tcl"
-
-        if (-not (Test-Path -LiteralPath $targetInit -PathType Leaf)) {
-            throw "Kopia runtime nie zawiera init.tcl: $targetInit"
-        }
-        if (-not (Test-Path -LiteralPath $targetTkInit -PathType Leaf)) {
-            throw "Kopia runtime nie zawiera tk.tcl: $targetTkInit"
-        }
-
-        Get-Content -LiteralPath $targetInit -TotalCount 1 -ErrorAction Stop | Out-Null
-        Get-Content -LiteralPath $targetTkInit -TotalCount 1 -ErrorAction Stop | Out-Null
-        $copySucceeded = $true
-        break
-    }
-    catch {
-        $lastCopyError = $_
-        if ($attempt -lt 3) {
-            Start-Sleep -Seconds $attempt
-        }
-    }
+    Get-Content -LiteralPath $requiredFile -TotalCount 1 -ErrorAction Stop | Out-Null
 }
 
-if (-not $copySucceeded) {
-    throw "Nie udalo sie przygotowac izolowanej kopii Tcl/Tk po 3 probach: $lastCopyError"
-}
-
-$env:TCL_LIBRARY = $targetTcl
-$env:TK_LIBRARY = $targetTk
-Add-Content -LiteralPath $env:GITHUB_ENV -Value "TCL_LIBRARY=$targetTcl"
-Add-Content -LiteralPath $env:GITHUB_ENV -Value "TK_LIBRARY=$targetTk"
+$env:TCL_LIBRARY = $sourceTcl.FullName
+$env:TK_LIBRARY = $sourceTk.FullName
+Add-Content -LiteralPath $env:GITHUB_ENV -Value "TCL_LIBRARY=$($sourceTcl.FullName)"
+Add-Content -LiteralPath $env:GITHUB_ENV -Value "TK_LIBRARY=$($sourceTk.FullName)"
 
 @'
 import os
+from pathlib import Path
 import tkinter as tk
+from tkinter import ttk
 
-root = tk.Tk()
-root.withdraw()
-print("tk_patchlevel=" + str(root.tk.call("info", "patchlevel")))
-print("tcl_library=" + str(root.tk.globalgetvar("tcl_library")))
-print("env_TCL_LIBRARY=" + str(os.environ.get("TCL_LIBRARY", "")))
-print("env_TK_LIBRARY=" + str(os.environ.get("TK_LIBRARY", "")))
-root.destroy()
+
+def normalized(value: str) -> str:
+    return os.path.normcase(os.path.normpath(str(Path(value).resolve())))
+
+
+expected_tcl = normalized(os.environ["TCL_LIBRARY"])
+expected_tk = normalized(os.environ["TK_LIBRARY"])
+for required in (
+    Path(expected_tcl) / "init.tcl",
+    Path(expected_tk) / "tk.tcl",
+    Path(expected_tk) / "spinbox.tcl",
+    Path(expected_tk) / "ttk" / "defaults.tcl",
+    Path(expected_tk) / "ttk" / "winTheme.tcl",
+):
+    required.read_bytes()
+
+root = None
+try:
+    root = tk.Tk()
+    root.withdraw()
+    actual_tcl = normalized(str(root.tk.globalgetvar("tcl_library")))
+    actual_tk = normalized(str(root.tk.globalgetvar("tk_library")))
+    if actual_tcl != expected_tcl:
+        raise RuntimeError(f"Unexpected tcl_library: {actual_tcl!r} != {expected_tcl!r}")
+    if actual_tk != expected_tk:
+        raise RuntimeError(f"Unexpected tk_library: {actual_tk!r} != {expected_tk!r}")
+
+    spinbox = tk.Spinbox(root)
+    spinbox.destroy()
+    style = ttk.Style(root)
+    if not style.theme_names():
+        raise RuntimeError("Tk ttk runtime reported no themes")
+
+    print("tk_patchlevel=" + str(root.tk.call("info", "patchlevel")))
+    print("tcl_library=" + actual_tcl)
+    print("tk_library=" + actual_tk)
+    print("env_TCL_LIBRARY=" + expected_tcl)
+    print("env_TK_LIBRARY=" + expected_tk)
+finally:
+    if root is not None:
+        root.destroy()
 '@ | python -
 
 if ($LASTEXITCODE -ne 0) {
-    throw "Preflight Tcl/Tk nie powiodl sie dla izolowanego runtime."
+    throw "Preflight Tcl/Tk nie powiodl sie dla runtime actions/setup-python."
 }
 
 if ($env:GITHUB_STEP_SUMMARY) {
     @"
-## Isolated Tcl/Tk runtime
+## Setup-python Tcl/Tk runtime
 
 - Python: `$pythonExe`
-- source: `$sourceRoot`
-- isolated copy: `$targetRoot`
-- run identity: `$safeIdentity`
-- TCL_LIBRARY: `$targetTcl`
-- TK_LIBRARY: `$targetTk`
+- job label: `$RuntimeName`
+- runtime root: `$sourceRoot`
+- mode: direct setup-python runtime; no copied interpreter tree
+- TCL_LIBRARY: `$($sourceTcl.FullName)`
+- TK_LIBRARY: `$($sourceTk.FullName)`
+- required Tk scripts: verified
+- Tk/ttk widget preflight: passed
+- Tk initialization retry: disabled
 "@ | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
 }

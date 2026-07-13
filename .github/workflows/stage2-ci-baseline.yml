@@ -20,8 +20,8 @@ concurrency:
 
 jobs:
   hermetic-smoke:
-    name: Hermetic smoke (Windows / Python 3.13)
-    runs-on: windows-latest
+    name: Hermetic smoke (Windows 2022 / Python 3.13)
+    runs-on: windows-2022
     timeout-minutes: 20
     env:
       PYTHONUTF8: "1"
@@ -88,7 +88,8 @@ jobs:
             "tests/test_stage1e_external_stores_3.py::test_launcher_config_reads_legacy_and_writes_roaming",
             "tests/test_tile_grid_appdata_settings.py",
             "tests/test_tytulyai_storage.py",
-            "tests/test_studio_component_hub.py::test_filtered_components_without_gui"
+            "tests/test_studio_component_hub.py::test_filtered_components_without_gui",
+            "tests/test_tcl_transient_retry.py"
           )
 
           python -m pytest -q `
@@ -109,8 +110,8 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-  tk-gui-diagnostic:
-    name: Tk GUI smoke (diagnostic)
+  tk-gui-smoke:
+    name: Tk GUI smoke (Windows 2022)
     needs: hermetic-smoke
     if: >-
       always() &&
@@ -119,7 +120,7 @@ jobs:
         github.event_name == 'workflow_dispatch' ||
         (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
       )
-    runs-on: windows-latest
+    runs-on: windows-2022
     timeout-minutes: 25
     env:
       PYTHONUTF8: "1"
@@ -160,7 +161,7 @@ jobs:
             New-Item -ItemType Directory -Path $entry.Value -Force | Out-Null
           }
 
-      - name: Prepare isolated Tcl/Tk runtime
+      - name: Prepare setup-python Tcl/Tk runtime
         shell: pwsh
         run: .\.github\scripts\prepare-tk-runtime.ps1 -RuntimeName "tk-gui"
 
@@ -175,7 +176,6 @@ jobs:
 
       - name: Probe Tcl/Tk and run GUI smoke
         id: tk_gui
-        continue-on-error: true
         working-directory: cursor-api
         shell: pwsh
         run: |
@@ -204,7 +204,8 @@ jobs:
             "tests/test_studio_component_hub.py::test_hub_search_during_partial_render",
             "tests/test_studio_launcher_inline.py::test_return_from_inline_restores_hub_tiles",
             "tests/test_studio_launcher_inline.py::test_return_from_inline_with_inline_resize_restores_hub",
-            "tests/test_studio_gicleeframe_visual_ready.py::test_gicleeframe_section_reentry_uses_minimal_cache"
+            "tests/test_studio_gicleeframe_visual_ready.py::test_gicleeframe_section_reentry_uses_minimal_cache",
+            "tests/test_studio_gicleeframe_fast_selection.py::test_media_section_selection_defers_heavy_details_to_on_demand"
           )
 
           python -m pytest -q `
@@ -215,21 +216,23 @@ jobs:
           "pytest_exit_code=$pytestExit" >> $env:GITHUB_OUTPUT
           exit $pytestExit
 
-      - name: Write Tk GUI diagnostic summary
+      - name: Write Tk GUI summary
         if: always()
         shell: pwsh
         run: |
           @"
-          ## Stage 2 Tk GUI diagnostic
+          ## Stage 2 Tk GUI smoke
 
+          - runner: windows-2022
           - step outcome: ${{ steps.tk_gui.outcome }}
           - Tcl/Tk probe exit code: ${{ steps.tk_gui.outputs.probe_exit_code }}
           - GUI pytest exit code: ${{ steps.tk_gui.outputs.pytest_exit_code }}
-          - mode: diagnostic and non-blocking
-          - runtime roots: isolated under RUNNER_TEMP
+          - mode: blocking
+          - application runtime roots: isolated under RUNNER_TEMP
+          - Tcl/Tk runtime: direct actions/setup-python
           "@ >> $env:GITHUB_STEP_SUMMARY
 
-      - name: Upload Tk GUI diagnostic evidence
+      - name: Upload Tk GUI evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -238,9 +241,9 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-  full-baseline-diagnostic:
-    name: Full pytest baseline (diagnostic)
-    needs: tk-gui-diagnostic
+  full-baseline:
+    name: Full pytest baseline (Windows 2022)
+    needs: tk-gui-smoke
     if: >-
       always() &&
       !cancelled() &&
@@ -248,7 +251,7 @@ jobs:
         github.event_name == 'workflow_dispatch' ||
         (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
       )
-    runs-on: windows-latest
+    runs-on: windows-2022
     timeout-minutes: 45
     env:
       PYTHONUTF8: "1"
@@ -289,7 +292,7 @@ jobs:
             New-Item -ItemType Directory -Path $entry.Value -Force | Out-Null
           }
 
-      - name: Prepare isolated Tcl/Tk runtime
+      - name: Prepare setup-python Tcl/Tk runtime
         shell: pwsh
         run: .\.github\scripts\prepare-tk-runtime.ps1 -RuntimeName "full-baseline"
 
@@ -301,6 +304,24 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements-dev.txt
           python -m pip check
+
+      - name: Warm Tcl/Tk on full-baseline runner
+        working-directory: cursor-api
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $reportRoot = Join-Path $env:RUNNER_TEMP "stage2-full-baseline-reports"
+          New-Item -ItemType Directory -Path $reportRoot -Force | Out-Null
+
+          python -m pytest -q `
+            --junitxml="$reportRoot\warmup-junit.xml" `
+            tests/test_studio_gicleeframe_fast_selection.py::test_media_section_selection_defers_heavy_details_to_on_demand `
+            2>&1 | Tee-Object -FilePath "$reportRoot\warmup-pytest.txt"
+
+          $exitCode = $LASTEXITCODE
+          if ($exitCode -ne 0) {
+            exit $exitCode
+          }
 
       - name: Run full pytest baseline
         id: full_pytest
@@ -318,17 +339,20 @@ jobs:
           "exit_code=$exitCode" >> $env:GITHUB_OUTPUT
           exit $exitCode
 
-      - name: Write diagnostic summary
+      - name: Write baseline summary
         if: always()
         shell: pwsh
         run: |
           @"
           ## Stage 2 full baseline
 
+          - runner: windows-2022
+          - warm-up: exact historical failing test on the same runner
           - pytest step outcome: ${{ steps.full_pytest.outcome }}
           - pytest exit code: ${{ steps.full_pytest.outputs.exit_code }}
           - mode: blocking baseline; evidence is uploaded on every outcome
-          - runtime roots: isolated under RUNNER_TEMP
+          - application runtime roots: isolated under RUNNER_TEMP
+          - Tcl/Tk runtime: direct actions/setup-python
           "@ >> $env:GITHUB_STEP_SUMMARY
 
       - name: Upload full baseline evidence
