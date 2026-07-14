@@ -1,6 +1,6 @@
 # ETAP 4B / LC-3A — Pure Shortcut Activation Decisions
 
-**Status:** fresh reconnaissance · contract freeze  
+**Status:** LC-3A implemented
 **Repository:** `eagleblastmusic-lgtm/gicleeart`  
 **Base:** `master` @ `6cfbd5b607f5a6afcf49c0d39a77946fdd77bb34`  
 **Data weryfikacji:** 2026-07-15

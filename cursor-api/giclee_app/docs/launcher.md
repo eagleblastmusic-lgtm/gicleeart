@@ -22,6 +22,8 @@ Pliki:
 
 **LC-2C tile grid placement:** `launcher_grid_layout.py` waliduje i rozwiązuje launcher-local sloty siatki. Oba rendery używają jednego `place_tile()`, zachowując trzy kolumny, row offset, paddingi oraz realne ramki DnD.
 
+**LC-3A shortcut decisions:** `launcher_shortcut_controller.py` rozstrzyga zbocza klawiszy oraz wyniki `unmapped / missing / pending / ready`. WinAPI, bindtagi Tk, fokus, statusy i `after_idle` pozostają w `OptionsCategoryGicleeApp`.
+
 ---
 
 ## Co robi
