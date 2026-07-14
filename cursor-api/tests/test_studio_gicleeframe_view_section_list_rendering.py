@@ -45,6 +45,9 @@ from giclee_app.ui.gicleeframe_view_top_bar import GicleeFrameTopBarMixin
 from giclee_app.ui.gicleeframe_view_section_list_interaction import (
     GicleeFrameSectionListInteractionMixin,
 )
+from giclee_app.ui.gicleeframe_view_details_on_demand import (
+    GicleeFrameDetailsOnDemandMixin,
+)
 from giclee_app.ui.gicleeframe_view_editor_shell import GicleeFrameEditorShellMixin
 from giclee_app.ui.gicleeframe_view_selection_orchestration import (
     GicleeFrameSelectionOrchestrationMixin,
@@ -315,7 +318,7 @@ def test_renderer_imports_shell_constants_without_duplication() -> None:
     assert f"_GF_SECTION_FIRST_BATCH_SIZE = {_GF_SECTION_FIRST_BATCH_SIZE}" in shell_text
 
 
-def test_gicleeframe_view_has_twelve_mixins_before_scrollable_frame() -> None:
+def test_gicleeframe_view_has_thirteen_mixins_before_scrollable_frame() -> None:
     mro = GicleeFrameView.__mro__
     assert GicleeFrameBrandPanelMixin in mro
     assert GicleeFramePageReadinessMixin in mro
@@ -329,6 +332,7 @@ def test_gicleeframe_view_has_twelve_mixins_before_scrollable_frame() -> None:
     assert GicleeFrameSectionListInteractionMixin in mro
     assert GicleeFrameSelectionOrchestrationMixin in mro
     assert GicleeFrameEditorShellMixin in mro
+    assert GicleeFrameDetailsOnDemandMixin in mro
     assert mro.index(GicleeFrameSectionListShellMixin) < mro.index(
         GicleeFrameSectionListRenderingMixin,
     )
@@ -341,7 +345,10 @@ def test_gicleeframe_view_has_twelve_mixins_before_scrollable_frame() -> None:
     assert mro.index(GicleeFrameSelectionOrchestrationMixin) < mro.index(
         GicleeFrameEditorShellMixin,
     )
-    assert mro.index(GicleeFrameEditorShellMixin) < mro.index(ctk.CTkScrollableFrame)
+    assert mro.index(GicleeFrameEditorShellMixin) < mro.index(
+        GicleeFrameDetailsOnDemandMixin,
+    )
+    assert mro.index(GicleeFrameDetailsOnDemandMixin) < mro.index(ctk.CTkScrollableFrame)
 
 
 def test_section_list_rendering_methods_resolve_by_identity_from_mixin_on_gicleeframe_view() -> None:
