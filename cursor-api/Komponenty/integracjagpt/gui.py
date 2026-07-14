@@ -12,7 +12,7 @@ from Komponenty._shared.theme_dev_gui import open_theme_dev_preview
 from Komponenty._shared.toast import show_toast
 from Komponenty._shared.window_geometry import position_toplevel_screen_center
 
-from .config import load_config, save_config
+from .config import GPT_KNOWLEDGE_PACK_VERSION, load_config, save_config
 from .handoff import (
     build_conversation_start_prompt,
     build_plan_evaluation_message,
@@ -232,7 +232,7 @@ class IntegracjaGptApp:
         ).pack(side="left", padx=(0, 6))
         ttk.Button(
             btn_row2,
-            text="Kopiuj: compact instructions (v35)",
+            text=f"Kopiuj: compact instructions ({GPT_KNOWLEDGE_PACK_VERSION})",
             command=self._copy_compact_instructions,
         ).pack(side="left", padx=(0, 6))
         ttk.Button(btn_row2, text="Otwórz review-demos", command=self._open_review_demos).pack(side="left")

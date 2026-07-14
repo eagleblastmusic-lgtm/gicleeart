@@ -108,7 +108,7 @@ def build_confirmation_checklist_message() -> str:
    GICLEE_PROJECT_REFACTOR_ROADMAP_v2.md
 
 5. Potwierdź, że widzisz pliki trybów analitycznych GICLEE_ANALYST_*_v1.md,
-   w tym sześć nowych modułów v3.9:
+   w tym sześć aktywnych modułów analyst zachowanych w v40:
    - GICLEE_ANALYST_MODE_GITHUB_PR_CI_v1.md
    - GICLEE_ANALYST_MODE_RUNTIME_DATA_OWNERSHIP_v1.md
    - GICLEE_ANALYST_MODE_WRITER_EXPORT_SAFETY_v1.md

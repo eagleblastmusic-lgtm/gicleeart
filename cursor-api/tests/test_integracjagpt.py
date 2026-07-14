@@ -298,6 +298,30 @@ def test_build_confirmation_checklist_message() -> None:
     assert "10. Potwierdź" in msg
 
 
+def test_exact_head_review_stale_version_labels_removed() -> None:
+    from Komponenty.integracjagpt.config import (
+        GPT_KNOWLEDGE_PACK_VERSION,
+        GPT_STARTER_DIR,
+        GPT_START_MESSAGE_FILE,
+    )
+    from Komponenty.integracjagpt.handoff import build_confirmation_checklist_message
+
+    gui_source = (GPT_STARTER_DIR.parent / "cursor-api" / "Komponenty" / "integracjagpt" / "gui.py").read_text(
+        encoding="utf-8"
+    )
+    assert "compact instructions (v35)" not in gui_source
+    assert "GPT_KNOWLEDGE_PACK_VERSION" in gui_source
+    assert 'f"Kopiuj: compact instructions ({GPT_KNOWLEDGE_PACK_VERSION})"' in gui_source
+
+    checklist = build_confirmation_checklist_message()
+    assert "nowych modułów v3.9" not in checklist
+    assert "aktywnych modułów analyst" in checklist
+
+    start_message = (GPT_STARTER_DIR / GPT_START_MESSAGE_FILE).read_text(encoding="utf-8")
+    assert "planowania małych, bezpiecznych etapów pracy" not in start_message
+    assert "autonomicznych etapów pracy z wewnętrznymi bramami bezpieczeństwa" in start_message
+
+
 def test_find_newest_obs_recording(tmp_path) -> None:
     from Komponenty.integracjagpt.obs_record import find_newest_recording
     import os
