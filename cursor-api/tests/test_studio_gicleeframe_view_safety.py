@@ -28,6 +28,7 @@ from giclee_app.ui.gicleeframe_view_safety import (
     _SAFETY_TITLE,
 )
 from giclee_app.ui.gicleeframe_view_top_bar import GicleeFrameTopBarMixin
+from giclee_app.ui.gicleeframe_view_ram_variants import GicleeFrameRamVariantMixin
 
 ROOT = Path(__file__).resolve().parents[1]
 SAFETY_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_safety.py"
@@ -180,6 +181,7 @@ def test_safety_mixin_is_wired_into_gicleeframe_view_mro() -> None:
     assert GicleeFrameSafetyCardMixin in GicleeFrameView.__mro__
     assert GicleeFrameReadinessRowMixin in GicleeFrameView.__mro__
     assert GicleeFrameTopBarMixin in GicleeFrameView.__mro__
+    assert GicleeFrameRamVariantMixin in GicleeFrameView.__mro__
     assert "_build_safety_card" not in GicleeFrameView.__dict__
     assert (
         GicleeFrameView._build_safety_card

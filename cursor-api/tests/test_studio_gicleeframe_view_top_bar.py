@@ -26,6 +26,7 @@ from giclee_app.ui.gicleeframe_view_brand import GicleeFrameBrandPanelMixin
 from giclee_app.ui.gicleeframe_view_page_readiness import (
     GicleeFramePageReadinessMixin,
 )
+from giclee_app.ui.gicleeframe_view_ram_variants import GicleeFrameRamVariantMixin
 from giclee_app.ui.gicleeframe_view_readiness_row import (
     GicleeFrameReadinessRowMixin,
 )
@@ -245,6 +246,7 @@ def test_top_bar_methods_resolve_by_identity_from_mixin_on_gicleeframe_view() ->
     assert GicleeFrameSafetyCardMixin in GicleeFrameView.__mro__
     assert GicleeFrameReadinessRowMixin in GicleeFrameView.__mro__
     assert GicleeFrameTopBarMixin in GicleeFrameView.__mro__
+    assert GicleeFrameRamVariantMixin in GicleeFrameView.__mro__
     for name in _EXPECTED_METHODS:
         assert name not in GicleeFrameView.__dict__
         assert getattr(GicleeFrameView, name) is getattr(GicleeFrameTopBarMixin, name)
@@ -256,12 +258,7 @@ def test_host_ownership_for_shell_and_adapters() -> None:
         "_ensure_top_bar_actions_for_atomic_reveal",
         "set_navigation",
         "_handle_back",
-        "_sync_working_variant_menu",
-        "_on_working_variant_selected",
-        "_add_ram_variant",
-        "_duplicate_ram_variant",
-        "_rename_ram_variant",
-        "_clear_page_draft",
+        "_apply_edit_to_draft",
         "_refresh_inventory",
         "_schedule_atomic_reveal_check",
         "_try_atomic_reveal",

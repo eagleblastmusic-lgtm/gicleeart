@@ -354,7 +354,7 @@ Kolejne kroki modularizacji (`GF-M2+`) — osobne PR-y. **GF-M1 nie uruchamia F3
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M9+** — osobne PR-y.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M10+** — osobne PR-y.
 
 ---
 
@@ -381,7 +381,7 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M9+** — osobne
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M9+** — osobne PR-y.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M10+** — osobne PR-y.
 
 ---
 
@@ -407,7 +407,7 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M9+** — osobne
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M9+** — osobne PR-y.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M10+** — osobne PR-y.
 
 ---
 
@@ -433,4 +433,32 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M9+** — osobne
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M9+** — osobne PR-y. RAM workflow pozostaje host-owned.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M10+** — osobne PR-y. RAM workflow pozostaje host-owned.
+
+---
+
+## 20. GF-M9 — RAM Variant Workflow Subsystem Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** ekstrakcja kompletnego subsystemu RAM variant workflow (menu sync, przełączanie wariantu, synchronizacja metadanych top bara, add/duplicate/rename/clear) bez zmiany zachowania, dialogów, komunikatów statusowych ani adapterów host-owned.
+
+### Wynik
+
+- **RAM variant workflow** przeniesiony do `ui/gicleeframe_view_ram_variants.py` jako `GicleeFrameRamVariantMixin`.
+- Przeniesiono dokładnie **7 metod**: `_sync_working_variant_menu`, `_on_working_variant_selected`, `_update_top_bar`, `_add_ram_variant`, `_duplicate_ram_variant`, `_rename_ram_variant`, `_clear_page_draft`.
+- Mixin **nie posiada lifecycle** ani `__init__`, **nie dziedziczy** po widżecie Tk, **nie używa `after()`**, **nie zapisuje plików** ani nie wykonuje operacji sieciowych/Shopify.
+- Host `GicleeFrameView` dziedziczy siedem mixinów panelowych/subsystemowych plus `GicleeFrameRamVariantMixin` przed `ctk.CTkScrollableFrame`.
+- Host nadal posiada:
+  - `__init__` i inicjalizację współdzielonego stanu (`_page_draft`, `_inventory`, `_merged`, `_working_variant_menu`, `_top_meta_label`, `_change_count_label`, `_on_status`),
+  - `_apply_edit_to_draft` — most edytor→draft,
+  - `_refresh_inventory` / `_refresh_inventory_light` — implementacje inventory,
+  - `_set_merged`, `_rebuild_page_model_cache`,
+  - `_render_section_menu` i implementacje section list,
+  - `_populate_editor` i całą ścieżkę selection/editor,
+  - `_reset_structure_dry_run_display`, `_build_shell`, atomic-reveal orchestration.
+- Zachowano **RAM-only behavior**: brak writera, brak trwałego zapisu, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M10+** — osobne PR-y. **Section List** jest kolejnym większym kandydatem na ekstrakcję.
