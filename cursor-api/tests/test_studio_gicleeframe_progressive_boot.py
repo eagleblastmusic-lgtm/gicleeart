@@ -35,7 +35,7 @@ def test_gicleeframe_progressive_boot_skips_initial_selection() -> None:
 
 
 def test_gicleeframe_section_list_is_incremental() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
+    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_rendering.py"
     text = path.read_text(encoding="utf-8")
 
     assert "def _render_section_list_incremental" in text

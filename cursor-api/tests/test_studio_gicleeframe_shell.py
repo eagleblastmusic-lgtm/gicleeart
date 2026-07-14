@@ -69,6 +69,12 @@ _SECTION_LIST_SHELL_VIEW_PATH = (
     / "ui"
     / "gicleeframe_view_section_list_shell.py"
 )
+_SECTION_LIST_RENDERING_VIEW_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "giclee_app"
+    / "ui"
+    / "gicleeframe_view_section_list_rendering.py"
+)
 _NEW_PLANNING_MODULES = (
     "gicleeframe_brief.py",
     "gicleeframe_draft_state.py",
@@ -188,11 +194,12 @@ def test_view_source_f222_premium_copy() -> None:
 def test_view_source_f223_first_screen_composition() -> None:
     text = _VIEW_PATH.read_text(encoding="utf-8")
     shell_text = _SECTION_LIST_SHELL_VIEW_PATH.read_text(encoding="utf-8")
-    combined = text + "\n" + shell_text
+    rendering_text = _SECTION_LIST_RENDERING_VIEW_PATH.read_text(encoding="utf-8")
+    combined = text + "\n" + shell_text + "\n" + rendering_text
     assert "_ellipsize" in text
     assert "_SECTION_LIST_WIDTH = 320" in combined
     assert "_EDITOR_HERO_PREVIEW_HEIGHT" in text
-    assert "_SECTION_ROW_HEIGHT" in text
+    assert "_SECTION_ROW_HEIGHT" in combined
     assert "RAM preview" in text
     assert "APPLY_RAM_DRAFT_LABEL" in text
     assert "_build_section_identity_card" in text
@@ -515,6 +522,39 @@ def test_section_list_shell_view_source_contract() -> None:
 def test_section_list_shell_view_source_no_write_or_network() -> None:
     _assert_no_writes_in_source(_SECTION_LIST_SHELL_VIEW_PATH)
     text = _SECTION_LIST_SHELL_VIEW_PATH.read_text(encoding="utf-8")
+    for forbidden_text in (
+        "shopify",
+        "deploy",
+        "subprocess",
+        "requests.get",
+        "requests.post",
+    ):
+        assert forbidden_text not in text.lower()
+
+
+def test_section_list_rendering_view_source_contract() -> None:
+    text = _SECTION_LIST_RENDERING_VIEW_PATH.read_text(encoding="utf-8")
+    assert "GicleeFrameSectionListRenderingMixin" in text
+    assert "_SECTION_ROW_GRIP = \"⋮\"" in text
+    assert "_SECTION_ROW_HEIGHT = 64" in text
+    assert "_GF_SECTION_BATCH_SIZE = 8" in text
+    assert "_GF_SECTION_BATCH_DELAY_MS = 0" in text
+    for method in (
+        "_render_section_list",
+        "_render_full_list_chunk",
+        "_render_section_list_incremental",
+        "_render_section_list_batch",
+        "_schedule_section_list_batch_continuation",
+        "_create_section_list_row",
+        "_build_section_row",
+        "_render_section_menu",
+    ):
+        assert method in text
+
+
+def test_section_list_rendering_view_source_no_write_or_network() -> None:
+    _assert_no_writes_in_source(_SECTION_LIST_RENDERING_VIEW_PATH)
+    text = _SECTION_LIST_RENDERING_VIEW_PATH.read_text(encoding="utf-8")
     for forbidden_text in (
         "shopify",
         "deploy",

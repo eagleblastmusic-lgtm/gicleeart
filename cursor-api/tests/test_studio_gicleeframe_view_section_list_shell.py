@@ -36,6 +36,9 @@ from giclee_app.ui.gicleeframe_view_section_list_shell import (
     _SECTION_LIST_WIDTH,
     _SECTION_PLACEHOLDER,
 )
+from giclee_app.ui.gicleeframe_view_section_list_rendering import (
+    GicleeFrameSectionListRenderingMixin,
+)
 from giclee_app.ui.gicleeframe_view_structure_dry_run import (
     GicleeFrameStructureDryRunMixin,
 )
@@ -73,18 +76,11 @@ _HOST_OWNERSHIP = {
     "_show_section_list_loading_state",
     "_run_deferred_bootstrap",
     "_try_mark_progressive_full_ready",
-    "_render_section_list",
-    "_render_full_list_chunk",
     "_finalize_full_list_render",
-    "_render_section_list_incremental",
-    "_render_section_list_batch",
-    "_schedule_section_list_batch_continuation",
-    "_create_section_list_row",
     "_on_section_row_click",
     "_select_element",
     "_start_section_drag",
     "_finish_section_drag",
-    "_render_section_menu",
     "_highlight_section_row",
     "_rebuild_page_model_cache",
     "_log_visual_gate_ready",
@@ -281,6 +277,7 @@ def test_section_list_shell_methods_resolve_by_identity_from_mixin_on_gicleefram
     assert GicleeFrameTopBarMixin in GicleeFrameView.__mro__
     assert GicleeFrameRamVariantMixin in GicleeFrameView.__mro__
     assert GicleeFrameSectionListShellMixin in GicleeFrameView.__mro__
+    assert GicleeFrameSectionListRenderingMixin in GicleeFrameView.__mro__
     for name in _EXPECTED_METHODS:
         assert name not in GicleeFrameView.__dict__
         assert getattr(GicleeFrameView, name) is getattr(

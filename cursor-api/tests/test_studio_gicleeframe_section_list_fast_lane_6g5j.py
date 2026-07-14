@@ -21,8 +21,22 @@ def _top_bar_text() -> str:
     )
 
 
+def _rendering_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_rendering.py"
+    ).read_text(encoding="utf-8")
+
+
 def _combined_text() -> str:
-    return _view_text() + "\n" + _top_bar_text() + "\n" + _section_list_shell_text()
+    return (
+        _view_text()
+        + "\n"
+        + _top_bar_text()
+        + "\n"
+        + _section_list_shell_text()
+        + "\n"
+        + _rendering_text()
+    )
 
 
 def _section_list_shell_text() -> str:
@@ -85,17 +99,17 @@ def test_section_list_fast_lane_preserves_late_lane_ordering() -> None:
 
 
 def test_section_list_subsequent_batches_still_use_batch_delay() -> None:
-    text = _view_text()
+    text = _rendering_text()
 
     start = text.index("def _schedule_section_list_batch_continuation")
-    end = text.index("def _end_selection_priority_window", start)
+    end = text.index("def _create_section_list_row", start)
     body = text[start:end]
 
     assert "_GF_SECTION_BATCH_DELAY_MS" in body
     assert "_render_section_list_batch(options, end)" in body
 
     batch_start = text.index("def _render_section_list_batch")
-    batch_end = text.index("def _create_section_list_row", batch_start)
+    batch_end = text.index("def _schedule_section_list_batch_continuation", batch_start)
     batch_body = text[batch_start:batch_end]
 
     assert "_GF_SECTION_FIRST_BATCH_SIZE" in batch_body

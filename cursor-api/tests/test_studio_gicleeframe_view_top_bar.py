@@ -30,6 +30,9 @@ from giclee_app.ui.gicleeframe_view_ram_variants import GicleeFrameRamVariantMix
 from giclee_app.ui.gicleeframe_view_section_list_shell import (
     GicleeFrameSectionListShellMixin,
 )
+from giclee_app.ui.gicleeframe_view_section_list_rendering import (
+    GicleeFrameSectionListRenderingMixin,
+)
 from giclee_app.ui.gicleeframe_view_readiness_row import (
     GicleeFrameReadinessRowMixin,
 )
@@ -251,6 +254,7 @@ def test_top_bar_methods_resolve_by_identity_from_mixin_on_gicleeframe_view() ->
     assert GicleeFrameTopBarMixin in GicleeFrameView.__mro__
     assert GicleeFrameRamVariantMixin in GicleeFrameView.__mro__
     assert GicleeFrameSectionListShellMixin in GicleeFrameView.__mro__
+    assert GicleeFrameSectionListRenderingMixin in GicleeFrameView.__mro__
     for name in _EXPECTED_METHODS:
         assert name not in GicleeFrameView.__dict__
         assert getattr(GicleeFrameView, name) is getattr(GicleeFrameTopBarMixin, name)

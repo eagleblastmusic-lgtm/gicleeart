@@ -62,7 +62,14 @@ def test_top_bar_late_split_preserves_prior_optimizations() -> None:
     host = (
         ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
     ).read_text(encoding="utf-8")
-    assert "studio.gicleeframe.section_list.first_visible_ready" in host
+    rendering = (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_rendering.py"
+    ).read_text(encoding="utf-8")
+    shell = (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_shell.py"
+    ).read_text(encoding="utf-8")
+    combined = host + "\n" + shell + "\n" + rendering
+    assert "studio.gicleeframe.section_list.first_visible_ready" in combined
     assert "studio.gicleeframe.editor.fields_lazy_startup" in host
     assert "studio.gicleeframe.editor.identity_card_lazy_startup" in host
     assert "studio.gicleeframe.populate_editor.preview_deferred_requested" in host

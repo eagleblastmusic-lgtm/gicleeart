@@ -20,8 +20,20 @@ def _section_list_shell_text() -> str:
     ).read_text(encoding="utf-8")
 
 
+def _rendering_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_rendering.py"
+    ).read_text(encoding="utf-8")
+
+
 def _combined_text() -> str:
-    return _view_text() + "\n" + _section_list_shell_text()
+    return (
+        _view_text()
+        + "\n"
+        + _section_list_shell_text()
+        + "\n"
+        + _rendering_text()
+    )
 
 
 def test_sections_column_shell_and_extras_split_exists() -> None:
