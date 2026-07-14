@@ -16,6 +16,8 @@ Pliki:
 
 **LC-1 composition root:** warstwy klasycznego launchera przekazują finalną klasę jawnie do `launcher.main(app_factory=...)`. Entry point, MRO i zachowanie pozostają bez zmian, a runtime nie podmienia już globalnego `launcher.GicleeApp`.
 
+**LC-2A navigation model:** `category_navigation.py` rozstrzyga czysty, niemutowalny plan ekranu kategorii. `CategoryGicleeApp` nadal odpowiada za istniejące widgety Tk, hooki renderera, fokus, scroll i statusy.
+
 ---
 
 ## Co robi
