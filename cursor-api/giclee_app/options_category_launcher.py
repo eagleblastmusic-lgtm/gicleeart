@@ -348,12 +348,7 @@ class OptionsCategoryGicleeApp(StyledCategoryGicleeApp):
 def main() -> None:
     """Uruchamia pełny launcher kategorii z menu Opcje."""
 
-    original_class = _launcher.GicleeApp
-    _launcher.GicleeApp = OptionsCategoryGicleeApp
-    try:
-        _launcher.main()
-    finally:
-        _launcher.GicleeApp = original_class
+    _launcher.main(app_factory=OptionsCategoryGicleeApp)
 
 
 if __name__ == "__main__":

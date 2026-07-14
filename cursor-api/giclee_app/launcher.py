@@ -1688,7 +1688,11 @@ Komponenty nie wpisane do zadnej sekcji wpadna do dodatkowej sekcji "Inne" na do
 """
 
 
-def main() -> None:
+LauncherFactory = Callable[[tk.Tk], object]
+
+
+def main(app_factory: LauncherFactory | None = None) -> None:
+    factory = app_factory or GicleeApp
     if _LAUNCHER_AUTH_ENABLED:
         # Auth: pierwszy start = ustawienie hasla, potem logowanie przy kazdym uruchomieniu.
         try:
@@ -1707,7 +1711,7 @@ def main() -> None:
     root.withdraw()
 
     def _show_main() -> None:
-        GicleeApp(root)
+        factory(root)
         root.deiconify()
 
     from .splash_screen import run_splash_then

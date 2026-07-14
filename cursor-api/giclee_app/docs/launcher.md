@@ -14,6 +14,8 @@ Pliki:
 
 **Studio Preview (F1):** nowy shell CustomTkinter w [`studio-preview.md`](studio-preview.md) — `python -m giclee_app.studio_preview`. Klasyczny launcher pozostaje fallbackiem z pollingiem Shopify, backupami i widokami inline.
 
+**LC-1 composition root:** warstwy klasycznego launchera przekazują finalną klasę jawnie do `launcher.main(app_factory=...)`. Entry point, MRO i zachowanie pozostają bez zmian, a runtime nie podmienia już globalnego `launcher.GicleeApp`.
+
 ---
 
 ## Co robi

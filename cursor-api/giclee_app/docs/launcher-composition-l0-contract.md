@@ -1,6 +1,6 @@
 # ETAP 4B / L-0 — Launcher Composition: Fresh Reconnaissance & Contract Freeze
 
-**Status:** contract freeze — docs only  
+**Status:** L-0 complete · LC-1 implemented
 **Repository:** `eagleblastmusic-lgtm/gicleeart`  
 **Base:** `master` @ `f3d830910b2e9a5f108ec0896cc19c88d3d1eb5f`  
 **Data weryfikacji:** 2026-07-14
