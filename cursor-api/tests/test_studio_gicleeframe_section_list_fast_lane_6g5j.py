@@ -33,6 +33,12 @@ def _rendering_text() -> str:
     ).read_text(encoding="utf-8")
 
 
+def _lifecycle_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_lifecycle_inventory.py"
+    ).read_text(encoding="utf-8")
+
+
 def _combined_text() -> str:
     return (
         _view_text()
@@ -60,12 +66,12 @@ def _constant_int(text: str, name: str) -> int:
 
 
 def test_section_first_visible_defer_ms_constant_exists() -> None:
-    text = _view_text()
+    text = _lifecycle_text()
     assert "_GF_SECTION_FIRST_VISIBLE_DEFER_MS = 0" in text
 
 
 def test_section_list_first_visible_fast_lane_event_exists() -> None:
-    text = _view_text()
+    text = _lifecycle_text()
     assert "studio.gicleeframe.section_list.first_visible_fast_lane" in text
     assert "delay_ms=effective_delay" in text
     assert "row_count=len(self._section_dropdown_options_cache)" in text
@@ -73,10 +79,10 @@ def test_section_list_first_visible_fast_lane_event_exists() -> None:
 
 
 def test_section_list_incremental_scheduled_uses_fast_lane_defer() -> None:
-    text = _view_text()
+    text = _lifecycle_text()
 
     start = text.index("def _schedule_section_list_incremental")
-    end = text.index("def _build_page_editor_section", start)
+    end = text.index("def _refresh_inventory_light", start)
     body = text[start:end]
 
     assert "studio.gicleeframe.section_list.incremental_scheduled" in body
@@ -87,11 +93,12 @@ def test_section_list_incremental_scheduled_uses_fast_lane_defer() -> None:
 
 def test_section_list_fast_lane_preserves_prior_6g5_markers() -> None:
     text = _combined_text()
+    lifecycle_text = _lifecycle_text()
     assert "studio.gicleeframe.section_list.column_ready_for_rows" in text
     assert "studio.gicleeframe.section_list.incremental_enter" in text
     assert "studio.gicleeframe.section_list.first_batch_start" in text
     assert "studio.gicleeframe.section_list.first_visible_ready" in text
-    assert "studio.gicleeframe.visual.perceived_ready" in text
+    assert "studio.gicleeframe.visual.perceived_ready" in lifecycle_text
     assert "studio.gicleeframe.top_bar.actions_late_scheduled" in text
     assert "studio.gicleeframe.editor.fields_lazy_startup" in text
     assert "studio.gicleeframe.editor.identity_card_lazy_startup" in text

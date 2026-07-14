@@ -44,6 +44,12 @@ def _page_context_text() -> str:
     return PAGE_CONTEXT_PATH.read_text(encoding="utf-8")
 
 
+def _lifecycle_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_lifecycle_inventory.py"
+    ).read_text(encoding="utf-8")
+
+
 def _combined_text() -> str:
     return (
         _view_text()
@@ -257,14 +263,18 @@ def test_populate_done_logs_only_for_current_generation() -> None:
 
 def test_selection_diag_preserves_prior_6g5_markers() -> None:
     text = _combined_text()
+    lifecycle_text = _lifecycle_text()
     for marker in (
         "studio.gicleeframe.section_list.static_lane_ready",
         "studio.gicleeframe.section_list.first_visible_ready",
-        "studio.gicleeframe.visual.perceived_ready",
         "studio.gicleeframe.section_list.scroll_upgrade_scheduled",
         "studio.gicleeframe.sections_column.early_lane_scheduled",
-        "studio.gicleeframe.visual.perceived_ready_gate_check",
         "select_element.immediate_ready",
         "populate_editor.deferred_stale",
     ):
         assert marker in text
+    for marker in (
+        "studio.gicleeframe.visual.perceived_ready",
+        "studio.gicleeframe.visual.perceived_ready_gate_check",
+    ):
+        assert marker in lifecycle_text

@@ -54,6 +54,9 @@ from giclee_app.ui.gicleeframe_view_structure_dry_run import (
     GicleeFrameStructureDryRunMixin,
 )
 from giclee_app.ui.gicleeframe_view_top_bar import GicleeFrameTopBarMixin
+from giclee_app.ui.gicleeframe_view_lifecycle_inventory import (
+    GicleeFrameLifecycleInventoryMixin,
+)
 from giclee_app.ui.gicleeframe_view_primitives import _GF_BORDER_WARM, _GF_CARD_SOFT
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -86,6 +89,9 @@ _EXPECTED_METHODS = {
 
 _HOST_OWNERSHIP = {
     "__init__",
+}
+
+_LIFECYCLE_OWNERSHIP = {
     "_set_merged",
     "_since_visual_enter_ms",
     "_finalize_full_list_render",
@@ -310,7 +316,7 @@ def test_collapse_section_list_on_click_enabled_semantics(
         assert _collapse_section_list_on_click_enabled() is False
 
 
-def test_gicleeframe_view_has_fifteen_mixins_before_scrollable_frame() -> None:
+def test_gicleeframe_view_has_sixteen_mixins_before_scrollable_frame() -> None:
     mro = GicleeFrameView.__mro__
     for mixin in (
         GicleeFrameBrandPanelMixin,
@@ -328,6 +334,7 @@ def test_gicleeframe_view_has_fifteen_mixins_before_scrollable_frame() -> None:
         GicleeFrameDetailsOnDemandMixin,
         GicleeFrameVisualDetailRenderersMixin,
         GicleeFramePageContextMixin,
+        GicleeFrameLifecycleInventoryMixin,
     ):
         assert mixin in mro
     assert mro.index(GicleeFrameSectionListRenderingMixin) < mro.index(
@@ -349,6 +356,9 @@ def test_gicleeframe_view_has_fifteen_mixins_before_scrollable_frame() -> None:
         GicleeFramePageContextMixin,
     )
     assert mro.index(GicleeFramePageContextMixin) < mro.index(
+        GicleeFrameLifecycleInventoryMixin,
+    )
+    assert mro.index(GicleeFrameLifecycleInventoryMixin) < mro.index(
         ctk.CTkScrollableFrame,
     )
 
@@ -365,6 +375,12 @@ def test_section_list_interaction_methods_resolve_by_identity_from_mixin_on_gicl
 def test_host_ownership_for_interaction_adapters() -> None:
     for name in _HOST_OWNERSHIP:
         assert name in GicleeFrameView.__dict__
+    for name in _LIFECYCLE_OWNERSHIP:
+        assert name not in GicleeFrameView.__dict__
+        assert getattr(GicleeFrameView, name) is getattr(
+            GicleeFrameLifecycleInventoryMixin,
+            name,
+        )
 
 
 def test_render_section_list_remains_renderer_owned_not_in_interaction() -> None:
@@ -386,8 +402,12 @@ def test_update_top_bar_remains_ram_variant_owned_not_in_interaction() -> None:
 
 
 def test_host_keeps_finalize_full_list_render() -> None:
-    assert "_finalize_full_list_render" in GicleeFrameView.__dict__
+    assert "_finalize_full_list_render" not in GicleeFrameView.__dict__
     assert "_finalize_full_list_render" not in GicleeFrameSectionListInteractionMixin.__dict__
+    assert (
+        GicleeFrameView._finalize_full_list_render
+        is GicleeFrameLifecycleInventoryMixin._finalize_full_list_render
+    )
 
 
 def test_selected_section_label_empty_merged() -> None:

@@ -9,6 +9,8 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 ROOT = Path(__file__).resolve().parents[1]
+LIFECYCLE_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_lifecycle_inventory.py"
+HOST_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
 INTERACTION_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_interaction.py"
 SELECTION_PATH = (
     ROOT / "giclee_app" / "ui" / "gicleeframe_view_selection_orchestration.py"
@@ -22,14 +24,14 @@ def _method_block(text: str, name: str) -> str:
 
 
 def test_gicleeframe_view_has_model_cache_fields() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    host_text = HOST_PATH.read_text(encoding="utf-8")
+    lifecycle_text = LIFECYCLE_PATH.read_text(encoding="utf-8")
 
-    assert "_merged_by_id" in text
-    assert "_section_tree_rows_cache" in text
-    assert "_section_dropdown_options_cache" in text
-    assert "_section_row_frames" in text
-    assert "def _rebuild_page_model_cache" in text
+    assert "_merged_by_id" in host_text
+    assert "_section_tree_rows_cache" in host_text
+    assert "_section_dropdown_options_cache" in host_text
+    assert "_section_row_frames" in host_text
+    assert "def _rebuild_page_model_cache" in lifecycle_text
 
 
 def test_select_element_uses_lookup_cache() -> None:
@@ -62,9 +64,8 @@ def test_highlight_uses_row_frame_lookup() -> None:
 
 
 def test_refresh_inventory_rebuilds_model_cache() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
-    block = _method_block(text, "_refresh_inventory")
+    lifecycle_text = LIFECYCLE_PATH.read_text(encoding="utf-8")
+    block = _method_block(lifecycle_text, "_refresh_inventory")
 
     assert "_set_merged" in block or "_rebuild_page_model_cache" in block
 

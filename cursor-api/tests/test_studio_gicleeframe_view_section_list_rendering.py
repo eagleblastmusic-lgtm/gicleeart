@@ -53,6 +53,9 @@ from giclee_app.ui.gicleeframe_view_visual_detail_renderers import (
     GicleeFrameVisualDetailRenderersMixin,
 )
 from giclee_app.ui.gicleeframe_view_page_context import GicleeFramePageContextMixin
+from giclee_app.ui.gicleeframe_view_lifecycle_inventory import (
+    GicleeFrameLifecycleInventoryMixin,
+)
 from giclee_app.ui.gicleeframe_view_selection_orchestration import (
     GicleeFrameSelectionOrchestrationMixin,
 )
@@ -75,6 +78,9 @@ _EXPECTED_METHODS = {
 
 _HOST_OWNERSHIP = {
     "__init__",
+}
+
+_LIFECYCLE_OWNERSHIP = {
     "_finalize_full_list_render",
     "_rebuild_page_model_cache",
     "_try_mark_progressive_full_ready",
@@ -325,7 +331,7 @@ def test_renderer_imports_shell_constants_without_duplication() -> None:
     assert f"_GF_SECTION_FIRST_BATCH_SIZE = {_GF_SECTION_FIRST_BATCH_SIZE}" in shell_text
 
 
-def test_gicleeframe_view_has_fifteen_mixins_before_scrollable_frame() -> None:
+def test_gicleeframe_view_has_sixteen_mixins_before_scrollable_frame() -> None:
     mro = GicleeFrameView.__mro__
     assert GicleeFrameBrandPanelMixin in mro
     assert GicleeFramePageReadinessMixin in mro
@@ -341,6 +347,8 @@ def test_gicleeframe_view_has_fifteen_mixins_before_scrollable_frame() -> None:
     assert GicleeFrameEditorShellMixin in mro
     assert GicleeFrameDetailsOnDemandMixin in mro
     assert GicleeFrameVisualDetailRenderersMixin in mro
+    assert GicleeFramePageContextMixin in mro
+    assert GicleeFrameLifecycleInventoryMixin in mro
     assert mro.index(GicleeFrameSectionListShellMixin) < mro.index(
         GicleeFrameSectionListRenderingMixin,
     )
@@ -363,6 +371,9 @@ def test_gicleeframe_view_has_fifteen_mixins_before_scrollable_frame() -> None:
         GicleeFramePageContextMixin,
     )
     assert mro.index(GicleeFramePageContextMixin) < mro.index(
+        GicleeFrameLifecycleInventoryMixin,
+    )
+    assert mro.index(GicleeFrameLifecycleInventoryMixin) < mro.index(
         ctk.CTkScrollableFrame,
     )
 
@@ -379,6 +390,12 @@ def test_section_list_rendering_methods_resolve_by_identity_from_mixin_on_giclee
 def test_host_ownership_for_rendering_adapters() -> None:
     for name in _HOST_OWNERSHIP:
         assert name in GicleeFrameView.__dict__
+    for name in _LIFECYCLE_OWNERSHIP:
+        assert name not in GicleeFrameView.__dict__
+        assert getattr(GicleeFrameView, name) is getattr(
+            GicleeFrameLifecycleInventoryMixin,
+            name,
+        )
     for name in _PAGE_CONTEXT_ADAPTER:
         assert name not in GicleeFrameView.__dict__
         assert getattr(GicleeFrameView, name) is getattr(GicleeFramePageContextMixin, name)

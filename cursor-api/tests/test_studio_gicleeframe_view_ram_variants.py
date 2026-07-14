@@ -53,6 +53,9 @@ from giclee_app.ui.gicleeframe_view_structure_dry_run import (
     GicleeFrameStructureDryRunMixin,
 )
 from giclee_app.ui.gicleeframe_view_top_bar import GicleeFrameTopBarMixin
+from giclee_app.ui.gicleeframe_view_lifecycle_inventory import (
+    GicleeFrameLifecycleInventoryMixin,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 RAM_VARIANTS_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_ram_variants.py"
@@ -84,9 +87,12 @@ _FORBIDDEN_OWNERSHIP = {
 }
 
 _HOST_OWNERSHIP = {
+    "_apply_edit_to_draft",
+}
+
+_LIFECYCLE_OWNERSHIP = {
     "_build_shell",
     "_ensure_top_bar_actions_for_atomic_reveal",
-    "_apply_edit_to_draft",
     "_refresh_inventory",
     "_schedule_atomic_reveal_check",
     "_try_atomic_reveal",
@@ -230,6 +236,12 @@ def test_ram_variant_methods_resolve_by_identity_from_mixin_on_gicleeframe_view(
 def test_host_ownership_for_shell_and_adapters() -> None:
     for name in _HOST_OWNERSHIP:
         assert name in GicleeFrameView.__dict__
+    for name in _LIFECYCLE_OWNERSHIP:
+        assert name not in GicleeFrameView.__dict__
+        assert getattr(GicleeFrameView, name) is getattr(
+            GicleeFrameLifecycleInventoryMixin,
+            name,
+        )
 
 
 def test_sync_working_variant_menu_noop_without_widget() -> None:

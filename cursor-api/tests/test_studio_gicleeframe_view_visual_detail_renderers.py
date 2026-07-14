@@ -52,11 +52,15 @@ from giclee_app.ui.gicleeframe_view_visual_detail_renderers import (
     GicleeFrameVisualDetailRenderersMixin,
 )
 from giclee_app.ui.gicleeframe_view_page_context import GicleeFramePageContextMixin
+from giclee_app.ui.gicleeframe_view_lifecycle_inventory import (
+    GicleeFrameLifecycleInventoryMixin,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 VIEW_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
 VISUAL_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_visual_detail_renderers.py"
 PAGE_CONTEXT_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_page_context.py"
+LIFECYCLE_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_lifecycle_inventory.py"
 EDITOR_SHELL_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_editor_shell.py"
 DETAILS_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_details_on_demand.py"
 VISUAL_PATCH = "giclee_app.ui.gicleeframe_view_visual_detail_renderers"
@@ -421,7 +425,7 @@ def test_visual_renderer_module_has_no_write_network_or_deploy() -> None:
         assert token not in source
 
 
-def test_gicleeframe_view_has_fifteen_mixins_before_scrollable_frame() -> None:
+def test_gicleeframe_view_has_sixteen_mixins_before_scrollable_frame() -> None:
     expected = (
         GicleeFrameBrandPanelMixin,
         GicleeFramePageReadinessMixin,
@@ -438,6 +442,7 @@ def test_gicleeframe_view_has_fifteen_mixins_before_scrollable_frame() -> None:
         GicleeFrameDetailsOnDemandMixin,
         GicleeFrameVisualDetailRenderersMixin,
         GicleeFramePageContextMixin,
+        GicleeFrameLifecycleInventoryMixin,
         ctk.CTkScrollableFrame,
     )
     assert GicleeFrameView.__mro__[1 : 1 + len(expected)] == expected
@@ -470,9 +475,13 @@ def test_host_ownership_for_page_context_and_lifecycle_exclusions() -> None:
         assert not _host_defines_method(name, host_text), name
         assert f"def {name}(" not in visual_text, name
         assert f"def {name}(" in page_context_text, name
-    for name in ("on_show", "__init__"):
+    for name in ("__init__",):
         assert _host_defines_method(name, host_text), name
         assert f"def {name}(" not in visual_text, name
+    lifecycle_text = LIFECYCLE_PATH.read_text(encoding="utf-8")
+    assert _host_defines_method("on_show", lifecycle_text)
+    assert f"def on_show(" not in host_text
+    assert f"def on_show(" not in visual_text
 
 
 # --- §10.9–39 behavior ---

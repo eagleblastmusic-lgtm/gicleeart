@@ -21,6 +21,9 @@ from giclee_app.ui.gicleeframe_view_structure_dry_run import (
     GicleeFrameStructureDryRunMixin,
     _STRUCTURE_DRY_RUN_WRAPLENGTH,
 )
+from giclee_app.ui.gicleeframe_view_lifecycle_inventory import (
+    GicleeFrameLifecycleInventoryMixin,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 STRUCTURE_PATH = (
@@ -262,6 +265,10 @@ def test_structure_methods_resolve_from_mixin_on_gicleeframe_view() -> None:
         )
 
 
-def test_control_orchestration_and_inventory_remain_host_owned() -> None:
-    assert "_build_control_column" in GicleeFrameView.__dict__
-    assert "_refresh_inventory" in GicleeFrameView.__dict__
+def test_control_orchestration_and_inventory_owned_by_lifecycle_mixin() -> None:
+    for name in ("_build_control_column", "_refresh_inventory"):
+        assert name not in GicleeFrameView.__dict__
+        assert getattr(GicleeFrameView, name) is getattr(
+            GicleeFrameLifecycleInventoryMixin,
+            name,
+        )

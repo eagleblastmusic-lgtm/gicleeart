@@ -11,11 +11,16 @@ SELECTION_PATH = (
     ROOT / "giclee_app" / "ui" / "gicleeframe_view_selection_orchestration.py"
 )
 EDITOR_SHELL_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_editor_shell.py"
+LIFECYCLE_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_lifecycle_inventory.py"
 DETAILS_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_details_on_demand.py"
 
 
 def _view_text() -> str:
     return VIEW_PATH.read_text(encoding="utf-8")
+
+
+def _lifecycle_text() -> str:
+    return LIFECYCLE_PATH.read_text(encoding="utf-8")
 
 
 def _editor_shell_text() -> str:
@@ -58,49 +63,48 @@ def test_gicleeframe_has_visual_state_fields() -> None:
 
 
 def test_gicleeframe_logs_all_visual_events() -> None:
-    combined = _view_text() + "\n" + _editor_shell_text()
-
-    for event in (
-        "studio.gicleeframe.visual.enter",
-        "studio.gicleeframe.visual.shell_built",
-        "studio.gicleeframe.visual.inventory_loaded",
-        "studio.gicleeframe.visual.first_selection_done",
-        "studio.gicleeframe.visual.idle_ready",
-        "studio.gicleeframe.visual.visible_ready",
-        "studio.gicleeframe.visual.full_ready_progressive",
-        "studio.gicleeframe.atomic_reveal.overlay_shown",
-        "studio.gicleeframe.atomic_reveal.minimal_ready",
-        "studio.gicleeframe.atomic_reveal.ready",
-        "studio.gicleeframe.atomic_reveal.revealed",
-        "studio.gicleeframe.atomic_reveal.waiting_for",
-    ):
-        assert event in combined
+    view_text = _view_text()
+    lifecycle_text = _lifecycle_text()
+    editor_text = _editor_shell_text()
+    event_sources = {
+        "studio.gicleeframe.visual.enter": (view_text, lifecycle_text),
+        "studio.gicleeframe.visual.shell_built": (lifecycle_text,),
+        "studio.gicleeframe.visual.inventory_loaded": (lifecycle_text,),
+        "studio.gicleeframe.visual.first_selection_done": (view_text, editor_text, _selection_text()),
+        "studio.gicleeframe.visual.idle_ready": (lifecycle_text,),
+        "studio.gicleeframe.visual.visible_ready": (lifecycle_text,),
+        "studio.gicleeframe.visual.full_ready_progressive": (lifecycle_text,),
+        "studio.gicleeframe.atomic_reveal.overlay_shown": (lifecycle_text,),
+        "studio.gicleeframe.atomic_reveal.minimal_ready": (lifecycle_text,),
+        "studio.gicleeframe.atomic_reveal.ready": (lifecycle_text,),
+        "studio.gicleeframe.atomic_reveal.revealed": (lifecycle_text,),
+        "studio.gicleeframe.atomic_reveal.waiting_for": (lifecycle_text,),
+    }
+    for event, sources in event_sources.items():
+        assert any(event in source for source in sources), event
 
 
 def test_on_show_schedules_atomic_reveal_when_not_complete() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
-    block = _method_block(text, "on_show")
+    lifecycle_text = _lifecycle_text()
+    block = _method_block(lifecycle_text, "on_show")
 
     assert "_schedule_atomic_reveal_check" in block
     assert "cache_hit" in block
 
 
 def test_schedule_atomic_reveal_uses_after_idle() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
-    block = _method_block(text, "_schedule_atomic_reveal_check")
+    lifecycle_text = _lifecycle_text()
+    block = _method_block(lifecycle_text, "_schedule_atomic_reveal_check")
 
     assert "after_idle" in block
     assert "_try_atomic_reveal" in block
 
 
 def test_loading_overlay_copy() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    lifecycle_text = _lifecycle_text()
 
-    assert "Przygotowuję GICLÉE FRAME" in text
-    assert "_GF_LOADING_OVERLAY_TEXT" in text
+    assert "Przygotowuję GICLÉE FRAME" in lifecycle_text
+    assert "_GF_LOADING_OVERLAY_TEXT" in lifecycle_text
 
 
 def test_launcher_gicleeframe_open_passes_cache_hit_without_update_idletasks() -> None:
@@ -169,6 +173,7 @@ def test_gicleeframe_has_section_visual_cache() -> None:
 
 def test_gicleeframe_has_minimal_and_details_cache_events() -> None:
     view_text = _view_text()
+    lifecycle_text = _lifecycle_text()
     selection_text = _selection_text()
     editor_text = _editor_shell_text()
     details_text = _details_text()
@@ -176,31 +181,27 @@ def test_gicleeframe_has_minimal_and_details_cache_events() -> None:
     assert "_minimal_cache_entry" in editor_text
     assert "_details_cache_entry" in details_text
     assert "details_cache_preview" in details_text
-    for event in (
-        "studio.gicleeframe.selection.minimal_cache_hit",
-        "studio.gicleeframe.selection.minimal_cache_miss",
-        "studio.gicleeframe.selection.minimal_editor_ready",
-        "studio.gicleeframe.details_on_demand.available",
-        "studio.gicleeframe.details_on_demand.requested",
-        "studio.gicleeframe.details_on_demand.full_auto_suppressed",
-        "studio.gicleeframe.details_shell.requested",
-        "studio.gicleeframe.details_shell.ready",
-        "studio.gicleeframe.details_shell.applied",
-        "studio.gicleeframe.details_module.requested",
-        "studio.gicleeframe.details_module.ready",
-        "studio.gicleeframe.details_module.applied",
-        "studio.gicleeframe.details_module.cache_hit",
-        "studio.gicleeframe.details_module.batch",
-        "studio.gicleeframe.details_on_demand.cancelled",
-        "studio.gicleeframe.details_on_demand.applied",
-        "studio.gicleeframe.visible_prewarm.suppressed",
-    ):
-        assert (
-            event in view_text
-            or event in selection_text
-            or event in editor_text
-            or event in details_text
-        )
+    event_sources = {
+        "studio.gicleeframe.selection.minimal_cache_hit": (selection_text, editor_text),
+        "studio.gicleeframe.selection.minimal_cache_miss": (selection_text, editor_text),
+        "studio.gicleeframe.selection.minimal_editor_ready": (editor_text,),
+        "studio.gicleeframe.details_on_demand.available": (details_text,),
+        "studio.gicleeframe.details_on_demand.requested": (details_text,),
+        "studio.gicleeframe.details_on_demand.full_auto_suppressed": (details_text,),
+        "studio.gicleeframe.details_shell.requested": (details_text,),
+        "studio.gicleeframe.details_shell.ready": (details_text,),
+        "studio.gicleeframe.details_shell.applied": (details_text,),
+        "studio.gicleeframe.details_module.requested": (details_text,),
+        "studio.gicleeframe.details_module.ready": (details_text,),
+        "studio.gicleeframe.details_module.applied": (details_text,),
+        "studio.gicleeframe.details_module.cache_hit": (details_text,),
+        "studio.gicleeframe.details_module.batch": (details_text,),
+        "studio.gicleeframe.details_on_demand.cancelled": (selection_text, details_text),
+        "studio.gicleeframe.details_on_demand.applied": (details_text,),
+        "studio.gicleeframe.visible_prewarm.suppressed": (lifecycle_text,),
+    }
+    for event, sources in event_sources.items():
+        assert any(event in source for source in sources), event
 
 
 def test_gicleeframe_section_reentry_uses_minimal_cache() -> None:

@@ -45,6 +45,12 @@ def _details_text() -> str:
     ).read_text(encoding="utf-8")
 
 
+def _lifecycle_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_lifecycle_inventory.py"
+    ).read_text(encoding="utf-8")
+
+
 def _combined_text() -> str:
     return (
         _view_text()
@@ -66,7 +72,7 @@ def _constant_int(text: str, name: str) -> int:
 
 
 def test_gicleeframe_uses_stable_workspace_skeleton_columns() -> None:
-    text = _view_text()
+    text = _lifecycle_text()
 
     assert "_GF_SKELETON_SECTION_TEXT" in text
     assert "_GF_SKELETON_EDITOR_TEXT" in text
@@ -77,7 +83,7 @@ def test_gicleeframe_uses_stable_workspace_skeleton_columns() -> None:
 
 
 def test_gicleeframe_tracks_atomic_reveal_gates() -> None:
-    text = _view_text()
+    text = _lifecycle_text()
 
     assert "_try_atomic_reveal" in text
     assert "_atomic_reveal_missing_gates" in text
@@ -101,10 +107,10 @@ def test_gicleeframe_defers_heavy_editor_details_to_on_demand() -> None:
 
 
 def test_gicleeframe_sections_deferred_packs_card_into_skeleton_column() -> None:
-    text = _view_text()
+    text = _lifecycle_text()
 
     assert "card.pack(fill=\"both\", expand=True)" in text
-    assert "_workspace_skeleton_columns_built" in text
+    assert "_workspace_skeleton_columns_built" in _view_text()
 
 
 def test_gicleeframe_section_list_has_progressive_first_batch() -> None:

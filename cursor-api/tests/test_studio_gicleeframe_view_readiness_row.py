@@ -15,6 +15,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from giclee_app.ui import gicleeframe_view_readiness_row as row_module
 from giclee_app.ui.gicleeframe_view import GicleeFrameView
 from giclee_app.ui.gicleeframe_view_page_context import GicleeFramePageContextMixin
+from giclee_app.ui.gicleeframe_view_lifecycle_inventory import (
+    GicleeFrameLifecycleInventoryMixin,
+)
 from giclee_app.ui.gicleeframe_view_brand import GicleeFrameBrandPanelMixin
 from giclee_app.ui.gicleeframe_view_page_readiness import (
     GicleeFramePageReadinessMixin,
@@ -212,5 +215,13 @@ def test_readiness_row_mixin_is_wired_into_gicleeframe_view_mro() -> None:
         GicleeFrameView._pack_readiness_row
         is GicleeFrameReadinessRowMixin._pack_readiness_row
     )
-    assert "_build_control_column" in GicleeFrameView.__dict__
-    assert "_toggle_f1_section" in GicleeFrameView.__dict__
+    assert "_build_control_column" not in GicleeFrameView.__dict__
+    assert (
+        GicleeFrameView._build_control_column
+        is GicleeFrameLifecycleInventoryMixin._build_control_column
+    )
+    assert "_toggle_f1_section" not in GicleeFrameView.__dict__
+    assert (
+        GicleeFrameView._toggle_f1_section
+        is GicleeFrameLifecycleInventoryMixin._toggle_f1_section
+    )

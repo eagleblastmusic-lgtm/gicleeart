@@ -17,7 +17,11 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from giclee_app.ui import gicleeframe_view_selection_orchestration as selection_module
-from giclee_app.ui.gicleeframe_view import GicleeFrameView, _progressive_boot_enabled
+from giclee_app.ui.gicleeframe_view import GicleeFrameView
+from giclee_app.ui.gicleeframe_view_lifecycle_inventory import (
+    GicleeFrameLifecycleInventoryMixin,
+    _progressive_boot_enabled,
+)
 from giclee_app.ui.gicleeframe_view_brand import GicleeFrameBrandPanelMixin
 from giclee_app.ui.gicleeframe_view_page_readiness import (
     GicleeFramePageReadinessMixin,
@@ -44,6 +48,9 @@ from giclee_app.ui.gicleeframe_view_visual_detail_renderers import (
     GicleeFrameVisualDetailRenderersMixin,
 )
 from giclee_app.ui.gicleeframe_view_page_context import GicleeFramePageContextMixin
+from giclee_app.ui.gicleeframe_view_lifecycle_inventory import (
+    GicleeFrameLifecycleInventoryMixin,
+)
 from giclee_app.ui.gicleeframe_view_selection_orchestration import (
     GicleeFrameSelectionOrchestrationMixin,
     _GF_ATOMIC_SWAP_STATUS_TEXT,
@@ -90,6 +97,9 @@ _HOST_OWNERSHIP = {
     "_highlight_section_row",
     "_update_section_list_trigger",
     "_collapse_section_list",
+}
+
+_LIFECYCLE_OWNERSHIP = {
     "_queue_latency_since_ms",
 }
 
@@ -358,7 +368,7 @@ def test_selection_orchestration_constants_exact_values() -> None:
         assert f"{name} =" not in host_text
 
 
-def test_gicleeframe_view_has_fifteen_mixins_before_scrollable_frame() -> None:
+def test_gicleeframe_view_has_sixteen_mixins_before_scrollable_frame() -> None:
     mro = GicleeFrameView.__mro__
     for mixin in (
         GicleeFrameBrandPanelMixin,
@@ -376,6 +386,7 @@ def test_gicleeframe_view_has_fifteen_mixins_before_scrollable_frame() -> None:
         GicleeFrameDetailsOnDemandMixin,
         GicleeFrameVisualDetailRenderersMixin,
         GicleeFramePageContextMixin,
+        GicleeFrameLifecycleInventoryMixin,
     ):
         assert mixin in mro
     assert mro.index(GicleeFrameSectionListInteractionMixin) < mro.index(
@@ -394,6 +405,9 @@ def test_gicleeframe_view_has_fifteen_mixins_before_scrollable_frame() -> None:
         GicleeFramePageContextMixin,
     )
     assert mro.index(GicleeFramePageContextMixin) < mro.index(
+        GicleeFrameLifecycleInventoryMixin,
+    )
+    assert mro.index(GicleeFrameLifecycleInventoryMixin) < mro.index(
         ctk.CTkScrollableFrame,
     )
 
@@ -412,6 +426,9 @@ def test_host_ownership_for_selection_adapters() -> None:
         assert name not in GicleeFrameSelectionOrchestrationMixin.__dict__
     for name in _HOST_OWNERSHIP_IN_VIEW:
         assert name in GicleeFrameView.__dict__
+    for name in _LIFECYCLE_OWNERSHIP:
+        assert name not in GicleeFrameView.__dict__
+        assert name in GicleeFrameLifecycleInventoryMixin.__dict__
     for name in _INTERACTION_OWNERSHIP:
         assert name in GicleeFrameSectionListInteractionMixin.__dict__
     for name in _PAGE_CONTEXT_ADAPTER:

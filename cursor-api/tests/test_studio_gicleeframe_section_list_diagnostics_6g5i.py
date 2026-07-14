@@ -26,6 +26,12 @@ def _rendering_text() -> str:
     ).read_text(encoding="utf-8")
 
 
+def _lifecycle_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_lifecycle_inventory.py"
+    ).read_text(encoding="utf-8")
+
+
 def _combined_text() -> str:
     top_bar = (ROOT / "giclee_app" / "ui" / "gicleeframe_view_top_bar.py").read_text(
         encoding="utf-8"
@@ -50,7 +56,7 @@ def _section_list_shell_text() -> str:
 
 
 def test_section_list_incremental_scheduled_event_exists() -> None:
-    text = _view_text()
+    text = _lifecycle_text()
     assert "studio.gicleeframe.section_list.incremental_scheduled" in text
     assert "delay_ms=effective_delay" in text
     assert "row_count=len(self._section_dropdown_options_cache)" in text
@@ -94,8 +100,9 @@ def test_section_list_column_ready_for_rows_event_exists() -> None:
 
 def test_section_list_diagnostics_preserves_prior_6g5_markers() -> None:
     text = _combined_text()
+    lifecycle_text = _lifecycle_text()
     assert "studio.gicleeframe.section_list.first_visible_ready" in text
-    assert "studio.gicleeframe.visual.perceived_ready" in text
+    assert "studio.gicleeframe.visual.perceived_ready" in lifecycle_text
     assert "studio.gicleeframe.top_bar.actions_late_scheduled" in text
     assert "studio.gicleeframe.editor.fields_lazy_startup" in text
     assert "studio.gicleeframe.editor.identity_card_lazy_startup" in text
@@ -103,6 +110,6 @@ def test_section_list_diagnostics_preserves_prior_6g5_markers() -> None:
 
 
 def test_schedule_section_list_incremental_helper_exists() -> None:
-    text = _view_text()
+    text = _lifecycle_text()
     assert "def _schedule_section_list_incremental" in text
     assert "self._schedule_section_list_incremental()" in text

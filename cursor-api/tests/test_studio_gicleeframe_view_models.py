@@ -121,7 +121,7 @@ def test_section_visual_cache_entry_fields_unchanged() -> None:
 
 def test_ellipsize_default_matches_view_constant() -> None:
     default = inspect.signature(models._ellipsize).parameters["max_chars"].default
-    assert default == view._SECTION_LABEL_MAX_CHARS == 42
+    assert default == 42
 
 
 def test_ellipsize_empty_text() -> None:

@@ -23,6 +23,12 @@ def _section_list_shell_text() -> str:
     ).read_text(encoding="utf-8")
 
 
+def _lifecycle_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_lifecycle_inventory.py"
+    ).read_text(encoding="utf-8")
+
+
 def _combined_text() -> str:
     return _view_text() + "\n" + _section_list_shell_text()
 
@@ -56,14 +62,12 @@ def test_early_shell_can_use_static_lane_without_immediate_scroll_upgrade() -> N
 
 
 def test_static_lane_spike_events_exist() -> None:
-    text = _combined_text()
-    for event in (
-        "studio.gicleeframe.section_list.static_lane_ready",
-        "studio.gicleeframe.section_list.scroll_upgrade_scheduled",
-        "studio.gicleeframe.section_list.scroll_upgrade_enter",
-        "studio.gicleeframe.section_list.scroll_upgrade_ready",
-    ):
-        assert event in text
+    shell_text = _section_list_shell_text()
+    lifecycle_text = _lifecycle_text()
+    assert "studio.gicleeframe.section_list.static_lane_ready" in shell_text
+    assert "studio.gicleeframe.section_list.scroll_upgrade_scheduled" in shell_text
+    assert "studio.gicleeframe.section_list.scroll_upgrade_enter" in lifecycle_text
+    assert "studio.gicleeframe.section_list.scroll_upgrade_ready" in lifecycle_text
 
 
 def test_scroll_upgrade_scheduled_includes_reason_field() -> None:
@@ -78,14 +82,15 @@ def test_scroll_upgrade_scheduled_includes_reason_field() -> None:
 
 
 def test_scroll_upgrade_not_blocking_atomic_reveal_prerequisites() -> None:
-    prereq_body = _method_block(_view_text(), "_ensure_atomic_reveal_prerequisites")
+    lifecycle_text = _lifecycle_text()
+    prereq_body = _method_block(lifecycle_text, "_ensure_atomic_reveal_prerequisites")
     assert "_schedule_section_list_scroll_upgrade" not in prereq_body
     assert 'reason="before_atomic_reveal"' not in prereq_body
-    gates_body = _method_block(_view_text(), "_atomic_reveal_missing_gates")
+    gates_body = _method_block(lifecycle_text, "_atomic_reveal_missing_gates")
     assert "scroll_upgrade" not in gates_body
     assert "top_actions" not in gates_body
     assert "section_rows" not in gates_body
-    perceived_body = _method_block(_view_text(), "_try_mark_perceived_ready")
+    perceived_body = _method_block(lifecycle_text, "_try_mark_perceived_ready")
     assert "_schedule_atomic_reveal_check" in perceived_body
 
 
@@ -113,8 +118,8 @@ def test_first_visible_ready_logged_before_scroll_upgrade_scheduling() -> None:
 
 
 def test_scroll_frame_created_on_upgrade_path() -> None:
-    text = _view_text()
-    upgrade_body = _method_block(text, "_upgrade_section_list_scroll")
+    lifecycle_text = _lifecycle_text()
+    upgrade_body = _method_block(lifecycle_text, "_upgrade_section_list_scroll")
     assert "CTkScrollableFrame" in upgrade_body or "_create_section_list_scroll_frame" in upgrade_body
     scroll_body = _method_block(_section_list_shell_text(), "_create_section_list_scroll_frame")
     assert "CTkScrollableFrame" in scroll_body
@@ -138,13 +143,14 @@ def test_real_static_lane_rows_log_first_visible_ready() -> None:
 
 
 def test_deferred_early_lane_uses_static_lane_shell() -> None:
-    body = _method_block(_view_text(), "_build_sections_column_deferred")
+    body = _method_block(_lifecycle_text(), "_build_sections_column_deferred")
     assert "use_static_lane=True" in body
 
 
 def test_static_lane_spike_preserves_prior_6g5_markers() -> None:
+    lifecycle_text = _lifecycle_text()
     text = _combined_text()
-    assert "studio.gicleeframe.sections_column.early_lane_enter" in text
+    assert "studio.gicleeframe.sections_column.early_lane_enter" in lifecycle_text
     assert "studio.gicleeframe.section_list.column_ready_for_rows" in text
     assert "studio.gicleeframe.section_list.first_visible_ready" in text
     assert "uses_async_first_paint = True" in text
@@ -183,6 +189,6 @@ def test_scroll_upgrade_creates_scroll_and_schedules_incremental() -> None:
 
 
 def test_perceived_ready_triggers_atomic_reveal_check() -> None:
-    body = _method_block(_view_text(), "_try_mark_perceived_ready")
+    body = _method_block(_lifecycle_text(), "_try_mark_perceived_ready")
     assert "_schedule_atomic_reveal_check" in body
     assert 'trigger=trigger or "perceived_ready"' in body

@@ -73,8 +73,15 @@ def test_startup_hotspot_section_list_first_visible_ready_marker() -> None:
     assert "since_enter_ms=self._since_visual_enter_ms()" in text
 
 
+def _lifecycle_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_lifecycle_inventory.py"
+    ).read_text(encoding="utf-8")
+
+
 def test_startup_hotspot_preserves_prior_6g5_optimizations() -> None:
-    combined = _view_text() + "\n" + _editor_shell_text()
-    assert "studio.gicleeframe.editor.fields_lazy_startup" in combined
-    assert "studio.gicleeframe.control.deferred_readiness_late" in combined
-    assert "studio.gicleeframe.populate_editor.preview_deferred_requested" in combined
+    editor_text = _editor_shell_text()
+    lifecycle_text = _lifecycle_text()
+    assert "studio.gicleeframe.editor.fields_lazy_startup" in editor_text
+    assert "studio.gicleeframe.control.deferred_readiness_late" in lifecycle_text
+    assert "studio.gicleeframe.populate_editor.preview_deferred_requested" in editor_text

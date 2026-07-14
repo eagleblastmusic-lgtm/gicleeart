@@ -26,6 +26,12 @@ def _rendering_text() -> str:
     ).read_text(encoding="utf-8")
 
 
+def _lifecycle_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_lifecycle_inventory.py"
+    ).read_text(encoding="utf-8")
+
+
 def _combined_text() -> str:
     return (
         _view_text()
@@ -40,8 +46,8 @@ def test_sections_column_shell_and_extras_split_exists() -> None:
     text = _section_list_shell_text()
     assert "def _build_sections_column_shell" in text
     assert "def _build_sections_column_extras" in text
-    text = _view_text()
-    assert "def _build_sections_column_extras_deferred" in text
+    lifecycle_text = _lifecycle_text()
+    assert "def _build_sections_column_extras_deferred" in lifecycle_text
 
 
 def test_sections_column_shell_ready_event_exists() -> None:
@@ -141,7 +147,7 @@ def test_build_sections_column_extras_skips_missing_slot_without_error() -> None
 
 
 def test_sections_column_extras_deferred_after_shell_ready() -> None:
-    text = _view_text()
+    text = _lifecycle_text()
 
     start = text.index("def _build_sections_column_deferred")
     end = text.index("def _build_sections_column_extras_deferred", start)
@@ -157,7 +163,7 @@ def test_sections_column_extras_deferred_after_shell_ready() -> None:
 
 
 def test_sections_column_early_lane_enter_event_exists() -> None:
-    text = _view_text()
+    text = _lifecycle_text()
 
     start = text.index("def _build_sections_column_deferred")
     end = text.index("def _build_sections_column_extras_deferred", start)
@@ -169,23 +175,28 @@ def test_sections_column_early_lane_enter_event_exists() -> None:
 
 
 def test_sections_column_queue_latency_instrumentation() -> None:
-    text = _combined_text()
-    assert "def _queue_latency_since_ms" in _view_text()
-    assert "_sections_column_early_lane_scheduled_mono" in text
-    assert "_section_list_column_ready_mono" in text
-    assert "_section_list_incremental_scheduled_mono" in text
-    assert "_section_list_incremental_enter_mono" in text
+    shell_text = _section_list_shell_text()
+    rendering_text = _rendering_text()
+    lifecycle_text = _lifecycle_text()
+    host_text = _view_text()
+    assert "def _queue_latency_since_ms" in lifecycle_text
+    assert "_sections_column_early_lane_scheduled_mono" in host_text
+    assert "_section_list_column_ready_mono" in shell_text
+    assert "_section_list_incremental_scheduled_mono" in lifecycle_text
+    assert "_section_list_incremental_enter_mono" in rendering_text
 
-    assert "queue_latency_ms=self._queue_latency_since_ms(" in text
-    assert "since_early_lane_enter_ms=self._queue_latency_since_ms(" in text
+    assert "queue_latency_ms=self._queue_latency_since_ms(" in shell_text
+    assert "since_early_lane_enter_ms=self._queue_latency_since_ms(" in shell_text
 
 
 def test_sections_column_split_preserves_prior_6g5_markers() -> None:
     text = _combined_text()
-    assert "_GF_SECTIONS_COLUMN_EARLY_DEFER_MS = 0" in text
-    assert "studio.gicleeframe.sections_column.early_lane_scheduled" in text
-    assert "studio.gicleeframe.section_list.first_visible_fast_lane" in text
-    assert "studio.gicleeframe.section_list.incremental_scheduled" in text
+    lifecycle_text = _lifecycle_text()
+    shell_text = _section_list_shell_text()
+    assert "_GF_SECTIONS_COLUMN_EARLY_DEFER_MS = 0" in shell_text
+    assert "studio.gicleeframe.sections_column.early_lane_scheduled" in shell_text
+    assert "studio.gicleeframe.section_list.first_visible_fast_lane" in lifecycle_text
+    assert "studio.gicleeframe.section_list.incremental_scheduled" in lifecycle_text
     assert "studio.gicleeframe.section_list.incremental_enter" in text
     assert "studio.gicleeframe.section_list.first_visible_ready" in text
-    assert "studio.gicleeframe.visual.perceived_ready" in text
+    assert "studio.gicleeframe.visual.perceived_ready" in lifecycle_text

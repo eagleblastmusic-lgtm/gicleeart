@@ -6,6 +6,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 ROOT = Path(__file__).resolve().parents[1]
+LIFECYCLE_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_lifecycle_inventory.py"
+HOST_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
 
 
 def test_launcher_gicleeframe_shell_keeps_cached_view() -> None:
@@ -35,20 +37,19 @@ def test_launcher_return_from_gicleeframe_does_not_destroy_cached_view() -> None
 
 
 def test_gicleeframe_view_has_dynamic_navigation() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    lifecycle_text = LIFECYCLE_PATH.read_text(encoding="utf-8")
+    host_text = HOST_PATH.read_text(encoding="utf-8")
 
-    assert "def set_navigation" in text
-    assert "def _handle_back" in text
-    assert "_back_button" in text
-    assert "def on_show" in text
-    assert "def on_hide" in text
+    assert "def set_navigation" in lifecycle_text
+    assert "def _handle_back" in lifecycle_text
+    assert "_back_button" in host_text
+    assert "def on_show" in lifecycle_text
+    assert "def on_hide" in lifecycle_text
 
 
 def test_gicleeframe_on_show_does_not_refresh_inventory() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    lifecycle_text = LIFECYCLE_PATH.read_text(encoding="utf-8")
 
-    block = text.split("def on_show", 1)[1].split("\n    def ", 1)[0]
+    block = lifecycle_text.split("def on_show", 1)[1].split("\n    def ", 1)[0]
     assert "_refresh_inventory" not in block
     assert "build_gicleeframe_page_inventory" not in block
