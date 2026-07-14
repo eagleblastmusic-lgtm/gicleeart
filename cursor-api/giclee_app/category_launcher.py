@@ -8,8 +8,8 @@ import tkinter as tk
 from typing import Any
 
 from . import launcher as _launcher
+from .category_navigation import CategoryViewKind, resolve_category_navigation
 from .component_loader import Component
-from .launcher_layout import resolve_sections
 
 
 @dataclass(frozen=True)
@@ -148,8 +148,15 @@ class CategoryGicleeApp(_launcher.GicleeApp):
         for column in range(_launcher._TILES_PER_ROW):
             self.tiles_frame.columnconfigure(column, weight=1, uniform="tiles")
 
-        if not self._all_components:
-            self._active_section = None
+        plan = resolve_category_navigation(
+            self._all_components,
+            self._layout,
+            normally_visible=self._normally_visible,
+            active_section=self._active_section,
+        )
+        self._active_section = plan.active_section
+
+        if plan.kind is CategoryViewKind.NO_COMPONENTS:
             self._set_subtitle("Brak wykrytych komponentów")
             self._render_empty(
                 "Brak komponentow.\n\n"
@@ -159,13 +166,7 @@ class CategoryGicleeApp(_launcher.GicleeApp):
             )
             return
 
-        sections = resolve_sections(
-            self._all_components,
-            self._layout,
-            normally_visible=self._normally_visible,
-        )
-        if not sections:
-            self._active_section = None
+        if plan.kind is CategoryViewKind.NO_VISIBLE_SECTIONS:
             self._set_subtitle("Brak widocznych komponentów")
             self._render_empty(
                 "Brak widocznych kafelkow.\n\n"
@@ -174,17 +175,19 @@ class CategoryGicleeApp(_launcher.GicleeApp):
             )
             return
 
-        by_title = category_map(sections)
-        if self._active_section not in by_title:
-            self._active_section = None
+        if plan.kind is CategoryViewKind.CATEGORY_INDEX:
+            self._render_category_index([
+                (title, list(components))
+                for title, components in plan.sections
+            ])
+            return
 
-        if self._active_section is None:
-            self._render_category_index(sections)
-        else:
-            self._render_category_components(
-                self._active_section,
-                by_title[self._active_section],
-            )
+        if plan.active_section is None:
+            raise RuntimeError("Category navigation plan has no active section")
+        self._render_category_components(
+            plan.active_section,
+            list(plan.active_components),
+        )
 
     def _render_empty(self, message: str) -> None:
         empty = tk.Label(

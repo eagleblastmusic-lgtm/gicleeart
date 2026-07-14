@@ -1,6 +1,6 @@
 # ETAP 4B / LC-2 — Category Navigator and Tile Grid Boundaries
 
-**Status:** fresh reconnaissance · LC-2A contract freeze  
+**Status:** LC-2A implemented
 **Repository:** `eagleblastmusic-lgtm/gicleeart`  
 **Base:** `master` @ `14e76263602ac08cd098e4537f8f9ebf09176ff2`  
 **Data weryfikacji:** 2026-07-15
