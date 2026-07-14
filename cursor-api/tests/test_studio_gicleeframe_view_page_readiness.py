@@ -28,6 +28,9 @@ from giclee_app.ui.gicleeframe_view_ram_variants import GicleeFrameRamVariantMix
 from giclee_app.ui.gicleeframe_view_section_list_shell import (
     GicleeFrameSectionListShellMixin,
 )
+from giclee_app.ui.gicleeframe_view_section_list_interaction import (
+    GicleeFrameSectionListInteractionMixin,
+)
 from giclee_app.ui.gicleeframe_view_section_list_rendering import (
     GicleeFrameSectionListRenderingMixin,
 )
@@ -225,6 +228,7 @@ def test_page_readiness_mixin_is_wired_into_gicleeframe_view_mro() -> None:
     assert GicleeFrameRamVariantMixin in GicleeFrameView.__mro__
     assert GicleeFrameSectionListShellMixin in GicleeFrameView.__mro__
     assert GicleeFrameSectionListRenderingMixin in GicleeFrameView.__mro__
+    assert GicleeFrameSectionListInteractionMixin in GicleeFrameView.__mro__
     for name in _EXPECTED_METHODS:
         assert hasattr(GicleeFrameView, name)
         assert name not in GicleeFrameView.__dict__

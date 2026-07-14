@@ -9,12 +9,16 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 ROOT = Path(__file__).resolve().parents[1]
+INTERACTION_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_interaction.py"
+VIEW_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
 
 
 def _view_text() -> str:
-    return (ROOT / "giclee_app" / "ui" / "gicleeframe_view.py").read_text(
-        encoding="utf-8"
-    )
+    return VIEW_PATH.read_text(encoding="utf-8")
+
+
+def _interaction_text() -> str:
+    return INTERACTION_PATH.read_text(encoding="utf-8")
 
 
 def _section_list_shell_text() -> str:
@@ -57,7 +61,7 @@ def _sample_merged(element_id: str, element_type: str = "media_section"):
 
 
 def test_selection_diag_click_events_exist() -> None:
-    text = _view_text()
+    text = _interaction_text()
     click_body = _method_block(text, "_on_section_row_click")
     assert "studio.gicleeframe.selection.click" in click_body
     for field in (

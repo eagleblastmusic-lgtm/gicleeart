@@ -49,6 +49,7 @@ Disclaimer F2: **„Zmiany są tylko lokalnym draftem w pamięci — nic nie zap
 | `ui/gicleeframe_view.py` | Widok CTk: **F2.1 edytor strony** (top bar / trigger / edytor) + F1 komponent marki |
 | `ui/gicleeframe_view_models.py` | **GF-M1** — czyste kontrakty widoku (dataclass + helpery tekstowe, bez UI) |
 | `ui/gicleeframe_view_primitives.py` | **GF-M2** — bezstanowe prymitywy UI i lokalne tokeny wizualne |
+| `ui/gicleeframe_view_section_list_interaction.py` | **GF-M12** — dropdown, highlight, row-click gateway i drag/reorder RAM listy sekcji |
 | `launcher_studio.py` | Routing: `gicleeframe` → `GicleeFrameView` |
 
 ---
@@ -461,7 +462,7 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M10+** — osobn
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M12+** — osobne PR-y. **Section List shell** (GF-M10) i **rendering** (GF-M11) zrealizowano; dropdown interaction, selection i reorder pozostają kandydatem GF-M12.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M13+** — osobne PR-y. **Section List shell** (GF-M10), **rendering** (GF-M11) i **interaction** (GF-M12) zrealizowano; selection/editor orchestration pozostaje primary kandydatem GF-M13.
 
 ---
 
@@ -486,7 +487,7 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M12+** — osobn
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M12+** — osobne PR-y. Dropdown interaction, selection i reorder pozostają host-owned kandydatami na GF-M12.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M13+** — osobne PR-y. Dropdown interaction przeniesiono w GF-M12; selection/editor orchestration pozostaje host-owned kandydatem GF-M13.
 
 ---
 
@@ -515,4 +516,30 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M12+** — osobn
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M12+** — osobne PR-y. Dropdown interaction, selection/highlighting i drag/reorder pozostają host-owned kandydatami na GF-M12.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M13+** — osobne PR-y. Dropdown interaction, highlighting i drag/reorder przeniesiono w GF-M12; selection/editor orchestration pozostaje host-owned kandydatem GF-M13.
+
+---
+
+## 23. GF-M12 — Section List Interaction, Highlight & RAM Reorder Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** ekstrakcja spójnej granicy interakcji listy sekcji (trigger/dropdown, outside-click, row-click gateway, highlight, drag/reorder RAM) bez absorpcji selection/editor pipeline, inventory loading, rendering implementation, shell construction ani persistence.
+
+### Wynik
+
+- **Section list interaction** przeniesiony do `ui/gicleeframe_view_section_list_interaction.py` jako `GicleeFrameSectionListInteractionMixin`.
+- Przeniesiono dokładnie **19 metod** oraz env constant/helper (`_GF_SECTION_ROW_COLLAPSE_ON_CLICK_ENV`, `_collapse_section_list_on_click_enabled`).
+- Mixin **nie posiada lifecycle** ani `__init__`, **nie dziedziczy** po widżecie Tk; **używa `after()`** wyłącznie dla opóźnionego outside-click bind.
+- Host `GicleeFrameView` dziedziczy **dziesięć mixinów** panelowych/subsystemowych przed `ctk.CTkScrollableFrame` (interaction po rendererze).
+- Host nadal posiada:
+  - `__init__` i inicjalizację pól dropdown/selection/drag,
+  - `_finalize_full_list_render` i politykę initial-selection,
+  - `_select_element` i całą ścieżkę selection/editor orchestration,
+  - `_render_section_list` (via renderer mixin), inventory merge, progressive bootstrap,
+  - perceived-ready, atomic-reveal i editor population.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M13+** — osobne PR-y. **Selection/editor orchestration** (`_select_element` i powiązany pipeline) pozostaje primary kandydatem GF-M13.

@@ -69,6 +69,12 @@ _SECTION_LIST_SHELL_VIEW_PATH = (
     / "ui"
     / "gicleeframe_view_section_list_shell.py"
 )
+_SECTION_LIST_INTERACTION_VIEW_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "giclee_app"
+    / "ui"
+    / "gicleeframe_view_section_list_interaction.py"
+)
 _SECTION_LIST_RENDERING_VIEW_PATH = (
     Path(__file__).resolve().parents[1]
     / "giclee_app"
@@ -138,7 +144,8 @@ def test_view_source_no_forbidden_action_buttons() -> None:
 def test_view_source_f21_editor_labels() -> None:
     text = _VIEW_PATH.read_text(encoding="utf-8")
     shell_text = _SECTION_LIST_SHELL_VIEW_PATH.read_text(encoding="utf-8")
-    combined = text + "\n" + shell_text
+    interaction_text = _SECTION_LIST_INTERACTION_VIEW_PATH.read_text(encoding="utf-8")
+    combined = text + "\n" + shell_text + "\n" + interaction_text
     assert "PAGE_EDITOR_TITLE" in text
     assert "SECTION_EDITOR_TITLE" in text
     assert "_section_list_trigger" in text
@@ -151,10 +158,10 @@ def test_view_source_f21_editor_labels() -> None:
     assert "_editor_status_dot" in text
     assert "_section_list_scroll" in text
     assert "_section_dropdown_popup" in text
-    assert "_toggle_section_list" in text
+    assert "_toggle_section_list" in combined
     assert "_SECTION_LIST_WIDTH" in combined
     assert "SECTION_LIST_DRAG_HINT" in combined
-    assert "reorder_page_blocks" in text
+    assert "reorder_page_blocks" in combined
     assert "_structure_dry_run_btn" in text
     assert "_build_control_column" in text
     assert "_CONTROL_COL_MINSIZE" in text

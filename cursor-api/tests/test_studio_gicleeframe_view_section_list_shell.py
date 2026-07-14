@@ -36,6 +36,9 @@ from giclee_app.ui.gicleeframe_view_section_list_shell import (
     _SECTION_LIST_WIDTH,
     _SECTION_PLACEHOLDER,
 )
+from giclee_app.ui.gicleeframe_view_section_list_interaction import (
+    GicleeFrameSectionListInteractionMixin,
+)
 from giclee_app.ui.gicleeframe_view_section_list_rendering import (
     GicleeFrameSectionListRenderingMixin,
 )
@@ -77,11 +80,7 @@ _HOST_OWNERSHIP = {
     "_run_deferred_bootstrap",
     "_try_mark_progressive_full_ready",
     "_finalize_full_list_render",
-    "_on_section_row_click",
     "_select_element",
-    "_start_section_drag",
-    "_finish_section_drag",
-    "_highlight_section_row",
     "_rebuild_page_model_cache",
     "_log_visual_gate_ready",
     "_try_mark_perceived_ready",
@@ -278,6 +277,7 @@ def test_section_list_shell_methods_resolve_by_identity_from_mixin_on_gicleefram
     assert GicleeFrameRamVariantMixin in GicleeFrameView.__mro__
     assert GicleeFrameSectionListShellMixin in GicleeFrameView.__mro__
     assert GicleeFrameSectionListRenderingMixin in GicleeFrameView.__mro__
+    assert GicleeFrameSectionListInteractionMixin in GicleeFrameView.__mro__
     for name in _EXPECTED_METHODS:
         assert name not in GicleeFrameView.__dict__
         assert getattr(GicleeFrameView, name) is getattr(

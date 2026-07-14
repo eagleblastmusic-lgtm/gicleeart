@@ -6,6 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 ROOT = Path(__file__).resolve().parents[1]
+INTERACTION_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_interaction.py"
 
 
 def _method_block(text: str, name: str) -> str:
@@ -46,7 +47,7 @@ def test_select_element_does_not_render_section_list() -> None:
 
 
 def test_highlight_uses_row_frame_lookup() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
+    path = INTERACTION_PATH
     text = path.read_text(encoding="utf-8")
 
     assert "def _set_section_row_highlight" in text
