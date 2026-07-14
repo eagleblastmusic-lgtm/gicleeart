@@ -20,6 +20,8 @@ Pliki:
 
 **LC-2B category renderer:** `category_renderer.py` buduje puste stany, indeks i ekran komponentów przez jawne callbacki. Metody `CategoryGicleeApp` pozostają wrapperami, a Styled i DnD nadal dostarczają własne hooki kafelków.
 
+**LC-2C tile grid placement:** `launcher_grid_layout.py` waliduje i rozwiązuje launcher-local sloty siatki. Oba rendery używają jednego `place_tile()`, zachowując trzy kolumny, row offset, paddingi oraz realne ramki DnD.
+
 ---
 
 ## Co robi
