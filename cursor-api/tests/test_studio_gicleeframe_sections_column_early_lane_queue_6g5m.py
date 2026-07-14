@@ -14,6 +14,16 @@ def _view_text() -> str:
     )
 
 
+def _section_list_shell_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_shell.py"
+    ).read_text(encoding="utf-8")
+
+
+def _combined_text() -> str:
+    return _view_text() + "\n" + _section_list_shell_text()
+
+
 def test_init_refresh_light_defer_ms_constant_exists() -> None:
     text = _view_text()
     assert "_GF_INIT_REFRESH_LIGHT_DEFER_MS = 0" in text
@@ -57,7 +67,7 @@ def test_init_refresh_light_deferred_runs_after_early_lane_queue() -> None:
     assert init_body.index("_build_shell()") < init_body.index(
         "_schedule_init_refresh_light()"
     )
-    assert text.index("def _schedule_sections_column_early_lane") < text.index(
+    assert _section_list_shell_text().index("def _schedule_sections_column_early_lane") < text.index(
         "def _schedule_init_refresh_light"
     )
 
@@ -115,7 +125,7 @@ def test_runtime_marker_diagnostic_fields_exist() -> None:
 
 
 def test_early_lane_queue_6g5m_preserves_prior_6g5_markers() -> None:
-    text = _view_text()
+    text = _combined_text()
     assert 'phase_marker="6G.5-M"' in text
     assert "studio.gicleeframe.sections_column.early_lane_scheduled" in text
     assert "studio.gicleeframe.sections_column.early_lane_enter" in text

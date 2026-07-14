@@ -21,6 +21,16 @@ def _top_bar_text() -> str:
     )
 
 
+def _section_list_shell_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_shell.py"
+    ).read_text(encoding="utf-8")
+
+
+def _combined_text() -> str:
+    return _view_text() + "\n" + _section_list_shell_text()
+
+
 def _constant_int(text: str, name: str) -> int:
     match = re.search(rf"^{re.escape(name)}\s*=\s*(\d+)$", text, re.MULTILINE)
     assert match is not None, f"missing integer constant: {name}"
@@ -45,10 +55,10 @@ def test_try_mark_perceived_ready_waits_for_first_visible_sections() -> None:
 
 
 def test_first_visible_ready_sets_flag_and_triggers_perceived_ready() -> None:
-    text = _view_text()
+    text = _section_list_shell_text()
 
     start = text.index("studio.gicleeframe.section_list.first_visible_ready")
-    end = text.index("if end < len(options):", start)
+    end = text.index("self._schedule_atomic_reveal_check", start)
     body = text[start:end]
 
     assert "self._section_list_first_visible_built = True" in body
@@ -83,7 +93,7 @@ def test_identity_card_late_scheduled_event_exists() -> None:
 
 
 def test_first_visible_sections_preserves_prior_6g5_optimizations() -> None:
-    text = _view_text()
+    text = _combined_text()
     assert "studio.gicleeframe.editor.identity_card_lazy_startup" in text
     assert "studio.gicleeframe.editor.fields_lazy_startup" in text
     assert "studio.gicleeframe.control.deferred_readiness_late" in text

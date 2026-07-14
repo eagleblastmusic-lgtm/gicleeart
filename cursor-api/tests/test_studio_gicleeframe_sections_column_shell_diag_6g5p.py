@@ -16,6 +16,16 @@ def _view_text() -> str:
     )
 
 
+def _section_list_shell_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_shell.py"
+    ).read_text(encoding="utf-8")
+
+
+def _combined_text() -> str:
+    return _view_text() + "\n" + _section_list_shell_text()
+
+
 def _method_block(text: str, name: str) -> str:
     marker = f"def {name}"
     assert marker in text
@@ -41,7 +51,7 @@ def test_sections_column_deferred_clear_children_diag_fields() -> None:
 
 
 def test_sections_column_shell_subspans_exist() -> None:
-    text = _view_text()
+    text = _section_list_shell_text()
     shell_body = _method_block(text, "_build_sections_column_shell")
     scroll_body = _method_block(text, "_create_section_list_scroll_frame")
     expected_shell = [
@@ -60,7 +70,7 @@ def test_sections_column_shell_subspans_exist() -> None:
 
 
 def test_sections_column_shell_diag_preserves_prior_6g5_markers() -> None:
-    text = _view_text()
+    text = _combined_text()
     assert "studio.gicleeframe.build.sections_column.deferred.shell" in text
     assert "studio.gicleeframe.section_list.column_ready_for_rows" in text
     assert "studio.gicleeframe.sections_column.early_lane_enter" in text

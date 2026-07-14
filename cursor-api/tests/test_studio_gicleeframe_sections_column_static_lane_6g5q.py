@@ -17,6 +17,16 @@ def _view_text() -> str:
     )
 
 
+def _section_list_shell_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_shell.py"
+    ).read_text(encoding="utf-8")
+
+
+def _combined_text() -> str:
+    return _view_text() + "\n" + _section_list_shell_text()
+
+
 def _method_block(text: str, name: str) -> str:
     marker = f"def {name}"
     assert marker in text
@@ -46,7 +56,7 @@ def test_early_shell_can_use_static_lane_without_immediate_scroll_upgrade() -> N
 
 
 def test_static_lane_spike_events_exist() -> None:
-    text = _view_text()
+    text = _combined_text()
     for event in (
         "studio.gicleeframe.section_list.static_lane_ready",
         "studio.gicleeframe.section_list.scroll_upgrade_scheduled",
@@ -57,7 +67,7 @@ def test_static_lane_spike_events_exist() -> None:
 
 
 def test_scroll_upgrade_scheduled_includes_reason_field() -> None:
-    text = _view_text()
+    text = _section_list_shell_text()
     marker = "def _schedule_section_list_scroll_upgrade(self, *, reason: str)"
     assert marker in text
     body = text.split(marker, 1)[1].split("\n    def ", 1)[0]
@@ -80,22 +90,22 @@ def test_scroll_upgrade_not_blocking_atomic_reveal_prerequisites() -> None:
 
 
 def test_scroll_upgrade_fallback_timeout_path_exists() -> None:
-    body = _method_block(_view_text(), "_ensure_section_list_scroll_upgrade_fallback")
+    body = _method_block(_section_list_shell_text(), "_ensure_section_list_scroll_upgrade_fallback")
     assert 'reason="fallback_timeout"' in body
     assert "_GF_SECTION_SCROLL_UPGRADE_FALLBACK_TIMEOUT_MS" in body
 
 
 def test_static_lane_shell_schedules_fallback_not_immediate_upgrade() -> None:
-    body = _method_block(_view_text(), "_build_sections_column_shell")
+    body = _method_block(_section_list_shell_text(), "_build_sections_column_shell")
     static_block = body.split("if use_static_lane:", 1)[1].split("else:", 1)[0]
     assert "_ensure_section_list_scroll_upgrade_fallback" in static_block
     assert "_schedule_section_list_scroll_upgrade" not in static_block
 
 
 def test_first_visible_ready_logged_before_scroll_upgrade_scheduling() -> None:
-    populate = _method_block(_view_text(), "_populate_section_list_static_lane")
+    populate = _method_block(_section_list_shell_text(), "_populate_section_list_static_lane")
     assert "studio.gicleeframe.section_list.first_visible_ready" in populate
-    shell = _method_block(_view_text(), "_build_sections_column_shell")
+    shell = _method_block(_section_list_shell_text(), "_build_sections_column_shell")
     static_block = shell.split("if use_static_lane:", 1)[1].split("else:", 1)[0]
     first_visible_pos = static_block.index("_populate_section_list_static_lane")
     upgrade_pos = static_block.index("_ensure_section_list_scroll_upgrade_fallback")
@@ -106,13 +116,13 @@ def test_scroll_frame_created_on_upgrade_path() -> None:
     text = _view_text()
     upgrade_body = _method_block(text, "_upgrade_section_list_scroll")
     assert "CTkScrollableFrame" in upgrade_body or "_create_section_list_scroll_frame" in upgrade_body
-    scroll_body = _method_block(text, "_create_section_list_scroll_frame")
+    scroll_body = _method_block(_section_list_shell_text(), "_create_section_list_scroll_frame")
     assert "CTkScrollableFrame" in scroll_body
     assert "studio.gicleeframe.build.sections_column.shell.scroll_create" in scroll_body
 
 
 def test_placeholder_static_lane_does_not_log_first_visible_ready() -> None:
-    body = _method_block(_view_text(), "_populate_section_list_static_lane")
+    body = _method_block(_section_list_shell_text(), "_populate_section_list_static_lane")
     placeholder_start = body.index("self._section_list_static_lane_real_rows = False")
     placeholder_body = body[placeholder_start:]
     assert "studio.gicleeframe.section_list.static_lane_ready" in placeholder_body
@@ -121,7 +131,7 @@ def test_placeholder_static_lane_does_not_log_first_visible_ready() -> None:
 
 
 def test_real_static_lane_rows_log_first_visible_ready() -> None:
-    body = _method_block(_view_text(), "_populate_section_list_static_lane")
+    body = _method_block(_section_list_shell_text(), "_populate_section_list_static_lane")
     assert "real_rows=True" in body
     assert "studio.gicleeframe.section_list.first_visible_ready" in body
     assert "self._section_list_first_visible_built = True" in body
@@ -133,7 +143,7 @@ def test_deferred_early_lane_uses_static_lane_shell() -> None:
 
 
 def test_static_lane_spike_preserves_prior_6g5_markers() -> None:
-    text = _view_text()
+    text = _combined_text()
     assert "studio.gicleeframe.sections_column.early_lane_enter" in text
     assert "studio.gicleeframe.section_list.column_ready_for_rows" in text
     assert "studio.gicleeframe.section_list.first_visible_ready" in text

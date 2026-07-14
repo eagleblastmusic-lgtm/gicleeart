@@ -17,6 +17,16 @@ def _view_text() -> str:
     )
 
 
+def _section_list_shell_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_shell.py"
+    ).read_text(encoding="utf-8")
+
+
+def _combined_text() -> str:
+    return _view_text() + "\n" + _section_list_shell_text()
+
+
 def _method_block(text: str, name: str) -> str:
     marker = f"def {name}"
     assert marker in text
@@ -208,7 +218,7 @@ def test_populate_done_logs_only_for_current_generation() -> None:
 
 
 def test_selection_diag_preserves_prior_6g5_markers() -> None:
-    text = _view_text()
+    text = _combined_text()
     for marker in (
         "studio.gicleeframe.section_list.static_lane_ready",
         "studio.gicleeframe.section_list.first_visible_ready",

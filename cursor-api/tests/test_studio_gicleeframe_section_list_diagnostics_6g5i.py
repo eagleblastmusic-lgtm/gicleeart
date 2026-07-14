@@ -18,7 +18,13 @@ def _combined_text() -> str:
     top_bar = (ROOT / "giclee_app" / "ui" / "gicleeframe_view_top_bar.py").read_text(
         encoding="utf-8"
     )
-    return _view_text() + "\n" + top_bar
+    return _view_text() + "\n" + top_bar + "\n" + _section_list_shell_text()
+
+
+def _section_list_shell_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_shell.py"
+    ).read_text(encoding="utf-8")
 
 
 def test_section_list_incremental_scheduled_event_exists() -> None:
@@ -54,7 +60,7 @@ def test_section_list_first_batch_spans_exist() -> None:
 
 
 def test_section_list_column_ready_for_rows_event_exists() -> None:
-    text = _view_text()
+    text = _section_list_shell_text()
 
     start = text.index("def _log_section_list_column_ready")
     end = text.index("def _build_sections_column_shell", start)
