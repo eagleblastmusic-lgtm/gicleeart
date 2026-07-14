@@ -37,6 +37,19 @@ jobs:
       - name: Apply pure category navigation model
         run: python .github/scripts/apply_lc2a.py
 
+      - name: Normalize generated test literal
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('cursor-api/tests/test_launcher_category_navigation_model.py')
+          text = path.read_text(encoding='utf-8')
+          malformed = 'split("\n    def ", 1)[0]'
+          escaped = 'split("\\n    def ", 1)[0]'
+          if malformed not in text:
+              raise SystemExit('generated navigation test literal not found')
+          path.write_text(text.replace(malformed, escaped), encoding='utf-8')
+          PY
+
       - name: Install focused test dependencies
         working-directory: cursor-api
         run: |
