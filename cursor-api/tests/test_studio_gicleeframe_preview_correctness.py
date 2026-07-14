@@ -6,6 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 ROOT = Path(__file__).resolve().parents[1]
+VISUAL_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_visual_detail_renderers.py"
 
 
 def _method_block(text: str, name: str) -> str:
@@ -17,8 +18,7 @@ def _method_block(text: str, name: str) -> str:
 
 
 def test_media_section_preview_has_metadata_renderer() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    text = VISUAL_PATH.read_text(encoding="utf-8")
 
     assert "_build_media_section_preview_structure" in text
     assert "_update_media_section_preview_content" in text
@@ -26,8 +26,7 @@ def test_media_section_preview_has_metadata_renderer() -> None:
 
 
 def test_legacy_and_default_preview_have_fallback_renderers() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    text = VISUAL_PATH.read_text(encoding="utf-8")
 
     assert "_update_legacy_preview_content" in text
     assert "_build_default_preview_structure" in text
@@ -36,8 +35,7 @@ def test_legacy_and_default_preview_have_fallback_renderers() -> None:
 
 
 def test_preview_fallback_uses_informative_labels_not_skeleton_only() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    text = VISUAL_PATH.read_text(encoding="utf-8")
     media_block = _method_block(text, "_update_media_section_preview_content")
     default_block = _method_block(text, "_update_default_preview_content")
 
@@ -50,8 +48,7 @@ def test_preview_fallback_uses_informative_labels_not_skeleton_only() -> None:
 
 
 def test_preview_key_covers_editorial_section_types() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    text = VISUAL_PATH.read_text(encoding="utf-8")
     block = _method_block(text, "_preview_key_for_element")
 
     assert "media_section" in block
@@ -59,8 +56,7 @@ def test_preview_key_covers_editorial_section_types() -> None:
 
 
 def test_update_section_preview_still_uses_reuse_cache() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    text = VISUAL_PATH.read_text(encoding="utf-8")
     block = _method_block(text, "_update_section_preview")
 
     assert "preview.reuse" in block
@@ -71,15 +67,13 @@ def test_update_section_preview_still_uses_reuse_cache() -> None:
 
 
 def test_preview_fallback_logs_event() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    text = VISUAL_PATH.read_text(encoding="utf-8")
 
     assert "studio.gicleeframe.preview.fallback_used" in text
 
 
 def test_preview_correctness_no_writer_or_deploy() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    text = VISUAL_PATH.read_text(encoding="utf-8")
     preview_block = text.split("def _preview_key_for_element", 1)[1].split(
         "\n    def _hide_preview_frames",
         1,

@@ -53,6 +53,7 @@ Disclaimer F2: **„Zmiany są tylko lokalnym draftem w pamięci — nic nie zap
 | `ui/gicleeframe_view_selection_orchestration.py` | **GF-M13** — selection orchestration, priority lane, atomic swap i scheduling populate |
 | `ui/gicleeframe_view_editor_shell.py` | **GF-M14** — editor shell, prewarm lifecycle i minimal population |
 | `ui/gicleeframe_view_details_on_demand.py` | **GF-M15** — details-on-demand orchestrator, cache i deferred wrappers |
+| `ui/gicleeframe_view_visual_detail_renderers.py` | **GF-M16** — preview, layer-navigation i children-overview renderers |
 | `launcher_studio.py` | Routing: `gicleeframe` → `GicleeFrameView` |
 
 ---
@@ -572,7 +573,7 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M14+** — osobn
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M16+** — osobne PR-y. Editor shell/population przeniesiono w GF-M14; details-on-demand przeniesiono w GF-M15; preview renderer, page-context engine, layer-navigation renderer, children renderer, lifecycle i inventory pozostają host-owned kandydatami GF-M16+.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M17+** — osobne PR-y. Editor shell/population przeniesiono w GF-M14; details-on-demand przeniesiono w GF-M15; visual detail renderers przeniesiono w GF-M16; page-context engine, lifecycle i inventory pozostają host-owned kandydatami GF-M17+.
 
 ---
 
@@ -599,7 +600,7 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M16+** — osobn
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M16+** — osobne PR-y. Details-on-demand przeniesiono w GF-M15; preview renderer, page-context engine, layer-navigation renderer, children renderer, lifecycle i inventory pozostają host-owned kandydatami GF-M16+.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M17+** — osobne PR-y. Details-on-demand przeniesiono w GF-M15; visual detail renderers przeniesiono w GF-M16; page-context engine, lifecycle i inventory pozostają host-owned kandydatami GF-M17+.
 
 ---
 
@@ -623,4 +624,29 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M16+** — osobn
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M16+** — osobne PR-y. Preview renderer, page-context engine, layer-navigation renderer, children renderer, lifecycle i inventory pozostają host-owned kandydatami GF-M16+.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M17+** — osobne PR-y. Page-context engine, lifecycle i inventory pozostają host-owned kandydatami GF-M17+.
+
+---
+
+## 27. GF-M16 — Visual Detail Renderers Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** ekstrakcja spójnej granicy visual detail renderers (tree-row lookup, preview cache/lifecycle, type-aware preview renderers, section preview update, layer-navigation renderer, children overview) bez absorpcji details-on-demand, editor shell, page-context engine, selection orchestration, lifecycle ani inventory.
+
+### Wynik
+
+- **Visual detail renderers** przeniesione do `ui/gicleeframe_view_visual_detail_renderers.py` jako `GicleeFrameVisualDetailRenderersMixin`.
+- Przeniesiono dokładnie **40 metod**; mixin **nie wprowadza nowych stałych** granicy.
+- `_LAYER_NAV_TITLE` pozostaje własnością `gicleeframe_view_editor_shell.py` i jest importowany bez duplikacji wartości.
+- Mixin **nie posiada lifecycle** ani `__init__`, **nie dziedziczy** po widżecie Tk; **nie używa `after()`**.
+- Host `GicleeFrameView` dziedziczy **czternaście mixinów** panelowych/subsystemowych przed `ctk.CTkScrollableFrame` (visual renderers po details-on-demand).
+- Host nadal posiada:
+  - `__init__` i inicjalizację pól preview/layer/children/page-context,
+  - page-context engine, inline setting editor,
+  - lifecycle, inventory merge, progressive bootstrap, perceived-ready i atomic-reveal orchestration.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M17+** — osobne PR-y. Page-context engine, lifecycle i inventory pozostają host-owned kandydatami GF-M17+.

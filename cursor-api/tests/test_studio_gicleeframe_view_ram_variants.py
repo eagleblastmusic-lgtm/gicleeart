@@ -35,6 +35,9 @@ from giclee_app.ui.gicleeframe_view_details_on_demand import (
     GicleeFrameDetailsOnDemandMixin,
 )
 from giclee_app.ui.gicleeframe_view_editor_shell import GicleeFrameEditorShellMixin
+from giclee_app.ui.gicleeframe_view_visual_detail_renderers import (
+    GicleeFrameVisualDetailRenderersMixin,
+)
 from giclee_app.ui.gicleeframe_view_section_list_interaction import (
     GicleeFrameSectionListInteractionMixin,
 )
@@ -216,6 +219,7 @@ def test_ram_variant_methods_resolve_by_identity_from_mixin_on_gicleeframe_view(
     assert GicleeFrameSectionListInteractionMixin in GicleeFrameView.__mro__
     assert GicleeFrameEditorShellMixin in GicleeFrameView.__mro__
     assert GicleeFrameDetailsOnDemandMixin in GicleeFrameView.__mro__
+    assert GicleeFrameVisualDetailRenderersMixin in GicleeFrameView.__mro__
     for name in _EXPECTED_METHODS:
         assert name not in GicleeFrameView.__dict__
         assert getattr(GicleeFrameView, name) is getattr(GicleeFrameRamVariantMixin, name)
