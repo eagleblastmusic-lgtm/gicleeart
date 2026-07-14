@@ -50,6 +50,7 @@ Disclaimer F2: **„Zmiany są tylko lokalnym draftem w pamięci — nic nie zap
 | `ui/gicleeframe_view_models.py` | **GF-M1** — czyste kontrakty widoku (dataclass + helpery tekstowe, bez UI) |
 | `ui/gicleeframe_view_primitives.py` | **GF-M2** — bezstanowe prymitywy UI i lokalne tokeny wizualne |
 | `ui/gicleeframe_view_section_list_interaction.py` | **GF-M12** — dropdown, highlight, row-click gateway i drag/reorder RAM listy sekcji |
+| `ui/gicleeframe_view_selection_orchestration.py` | **GF-M13** — selection orchestration, priority lane, atomic swap i scheduling populate |
 | `launcher_studio.py` | Routing: `gicleeframe` → `GicleeFrameView` |
 
 ---
@@ -231,12 +232,12 @@ Implementacja referencyjna: ten moduł (`gicleeframe_page_*`, `gicleeframe_view.
 
 ## 11. Performance — responsive section selection (Studio v1.41.1)
 
-Wybór sekcji w `gicleeframe_view.py` jest dwuetapowy:
+Wybór sekcji w `gicleeframe_view_selection_orchestration.py` (mixin `GicleeFrameSelectionOrchestrationMixin`) jest dwuetapowy:
 
 | Etap | Opóźnienie | Zachowanie |
 |------|------------|------------|
 | **Immediate** | 0 ms | highlight wiersza, trigger, subtitle „Ładowanie: …”, anulowanie poprzednich jobów |
-| **Deferred populate** | 16 ms (`_GF_SELECT_POPULATE_DEFER_MS`) | pełny `_populate_editor()` z guardem `_selection_generation` |
+| **Deferred populate** | 0 ms (`_GF_SELECT_POPULATE_DEFER_MS`) | pełny `_populate_editor()` z guardem `_selection_generation` (via atomic swap) |
 | **Stable page context** | 140 ms (`_GF_PAGE_CONTEXT_STABLE_DEFER_MS`) | `_populate_page_context_progressive` tylko gdy wybór się ustabilizował |
 
 Lista sekcji **domyślnie nie zwija się** po kliknięciu wiersza (szybkie przechodzenie po strukturze). Legacy/debug: `$env:GICLEE_GF_COLLAPSE_SECTION_LIST_ON_CLICK="1"`.
@@ -462,7 +463,7 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M10+** — osobn
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M13+** — osobne PR-y. **Section List shell** (GF-M10), **rendering** (GF-M11) i **interaction** (GF-M12) zrealizowano; selection/editor orchestration pozostaje primary kandydatem GF-M13.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M14+** — osobne PR-y. **Section List shell** (GF-M10), **rendering** (GF-M11), **interaction** (GF-M12) i **selection orchestration** (GF-M13) zrealizowano; editor shell/population pozostaje primary kandydatem GF-M14+.
 
 ---
 
@@ -487,7 +488,7 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M13+** — osobn
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M13+** — osobne PR-y. Dropdown interaction przeniesiono w GF-M12; selection/editor orchestration pozostaje host-owned kandydatem GF-M13.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M14+** — osobne PR-y. Dropdown interaction przeniesiono w GF-M12; selection orchestration przeniesiono w GF-M13.
 
 ---
 
@@ -508,7 +509,7 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M13+** — osobn
   - `__init__` i inicjalizację pól section-list/renderingu,
   - `_finalize_full_list_render` i politykę initial-selection,
   - dropdown open/close/collapse, outside-click bindings,
-  - `_on_section_row_click`, `_select_element`, highlighting,
+  - `_on_section_row_click`, highlighting,
   - `_start_section_drag`, `_finish_section_drag`, reorder RAM,
   - `_upgrade_section_list_scroll`, progressive bootstrap/scheduling,
   - perceived-ready, atomic-reveal i editor population.
@@ -516,7 +517,7 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M13+** — osobn
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M13+** — osobne PR-y. Dropdown interaction, highlighting i drag/reorder przeniesiono w GF-M12; selection/editor orchestration pozostaje host-owned kandydatem GF-M13.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M14+** — osobne PR-y. Dropdown interaction, highlighting i drag/reorder przeniesiono w GF-M12; selection orchestration przeniesiono w GF-M13.
 
 ---
 
@@ -535,11 +536,38 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M13+** — osobn
 - Host nadal posiada:
   - `__init__` i inicjalizację pól dropdown/selection/drag,
   - `_finalize_full_list_render` i politykę initial-selection,
-  - `_select_element` i całą ścieżkę selection/editor orchestration,
   - `_render_section_list` (via renderer mixin), inventory merge, progressive bootstrap,
   - perceived-ready, atomic-reveal i editor population.
 - Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M13+** — osobne PR-y. **Selection/editor orchestration** (`_select_element` i powiązany pipeline) pozostaje primary kandydatem GF-M13.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M14+** — osobne PR-y. Selection orchestration przeniesiono w GF-M13.
+
+---
+
+## 24. GF-M13 — Selection Orchestration, Priority Lane & Atomic Swap Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** ekstrakcja spójnej granicy selection orchestration (`_select_element` i powiązany pipeline: priority lane, job scheduling/cancellation, atomic swap, preserved selection po light inventory refresh) bez absorpcji editor implementation, details-on-demand, page-context, preview, layer navigation, inventory loading, section-list rendering/interaction ani persistence.
+
+### Wynik
+
+- **Selection orchestration** przeniesiony do `ui/gicleeframe_view_selection_orchestration.py` jako `GicleeFrameSelectionOrchestrationMixin`.
+- Przeniesiono dokładnie **18 metod** oraz **4 stałe** granicy (`_GF_ATOMIC_SWAP_STATUS_TEXT`, `_GF_SELECT_POPULATE_DEFER_MS`, `_GF_SELECTION_PRIORITY_WINDOW_MS`, `_GF_SELECTION_PRIORITY_YIELD_DEFER_MS`).
+- Host zachowuje adapter `_progressive_boot_enabled_for_selection()` — delegacja do `_progressive_boot_enabled()` bez duplikacji polityki env.
+- Mixin **nie posiada lifecycle** ani `__init__`, **nie dziedziczy** po widżecie Tk; **używa `after()`, `after_idle()` i `after_cancel()`** wyłącznie dla selection scheduling, priority lifecycle, atomic swap i cancellation renderer batch continuation.
+- Host `GicleeFrameView` dziedziczy **jedenaście mixinów** panelowych/subsystemowych przed `ctk.CTkScrollableFrame` (selection po interaction).
+- Host nadal posiada:
+  - `__init__` i inicjalizację pól selection/editor/details/page-context,
+  - `_progressive_boot_enabled_for_selection` (adapter),
+  - `_populate_editor` i implementację pól/layoutu edytora,
+  - details-on-demand, page-context population, preview/layer/children rendering,
+  - `_finalize_full_list_render` i politykę initial-selection,
+  - inventory merge, progressive bootstrap, perceived-ready i atomic-reveal orchestration.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M14+** — osobne PR-y. **Editor shell/population**, details-on-demand, page-context, preview i layer navigation pozostają host-owned kandydatami GF-M14+.

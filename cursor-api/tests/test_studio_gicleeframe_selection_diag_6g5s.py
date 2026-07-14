@@ -11,6 +11,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 ROOT = Path(__file__).resolve().parents[1]
 INTERACTION_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_interaction.py"
 VIEW_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
+SELECTION_PATH = (
+    ROOT / "giclee_app" / "ui" / "gicleeframe_view_selection_orchestration.py"
+)
 
 
 def _view_text() -> str:
@@ -27,8 +30,12 @@ def _section_list_shell_text() -> str:
     ).read_text(encoding="utf-8")
 
 
+def _selection_text() -> str:
+    return SELECTION_PATH.read_text(encoding="utf-8")
+
+
 def _combined_text() -> str:
-    return _view_text() + "\n" + _section_list_shell_text()
+    return _view_text() + "\n" + _section_list_shell_text() + "\n" + _selection_text()
 
 
 def _method_block(text: str, name: str) -> str:
@@ -75,7 +82,7 @@ def test_selection_diag_click_events_exist() -> None:
 
 
 def test_selection_diag_pipeline_events_exist() -> None:
-    text = _view_text()
+    text = _selection_text()
     for event in (
         "studio.gicleeframe.selection.start",
         "studio.gicleeframe.selection.jobs_cancelled",
@@ -111,7 +118,7 @@ def test_selection_diag_editor_segment_events_exist() -> None:
 
 
 def test_selection_diag_atomic_swap_events_exist() -> None:
-    text = _view_text()
+    text = _selection_text()
     for event in (
         "studio.gicleeframe.selection.atomic_swap.scheduled",
         "studio.gicleeframe.selection.atomic_swap.ready",
@@ -134,14 +141,13 @@ def test_selection_diag_page_context_events_exist() -> None:
 
 
 def test_selection_diag_events_include_generation() -> None:
-    text = _view_text()
-    for method in (
-        "_select_element",
-        "_populate_editor_deferred",
-        "_populate_editor",
-        "_populate_page_context_progressive_stable",
-    ):
-        body = _method_block(text, method)
+    selection_text = _selection_text()
+    view_text = _view_text()
+    for method in ("_select_element", "_populate_editor_deferred"):
+        body = _method_block(selection_text, method)
+        assert "generation" in body
+    for method in ("_populate_editor", "_populate_page_context_progressive_stable"):
+        body = _method_block(view_text, method)
         assert "generation" in body
 
 
@@ -172,7 +178,10 @@ def test_stale_deferred_populate_does_not_update_ui() -> None:
         def _capture(event: str, **kwargs) -> None:  # type: ignore[no-untyped-def]
             logged.append((event, kwargs))
 
-        with patch("giclee_app.ui.gicleeframe_view.log_event", side_effect=_capture):
+        with patch(
+            "giclee_app.ui.gicleeframe_view_selection_orchestration.log_event",
+            side_effect=_capture,
+        ):
             with patch.object(view, "_populate_editor") as populate_mock:
                 view._populate_editor_deferred("elem-a", generation=1)
 
@@ -206,7 +215,10 @@ def test_populate_done_logs_only_for_current_generation() -> None:
         def _capture(event: str, **kwargs) -> None:  # type: ignore[no-untyped-def]
             logged.append((event, kwargs))
 
-        with patch("giclee_app.ui.gicleeframe_view.log_event", side_effect=_capture):
+        with patch(
+            "giclee_app.ui.gicleeframe_view_selection_orchestration.log_event",
+            side_effect=_capture,
+        ):
             with patch.object(view, "_populate_editor"):
                 view._populate_editor_deferred("elem-current", generation=5)
                 view._selection_generation = 6

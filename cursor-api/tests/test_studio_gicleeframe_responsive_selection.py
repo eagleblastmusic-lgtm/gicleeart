@@ -7,8 +7,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 ROOT = Path(__file__).resolve().parents[1]
 
-
 INTERACTION_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_interaction.py"
+SELECTION_PATH = (
+    ROOT / "giclee_app" / "ui" / "gicleeframe_view_selection_orchestration.py"
+)
+VIEW_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
 
 
 def test_section_row_click_does_not_collapse_by_default() -> None:
@@ -22,19 +25,17 @@ def test_section_row_click_does_not_collapse_by_default() -> None:
 
 
 def test_select_element_has_immediate_and_deferred_pipeline() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    selection_text = SELECTION_PATH.read_text(encoding="utf-8")
 
-    assert "_selection_generation" in text
-    assert "_cancel_selection_jobs" in text
-    assert "_populate_editor_deferred" in text
-    assert "select_element.immediate_ready" in text
-    assert "populate_editor.deferred" in text
+    assert "_selection_generation" in selection_text
+    assert "_cancel_selection_jobs" in selection_text
+    assert "_populate_editor_deferred" in selection_text
+    assert "select_element.immediate_ready" in selection_text
+    assert "populate_editor.deferred" in selection_text
 
 
 def test_page_context_waits_for_stable_selection() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    text = VIEW_PATH.read_text(encoding="utf-8")
 
     assert "_GF_PAGE_CONTEXT_STABLE_DEFER_MS" in text
     assert "_populate_page_context_progressive_stable" in text

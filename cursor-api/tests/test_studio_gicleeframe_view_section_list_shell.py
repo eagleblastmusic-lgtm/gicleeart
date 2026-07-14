@@ -80,7 +80,6 @@ _HOST_OWNERSHIP = {
     "_run_deferred_bootstrap",
     "_try_mark_progressive_full_ready",
     "_finalize_full_list_render",
-    "_select_element",
     "_rebuild_page_model_cache",
     "_log_visual_gate_ready",
     "_try_mark_perceived_ready",
