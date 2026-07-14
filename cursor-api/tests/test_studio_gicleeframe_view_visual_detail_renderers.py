@@ -200,6 +200,20 @@ def _invoke_button1(widget: _FakePackable) -> None:
     raise AssertionError("expected <Button-1> bind callback")
 
 
+def _button1_bind_count(root: _FakePackable) -> int:
+    count = sum(1 for sequence, _handler in root.bind_calls if sequence == "<Button-1>")
+    for child in root.winfo_children():
+        if isinstance(child, _FakePackable):
+            count += _button1_bind_count(child)
+    return count
+
+
+def _tile_child_label(tile: _FakeFrame) -> str:
+    labels = [child for child in tile.winfo_children() if isinstance(child, _FakeLabel)]
+    assert len(labels) >= 2
+    return labels[1]._text
+
+
 def _find_children_tile(harness: GicleeFrameVisualDetailRenderersHarness) -> _FakeFrame:
     grid = None
     for child in harness._children_overview_buttons.winfo_children():
@@ -635,6 +649,18 @@ def test_update_layer_nav_tile_skip_and_update(
     assert harness._layer_nav_bound_targets["slot:0"] == "e1"
     assert first_bind_count >= 1
 
+    nested_labels = [
+        child for child in tile.winfo_children() if isinstance(child, _FakeLabel)
+    ]
+    assert nested_labels
+
+    harness._select_element_calls.clear()
+    _invoke_button1(tile)
+    _invoke_button1(nested_labels[0])
+    assert harness._select_element_calls == ["e1", "e1"]
+
+    first_binding_count = _button1_bind_count(tile)
+
     harness._update_layer_nav_tile(
         "slot:0", kind="K", title="Title", element_id="e1", active=False,
     )
@@ -643,8 +669,65 @@ def test_update_layer_nav_tile_skip_and_update(
         "studio.gicleeframe.layer_nav.tile_skipped",
     ]
     assert len(tile.bind_calls) == first_bind_count
+    assert _button1_bind_count(tile) == first_binding_count
     assert len(harness._layer_nav_meta_widgets["slot:0"].configure_calls) == first_kind_configure
     assert len(harness._layer_nav_title_widgets["slot:0"].configure_calls) == first_title_configure
+
+
+def test_update_layer_nav_stale_empty_keeps_visible_frame(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_fake_ctk(monkeypatch)
+    harness = GicleeFrameVisualDetailRenderersHarness()
+    layer_nav_frame = harness._layer_nav_frame
+    assert layer_nav_frame is not None
+    layer_nav_frame.pack(fill="x")
+    assert layer_nav_frame.winfo_manager() == "pack"
+
+    m = _sample_merged("child-1", element_type="text")
+    harness._editor_last_ready_element_id = "prev-ready"
+    monkeypatch.setattr(harness, "_selected_layer_items", lambda _merged: [])
+
+    sync_calls: list[list[str]] = []
+    real_sync = harness._sync_layer_nav_visibility
+
+    def tracked_sync(desired_keys: list[str]) -> None:
+        sync_calls.append(list(desired_keys))
+        return real_sync(desired_keys)
+
+    harness._sync_layer_nav_visibility = tracked_sync  # type: ignore[method-assign]
+
+    events: list[tuple[str, dict[str, Any]]] = []
+    monkeypatch.setattr(
+        visual_module,
+        "log_event",
+        lambda event, **kwargs: events.append((event, dict(kwargs))),
+    )
+
+    pack_forget_before = layer_nav_frame.pack_forget_calls
+    harness._update_layer_nav(m, stale_refresh=True)
+
+    assert sync_calls == []
+    assert layer_nav_frame.pack_forget_calls == pack_forget_before
+    assert layer_nav_frame.winfo_manager() == "pack"
+    assert events == [
+        (
+            "studio.gicleeframe.editor.stale_content_kept",
+            {
+                "element_id": "child-1",
+                "element_type": "text",
+                "previous_element_id": "prev-ready",
+                "since_click_ms": 5.0,
+                "region": "layer_nav",
+            },
+        ),
+    ]
+    forbidden = {
+        "studio.gicleeframe.layer_nav.delta",
+        "studio.gicleeframe.layer_nav.reuse",
+        "studio.gicleeframe.layer_nav",
+    }
+    assert {event for event, _payload in events}.isdisjoint(forbidden)
 
 
 def test_update_layer_nav_empty_and_populated(
@@ -1074,9 +1157,23 @@ def test_children_overview_range_and_grid_reuse(
     harness._section_tree_rows_cache = [row]
     m = _sample_merged("media-1", element_type="media_section")
     harness._fill_children_overview_buttons_range(m, 0, 1)
-    first_grids = len(harness._children_overview_buttons.winfo_children())
+    first_grid = next(
+        child
+        for child in harness._children_overview_buttons.winfo_children()
+        if isinstance(child, _FakeFrame)
+    )
+
     harness._fill_children_overview_buttons_range(m, 1, 2)
-    assert len(harness._children_overview_buttons.winfo_children()) >= first_grids
+    grids = [
+        child
+        for child in harness._children_overview_buttons.winfo_children()
+        if isinstance(child, _FakeFrame)
+    ]
+    assert grids == [first_grid]
+    assert len(first_grid.winfo_children()) == 2
+
+    tiles = [child for child in first_grid.winfo_children() if isinstance(child, _FakeFrame)]
+    assert [_tile_child_label(tile) for tile in tiles] == ["Child c1", "Child c2"]
 
 
 def test_children_stale_refresh_destroy_handles_tcl(
