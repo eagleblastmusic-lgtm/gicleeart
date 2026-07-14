@@ -36,6 +36,9 @@ from giclee_app.ui.gicleeframe_view_details_on_demand import (
     GicleeFrameDetailsOnDemandMixin,
 )
 from giclee_app.ui.gicleeframe_view_editor_shell import GicleeFrameEditorShellMixin
+from giclee_app.ui.gicleeframe_view_visual_detail_renderers import (
+    GicleeFrameVisualDetailRenderersMixin,
+)
 from giclee_app.ui.gicleeframe_view_section_list_interaction import (
     GicleeFrameSectionListInteractionMixin,
 )
@@ -200,6 +203,7 @@ def test_safety_mixin_is_wired_into_gicleeframe_view_mro() -> None:
     assert GicleeFrameSectionListInteractionMixin in GicleeFrameView.__mro__
     assert GicleeFrameEditorShellMixin in GicleeFrameView.__mro__
     assert GicleeFrameDetailsOnDemandMixin in GicleeFrameView.__mro__
+    assert GicleeFrameVisualDetailRenderersMixin in GicleeFrameView.__mro__
     assert "_build_safety_card" not in GicleeFrameView.__dict__
     assert (
         GicleeFrameView._build_safety_card

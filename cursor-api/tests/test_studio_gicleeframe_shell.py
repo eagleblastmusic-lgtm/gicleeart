@@ -87,6 +87,12 @@ _EDITOR_SHELL_VIEW_PATH = (
     / "ui"
     / "gicleeframe_view_editor_shell.py"
 )
+_VISUAL_RENDERERS_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "giclee_app"
+    / "ui"
+    / "gicleeframe_view_visual_detail_renderers.py"
+)
 _NEW_PLANNING_MODULES = (
     "gicleeframe_brief.py",
     "gicleeframe_draft_state.py",
@@ -183,7 +189,8 @@ def test_view_source_f21_editor_labels() -> None:
     assert "_build_action_dock" in combined
     assert "_PREVIEW_SETTINGS_CAPTION" in combined
     assert "_pack_field_vertical" in text
-    assert "_update_section_preview" in text
+    visual_text = _VISUAL_RENDERERS_PATH.read_text(encoding="utf-8")
+    assert "_update_section_preview" in visual_text
 
 
 def test_view_source_f222_premium_copy() -> None:
@@ -245,16 +252,17 @@ def test_view_source_f225_section_workbench() -> None:
 
     text = _VIEW_PATH.read_text(encoding="utf-8")
     editor_text = _EDITOR_SHELL_VIEW_PATH.read_text(encoding="utf-8")
+    visual_text = _VISUAL_RENDERERS_PATH.read_text(encoding="utf-8")
     combined = text + "\n" + editor_text
     assert "F2.2.5" in text
     assert "_section_preview_canvas" in text
     assert "_section_preview_badge" in text
-    assert "_build_media_section_preview_structure" in text
-    assert "_build_divider_preview_structure" in text
-    assert "_build_legacy_preview_structure" in text
-    assert "_build_text_preview_structure" in text
+    assert "_build_media_section_preview_structure" in visual_text
+    assert "_build_divider_preview_structure" in visual_text
+    assert "_build_legacy_preview_structure" in visual_text
+    assert "_build_text_preview_structure" in visual_text
     assert "Warstwy sekcji" in combined
-    assert "Kliknij, aby edytować" in text
+    assert "Kliknij, aby edytować" in visual_text
     assert "Workbench sekcji" in combined
     assert "APPLY_RAM_DRAFT_LABEL" in text
     assert APPLY_RAM_DRAFT_LABEL == "Uaktualnij wariant RAM"
@@ -269,22 +277,23 @@ def test_view_source_f226_child_layer_and_color() -> None:
 
     text = _VIEW_PATH.read_text(encoding="utf-8")
     editor_text = _EDITOR_SHELL_VIEW_PATH.read_text(encoding="utf-8")
+    visual_text = _VISUAL_RENDERERS_PATH.read_text(encoding="utf-8")
     combined = text + "\n" + editor_text
     primitives_text = _PRIMITIVES_PATH.read_text(encoding="utf-8")
     assert "F2.2.6" in text
-    assert "_LAYER_NAV_TITLE" in combined
-    assert "_IMAGE_SOURCE_TITLE" in combined
+    assert "_LAYER_NAV_TITLE" in editor_text
+    assert "_IMAGE_SOURCE_TITLE" in editor_text
     assert "_layer_nav_frame" in text
-    assert "_update_layer_nav" in text
-    assert "_parent_row_for_element" in text
-    assert "_selected_layer_items" in text
-    assert "_build_image_preview_structure" in text
-    assert "_image_ref_label" in text
+    assert "_update_layer_nav" in visual_text
+    assert "_parent_row_for_element" in visual_text
+    assert "_selected_layer_items" in visual_text
+    assert "_build_image_preview_structure" in visual_text
+    assert "_image_ref_label" in visual_text
     assert '_GF_PANEL = "#1e1e21"' in primitives_text
     assert '_GF_GOLD = "#b8a878"' in primitives_text
     assert '_GF_PANEL = "#1e1e21"' not in text
     assert "panel_deep" in text
-    assert "Grafika sekcji" in text
+    assert "Grafika sekcji" in visual_text
     assert "Źródło grafiki" in combined
     assert "Warstwy sekcji" in combined
     assert "Workbench sekcji" in combined

@@ -40,6 +40,9 @@ from giclee_app.ui.gicleeframe_view_details_on_demand import (
     GicleeFrameDetailsOnDemandMixin,
 )
 from giclee_app.ui.gicleeframe_view_editor_shell import GicleeFrameEditorShellMixin
+from giclee_app.ui.gicleeframe_view_visual_detail_renderers import (
+    GicleeFrameVisualDetailRenderersMixin,
+)
 from giclee_app.ui.gicleeframe_view_selection_orchestration import (
     GicleeFrameSelectionOrchestrationMixin,
     _GF_ATOMIC_SWAP_STATUS_TEXT,
@@ -351,7 +354,7 @@ def test_selection_orchestration_constants_exact_values() -> None:
         assert f"{name} =" not in host_text
 
 
-def test_gicleeframe_view_has_thirteen_mixins_before_scrollable_frame() -> None:
+def test_gicleeframe_view_has_fourteen_mixins_before_scrollable_frame() -> None:
     mro = GicleeFrameView.__mro__
     for mixin in (
         GicleeFrameBrandPanelMixin,
@@ -367,6 +370,7 @@ def test_gicleeframe_view_has_thirteen_mixins_before_scrollable_frame() -> None:
         GicleeFrameSelectionOrchestrationMixin,
         GicleeFrameEditorShellMixin,
         GicleeFrameDetailsOnDemandMixin,
+        GicleeFrameVisualDetailRenderersMixin,
     ):
         assert mixin in mro
     assert mro.index(GicleeFrameSectionListInteractionMixin) < mro.index(
@@ -378,7 +382,12 @@ def test_gicleeframe_view_has_thirteen_mixins_before_scrollable_frame() -> None:
     assert mro.index(GicleeFrameEditorShellMixin) < mro.index(
         GicleeFrameDetailsOnDemandMixin,
     )
-    assert mro.index(GicleeFrameDetailsOnDemandMixin) < mro.index(ctk.CTkScrollableFrame)
+    assert mro.index(GicleeFrameDetailsOnDemandMixin) < mro.index(
+        GicleeFrameVisualDetailRenderersMixin,
+    )
+    assert mro.index(GicleeFrameVisualDetailRenderersMixin) < mro.index(
+        ctk.CTkScrollableFrame,
+    )
 
 
 def test_selection_orchestration_methods_resolve_by_identity_from_mixin_on_gicleeframe_view() -> None:

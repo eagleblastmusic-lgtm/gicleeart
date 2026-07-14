@@ -30,6 +30,9 @@ from giclee_app.ui.gicleeframe_view_brand import GicleeFrameBrandPanelMixin
 from giclee_app.ui.gicleeframe_view_details_on_demand import (
     GicleeFrameDetailsOnDemandMixin,
 )
+from giclee_app.ui.gicleeframe_view_visual_detail_renderers import (
+    GicleeFrameVisualDetailRenderersMixin,
+)
 from giclee_app.ui.gicleeframe_view_editor_shell import (
     GicleeFrameEditorShellMixin,
     _EDITOR_FORM_WIDTH,
@@ -165,8 +168,6 @@ _HOST_OWNERSHIP = {
     "_get_or_create_readonly_card",
     "_show_page_context_row",
     "_get_or_create_page_context_row",
-    "_hide_preview_frames",
-    "_fill_children_overview_buttons",
 }
 
 _MICRO_DEFER_CALLERS = {
@@ -680,7 +681,7 @@ def test_editor_shell_constants_exact_values() -> None:
         assert not _host_defines_constant(name, host_text), name
 
 
-def test_gicleeframe_view_has_thirteen_mixins_before_scrollable_frame() -> None:
+def test_gicleeframe_view_has_fourteen_mixins_before_scrollable_frame() -> None:
     expected = (
         GicleeFrameBrandPanelMixin,
         GicleeFramePageReadinessMixin,
@@ -695,6 +696,7 @@ def test_gicleeframe_view_has_thirteen_mixins_before_scrollable_frame() -> None:
         GicleeFrameSelectionOrchestrationMixin,
         GicleeFrameEditorShellMixin,
         GicleeFrameDetailsOnDemandMixin,
+        GicleeFrameVisualDetailRenderersMixin,
         ctk.CTkScrollableFrame,
     )
 
@@ -1411,11 +1413,11 @@ def test_apply_section_visual_cache_delegates_to_minimal_cache(
     harness = GicleeFrameEditorShellHarness()
     element = _sample_merged("a")
     calls: list[Any] = []
-    monkeypatch.setattr(
-        harness,
-        "_apply_minimal_cache",
-        lambda m: calls.append(m) or True,
-    )
+    def _record_minimal_cache(m: Any) -> bool:
+        calls.append(m)
+        return True
+
+    monkeypatch.setattr(harness, "_apply_minimal_cache", _record_minimal_cache)
     assert harness._apply_section_visual_cache(element) is True
     assert calls == [element]
 
