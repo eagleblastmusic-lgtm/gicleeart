@@ -1,0 +1,124 @@
+name: LC2C one-shot implementation
+
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    if: >-
+      github.head_ref == 'gpt-work/launcher-composition-lc2c-grid-layout' &&
+      github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout LC-2C branch head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: cursor-api/requirements-dev.txt
+
+      - name: Apply launcher tile grid placement
+        run: python .github/scripts/apply_lc2c.py
+
+      - name: Install focused test dependencies
+        working-directory: cursor-api
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+          python -m pip check
+
+      - name: Run LC-2C focused regression suite
+        working-directory: cursor-api
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p "$RUNNER_TEMP/lc2c-focused"
+          python -m pytest -q \
+            tests/test_launcher_grid_layout.py \
+            tests/test_launcher_category_renderer.py \
+            tests/test_launcher_category_navigation_model.py \
+            tests/test_launcher_category_navigation.py \
+            tests/test_launcher_composition.py \
+            tests/test_launcher_tile_order.py \
+            tests/test_launcher_shortcuts.py \
+            tests/test_launcher_shortcuts_config.py \
+            tests/test_studio_imports.py \
+            2>&1 | tee "$RUNNER_TEMP/lc2c-focused/pytest.txt"
+
+      - name: Upload LC-2C focused diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lc2c-focused-${{ github.run_id }}
+          path: ${{ runner.temp }}/lc2c-focused
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Validate diff and scope
+        run: |
+          git diff --check
+          git status --short
+          python - <<'PY'
+          import subprocess
+
+          allowed = {
+              '.github/scripts/apply_lc2c.py',
+              '.github/workflows/lc2c-one-shot.yml',
+              'cursor-api/giclee_app/launcher_grid_layout.py',
+              'cursor-api/giclee_app/category_renderer.py',
+              'cursor-api/tests/test_launcher_grid_layout.py',
+              'cursor-api/giclee_app/docs/launcher.md',
+              'cursor-api/giclee_app/docs/launcher-composition-lc2c-contract.md',
+          }
+          tracked = subprocess.check_output(
+              ['git', 'diff', '--name-only', '--'], text=True
+          ).splitlines()
+          untracked = subprocess.check_output(
+              ['git', 'ls-files', '--others', '--exclude-standard'], text=True
+          ).splitlines()
+          paths = set(tracked) | set(untracked)
+          unexpected = sorted(paths - allowed)
+          if unexpected:
+              raise SystemExit(f'unexpected paths: {unexpected}')
+          required = {
+              'cursor-api/giclee_app/launcher_grid_layout.py',
+              'cursor-api/giclee_app/category_renderer.py',
+              'cursor-api/tests/test_launcher_grid_layout.py',
+          }
+          missing = sorted(required - paths)
+          if missing:
+              raise SystemExit(f'missing required changes: {missing}')
+          PY
+
+      - name: Commit implementation and remove one-shot helpers
+        run: |
+          rm .github/workflows/lc2c-one-shot.yml .github/scripts/apply_lc2c.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A \
+            .github/workflows/lc2c-one-shot.yml \
+            .github/scripts/apply_lc2c.py \
+            cursor-api/giclee_app/launcher_grid_layout.py \
+            cursor-api/giclee_app/category_renderer.py \
+            cursor-api/tests/test_launcher_grid_layout.py \
+            cursor-api/giclee_app/docs/launcher.md \
+            cursor-api/giclee_app/docs/launcher-composition-lc2c-contract.md
+          git commit -m 'refactor(launcher): extract tile grid placement'
+          git push origin HEAD:${{ github.head_ref }}
