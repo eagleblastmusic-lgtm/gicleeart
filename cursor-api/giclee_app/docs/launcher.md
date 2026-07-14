@@ -18,6 +18,8 @@ Pliki:
 
 **LC-2A navigation model:** `category_navigation.py` rozstrzyga czysty, niemutowalny plan ekranu kategorii. `CategoryGicleeApp` nadal odpowiada za istniejące widgety Tk, hooki renderera, fokus, scroll i statusy.
 
+**LC-2B category renderer:** `category_renderer.py` buduje puste stany, indeks i ekran komponentów przez jawne callbacki. Metody `CategoryGicleeApp` pozostają wrapperami, a Styled i DnD nadal dostarczają własne hooki kafelków.
+
 ---
 
 ## Co robi
