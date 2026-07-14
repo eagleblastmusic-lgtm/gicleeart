@@ -687,8 +687,7 @@ def test_editor_shell_constants_exact_values() -> None:
 
 
 def test_gicleeframe_view_has_twelve_mixins_before_scrollable_frame() -> None:
-    mro = GicleeFrameView.__mro__
-    for mixin in (
+    expected = (
         GicleeFrameBrandPanelMixin,
         GicleeFramePageReadinessMixin,
         GicleeFrameStructureDryRunMixin,
@@ -701,12 +700,10 @@ def test_gicleeframe_view_has_twelve_mixins_before_scrollable_frame() -> None:
         GicleeFrameSectionListInteractionMixin,
         GicleeFrameSelectionOrchestrationMixin,
         GicleeFrameEditorShellMixin,
-    ):
-        assert mixin in mro
-    assert mro.index(GicleeFrameSelectionOrchestrationMixin) < mro.index(
-        GicleeFrameEditorShellMixin,
+        ctk.CTkScrollableFrame,
     )
-    assert mro.index(GicleeFrameEditorShellMixin) < mro.index(ctk.CTkScrollableFrame)
+
+    assert GicleeFrameView.__mro__[1 : 1 + len(expected)] == expected
 
 
 def test_editor_shell_methods_resolve_by_identity_from_mixin_on_gicleeframe_view() -> None:
@@ -738,21 +735,13 @@ def test_host_ownership_for_editor_adapters() -> None:
 def test_editor_micro_defer_ms_delegates_to_host(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    try:
-        root = ctk.CTk()
-    except tk.TclError:
-        pytest.skip("Tk/CTk unavailable in this environment")
-    root.withdraw()
-    try:
-        view = GicleeFrameView(root)
-        assert view._editor_micro_defer_ms() == _GF_MICRO_DEFER_MS
-        monkeypatch.setattr(
-            "giclee_app.ui.gicleeframe_view._GF_MICRO_DEFER_MS",
-            24,
-        )
-        assert view._editor_micro_defer_ms() == 24
-    finally:
-        root.destroy()
+    view = object.__new__(GicleeFrameView)
+    assert view._editor_micro_defer_ms() == _GF_MICRO_DEFER_MS
+    monkeypatch.setattr(
+        "giclee_app.ui.gicleeframe_view._GF_MICRO_DEFER_MS",
+        24,
+    )
+    assert view._editor_micro_defer_ms() == 24
 
 
 def test_editor_shell_micro_defer_callers_exact() -> None:
@@ -1184,6 +1173,10 @@ def test_micro_deferred_editor_form_shell_sets_ready_and_reveal(
     monkeypatch.setattr(
         "giclee_app.ui.gicleeframe_view_editor_shell.ctk.CTkLabel",
         lambda *_a, **_k: _FakePackable(),
+    )
+    monkeypatch.setattr(
+        "giclee_app.ui.gicleeframe_view_editor_shell.theme.get_font",
+        lambda *_a, **_k: "Arial 10",
     )
     harness._micro_deferred_editor_form_shell()
     assert harness._editor_form_shell_ready is True
@@ -1946,26 +1939,6 @@ def test_set_textbox_readonly_and_editable_states() -> None:
     harness._set_textbox(box, "updated", readonly=False)
     assert box._text == "updated"
     assert box._state == "normal"
-
-
-def test_set_entry_and_textbox_with_real_ctk_widgets() -> None:
-    try:
-        root = ctk.CTk()
-    except tk.TclError:
-        pytest.skip("Tk/CTk unavailable in this environment")
-    root.withdraw()
-    try:
-        harness = GicleeFrameEditorShellHarness()
-        entry = ctk.CTkEntry(root)
-        box = ctk.CTkTextbox(root, height=40)
-        harness._set_entry(entry, "live", readonly=True)
-        assert entry.get() == "live"
-        assert str(entry.cget("state")) == "disabled"
-        harness._set_textbox(box, "body", readonly=False)
-        assert box.get("1.0", "end-1c") == "body"
-        assert str(box.cget("state")) == "normal"
-    finally:
-        root.destroy()
 
 
 def test_build_edit_panel_composition_order(

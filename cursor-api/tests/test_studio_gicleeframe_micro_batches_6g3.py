@@ -42,9 +42,10 @@ def test_gicleeframe_section_list_uses_bounded_progressive_batches() -> None:
 
 
 def test_gicleeframe_editor_and_control_are_micro_deferred() -> None:
-    combined = _view_text() + "\n" + _editor_shell_text()
+    host = _view_text()
+    editor = _editor_shell_text()
 
-    assert "studio.gicleeframe.editor.skeleton_ready" in combined
-    assert "studio.gicleeframe.editor.deferred_fields" in combined
-    assert "studio.gicleeframe.control.skeleton_ready" in combined
-    assert "studio.gicleeframe.control.deferred_safety" in combined
+    assert "studio.gicleeframe.editor.skeleton_ready" in editor
+    assert "studio.gicleeframe.editor.deferred_fields" in editor
+    assert "studio.gicleeframe.control.skeleton_ready" in host
+    assert "studio.gicleeframe.control.deferred_safety" in host

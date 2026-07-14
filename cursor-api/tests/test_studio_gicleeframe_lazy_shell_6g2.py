@@ -21,14 +21,15 @@ def _editor_shell_text() -> str:
 
 
 def test_gicleeframe_has_lazy_shell() -> None:
-    combined = _view_text() + "\n" + _editor_shell_text()
+    host = _view_text()
+    editor = _editor_shell_text()
 
-    assert "GICLEE_GF_LAZY_SHELL" in combined
-    assert "studio.gicleeframe.shell.critical_ready" in combined
-    assert "studio.gicleeframe.shell.deferred_editor" in combined
-    assert "studio.gicleeframe.shell.deferred_control" in combined
-    assert "studio.gicleeframe.f1.lazy_collapsed" in combined
-    assert "studio.gicleeframe.f1.build_on_expand" in combined
+    assert "studio.gicleeframe.shell.deferred_editor" in editor
+    assert "GICLEE_GF_LAZY_SHELL" in host
+    assert "studio.gicleeframe.shell.critical_ready" in host
+    assert "studio.gicleeframe.shell.deferred_control" in host
+    assert "studio.gicleeframe.f1.lazy_collapsed" in host
+    assert "studio.gicleeframe.f1.build_on_expand" in host
 
 
 def test_lazy_shell_does_not_auto_defer_f1_build() -> None:

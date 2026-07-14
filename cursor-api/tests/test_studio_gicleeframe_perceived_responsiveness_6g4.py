@@ -66,14 +66,15 @@ def test_gicleeframe_tracks_atomic_reveal_gates() -> None:
 
 
 def test_gicleeframe_defers_heavy_editor_details_to_on_demand() -> None:
-    combined = _view_text() + "\n" + _editor_shell_text()
+    host = _view_text()
+    editor = _editor_shell_text()
 
-    assert "_should_defer_editor_detail_populate" in combined
-    assert "studio.gicleeframe.populate_editor.details_deferred" in combined
-    assert "_apply_heavy_details_on_demand" in combined
-    assert "studio.gicleeframe.details_on_demand.requested" in combined
-    assert "_selection_generation" in combined
-    assert ".stale" in combined
+    assert "studio.gicleeframe.populate_editor.details_deferred" in editor
+    assert "_should_defer_editor_detail_populate" in host
+    assert "_apply_heavy_details_on_demand" in host
+    assert "studio.gicleeframe.details_on_demand.requested" in host
+    assert "_selection_generation" in host
+    assert ".stale" in host
 
 
 def test_gicleeframe_sections_deferred_packs_card_into_skeleton_column() -> None:

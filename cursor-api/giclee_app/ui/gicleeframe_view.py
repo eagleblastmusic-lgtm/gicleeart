@@ -227,9 +227,10 @@ class GicleeFrameView(
     GicleeFrameEditorShellMixin,
     ctk.CTkScrollableFrame,
 ):
+    uses_async_first_paint = True
+
     def _editor_micro_defer_ms(self) -> int:
         return _GF_MICRO_DEFER_MS
-    uses_async_first_paint = True
 
     def _progressive_boot_enabled_for_selection(self) -> bool:
         return _progressive_boot_enabled()
