@@ -91,7 +91,7 @@ def test_rows_prewarm_skips_when_row_shells_already_built(gicleeframe_view) -> N
     def _capture(event: str, **kwargs) -> None:  # type: ignore[no-untyped-def]
         logged.append((event, kwargs))
 
-    with patch("giclee_app.ui.gicleeframe_view.log_event", side_effect=_capture):
+    with patch("giclee_app.ui.gicleeframe_view_editor_shell.log_event", side_effect=_capture):
         with patch.object(view, "_ensure_title_row_built") as title_mock:
             with patch.object(view, "_ensure_notes_row_built") as notes_mock:
                 view._run_editor_rows_prewarm()

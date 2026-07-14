@@ -27,8 +27,14 @@ def _rendering_text() -> str:
     ).read_text(encoding="utf-8")
 
 
+def _editor_shell_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_editor_shell.py"
+    ).read_text(encoding="utf-8")
+
+
 def _combined_text() -> str:
-    return _view_text() + "\n" + _section_list_shell_text() + "\n" + _rendering_text()
+    return _view_text() + "\n" + _section_list_shell_text() + "\n" + _rendering_text() + "\n" + _editor_shell_text()
 
 
 def _constant_int(text: str, name: str) -> int:
@@ -60,14 +66,15 @@ def test_gicleeframe_tracks_atomic_reveal_gates() -> None:
 
 
 def test_gicleeframe_defers_heavy_editor_details_to_on_demand() -> None:
-    text = _view_text()
+    host = _view_text()
+    editor = _editor_shell_text()
 
-    assert "_should_defer_editor_detail_populate" in text
-    assert "studio.gicleeframe.populate_editor.details_deferred" in text
-    assert "_apply_heavy_details_on_demand" in text
-    assert "studio.gicleeframe.details_on_demand.requested" in text
-    assert "_selection_generation" in text
-    assert ".stale" in text
+    assert "studio.gicleeframe.populate_editor.details_deferred" in editor
+    assert "_should_defer_editor_detail_populate" in host
+    assert "_apply_heavy_details_on_demand" in host
+    assert "studio.gicleeframe.details_on_demand.requested" in host
+    assert "_selection_generation" in host
+    assert ".stale" in host
 
 
 def test_gicleeframe_sections_deferred_packs_card_into_skeleton_column() -> None:

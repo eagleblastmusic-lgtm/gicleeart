@@ -15,6 +15,12 @@ def _view_text() -> str:
     )
 
 
+def _editor_shell_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_editor_shell.py"
+    ).read_text(encoding="utf-8")
+
+
 def _section_list_shell_text() -> str:
     return (
         ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_shell.py"
@@ -28,7 +34,15 @@ def _top_bar_text() -> str:
 
 
 def _combined_text() -> str:
-    return _view_text() + "\n" + _section_list_shell_text() + "\n" + _top_bar_text()
+    return (
+        _view_text()
+        + "\n"
+        + _section_list_shell_text()
+        + "\n"
+        + _top_bar_text()
+        + "\n"
+        + _editor_shell_text()
+    )
 
 
 def _constant_int(text: str, name: str) -> int:
@@ -102,10 +116,9 @@ def test_sections_column_early_lane_preserves_section_list_markers() -> None:
 
 def test_sections_column_early_lane_shell_before_extras() -> None:
     text = _view_text()
-
-    start = text.index("def _build_sections_column_deferred")
-    end = text.index("def _build_editor_column_deferred", start)
-    body = text[start:end]
+    body = text.split("def _build_sections_column_deferred", 1)[1].split(
+        "\n    def _build_sections_column_extras_deferred", 1
+    )[0]
 
     assert "_build_sections_column_shell" in body
     assert "_flush_pending_section_list_if_needed()" in body
@@ -122,8 +135,8 @@ def test_sections_column_early_lane_preserves_fast_lane_constants() -> None:
 
 
 def test_sections_column_early_lane_preserves_late_lane_ordering() -> None:
-    text = _view_text()
-    identity_ms = _constant_int(text, "_GF_EDITOR_IDENTITY_LATE_DEFER_MS")
+    editor_text = _editor_shell_text()
+    identity_ms = _constant_int(editor_text, "_GF_EDITOR_IDENTITY_LATE_DEFER_MS")
     top_bar_ms = _constant_int(_top_bar_text(), "_GF_TOP_BAR_ACTIONS_LATE_DEFER_MS")
 
     assert 0 < identity_ms <= top_bar_ms

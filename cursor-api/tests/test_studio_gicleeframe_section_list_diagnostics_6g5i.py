@@ -14,6 +14,12 @@ def _view_text() -> str:
     )
 
 
+def _editor_shell_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_editor_shell.py"
+    ).read_text(encoding="utf-8")
+
+
 def _rendering_text() -> str:
     return (
         ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_rendering.py"
@@ -32,6 +38,8 @@ def _combined_text() -> str:
         + _section_list_shell_text()
         + "\n"
         + _rendering_text()
+        + "\n"
+        + _editor_shell_text()
     )
 
 

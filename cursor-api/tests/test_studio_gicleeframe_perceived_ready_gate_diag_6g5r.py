@@ -47,19 +47,29 @@ def test_visual_gate_ready_events_exist() -> None:
     assert 'f"studio.gicleeframe.visual.gate.{gate}_ready"' in text
 
 
+def _editor_shell_text() -> str:
+    return (ROOT / "giclee_app" / "ui" / "gicleeframe_view_editor_shell.py").read_text(
+        encoding="utf-8"
+    )
+
+
 def test_editor_control_deferred_diagnostic_events_exist() -> None:
-    text = _view_text()
+    host = _view_text()
+    editor = _editor_shell_text()
     for event in (
-        "studio.gicleeframe.editor.deferred_scheduled",
         "studio.gicleeframe.editor.skeleton_enter",
         "studio.gicleeframe.editor.skeleton_done",
+    ):
+        assert event in editor
+    for event in (
+        "studio.gicleeframe.editor.deferred_scheduled",
         "studio.gicleeframe.control.deferred_scheduled",
         "studio.gicleeframe.control.skeleton_enter",
         "studio.gicleeframe.control.skeleton_done",
         "studio.gicleeframe.control.structure_enter",
         "studio.gicleeframe.control.structure_done",
     ):
-        assert event in text
+        assert event in host
 
 
 def test_try_mark_perceived_ready_logs_missing_gates_before_final_ready() -> None:
@@ -136,14 +146,17 @@ def test_perceived_ready_logs_only_once() -> None:
 
 
 def test_perceived_gate_diag_preserves_prior_6g5_markers() -> None:
-    text = _view_text() + "\n" + (
+    host = _view_text()
+    editor = _editor_shell_text()
+    shell = (
         ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_shell.py"
     ).read_text(encoding="utf-8")
     for marker in (
         "studio.gicleeframe.section_list.static_lane_ready",
         "studio.gicleeframe.section_list.first_visible_ready",
-        "studio.gicleeframe.visual.perceived_ready",
         "studio.gicleeframe.section_list.scroll_upgrade_scheduled",
         "studio.gicleeframe.sections_column.early_lane_scheduled",
     ):
-        assert marker in text
+        assert marker in shell
+    assert "studio.gicleeframe.visual.perceived_ready" in host
+    assert "studio.gicleeframe.editor.skeleton_done" in editor

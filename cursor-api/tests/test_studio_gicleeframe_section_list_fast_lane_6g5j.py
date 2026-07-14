@@ -15,6 +15,12 @@ def _view_text() -> str:
     )
 
 
+def _editor_shell_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_editor_shell.py"
+    ).read_text(encoding="utf-8")
+
+
 def _top_bar_text() -> str:
     return (ROOT / "giclee_app" / "ui" / "gicleeframe_view_top_bar.py").read_text(
         encoding="utf-8"
@@ -36,6 +42,8 @@ def _combined_text() -> str:
         + _section_list_shell_text()
         + "\n"
         + _rendering_text()
+        + "\n"
+        + _editor_shell_text()
     )
 
 
@@ -91,8 +99,8 @@ def test_section_list_fast_lane_preserves_prior_6g5_markers() -> None:
 
 
 def test_section_list_fast_lane_preserves_late_lane_ordering() -> None:
-    text = _view_text()
-    identity_ms = _constant_int(text, "_GF_EDITOR_IDENTITY_LATE_DEFER_MS")
+    editor_text = _editor_shell_text()
+    identity_ms = _constant_int(editor_text, "_GF_EDITOR_IDENTITY_LATE_DEFER_MS")
     top_bar_ms = _constant_int(_top_bar_text(), "_GF_TOP_BAR_ACTIONS_LATE_DEFER_MS")
 
     assert 0 < identity_ms <= top_bar_ms

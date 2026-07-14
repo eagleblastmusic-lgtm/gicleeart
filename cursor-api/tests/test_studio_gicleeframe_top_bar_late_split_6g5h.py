@@ -53,6 +53,12 @@ def test_top_bar_late_split_events_exist() -> None:
     assert "studio.gicleeframe.build.command_bar.secondary_actions_late" in text
 
 
+def _editor_shell_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_editor_shell.py"
+    ).read_text(encoding="utf-8")
+
+
 def test_top_bar_late_split_preserves_prior_optimizations() -> None:
     text = _top_bar_text()
     assert "studio.gicleeframe.context_bar.actions_lazy_startup" in text
@@ -68,11 +74,11 @@ def test_top_bar_late_split_preserves_prior_optimizations() -> None:
     shell = (
         ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_shell.py"
     ).read_text(encoding="utf-8")
-    combined = host + "\n" + shell + "\n" + rendering
+    combined = host + "\n" + shell + "\n" + rendering + "\n" + _editor_shell_text()
     assert "studio.gicleeframe.section_list.first_visible_ready" in combined
-    assert "studio.gicleeframe.editor.fields_lazy_startup" in host
-    assert "studio.gicleeframe.editor.identity_card_lazy_startup" in host
-    assert "studio.gicleeframe.populate_editor.preview_deferred_requested" in host
+    assert "studio.gicleeframe.editor.fields_lazy_startup" in combined
+    assert "studio.gicleeframe.editor.identity_card_lazy_startup" in combined
+    assert "studio.gicleeframe.populate_editor.preview_deferred_requested" in combined
 
 
 def test_start_schedules_staggered_late_builds() -> None:

@@ -14,6 +14,12 @@ def _view_text() -> str:
     )
 
 
+def _editor_shell_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_editor_shell.py"
+    ).read_text(encoding="utf-8")
+
+
 def _top_bar_text() -> str:
     return (ROOT / "giclee_app" / "ui" / "gicleeframe_view_top_bar.py").read_text(
         encoding="utf-8"
@@ -38,7 +44,7 @@ def test_startup_hotspot_command_bar_spans_exist() -> None:
 
 
 def test_startup_hotspot_editor_skeleton_spans_exist() -> None:
-    text = _view_text()
+    text = _editor_shell_text()
     assert "studio.gicleeframe.build.editor_column.skeleton.ensure_column" in text
     assert "studio.gicleeframe.build.editor_column.skeleton.identity_card" in text
     assert "studio.gicleeframe.build.editor_column.skeleton.legacy_message" in text
@@ -68,7 +74,7 @@ def test_startup_hotspot_section_list_first_visible_ready_marker() -> None:
 
 
 def test_startup_hotspot_preserves_prior_6g5_optimizations() -> None:
-    text = _view_text()
-    assert "studio.gicleeframe.editor.fields_lazy_startup" in text
-    assert "studio.gicleeframe.control.deferred_readiness_late" in text
-    assert "studio.gicleeframe.populate_editor.preview_deferred_requested" in text
+    combined = _view_text() + "\n" + _editor_shell_text()
+    assert "studio.gicleeframe.editor.fields_lazy_startup" in combined
+    assert "studio.gicleeframe.control.deferred_readiness_late" in combined
+    assert "studio.gicleeframe.populate_editor.preview_deferred_requested" in combined

@@ -51,6 +51,7 @@ Disclaimer F2: **„Zmiany są tylko lokalnym draftem w pamięci — nic nie zap
 | `ui/gicleeframe_view_primitives.py` | **GF-M2** — bezstanowe prymitywy UI i lokalne tokeny wizualne |
 | `ui/gicleeframe_view_section_list_interaction.py` | **GF-M12** — dropdown, highlight, row-click gateway i drag/reorder RAM listy sekcji |
 | `ui/gicleeframe_view_selection_orchestration.py` | **GF-M13** — selection orchestration, priority lane, atomic swap i scheduling populate |
+| `ui/gicleeframe_view_editor_shell.py` | **GF-M14** — editor shell, prewarm lifecycle i minimal population |
 | `launcher_studio.py` | Routing: `gicleeframe` → `GicleeFrameView` |
 
 ---
@@ -570,4 +571,31 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M14+** — osobn
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M14+** — osobne PR-y. **Editor shell/population**, details-on-demand, page-context, preview i layer navigation pozostają host-owned kandydatami GF-M14+.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M15+** — osobne PR-y. Editor shell/population przeniesiono w GF-M14; details-on-demand, page-context engine, preview renderer, layer-navigation renderer i children population pozostają host-owned kandydatami GF-M15+.
+
+---
+
+## 25. GF-M14 — Editor Shell, Prewarm & Minimal Population Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** ekstrakcja spójnej granicy editor shell & minimal population (deferred startup, identity/prewarm lifecycle, form shell, basic field rows, placeholder/refresh/stable-shell state, minimal visual cache, `_populate_editor` lightweight path) bez absorpcji details-on-demand, page-context engine, preview renderer, layer-navigation renderer, children population ani `_save_section_visual_cache`.
+
+### Wynik
+
+- **Editor shell** przeniesiony do `ui/gicleeframe_view_editor_shell.py` jako `GicleeFrameEditorShellMixin`.
+- Przeniesiono dokładnie **58 metod** oraz **10 stałych** granicy.
+- Host zachowuje adapter `_editor_micro_defer_ms()` — delegacja do `_GF_MICRO_DEFER_MS` bez duplikacji globalnej polityki micro-defer.
+- Mixin **nie posiada lifecycle** ani `__init__`, **nie dziedziczy** po widżecie Tk; **używa `after()`** wyłącznie dla przeniesionego editor startup/prewarm lifecycle.
+- Host `GicleeFrameView` dziedziczy **dwanaście mixinów** panelowych/subsystemowych przed `ctk.CTkScrollableFrame` (editor shell po selection orchestration).
+- Host nadal posiada:
+  - `__init__` i inicjalizację pól editor/details/page-context,
+  - `_editor_micro_defer_ms` (adapter),
+  - details-on-demand, page-context engine, preview/layer/children rendering,
+  - `_save_section_visual_cache`,
+  - inventory merge, progressive bootstrap, perceived-ready i atomic-reveal orchestration.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M15+** — osobne PR-y. Details-on-demand, page-context engine, preview renderer, layer-navigation renderer i children population pozostają host-owned kandydatami GF-M15+.

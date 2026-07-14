@@ -7,10 +7,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 ROOT = Path(__file__).resolve().parents[1]
 VIEW_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
+EDITOR_SHELL_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_editor_shell.py"
 
 
 def _view_text() -> str:
     return VIEW_PATH.read_text(encoding="utf-8")
+
+
+def _editor_shell_text() -> str:
+    return EDITOR_SHELL_PATH.read_text(encoding="utf-8")
 
 
 def _method_block(text: str, name: str) -> str:
@@ -30,12 +35,12 @@ def test_divider_is_not_deferred_only_for_page_settings() -> None:
 
 
 def test_media_section_preview_is_deferred() -> None:
-    text = _view_text()
+    combined = _view_text() + "\n" + _editor_shell_text()
 
-    assert "_GF_PREVIEW_DEFER_FOR_HEAVY_TYPES_MS" in text
-    assert "_populate_editor_preview_deferred" in text
-    assert "studio.gicleeframe.populate_editor.preview_deferred" in text
-    assert "studio.gicleeframe.populate_editor.preview_deferred_requested" in text
+    assert "_GF_PREVIEW_DEFER_FOR_HEAVY_TYPES_MS" in combined
+    assert "_populate_editor_preview_deferred" in combined
+    assert "studio.gicleeframe.populate_editor.preview_deferred" in combined
+    assert "studio.gicleeframe.populate_editor.preview_deferred_requested" in combined
 
 
 def test_media_section_children_can_be_delayed_later_than_default() -> None:
@@ -48,8 +53,8 @@ def test_media_section_children_can_be_delayed_later_than_default() -> None:
 
 
 def test_selection_polish_preserves_lazy_startup_and_late_control() -> None:
-    text = _view_text()
+    combined = _view_text() + "\n" + _editor_shell_text()
 
-    assert "studio.gicleeframe.editor.fields_lazy_startup" in text
-    assert "studio.gicleeframe.control.deferred_readiness_late" in text
-    assert "studio.gicleeframe.control.deferred_safety_late" in text
+    assert "studio.gicleeframe.editor.fields_lazy_startup" in combined
+    assert "studio.gicleeframe.control.deferred_readiness_late" in combined
+    assert "studio.gicleeframe.control.deferred_safety_late" in combined

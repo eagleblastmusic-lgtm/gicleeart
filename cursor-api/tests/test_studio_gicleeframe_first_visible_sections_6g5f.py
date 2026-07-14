@@ -15,6 +15,12 @@ def _view_text() -> str:
     )
 
 
+def _editor_shell_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_editor_shell.py"
+    ).read_text(encoding="utf-8")
+
+
 def _top_bar_text() -> str:
     return (ROOT / "giclee_app" / "ui" / "gicleeframe_view_top_bar.py").read_text(
         encoding="utf-8"
@@ -84,22 +90,22 @@ def test_empty_section_list_marks_first_visible_built() -> None:
 
 
 def test_identity_card_late_defer_follows_prewarm_lane() -> None:
-    text = _view_text()
-    prewarm_ms = _constant_int(text, "_GF_EDITOR_IDENTITY_PREWARM_AFTER_PERCEIVED_MS")
-    identity_ms = _constant_int(text, "_GF_EDITOR_IDENTITY_LATE_DEFER_MS")
+    editor_text = _editor_shell_text()
+    prewarm_ms = _constant_int(editor_text, "_GF_EDITOR_IDENTITY_PREWARM_AFTER_PERCEIVED_MS")
+    identity_ms = _constant_int(editor_text, "_GF_EDITOR_IDENTITY_LATE_DEFER_MS")
     top_bar_ms = _constant_int(_top_bar_text(), "_GF_TOP_BAR_ACTIONS_LATE_DEFER_MS")
 
     assert 0 < prewarm_ms < identity_ms <= top_bar_ms
 
 
 def test_identity_card_late_scheduled_event_exists() -> None:
-    text = _view_text()
+    text = _editor_shell_text()
     assert "studio.gicleeframe.editor.identity_card_late_scheduled" in text
     assert "delay_ms=_GF_EDITOR_IDENTITY_LATE_DEFER_MS" in text
 
 
 def test_first_visible_sections_preserves_prior_6g5_optimizations() -> None:
-    text = _combined_text()
+    text = _combined_text() + "\n" + _editor_shell_text()
     assert "studio.gicleeframe.editor.identity_card_lazy_startup" in text
     assert "studio.gicleeframe.editor.fields_lazy_startup" in text
     assert "studio.gicleeframe.control.deferred_readiness_late" in text

@@ -10,10 +10,15 @@ VIEW_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
 SELECTION_PATH = (
     ROOT / "giclee_app" / "ui" / "gicleeframe_view_selection_orchestration.py"
 )
+EDITOR_SHELL_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_editor_shell.py"
 
 
 def _view_text() -> str:
     return VIEW_PATH.read_text(encoding="utf-8")
+
+
+def _editor_shell_text() -> str:
+    return EDITOR_SHELL_PATH.read_text(encoding="utf-8")
 
 
 def _selection_text() -> str:
@@ -21,7 +26,7 @@ def _selection_text() -> str:
 
 
 def _selection_source_text() -> str:
-    return _view_text() + "\n" + _selection_text()
+    return _view_text() + "\n" + _selection_text() + "\n" + _editor_shell_text()
 
 
 def _method_block(text: str, name: str) -> str:
@@ -40,8 +45,7 @@ def test_gicleeframe_has_visual_state_fields() -> None:
 
 
 def test_gicleeframe_logs_all_visual_events() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    combined = _view_text() + "\n" + _editor_shell_text()
 
     for event in (
         "studio.gicleeframe.visual.enter",
@@ -57,7 +61,7 @@ def test_gicleeframe_logs_all_visual_events() -> None:
         "studio.gicleeframe.atomic_reveal.revealed",
         "studio.gicleeframe.atomic_reveal.waiting_for",
     ):
-        assert event in text
+        assert event in combined
 
 
 def test_on_show_schedules_atomic_reveal_when_not_complete() -> None:
@@ -119,6 +123,7 @@ def test_launcher_gicleeframe_open_passes_cache_hit_without_update_idletasks() -
 def test_gicleeframe_has_section_visual_cache() -> None:
     view_text = _view_text()
     selection_text = _selection_text()
+    editor_text = _editor_shell_text()
 
     assert "_section_visual_cache" in view_text
     assert "SectionVisualCacheEntry" in view_text
@@ -140,14 +145,15 @@ def test_gicleeframe_has_section_visual_cache() -> None:
         "studio.gicleeframe.editor.layout_shift_guard",
         "studio.gicleeframe.details_on_demand.available",
     ):
-        assert event in view_text or event in selection_text
+        assert event in view_text or event in selection_text or event in editor_text
 
 
 def test_gicleeframe_has_minimal_and_details_cache_events() -> None:
     view_text = _view_text()
     selection_text = _selection_text()
+    editor_text = _editor_shell_text()
 
-    assert "_minimal_cache_entry" in view_text
+    assert "_minimal_cache_entry" in editor_text
     assert "_details_cache_entry" in view_text
     assert "details_cache_preview" in view_text
     for event in (
@@ -169,7 +175,7 @@ def test_gicleeframe_has_minimal_and_details_cache_events() -> None:
         "studio.gicleeframe.details_on_demand.applied",
         "studio.gicleeframe.visible_prewarm.suppressed",
     ):
-        assert event in view_text or event in selection_text
+        assert event in view_text or event in selection_text or event in editor_text
 
 
 def test_gicleeframe_section_reentry_uses_minimal_cache() -> None:
@@ -236,36 +242,40 @@ def test_gicleeframe_section_reentry_uses_minimal_cache() -> None:
             side_effect=_capture,
         ):
             with patch("giclee_app.ui.gicleeframe_view.log_event", side_effect=_capture):
-                with patch.object(view, "after_idle", side_effect=lambda cb: cb()):
-                    with patch.object(view, "_populate_editor", side_effect=_populate_with_flag):
-                        view._select_element("elem-a")
-                        view._section_visual_cache["elem-a"] = SectionVisualCacheEntry(
-                            element_type="divider",
-                            status="ok",
-                            has_draft_patch=False,
-                            title="Tytuł A",
-                            text="",
-                            alt="",
-                            image_ref="",
-                            notes="",
-                            visible=True,
-                            subtitle_text="Sekcja A",
-                            page_context_summary=(("Typ sekcji", "divider"),),
-                            fields_title=False,
-                            fields_text=False,
-                            fields_alt=False,
-                            fields_image_ref=False,
-                            fields_notes=True,
-                            fields_visible=True,
-                            fields_children=False,
-                            fields_page_context=True,
-                            media_details_built=False,
-                            preview_key="",
-                            layer_nav_visible=False,
-                            layer_nav_titles=(),
-                        )
-                        view._select_element("elem-b")
-                        view._select_element("elem-a")
+                with patch(
+                    "giclee_app.ui.gicleeframe_view_editor_shell.log_event",
+                    side_effect=_capture,
+                ):
+                    with patch.object(view, "after_idle", side_effect=lambda cb: cb()):
+                        with patch.object(view, "_populate_editor", side_effect=_populate_with_flag):
+                            view._select_element("elem-a")
+                            view._section_visual_cache["elem-a"] = SectionVisualCacheEntry(
+                                element_type="divider",
+                                status="ok",
+                                has_draft_patch=False,
+                                title="Tytuł A",
+                                text="",
+                                alt="",
+                                image_ref="",
+                                notes="",
+                                visible=True,
+                                subtitle_text="Sekcja A",
+                                page_context_summary=(("Typ sekcji", "divider"),),
+                                fields_title=False,
+                                fields_text=False,
+                                fields_alt=False,
+                                fields_image_ref=False,
+                                fields_notes=True,
+                                fields_visible=True,
+                                fields_children=False,
+                                fields_page_context=True,
+                                media_details_built=False,
+                                preview_key="",
+                                layer_nav_visible=False,
+                                layer_nav_titles=(),
+                            )
+                            view._select_element("elem-b")
+                            view._select_element("elem-a")
 
         minimal_hits = [
             item

@@ -81,6 +81,12 @@ _SECTION_LIST_RENDERING_VIEW_PATH = (
     / "ui"
     / "gicleeframe_view_section_list_rendering.py"
 )
+_EDITOR_SHELL_VIEW_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "giclee_app"
+    / "ui"
+    / "gicleeframe_view_editor_shell.py"
+)
 _NEW_PLANNING_MODULES = (
     "gicleeframe_brief.py",
     "gicleeframe_draft_state.py",
@@ -143,9 +149,10 @@ def test_view_source_no_forbidden_action_buttons() -> None:
 
 def test_view_source_f21_editor_labels() -> None:
     text = _VIEW_PATH.read_text(encoding="utf-8")
+    editor_text = _EDITOR_SHELL_VIEW_PATH.read_text(encoding="utf-8")
     shell_text = _SECTION_LIST_SHELL_VIEW_PATH.read_text(encoding="utf-8")
     interaction_text = _SECTION_LIST_INTERACTION_VIEW_PATH.read_text(encoding="utf-8")
-    combined = text + "\n" + shell_text + "\n" + interaction_text
+    combined = text + "\n" + shell_text + "\n" + interaction_text + "\n" + editor_text
     assert "PAGE_EDITOR_TITLE" in text
     assert "SECTION_EDITOR_TITLE" in text
     assert "_section_list_trigger" in text
@@ -167,14 +174,14 @@ def test_view_source_f21_editor_labels() -> None:
     assert "_CONTROL_COL_MINSIZE" in text
     assert "SECTION_LIST_TITLE" in combined
     assert "APPLY_RAM_MICROCOPY" in text
-    assert "_make_primary_button" in text
-    assert "_build_setting_group_card" in text
+    assert "_make_primary_button" in combined
+    assert "_build_setting_group_card" in combined
     assert "divider_setting_groups" in text
     assert "_make_empty_state" in text
     assert "_build_command_bar" in text
-    assert "_build_section_identity_card" in text
-    assert "_build_action_dock" in text
-    assert "_PREVIEW_SETTINGS_CAPTION" in text
+    assert "_build_section_identity_card" in combined
+    assert "_build_action_dock" in combined
+    assert "_PREVIEW_SETTINGS_CAPTION" in combined
     assert "_pack_field_vertical" in text
     assert "_update_section_preview" in text
 
@@ -186,32 +193,35 @@ def test_view_source_f222_premium_copy() -> None:
     )
 
     text = _VIEW_PATH.read_text(encoding="utf-8")
+    editor_text = _EDITOR_SHELL_VIEW_PATH.read_text(encoding="utf-8")
+    combined = text + "\n" + editor_text
     assert "APPLY_RAM_DRAFT_LABEL" in text
     assert APPLY_RAM_DRAFT_LABEL == "Uaktualnij wariant RAM"
     assert "APPLY_RAM_MICROCOPY" in text
     assert "Tylko pamięć" in APPLY_RAM_MICROCOPY
-    assert "_PREVIEW_SETTINGS_CAPTION" in text
-    assert "Podgląd ustawień" in text
-    assert "RAM-only" in text
-    assert "Widoczna" in text
+    assert "_PREVIEW_SETTINGS_CAPTION" in combined
+    assert "Podgląd ustawień" in combined
+    assert "RAM-only" in combined
+    assert "Widoczna" in combined
     for pattern in _FORBIDDEN_BUTTON_PATTERNS:
         assert not re.search(pattern, text), f"Forbidden button pattern found: {pattern}"
 
 
 def test_view_source_f223_first_screen_composition() -> None:
     text = _VIEW_PATH.read_text(encoding="utf-8")
+    editor_text = _EDITOR_SHELL_VIEW_PATH.read_text(encoding="utf-8")
     shell_text = _SECTION_LIST_SHELL_VIEW_PATH.read_text(encoding="utf-8")
     rendering_text = _SECTION_LIST_RENDERING_VIEW_PATH.read_text(encoding="utf-8")
-    combined = text + "\n" + shell_text + "\n" + rendering_text
+    combined = text + "\n" + shell_text + "\n" + rendering_text + "\n" + editor_text
     assert "_ellipsize" in text
     assert "_SECTION_LIST_WIDTH = 320" in combined
-    assert "_EDITOR_HERO_PREVIEW_HEIGHT" in text
+    assert "_EDITOR_HERO_PREVIEW_HEIGHT" in combined
     assert "_SECTION_ROW_HEIGHT" in combined
-    assert "RAM preview" in text
+    assert "RAM preview" in combined
     assert "APPLY_RAM_DRAFT_LABEL" in text
-    assert "_build_section_identity_card" in text
-    assert "_build_action_dock" in text
-    assert "F2.2.3" in text
+    assert "_build_section_identity_card" in combined
+    assert "_build_action_dock" in combined
+    assert "F2.2.3" in combined
     assert _self_method_calls(text, "_build_action_dock") == []
 
 
@@ -234,6 +244,8 @@ def test_view_source_f225_section_workbench() -> None:
     from giclee_app.studio.gicleeframe_page_draft import APPLY_RAM_DRAFT_LABEL
 
     text = _VIEW_PATH.read_text(encoding="utf-8")
+    editor_text = _EDITOR_SHELL_VIEW_PATH.read_text(encoding="utf-8")
+    combined = text + "\n" + editor_text
     assert "F2.2.5" in text
     assert "_section_preview_canvas" in text
     assert "_section_preview_badge" in text
@@ -241,9 +253,9 @@ def test_view_source_f225_section_workbench() -> None:
     assert "_build_divider_preview_structure" in text
     assert "_build_legacy_preview_structure" in text
     assert "_build_text_preview_structure" in text
-    assert "Warstwy sekcji" in text
+    assert "Warstwy sekcji" in combined
     assert "Kliknij, aby edytować" in text
-    assert "Workbench sekcji" in text
+    assert "Workbench sekcji" in combined
     assert "APPLY_RAM_DRAFT_LABEL" in text
     assert APPLY_RAM_DRAFT_LABEL == "Uaktualnij wariant RAM"
     assert '"Komponenty"' not in text
@@ -256,10 +268,12 @@ def test_view_source_f226_child_layer_and_color() -> None:
     from giclee_app.studio.gicleeframe_page_draft import APPLY_RAM_DRAFT_LABEL
 
     text = _VIEW_PATH.read_text(encoding="utf-8")
+    editor_text = _EDITOR_SHELL_VIEW_PATH.read_text(encoding="utf-8")
+    combined = text + "\n" + editor_text
     primitives_text = _PRIMITIVES_PATH.read_text(encoding="utf-8")
     assert "F2.2.6" in text
-    assert "_LAYER_NAV_TITLE" in text
-    assert "_IMAGE_SOURCE_TITLE" in text
+    assert "_LAYER_NAV_TITLE" in combined
+    assert "_IMAGE_SOURCE_TITLE" in combined
     assert "_layer_nav_frame" in text
     assert "_update_layer_nav" in text
     assert "_parent_row_for_element" in text
@@ -271,9 +285,9 @@ def test_view_source_f226_child_layer_and_color() -> None:
     assert '_GF_PANEL = "#1e1e21"' not in text
     assert "panel_deep" in text
     assert "Grafika sekcji" in text
-    assert "Źródło grafiki" in text
-    assert "Warstwy sekcji" in text
-    assert "Workbench sekcji" in text
+    assert "Źródło grafiki" in combined
+    assert "Warstwy sekcji" in combined
+    assert "Workbench sekcji" in combined
     assert "APPLY_RAM_DRAFT_LABEL" in text
     assert APPLY_RAM_DRAFT_LABEL == "Uaktualnij wariant RAM"
     assert "write_text" not in text
