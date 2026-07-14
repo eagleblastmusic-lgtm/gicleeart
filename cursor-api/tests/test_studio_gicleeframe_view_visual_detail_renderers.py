@@ -19,7 +19,9 @@ from giclee_app.studio.gicleeframe_page_draft import (
     MergedPageElement,
     SectionTreeChild,
     SectionTreeRow,
+    editor_title_for_element,
 )
+from giclee_app.studio.gicleeframe_page_settings import PageSettingField
 from giclee_app.ui import gicleeframe_view_visual_detail_renderers as visual_module
 from giclee_app.ui.gicleeframe_view import GicleeFrameView
 from giclee_app.ui.gicleeframe_view_brand import GicleeFrameBrandPanelMixin
@@ -143,6 +145,21 @@ def _sample_merged(
     return MergedPageElement(**base)
 
 
+def _divider_merged(**settings: str) -> MergedPageElement:
+    fields = tuple(
+        PageSettingField(label=key, key=key, value=value, control="select")
+        for key, value in settings.items()
+    )
+    return _sample_merged("d1", element_type="divider", page_settings=fields)
+
+
+def _event_payloads(
+    events: list[tuple[str, dict[str, Any]]],
+    name: str,
+) -> list[dict[str, Any]]:
+    return [payload for event, payload in events if event == name]
+
+
 def _sample_tree_row(element_id: str, *, children: tuple[str, ...] = ()) -> SectionTreeRow:
     merged = _sample_merged(element_id)
     child_rows = tuple(
@@ -163,6 +180,36 @@ def _sample_tree_row(element_id: str, *, children: tuple[str, ...] = ()) -> Sect
         merged=merged,
         children=child_rows,
     )
+
+
+def _track_method(harness: Any, name: str, order: list[str]) -> None:
+    original = getattr(harness, name)
+
+    def tracked(*args: Any, **kwargs: Any) -> Any:
+        order.append(name)
+        return original(*args, **kwargs)
+
+    setattr(harness, name, tracked)
+
+
+def _invoke_button1(widget: _FakePackable) -> None:
+    for sequence, handler in widget.bind_calls:
+        if sequence == "<Button-1>":
+            handler(None)
+            return
+    raise AssertionError("expected <Button-1> bind callback")
+
+
+def _find_children_tile(harness: GicleeFrameVisualDetailRenderersHarness) -> _FakeFrame:
+    grid = None
+    for child in harness._children_overview_buttons.winfo_children():
+        if isinstance(child, _FakeFrame):
+            grid = child
+            break
+    assert grid is not None
+    tiles = [child for child in grid.winfo_children() if isinstance(child, _FakeFrame)]
+    assert len(tiles) == 1
+    return tiles[0]
 
 
 class _FakePackable:
@@ -243,6 +290,8 @@ class _FakeFrame(_FakePackable):
 class _FakeLabel(_FakePackable):
     def __init__(self, master: Any | None = None, *, text: str = "", **kwargs: Any) -> None:
         super().__init__(master=master, text=text, **kwargs)
+        if isinstance(master, _FakePackable):
+            master._children.append(self)
 
 
 class _FakeCanvas(_FakePackable):
@@ -300,13 +349,19 @@ class GicleeFrameVisualDetailRenderersHarness(GicleeFrameVisualDetailRenderersMi
         self._selected_id: str | None = None
         self._merged: list[MergedPageElement] = []
         self._select_element_calls: list[str] = []
-        self._content_swapped: list[tuple[MergedPageElement, str]] = []
+        self._content_swapped: list[tuple[MergedPageElement, str, dict[str, Any]]] = []
 
     def _select_element(self, element_id: str) -> None:
         self._select_element_calls.append(element_id)
 
-    def _log_editor_content_swapped(self, m: MergedPageElement, *, region: str, **kwargs: Any) -> None:
-        self._content_swapped.append((m, region))
+    def _log_editor_content_swapped(
+        self,
+        m: MergedPageElement,
+        *,
+        region: str,
+        **kwargs: Any,
+    ) -> None:
+        self._content_swapped.append((m, region, dict(kwargs)))
 
     def _since_selection_click_ms(self) -> float | None:
         return 5.0
@@ -475,13 +530,56 @@ def test_sync_layer_nav_visibility_and_hide_show_tcl() -> None:
     harness._layer_nav_tile_cache["slot:0"] = tile
     harness._layer_nav_visible_keys = {"slot:0"}
     harness._layer_nav_visible_order = ("slot:0",)
+
+    def _raise_tcl(*_a: Any, **_k: Any) -> None:
+        raise tk.TclError("gone")
+
+    tile.pack_forget = _raise_tcl  # type: ignore[method-assign]
+    harness._sync_layer_nav_visibility([])
+    assert "slot:0" in harness._layer_nav_visible_keys
+
+    tile.pack_forget = _FakePackable.pack_forget.__get__(tile, _FakePackable)  # type: ignore[method-assign]
+    harness._layer_nav_visible_keys = {"slot:0"}
+    harness._layer_nav_visible_order = ("slot:0",)
     harness._sync_layer_nav_visibility([])
     assert "slot:0" not in harness._layer_nav_visible_keys
+
+    tile.pack = _raise_tcl  # type: ignore[method-assign]
+    harness._show_layer_nav_tile("slot:0")
+    assert "slot:0" not in harness._layer_nav_visible_keys
+
+    tile.pack = _FakePackable.pack.__get__(tile, _FakePackable)  # type: ignore[method-assign]
     harness._show_layer_nav_tile("slot:0")
     assert "slot:0" in harness._layer_nav_visible_keys
-    tile.pack_forget_calls = 0
+
+    tile.pack_forget = _raise_tcl  # type: ignore[method-assign]
     harness._hide_layer_nav_tiles()
-    assert tile.pack_forget_calls >= 1
+    assert "slot:0" not in harness._layer_nav_visible_keys
+
+
+def test_preview_hide_show_tcl_errors() -> None:
+    harness = GicleeFrameVisualDetailRenderersHarness()
+    frame = _FakePackable()
+    harness._preview_frame_cache["preview:text"] = frame
+    harness._preview_active_key = "preview:text"
+
+    def _raise_tcl(*_a: Any, **_k: Any) -> None:
+        raise tk.TclError("gone")
+
+    frame.pack_forget = _raise_tcl  # type: ignore[method-assign]
+    harness._hide_preview_frames()
+    assert harness._preview_active_key is None
+
+    frame.pack_forget = _FakePackable.pack_forget.__get__(frame, _FakePackable)  # type: ignore[method-assign]
+    harness._preview_active_key = None
+
+    frame.pack = _raise_tcl  # type: ignore[method-assign]
+    harness._show_preview_frame("preview:text")
+    assert harness._preview_active_key is None
+
+    frame.pack = _FakePackable.pack.__get__(frame, _FakePackable)  # type: ignore[method-assign]
+    harness._show_preview_frame("preview:text")
+    assert harness._preview_active_key == "preview:text"
 
 
 def test_layer_nav_header_row_tile_idempotent_creation(
@@ -505,20 +603,48 @@ def test_update_layer_nav_tile_skip_and_update(
 ) -> None:
     _patch_fake_ctk(monkeypatch)
     harness = GicleeFrameVisualDetailRenderersHarness()
-    events: list[str] = []
+    tile_events: list[str] = []
     monkeypatch.setattr(
         visual_module,
         "log_event",
-        lambda event, **kwargs: events.append(event),
+        lambda event, **kwargs: tile_events.append(event)
+        if event
+        in {
+            "studio.gicleeframe.layer_nav.tile_updated",
+            "studio.gicleeframe.layer_nav.tile_skipped",
+        }
+        else None,
+    )
+    signature = harness._layer_nav_tile_signature(
+        kind="K",
+        title="Title",
+        meta="",
+        element_id="e1",
+        active=False,
     )
     harness._update_layer_nav_tile(
         "slot:0", kind="K", title="Title", element_id="e1", active=False,
     )
+    tile = harness._layer_nav_tile_cache["slot:0"]
+    first_bind_count = len(tile.bind_calls)
+    first_kind_configure = len(harness._layer_nav_meta_widgets["slot:0"].configure_calls)
+    first_title_configure = len(harness._layer_nav_title_widgets["slot:0"].configure_calls)
+
+    assert tile_events == ["studio.gicleeframe.layer_nav.tile_updated"]
+    assert harness._layer_nav_rendered_signatures["slot:0"] == signature
+    assert harness._layer_nav_bound_targets["slot:0"] == "e1"
+    assert first_bind_count >= 1
+
     harness._update_layer_nav_tile(
         "slot:0", kind="K", title="Title", element_id="e1", active=False,
     )
-    assert "studio.gicleeframe.layer_nav.tile_skipped" in events
-    assert "studio.gicleeframe.layer_nav.tile_updated" in events or True
+    assert tile_events == [
+        "studio.gicleeframe.layer_nav.tile_updated",
+        "studio.gicleeframe.layer_nav.tile_skipped",
+    ]
+    assert len(tile.bind_calls) == first_bind_count
+    assert len(harness._layer_nav_meta_widgets["slot:0"].configure_calls) == first_kind_configure
+    assert len(harness._layer_nav_title_widgets["slot:0"].configure_calls) == first_title_configure
 
 
 def test_update_layer_nav_empty_and_populated(
@@ -538,7 +664,7 @@ def test_preview_key_is_type_based() -> None:
     harness = GicleeFrameVisualDetailRenderersHarness()
     m = _sample_merged("id-1", element_type="media_section")
     key = harness._preview_key_for_element(m)
-    assert "media_section" in key
+    assert key == "preview:media_section"
     assert "id-1" not in key
 
 
@@ -571,26 +697,55 @@ def test_clear_preview_shell_bootstrap_preserves_cached_frames(
 ) -> None:
     _patch_fake_ctk(monkeypatch)
     harness = GicleeFrameVisualDetailRenderersHarness()
-    harness._preview_bootstrap_panel = _FakePackable()
-    harness._preview_frame_cache["text"] = _FakePackable()
-    events: list[str] = []
+    canvas = harness._section_preview_canvas
+    assert canvas is not None
+
+    cached = _FakeFrame(canvas)
+    stale = _FakeFrame(canvas)
+    bootstrap_panel = _FakePackable()
+    bootstrap_status = _FakePackable()
+
+    harness._preview_frame_cache["preview:text"] = cached
+    canvas._children = [cached, stale]
+    harness._preview_bootstrap_panel = bootstrap_panel
+    harness._preview_bootstrap_status_label = bootstrap_status
+
+    events: list[tuple[str, dict[str, Any]]] = []
     monkeypatch.setattr(
         visual_module,
         "log_event",
-        lambda event, **kwargs: events.append(event),
+        lambda event, **kwargs: events.append((event, kwargs)),
     )
+
     harness._clear_preview_shell_bootstrap_once()
+
+    assert bootstrap_panel.destroy_calls == 1
+    assert stale.destroy_calls == 1
+    assert cached.destroy_calls == 0
     assert harness._preview_shell_bootstrapped is True
-    assert "preview.bootstrap_cleared" in " ".join(events) or True
+    assert harness._preview_bootstrap_panel is None
+    assert harness._preview_bootstrap_status_label is None
+    assert events == [
+        ("studio.gicleeframe.preview.destroy_fallback", {"reason": "shell_bootstrap"}),
+    ]
 
 
 def test_divider_preview_dimensions_bounds() -> None:
     harness = GicleeFrameVisualDetailRenderersHarness()
-    thick, width = harness._divider_preview_dimensions(
-        _sample_merged("d1", element_type="divider"),
+    valid = harness._divider_preview_dimensions(
+        _divider_merged(thickness="3", width_percent="50"),
     )
-    assert thick <= 12
-    assert width <= 100
+    assert valid == (6, 97)
+
+    extreme = harness._divider_preview_dimensions(
+        _divider_merged(thickness="0.5", width_percent="100"),
+    )
+    assert extreme == (1, 52)
+
+    invalid = harness._divider_preview_dimensions(
+        _divider_merged(thickness="bad", width_percent="nope"),
+    )
+    assert invalid == (2, 52)
 
 
 def test_divider_preview_structure_and_content(
@@ -598,83 +753,182 @@ def test_divider_preview_structure_and_content(
 ) -> None:
     _patch_fake_ctk(monkeypatch)
     harness = GicleeFrameVisualDetailRenderersHarness()
-    frame = _FakePackable()
-    harness._build_divider_preview_structure(frame, "divider")
-    harness._update_divider_preview_content("divider", _sample_merged("d1", element_type="divider"))
+    frame = _FakeFrame()
+    preview_key = "preview:divider"
+    harness._build_divider_preview_structure(frame, preview_key)
+    assert set(harness._preview_value_widgets[preview_key]) == {
+        "ghost_top",
+        "line",
+        "ghost_bottom",
+    }
+    harness._update_divider_preview_content(
+        preview_key,
+        _divider_merged(thickness="4", width_percent="20"),
+    )
+    line = harness._preview_value_widgets[preview_key]["line"]
+    assert line.configure_calls[-1]["height"] == 8
+    assert line.pack_calls[-1]["padx"] == 124
 
 
 def test_media_section_preview_renderer(monkeypatch: pytest.MonkeyPatch) -> None:
     _patch_fake_ctk(monkeypatch)
     harness = GicleeFrameVisualDetailRenderersHarness()
-    frame = _FakePackable()
-    harness._build_media_section_preview_structure(frame, "media_section")
-    harness._update_media_section_preview_content(
-        "media_section", _sample_merged("m1", element_type="media_section"),
-    )
+    preview_key = "preview:media_section"
+    frame = _FakeFrame()
+    harness._build_media_section_preview_structure(frame, preview_key)
+    widgets = harness._preview_value_widgets[preview_key]
+    assert {"heading_label", "subtitle_label", "meta_label", "hint_label"}.issubset(widgets.keys())
+    m = _sample_merged("m1", element_type="media_section", title="Section title")
+    harness._update_media_section_preview_content(preview_key, m)
+    assert widgets["heading_label"]._text == "Section title"
+    assert widgets["subtitle_label"]._text == "Uproszczony podgląd struktury sekcji"
 
 
 def test_legacy_preview_renderer(monkeypatch: pytest.MonkeyPatch) -> None:
     _patch_fake_ctk(monkeypatch)
     harness = GicleeFrameVisualDetailRenderersHarness()
-    frame = _FakePackable()
-    harness._build_legacy_preview_structure(frame, "section_legacy")
-    harness._update_legacy_preview_content(
-        "section_legacy", _sample_merged("l1", element_type="section_legacy"),
-    )
+    preview_key = "preview:section_legacy"
+    frame = _FakeFrame()
+    harness._build_legacy_preview_structure(frame, preview_key)
+    widgets = harness._preview_value_widgets[preview_key]
+    assert {"heading_label", "subtitle_label", "meta_label", "hint_label"}.issubset(widgets.keys())
+    m = _sample_merged("l1", element_type="section_legacy", label="Legacy label")
+    harness._update_legacy_preview_content(preview_key, m)
+    assert widgets["heading_label"]._text == "Legacy label"
+    assert "legacy" in widgets["subtitle_label"]._text.lower()
 
 
 def test_default_preview_fallback_event(monkeypatch: pytest.MonkeyPatch) -> None:
     _patch_fake_ctk(monkeypatch)
     harness = GicleeFrameVisualDetailRenderersHarness()
-    frame = _FakePackable()
-    harness._build_default_preview_structure(frame, "fallback")
+    preview_key = "preview:default"
+    frame = _FakeFrame()
+    harness._build_default_preview_structure(frame, preview_key)
     events: list[str] = []
     monkeypatch.setattr(
         visual_module,
         "log_event",
         lambda event, **kwargs: events.append(event),
     )
-    harness._update_default_preview_content(
-        "fallback", _sample_merged("u1", element_type="unknown_type"),
-    )
+    m = _sample_merged("u1", element_type="unknown_type", title="Fallback title")
+    harness._update_default_preview_content(preview_key, m)
     assert "studio.gicleeframe.preview.fallback_used" in events
+    assert harness._preview_value_widgets[preview_key]["heading_label"]._text == "Fallback title"
 
 
 def test_image_preview_and_normalized_reference(monkeypatch: pytest.MonkeyPatch) -> None:
     _patch_fake_ctk(monkeypatch)
     harness = GicleeFrameVisualDetailRenderersHarness()
-    frame = _FakePackable()
-    harness._build_image_preview_structure(frame, "image")
-    harness._update_image_preview_content(
-        "image", _sample_merged("i1", element_type="image"),
+    preview_key = "preview:image"
+    frame = _FakeFrame()
+    harness._build_image_preview_structure(frame, preview_key)
+    widgets = harness._preview_value_widgets[preview_key]
+    assert {"heading_label", "ref_label", "footnote_label"}.issubset(widgets.keys())
+    m = _sample_merged(
+        "i1",
+        element_type="image",
+        image_ref="shopify://shop_images/foo/bar.png",
     )
+    harness._update_image_preview_content(preview_key, m)
+    assert widgets["ref_label"]._text == "bar.png"
+    assert harness._image_ref_label(m.image_ref) == "bar.png"
 
 
 def test_text_preview_renderer(monkeypatch: pytest.MonkeyPatch) -> None:
     _patch_fake_ctk(monkeypatch)
     harness = GicleeFrameVisualDetailRenderersHarness()
-    frame = _FakePackable()
-    harness._build_text_preview_structure(frame, "text")
-    harness._update_text_preview_content(
-        "text", _sample_merged("t1", element_type="text"),
-    )
+    preview_key = "preview:text"
+    frame = _FakeFrame()
+    harness._build_text_preview_structure(frame, preview_key)
+    widgets = harness._preview_value_widgets[preview_key]
+    assert {"title_label", "kind_label"}.issubset(widgets.keys())
+    m = _sample_merged("t1", element_type="text", title="Heading copy")
+    harness._update_text_preview_content(preview_key, m)
+    assert widgets["title_label"]._text == "Heading copy"
+    assert widgets["kind_label"]._text == editor_title_for_element(m)
 
 
 def test_preview_structure_and_content_dispatch(monkeypatch: pytest.MonkeyPatch) -> None:
     _patch_fake_ctk(monkeypatch)
     harness = GicleeFrameVisualDetailRenderersHarness()
-    for etype, key in (
-        ("divider", "divider"),
-        ("media_section", "media_section"),
-        ("section_legacy", "section_legacy"),
-        ("text", "text"),
-        ("image", "image"),
-        ("unknown", "default"),
+
+    build_routes = {
+        "_build_divider_preview_structure": "divider",
+        "_build_media_section_preview_structure": "media_section",
+        "_build_legacy_preview_structure": "section_legacy",
+        "_build_image_preview_structure": "image",
+        "_build_text_preview_structure": "text",
+        "_build_default_preview_structure": "default",
+    }
+    update_routes = {
+        "_update_divider_preview_content": "divider",
+        "_update_media_section_preview_content": "media_section",
+        "_update_legacy_preview_content": "section_legacy",
+        "_update_image_preview_content": "image",
+        "_update_text_preview_content": "text",
+        "_update_default_preview_content": "default",
+    }
+
+    for preview_key, element_type, expected in (
+        ("preview:divider", "divider", "divider"),
+        ("preview:media_section", "media_section", "media_section"),
+        ("preview:section_legacy", "section_legacy", "section_legacy"),
+        ("preview:image", "image", "image"),
+        ("preview:text", "text", "text"),
+        ("preview:default", "unknown_type", "default"),
     ):
-        m = _sample_merged(f"x-{etype}", element_type=etype)
-        preview_key = harness._preview_key_for_element(m)
+        build_calls: list[str] = []
+        update_calls: list[str] = []
+        originals_build = {
+            name: getattr(GicleeFrameVisualDetailRenderersMixin, name)
+            for name in build_routes
+        }
+        originals_update = {
+            name: getattr(GicleeFrameVisualDetailRenderersMixin, name)
+            for name in update_routes
+        }
+
+        for name, label in build_routes.items():
+            original = originals_build[name].__get__(harness, GicleeFrameVisualDetailRenderersHarness)
+
+            def build_recorder(frame: Any, key: str, *, _label: str = label, _original=original) -> None:
+                build_calls.append(_label)
+                return _original(frame, key)
+
+            monkeypatch.setattr(harness, name, build_recorder)
+
+        for name, label in update_routes.items():
+            original = originals_update[name].__get__(harness, GicleeFrameVisualDetailRenderersHarness)
+
+            def update_recorder(key: str, m: MergedPageElement, *, _label: str = label, _original=original) -> None:
+                update_calls.append(_label)
+                return _original(key, m)
+
+            monkeypatch.setattr(harness, name, update_recorder)
+
+        m = _sample_merged(f"x-{element_type}", element_type=element_type)
         harness._ensure_preview_structure(preview_key)
         harness._update_preview_content(preview_key, m)
+        assert build_calls == [expected]
+        assert update_calls == [expected]
+
+    build_calls = []
+    update_calls = []
+    monkeypatch.setattr(
+        harness,
+        "_build_default_preview_structure",
+        lambda frame, key: build_calls.append("unknown"),
+    )
+    monkeypatch.setattr(
+        harness,
+        "_update_default_preview_content",
+        lambda key, m: update_calls.append("unknown"),
+    )
+    unknown_key = "preview:weird"
+    harness._ensure_preview_structure(unknown_key)
+    harness._update_preview_content(unknown_key, _sample_merged("weird", element_type="weird"))
+    assert build_calls == ["unknown"]
+    assert update_calls == ["unknown"]
 
 
 def test_update_section_preview_normal_ordering(
@@ -683,25 +937,93 @@ def test_update_section_preview_normal_ordering(
     _patch_fake_ctk(monkeypatch)
     harness = GicleeFrameVisualDetailRenderersHarness()
     m = _sample_merged("m1", element_type="media_section")
-    events: list[str] = []
+    harness._merged = [m]
+    call_order: list[str] = []
+    for method_name in (
+        "_ensure_preview_structure",
+        "_update_preview_content",
+        "_clear_preview_shell_bootstrap_once",
+        "_hide_preview_frames",
+        "_show_preview_frame",
+    ):
+        _track_method(harness, method_name, call_order)
+
+    events: list[tuple[str, dict[str, Any]]] = []
     monkeypatch.setattr(
         visual_module,
         "log_event",
-        lambda event, **kwargs: events.append(event),
+        lambda event, **kwargs: events.append((event, kwargs)),
     )
+
     harness._update_section_preview(m, stale_refresh=False)
-    assert any("preview.reuse" in e or "section_preview" in e for e in events)
+
+    assert call_order == [
+        "_ensure_preview_structure",
+        "_update_preview_content",
+        "_clear_preview_shell_bootstrap_once",
+        "_hide_preview_frames",
+        "_show_preview_frame",
+    ]
+    badge = harness._section_preview_badge
+    assert badge is not None
+    assert badge.configure_calls[-1]["text"] == "sekcja edytorska"
+
+    reuse_payloads = _event_payloads(events, "studio.gicleeframe.preview.reuse")
+    section_payloads = _event_payloads(events, "studio.gicleeframe.section_preview")
+    assert len(reuse_payloads) == 1
+    assert len(section_payloads) == 1
+    assert reuse_payloads[0]["element_type"] == "media_section"
+    assert reuse_payloads[0]["active_key"] == "preview:media_section"
+    assert "before_children" in reuse_payloads[0]
+    assert "after_children" in reuse_payloads[0]
+    assert "cached_frames" in reuse_payloads[0]
+    assert "widget_count" in reuse_payloads[0]
+    assert section_payloads[0]["element_type"] == "media_section"
+    assert "children_before_destroy" in section_payloads[0]
 
 
-def test_update_section_preview_stale_refresh(
+def test_update_section_preview_stale_refresh_same_key(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _patch_fake_ctk(monkeypatch)
     harness = GicleeFrameVisualDetailRenderersHarness()
     m = _sample_merged("m1", element_type="media_section")
-    harness._preview_active_key = "old-key"
+    preview_key = harness._preview_key_for_element(m)
+    harness._preview_active_key = preview_key
+    blocked: list[str] = []
+    harness._clear_preview_shell_bootstrap_once = lambda: blocked.append("clear")  # type: ignore[method-assign]
+    harness._hide_preview_frames = lambda: blocked.append("hide")  # type: ignore[method-assign]
+    harness._show_preview_frame = lambda key: blocked.append(f"show:{key}")  # type: ignore[method-assign]
+
     harness._update_section_preview(m, stale_refresh=True)
-    assert harness._content_swapped or True
+
+    assert blocked == []
+    assert harness._content_swapped == [(m, "preview", {"preview_key": preview_key})]
+
+
+def test_update_section_preview_stale_refresh_changed_key(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_fake_ctk(monkeypatch)
+    harness = GicleeFrameVisualDetailRenderersHarness()
+    m = _sample_merged("m1", element_type="media_section")
+    preview_key = harness._preview_key_for_element(m)
+    harness._preview_active_key = "preview:default"
+    harness._preview_frame_cache[preview_key] = _FakeFrame()
+    show_calls: list[str] = []
+    real_show = harness._show_preview_frame
+
+    def tracked_show(key: str) -> None:
+        show_calls.append(key)
+        real_show(key)
+
+    harness._show_preview_frame = tracked_show  # type: ignore[method-assign]
+
+    harness._update_section_preview(m, stale_refresh=True)
+
+    assert show_calls == [preview_key]
+    assert harness._preview_active_key == preview_key
+    assert harness._content_swapped == [(m, "preview", {"preview_key": preview_key})]
 
 
 def test_section_preview_telemetry_includes_cache_counts(
@@ -709,15 +1031,26 @@ def test_section_preview_telemetry_includes_cache_counts(
 ) -> None:
     _patch_fake_ctk(monkeypatch)
     harness = GicleeFrameVisualDetailRenderersHarness()
-    harness._preview_frame_cache["media_section"] = _FakePackable()
-    payloads: list[dict[str, Any]] = []
+    harness._preview_frame_cache["preview:media_section"] = _FakeFrame()
+    events: list[tuple[str, dict[str, Any]]] = []
     monkeypatch.setattr(
         visual_module,
         "log_event",
-        lambda event, **kwargs: payloads.append(kwargs),
+        lambda event, **kwargs: events.append((event, kwargs)),
     )
     harness._update_section_preview(_sample_merged("m1"), stale_refresh=False)
-    assert payloads
+    reuse_payloads = _event_payloads(events, "studio.gicleeframe.preview.reuse")
+    assert len(reuse_payloads) == 1
+    payload = reuse_payloads[0]
+    for field in (
+        "element_type",
+        "before_children",
+        "after_children",
+        "active_key",
+        "cached_frames",
+        "widget_count",
+    ):
+        assert field in payload
 
 
 def test_children_overview_zero_and_non_media(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -752,13 +1085,18 @@ def test_children_stale_refresh_destroy_handles_tcl(
     _patch_fake_ctk(monkeypatch)
     harness = GicleeFrameVisualDetailRenderersHarness()
     child = _FakePackable()
-    child.destroy = lambda: (_ for _ in ()).throw(tk.TclError("gone"))  # type: ignore[method-assign]
+
+    def _raise_tcl(*_a: Any, **_k: Any) -> None:
+        raise tk.TclError("gone")
+
+    child.destroy = _raise_tcl  # type: ignore[method-assign]
     harness._children_overview_buttons._children = [child]
     row = _sample_tree_row("media-1", children=("c1",))
     harness._section_tree_rows_cache = [row]
     harness._fill_children_overview_buttons_range(
         _sample_merged("media-1"), 0, 1, stale_refresh=True,
     )
+    assert len(harness._children_overview_buttons.winfo_children()) >= 1
 
 
 def test_children_tile_copy_and_selection_binding(
@@ -771,7 +1109,19 @@ def test_children_tile_copy_and_selection_binding(
     harness._fill_children_overview_buttons_range(
         _sample_merged("media-1", element_type="media_section"), 0, 1,
     )
-    assert harness._select_element_calls == []
+    tile = _find_children_tile(harness)
+    labels = [child for child in tile.winfo_children() if isinstance(child, _FakeLabel)]
+    assert len(labels) == 3
+    assert labels[0]._text == "EDYTOR SEKCJI"
+    assert labels[1]._text == "Child c1"
+    assert labels[2]._text == "Kliknij, aby edytować"
+
+    _invoke_button1(tile)
+    assert harness._select_element_calls == ["c1"]
+
+    harness._select_element_calls.clear()
+    _invoke_button1(labels[1])
+    assert harness._select_element_calls == ["c1"]
 
 
 def test_children_completion_logs_and_content_swap(
@@ -789,7 +1139,8 @@ def test_children_completion_logs_and_content_swap(
         lambda event, **kwargs: events.append(event),
     )
     harness._fill_children_overview_buttons_range(m, 0, 2, stale_refresh=True)
-    assert "studio.gicleeframe.children_overview" in events
+    assert events == ["studio.gicleeframe.children_overview"]
+    assert harness._content_swapped == [(m, "children", {})]
 
 
 def test_visual_module_does_not_implement_foreign_engines() -> None:

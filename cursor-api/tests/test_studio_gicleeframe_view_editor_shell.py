@@ -1413,11 +1413,11 @@ def test_apply_section_visual_cache_delegates_to_minimal_cache(
     harness = GicleeFrameEditorShellHarness()
     element = _sample_merged("a")
     calls: list[Any] = []
-    monkeypatch.setattr(
-        harness,
-        "_apply_minimal_cache",
-        lambda m: calls.append(m) or True,
-    )
+    def _record_minimal_cache(m: Any) -> bool:
+        calls.append(m)
+        return True
+
+    monkeypatch.setattr(harness, "_apply_minimal_cache", _record_minimal_cache)
     assert harness._apply_section_visual_cache(element) is True
     assert calls == [element]
 
