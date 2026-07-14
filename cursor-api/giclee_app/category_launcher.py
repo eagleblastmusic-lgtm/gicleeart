@@ -9,6 +9,12 @@ from typing import Any
 
 from . import launcher as _launcher
 from .category_navigation import CategoryViewKind, resolve_category_navigation
+from .category_renderer import (
+    CategoryRendererConfig,
+    render_category_components as render_category_components_view,
+    render_category_index as render_category_index_view,
+    render_empty_state,
+)
 from .component_loader import Component
 
 
@@ -189,138 +195,52 @@ class CategoryGicleeApp(_launcher.GicleeApp):
             list(plan.active_components),
         )
 
-    def _render_empty(self, message: str) -> None:
-        empty = tk.Label(
-            self.tiles_frame,
-            text=message,
-            bg="#f4f4f7",
-            fg="#666",
-            font=("Segoe UI", 10),
-            justify="center",
-            pady=40,
+    def _category_renderer_config(self) -> CategoryRendererConfig:
+        return CategoryRendererConfig(
+            app_title=_launcher.APP_TITLE,
+            version=_launcher.__version__,
+            columns=_launcher._TILES_PER_ROW,
+            tile_pad_x=_launcher._TILE_PAD_X,
+            tile_pad_y=_launcher._TILE_PAD_Y,
         )
-        empty.grid(
-            row=0,
-            column=0,
-            columnspan=_launcher._TILES_PER_ROW,
-            sticky="nsew",
+
+    def _render_empty(self, message: str) -> None:
+        render_empty_state(
+            self.tiles_frame,
+            message,
+            columns=_launcher._TILES_PER_ROW,
         )
 
     def _render_category_index(
         self,
         sections: list[tuple[str, list[Component]]],
     ) -> None:
-        self.root.title(f"{_launcher.APP_TITLE} · v{_launcher.__version__}")
-        self._set_subtitle("Wybierz kategorię")
-        intro = tk.Frame(self.tiles_frame, bg="#f4f4f7")
-        intro.grid(
-            row=0,
-            column=0,
-            columnspan=_launcher._TILES_PER_ROW,
-            sticky="ew",
-            padx=18,
-            pady=(16, 10),
+        render_category_index_view(
+            root=self.root,
+            parent=self.tiles_frame,
+            sections=sections,
+            config=self._category_renderer_config(),
+            set_subtitle=self._set_subtitle,
+            build_category_tile=self._build_category_tile,
         )
-        tk.Label(
-            intro,
-            text="Kategorie",
-            bg="#f4f4f7",
-            fg="#222",
-            font=("Segoe UI", 18, "bold"),
-            anchor="w",
-        ).pack(fill="x")
-        tk.Label(
-            intro,
-            text="Wybierz obszar pracy. Komponenty pojawią się dopiero po otwarciu kategorii.",
-            bg="#f4f4f7",
-            fg="#666",
-            font=("Segoe UI", 10),
-            anchor="w",
-        ).pack(fill="x", pady=(3, 0))
-
-        for index, (title, components) in enumerate(sections):
-            row, column = divmod(index, _launcher._TILES_PER_ROW)
-            tile = self._build_category_tile(
-                self.tiles_frame,
-                title,
-                len(components),
-            )
-            tile.grid(
-                row=row + 1,
-                column=column,
-                padx=_launcher._TILE_PAD_X,
-                pady=_launcher._TILE_PAD_Y,
-                sticky="",
-            )
 
     def _render_category_components(
         self,
         title: str,
         components: list[Component],
     ) -> None:
-        display_title = category_display_title(title)
-        self.root.title(
-            f"{_launcher.APP_TITLE} · {display_title} · v{_launcher.__version__}"
+        render_category_components_view(
+            root=self.root,
+            parent=self.tiles_frame,
+            title=title,
+            components=components,
+            config=self._category_renderer_config(),
+            set_subtitle=self._set_subtitle,
+            show_category_index=self._show_category_index,
+            build_component_tile=self._build_tile,
+            display_title=category_display_title,
+            count_text=category_count_text,
         )
-        self._set_subtitle(f"{display_title} — wybierz komponent")
-
-        nav = tk.Frame(self.tiles_frame, bg="#f4f4f7")
-        nav.grid(
-            row=0,
-            column=0,
-            columnspan=_launcher._TILES_PER_ROW,
-            sticky="ew",
-            padx=12,
-            pady=(12, 12),
-        )
-        nav.columnconfigure(1, weight=1)
-
-        back = tk.Button(
-            nav,
-            text="← Wszystkie kategorie",
-            command=self._show_category_index,
-            bg="#ffffff",
-            fg="#333",
-            activebackground="#eceff4",
-            activeforeground="#111",
-            relief="flat",
-            bd=0,
-            highlightthickness=1,
-            highlightbackground="#d7d9df",
-            padx=12,
-            pady=7,
-            cursor="hand2",
-            font=("Segoe UI", 9, "bold"),
-        )
-        back.grid(row=0, column=0, rowspan=2, sticky="w", padx=(0, 14))
-
-        tk.Label(
-            nav,
-            text=display_title,
-            bg="#f4f4f7",
-            fg="#222",
-            font=("Segoe UI", 18, "bold"),
-            anchor="w",
-        ).grid(row=0, column=1, sticky="ew")
-        tk.Label(
-            nav,
-            text=category_count_text(len(components)),
-            bg="#f4f4f7",
-            fg="#6a6a72",
-            font=("Segoe UI", 10),
-            anchor="w",
-        ).grid(row=1, column=1, sticky="ew", pady=(2, 0))
-
-        for index, comp in enumerate(components):
-            row, column = divmod(index, _launcher._TILES_PER_ROW)
-            tile = self._build_tile(self.tiles_frame, comp)
-            tile.grid(
-                row=row + 1,
-                column=column,
-                padx=_launcher._TILE_PAD_X,
-                pady=_launcher._TILE_PAD_Y,
-                sticky="",
-            )
 
     def _build_category_tile(
         self,

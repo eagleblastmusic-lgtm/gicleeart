@@ -1,6 +1,6 @@
 # ETAP 4B / LC-2B — Callback-driven Category Renderer
 
-**Status:** fresh reconnaissance · contract freeze  
+**Status:** LC-2B implemented
 **Repository:** `eagleblastmusic-lgtm/gicleeart`  
 **Base:** `master` @ `cf90d38dc13ae14807220cd9930ca3522be41c1c`  
 **Data weryfikacji:** 2026-07-15
