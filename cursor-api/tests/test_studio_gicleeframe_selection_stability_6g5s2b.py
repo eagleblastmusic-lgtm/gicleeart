@@ -58,7 +58,10 @@ def test_select_element_opens_selection_priority_window(gicleeframe_view) -> Non
     def _capture(event: str, **kwargs) -> None:  # type: ignore[no-untyped-def]
         logged.append((event, kwargs))
 
-    with patch("giclee_app.ui.gicleeframe_view.log_event", side_effect=_capture):
+    with patch(
+        "giclee_app.ui.gicleeframe_view_selection_orchestration.log_event",
+        side_effect=_capture,
+    ):
         with patch.object(view, "_schedule_selection_populate"):
             with patch.object(view, "_highlight_section_row"):
                 with patch.object(view, "_show_editor_selection_pending_state"):
@@ -126,7 +129,10 @@ def test_background_job_yields_during_active_selection_priority(gicleeframe_view
         deferred.append(f"{delay_ms}")
         return "after-1"
 
-    with patch("giclee_app.ui.gicleeframe_view.log_event", side_effect=_capture):
+    with patch(
+        "giclee_app.ui.gicleeframe_view_selection_orchestration.log_event",
+        side_effect=_capture,
+    ):
         with patch.object(view, "after", side_effect=_fake_after):
             yielded = view._defer_background_for_selection(
                 job="control.late_cards",

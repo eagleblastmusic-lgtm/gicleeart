@@ -39,6 +39,9 @@ from giclee_app.ui.gicleeframe_view_section_list_shell import (
     _SECTION_LIST_WIDTH,
     _SECTION_PLACEHOLDER,
 )
+from giclee_app.ui.gicleeframe_view_selection_orchestration import (
+    GicleeFrameSelectionOrchestrationMixin,
+)
 from giclee_app.ui.gicleeframe_view_structure_dry_run import (
     GicleeFrameStructureDryRunMixin,
 )
@@ -75,7 +78,6 @@ _EXPECTED_METHODS = {
 
 _HOST_OWNERSHIP = {
     "__init__",
-    "_select_element",
     "_set_merged",
     "_populate_editor",
     "_since_visual_enter_ms",
@@ -301,7 +303,7 @@ def test_collapse_section_list_on_click_enabled_semantics(
         assert _collapse_section_list_on_click_enabled() is False
 
 
-def test_gicleeframe_view_has_ten_mixins_before_scrollable_frame() -> None:
+def test_gicleeframe_view_has_eleven_mixins_before_scrollable_frame() -> None:
     mro = GicleeFrameView.__mro__
     for mixin in (
         GicleeFrameBrandPanelMixin,
@@ -314,12 +316,16 @@ def test_gicleeframe_view_has_ten_mixins_before_scrollable_frame() -> None:
         GicleeFrameSectionListShellMixin,
         GicleeFrameSectionListRenderingMixin,
         GicleeFrameSectionListInteractionMixin,
+        GicleeFrameSelectionOrchestrationMixin,
     ):
         assert mixin in mro
     assert mro.index(GicleeFrameSectionListRenderingMixin) < mro.index(
         GicleeFrameSectionListInteractionMixin,
     )
     assert mro.index(GicleeFrameSectionListInteractionMixin) < mro.index(
+        GicleeFrameSelectionOrchestrationMixin,
+    )
+    assert mro.index(GicleeFrameSelectionOrchestrationMixin) < mro.index(
         ctk.CTkScrollableFrame,
     )
 

@@ -6,20 +6,22 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 ROOT = Path(__file__).resolve().parents[1]
+VIEW_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
 
 
 def _view_text() -> str:
-    return (ROOT / "giclee_app" / "ui" / "gicleeframe_view.py").read_text(
-        encoding="utf-8"
-    )
+    return VIEW_PATH.read_text(encoding="utf-8")
+
+
+def _method_block(text: str, name: str) -> str:
+    marker = f"def {name}"
+    assert marker in text
+    return text.split(marker, 1)[1].split("\n    def ", 1)[0]
 
 
 def test_divider_is_not_deferred_only_for_page_settings() -> None:
     text = _view_text()
-
-    start = text.index("def _should_defer_editor_detail_populate")
-    end = text.index("def _merged_for_selection_generation")
-    body = text[start:end]
+    body = _method_block(text, "_should_defer_editor_detail_populate")
 
     assert "return True" in body
     assert "_populate_editor_preview_deferred" in text

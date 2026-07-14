@@ -6,6 +6,22 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 ROOT = Path(__file__).resolve().parents[1]
+VIEW_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
+SELECTION_PATH = (
+    ROOT / "giclee_app" / "ui" / "gicleeframe_view_selection_orchestration.py"
+)
+
+
+def _view_text() -> str:
+    return VIEW_PATH.read_text(encoding="utf-8")
+
+
+def _selection_text() -> str:
+    return SELECTION_PATH.read_text(encoding="utf-8")
+
+
+def _selection_source_text() -> str:
+    return _view_text() + "\n" + _selection_text()
 
 
 def _method_block(text: str, name: str) -> str:
@@ -101,11 +117,11 @@ def test_launcher_gicleeframe_open_passes_cache_hit_without_update_idletasks() -
 
 
 def test_gicleeframe_has_section_visual_cache() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    view_text = _view_text()
+    selection_text = _selection_text()
 
-    assert "_section_visual_cache" in text
-    assert "SectionVisualCacheEntry" in text
+    assert "_section_visual_cache" in view_text
+    assert "SectionVisualCacheEntry" in view_text
     for event in (
         "studio.gicleeframe.selection.minimal_cache_hit",
         "studio.gicleeframe.selection.minimal_cache_miss",
@@ -124,16 +140,16 @@ def test_gicleeframe_has_section_visual_cache() -> None:
         "studio.gicleeframe.editor.layout_shift_guard",
         "studio.gicleeframe.details_on_demand.available",
     ):
-        assert event in text
+        assert event in view_text or event in selection_text
 
 
 def test_gicleeframe_has_minimal_and_details_cache_events() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    view_text = _view_text()
+    selection_text = _selection_text()
 
-    assert "_minimal_cache_entry" in text
-    assert "_details_cache_entry" in text
-    assert "details_cache_preview" in text
+    assert "_minimal_cache_entry" in view_text
+    assert "_details_cache_entry" in view_text
+    assert "details_cache_preview" in view_text
     for event in (
         "studio.gicleeframe.selection.minimal_cache_hit",
         "studio.gicleeframe.selection.minimal_cache_miss",
@@ -153,7 +169,7 @@ def test_gicleeframe_has_minimal_and_details_cache_events() -> None:
         "studio.gicleeframe.details_on_demand.applied",
         "studio.gicleeframe.visible_prewarm.suppressed",
     ):
-        assert event in text
+        assert event in view_text or event in selection_text
 
 
 def test_gicleeframe_section_reentry_uses_minimal_cache() -> None:
@@ -215,37 +231,41 @@ def test_gicleeframe_section_reentry_uses_minimal_cache() -> None:
         def _populate_with_flag(m, *, visual_cache_refresh: bool = False, atomic_swap: bool = False) -> None:  # type: ignore[no-untyped-def]
             populate_calls.append(visual_cache_refresh)
 
-        with patch("giclee_app.ui.gicleeframe_view.log_event", side_effect=_capture):
-            with patch.object(view, "after_idle", side_effect=lambda cb: cb()):
-                with patch.object(view, "_populate_editor", side_effect=_populate_with_flag):
-                    view._select_element("elem-a")
-                    view._section_visual_cache["elem-a"] = SectionVisualCacheEntry(
-                        element_type="divider",
-                        status="ok",
-                        has_draft_patch=False,
-                        title="Tytuł A",
-                        text="",
-                        alt="",
-                        image_ref="",
-                        notes="",
-                        visible=True,
-                        subtitle_text="Sekcja A",
-                        page_context_summary=(("Typ sekcji", "divider"),),
-                        fields_title=False,
-                        fields_text=False,
-                        fields_alt=False,
-                        fields_image_ref=False,
-                        fields_notes=True,
-                        fields_visible=True,
-                        fields_children=False,
-                        fields_page_context=True,
-                        media_details_built=False,
-                        preview_key="",
-                        layer_nav_visible=False,
-                        layer_nav_titles=(),
-                    )
-                    view._select_element("elem-b")
-                    view._select_element("elem-a")
+        with patch(
+            "giclee_app.ui.gicleeframe_view_selection_orchestration.log_event",
+            side_effect=_capture,
+        ):
+            with patch("giclee_app.ui.gicleeframe_view.log_event", side_effect=_capture):
+                with patch.object(view, "after_idle", side_effect=lambda cb: cb()):
+                    with patch.object(view, "_populate_editor", side_effect=_populate_with_flag):
+                        view._select_element("elem-a")
+                        view._section_visual_cache["elem-a"] = SectionVisualCacheEntry(
+                            element_type="divider",
+                            status="ok",
+                            has_draft_patch=False,
+                            title="Tytuł A",
+                            text="",
+                            alt="",
+                            image_ref="",
+                            notes="",
+                            visible=True,
+                            subtitle_text="Sekcja A",
+                            page_context_summary=(("Typ sekcji", "divider"),),
+                            fields_title=False,
+                            fields_text=False,
+                            fields_alt=False,
+                            fields_image_ref=False,
+                            fields_notes=True,
+                            fields_visible=True,
+                            fields_children=False,
+                            fields_page_context=True,
+                            media_details_built=False,
+                            preview_key="",
+                            layer_nav_visible=False,
+                            layer_nav_titles=(),
+                        )
+                        view._select_element("elem-b")
+                        view._select_element("elem-a")
 
         minimal_hits = [
             item
@@ -677,20 +697,24 @@ def test_details_module_cancelled_when_selecting_other_section() -> None:
         def _capture(event: str, **kwargs) -> None:  # type: ignore[no-untyped-def]
             logged.append((event, kwargs))
 
-        with patch("giclee_app.ui.gicleeframe_view.log_event", side_effect=_capture):
-            with patch.object(view, "after", side_effect=_after):
-                with patch.object(view, "after_cancel"):
-                    with patch.object(view, "_update_section_preview") as preview_mock:
-                        view._on_details_module_clicked("preview")
-                        with patch.object(view, "_schedule_atomic_swap_populate"):
-                            with patch.object(view, "_highlight_section_row"):
-                                with patch.object(view, "_update_section_list_trigger"):
-                                    view._select_element("media-2")
-                        while scheduled:
-                            _, cb = scheduled.pop(0)
-                            cb()
+        with patch(
+            "giclee_app.ui.gicleeframe_view_selection_orchestration.log_event",
+            side_effect=_capture,
+        ):
+            with patch("giclee_app.ui.gicleeframe_view.log_event", side_effect=_capture):
+                with patch.object(view, "after", side_effect=_after):
+                    with patch.object(view, "after_cancel"):
+                        with patch.object(view, "_update_section_preview") as preview_mock:
+                            view._on_details_module_clicked("preview")
+                            with patch.object(view, "_schedule_atomic_swap_populate"):
+                                with patch.object(view, "_highlight_section_row"):
+                                    with patch.object(view, "_update_section_list_trigger"):
+                                        view._select_element("media-2")
+                            while scheduled:
+                                _, cb = scheduled.pop(0)
+                                cb()
 
-                        preview_mock.assert_not_called()
+                            preview_mock.assert_not_called()
         cancelled = [
             item for item in logged if item[0] == "studio.gicleeframe.details_on_demand.cancelled"
         ]

@@ -7,6 +7,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 ROOT = Path(__file__).resolve().parents[1]
 INTERACTION_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_interaction.py"
+SELECTION_PATH = (
+    ROOT / "giclee_app" / "ui" / "gicleeframe_view_selection_orchestration.py"
+)
 
 
 def _method_block(text: str, name: str) -> str:
@@ -27,8 +30,7 @@ def test_gicleeframe_view_has_model_cache_fields() -> None:
 
 
 def test_select_element_uses_lookup_cache() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    text = SELECTION_PATH.read_text(encoding="utf-8")
     block = _method_block(text, "_select_element")
 
     assert "_merged_by_id.get" in block
@@ -38,8 +40,7 @@ def test_select_element_uses_lookup_cache() -> None:
 
 
 def test_select_element_does_not_render_section_list() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    text = SELECTION_PATH.read_text(encoding="utf-8")
     block = _method_block(text, "_select_element")
 
     assert "_render_section_list(" not in block
