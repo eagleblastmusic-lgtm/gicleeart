@@ -63,6 +63,12 @@ _RAM_VARIANTS_VIEW_PATH = (
     / "ui"
     / "gicleeframe_view_ram_variants.py"
 )
+_SECTION_LIST_SHELL_VIEW_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "giclee_app"
+    / "ui"
+    / "gicleeframe_view_section_list_shell.py"
+)
 _NEW_PLANNING_MODULES = (
     "gicleeframe_brief.py",
     "gicleeframe_draft_state.py",
@@ -125,6 +131,8 @@ def test_view_source_no_forbidden_action_buttons() -> None:
 
 def test_view_source_f21_editor_labels() -> None:
     text = _VIEW_PATH.read_text(encoding="utf-8")
+    shell_text = _SECTION_LIST_SHELL_VIEW_PATH.read_text(encoding="utf-8")
+    combined = text + "\n" + shell_text
     assert "PAGE_EDITOR_TITLE" in text
     assert "SECTION_EDITOR_TITLE" in text
     assert "_section_list_trigger" in text
@@ -138,13 +146,13 @@ def test_view_source_f21_editor_labels() -> None:
     assert "_section_list_scroll" in text
     assert "_section_dropdown_popup" in text
     assert "_toggle_section_list" in text
-    assert "_SECTION_LIST_WIDTH" in text
-    assert "SECTION_LIST_DRAG_HINT" in text
+    assert "_SECTION_LIST_WIDTH" in combined
+    assert "SECTION_LIST_DRAG_HINT" in combined
     assert "reorder_page_blocks" in text
     assert "_structure_dry_run_btn" in text
     assert "_build_control_column" in text
     assert "_CONTROL_COL_MINSIZE" in text
-    assert "SECTION_LIST_TITLE" in text
+    assert "SECTION_LIST_TITLE" in combined
     assert "APPLY_RAM_MICROCOPY" in text
     assert "_make_primary_button" in text
     assert "_build_setting_group_card" in text
@@ -179,8 +187,10 @@ def test_view_source_f222_premium_copy() -> None:
 
 def test_view_source_f223_first_screen_composition() -> None:
     text = _VIEW_PATH.read_text(encoding="utf-8")
+    shell_text = _SECTION_LIST_SHELL_VIEW_PATH.read_text(encoding="utf-8")
+    combined = text + "\n" + shell_text
     assert "_ellipsize" in text
-    assert "_SECTION_LIST_WIDTH = 320" in text
+    assert "_SECTION_LIST_WIDTH = 320" in combined
     assert "_EDITOR_HERO_PREVIEW_HEIGHT" in text
     assert "_SECTION_ROW_HEIGHT" in text
     assert "RAM preview" in text
@@ -472,3 +482,44 @@ def test_ram_variants_view_source_no_write_or_network() -> None:
         "after_cancel(",
     ):
         assert forbidden_text not in text
+
+
+def test_section_list_shell_view_source_contract() -> None:
+    text = _SECTION_LIST_SHELL_VIEW_PATH.read_text(encoding="utf-8")
+    assert "GicleeFrameSectionListShellMixin" in text
+    assert "_SECTION_PLACEHOLDER = \"— wybierz sekcję —\"" in text
+    assert "_SECTION_LIST_WIDTH = 320" in text
+    assert "_SECTION_LIST_HEIGHT = 520" in text
+    assert "_SECTION_LIST_LOADING_TEXT = \"Ładowanie struktury sekcji…\"" in text
+    assert "_GF_SECTION_FIRST_BATCH_SIZE = 6" in text
+    assert "_GF_SECTIONS_COLUMN_EARLY_DEFER_MS = 0" in text
+    assert "_GF_SECTION_SCROLL_UPGRADE_AFTER_PERCEIVED_DEFER_MS = 40" in text
+    assert "_GF_SECTION_SCROLL_UPGRADE_FALLBACK_TIMEOUT_MS = 800" in text
+    for method in (
+        "_schedule_sections_column_early_lane",
+        "_log_section_list_column_ready",
+        "_build_sections_column_shell",
+        "_create_section_list_scroll_frame",
+        "_populate_section_list_static_lane",
+        "_try_refresh_static_lane_before_scroll_upgrade",
+        "_cancel_section_list_scroll_upgrade_fallback",
+        "_ensure_section_list_scroll_upgrade_fallback",
+        "_schedule_section_list_scroll_upgrade_after_perceived",
+        "_schedule_section_list_scroll_upgrade",
+        "_build_sections_column_extras",
+        "_build_sections_column",
+    ):
+        assert method in text
+
+
+def test_section_list_shell_view_source_no_write_or_network() -> None:
+    _assert_no_writes_in_source(_SECTION_LIST_SHELL_VIEW_PATH)
+    text = _SECTION_LIST_SHELL_VIEW_PATH.read_text(encoding="utf-8")
+    for forbidden_text in (
+        "shopify",
+        "deploy",
+        "subprocess",
+        "requests.get",
+        "requests.post",
+    ):
+        assert forbidden_text not in text.lower()

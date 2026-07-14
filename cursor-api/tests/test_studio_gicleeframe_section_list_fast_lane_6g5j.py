@@ -22,7 +22,13 @@ def _top_bar_text() -> str:
 
 
 def _combined_text() -> str:
-    return _view_text() + "\n" + _top_bar_text()
+    return _view_text() + "\n" + _top_bar_text() + "\n" + _section_list_shell_text()
+
+
+def _section_list_shell_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_shell.py"
+    ).read_text(encoding="utf-8")
 
 
 def _constant_int(text: str, name: str) -> int:

@@ -27,6 +27,9 @@ from giclee_app.ui.gicleeframe_view_structure_dry_run import (
 )
 from giclee_app.ui.gicleeframe_view_top_bar import GicleeFrameTopBarMixin
 from giclee_app.ui.gicleeframe_view_ram_variants import GicleeFrameRamVariantMixin
+from giclee_app.ui.gicleeframe_view_section_list_shell import (
+    GicleeFrameSectionListShellMixin,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 ROW_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_readiness_row.py"
@@ -183,6 +186,7 @@ def test_readiness_row_mixin_is_wired_into_gicleeframe_view_mro() -> None:
     assert GicleeFrameReadinessRowMixin in GicleeFrameView.__mro__
     assert GicleeFrameTopBarMixin in GicleeFrameView.__mro__
     assert GicleeFrameRamVariantMixin in GicleeFrameView.__mro__
+    assert GicleeFrameSectionListShellMixin in GicleeFrameView.__mro__
     assert "_pack_readiness_row" not in GicleeFrameView.__dict__
     assert (
         GicleeFrameView._pack_readiness_row

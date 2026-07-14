@@ -136,7 +136,9 @@ def test_perceived_ready_logs_only_once() -> None:
 
 
 def test_perceived_gate_diag_preserves_prior_6g5_markers() -> None:
-    text = _view_text()
+    text = _view_text() + "\n" + (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_shell.py"
+    ).read_text(encoding="utf-8")
     for marker in (
         "studio.gicleeframe.section_list.static_lane_ready",
         "studio.gicleeframe.section_list.first_visible_ready",

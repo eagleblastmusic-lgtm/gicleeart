@@ -15,6 +15,12 @@ def _view_text() -> str:
     )
 
 
+def _section_list_shell_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_shell.py"
+    ).read_text(encoding="utf-8")
+
+
 def _top_bar_text() -> str:
     return (ROOT / "giclee_app" / "ui" / "gicleeframe_view_top_bar.py").read_text(
         encoding="utf-8"
@@ -22,7 +28,7 @@ def _top_bar_text() -> str:
 
 
 def _combined_text() -> str:
-    return _view_text() + "\n" + _top_bar_text()
+    return _view_text() + "\n" + _section_list_shell_text() + "\n" + _top_bar_text()
 
 
 def _constant_int(text: str, name: str) -> int:
@@ -32,15 +38,15 @@ def _constant_int(text: str, name: str) -> int:
 
 
 def test_sections_column_early_defer_ms_constant_exists() -> None:
-    text = _view_text()
+    text = _section_list_shell_text()
     assert "_GF_SECTIONS_COLUMN_EARLY_DEFER_MS = 0" in text
 
 
 def test_sections_column_early_lane_scheduled_event_exists() -> None:
-    text = _view_text()
+    text = _section_list_shell_text()
 
     start = text.index("def _schedule_sections_column_early_lane")
-    end = text.index("def _build_sections_column_deferred", start)
+    end = text.index("def _log_section_list_column_ready", start)
     body = text[start:end]
 
     assert "studio.gicleeframe.sections_column.early_lane_scheduled" in body
@@ -71,10 +77,10 @@ def test_sections_column_early_lane_not_scheduled_from_build_shell_critical_read
 
 
 def test_sections_column_early_lane_helper_uses_early_defer() -> None:
-    text = _view_text()
+    text = _section_list_shell_text()
 
     start = text.index("def _schedule_sections_column_early_lane")
-    end = text.index("def _build_sections_column_deferred", start)
+    end = text.index("def _log_section_list_column_ready", start)
     body = text[start:end]
 
     assert "_GF_SECTIONS_COLUMN_EARLY_DEFER_MS" in body
@@ -84,7 +90,7 @@ def test_sections_column_early_lane_helper_uses_early_defer() -> None:
 
 
 def test_sections_column_early_lane_preserves_section_list_markers() -> None:
-    text = _view_text()
+    text = _combined_text()
     assert "studio.gicleeframe.section_list.column_shell_ready" in text
     assert "studio.gicleeframe.section_list.column_ready_for_rows" in text
     assert "studio.gicleeframe.sections_column.early_lane_enter" in text

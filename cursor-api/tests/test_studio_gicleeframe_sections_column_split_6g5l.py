@@ -14,15 +14,26 @@ def _view_text() -> str:
     )
 
 
+def _section_list_shell_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_shell.py"
+    ).read_text(encoding="utf-8")
+
+
+def _combined_text() -> str:
+    return _view_text() + "\n" + _section_list_shell_text()
+
+
 def test_sections_column_shell_and_extras_split_exists() -> None:
-    text = _view_text()
+    text = _section_list_shell_text()
     assert "def _build_sections_column_shell" in text
     assert "def _build_sections_column_extras" in text
+    text = _view_text()
     assert "def _build_sections_column_extras_deferred" in text
 
 
 def test_sections_column_shell_ready_event_exists() -> None:
-    text = _view_text()
+    text = _section_list_shell_text()
 
     start = text.index("def _build_sections_column_shell")
     end = text.index("def _create_section_list_scroll_frame", start)
@@ -37,7 +48,7 @@ def test_sections_column_shell_ready_event_exists() -> None:
 
 
 def test_sections_column_extras_no_pack_before_scroll() -> None:
-    text = _view_text()
+    text = _section_list_shell_text()
 
     start = text.index("def _build_sections_column_extras")
     end = text.index("def _build_sections_column(", start)
@@ -48,7 +59,7 @@ def test_sections_column_extras_no_pack_before_scroll() -> None:
 
 
 def test_sections_column_extras_uses_shell_slot() -> None:
-    text = _view_text()
+    text = _section_list_shell_text()
 
     shell_start = text.index("def _build_sections_column_shell")
     shell_end = text.index("def _create_section_list_scroll_frame", shell_start)
@@ -146,8 +157,8 @@ def test_sections_column_early_lane_enter_event_exists() -> None:
 
 
 def test_sections_column_queue_latency_instrumentation() -> None:
-    text = _view_text()
-    assert "def _queue_latency_since_ms" in text
+    text = _combined_text()
+    assert "def _queue_latency_since_ms" in _view_text()
     assert "_sections_column_early_lane_scheduled_mono" in text
     assert "_section_list_column_ready_mono" in text
     assert "_section_list_incremental_scheduled_mono" in text
@@ -158,7 +169,7 @@ def test_sections_column_queue_latency_instrumentation() -> None:
 
 
 def test_sections_column_split_preserves_prior_6g5_markers() -> None:
-    text = _view_text()
+    text = _combined_text()
     assert "_GF_SECTIONS_COLUMN_EARLY_DEFER_MS = 0" in text
     assert "studio.gicleeframe.sections_column.early_lane_scheduled" in text
     assert "studio.gicleeframe.section_list.first_visible_fast_lane" in text
