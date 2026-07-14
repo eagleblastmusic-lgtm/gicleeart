@@ -46,7 +46,10 @@ jobs:
 
       - name: Run LC-2A focused regression suite
         working-directory: cursor-api
+        shell: bash
         run: |
+          set -o pipefail
+          mkdir -p "$RUNNER_TEMP/lc2a-focused"
           python -m pytest -q \
             tests/test_launcher_category_navigation_model.py \
             tests/test_launcher_category_navigation.py \
@@ -54,7 +57,17 @@ jobs:
             tests/test_launcher_tile_order.py \
             tests/test_launcher_shortcuts.py \
             tests/test_launcher_shortcuts_config.py \
-            tests/test_studio_imports.py
+            tests/test_studio_imports.py \
+            2>&1 | tee "$RUNNER_TEMP/lc2a-focused/pytest.txt"
+
+      - name: Upload LC-2A focused diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lc2a-focused-${{ github.run_id }}
+          path: ${{ runner.temp }}/lc2a-focused
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Validate diff and scope
         run: |
