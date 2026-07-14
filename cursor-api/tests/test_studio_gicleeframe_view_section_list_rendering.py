@@ -42,6 +42,9 @@ from giclee_app.ui.gicleeframe_view_structure_dry_run import (
     GicleeFrameStructureDryRunMixin,
 )
 from giclee_app.ui.gicleeframe_view_top_bar import GicleeFrameTopBarMixin
+from giclee_app.ui.gicleeframe_view_section_list_interaction import (
+    GicleeFrameSectionListInteractionMixin,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 VIEW_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
@@ -72,17 +75,11 @@ _HOST_OWNERSHIP = {
     "_schedule_atomic_reveal_check",
     "_since_visual_enter_ms",
     "_queue_latency_since_ms",
-    "_on_section_row_click",
-    "_start_section_drag",
-    "_finish_section_drag",
-    "_highlight_section_row",
-    "_highlight_section_rows",
     "_select_element",
     "_upgrade_section_list_scroll",
     "_schedule_section_list_incremental",
     "_run_deferred_bootstrap",
     "_cancel_section_list_batch_continuation",
-    "_update_section_list_trigger",
 }
 
 
@@ -318,7 +315,7 @@ def test_renderer_imports_shell_constants_without_duplication() -> None:
     assert f"_GF_SECTION_FIRST_BATCH_SIZE = {_GF_SECTION_FIRST_BATCH_SIZE}" in shell_text
 
 
-def test_gicleeframe_view_has_nine_mixins_before_scrollable_frame() -> None:
+def test_gicleeframe_view_has_ten_mixins_before_scrollable_frame() -> None:
     mro = GicleeFrameView.__mro__
     assert GicleeFrameBrandPanelMixin in mro
     assert GicleeFramePageReadinessMixin in mro
@@ -329,10 +326,14 @@ def test_gicleeframe_view_has_nine_mixins_before_scrollable_frame() -> None:
     assert GicleeFrameRamVariantMixin in mro
     assert GicleeFrameSectionListShellMixin in mro
     assert GicleeFrameSectionListRenderingMixin in mro
+    assert GicleeFrameSectionListInteractionMixin in mro
     assert mro.index(GicleeFrameSectionListShellMixin) < mro.index(
         GicleeFrameSectionListRenderingMixin,
     )
-    assert mro.index(GicleeFrameSectionListRenderingMixin) < mro.index(ctk.CTkScrollableFrame)
+    assert mro.index(GicleeFrameSectionListRenderingMixin) < mro.index(
+        GicleeFrameSectionListInteractionMixin,
+    )
+    assert mro.index(GicleeFrameSectionListInteractionMixin) < mro.index(ctk.CTkScrollableFrame)
 
 
 def test_section_list_rendering_methods_resolve_by_identity_from_mixin_on_gicleeframe_view() -> None:

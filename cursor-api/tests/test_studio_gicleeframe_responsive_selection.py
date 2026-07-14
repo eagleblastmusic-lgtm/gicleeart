@@ -8,8 +8,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 ROOT = Path(__file__).resolve().parents[1]
 
 
+INTERACTION_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_interaction.py"
+
+
 def test_section_row_click_does_not_collapse_by_default() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
+    path = INTERACTION_PATH
     text = path.read_text(encoding="utf-8")
 
     assert "GICLEE_GF_COLLAPSE_SECTION_LIST_ON_CLICK" in text
@@ -39,7 +42,7 @@ def test_page_context_waits_for_stable_selection() -> None:
 
 
 def test_section_dropdown_reuses_rows() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
+    path = INTERACTION_PATH
     text = path.read_text(encoding="utf-8")
 
     assert "_ensure_section_dropdown_rows" in text
