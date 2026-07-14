@@ -2,7 +2,7 @@
 
 Hub: [`admin-components-strategy.md`](admin-components-strategy.md) · [`studio-v2-workflows.md`](studio-v2-workflows.md) · [`studio-save-pattern.md`](studio-save-pattern.md) · legacy: [`../../docs/komponenty/gicleeframe.md`](../../docs/komponenty/gicleeframe.md)
 
-**Stan:** app planning component **ready** @ Studio v1.40.8 · page editor workflow **ready (F2.1)** · **F2.2 layout polish** · **F2.2.1 visual hierarchy** · **F2.2.2 premium visual workbench** · **F2.2.3 first-screen composition** · **F2.2.4 premium visual language** · **F2.2.5 section workbench** · **F2.2.6 child layer navigation** · Shopify **not started** · writer/save **blocked**
+**Stan:** app planning component **ready** @ Studio v1.40.8 · page editor workflow **ready (F2.1)** · **F2.2 layout polish** · **F2.2.1 visual hierarchy** · **F2.2.2 premium visual workbench** · **F2.2.3 first-screen composition** · **F2.2.4 premium visual language** · **F2.2.5 section workbench** · **F2.2.6 child layer navigation** · **GF-M1–GF-M18 modularization complete** · **final host boundary complete** · Shopify **not started** · writer/save **blocked** · **next: brak GF-M19**
 
 ---
 
@@ -47,6 +47,24 @@ Disclaimer F2: **„Zmiany są tylko lokalnym draftem w pamięci — nic nie zap
 | `studio/gicleeframe_page_settings.py` | **F2.1** — specyfikacja pól `settings` sekcji (divider / media) |
 | `studio/gicleeframe_page_dry_run.py` | **F2** — dry-run struktury + guardrails |
 | `ui/gicleeframe_view.py` | Widok CTk: **F2.1 edytor strony** (top bar / trigger / edytor) + F1 komponent marki |
+| `ui/gicleeframe_view_models.py` | **GF-M1** — czyste kontrakty widoku (dataclass + helpery tekstowe, bez UI) |
+| `ui/gicleeframe_view_primitives.py` | **GF-M2** — bezstanowe prymitywy UI i lokalne tokeny wizualne |
+| `ui/gicleeframe_view_brand.py` | **GF-M3** — panel planowania marki F1 (RAM-only) |
+| `ui/gicleeframe_view_page_readiness.py` | **GF-M4** — panel readiness strony F2 |
+| `ui/gicleeframe_view_structure_dry_run.py` | **GF-M5** — panel structure dry-run F2 |
+| `ui/gicleeframe_view_safety.py` | **GF-M6** — statyczna karta bezpieczeństwa F2 |
+| `ui/gicleeframe_view_readiness_row.py` | **GF-M7** — wspólny renderer wiersza readiness |
+| `ui/gicleeframe_view_top_bar.py` | **GF-M8** — subsystém top bar (context bar, command bar, staggered late-build) |
+| `ui/gicleeframe_view_ram_variants.py` | **GF-M9** — workflow wariantów RAM |
+| `ui/gicleeframe_view_section_list_shell.py` | **GF-M10** — kolumna listy sekcji i static first-visible lane |
+| `ui/gicleeframe_view_section_list_rendering.py` | **GF-M11** — full/incremental rendering i konstrukcja wierszy sekcji |
+| `ui/gicleeframe_view_section_list_interaction.py` | **GF-M12** — dropdown, highlight, row-click gateway i drag/reorder RAM listy sekcji |
+| `ui/gicleeframe_view_selection_orchestration.py` | **GF-M13** — selection orchestration, priority lane, atomic swap i scheduling populate |
+| `ui/gicleeframe_view_editor_shell.py` | **GF-M14** — editor shell, prewarm lifecycle i minimal population |
+| `ui/gicleeframe_view_details_on_demand.py` | **GF-M15** — details-on-demand orchestrator, cache i deferred wrappers |
+| `ui/gicleeframe_view_visual_detail_renderers.py` | **GF-M16** — preview, layer-navigation i children-overview renderers |
+| `ui/gicleeframe_view_page_context.py` | **GF-M17** — page-context shell, lazy groups i inline setting editor |
+| `ui/gicleeframe_view_lifecycle_inventory.py` | **GF-M18** — lifecycle, inventory i shell orchestration |
 | `launcher_studio.py` | Routing: `gicleeframe` → `GicleeFrameView` |
 
 ---
@@ -228,12 +246,12 @@ Implementacja referencyjna: ten moduł (`gicleeframe_page_*`, `gicleeframe_view.
 
 ## 11. Performance — responsive section selection (Studio v1.41.1)
 
-Wybór sekcji w `gicleeframe_view.py` jest dwuetapowy:
+Wybór sekcji w `gicleeframe_view_selection_orchestration.py` (mixin `GicleeFrameSelectionOrchestrationMixin`) jest dwuetapowy:
 
 | Etap | Opóźnienie | Zachowanie |
 |------|------------|------------|
 | **Immediate** | 0 ms | highlight wiersza, trigger, subtitle „Ładowanie: …”, anulowanie poprzednich jobów |
-| **Deferred populate** | 16 ms (`_GF_SELECT_POPULATE_DEFER_MS`) | pełny `_populate_editor()` z guardem `_selection_generation` |
+| **Deferred populate** | 0 ms (`_GF_SELECT_POPULATE_DEFER_MS`) | pełny `_populate_editor()` z guardem `_selection_generation` (via atomic swap) |
 | **Stable page context** | 140 ms (`_GF_PAGE_CONTEXT_STABLE_DEFER_MS`) | `_populate_page_context_progressive` tylko gdy wybór się ustabilizował |
 
 Lista sekcji **domyślnie nie zwija się** po kliknięciu wiersza (szybkie przechodzenie po strukturze). Legacy/debug: `$env:GICLEE_GF_COLLAPSE_SECTION_LIST_ON_CLICK="1"`.
@@ -241,3 +259,469 @@ Lista sekcji **domyślnie nie zwija się** po kliknięciu wiersza (szybkie przec
 Dropdown sekcji reużywa istniejących wierszy (`section_dropdown.rows_reused`) zamiast przebudowywać listę przy każdym otwarciu.
 
 Logi perf (`GICLEE_STUDIO_PERF=1`): `select_element.immediate_ready`, `populate_editor.deferred`, `populate_editor.deferred_stale`, `page_context.stable_defer_stale`.
+
+---
+
+## 12. GF-M1 — Pure View Contracts Extraction
+
+**Cel:** pierwszy, najmniejszy krok modularizacji `GicleeFrameView` — ekstrakcja czystych kontraktów widoku do osobnego modułu bez zmiany zachowania.
+
+### Przeniesione symbole
+
+| Symbol | Nowy moduł |
+|--------|------------|
+| `PageContextRowSpec` | `ui/gicleeframe_view_models.py` |
+| `SectionVisualCacheEntry` | `ui/gicleeframe_view_models.py` |
+| `_ellipsize` | `ui/gicleeframe_view_models.py` |
+| `_section_kind_copy` | `ui/gicleeframe_view_models.py` |
+
+### Gwarancje GF-M1
+
+- **Zero** zmian behavior / layout / performance / timingów / schedulerów
+- **Zero** zmian RAM draft, writera, zapisu do plików motywu, Shopify sync/deploy/mutation
+- Re-eksport przez `gicleeframe_view.py` zachowany — `from giclee_app.ui.gicleeframe_view import SectionVisualCacheEntry` nadal działa
+- Moduł models importuje wyłącznie `dataclass`, `PageSettingField`, `MergedPageElement` — bez tkinter/customtkinter/Komponenty/I/O/sieci
+
+### Dalsze etapy
+
+Kolejne kroki modularizacji (`GF-M2+`) — osobne PR-y. **GF-M1 nie uruchamia F3/F4 ani writera.**
+
+---
+
+## 13. GF-M2 — Stateless UI Primitives Extraction
+
+**Cel:** drugi krok modularizacji `GicleeFrameView` — ekstrakcja bezstanowych prymitywów UI i lokalnych tokenów wizualnych do osobnego modułu bez zmiany zachowania ani wyglądu.
+
+### Przeniesione tokeny (19)
+
+`_BTN_HEIGHT`, `_CARD_PAD_X`, `_CARD_PAD_Y`, `_GF_BG`, `_GF_PANEL`, `_GF_CARD`, `_GF_CARD_SOFT`, `_GF_FIELD`, `_GF_FIELD_HOVER`, `_GF_BORDER`, `_GF_BORDER_WARM`, `_GF_GOLD_SOFT`, `_GF_GOLD`, `_GF_MUTED`, `_GF_PREVIEW_BG`, `_GF_PREVIEW_PAPER`, `_GF_PREVIEW_MAT`, `_GF_SUCCESS`, `_GF_DANGER`
+
+### Przeniesione funkcje (15)
+
+`_f2_entry_kwargs`, `_make_surface`, `_make_card`, `_make_gf_card`, `_make_section_caption`, `_make_card_title`, `_make_section_title`, `_make_status_pill`, `_make_pill`, `_make_empty_state`, `_build_safety_row`, `_make_secondary_button`, `_make_primary_button`, `_f2_menu_kwargs`, `_element_pill_colors`
+
+### Gwarancje GF-M2
+
+- **Zero** zmian UI, layoutu, tekstów, kolorów, wymiarów, timingów, schedulerów, performance lane i telemetry
+- **Zero** zmian RAM draft, writera, zapisu do plików motywu, Shopify sync/deploy/mutation
+- Re-eksport przez `gicleeframe_view.py` zachowany — `from giclee_app.ui.gicleeframe_view import _make_gf_card, _GF_PANEL` nadal działa i wskazuje ten sam obiekt co w `gicleeframe_view_primitives`
+- Moduł primitives importuje wyłącznie `Callable`, `customtkinter`, `theme` — bez os/sys/time/tkinter/Komponenty/I/O/sieci/subprocess
+- **GF-M2 nie uruchamia F3/F4 ani writera.**
+
+---
+
+## 14. GF-M3 — F1 Brand Panel Extraction
+
+**Status:** zakończone.
+
+**Cel:** wydzielenie panelu planowania marki **F1** (RAM-only) z `ui/gicleeframe_view.py` do osobnego modułu, bez zmiany UI/tekstu/layoutu oraz bez naruszania lifecycle, schedulerów, telemetry i selection/performance lane hosta.
+
+### Wynik
+
+- **Panel F1** przeniesiony do `ui/gicleeframe_view_brand.py` jako `GicleeFrameBrandPanelMixin`.
+- **Mixin nie posiada lifecycle** ani `__init__` i **nie dziedziczy** po widżecie Tk.
+- Host `GicleeFrameView` nadal posiada:
+  - adapter expand/collapse `_toggle_f1_section` (w tym event `studio.gicleeframe.f1.build_on_expand`),
+  - wspólny renderer readiness `_pack_readiness_row`.
+- **Nota historyczna (GF-M7):** renderer pozostawał w hoście do GF-M7; ownership przeniesiono do `GicleeFrameReadinessRowMixin`.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+---
+
+## 15. GF-M4 — F2 Page Readiness Panel Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** wydzielenie panelu readiness strony **F2** (RAM-only) z `ui/gicleeframe_view.py` do osobnego modułu, bez zmiany UI/tekstu/layoutu oraz bez naruszania lifecycle, schedulerów, telemetry i selection/performance lane hosta.
+
+### Wynik
+
+- **Panel readiness strony** przeniesiony do `ui/gicleeframe_view_page_readiness.py` jako `GicleeFramePageReadinessMixin`.
+- **Mixin nie posiada lifecycle** ani `__init__` i **nie dziedziczy** po widżecie Tk.
+- Host `GicleeFrameView` dziedziczy `GicleeFrameBrandPanelMixin` i `GicleeFramePageReadinessMixin` przed `ctk.CTkScrollableFrame`.
+- Host nadal posiada:
+  - kompozycję kolumny kontrolnej `_build_control_column`,
+  - wspólny renderer readiness `_pack_readiness_row`.
+- **Nota historyczna (GF-M7):** renderer pozostawał w hoście do GF-M7; ownership przeniesiono do `GicleeFrameReadinessRowMixin`.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+---
+
+## 16. GF-M5 — F2 Structure Dry-Run Panel Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** wydzielenie panelu structure dry-run **F2** (RAM-only) z `ui/gicleeframe_view.py` do osobnego modułu, bez zmiany UI/tekstu/layoutu oraz bez naruszania lifecycle, schedulerów, telemetry i selection/performance lane hosta.
+
+### Wynik
+
+- **Panel structure dry-run** przeniesiony do `ui/gicleeframe_view_structure_dry_run.py` jako `GicleeFrameStructureDryRunMixin`.
+- **Mixin nie posiada lifecycle** ani `__init__` i **nie dziedziczy** po widżecie Tk.
+- Host `GicleeFrameView` dziedziczy `GicleeFrameBrandPanelMixin`, `GicleeFramePageReadinessMixin` i `GicleeFrameStructureDryRunMixin` przed `ctk.CTkScrollableFrame`.
+- Przeniesiono dokładnie trzy metody: `_build_control_structure_card`, `_reset_structure_dry_run_display`, `_run_structure_dry_run`.
+- Layout token `_STRUCTURE_DRY_RUN_WRAPLENGTH = 292` pozostaje w mixin module; `_CONTROL_COL_MINSIZE` pozostaje w hoście.
+- Host nadal posiada:
+  - kompozycję kolumny kontrolnej `_build_control_column` (structure → readiness → safety),
+  - implementację inventory `_refresh_inventory`,
+  - wspólny renderer readiness `_pack_readiness_row`,
+  - etykietę command bar `CHECK_STRUCTURE_LABEL`.
+- **Nota historyczna (GF-M7):** renderer pozostawał w hoście do GF-M7; ownership przeniesiono do `GicleeFrameReadinessRowMixin`.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M10+** — osobne PR-y.
+
+---
+
+## 17. GF-M6 — F2 Safety Card Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** wydzielenie statycznej karty bezpieczeństwa **F2** (RAM-only) z `ui/gicleeframe_view.py` do osobnego modułu, bez zmiany UI/tekstu/layoutu oraz bez naruszania lifecycle, schedulerów, telemetry i selection/performance lane hosta.
+
+### Wynik
+
+- **Karta safety** przeniesiona do `ui/gicleeframe_view_safety.py` jako `GicleeFrameSafetyCardMixin`.
+- **Mixin nie posiada lifecycle** ani `__init__` i **nie dziedziczy** po widżecie Tk.
+- Przeniesiono dokładnie jedną metodę: `_build_safety_card`.
+- Moduł safety jest właścicielem `_SAFETY_TITLE`, `_SAFETY_CHECKLIST` i `_SAFETY_ROW_WRAPLENGTH = 276`.
+- Host `GicleeFrameView` dziedziczy `GicleeFrameBrandPanelMixin`, `GicleeFramePageReadinessMixin`, `GicleeFrameStructureDryRunMixin` i `GicleeFrameSafetyCardMixin` przed `ctk.CTkScrollableFrame`.
+- Host nadal posiada:
+  - kompozycję kolumny kontrolnej `_build_control_column` (structure → readiness → safety),
+  - token layoutu `_CONTROL_COL_MINSIZE`,
+  - implementację inventory `_refresh_inventory`,
+  - wspólny renderer readiness `_pack_readiness_row`.
+- **Nota historyczna (GF-M7):** renderer pozostawał w hoście do GF-M7; ownership przeniesiono do `GicleeFrameReadinessRowMixin`.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M10+** — osobne PR-y.
+
+---
+
+## 18. GF-M7 — Shared Readiness Row Renderer Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** wydzielenie wspólnego renderera wiersza readiness używanego przez F1 Brand Panel i F2 Page Readiness Panel, bez zmiany UI/tekstu/layoutu oraz bez naruszania lifecycle, schedulerów, telemetry i selection/performance lane hosta.
+
+### Wynik
+
+- **Renderer readiness row** przeniesiony do `ui/gicleeframe_view_readiness_row.py` jako `GicleeFrameReadinessRowMixin`.
+- **Mixin nie posiada lifecycle** ani `__init__` i **nie dziedziczy** po widżecie Tk.
+- Przeniesiono dokładnie jedną metodę: `_pack_readiness_row`.
+- Host `GicleeFrameView` dziedziczy pięć mixinów panelowych plus `GicleeFrameReadinessRowMixin` przed `ctk.CTkScrollableFrame`.
+- F1 i F2 nadal wywołują `self._pack_readiness_row(...)` bez zmian; rozwiązanie przez MRO.
+- Host nadal posiada:
+  - kompozycję kolumny kontrolnej `_build_control_column`,
+  - adapter expand/collapse `_toggle_f1_section`,
+  - lifecycle, schedulery, telemetry, inventory i pozostałe lane'y wydajnościowe.
+- Import `status_color` usunięty z hosta po ekstrakcji (jedyny konsument).
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M10+** — osobne PR-y.
+
+---
+
+## 19. GF-M8 — Top Bar Subsystem Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** pierwszy średni pakiet modularizacji po serii małych granic GF-M3–GF-M7 — ekstrakcja kompletnego subsystemu top bara (context bar, command bar, staggered late-build scheduling) bez zmiany UI, timingów, telemetry i integracji atomic reveal.
+
+### Wynik
+
+- **Top bar subsystem** przeniesiony do `ui/gicleeframe_view_top_bar.py` jako `GicleeFrameTopBarMixin`.
+- Przeniesiono dokładnie **11 metod** oraz **6 stałych** subsystemowych (`_BACK_LABEL`, `_SHELL_STATUS_CHIP`, `_GF_TOP_BAR_*`).
+- Mixin **nie posiada lifecycle** ani `__init__`, **nie dziedziczy** po widżecie Tk; **używa `after()`** jako część granicy schedulera.
+- Host `GicleeFrameView` dziedziczy sześć mixinów panelowych plus `GicleeFrameTopBarMixin` przed `ctk.CTkScrollableFrame`.
+- Host nadal posiada:
+  - `__init__` i inicjalizację pól widgetów top bara,
+  - `_build_shell` i wywołanie `_schedule_top_bar_actions_late_build()`,
+  - `_ensure_top_bar_actions_for_atomic_reveal`, atomic-reveal orchestration,
+  - suppression guards (`_should_suppress_visible_prewarm`, `_log_visible_prewarm_suppressed`),
+  - **RAM workflow** (warianty, menu, nawigacja, inventory adaptery) — kandydat następnej większej paczki.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M10+** — osobne PR-y. RAM workflow pozostaje host-owned.
+
+---
+
+## 20. GF-M9 — RAM Variant Workflow Subsystem Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** ekstrakcja kompletnego subsystemu RAM variant workflow (menu sync, przełączanie wariantu, synchronizacja metadanych top bara, add/duplicate/rename/clear) bez zmiany zachowania, dialogów, komunikatów statusowych ani adapterów host-owned.
+
+### Wynik
+
+- **RAM variant workflow** przeniesiony do `ui/gicleeframe_view_ram_variants.py` jako `GicleeFrameRamVariantMixin`.
+- Przeniesiono dokładnie **7 metod**: `_sync_working_variant_menu`, `_on_working_variant_selected`, `_update_top_bar`, `_add_ram_variant`, `_duplicate_ram_variant`, `_rename_ram_variant`, `_clear_page_draft`.
+- Mixin **nie posiada lifecycle** ani `__init__`, **nie dziedziczy** po widżecie Tk, **nie używa `after()`**, **nie zapisuje plików** ani nie wykonuje operacji sieciowych/Shopify.
+- Host `GicleeFrameView` dziedziczy siedem mixinów panelowych/subsystemowych przed `ctk.CTkScrollableFrame`.
+- Host nadal posiada:
+  - `__init__` i inicjalizację współdzielonego stanu (`_page_draft`, `_inventory`, `_merged`, `_working_variant_menu`, `_top_meta_label`, `_change_count_label`, `_on_status`),
+  - `_apply_edit_to_draft` — most edytor→draft,
+  - `_refresh_inventory` / `_refresh_inventory_light` — implementacje inventory,
+  - `_set_merged`, `_rebuild_page_model_cache`,
+  - `_render_section_menu` i implementacje section list,
+  - `_populate_editor` i całą ścieżkę selection/editor,
+  - `_reset_structure_dry_run_display`, `_build_shell`, atomic-reveal orchestration.
+- Zachowano **RAM-only behavior**: brak writera, brak trwałego zapisu, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M14+** — osobne PR-y. **Section List shell** (GF-M10), **rendering** (GF-M11), **interaction** (GF-M12) i **selection orchestration** (GF-M13) zrealizowano; editor shell/population pozostaje primary kandydatem GF-M14+.
+
+---
+
+## 21. GF-M10 — Section List Column & Static First-Visible Lane Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** ekstrakcja spójnej granicy kolumny sekcji (early lane scheduling, shell kolumny, extras slot, static first-visible lane, scroll-upgrade scheduling) bez absorpcji progressive bootstrap, full/incremental rendering, selection, drag/reorder ani inventory.
+
+### Wynik
+
+- **Section list shell** przeniesiony do `ui/gicleeframe_view_section_list_shell.py` jako `GicleeFrameSectionListShellMixin`.
+- Przeniesiono dokładnie **12 metod** oraz **8 stałych** granicy (`_SECTION_PLACEHOLDER`, `_SECTION_LIST_WIDTH`, `_SECTION_LIST_HEIGHT`, `_SECTION_LIST_LOADING_TEXT`, `_GF_SECTION_FIRST_BATCH_SIZE`, timing constants early lane / scroll upgrade).
+- Mixin **nie posiada lifecycle** ani `__init__`, **nie dziedziczy** po widżecie Tk; **używa `after()` i `after_cancel()`** jako część granicy schedulera first-visible/scroll-upgrade.
+- Host `GicleeFrameView` dziedziczy **osiem mixinów** panelowych/subsystemowych przed `ctk.CTkScrollableFrame`.
+- Host nadal posiada:
+  - `__init__` i inicjalizację pól section-list/schedulera,
+  - `_build_sections_column_deferred`, `_build_sections_column_extras_deferred`,
+  - `_upgrade_section_list_scroll`, full/incremental rendering, dropdown interaction,
+  - selection, drag/reorder, inventory merge, perceived-ready i atomic-reveal orchestration.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M14+** — osobne PR-y. Dropdown interaction przeniesiono w GF-M12; selection orchestration przeniesiono w GF-M13.
+
+---
+
+## 22. GF-M11 — Section List Rendering & Row Construction Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** ekstrakcja spójnej granicy full/incremental rendering i konstrukcji wierszy sekcji bez absorpcji dropdown interaction, selection, drag/reorder, inventory, progressive lifecycle gates, editor population ani atomic reveal.
+
+### Wynik
+
+- **Section list rendering** przeniesiony do `ui/gicleeframe_view_section_list_rendering.py` jako `GicleeFrameSectionListRenderingMixin`.
+- Przeniesiono dokładnie **8 metod** oraz **4 stałe** granicy (`_SECTION_ROW_GRIP`, `_SECTION_ROW_HEIGHT`, `_GF_SECTION_BATCH_SIZE`, `_GF_SECTION_BATCH_DELAY_MS`).
+- Renderer importuje `_GF_SECTION_FIRST_BATCH_SIZE` i `_SECTION_PLACEHOLDER` z modułu shell — bez duplikacji.
+- Mixin **nie posiada lifecycle** ani `__init__`, **nie dziedziczy** po widżecie Tk; **używa `after()` i `after_idle()`** wyłącznie dla batchingu renderingu.
+- Host `GicleeFrameView` dziedziczy **dziewięć mixinów** panelowych/subsystemowych przed `ctk.CTkScrollableFrame`.
+- Host nadal posiada:
+  - `__init__` i inicjalizację pól section-list/renderingu,
+  - `_finalize_full_list_render` i politykę initial-selection,
+  - dropdown open/close/collapse, outside-click bindings,
+  - `_on_section_row_click`, highlighting,
+  - `_start_section_drag`, `_finish_section_drag`, reorder RAM,
+  - `_upgrade_section_list_scroll`, progressive bootstrap/scheduling,
+  - perceived-ready, atomic-reveal i editor population.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M14+** — osobne PR-y. Dropdown interaction, highlighting i drag/reorder przeniesiono w GF-M12; selection orchestration przeniesiono w GF-M13.
+
+---
+
+## 23. GF-M12 — Section List Interaction, Highlight & RAM Reorder Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** ekstrakcja spójnej granicy interakcji listy sekcji (trigger/dropdown, outside-click, row-click gateway, highlight, drag/reorder RAM) bez absorpcji selection/editor pipeline, inventory loading, rendering implementation, shell construction ani persistence.
+
+### Wynik
+
+- **Section list interaction** przeniesiony do `ui/gicleeframe_view_section_list_interaction.py` jako `GicleeFrameSectionListInteractionMixin`.
+- Przeniesiono dokładnie **19 metod** oraz env constant/helper (`_GF_SECTION_ROW_COLLAPSE_ON_CLICK_ENV`, `_collapse_section_list_on_click_enabled`).
+- Mixin **nie posiada lifecycle** ani `__init__`, **nie dziedziczy** po widżecie Tk; **używa `after()`** wyłącznie dla opóźnionego outside-click bind.
+- Host `GicleeFrameView` dziedziczy **dziesięć mixinów** panelowych/subsystemowych przed `ctk.CTkScrollableFrame` (interaction po rendererze).
+- Host nadal posiada:
+  - `__init__` i inicjalizację pól dropdown/selection/drag,
+  - `_finalize_full_list_render` i politykę initial-selection,
+  - `_render_section_list` (via renderer mixin), inventory merge, progressive bootstrap,
+  - perceived-ready, atomic-reveal i editor population.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M14+** — osobne PR-y. Selection orchestration przeniesiono w GF-M13.
+
+---
+
+## 24. GF-M13 — Selection Orchestration, Priority Lane & Atomic Swap Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** ekstrakcja spójnej granicy selection orchestration (`_select_element` i powiązany pipeline: priority lane, job scheduling/cancellation, atomic swap, preserved selection po light inventory refresh) bez absorpcji editor implementation, details-on-demand, page-context, preview, layer navigation, inventory loading, section-list rendering/interaction ani persistence.
+
+### Wynik
+
+- **Selection orchestration** przeniesiony do `ui/gicleeframe_view_selection_orchestration.py` jako `GicleeFrameSelectionOrchestrationMixin`.
+- Przeniesiono dokładnie **18 metod** oraz **4 stałe** granicy (`_GF_ATOMIC_SWAP_STATUS_TEXT`, `_GF_SELECT_POPULATE_DEFER_MS`, `_GF_SELECTION_PRIORITY_WINDOW_MS`, `_GF_SELECTION_PRIORITY_YIELD_DEFER_MS`).
+- Host zachowuje adapter `_progressive_boot_enabled_for_selection()` — delegacja do `_progressive_boot_enabled()` bez duplikacji polityki env.
+- Mixin **nie posiada lifecycle** ani `__init__`, **nie dziedziczy** po widżecie Tk; **używa `after()`, `after_idle()` i `after_cancel()`** wyłącznie dla selection scheduling, priority lifecycle, atomic swap i cancellation renderer batch continuation.
+- Host `GicleeFrameView` dziedziczy **jedenaście mixinów** panelowych/subsystemowych przed `ctk.CTkScrollableFrame` (selection po interaction).
+- Host nadal posiada:
+  - `__init__` i inicjalizację pól selection/editor/details/page-context,
+  - `_progressive_boot_enabled_for_selection` (adapter),
+  - `_populate_editor` i implementację pól/layoutu edytora,
+  - details-on-demand, page-context population, preview/layer/children rendering,
+  - `_finalize_full_list_render` i politykę initial-selection,
+  - inventory merge, progressive bootstrap, perceived-ready i atomic-reveal orchestration.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M14+** — osobne PR-y. Editor shell/population przeniesiono w GF-M14; details-on-demand, visual renderers, page-context i lifecycle/inventory pozostają kandydatami kolejnych etapów (patrz §25–§29).
+
+---
+
+## 25. GF-M14 — Editor Shell, Prewarm & Minimal Population Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** ekstrakcja spójnej granicy editor shell & minimal population (deferred startup, identity/prewarm lifecycle, form shell, basic field rows, placeholder/refresh/stable-shell state, minimal visual cache, `_populate_editor` lightweight path) bez absorpcji details-on-demand, page-context engine, preview renderer, layer-navigation renderer, children population ani `_save_section_visual_cache`.
+
+### Wynik
+
+- **Editor shell** przeniesiony do `ui/gicleeframe_view_editor_shell.py` jako `GicleeFrameEditorShellMixin`.
+- Przeniesiono dokładnie **58 metod** oraz **10 stałych** granicy.
+- Host zachowuje adapter `_editor_micro_defer_ms()` — delegacja do `_GF_MICRO_DEFER_MS` bez duplikacji globalnej polityki micro-defer.
+- Mixin **nie posiada lifecycle** ani `__init__`, **nie dziedziczy** po widżecie Tk; **używa `after()`** wyłącznie dla przeniesionego editor startup/prewarm lifecycle.
+- Host `GicleeFrameView` dziedziczy **dwanaście mixinów** panelowych/subsystemowych przed `ctk.CTkScrollableFrame` (editor shell po selection orchestration).
+- Host nadal posiada:
+  - `__init__` i inicjalizację pól editor/details/page-context,
+  - `_editor_micro_defer_ms` (adapter),
+  - details-on-demand, page-context engine, preview/layer/children rendering,
+  - `_save_section_visual_cache`,
+  - inventory merge, progressive bootstrap, perceived-ready i atomic-reveal orchestration.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M15+** — osobne PR-y. Details-on-demand przeniesiono w GF-M15; visual renderers, page-context i lifecycle/inventory → GF-M16–GF-M18 (zakończone; patrz §26–§29).
+
+---
+
+## 26. GF-M15 — Details-on-Demand Orchestrator & Cache Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** ekstrakcja spójnej granicy details-on-demand (CTA timing, stable shell, module shell, cache policy, dispatch, legacy staged pipeline, deferred wrappers, shared visual-cache save) bez absorpcji preview renderer, page-context engine, layer-navigation renderer ani children renderer.
+
+### Wynik
+
+- **Details-on-demand** przeniesiony do `ui/gicleeframe_view_details_on_demand.py` jako `GicleeFrameDetailsOnDemandMixin`.
+- Przeniesiono dokładnie **48 metod** oraz **32 stałe** granicy.
+- Mixin **nie posiada lifecycle** ani `__init__`, **nie dziedziczy** po widżecie Tk; **używa `after()`** wyłącznie dla przeniesionych details/deferred jobs.
+- Host `GicleeFrameView` dziedziczy **trzynaście mixinów** panelowych/subsystemowych przed `ctk.CTkScrollableFrame` (details-on-demand po editor shell).
+- Host nadal posiada:
+  - `__init__` i inicjalizację pól details/page-context/preview/layer/children,
+  - preview renderer, page-context engine, layer-navigation renderer, children renderer,
+  - lifecycle, inventory merge, progressive bootstrap, perceived-ready i atomic-reveal orchestration.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M16+** — osobne PR-y. Visual renderers przeniesiono w GF-M16; page-context i lifecycle/inventory → GF-M17–GF-M18 (zakończone; patrz §28–§29).
+
+---
+
+## 27. GF-M16 — Visual Detail Renderers Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** ekstrakcja spójnej granicy visual detail renderers (tree-row lookup, preview cache/lifecycle, type-aware preview renderers, section preview update, layer-navigation renderer, children overview) bez absorpcji details-on-demand, editor shell, page-context engine, selection orchestration, lifecycle ani inventory.
+
+### Wynik
+
+- **Visual detail renderers** przeniesione do `ui/gicleeframe_view_visual_detail_renderers.py` jako `GicleeFrameVisualDetailRenderersMixin`.
+- Przeniesiono dokładnie **40 metod**; mixin **nie wprowadza nowych stałych** granicy.
+- `_LAYER_NAV_TITLE` pozostaje własnością `gicleeframe_view_editor_shell.py` i jest importowany bez duplikacji wartości.
+- Mixin **nie posiada lifecycle** ani `__init__`, **nie dziedziczy** po widżecie Tk; **nie używa `after()`**.
+- Host `GicleeFrameView` dziedziczy **piętnaście mixinów** panelowych/subsystemowych przed `ctk.CTkScrollableFrame` (visual renderers po details-on-demand; page-context engine w GF-M17).
+- Host nadal posiada:
+  - `__init__` i inicjalizację pól preview/layer/children/page-context,
+  - lifecycle, inventory merge, progressive bootstrap, perceived-ready i atomic-reveal orchestration.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M16+** — osobne PR-y. Visual renderers przeniesiono w GF-M16; page-context i lifecycle/inventory → GF-M17–GF-M18 (zakończone; patrz §28–§29).
+
+---
+
+## 28. GF-M17 — Page Context & Inline Settings Engine Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** ekstrakcja spójnej granicy page-context engine (shell summary, routing progressive/immediate, readonly/setting caches, lazy divider groups, inline setting editor, batch scheduling) bez absorpcji editor shell, details-on-demand, visual renderers, selection orchestration, lifecycle ani inventory.
+
+### Wynik
+
+- **Page context engine** przeniesiony do `ui/gicleeframe_view_page_context.py` jako `GicleeFramePageContextMixin`.
+- Przeniesiono dokładnie **39 metod** i **10 stałych** granicy oraz helper `_progressive_page_context_enabled()`.
+- Mixin **nie posiada lifecycle** ani `__init__`, **nie dziedziczy** po widżecie Tk.
+- Host `GicleeFrameView` dziedziczy **piętnaście mixinów** panelowych/subsystemowych przed `ctk.CTkScrollableFrame` (page-context po visual renderers).
+- Host nadal posiada:
+  - `__init__` i inicjalizację pól page-context/selection/lifecycle,
+  - adaptery shell (`_ensure_page_context_shell_built` w GF-M14, `_apply_cached_page_context_summary` w GF-M15),
+  - lifecycle, inventory merge, progressive bootstrap, perceived-ready i atomic-reveal orchestration,
+  - `_apply_edit_to_draft` i writer/persistence poza zakresem GF-M17.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M18** — lifecycle/inventory (zakończone; patrz §29).
+
+---
+
+## 29. GF-M18 — Lifecycle, Inventory & Final Host Boundary Extraction
+
+**Status:** zakończone — final host boundary zintegrowany.
+
+**Cel:** ekstrakcja spójnej granicy lifecycle, inventory i shell orchestration (navigation lifecycle, RAM cache, visual-session timing, loading overlay, perceived-ready, atomic-reveal, lazy/eager shell, deferred sections/control-column startup, bounded inventory refresh, progressive section-list bootstrap) bez absorpcji `__init__`, adapterów hosta ani `_apply_edit_to_draft`.
+
+### Wynik
+
+- **Lifecycle, inventory & shell orchestration** przeniesione do `ui/gicleeframe_view_lifecycle_inventory.py` jako `GicleeFrameLifecycleInventoryMixin`.
+- Przeniesiono dokładnie **58 metod**, **15 aktywnych stałych** granicy oraz **3 helpery**: `_env_enabled`, `_progressive_boot_enabled`, `_lazy_shell_enabled`.
+- `_GF_MICRO_DEFER_MS` jest jedną z **15 stałych** importowanych przez host — **nie** helperem.
+- Host zachowuje `__init__`, `_editor_micro_defer_ms()`, `_progressive_boot_enabled_for_selection()`, `_apply_edit_to_draft`.
+- Mixin **nie posiada `__init__`**, **nie dziedziczy** po widżecie Tk; **używa `after()` / `after_idle()` / `after_cancel()`** dla przeniesionego lifecycle.
+- Host `GicleeFrameView` dziedziczy **szesnaście mixinów** panelowych/subsystemowych przed `ctk.CTkScrollableFrame` (lifecycle/inventory jako ostatni mixin przed host widget base).
+- Host nadal posiada wyłącznie: `__init__` i inicjalizację pól stanu, dwa adaptery micro-defer/progressive-boot, `_apply_edit_to_draft` i RAM draft mutation.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+**GF-M1–GF-M18 modularization complete.** Kolejna aktywność poza GF: Start Files v40, potem oddzielny program Bartosz OS / AgentRuntime / Antigravity SDK discovery. **Brak GF-M19.**
+
+---
+
+## 30. Finalny audit GICLÉE FRAME — 2026-07-14
+
+| Element | Wynik |
+|---------|-------|
+| Master SHA | `f3d830910b2e9a5f108ec0896cc19c88d3d1eb5f` |
+| Modularizacja | **GF-M1–GF-M18 complete** |
+| MRO | **16 mixinów** przed `ctk.CTkScrollableFrame` |
+| Host retention | `__init__`, `_editor_micro_defer_ms()`, `_progressive_boot_enabled_for_selection()`, `_apply_edit_to_draft` |
+| Guardrails | RAM-only — brak writera, zapisu plików, Shopify mutation |
+| CI ready #302 | Hermetic **48 passed**; canonical Tk **6 passed** (Tcl/Tk 8.6.15); full baseline **2342 passed**, 1 optional skip; JUnit **2343 tests**, 0 failures, 0 errors, 1 skipped |
+| Runtime inventory | **714** files scanned, **0** parse errors, **0** findings |
+| Decyzja audit | **PASS** |
+| Następny etap GF | **NO GF-M19** |
+| Następny program | Start Files v40 → Bartosz OS / AgentRuntime / Antigravity SDK discovery (osobny tor) |

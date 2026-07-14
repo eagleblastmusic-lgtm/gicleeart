@@ -21,7 +21,7 @@ from .gicleeapp_push import (
     _run_git,
     scan_file_secrets,
 )
-from .zip_knowledge import CLEAN_PACK_V38_ACTIVE_FILES, build_starter_knowledge_zip
+from .zip_knowledge import CLEAN_PACK_V40_ACTIVE_FILES, build_starter_knowledge_zip
 
 OnLine = list[str] | None
 
@@ -106,7 +106,7 @@ def _norm_rel(path: str | Path) -> str:
 
 
 def starter_push_allowlist_rel_paths() -> list[str]:
-    names: list[str] = list(CLEAN_PACK_V38_ACTIVE_FILES)
+    names: list[str] = list(CLEAN_PACK_V40_ACTIVE_FILES)
     for extra in (GPT_START_MESSAGE_FILE,):
         if extra not in names:
             names.append(extra)

@@ -28,7 +28,7 @@ def starter_push_env(tmp_path, monkeypatch):
     theme.mkdir()
     starter.mkdir()
 
-    for name in zk.CLEAN_PACK_V38_ACTIVE_FILES:
+    for name in zk.CLEAN_PACK_V40_ACTIVE_FILES:
         (starter / name).write_text(f"# {name}\n", encoding="utf-8")
     (starter / cfg.GPT_START_MESSAGE_FILE).write_text("start\n", encoding="utf-8")
     (starter / cfg.GPT_STARTER_ZIP_NAME).write_bytes(b"PK\x03\x04")
@@ -51,7 +51,7 @@ def test_starter_push_allowlist_includes_template_excludes_zip(starter_push_env)
 
     paths = sfp.starter_push_allowlist_rel_paths()
     assert "Pliki startowe dla GPT/GICLEEAPP_STUDIO_2_0_MODULE_TEMPLATE.md" in paths
-    assert "Pliki startowe dla GPT/giclee_cursor_architect_knowledge_v38.zip" not in paths
+    assert "Pliki startowe dla GPT/giclee_cursor_architect_knowledge_v40.zip" not in paths
     assert "Pliki startowe dla GPT/Wiadomość początkowa.txt" in paths
 
 

@@ -1,18 +1,175 @@
 # Current App State
 
+**Paczka instrukcji:** v4.0 · ostatnia aktualizacja ręczna: 2026-07-14
+
+---
+
+## Current repository state
+
+Weryfikacja: `git ls-remote` z `C:\Strona\pusty` (2026-07-13). GitHub connector (`gh`) niedostępny lokalnie — przed merge zweryfikuj przez connector w Custom GPT.
+
+### gicleeart (`eagleblastmusic-lgtm/gicleeart`)
+
+Default branch: `master`  
+Current SHA: `f3d830910b2e9a5f108ec0896cc19c88d3d1eb5f`  
+Open PRs: brak otwartego implementation PR na początku etapu v40  
+Current primary stage: **Start Files v40 — autonomous engineering system** (w trakcie / po ukończeniu tego brancha)  
+Poprzedni tor: **GICLÉE FRAME GF-M1–GF-M18 modularization — COMPLETED**  
+Ostatnie merge: **PR #63 GF-M17** · **PR #64 GF-M18** @ `f3d830910b2e9a5f108ec0896cc19c88d3d1eb5f`  
+Verified at: 2026-07-14 (`git fetch origin` + `rev-parse origin/master`)
+
+#### GICLÉE FRAME GF-M1–GF-M18 — COMPLETED + final audit PASS (2026-07-14)
+
+- **GF-M1–GF-M18 modularization complete**
+- **16 mixinów** w MRO `GicleeFrameView`
+- Host retains **4 behavioral methods**: `__init__`, `_editor_micro_defer_ms()`, `_progressive_boot_enabled_for_selection()`, `_apply_edit_to_draft`
+- **Final audit:** PASS — dokumentacja w `cursor-api/giclee_app/docs/gicleeframe-planning.md` §30
+- **Brak GF-M19** — modularizacja GICLÉE FRAME zamknięta
+- Ready CI **#302**: Hermetic 48 passed; canonical Tk 6 passed (Tcl/Tk 8.6.15); full baseline 2342 passed, 1 optional skip; JUnit 2343 tests, 0 failures, 0 errors, 1 skipped; runtime-write inventory 714 files, 0 parse errors, 0 findings
+
+**NEXT PRIMARY (po ukończeniu Start Files v40):** Bartosz OS / AgentRuntime / Antigravity SDK — discovery i pierwszy vertical slice (osobny program, nie GF-M19).
+
+Guardrails (tor gicleeart): no Shopify mutation; no deploy; no live-theme writer; no automatic data migration; no ZIP generation without explicit instruction; no force-push.
+
+#### HISTORICAL / SUPERSEDED — Runtime Foundation checkpoint 2026-07-13 (pre-PR #44–#46)
+
+**Superseded by:** § Runtime-write Inventory Closure — COMPLETED (2026-07-13) poniżej.
+
+#### Runtime Foundation / Repository Safety — checkpoint 2026-07-13
+
+Merged stages (zamknięte):
+
+- **PR #39** — CI Tcl/Tk runtime integrity (`windows-2022`, direct Tcl/Tk, no Tk retry, blocking GUI smoke + warm-up)
+- **PR #38** — Description mark store (inventory 24→17)
+- **PR #41** — Tytuły AI draft store (17→15)
+- **PR #42** — Social Media cycle directories (15→13)
+- **PR #43** — Kolaż Export Safety (13→12)
+
+Latest verified Stage 2 baseline (HISTORICAL run reference): `29236997354` — Hermetic 48 passed; Tk GUI 6; warm-up 1; Full 1739 passed, 1 skipped; inventory 12; parse errors 0; scanned 696.
+
+Remaining runtime-write inventory (12):
+
+| Moduł | Findings | Klasyfikacja |
+|-------|----------|--------------|
+| KPiR | 8 | verified false positives — do not re-migrate |
+| Karuzela | 2 | intentional Shopify theme writers — osobny Writer Safety |
+| Print Optimize | 2 | user workspace — **NEXT PRIMARY** |
+
+**NEXT PRIMARY (tor gicleeart / Runtime Foundation):** Print Optimize Workspace Safety  
+- default `test_photos` i `ww_pairs` poza checkout  
+- zachować user-selected paths  
+- brak auto migracji/kasowania/nadpisywania  
+- zachować GUI i CLI  
+- focused tests; expected inventory delta: **12 → 10**  
+Verified at: 2026-07-13 (master SHA potwierdzony `git ls-remote origin master`)
+
+#### Runtime-write Inventory Closure — COMPLETED (2026-07-13)
+
+**Status podtoru:** COMPLETED  
+**runtime-write inventory:** `0` (parse errors: 0, scanned Python files: 696)  
+**Delta inventory:** 12 → 10 → 8 → 0
+
+**Zamknięte podzadania:**
+
+- **Print Optimize Workspace Safety** — PR #44, merge `468fd381b708ee2c01832ac9b7b6695438c3e7fc`, head `2c1f38725de078aeac1666163a3f57f230465c22`, CI `29264514706` / run #221, Hermetic 48, Tk GUI 6, warm-up 1, Full 1747 passed / 1 skipped, inventory 12→10
+- **Karuzela Writer Safety** — PR #45, merge `9933b83b901eee5026fbaab87adb9e67ef8cfe8a`, head `1e854ce0135ef39fd6052a4a6fe2a75352b4e964`, CI `29265629361` / run #223, Hermetic 48, Tk GUI 6, warm-up 1, Full 1759 passed / 1 skipped, inventory 10→8
+- **KPiR Store Resolver Clarity** — PR #46, merge/master `c3cfe2efdee0de772415d905c5ca878e6d682b1d`, head `bbb0d17d4537de08a52b60e3936ef2ccc44f8ada`, CI `29266589571` / run #225, Hermetic 48, Tk GUI 6, warm-up 1, Full 1765 passed / 1 skipped, JUnit 1766 tests / 0 failures / 0 errors / 1 skipped, inventory 8→0
+
+**Final validation for Runtime-write Inventory Closure — run #225:** dowód zamknięcia podtoru PR #46; **nie** koniec całego programu Stage 2 CI.
+
+**GF-M1 — Pure View Contracts Extraction — COMPLETED (2026-07-13):**
+
+- **PR #47** — merge SHA / aktualny master: `36d66b451596f233dc11b03e0c1ecdb9868940c6`
+- base przed etapem: `c3cfe2efdee0de772415d905c5ca878e6d682b1d`
+- historyczny finalny head przed merge: branch `gpt-work/gicleeframe-modularization-m1` @ `0f0b7bfc4f58cadb4862f632960c070363a2d588`
+- CI run `29269940375` / run #227 — Hermetic 48, Tk GUI 6, warm-up 1, Full 1784 passed / 1 skipped, JUnit 1785 tests / 0 failures / 0 errors / 1 skipped, inventory 0, parse errors 0, scanned 697 Python files
+- zakres: `PageContextRowSpec`, `SectionVisualCacheEntry`, `_ellipsize`, `_section_kind_copy` przeniesione do `cursor-api/giclee_app/ui/gicleeframe_view_models.py`; re-eksporty z `gicleeframe_view.py` zachowane; bez zmian UI, layoutu, timingów, performance, RAM-only workflow
+
+**NEXT PRIMARY:** GF-M2 — GICLÉE FRAME Stateless UI Primitives Extraction (planowany discovery przed implementacją; nie rozpoczęty branch/PR).
+
+**Po GF-M2 (plan):** dalsza modularizacja GICLÉE FRAME → Launcher composition → Shopify theme modularization → repo/documentation consolidation.
+
+**Nadal otwarte (nie zamknięte tym podtorem):** szerszy ETAP 1 Repository Safety (m.in. finalny lokalny dry-run, zatwierdzona kopia danych, SHA źródło–cel, usunięcie zaakceptowanych runtime paths z trackingu, `.gitignore`, zero prohibited paths w `git ls-files`); szerszy ETAP 3A (AppPaths, ThemeRootResolver, TaskRunner, OperationResult, SafeFileTransaction, wspólny audit log); Theme Page Editor / WS-1.3 (osobny tor partial); szerszy ETAP 3C (launcher state, studio state, logi, cache, backupy, konfiguracja użytkownika).
+
+Guardrails (tor gicleeart): no Shopify mutation; no deploy; no live-theme writer; no automatic data migration; no ZIP generation without explicit instruction; no force-push.
+
+**Merge authorization (stała autoryzacja użytkownika):** działa wyłącznie po finalnym review, odczycie artifactów, potwierdzeniu dokładnego head SHA, `behind_by: 0`, sprawdzeniu changed files, braku nierozwiązanych review threads i zielonych wymaganych jobów. **Nie oznacza zgody na:** deploy, Shopify mutation, automatyczną migrację, force-push, history rewrite, generowanie ZIP-a.
+
+### gicleeapp (`eagleblastmusic-lgtm/gicleeapp`)
+
+Default branch: `main`  
+Current SHA: `294071efe832f2563dc64502412a75ada44246aa`  
+Open PRs: nie zweryfikowano przez connector w tej sesji  
+Role: kanoniczne repo aplikacji GicleeApp / cursor-api; push przez UI „Push GicleeApp do GitHub”  
+Verified at: 2026-07-13
+
+### gicleeart-gpt (`eagleblastmusic-lgtm/gicleeart-gpt`)
+
+Default branch: `main`  
+Current SHA: `13dd18beef4e1e0a5085769369430ef89e0ec6ad`  
+Snapshot date: nieznana z tej sesji — traktuj jako working-tree mirror, nie live Shopify  
+**Warning:** snapshot is not live Shopify production.  
+Verified at: 2026-07-13 (`git ls-remote gpt main`)
+
+### giclee-viewer (`eagleblastmusic-lgtm/giclee-viewer`)
+
+Default branch: `main` (zakładane)  
+Current SHA: **nie zweryfikowano w tej sesji** — ostatni znany lokalnie: `26446ce487d6fe1a511c7c137215834c78b6849f`  
+Current completed stage: GV-7 (historycznie)  
+Next verified stage: GV-8 Similarity / Variants / Pairing — **wymaga weryfikacji GitHub**  
+Verified at: pending connector
+
+### GicleeAppStudio_2 (`eagleblastmusic-lgtm/GicleeAppStudio_2`)
+
+Default branch: `main` (zakładane)  
+Current SHA: **nie zweryfikowano w tej sesji**  
+Current implementation stage: sprawdź repo — może wyprzedzać opis „future only” w starszych sekcjach poniżej  
+Verified at: pending connector
+
+---
+
+## Knowledge pack integration (integracjagpt)
+
+**Status (2026-07-14):** `integracjagpt` — migracja do paczki **v40** (47 plików).
+
+- ZIP: `giclee_cursor_architect_knowledge_v40.zip` (**47 plików**)
+- Manifest: `CLEAN_PACK_V40_ACTIVE_FILES` w `zip_knowledge.py`
+- Przycisk **„Skopiuj .zip”** w Oknie rozmowy generuje paczkę v40.
+
+v39 pozostaje archiwum na dysku — nie aktywny manifest.
+
+---
+
+## HISTORICAL — Known integration mismatch
+
+**Status: HISTORICAL / RESOLVED — 2026-07-13**
+
+Wcześniej lokalne pliki były v39, a `integracjagpt` pakiował v38. Po aktualizacji kodu integracji (2026-07-13) oba są v39; manifest i ZIP zawierają 46 plików Knowledge.
+
+---
+
+## HISTORICAL / SUPERSEDED — auto-sync GicleeApp 2026-07-11
+
+Poniższy blok zastąpiony przez § Current repository state (2026-07-13). Zachowany dla historii auto-sync Push GicleeApp.
+
 <!-- gpt-starter:gicleeapp-push:start -->
-GicleeApp Studio v1.54.2
+GicleeApp Studio v1.54.3 (Writer Safety clean worktree) · GitHub gicleeapp v1.54.2
 
 GitHub / aktualna wersja aplikacji (`eagleblastmusic-lgtm/gicleeapp`):
-v1.54.2 — zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`
+v1.54.2 — zgodnie z `cursor-api/giclee_app/__init__.py` i `cursor-api/package.json` w ostatnim pushu
 Ostatni push GicleeApp: `294071e` na `main` (2026-07-11 17:25 UTC) — Refresh GicleeApp repository snapshot
 
 Monorepo origin/master (projekt / docs):
 3ccbd19 feat(home-flow): add direct navigation and bounded structure writer
 
-Lokalne commity monorepo (nie na origin/master, push pending):
-- `e46cb49` feat(writer-safety): isolate variant save and delta-only apply
-- `14a48da` chore(audit): snapshot submenu and shared theme changes
+Writer Safety — czysty worktree (osobny od mieszanego `C:\Strona\pusty`):
+- worktree: `C:\Strona\pusty-ws12-clean`
+- branch: `local/writer-safety-ws12-clean`
+- accepted master checkpoint / baza prac: `3ccbd19ebe77b4aadf9403e271d821c3dd28bf2e`
+- WS-1.2: `d7790d0086d785cf8c1eef08094563701d0f4fda`
+- WS-1.3: `1364aea` — feat(writer-safety): lock window saves and apply sources (lokalny, **nie wypchnięty**)
+- working tree po commicie WS-1.3: **CLEAN**
+- wersja walidacji WS-1.3: **v1.54.3**
 
 Previous checkpoint:
 46fc718 feat(studio): add GICLÉE FRAME page inventory RAM editor (v1.40.0)
@@ -20,15 +177,16 @@ Previous checkpoint:
 Branch status:
 - **GitHub gicleeapp:** v1.54.2 / `main` @ `294071e` (auto-sync po Push GicleeApp, 2026-07-11 17:25 UTC)
 - **monorepo origin/master:** `3ccbd19` — feat(home-flow): add direct navigation and bounded structure writer
-- **lokalnie monorepo:** dodatkowe commity względem origin/master — push pending (nie zakładać push monorepo bez potwierdzenia użytkownika)
-  - `e46cb49` feat(writer-safety): isolate variant save and delta-only apply
-  - `14a48da` chore(audit): snapshot submenu and shared theme changes
+- **Writer Safety clean worktree:** `local/writer-safety-ws12-clean` @ `1364aea` — lokalny commit **nie na GitHub**; working tree **CLEAN**
+- **oryginalny worktree** `C:\Strona\pusty`: oddzielny, zawiera inne niezwiązane zmiany; **nie** traktować `audit/submenu-homeflow-20260711-1622` jako źródła Writer Safety
 
 GPT starter files:
-auto-sync po Push GicleeApp 2026-07-11 17:25 UTC (gicleeapp `294071e`, v1.54.2; paczka v38; źródło = ten folder, nie ZIP)
+checkpoint refresh Writer Safety WS-1.3 (2026-07-11); GitHub gicleeapp nadal `294071e` v1.54.2; paczka v38; źródło = ten folder, nie ZIP
 
 Recent context:
-- **GitHub gicleeapp:** v1.54.2 / `main` @ `294071e` — auto-sync po Push GicleeApp
+- **GitHub gicleeapp:** v1.54.2 / `main` @ `294071e` — auto-sync po Push GicleeApp (bez pushu WS-1.3)
+- **Writer Safety WS-1…WS-1.3:** DONE / TESTED LOCALLY w czystym worktree; szczegóły § Writer Safety
+- **Draft PR #1** (`gpt-work/writer-safety-ws1-clean` @ `492e516`) — OPEN / DRAFT / UNMERGED; blob SHA 6 plików WS-1.3 = lokalny `1364aea`
 - GICLÉE FRAME™ F2.1: closed + pushed (historycznie v1.40.1 / `4647c1b`; aktualna wersja aplikacji na GitHub jest nowsza)
 - Local runtime/untracked still outside commit and remote (working tree hygiene pending)
 <!-- gpt-starter:gicleeapp-push:end -->
@@ -124,6 +282,7 @@ Completed:
 - Istnieje: `cursor-api/docs/GICLEEAPP_IMPLEMENTED_SOLUTIONS_INDEX.md`
 - Przed nowym komponentem, helperem lub mechanizmem GicleeApp Cursor **musi** go sprawdzić (wzorce `_shared`, rejestracja, storage, logi, dialogi, DnD, operacje na plikach, guardrails)
 - Po dodaniu reużywalnego komponentu/helpera/mechanizmu Cursor **musi** zaktualizować indeks — **nie** przy kosmetyce, tylko przy nowym wzorcu do ponownego użycia
+- Writer Safety: `cursor-api/docs/theme-page-editor-writer-safety.md` + moduł `cursor-api/Komponenty/_shared/theme_page_editor/writer_safety_concurrency_fix.py` (WS-1.3)
 
 Not started:
 - GICLÉE FRAME™ F3 — lokalny zapis draftów RAM do pliku
@@ -133,7 +292,11 @@ Not started:
 - Katalog Shopify integration
 - Katalog migration
 
-Next recommended:
+## HISTORICAL / SUPERSEDED — Next recommended 2026-07-11
+
+**Superseded by:** § `gicleeart` → Runtime-write Inventory Closure COMPLETED + GF-M1 COMPLETED + GF-M2 NEXT PRIMARY (2026-07-13). Poniższe tory produktowe mogą nadal obowiązywać **osobno** — nie jako „current primary” dla toru GICLÉE FRAME modularization.
+
+Next recommended (historyczne):
 
 **Kontynuuj z aktualnego checkpointu — bez szerokiego cleanupu:**
 1. FAQ Hero image effects: jeżeli nie ma nowszego potwierdzenia, wykonaj test celowany + `compileall` + `git diff --check` + ręczny podgląd live.
@@ -143,6 +306,58 @@ Next recommended:
 **Studio Performance — GICLÉE FRAME 6G.5:** **PASS / checkpoint**. Nie startować kolejnej szerokiej optymalizacji bez konkretnego objawu UX i nowych metryk.
 
 **GICLÉE FRAME™ F3 / writer / Shopify sync-deploy:** nadal nie startować bez osobnej decyzji.
+
+**Writer Safety — publikacja czystego ciągu:** `d7790d0` → `1364aea` na osobnym zdalnym branchu + podpięcie do draft PR **nie wykonane** — wymaga osobnej, wyraźnej zgody użytkownika.
+
+---
+
+## Writer Safety — Theme Page Editor (checkpoint WS-1.3 — 2026-07-11)
+
+**Tor:** `gicleeart` / Theme Page Editor — **osobny od Runtime Foundation**. Nie jest „next primary” dla toru Print Optimize.
+
+**Status:** WS-1, WS-1.1, WS-1.2, WS-1.3 — **DONE / TESTED LOCALLY** w czystym worktree.
+
+**Czysty worktree:** `C:\Strona\pusty-ws12-clean` · branch `local/writer-safety-ws12-clean` · working tree **CLEAN** po `1364aea`.
+
+**Baza prac:** `3ccbd19` (accepted master checkpoint).
+
+| Etap | Commit | Opis |
+|------|--------|------|
+| WS-1 | (w ciągu clean) | Rozdzielenie zapisu wariantu od zapisu motywu |
+| WS-1.1 | (w ciągu clean) | Naprawa kontekstu deferred closure dla przycisków wielu okien |
+| WS-1.2 | `d7790d0` | Delta-only variant save i Apply |
+| WS-1.3 | `1364aea` | Izolacja zapisów między oknami i blokada źródeł Apply |
+
+**WS-1.3 — główne zabezpieczenia:**
+- każde okno: własny SHA-256 wariantu z chwili wczytania; nieaktualne okno blokowane przy zapisie,
+- podgląd Apply zamraża bajty i hashe bazy oraz wariantu,
+- przed i po Apply ponowna weryfikacja źródeł; przy zmianie źródła — rollback celów i bazy,
+- baza otrzymuje dokładne bajty wariantu z podglądu, nie nowszą zawartość pliku.
+
+**Nowe pliki WS-1.3:**
+- `cursor-api/Komponenty/_shared/theme_page_editor/writer_safety_concurrency_fix.py`
+- `cursor-api/tests/test_theme_page_editor_writer_safety_concurrency_fix.py`
+
+**Walidacja WS-1.3:** 20 passed · compileall PASS · `git diff --check` PASS · porównanie 6 plików z draft PR head `492e516` — blob SHA identyczne.
+
+**Manualne testy:** dwa okna (stale save zablokowany, gf3=0.6); stale Apply preview (blokada po zewnętrznej zmianie wariantu); cleanup gf3 — motyw/gf1/gf2 bez zmian.
+
+**Writer Safety gwarantuje obecnie:**
+- Save zapisuje wyłącznie aktywny wariant; nie zapisuje motywu ani innych wariantów,
+- nieaktualne okno nie nadpisuje nowszego zapisu,
+- Apply stosuje wyłącznie zarządzaną deltę; nie używa zmienionych źródeł po preview,
+- Apply wycofuje zapisane cele przy wykryciu zmiany źródła; brak automatycznego deployu.
+
+**Zdalny draft PR** (`eagleblastmusic-lgtm/gicleeart`):
+- **#1** — feat(writer-safety): per-window save and source-locked apply (v1.54.3)
+- branch: `gpt-work/writer-safety-ws1-clean` · head: `492e516427910c9760f9cd5b2ca00df0e9e397fa`
+- stan: OPEN · DRAFT · UNMERGED
+
+**Nie wykonano:** push lokalnego `1364aea`, merge PR, deploy, zapis do Shopify.
+
+**Oryginalny worktree** `C:\Strona\pusty` pozostaje oddzielny z niezwiązanymi zmianami. Nie traktować `audit/submenu-homeflow-20260711-1622` jako źródła merge/push Writer Safety.
+
+**Next (wymaga osobnej zgody):** publikacja czystego ciągu `d7790d0` → `1364aea` na osobnym zdalnym branchu; podpięcie do draft PR lub nowy draft PR.
 
 ---
 
@@ -265,7 +480,7 @@ Technical backlog (only after separate acceptance):
 Important guardrails:
 - Knowledge pack source folder: `C:\Strona\pusty\Pliki startowe dla GPT` — **Cursor edytuje tylko pliki źródłowe `.md` / `.txt` w tym folderze**
 - **Cursor NIE generuje ZIP-a wiedzy** — bez osobnego, wyraźnego polecenia użytkownika
-- ZIP traktuj jako **aktualny snapshot wiedzy** załączony do rozmowy; ZIP wiedzy (`giclee_cursor_architect_knowledge_v38.zip`) generuje **automatycznie program użytkownika** przy wysyłce paczki przez **Okno rozmowy** (Integracja z GPT); **źródłem edycji dla Cursora** są lokalne pliki w `Pliki startowe dla GPT`
+- ZIP traktuj jako **aktualny snapshot wiedzy** załączony do rozmowy; ZIP wiedzy (`giclee_cursor_architect_knowledge_v39.zip`) generuje **automatycznie program użytkownika** przy wysyłce paczki przez **Okno rozmowy** (Integracja z GPT); **źródłem edycji dla Cursora** są lokalne pliki w `Pliki startowe dla GPT`
 - Cursor nie uruchamia: `build_starter_knowledge_zip()`, GUI **Skopiuj .zip**, żadnego ręcznego generatora ZIP
 - GICLÉE FRAME F2.1: RAM-only — no write_text, no writer, no sync/deploy, no Komponenty/* mutation from panel
 - Do not start F3/F4/writer without separate approval
@@ -355,7 +570,9 @@ python -m tools.performance_agent --scenario-checklist
 
 ---
 
-## Giclee Viewer — current state
+## HISTORICAL / SUPERSEDED — Giclee Viewer — current state (2026-07-08)
+
+**Superseded by:** § Current repository state → `giclee-viewer` (weryfikacja pending). Poniższe szczegóły mogą być nieaktualne — sprawdź GitHub przed pracą.
 
 Repo GitHub:
 
@@ -501,7 +718,9 @@ Zakres przyszły:
 
 ---
 
-## GicleeApp Studio 2.0 — future direction
+## HISTORICAL / SUPERSEDED — GicleeApp Studio 2.0 — future direction (2026-07-08)
+
+**Superseded by:** § Current repository state → `GicleeAppStudio_2` (weryfikacja pending). Repo `GicleeAppStudio_2` na GitHubie może wyprzedzać opis „future only” poniżej.
 
 GicleeApp Studio 2.0 ma być przyszłym C# / WPF shell dla obecnego workflow Giclée Art.
 
@@ -717,7 +936,9 @@ Szczegóły w COMPACT v38 § UI / Product Taste Direction.
 
 ---
 
-## Source of Truth / Decision Memory
+## HISTORICAL / SUPERSEDED — Source of Truth / Decision Memory (2026-07-08)
+
+**Superseded by:** `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v39.md` § Hierarchia źródeł prawdy oraz § Current repository state powyżej.
 
 W nowych sesjach GPT należy traktować poniższe zasady jako obowiązujące:
 
@@ -798,3 +1019,183 @@ Szczegóły w COMPACT v38 § Source of Truth / Decision Memory.
 - `main`/`master` na GitHubie **nie są modyfikowane** bez osobnej, jednoznacznej zgody użytkownika.
 - Paczka wiedzy: **v3.8** (`GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md`, `GPT_GIT_BRANCH_WORKFLOW.md`). Procedura importu: Base SHA + Commit SHA obowiązkowe dla GicleeApp.
 - Brak deklaracji konkretnej implementacji na branchu GPT bez dowodu w GitHub / raporcie użytkownika.
+
+<!-- gpt-window-2:catalog-submenu-preview-queue:start -->
+## Checkpoint — Shopify Katalog submenu / kolejka podglądów — 2026-07-11
+
+### Aktualny wygląd i decyzje wizualne
+
+- Utworzono szeroki snapshot audytowy motywu:
+  - repo: `eagleblastmusic-lgtm/gicleeart-gpt`,
+  - branch: `audit/submenu-current-20260711-165132`,
+  - SHA: `2b352462cdffc64bef1e03356aa7d1439b136e58`.
+- Branch audytowy jest tylko snapshotem do odczytu. Zawiera wiele niezwiązanych zmian motywu i nie powinien być używany jako branch wdrożeniowy ani bezpośredni PR.
+- Obecny wygląd submenu z trzema kolumnami artystów i dużym podglądem obrazu po prawej został oceniony jako udany, przestronny i muzealny.
+- Nie zmieniać automatycznie:
+  - `const totalSlots = artistLinks.length`
+  - na `visible.length`.
+- Obecne liczenie wysokości zachowuje celowy rytm pionowy także po ukryciu 24 artystów. Zmiana na liczbę widocznych elementów mogłaby nadmiernie ścisnąć listę u góry.
+- Dostępne efekty nazw artystów:
+  - `classic`,
+  - `curatorial_glow`,
+  - `depth_of_field`,
+  - `museum_marker`,
+  - `preview_focus`.
+- Aktualnie testowany efekt lokalny: `museum_marker`.
+- Lista ukrytych artystów jest przechowywana jako zwykły wieloliniowy tekst, bez konwersji do HTML.
+- Testy komponentu Submenu katalog obejmują obecnie 6 przypadków i przechodziły lokalnie.
+
+### Priorytetowa kolejka podglądów artystów
+
+Branch implementacyjny:
+
+- branch: `gpt-work/catalog-preview-priority-queue`,
+- baza: `2b352462cdffc64bef1e03356aa7d1439b136e58`,
+- HEAD: `b46dea314c7466cf2dd81fe007ed65c0c8133811`.
+
+Dokładny zakres brancha:
+
+- `assets/giclee-catalog-preview-queue.js` — nowy plik,
+- `snippets/stylesheets.liquid` — jedna linia loadera.
+
+Zachowanie kolejki:
+
+- maksymalnie 3 requesty łącznie,
+- maksymalnie 2 requesty tła,
+- jeden slot pozostaje dostępny dla aktualnego hover/focus,
+- hover intent delay: 75 ms,
+- najnowszy hover otrzymuje priorytet,
+- starsze nierozpoczęte priorytety wracają do kolejki tła,
+- wspólny cache zapobiega ponownym requestom,
+- focus klawiatury może bezpośrednio zażądać podglądu.
+
+Stan lokalny w `C:\Strona\pusty` po synchronizacji:
+
+- `?? assets/giclee-catalog-preview-queue.js`,
+- `M snippets/stylesheets.liquid`,
+- loader istnieje dokładnie jeden raz,
+- `node --check` — PASS,
+- `git diff --check` — PASS,
+- brak merge, deployu i pushu.
+
+Test Network potwierdził, że 53 requesty `products.json` nie startują jednocześnie. Requesty tła były wykonywane partiami po maksymalnie dwa równolegle.
+
+Ważne ograniczenie obecnej wersji:
+
+- kolejka ogranicza równoległość,
+- ale nadal stopniowo prefetchuje wszystkie 53 widoczne kolekcje,
+- następne opcjonalne usprawnienie to ograniczenie automatycznego prefetchu do około 4–6 artystów albo małych paczek uruchamianych podczas bezczynności,
+- to dalsze ograniczenie nie zostało jeszcze zaimplementowane.
+
+Błędy `shop.app ... 403` oraz część błędów konta Shopify podczas Theme Dev na `127.0.0.1` nie były związane z kolejką podglądów.
+<!-- gpt-window-2:catalog-submenu-preview-queue:end -->
+
+<!-- gpt-window-3:catalog-panel-modularization:start -->
+## Checkpoint — Shopify Katalog submenu / modularizacja panelu — 2026-07-11
+
+**Status:** zastosowane lokalnie w `C:\Strona\pusty`; walidacja statyczna PASS; test wizualny po modularizacji pozostaje do wykonania.
+
+### Branch i źródło
+
+- repo: `eagleblastmusic-lgtm/gicleeart-gpt`
+- snapshot bazowy: `audit/submenu-current-20260711-165132`
+- Base SHA: `2b352462cdffc64bef1e03356aa7d1439b136e58`
+- branch docelowy: `gpt-work/catalog-panel-modularize-current`
+- finalny HEAD: `efd4464c46be700aa0c5e601f314d06a6c2816d6`
+- branch nie został zmergowany ani wdrożony do Shopify
+- nie używać wcześniejszego `gpt-work/catalog-panel-modularize` jako finalnego źródła wdrożenia
+
+### Docelowa architektura
+
+- `snippets/giclee-catalog-panel.liquid` — centralny punkt ładowania modułu
+- `assets/giclee-catalog-panel.css` — układ, wygląd i animacje panelu
+- `assets/giclee-catalog-panel.js` — logika panelu, konfiguracja, runtime efektów artystów oraz priorytetowa kolejka podglądów
+- `assets/giclee-catalog-artist-effects.css` — warianty wizualnego wyróżnienia aktywnego artysty
+
+`layout/theme.liquid` zawiera już tylko dwa wywołania modułu:
+
+- render stylów,
+- render skryptu.
+
+Blok loadera efektów FAQ w `layout/theme.liquid` został zachowany.
+
+### Runtime’y zintegrowane
+
+Kod dwóch wcześniejszych, osobnych plików został włączony do `assets/giclee-catalog-panel.js`:
+
+- `assets/giclee-catalog-artist-effects.js`
+- `assets/giclee-catalog-preview-queue.js`
+
+Oba stare pliki zostały usunięte z lokalnego working tree.
+
+Nie przywracać ich ani ich globalnych loaderów.
+
+Priorytetowa kolejka nadal zachowuje:
+
+- maksymalnie 3 requesty łącznie,
+- maksymalnie 2 requesty tła,
+- jeden slot dla aktualnego hover/focus,
+- hover intent delay 75 ms,
+- priorytet najnowszego hover,
+- współdzielony `imageCache`,
+- obsługę focusu klawiatury.
+
+Checkpoint `gpt-window-2:catalog-submenu-preview-queue` pozostaje historią implementacji kolejki, ale jego opis osobnego pliku i globalnego loadera został funkcjonalnie zastąpiony przez ten checkpoint modularizacji.
+
+### Ładowanie globalne
+
+`snippets/stylesheets.liquid` nie ładuje już:
+
+- `giclee-catalog-artist-effects.css`,
+- `giclee-catalog-artist-effects.js`,
+- `giclee-catalog-preview-queue.js`.
+
+Zasoby katalogu są obsługiwane przez `snippets/giclee-catalog-panel.liquid`.
+
+### Lokalny status po zastosowaniu
+
+Oczekiwany zakres:
+
+- `M assets/giclee-catalog-artist-effects.css`
+- `D assets/giclee-catalog-artist-effects.js`
+- `M layout/theme.liquid`
+- `M snippets/stylesheets.liquid`
+- `?? assets/giclee-catalog-panel.css`
+- `?? assets/giclee-catalog-panel.js`
+- `?? snippets/giclee-catalog-panel.liquid`
+
+`assets/giclee-catalog-preview-queue.js` był lokalnym plikiem nieśledzonym i został usunięty po integracji, dlatego nie musi pojawić się jako `D`.
+
+### Walidacja
+
+- `node --check assets/giclee-catalog-panel.js` — PASS
+- `git diff --check` dla dokładnego zakresu — PASS
+- porównanie końcowych plików z branchem docelowym po normalizacji CRLF/LF — PASS
+- tagi `<style>` i `<script>` zrównoważone
+- render modułu nie znajduje się wewnątrz `<style>` ani `<script>`
+- stare globalne loadery usunięte
+- runtime efektów artystów obecny dokładnie raz
+- runtime kolejki podglądów obecny dokładnie raz
+
+### Nie wykonano
+
+- wizualnego smoke testu po modularizacji,
+- lokalnego commita,
+- merge,
+- deployu Shopify,
+- zapisu lub synchronizacji do Shopify.
+
+### Następny krok
+
+Przetestować wizualnie:
+
+- otwieranie i zamykanie Katalogu,
+- szybkie przechodzenie kursorem między artystami,
+- ładowanie podglądów,
+- `museum_marker`,
+- focus klawiatury,
+- kliknięcie artysty i kurtynę przejścia,
+- FAQ/paralaksę,
+- menu mobilne.
+
+<!-- gpt-window-3:catalog-panel-modularization:end -->

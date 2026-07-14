@@ -4,7 +4,7 @@ Praktyczny przewodnik po bezpiecznej współpracy GPT ↔ GitHub ↔ lokalne mon
 
 **Źródło prawdy po akceptacji:** lokalne pliki w monorepo — nie branch GPT, nie snapshot theme, nie osobne repo `gicleeapp` bez importu.
 
-Szczegóły trybów A/B: `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md` § GPT GIT BRANCH IMPLEMENTATION MODE.
+Szczegóły trybów A/B: `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v40.md` § GPT GIT BRANCH IMPLEMENTATION MODE.
 
 ---
 
@@ -354,3 +354,230 @@ Rollback:
   git restore -- assets/giclee-home-stack.css assets/giclee-home-stack.js templates/index.json
 Push status: branch pushed, main untouched
 ```
+
+<!-- gpt-window-2:powershell-import-hardening:start -->
+## Addendum — PowerShell import i reconcile hardening
+
+Poniższe zasady wynikają z realnych problemów wykrytych podczas importu brancha do lokalnego monorepo.
+
+### 1. Używaj absolutnego katalogu repo
+
+Nie zakładaj, że:
+
+- bieżący katalog PowerShell,
+- katalog procesu .NET,
+- katalog wyświetlany w promptcie
+
+są zawsze identyczne.
+
+Bezpieczny wzorzec:
+
+```powershell
+$root = (
+  Resolve-Path -LiteralPath "C:\Strona\pusty"
+).Path
+
+git -C $root status
+
+$filePath = Join-Path `
+  $root `
+  "assets\example.js"
+
+$text = [System.IO.File]::ReadAllText($filePath)
+```
+
+Do `[System.IO.File]::ReadAllText()`, `ReadAllBytes()`, `WriteAllText()` i podobnych metod przekazuj ścieżki absolutne.
+
+### 2. Nie używaj `git show --output` jako pewnego zapisu bloba
+
+Dla pojedynczego pliku z commita bezpieczniej przechwycić stdout:
+
+```powershell
+$lines = @(
+  git -C $root show `
+    "${sha}:assets/example.js"
+)
+
+if ($LASTEXITCODE -ne 0 -or $lines.Count -eq 0) {
+  throw "Nie udało się odczytać pliku z commita."
+}
+
+$text = $lines -join "`n"
+```
+
+Nie zakładaj, że:
+
+```powershell
+git show --output="$file" "$sha`:path"
+```
+
+zawsze zapisze blob bez wypisywania go do terminala.
+
+### 3. Patch może być już częściowo obecny lokalnie
+
+Gdy `git apply --check` zwraca:
+
+* `already exists in working directory`,
+* `patch does not apply`,
+
+nie używaj automatycznie `--force`, nie usuwaj plików i nie resetuj repo.
+
+Najpierw:
+
+1. odczytaj wzorcowy blob z brancha,
+2. porównaj z lokalnym plikiem po normalizacji LF/CRLF i BOM,
+3. sprawdź, czy loader lub wpis konfiguracyjny już istnieje,
+4. wykonaj idempotentny reconcile tylko dokładnych plików,
+5. zachowaj backup.
+
+### 4. `git diff --stat` nie pokazuje plików untracked
+
+Nowy plik oznaczony jako:
+
+```text
+?? assets/example.js
+```
+
+nie pojawi się w zwykłym `git diff --stat`.
+
+Końcowy raport powinien zawierać oba polecenia:
+
+```powershell
+git -C $root status --short -- <dokładne-pliki>
+git -C $root diff --stat -- <dokładne-pliki>
+```
+
+### 5. Standard importu pozostaje bez zmian
+
+* `git diff --binary --output="$patch"` zamiast `>`,
+* `git apply --check` przed `git apply`,
+* przy zadaniu cross-repo oba checki muszą przejść przed pierwszym apply,
+* tylko dokładna lista plików,
+* backup przed reconcile,
+* bez `git add .`,
+* bez `git clean`,
+* bez szerokiego `restore`,
+* bez merge, push i deployu bez jawnej zgody użytkownika.
+
+<!-- gpt-window-2:powershell-import-hardening:end -->
+
+<!-- gpt-window-3:transactional-reconcile-state:start -->
+## Addendum — stan transakcji, ponowienia i porównywanie plików
+
+### 1. Rozróżniaj etap, na którym wystąpił błąd
+
+Nie każdy błąd oznacza, że „niczego nie zastosowano”.
+
+- błąd preflight przed `git apply`, `git restore`, zapisem lub usunięciem — working tree nie został zmieniony,
+- błąd po zastosowaniu plików, np. podczas `node --check` lub `git diff --check` — część albo całość zmian może już istnieć lokalnie.
+
+Po błędzie post-apply:
+
+1. sprawdź `git status --short`,
+2. sprawdź istnienie plików docelowych,
+3. nie uruchamiaj ponownie preflightu wymagającego, aby nowe pliki nie istniały,
+4. kontynuuj od naprawy i końcowej walidacji albo wykonaj świadomy rollback z backupu.
+
+### 2. `git diff <branch> -- <path>` nie jest testem zawartości pliku untracked
+
+Dla plików `??` Git może potraktować plik jako nieobecny względem drzewa brancha.
+
+Przy weryfikacji plików tracked i untracked osobno sprawdzaj:
+
+- czy plik istnieje,
+- wzorcowy blob z konkretnego brancha lub SHA,
+- rzeczywistą zawartość pliku,
+- końcowy status Git.
+
+Nie opieraj całego preflightu na jednym `git diff --quiet <branch>`.
+
+### 3. Nie porównuj UTF-8 przez niejawne dekodowanie PowerShell
+
+`Get-Content`, przechwytywanie stdout programu natywnego i konsola mogą użyć różnych sposobów dekodowania. Może to wytworzyć różne formy mojibake mimo identycznej logiki.
+
+Wzorzec z przechwytywaniem `git show` do tablicy linii jest odpowiedni do inspekcji tekstowej, ale nie do byte-exact verification.
+
+Dla dokładnej kontroli:
+
+- użyj absolutnych ścieżek,
+- pobierz blob bez transformacji tekstowej,
+- porównaj surowe bajty,
+- jeśli dopuszczasz różnicę systemową, normalizuj wyłącznie CRLF do LF,
+- nie zmieniaj kodowania, BOM ani znaków Unicode bez świadomej decyzji.
+
+### 4. Targeted restore jako kontrolowany fallback
+
+Jeśli patch nie może zostać bezpiecznie zastosowany, ponieważ working tree zawiera już wcześniejsze etapy tej samej funkcji, dopuszczalny jest precyzyjny:
+
+```powershell
+git restore --source="<przypięty-branch>" --worktree -- <dokładna-lista-plików>
+```
+
+Wyłącznie gdy:
+
+* branch i HEAD zostały zweryfikowane,
+* zakres obejmuje tylko uzgodnione pliki,
+* aktualne źródła zostały zinwentaryzowane,
+* utworzono backup,
+* cudze zmiany nie są nadpisywane,
+* stare pliki usuwa się dopiero po potwierdzeniu integracji ich zachowania,
+* po operacji wykonywane są testy składni, whitespace i porównanie z targetem.
+
+Nie jest to zgoda na szeroki restore całego repozytorium.
+
+### 5. Retry musi być idempotentny
+
+Skrypt ponawiany po częściowym zastosowaniu powinien:
+
+* rozpoznać pliki już zgodne z targetem,
+* nie zgłaszać ich automatycznie jako konflikt,
+* nie usuwać ich przed porównaniem,
+* przejść do brakującego kroku lub walidacji,
+* raportować, czy jest w fazie preflight, apply czy post-apply.
+
+### 6. Końcowa pusta linia też może przerwać walidację
+
+Po zapisaniu krótkich plików loaderów i konfiguracji zawsze wykonaj:
+
+```powershell
+git diff --check -- <dokładne-pliki>
+```
+
+Komunikat `new blank line at EOF` oznacza dodatkową pustą linię na końcu pliku. Plik powinien kończyć się pojedynczym znakiem nowej linii, bez dodatkowego pustego wiersza.
+
+<!-- gpt-window-3:transactional-reconcile-state:end -->
+
+---
+
+## Dwa workflow implementacji (v4.0)
+
+### A. Import `gpt-work/*` → monorepo (ten dokument)
+
+Branch w `gicleeart-gpt` lub `gicleeapp` → patch/import do `C:\Strona\pusty` → test lokalny → commit lokalny.
+
+**Merge na GitHubie:** tylko przy jawnej autoryzacji użytkownika.
+
+### B. Bezpośredni PR na `gicleeart` (monorepo)
+
+Runtime Foundation, CI, Repository Safety — pełny pipeline:
+
+`GICLEE_ANALYST_MODE_GITHUB_PR_CI_v1.md` + [GICLEE_AUTONOMOUS_ENGINEERING_PIPELINE_v1.md](GICLEE_AUTONOMOUS_ENGINEERING_PIPELINE_v1.md)
+
+Instrukcje konstytucyjne: `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v40.md`.
+
+**Squash merge** z `expected_head_sha` dozwolony wyłącznie, gdy użytkownik zlecił implementację obejmującą merge albo udzielił wyraźnej zgody. Zielone CI samo nie autoryzuje merge.
+
+---
+
+## v4.0 — model-switch, worktree i selective stage
+
+Pełny pipeline: [GICLEE_AUTONOMOUS_ENGINEERING_PIPELINE_v1.md](GICLEE_AUTONOMOUS_ENGINEERING_PIPELINE_v1.md)
+
+| Zasada | Szczegół |
+|--------|----------|
+| **Model-switch checkpoint** | Przed przełączeniem modelu: branch, HEAD, status, name-status, stat/numstat, ukończony zakres, testy (`GICLEE_ANALYST_MODE_HANDOFF_CONTINUITY_v1.md`) |
+| **Single-writer worktree** | Nigdy dwóch agentów edytujących ten sam worktree równolegle |
+| **Expected changed-file budget** | Ustal allowlistę i budżet plików przed implementacją; przekroczenie = anomaly gate |
+| **Selective stage** | Jawne ścieżki; bez `git add -A` / `git add .` |
+| **Exact-head review przed ready** | Diff, pliki, rozmiary — raport agenta ≠ dowód |
+| **Post-merge master reread** | Po merge odczytaj nowy `master` SHA przed kolejnym etapem |

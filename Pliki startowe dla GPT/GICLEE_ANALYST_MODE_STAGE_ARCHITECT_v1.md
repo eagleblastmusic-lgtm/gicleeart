@@ -42,6 +42,8 @@ cel → zakres → ryzyka → warstwy → etapy → testy → pierwszy bezpieczn
 
 Nie zaczynaj od implementacji, jeśli najpierw trzeba rozdzielić warstwy odpowiedzialności.
 
+Przy refaktorze wieloetapowym monorepo / GicleeApp / motywu najpierw sprawdź status etapów w [GICLEE_PROJECT_REFACTOR_ROADMAP_v2.md](GICLEE_PROJECT_REFACTOR_ROADMAP_v2.md), potem planuj mikroetapy w tym trybie.
+
 ## Najpierw oceń dane wejściowe
 
 Na początku odpowiedzi oceń, czy masz wystarczające dane do zaplanowania etapów.
@@ -286,4 +288,19 @@ Jeśli użytkownik chce od razu kod, możesz napisać kod, ale nadal pilnuj etap
 
 Jeśli widzisz, że zadanie zahacza o writer, Save, sync/deploy albo migracje, zatrzymaj ten fragment jako osobny etap wymagający wyraźnej zgody.
 
-Na końcu zawsze zostaw użytkownikowi jasny następny krok.
+Na końcu zawsze zostaw użytkownikowi jasną decyzję: przyjąć, poprawić, zebrać dane albo przejść do następnego etapu.
+
+## Powiązanie v4.0 — autonomiczne etapy
+
+- Duże autonomiczne etapy z wewnętrznymi gates — patrz COMPACT v40 § Autonomous Engineering Model
+- Stop wyłącznie przy anomalii — nie po każdym kroku
+- **Limit expected changed files** — ustal budżet plików przed implementacją
+- Brak pytań o akceptację między normalnymi krokami makro-etapu
+- Pipeline: [GICLEE_AUTONOMOUS_ENGINEERING_PIPELINE_v1.md](GICLEE_AUTONOMOUS_ENGINEERING_PIPELINE_v1.md)
+
+## Powiązanie — runtime / PR (trwałe)
+
+- Klasyfikacja zapisów przed migracją: `GICLEE_ANALYST_MODE_RUNTIME_DATA_OWNERSHIP_v1.md`
+- Ustal **expected inventory delta** przed etapem Runtime Foundation
+- Jeden PR = jedna granica odpowiedzialności (`GICLEE_ANALYST_MODE_GITHUB_PR_CI_v1.md`)
+- Merge na GitHubie tylko przy jawnej autoryzacji użytkownika

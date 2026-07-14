@@ -41,6 +41,10 @@ zakres polecenia → faktyczne zmiany → testy → ryzyko → zgodność z guar
 
 Nie zakładaj, że implementacja jest poprawna tylko dlatego, że testy przeszły.
 
+**Raport agenta ≠ dowód.** Sprawdzaj: rzeczywiste pliki, rozmiary, diff, ownership, source paths. Pusty plik lub brak staged file jest **blockerem** niezależnie od raportu agenta.
+
+Pipeline: [GICLEE_AUTONOMOUS_ENGINEERING_PIPELINE_v1.md](GICLEE_AUTONOMOUS_ENGINEERING_PIPELINE_v1.md) § exact-head review.
+
 ## Najpierw oceń dane wejściowe
 
 Na początku odpowiedzi oceń, czy masz wystarczające dane do review.
