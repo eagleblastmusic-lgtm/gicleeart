@@ -10,6 +10,11 @@ from typing import Any
 
 from . import launcher as _launcher
 from .launcher_layout import resolve_sections
+from .launcher_shortcut_controller import (
+    ShortcutActivationKind,
+    resolve_shortcut_activation,
+    resolve_shortcut_poll,
+)
 from .launcher_shortcut_options import show_shortcut_options
 from .launcher_shortcuts import (
     dialog_blocks_shortcuts,
@@ -285,6 +290,7 @@ class OptionsCategoryGicleeApp(StyledCategoryGicleeApp):
                 continue
 
         active = self._windows_launcher_is_foreground() and self._launcher_shortcuts_active()
+        modifiers_down = False
         if active:
             try:
                 ctrl_down = bool(int(user32.GetAsyncKeyState(_VK_CONTROL)) & 0x8000)
@@ -292,15 +298,20 @@ class OptionsCategoryGicleeApp(StyledCategoryGicleeApp):
             except (AttributeError, OSError, TypeError, ValueError):
                 ctrl_down = False
                 alt_down = False
-            if not ctrl_down and not alt_down:
-                pressed_now = current_down - self._windows_shortcut_down
-                for key in sorted(pressed_now):
-                    if self._trigger_shortcut(key):
-                        break
+            modifiers_down = ctrl_down or alt_down
 
+        decision = resolve_shortcut_poll(
+            current_down,
+            self._windows_shortcut_down,
+            active=active,
+            modifiers_down=modifiers_down,
+        )
         # Zapamiętujemy stan także poza aktywnym oknem. Dzięki temu przytrzymany
         # klawisz nie uruchomi komponentu dopiero po powrocie do launchera.
-        self._windows_shortcut_down = current_down
+        self._windows_shortcut_down = set(decision.next_down)
+        for key in decision.pressed_keys:
+            if self._trigger_shortcut(key):
+                break
         try:
             self._windows_shortcut_poll_id = self.root.after(
                 _WINDOWS_SHORTCUT_POLL_MS,
@@ -311,20 +322,28 @@ class OptionsCategoryGicleeApp(StyledCategoryGicleeApp):
 
     def _trigger_shortcut(self, key: str) -> bool:
         folder = self._shortcut_map.get(key)
-        if not folder:
+        component = self._component_by_folder(folder) if folder else None
+        decision = resolve_shortcut_activation(
+            self._shortcut_map,
+            key,
+            component_exists=component is not None,
+            launch_pending=self._shortcut_launch_pending,
+        )
+        if decision.kind is ShortcutActivationKind.UNMAPPED:
             return False
-        component = self._component_by_folder(folder)
-        if component is None:
+        if decision.kind is ShortcutActivationKind.MISSING_COMPONENT:
             self.status_var.set(
-                f"Skrót «{shortcut_display_label(key)}»: brak komponentu {folder}"
+                f"Skrót «{shortcut_display_label(decision.key)}»: "
+                f"brak komponentu {decision.folder_name}"
             )
             return True
-        if self._shortcut_launch_pending:
+        if decision.kind is ShortcutActivationKind.LAUNCH_PENDING:
             return True
 
+        assert component is not None
         self._shortcut_launch_pending = True
         self.status_var.set(
-            f"Skrót {shortcut_display_label(key)}: otwieram {component.name}"
+            f"Skrót {shortcut_display_label(decision.key)}: otwieram {component.name}"
         )
 
         def launch_selected() -> None:
