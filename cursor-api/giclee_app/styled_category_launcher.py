@@ -192,12 +192,7 @@ class StyledCategoryGicleeApp(CategoryGicleeApp):
 def main() -> None:
     """Uruchamia launcher kategorii ze spójnymi kafelkami komponentów."""
 
-    original_class = _launcher.GicleeApp
-    _launcher.GicleeApp = StyledCategoryGicleeApp
-    try:
-        _launcher.main()
-    finally:
-        _launcher.GicleeApp = original_class
+    _launcher.main(app_factory=StyledCategoryGicleeApp)
 
 
 if __name__ == "__main__":

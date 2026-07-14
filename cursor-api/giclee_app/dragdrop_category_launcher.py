@@ -402,12 +402,7 @@ class DragDropCategoryGicleeApp(OptionsCategoryGicleeApp):
 def main() -> None:
     """Uruchamia pełny launcher z menu Opcje i drag-and-drop."""
 
-    original_class = _launcher.GicleeApp
-    _launcher.GicleeApp = DragDropCategoryGicleeApp
-    try:
-        _launcher.main()
-    finally:
-        _launcher.GicleeApp = original_class
+    _launcher.main(app_factory=DragDropCategoryGicleeApp)
 
 
 if __name__ == "__main__":

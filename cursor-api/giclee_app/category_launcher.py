@@ -485,12 +485,7 @@ class CategoryGicleeApp(_launcher.GicleeApp):
 def main() -> None:
     """Uruchamia bazowy launcher z klasą nawigacji kategorii."""
 
-    original_class = _launcher.GicleeApp
-    _launcher.GicleeApp = CategoryGicleeApp
-    try:
-        _launcher.main()
-    finally:
-        _launcher.GicleeApp = original_class
+    _launcher.main(app_factory=CategoryGicleeApp)
 
 
 if __name__ == "__main__":
