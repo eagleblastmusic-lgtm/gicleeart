@@ -6,6 +6,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 ROOT = Path(__file__).resolve().parents[1]
+HOST_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
+PAGE_CONTEXT_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_page_context.py"
 
 
 def _method_block(text: str, name: str) -> str:
@@ -15,8 +17,7 @@ def _method_block(text: str, name: str) -> str:
 
 
 def test_page_context_has_reuse_cache_fields() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    text = HOST_PATH.read_text(encoding="utf-8")
 
     assert "_page_context_row_cache" in text
     assert "_page_context_value_widgets" in text
@@ -24,8 +25,7 @@ def test_page_context_has_reuse_cache_fields() -> None:
 
 
 def test_page_context_has_reuse_helpers() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    text = PAGE_CONTEXT_PATH.read_text(encoding="utf-8")
 
     assert "def _hide_page_context_rows" in text
     assert "def _show_page_context_row" in text
@@ -33,8 +33,7 @@ def test_page_context_has_reuse_helpers() -> None:
 
 
 def test_fill_page_context_uses_reuse_event() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    text = PAGE_CONTEXT_PATH.read_text(encoding="utf-8")
     block = _method_block(text, "_fill_page_context")
 
     assert "page_context.reuse" in block
@@ -43,8 +42,7 @@ def test_fill_page_context_uses_reuse_event() -> None:
 
 
 def test_fill_page_context_does_not_destroy_children_on_normal_path() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    text = PAGE_CONTEXT_PATH.read_text(encoding="utf-8")
     block = _method_block(text, "_fill_page_context")
 
     if ".destroy()" in block:
@@ -52,7 +50,6 @@ def test_fill_page_context_does_not_destroy_children_on_normal_path() -> None:
 
 
 def test_setting_callbacks_do_not_capture_static_old_element_id() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    text = PAGE_CONTEXT_PATH.read_text(encoding="utf-8")
 
     assert "self._selected_id" in text

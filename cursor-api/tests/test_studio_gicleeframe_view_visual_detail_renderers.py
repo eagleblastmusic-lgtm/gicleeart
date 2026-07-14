@@ -51,10 +51,12 @@ from giclee_app.ui.gicleeframe_view_top_bar import GicleeFrameTopBarMixin
 from giclee_app.ui.gicleeframe_view_visual_detail_renderers import (
     GicleeFrameVisualDetailRenderersMixin,
 )
+from giclee_app.ui.gicleeframe_view_page_context import GicleeFramePageContextMixin
 
 ROOT = Path(__file__).resolve().parents[1]
 VIEW_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
 VISUAL_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_visual_detail_renderers.py"
+PAGE_CONTEXT_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_page_context.py"
 EDITOR_SHELL_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_editor_shell.py"
 DETAILS_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_details_on_demand.py"
 VISUAL_PATCH = "giclee_app.ui.gicleeframe_view_visual_detail_renderers"
@@ -419,7 +421,7 @@ def test_visual_renderer_module_has_no_write_network_or_deploy() -> None:
         assert token not in source
 
 
-def test_gicleeframe_view_has_fourteen_mixins_before_scrollable_frame() -> None:
+def test_gicleeframe_view_has_fifteen_mixins_before_scrollable_frame() -> None:
     expected = (
         GicleeFrameBrandPanelMixin,
         GicleeFramePageReadinessMixin,
@@ -435,6 +437,7 @@ def test_gicleeframe_view_has_fourteen_mixins_before_scrollable_frame() -> None:
         GicleeFrameEditorShellMixin,
         GicleeFrameDetailsOnDemandMixin,
         GicleeFrameVisualDetailRenderersMixin,
+        GicleeFramePageContextMixin,
         ctk.CTkScrollableFrame,
     )
     assert GicleeFrameView.__mro__[1 : 1 + len(expected)] == expected
@@ -457,14 +460,17 @@ def test_layer_nav_title_remains_editor_shell_owned_and_imported() -> None:
 def test_host_ownership_for_page_context_and_lifecycle_exclusions() -> None:
     host_text = VIEW_PATH.read_text(encoding="utf-8")
     visual_text = VISUAL_PATH.read_text(encoding="utf-8")
+    page_context_text = PAGE_CONTEXT_PATH.read_text(encoding="utf-8")
     for name in (
         "_fill_page_context",
         "_hide_page_context_rows",
         "_populate_page_context_batch",
         "_schedule_page_context_job",
-        "on_show",
-        "__init__",
     ):
+        assert not _host_defines_method(name, host_text), name
+        assert f"def {name}(" not in visual_text, name
+        assert f"def {name}(" in page_context_text, name
+    for name in ("on_show", "__init__"):
         assert _host_defines_method(name, host_text), name
         assert f"def {name}(" not in visual_text, name
 

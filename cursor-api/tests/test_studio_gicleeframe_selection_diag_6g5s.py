@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 ROOT = Path(__file__).resolve().parents[1]
 INTERACTION_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_interaction.py"
 VIEW_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
+PAGE_CONTEXT_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_page_context.py"
 EDITOR_SHELL_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_editor_shell.py"
 SELECTION_PATH = (
     ROOT / "giclee_app" / "ui" / "gicleeframe_view_selection_orchestration.py"
@@ -39,6 +40,10 @@ def _selection_text() -> str:
     return SELECTION_PATH.read_text(encoding="utf-8")
 
 
+def _page_context_text() -> str:
+    return PAGE_CONTEXT_PATH.read_text(encoding="utf-8")
+
+
 def _combined_text() -> str:
     return (
         _view_text()
@@ -48,6 +53,8 @@ def _combined_text() -> str:
         + _selection_text()
         + "\n"
         + _editor_shell_text()
+        + "\n"
+        + _page_context_text()
     )
 
 
@@ -141,7 +148,7 @@ def test_selection_diag_atomic_swap_events_exist() -> None:
 
 
 def test_selection_diag_page_context_events_exist() -> None:
-    text = _view_text()
+    text = _page_context_text()
     for event in (
         "studio.gicleeframe.selection.page_context.loading_state",
         "studio.gicleeframe.selection.page_context.populate_enter",
@@ -154,12 +161,14 @@ def test_selection_diag_page_context_events_exist() -> None:
 def test_selection_diag_events_include_generation() -> None:
     selection_text = _selection_text()
     editor_text = _editor_shell_text()
-    view_text = _view_text()
+    page_context_text = _page_context_text()
     for method in ("_select_element", "_populate_editor_deferred"):
         body = _method_block(selection_text, method)
         assert "generation" in body
-    for method in ("_populate_editor", "_populate_page_context_progressive_stable"):
-        source = editor_text if method == "_populate_editor" else view_text
+    for method, source in (
+        ("_populate_editor", editor_text),
+        ("_populate_page_context_progressive_stable", page_context_text),
+    ):
         body = _method_block(source, method)
         assert "generation" in body
 

@@ -43,6 +43,7 @@ from giclee_app.ui.gicleeframe_view_editor_shell import GicleeFrameEditorShellMi
 from giclee_app.ui.gicleeframe_view_visual_detail_renderers import (
     GicleeFrameVisualDetailRenderersMixin,
 )
+from giclee_app.ui.gicleeframe_view_page_context import GicleeFramePageContextMixin
 from giclee_app.ui.gicleeframe_view_selection_orchestration import (
     GicleeFrameSelectionOrchestrationMixin,
     _GF_ATOMIC_SWAP_STATUS_TEXT,
@@ -86,12 +87,15 @@ _HOST_OWNERSHIP = {
     "__init__",
     "_editor_micro_defer_ms",
     "_progressive_boot_enabled_for_selection",
-    "_cancel_page_context_jobs",
-    "_close_active_setting_editor",
     "_highlight_section_row",
     "_update_section_list_trigger",
     "_collapse_section_list",
     "_queue_latency_since_ms",
+}
+
+_PAGE_CONTEXT_ADAPTER = {
+    "_cancel_page_context_jobs",
+    "_close_active_setting_editor",
 }
 
 _HOST_OWNERSHIP_IN_VIEW = _HOST_OWNERSHIP - {
@@ -354,7 +358,7 @@ def test_selection_orchestration_constants_exact_values() -> None:
         assert f"{name} =" not in host_text
 
 
-def test_gicleeframe_view_has_fourteen_mixins_before_scrollable_frame() -> None:
+def test_gicleeframe_view_has_fifteen_mixins_before_scrollable_frame() -> None:
     mro = GicleeFrameView.__mro__
     for mixin in (
         GicleeFrameBrandPanelMixin,
@@ -371,6 +375,7 @@ def test_gicleeframe_view_has_fourteen_mixins_before_scrollable_frame() -> None:
         GicleeFrameEditorShellMixin,
         GicleeFrameDetailsOnDemandMixin,
         GicleeFrameVisualDetailRenderersMixin,
+        GicleeFramePageContextMixin,
     ):
         assert mixin in mro
     assert mro.index(GicleeFrameSectionListInteractionMixin) < mro.index(
@@ -386,6 +391,9 @@ def test_gicleeframe_view_has_fourteen_mixins_before_scrollable_frame() -> None:
         GicleeFrameVisualDetailRenderersMixin,
     )
     assert mro.index(GicleeFrameVisualDetailRenderersMixin) < mro.index(
+        GicleeFramePageContextMixin,
+    )
+    assert mro.index(GicleeFramePageContextMixin) < mro.index(
         ctk.CTkScrollableFrame,
     )
 
@@ -406,6 +414,10 @@ def test_host_ownership_for_selection_adapters() -> None:
         assert name in GicleeFrameView.__dict__
     for name in _INTERACTION_OWNERSHIP:
         assert name in GicleeFrameSectionListInteractionMixin.__dict__
+    for name in _PAGE_CONTEXT_ADAPTER:
+        assert name not in GicleeFrameSelectionOrchestrationMixin.__dict__
+        assert name not in GicleeFrameView.__dict__
+        assert getattr(GicleeFrameView, name) is getattr(GicleeFramePageContextMixin, name)
     assert "_select_element" not in GicleeFrameView.__dict__
 
 

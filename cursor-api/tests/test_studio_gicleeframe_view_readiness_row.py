@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from giclee_app.ui import gicleeframe_view_readiness_row as row_module
 from giclee_app.ui.gicleeframe_view import GicleeFrameView
+from giclee_app.ui.gicleeframe_view_page_context import GicleeFramePageContextMixin
 from giclee_app.ui.gicleeframe_view_brand import GicleeFrameBrandPanelMixin
 from giclee_app.ui.gicleeframe_view_page_readiness import (
     GicleeFramePageReadinessMixin,
@@ -205,6 +206,7 @@ def test_readiness_row_mixin_is_wired_into_gicleeframe_view_mro() -> None:
     assert GicleeFrameEditorShellMixin in GicleeFrameView.__mro__
     assert GicleeFrameDetailsOnDemandMixin in GicleeFrameView.__mro__
     assert GicleeFrameVisualDetailRenderersMixin in GicleeFrameView.__mro__
+    assert GicleeFramePageContextMixin in GicleeFrameView.__mro__
     assert "_pack_readiness_row" not in GicleeFrameView.__dict__
     assert (
         GicleeFrameView._pack_readiness_row
