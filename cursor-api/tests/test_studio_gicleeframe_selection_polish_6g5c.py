@@ -23,6 +23,12 @@ def _details_text() -> str:
     return DETAILS_PATH.read_text(encoding="utf-8")
 
 
+def _lifecycle_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_lifecycle_inventory.py"
+    ).read_text(encoding="utf-8")
+
+
 def _method_block(text: str, name: str) -> str:
     marker = f"def {name}"
     assert marker in text
@@ -61,8 +67,9 @@ def test_media_section_children_can_be_delayed_later_than_default() -> None:
 
 
 def test_selection_polish_preserves_lazy_startup_and_late_control() -> None:
-    combined = _view_text() + "\n" + _editor_shell_text()
+    editor_text = _editor_shell_text()
+    lifecycle_text = _lifecycle_text()
 
-    assert "studio.gicleeframe.editor.fields_lazy_startup" in combined
-    assert "studio.gicleeframe.control.deferred_readiness_late" in combined
-    assert "studio.gicleeframe.control.deferred_safety_late" in combined
+    assert "studio.gicleeframe.editor.fields_lazy_startup" in editor_text
+    assert "studio.gicleeframe.control.deferred_readiness_late" in lifecycle_text
+    assert "studio.gicleeframe.control.deferred_safety_late" in lifecycle_text

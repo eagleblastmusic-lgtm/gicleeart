@@ -11,6 +11,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def _lifecycle_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_lifecycle_inventory.py"
+    ).read_text(encoding="utf-8")
+
+
 def _view_text() -> str:
     return (ROOT / "giclee_app" / "ui" / "gicleeframe_view.py").read_text(
         encoding="utf-8"
@@ -24,7 +30,7 @@ def _method_block(text: str, name: str) -> str:
 
 
 def test_perceived_ready_gate_check_event_exists() -> None:
-    text = _view_text()
+    text = _lifecycle_text()
     body = _method_block(text, "_try_mark_perceived_ready")
     assert "studio.gicleeframe.visual.perceived_ready_gate_check" in body
     for field in (
@@ -40,7 +46,7 @@ def test_perceived_ready_gate_check_event_exists() -> None:
 
 
 def test_visual_gate_ready_events_exist() -> None:
-    text = _view_text()
+    text = _lifecycle_text()
     assert "_log_visual_gate_ready" in text
     for gate in ("sections", "editor", "control", "first_visible"):
         assert f'"{gate}"' in text or f"'{gate}'" in text
@@ -54,7 +60,7 @@ def _editor_shell_text() -> str:
 
 
 def test_editor_control_deferred_diagnostic_events_exist() -> None:
-    host = _view_text()
+    lifecycle = _lifecycle_text()
     editor = _editor_shell_text()
     for event in (
         "studio.gicleeframe.editor.skeleton_enter",
@@ -69,7 +75,7 @@ def test_editor_control_deferred_diagnostic_events_exist() -> None:
         "studio.gicleeframe.control.structure_enter",
         "studio.gicleeframe.control.structure_done",
     ):
-        assert event in host
+        assert event in lifecycle
 
 
 def test_try_mark_perceived_ready_logs_missing_gates_before_final_ready() -> None:
@@ -93,7 +99,10 @@ def test_try_mark_perceived_ready_logs_missing_gates_before_final_ready() -> Non
         def _capture(event: str, **kwargs) -> None:  # type: ignore[no-untyped-def]
             logged.append((event, kwargs))
 
-        with patch("giclee_app.ui.gicleeframe_view.log_event", side_effect=_capture):
+        with patch(
+            "giclee_app.ui.gicleeframe_view_lifecycle_inventory.log_event",
+            side_effect=_capture,
+        ):
             view._try_mark_perceived_ready(trigger="test_partial")
 
         assert not view._perceived_ready_logged
@@ -132,7 +141,10 @@ def test_perceived_ready_logs_only_once() -> None:
         def _capture(event: str, **kwargs) -> None:  # type: ignore[no-untyped-def]
             logged.append(event)
 
-        with patch("giclee_app.ui.gicleeframe_view.log_event", side_effect=_capture):
+        with patch(
+            "giclee_app.ui.gicleeframe_view_lifecycle_inventory.log_event",
+            side_effect=_capture,
+        ):
             view._try_mark_perceived_ready(trigger="first")
             view._try_mark_perceived_ready(trigger="second")
 
@@ -146,7 +158,7 @@ def test_perceived_ready_logs_only_once() -> None:
 
 
 def test_perceived_gate_diag_preserves_prior_6g5_markers() -> None:
-    host = _view_text()
+    lifecycle = _lifecycle_text()
     editor = _editor_shell_text()
     shell = (
         ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_shell.py"
@@ -158,5 +170,5 @@ def test_perceived_gate_diag_preserves_prior_6g5_markers() -> None:
         "studio.gicleeframe.sections_column.early_lane_scheduled",
     ):
         assert marker in shell
-    assert "studio.gicleeframe.visual.perceived_ready" in host
+    assert "studio.gicleeframe.visual.perceived_ready" in lifecycle
     assert "studio.gicleeframe.editor.skeleton_done" in editor

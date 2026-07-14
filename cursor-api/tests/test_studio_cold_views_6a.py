@@ -8,6 +8,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def _lifecycle_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_lifecycle_inventory.py"
+    ).read_text(encoding="utf-8")
+
+
 def test_katalog_refresh_is_deferred() -> None:
     path = ROOT / "giclee_app" / "ui" / "katalog_view.py"
     text = path.read_text(encoding="utf-8")
@@ -38,10 +44,9 @@ def test_launcher_caches_katalog_view() -> None:
 
 
 def test_gicleeframe_has_cold_open_breakdown_spans() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    lifecycle_text = _lifecycle_text()
 
-    assert "studio.gicleeframe.build.context_bar" in text
-    assert "studio.gicleeframe.build.workspace" in text
-    assert "studio.gicleeframe.inventory.render_section_list" in text
-    assert "studio.gicleeframe.inventory.initial_selection" in text
+    assert "studio.gicleeframe.build.context_bar" in lifecycle_text
+    assert "studio.gicleeframe.build.workspace" in lifecycle_text
+    assert "studio.gicleeframe.inventory.render_section_list" in lifecycle_text
+    assert "studio.gicleeframe.inventory.initial_selection" in lifecycle_text

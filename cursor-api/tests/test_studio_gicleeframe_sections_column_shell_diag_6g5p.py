@@ -22,6 +22,12 @@ def _section_list_shell_text() -> str:
     ).read_text(encoding="utf-8")
 
 
+def _lifecycle_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_lifecycle_inventory.py"
+    ).read_text(encoding="utf-8")
+
+
 def _combined_text() -> str:
     return _view_text() + "\n" + _section_list_shell_text()
 
@@ -33,7 +39,7 @@ def _method_block(text: str, name: str) -> str:
 
 
 def test_sections_column_deferred_subspans_exist() -> None:
-    body = _method_block(_view_text(), "_build_sections_column_deferred")
+    body = _method_block(_lifecycle_text(), "_build_sections_column_deferred")
     expected = [
         "studio.gicleeframe.build.sections_column.deferred.clear_children",
         "studio.gicleeframe.build.sections_column.deferred.shell_build",
@@ -44,7 +50,7 @@ def test_sections_column_deferred_subspans_exist() -> None:
 
 
 def test_sections_column_deferred_clear_children_diag_fields() -> None:
-    body = _method_block(_view_text(), "_build_sections_column_deferred")
+    body = _method_block(_lifecycle_text(), "_build_sections_column_deferred")
     assert "children_count=len(children)" in body
     assert "child_types=" in body
     assert "winfo_children()" in body
@@ -71,8 +77,9 @@ def test_sections_column_shell_subspans_exist() -> None:
 
 def test_sections_column_shell_diag_preserves_prior_6g5_markers() -> None:
     text = _combined_text()
-    assert "studio.gicleeframe.build.sections_column.deferred.shell" in text
+    lifecycle_text = _lifecycle_text()
+    assert "studio.gicleeframe.build.sections_column.deferred.shell" in lifecycle_text
     assert "studio.gicleeframe.section_list.column_ready_for_rows" in text
-    assert "studio.gicleeframe.sections_column.early_lane_enter" in text
+    assert "studio.gicleeframe.sections_column.early_lane_enter" in lifecycle_text
     assert "studio.gicleeframe.sections_column.extras_skipped_missing_slot" in text
     assert "uses_async_first_paint = True" in text

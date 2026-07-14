@@ -574,7 +574,7 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M14+** — osobn
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M18+** — osobne PR-y. Editor shell/population przeniesiono w GF-M14; details-on-demand przeniesiono w GF-M15; visual detail renderers przeniesiono w GF-M16; page-context engine, lifecycle i inventory pozostają host-owned kandydatami GF-M17+.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M14+** — osobne PR-y. Editor shell/population przeniesiono w GF-M14; details-on-demand, visual renderers, page-context i lifecycle/inventory pozostają kandydatami kolejnych etapów (patrz §25–§29).
 
 ---
 
@@ -601,7 +601,7 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M18+** — osobn
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M18+** — osobne PR-y. Details-on-demand przeniesiono w GF-M15; visual detail renderers przeniesiono w GF-M16; page-context engine, lifecycle i inventory pozostają host-owned kandydatami GF-M17+.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M15+** — osobne PR-y. Details-on-demand przeniesiono w GF-M15; visual renderers, page-context i lifecycle/inventory → GF-M16–GF-M18 (zakończone; patrz §26–§29).
 
 ---
 
@@ -625,7 +625,7 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M18+** — osobn
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M18+** — osobne PR-y. Lifecycle i inventory pozostają host-owned kandydatami GF-M18+.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M16+** — osobne PR-y. Visual renderers przeniesiono w GF-M16; page-context i lifecycle/inventory → GF-M17–GF-M18 (zakończone; patrz §28–§29).
 
 ---
 
@@ -649,7 +649,7 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M18+** — osobn
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M18+** — osobne PR-y. Lifecycle i inventory pozostają host-owned kandydatami GF-M18+.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M16+** — osobne PR-y. Visual renderers przeniesiono w GF-M16; page-context i lifecycle/inventory → GF-M17–GF-M18 (zakończone; patrz §28–§29).
 
 ---
 
@@ -674,4 +674,26 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M18+** — osobn
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M18+** — osobne PR-y. Lifecycle i inventory pozostają host-owned kandydatami GF-M18+.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M18** — lifecycle/inventory (zakończone; patrz §29).
+
+---
+
+## 29. GF-M18 — Lifecycle, Inventory & Final Host Boundary Extraction
+
+**Status:** zakończone — final host boundary zintegrowany.
+
+**Cel:** ekstrakcja spójnej granicy lifecycle, inventory i shell orchestration (navigation lifecycle, RAM cache, visual-session timing, loading overlay, perceived-ready, atomic-reveal, lazy/eager shell, deferred sections/control-column startup, bounded inventory refresh, progressive section-list bootstrap) bez absorpcji `__init__`, adapterów hosta ani `_apply_edit_to_draft`.
+
+### Wynik
+
+- **Lifecycle, inventory & shell orchestration** przeniesione do `ui/gicleeframe_view_lifecycle_inventory.py` jako `GicleeFrameLifecycleInventoryMixin`.
+- Przeniesiono dokładnie **58 metod**, **15 stałych** granicy oraz **3 helpery** (`_env_enabled`, `_progressive_boot_enabled`, `_GF_MICRO_DEFER_MS` importowany przez host).
+- Host zachowuje adaptery `_editor_micro_defer_ms()` i `_progressive_boot_enabled_for_selection()` oraz `_apply_edit_to_draft`.
+- Mixin **nie posiada `__init__`**, **nie dziedziczy** po widżecie Tk; **używa `after()` / `after_idle()` / `after_cancel()`** dla przeniesionego lifecycle.
+- Host `GicleeFrameView` dziedziczy **szesnaście mixinów** panelowych/subsystemowych przed `ctk.CTkScrollableFrame` (lifecycle/inventory jako ostatni mixin przed host widget base).
+- Host nadal posiada wyłącznie: `__init__` i inicjalizację pól stanu, dwa adaptery micro-defer/progressive-boot, `_apply_edit_to_draft` i RAM draft mutation.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+**GF-M1–GF-M18 modularization complete.** Kolejna aktywność: finalny audit GICLÉE FRAME — nie GF-M19.

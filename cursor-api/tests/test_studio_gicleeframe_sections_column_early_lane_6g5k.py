@@ -33,6 +33,12 @@ def _top_bar_text() -> str:
     )
 
 
+def _lifecycle_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_lifecycle_inventory.py"
+    ).read_text(encoding="utf-8")
+
+
 def _combined_text() -> str:
     return (
         _view_text()
@@ -70,7 +76,7 @@ def test_sections_column_early_lane_scheduled_event_exists() -> None:
 
 
 def test_sections_column_early_lane_scheduled_after_workspace_critical() -> None:
-    text = _view_text()
+    text = _lifecycle_text()
 
     start = text.index("def _build_page_editor_section_critical")
     end = text.index("def _build_workspace_skeleton_column", start)
@@ -81,7 +87,7 @@ def test_sections_column_early_lane_scheduled_after_workspace_critical() -> None
 
 
 def test_sections_column_early_lane_not_scheduled_from_build_shell_critical_ready() -> None:
-    text = _view_text()
+    text = _lifecycle_text()
 
     start = text.index("studio.gicleeframe.shell.critical_ready")
     end = text.index("self.after(_GF_SHELL_EDITOR_DEFER_MS", start)
@@ -105,17 +111,18 @@ def test_sections_column_early_lane_helper_uses_early_defer() -> None:
 
 def test_sections_column_early_lane_preserves_section_list_markers() -> None:
     text = _combined_text()
+    lifecycle_text = _lifecycle_text()
     assert "studio.gicleeframe.section_list.column_shell_ready" in text
     assert "studio.gicleeframe.section_list.column_ready_for_rows" in text
-    assert "studio.gicleeframe.sections_column.early_lane_enter" in text
-    assert "studio.gicleeframe.section_list.first_visible_fast_lane" in text
-    assert "studio.gicleeframe.section_list.incremental_scheduled" in text
+    assert "studio.gicleeframe.sections_column.early_lane_enter" in lifecycle_text
+    assert "studio.gicleeframe.section_list.first_visible_fast_lane" in lifecycle_text
+    assert "studio.gicleeframe.section_list.incremental_scheduled" in lifecycle_text
     assert "studio.gicleeframe.section_list.first_visible_ready" in text
-    assert "studio.gicleeframe.visual.perceived_ready" in text
+    assert "studio.gicleeframe.visual.perceived_ready" in lifecycle_text
 
 
 def test_sections_column_early_lane_shell_before_extras() -> None:
-    text = _view_text()
+    text = _lifecycle_text()
     body = text.split("def _build_sections_column_deferred", 1)[1].split(
         "\n    def _build_sections_column_extras_deferred", 1
     )[0]
@@ -129,9 +136,10 @@ def test_sections_column_early_lane_shell_before_extras() -> None:
 
 
 def test_sections_column_early_lane_preserves_fast_lane_constants() -> None:
-    text = _view_text()
-    assert "_GF_SECTION_FIRST_VISIBLE_DEFER_MS" in text
-    assert "_GF_SECTION_FIRST_BATCH_SIZE" in text
+    lifecycle_text = _lifecycle_text()
+    shell_text = _section_list_shell_text()
+    assert "_GF_SECTION_FIRST_VISIBLE_DEFER_MS" in lifecycle_text
+    assert "_GF_SECTION_FIRST_BATCH_SIZE" in shell_text
 
 
 def test_sections_column_early_lane_preserves_late_lane_ordering() -> None:

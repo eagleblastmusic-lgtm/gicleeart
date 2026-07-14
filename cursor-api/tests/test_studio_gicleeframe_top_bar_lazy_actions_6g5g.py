@@ -70,9 +70,15 @@ def test_startup_path_keeps_diagnostic_spans_for_placeholders() -> None:
     assert "studio.gicleeframe.build.command_bar.secondary_actions" in text
 
 
+def _lifecycle_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_lifecycle_inventory.py"
+    ).read_text(encoding="utf-8")
+
+
 def test_build_shell_schedules_top_bar_late_build() -> None:
-    text = _view_text()
-    body = text.split("def _build_shell", 1)[1].split("\n    def ", 1)[0]
+    lifecycle_text = _lifecycle_text()
+    body = lifecycle_text.split("def _build_shell", 1)[1].split("\n    def ", 1)[0]
     assert "_schedule_top_bar_actions_late_build()" in body
 
 
@@ -104,9 +110,18 @@ def _combined_text() -> str:
 
 
 def test_top_bar_lazy_preserves_prior_6g5_optimizations() -> None:
-    combined = _combined_text() + "\n" + _editor_shell_text()
-    assert "studio.gicleeframe.editor.fields_lazy_startup" in combined
-    assert "studio.gicleeframe.editor.identity_card_lazy_startup" in combined
-    assert "studio.gicleeframe.control.deferred_readiness_late" in combined
-    assert "studio.gicleeframe.populate_editor.preview_deferred_requested" in combined
-    assert "studio.gicleeframe.section_list.first_visible_ready" in combined
+    lifecycle_text = _lifecycle_text()
+    editor_text = _editor_shell_text()
+    shell_text = (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_shell.py"
+    ).read_text(encoding="utf-8")
+    rendering_text = (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_rendering.py"
+    ).read_text(encoding="utf-8")
+    assert "studio.gicleeframe.editor.fields_lazy_startup" in editor_text
+    assert "studio.gicleeframe.editor.identity_card_lazy_startup" in editor_text
+    assert "studio.gicleeframe.control.deferred_readiness_late" in lifecycle_text
+    assert "studio.gicleeframe.populate_editor.preview_deferred_requested" in editor_text
+    assert "studio.gicleeframe.section_list.first_visible_ready" in rendering_text
+    assert "studio.gicleeframe.section_list.first_visible_ready" in shell_text
+    assert "def _build_sections_column_shell" in shell_text

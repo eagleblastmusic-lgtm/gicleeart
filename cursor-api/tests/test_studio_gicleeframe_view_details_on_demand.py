@@ -65,6 +65,9 @@ from giclee_app.ui.gicleeframe_view_visual_detail_renderers import (
     GicleeFrameVisualDetailRenderersMixin,
 )
 from giclee_app.ui.gicleeframe_view_page_context import GicleeFramePageContextMixin
+from giclee_app.ui.gicleeframe_view_lifecycle_inventory import (
+    GicleeFrameLifecycleInventoryMixin,
+)
 from giclee_app.ui.gicleeframe_view_models import SectionVisualCacheEntry
 from giclee_app.ui.gicleeframe_view_page_readiness import (
     GicleeFramePageReadinessMixin,
@@ -708,7 +711,7 @@ def test_details_constants_exact_values() -> None:
         assert not _host_defines_constant(name, host_text), name
 
 
-def test_gicleeframe_view_has_fifteen_mixins_before_scrollable_frame() -> None:
+def test_gicleeframe_view_has_sixteen_mixins_before_scrollable_frame() -> None:
     expected = (
         GicleeFrameBrandPanelMixin,
         GicleeFramePageReadinessMixin,
@@ -725,6 +728,7 @@ def test_gicleeframe_view_has_fifteen_mixins_before_scrollable_frame() -> None:
         GicleeFrameDetailsOnDemandMixin,
         GicleeFrameVisualDetailRenderersMixin,
         GicleeFramePageContextMixin,
+        GicleeFrameLifecycleInventoryMixin,
         ctk.CTkScrollableFrame,
     )
     assert GicleeFrameView.__mro__[1 : 1 + len(expected)] == expected

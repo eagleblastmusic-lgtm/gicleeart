@@ -69,6 +69,8 @@ _VIEW_REEXPORT_EXCLUDED_AFTER_GF_M6 = frozenset({
     "_make_status_pill",
 })
 
+_VIEW_REEXPORT_EXCLUDED_AFTER_GF_M18 = frozenset(_FUNCTION_NAMES + _TOKEN_NAMES)
+
 _EXPECTED_TOKEN_VALUES = {
     "_BTN_HEIGHT": 28,
     "_CARD_PAD_X": 14,
@@ -149,7 +151,7 @@ def test_primitives_all_is_immutable_tuple_of_34() -> None:
 
 def test_view_reexports_all_functions_with_identity() -> None:
     for name in _FUNCTION_NAMES:
-        if name in _VIEW_REEXPORT_EXCLUDED_AFTER_GF_M6:
+        if name in _VIEW_REEXPORT_EXCLUDED_AFTER_GF_M6 | _VIEW_REEXPORT_EXCLUDED_AFTER_GF_M18:
             assert not hasattr(view, name)
             continue
         assert getattr(view, name) is getattr(primitives, name), name
@@ -381,10 +383,9 @@ def test_primitives_source_guardrails() -> None:
 
 def test_view_imports_primitives_and_does_not_redefine_symbols() -> None:
     text = _VIEW_PATH.read_text(encoding="utf-8")
-    assert "gicleeframe_view_primitives" in text
     assert "class GicleeFrameView" in text
-    assert "def _env_enabled" in text
-    assert "_GF_BOOT_DEFER_MS" in text
+    assert "def _env_enabled" not in text
+    assert "_GF_BOOT_DEFER_MS" not in text
     for name in _FUNCTION_NAMES:
         assert f"def {name}" not in text, name
     for name in _TOKEN_NAMES:

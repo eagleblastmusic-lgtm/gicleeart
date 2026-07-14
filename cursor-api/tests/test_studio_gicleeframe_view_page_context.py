@@ -59,10 +59,14 @@ from giclee_app.ui.gicleeframe_view_top_bar import GicleeFrameTopBarMixin
 from giclee_app.ui.gicleeframe_view_visual_detail_renderers import (
     GicleeFrameVisualDetailRenderersMixin,
 )
+from giclee_app.ui.gicleeframe_view_lifecycle_inventory import (
+    GicleeFrameLifecycleInventoryMixin,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 VIEW_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
 PAGE_CONTEXT_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_page_context.py"
+LIFECYCLE_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_lifecycle_inventory.py"
 EDITOR_SHELL_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_editor_shell.py"
 DETAILS_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_details_on_demand.py"
 VISUAL_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_visual_detail_renderers.py"
@@ -139,8 +143,11 @@ _HOST_ADAPTER_METHODS = (
 
 _HOST_LIFECYCLE_IN_VIEW = (
     "__init__",
-    "on_show",
     "_apply_edit_to_draft",
+)
+
+_LIFECYCLE_OWNERSHIP = (
+    "on_show",
     "_refresh_inventory",
 )
 
@@ -582,7 +589,7 @@ def test_page_context_module_has_no_write_network_or_deploy() -> None:
         assert token not in source
 
 
-def test_gicleeframe_view_has_fifteen_mixins_before_scrollable_frame() -> None:
+def test_gicleeframe_view_has_sixteen_mixins_before_scrollable_frame() -> None:
     expected = (
         GicleeFrameBrandPanelMixin,
         GicleeFramePageReadinessMixin,
@@ -599,6 +606,7 @@ def test_gicleeframe_view_has_fifteen_mixins_before_scrollable_frame() -> None:
         GicleeFrameDetailsOnDemandMixin,
         GicleeFrameVisualDetailRenderersMixin,
         GicleeFramePageContextMixin,
+        GicleeFrameLifecycleInventoryMixin,
         ctk.CTkScrollableFrame,
     )
     assert GicleeFrameView.__mro__[1 : 1 + len(expected)] == expected
@@ -607,12 +615,17 @@ def test_gicleeframe_view_has_fifteen_mixins_before_scrollable_frame() -> None:
 def test_host_ownership_for_state_lifecycle_and_draft_exclusions() -> None:
     host_text = VIEW_PATH.read_text(encoding="utf-8")
     page_context_text = PAGE_CONTEXT_PATH.read_text(encoding="utf-8")
+    lifecycle_text = LIFECYCLE_PATH.read_text(encoding="utf-8")
     selection_text = SELECTION_PATH.read_text(encoding="utf-8")
     visual_text = VISUAL_PATH.read_text(encoding="utf-8")
     details_text = DETAILS_PATH.read_text(encoding="utf-8")
     for name in _HOST_LIFECYCLE_IN_VIEW:
         assert _host_defines_method(name, host_text), name
         assert f"def {name}(" not in page_context_text, name
+    for name in _LIFECYCLE_OWNERSHIP:
+        assert f"def {name}(" in lifecycle_text, name
+        assert f"def {name}(" not in page_context_text, name
+        assert name not in GicleeFrameView.__dict__
     for name in _SELECTION_ORCHESTRATION_EXCLUSIONS:
         assert f"def {name}(" in selection_text, name
         assert f"def {name}(" not in page_context_text, name

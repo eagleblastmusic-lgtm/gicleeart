@@ -34,6 +34,9 @@ from giclee_app.ui.gicleeframe_view_visual_detail_renderers import (
     GicleeFrameVisualDetailRenderersMixin,
 )
 from giclee_app.ui.gicleeframe_view_page_context import GicleeFramePageContextMixin
+from giclee_app.ui.gicleeframe_view_lifecycle_inventory import (
+    GicleeFrameLifecycleInventoryMixin,
+)
 from giclee_app.ui.gicleeframe_view_editor_shell import (
     GicleeFrameEditorShellMixin,
     _EDITOR_FORM_WIDTH,
@@ -150,18 +153,18 @@ _INTERACTION_OWNERSHIP = {
 _HOST_OWNERSHIP = {
     "__init__",
     "_editor_micro_defer_ms",
+    "_apply_edit_to_draft",
+}
+
+_LIFECYCLE_OWNERSHIP = {
     "_clear_column_children",
     "_since_visual_enter_ms",
     "_queue_latency_since_ms",
     "_log_visual_gate_ready",
     "_try_mark_perceived_ready",
     "_schedule_atomic_reveal_check",
-    "_defer_background_for_selection",
     "_should_suppress_visible_prewarm",
     "_log_visible_prewarm_suppressed",
-    "_selected_section_label",
-    "_apply_edit_to_draft",
-    "_since_selection_click_ms",
 }
 
 _PAGE_CONTEXT_ADAPTER = {
@@ -685,7 +688,7 @@ def test_editor_shell_constants_exact_values() -> None:
         assert not _host_defines_constant(name, host_text), name
 
 
-def test_gicleeframe_view_has_fifteen_mixins_before_scrollable_frame() -> None:
+def test_gicleeframe_view_has_sixteen_mixins_before_scrollable_frame() -> None:
     expected = (
         GicleeFrameBrandPanelMixin,
         GicleeFramePageReadinessMixin,
@@ -702,6 +705,7 @@ def test_gicleeframe_view_has_fifteen_mixins_before_scrollable_frame() -> None:
         GicleeFrameDetailsOnDemandMixin,
         GicleeFrameVisualDetailRenderersMixin,
         GicleeFramePageContextMixin,
+        GicleeFrameLifecycleInventoryMixin,
         ctk.CTkScrollableFrame,
     )
 
@@ -720,12 +724,14 @@ def test_editor_shell_methods_resolve_by_identity_from_mixin_on_gicleeframe_view
 def test_host_ownership_for_editor_adapters() -> None:
     for name in _HOST_OWNERSHIP:
         assert name not in GicleeFrameEditorShellMixin.__dict__
-    host_in_view = (
-        _HOST_OWNERSHIP
-        - {"__init__"}
-        - _SELECTION_OWNERSHIP
-        - _INTERACTION_OWNERSHIP
-    )
+    for name in _LIFECYCLE_OWNERSHIP:
+        assert name not in GicleeFrameEditorShellMixin.__dict__
+        assert name not in GicleeFrameView.__dict__
+        assert getattr(GicleeFrameView, name) is getattr(
+            GicleeFrameLifecycleInventoryMixin,
+            name,
+        )
+    host_in_view = _HOST_OWNERSHIP - {"__init__"}
     for name in host_in_view:
         assert name in GicleeFrameView.__dict__
     for name in _PAGE_CONTEXT_ADAPTER:

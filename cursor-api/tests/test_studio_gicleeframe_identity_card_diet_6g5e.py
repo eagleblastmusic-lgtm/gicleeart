@@ -20,6 +20,12 @@ def _editor_shell_text() -> str:
     ).read_text(encoding="utf-8")
 
 
+def _lifecycle_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_lifecycle_inventory.py"
+    ).read_text(encoding="utf-8")
+
+
 def test_identity_card_late_build_constants_and_methods_exist() -> None:
     text = _editor_shell_text()
     assert "_GF_EDITOR_IDENTITY_LATE_DEFER_MS" in text
@@ -48,8 +54,9 @@ def test_startup_skeleton_uses_placeholder_not_full_identity_card() -> None:
 
 
 def test_identity_card_diet_preserves_prior_6g5_optimizations() -> None:
-    combined = _view_text() + "\n" + _editor_shell_text()
-    assert "studio.gicleeframe.editor.fields_lazy_startup" in combined
-    assert "studio.gicleeframe.control.deferred_readiness_late" in combined
-    assert "studio.gicleeframe.populate_editor.preview_deferred_requested" in combined
-    assert "studio.gicleeframe.build.editor_column.skeleton.identity_card" in combined
+    editor_text = _editor_shell_text()
+    lifecycle_text = _lifecycle_text()
+    assert "studio.gicleeframe.editor.fields_lazy_startup" in editor_text
+    assert "studio.gicleeframe.control.deferred_readiness_late" in lifecycle_text
+    assert "studio.gicleeframe.populate_editor.preview_deferred_requested" in editor_text
+    assert "studio.gicleeframe.build.editor_column.skeleton.identity_card" in editor_text

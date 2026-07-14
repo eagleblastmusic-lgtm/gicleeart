@@ -99,6 +99,13 @@ _PAGE_CONTEXT_PATH = (
     / "ui"
     / "gicleeframe_view_page_context.py"
 )
+_LIFECYCLE_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "giclee_app"
+    / "ui"
+    / "gicleeframe_view_lifecycle_inventory.py"
+)
+_PAGE_DRAFT_PATH = _STUDIO_ROOT / "gicleeframe_page_draft.py"
 _NEW_PLANNING_MODULES = (
     "gicleeframe_brief.py",
     "gicleeframe_draft_state.py",
@@ -164,37 +171,41 @@ def test_view_source_f21_editor_labels() -> None:
     editor_text = _EDITOR_SHELL_VIEW_PATH.read_text(encoding="utf-8")
     shell_text = _SECTION_LIST_SHELL_VIEW_PATH.read_text(encoding="utf-8")
     interaction_text = _SECTION_LIST_INTERACTION_VIEW_PATH.read_text(encoding="utf-8")
-    combined = text + "\n" + shell_text + "\n" + interaction_text + "\n" + editor_text
-    assert "PAGE_EDITOR_TITLE" in text
-    assert "SECTION_EDITOR_TITLE" in text
+    lifecycle_text = _LIFECYCLE_PATH.read_text(encoding="utf-8")
+    top_bar_text = _TOP_BAR_VIEW_PATH.read_text(encoding="utf-8")
+    structure_text = _STRUCTURE_DRY_RUN_VIEW_PATH.read_text(encoding="utf-8")
+    page_context_text = _PAGE_CONTEXT_PATH.read_text(encoding="utf-8")
+    draft_text = _PAGE_DRAFT_PATH.read_text(encoding="utf-8")
+    combined = shell_text + "\n" + interaction_text + "\n" + editor_text
+    assert "PAGE_EDITOR_TITLE" in draft_text
+    assert "SECTION_EDITOR_TITLE" in draft_text
     assert "_section_list_trigger" in text
-    assert "DEFAULT_VARIANT_NAME" in text
-    assert "WORKING_VARIANT_LABEL" in text
+    assert "DEFAULT_VARIANT_NAME" in top_bar_text
+    assert "WORKING_VARIANT_LABEL" in draft_text
     assert "+ Dodaj wariant" not in text
-    assert "APPLY_RAM_DRAFT_LABEL" in text
-    assert "editor_field_visibility" in text
-    assert "editor_context_rows" in text
-    assert "_editor_status_dot" in text
+    assert "APPLY_RAM_DRAFT_LABEL" in editor_text
+    assert "editor_field_visibility" in editor_text
+    assert "editor_context_rows" in editor_text
+    assert "_editor_status_dot" in editor_text
     assert "_section_list_scroll" in text
     assert "_section_dropdown_popup" in text
     assert "_toggle_section_list" in combined
-    assert "_SECTION_LIST_WIDTH" in combined
-    assert "SECTION_LIST_DRAG_HINT" in combined
+    assert "_SECTION_LIST_WIDTH" in shell_text
+    assert "SECTION_LIST_DRAG_HINT" in shell_text
     assert "reorder_page_blocks" in combined
     assert "_structure_dry_run_btn" in text
-    assert "_build_control_column" in text
-    assert "_CONTROL_COL_MINSIZE" in text
-    assert "SECTION_LIST_TITLE" in combined
-    assert "APPLY_RAM_MICROCOPY" in text
+    assert "_build_control_column" in lifecycle_text
+    assert "_CONTROL_COL_MINSIZE" in lifecycle_text
+    assert "SECTION_LIST_TITLE" in shell_text
+    assert "APPLY_RAM_MICROCOPY" in editor_text
     assert "_make_primary_button" in combined
-    assert "_build_setting_group_card" in combined
-    assert "divider_setting_groups" in text
-    assert "_make_empty_state" in text
-    assert "_build_command_bar" in text
-    assert "_build_section_identity_card" in combined
-    assert "_build_action_dock" in combined
-    assert "_PREVIEW_SETTINGS_CAPTION" in combined
-    page_context_text = _PAGE_CONTEXT_PATH.read_text(encoding="utf-8")
+    assert "_build_setting_group_card" in editor_text
+    assert "divider_setting_groups" in page_context_text
+    assert "_make_empty_state" in structure_text
+    assert "_build_command_bar" in top_bar_text
+    assert "_build_section_identity_card" in editor_text
+    assert "_build_action_dock" in editor_text
+    assert "_PREVIEW_SETTINGS_CAPTION" in editor_text
     assert "_pack_field_vertical" in page_context_text
     visual_text = _VISUAL_RENDERERS_PATH.read_text(encoding="utf-8")
     assert "_update_section_preview" in visual_text
@@ -208,14 +219,15 @@ def test_view_source_f222_premium_copy() -> None:
 
     text = _VIEW_PATH.read_text(encoding="utf-8")
     editor_text = _EDITOR_SHELL_VIEW_PATH.read_text(encoding="utf-8")
-    combined = text + "\n" + editor_text
-    assert "APPLY_RAM_DRAFT_LABEL" in text
+    top_bar_text = _TOP_BAR_VIEW_PATH.read_text(encoding="utf-8")
+    combined = editor_text
+    assert "APPLY_RAM_DRAFT_LABEL" in editor_text
     assert APPLY_RAM_DRAFT_LABEL == "Uaktualnij wariant RAM"
-    assert "APPLY_RAM_MICROCOPY" in text
+    assert "APPLY_RAM_MICROCOPY" in editor_text
     assert "Tylko pamięć" in APPLY_RAM_MICROCOPY
     assert "_PREVIEW_SETTINGS_CAPTION" in combined
     assert "Podgląd ustawień" in combined
-    assert "RAM-only" in combined
+    assert "RAM-only" in top_bar_text
     assert "Widoczna" in combined
     for pattern in _FORBIDDEN_BUTTON_PATTERNS:
         assert not re.search(pattern, text), f"Forbidden button pattern found: {pattern}"
@@ -226,27 +238,31 @@ def test_view_source_f223_first_screen_composition() -> None:
     editor_text = _EDITOR_SHELL_VIEW_PATH.read_text(encoding="utf-8")
     shell_text = _SECTION_LIST_SHELL_VIEW_PATH.read_text(encoding="utf-8")
     rendering_text = _SECTION_LIST_RENDERING_VIEW_PATH.read_text(encoding="utf-8")
-    combined = text + "\n" + shell_text + "\n" + rendering_text + "\n" + editor_text
-    assert "_ellipsize" in text
-    assert "_SECTION_LIST_WIDTH = 320" in combined
+    visual_text = _VISUAL_RENDERERS_PATH.read_text(encoding="utf-8")
+    combined = shell_text + "\n" + rendering_text + "\n" + editor_text
+    assert "_ellipsize" in rendering_text or "_ellipsize" in visual_text
+    assert "_SECTION_LIST_WIDTH = 320" in shell_text
     assert "_EDITOR_HERO_PREVIEW_HEIGHT" in combined
     assert "_SECTION_ROW_HEIGHT" in combined
     assert "RAM preview" in combined
-    assert "APPLY_RAM_DRAFT_LABEL" in text
-    assert "_build_section_identity_card" in combined
-    assert "_build_action_dock" in combined
-    assert "F2.2.3" in combined
+    assert "APPLY_RAM_DRAFT_LABEL" in editor_text
+    assert "_build_section_identity_card" in editor_text
+    assert "_build_action_dock" in editor_text
+    assert "F2.2.3" in editor_text
     assert _self_method_calls(text, "_build_action_dock") == []
 
 
 def test_view_source_f224_visual_tokens() -> None:
     text = _VIEW_PATH.read_text(encoding="utf-8")
+    editor_text = _EDITOR_SHELL_VIEW_PATH.read_text(encoding="utf-8")
+    visual_text = _VISUAL_RENDERERS_PATH.read_text(encoding="utf-8")
+    lifecycle_text = _LIFECYCLE_PATH.read_text(encoding="utf-8")
     primitives_text = _PRIMITIVES_PATH.read_text(encoding="utf-8")
     assert "F2.2.4" in text
-    assert "_GF_PREVIEW_PAPER" in text
-    assert "_make_gf_card" in text
-    assert "_section_kind_copy" in text
-    assert "APPLY_RAM_DRAFT_LABEL" in text
+    assert "_GF_PREVIEW_PAPER" in editor_text or "_GF_PREVIEW_PAPER" in visual_text
+    assert "_make_gf_card" in lifecycle_text or "_make_gf_card" in editor_text
+    assert "_section_kind_copy" in visual_text
+    assert "APPLY_RAM_DRAFT_LABEL" in editor_text
     assert '_GF_PREVIEW_PAPER = "#2e2e32"' in primitives_text
     assert "write_text" not in text
     assert _self_method_calls(text, "_build_action_dock") == []
@@ -260,7 +276,7 @@ def test_view_source_f225_section_workbench() -> None:
     text = _VIEW_PATH.read_text(encoding="utf-8")
     editor_text = _EDITOR_SHELL_VIEW_PATH.read_text(encoding="utf-8")
     visual_text = _VISUAL_RENDERERS_PATH.read_text(encoding="utf-8")
-    combined = text + "\n" + editor_text
+    combined = editor_text
     assert "F2.2.5" in text
     assert "_section_preview_canvas" in text
     assert "_section_preview_badge" in text
@@ -271,7 +287,7 @@ def test_view_source_f225_section_workbench() -> None:
     assert "Warstwy sekcji" in combined
     assert "Kliknij, aby edytować" in visual_text
     assert "Workbench sekcji" in combined
-    assert "APPLY_RAM_DRAFT_LABEL" in text
+    assert "APPLY_RAM_DRAFT_LABEL" in editor_text
     assert APPLY_RAM_DRAFT_LABEL == "Uaktualnij wariant RAM"
     assert '"Komponenty"' not in text
     assert "write_text" not in text
@@ -285,7 +301,8 @@ def test_view_source_f226_child_layer_and_color() -> None:
     text = _VIEW_PATH.read_text(encoding="utf-8")
     editor_text = _EDITOR_SHELL_VIEW_PATH.read_text(encoding="utf-8")
     visual_text = _VISUAL_RENDERERS_PATH.read_text(encoding="utf-8")
-    combined = text + "\n" + editor_text
+    lifecycle_text = _LIFECYCLE_PATH.read_text(encoding="utf-8")
+    combined = editor_text
     primitives_text = _PRIMITIVES_PATH.read_text(encoding="utf-8")
     assert "F2.2.6" in text
     assert "_LAYER_NAV_TITLE" in editor_text
@@ -299,12 +316,12 @@ def test_view_source_f226_child_layer_and_color() -> None:
     assert '_GF_PANEL = "#1e1e21"' in primitives_text
     assert '_GF_GOLD = "#b8a878"' in primitives_text
     assert '_GF_PANEL = "#1e1e21"' not in text
-    assert "panel_deep" in text
+    assert "panel_deep" in lifecycle_text or "panel_deep" in editor_text
     assert "Grafika sekcji" in visual_text
     assert "Źródło grafiki" in combined
     assert "Warstwy sekcji" in combined
     assert "Workbench sekcji" in combined
-    assert "APPLY_RAM_DRAFT_LABEL" in text
+    assert "APPLY_RAM_DRAFT_LABEL" in editor_text
     assert APPLY_RAM_DRAFT_LABEL == "Uaktualnij wariant RAM"
     assert "write_text" not in text
     for pattern in _FORBIDDEN_BUTTON_PATTERNS:
@@ -314,8 +331,8 @@ def test_view_source_f226_child_layer_and_color() -> None:
 def test_view_source_f221_setting_groups() -> None:
     from giclee_app.studio.gicleeframe_page_settings import divider_setting_groups
 
-    text = _VIEW_PATH.read_text(encoding="utf-8")
-    assert "divider_setting_groups" in text
+    page_context_text = _PAGE_CONTEXT_PATH.read_text(encoding="utf-8")
+    assert "divider_setting_groups" in page_context_text
     group_titles = [title for title, _keys in divider_setting_groups()]
     for group in ("Linia", "Układ", "Styl"):
         assert group in group_titles

@@ -37,8 +37,13 @@ def test_page_context_has_batch_logging_and_stale_guard() -> None:
 
 def test_page_context_jobs_are_cancelled_on_selection_change() -> None:
     page_context_text = PAGE_CONTEXT_PATH.read_text(encoding="utf-8")
-    host_text = HOST_PATH.read_text(encoding="utf-8")
+    lifecycle_text = (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_lifecycle_inventory.py"
+    ).read_text(encoding="utf-8")
+    selection_text = (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_selection_orchestration.py"
+    ).read_text(encoding="utf-8")
 
     assert "_cancel_page_context_jobs" in page_context_text
     assert "after_cancel" in page_context_text
-    assert "_cancel_page_context_jobs" in host_text
+    assert "_cancel_page_context_jobs" in lifecycle_text or "_cancel_page_context_jobs" in selection_text

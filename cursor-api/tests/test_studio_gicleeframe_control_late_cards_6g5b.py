@@ -8,10 +8,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def _view_text() -> str:
-    return (ROOT / "giclee_app" / "ui" / "gicleeframe_view.py").read_text(
-        encoding="utf-8"
-    )
+def _lifecycle_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_lifecycle_inventory.py"
+    ).read_text(encoding="utf-8")
 
 
 def _editor_shell_text() -> str:
@@ -21,7 +21,7 @@ def _editor_shell_text() -> str:
 
 
 def test_control_readiness_and_safety_are_late_cards() -> None:
-    text = _view_text()
+    text = _lifecycle_text()
 
     assert "_GF_CONTROL_LATE_BUILD_DEFER_MS" in text
     assert "_schedule_control_late_build" in text
@@ -32,7 +32,7 @@ def test_control_readiness_and_safety_are_late_cards() -> None:
 
 
 def test_control_structure_marks_shell_ready_before_late_cards() -> None:
-    text = _view_text()
+    text = _lifecycle_text()
 
     start = text.index("def _micro_deferred_control_structure")
     end = text.index("def _micro_deferred_control_readiness")

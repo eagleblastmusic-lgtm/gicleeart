@@ -10,7 +10,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-ROOT = Path(__file__).resolve().parents[1]
+LIFECYCLE_PATCH = "giclee_app.ui.gicleeframe_view_lifecycle_inventory"
 
 
 def _sample_merged(element_id: str, element_type: str = "media_section"):
@@ -66,11 +66,11 @@ def test_refresh_inventory_light_preserves_active_selected_id(gicleeframe_view) 
     _patch_inventory_refresh(view)
 
     with patch(
-        "giclee_app.ui.gicleeframe_view.build_gicleeframe_page_inventory",
+        f"{LIFECYCLE_PATCH}.build_gicleeframe_page_inventory",
         return_value=MagicMock(),
     ):
         with patch(
-            "giclee_app.ui.gicleeframe_view.merge_inventory_with_draft",
+            f"{LIFECYCLE_PATCH}.merge_inventory_with_draft",
             return_value=[element],
         ):
             with patch.object(view, "_update_top_bar"):
@@ -94,11 +94,11 @@ def test_refresh_inventory_light_clears_selected_id_when_missing_after_merge(
     _patch_inventory_refresh(view)
 
     with patch(
-        "giclee_app.ui.gicleeframe_view.build_gicleeframe_page_inventory",
+        f"{LIFECYCLE_PATCH}.build_gicleeframe_page_inventory",
         return_value=MagicMock(),
     ):
         with patch(
-            "giclee_app.ui.gicleeframe_view.merge_inventory_with_draft",
+            f"{LIFECYCLE_PATCH}.merge_inventory_with_draft",
             return_value=[],
         ):
             with patch.object(view, "_update_top_bar"):
@@ -120,13 +120,13 @@ def test_refresh_inventory_light_logs_preserved_event(gicleeframe_view) -> None:
     def _capture(event: str, **kwargs) -> None:  # type: ignore[no-untyped-def]
         logged.append((event, kwargs))
 
-    with patch("giclee_app.ui.gicleeframe_view.log_event", side_effect=_capture):
+    with patch(f"{LIFECYCLE_PATCH}.log_event", side_effect=_capture):
         with patch(
-            "giclee_app.ui.gicleeframe_view.build_gicleeframe_page_inventory",
+            f"{LIFECYCLE_PATCH}.build_gicleeframe_page_inventory",
             return_value=MagicMock(),
         ):
             with patch(
-                "giclee_app.ui.gicleeframe_view.merge_inventory_with_draft",
+                f"{LIFECYCLE_PATCH}.merge_inventory_with_draft",
                 return_value=[element],
             ):
                 with patch.object(view, "_update_top_bar"):
@@ -157,13 +157,13 @@ def test_refresh_inventory_light_logs_cleared_event(gicleeframe_view) -> None:
     def _capture(event: str, **kwargs) -> None:  # type: ignore[no-untyped-def]
         logged.append((event, kwargs))
 
-    with patch("giclee_app.ui.gicleeframe_view.log_event", side_effect=_capture):
+    with patch(f"{LIFECYCLE_PATCH}.log_event", side_effect=_capture):
         with patch(
-            "giclee_app.ui.gicleeframe_view.build_gicleeframe_page_inventory",
+            f"{LIFECYCLE_PATCH}.build_gicleeframe_page_inventory",
             return_value=MagicMock(),
         ):
             with patch(
-                "giclee_app.ui.gicleeframe_view.merge_inventory_with_draft",
+                f"{LIFECYCLE_PATCH}.merge_inventory_with_draft",
                 return_value=[],
             ):
                 with patch.object(view, "_update_top_bar"):

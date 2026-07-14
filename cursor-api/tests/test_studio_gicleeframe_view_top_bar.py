@@ -60,6 +60,9 @@ from giclee_app.ui.gicleeframe_view_top_bar import (
     _GF_TOP_BAR_SECONDARY_ACTIONS_LATE_DEFER_MS,
     _SHELL_STATUS_CHIP,
 )
+from giclee_app.ui.gicleeframe_view_lifecycle_inventory import (
+    GicleeFrameLifecycleInventoryMixin,
+)
 from giclee_app.ui.gicleeframe_view_primitives import _BTN_HEIGHT
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -277,19 +280,23 @@ def test_top_bar_methods_resolve_by_identity_from_mixin_on_gicleeframe_view() ->
 
 
 def test_host_ownership_for_shell_and_adapters() -> None:
+    assert "_apply_edit_to_draft" in GicleeFrameView.__dict__
     for name in (
         "_build_shell",
         "_ensure_top_bar_actions_for_atomic_reveal",
         "set_navigation",
         "_handle_back",
-        "_apply_edit_to_draft",
         "_refresh_inventory",
         "_schedule_atomic_reveal_check",
         "_try_atomic_reveal",
         "_should_suppress_visible_prewarm",
         "_log_visible_prewarm_suppressed",
     ):
-        assert name in GicleeFrameView.__dict__
+        assert name not in GicleeFrameView.__dict__
+        assert getattr(GicleeFrameView, name) is getattr(
+            GicleeFrameLifecycleInventoryMixin,
+            name,
+        )
 
 
 def test_context_bar_placeholder_uses_btn_height_token(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -21,6 +21,9 @@ from giclee_app.ui.gicleeframe_view_brand import (
 from giclee_app.ui.gicleeframe_view_readiness_row import (
     GicleeFrameReadinessRowMixin,
 )
+from giclee_app.ui.gicleeframe_view_lifecycle_inventory import (
+    GicleeFrameLifecycleInventoryMixin,
+)
 from giclee_app.ui.gicleeframe_view_details_on_demand import (
     GicleeFrameDetailsOnDemandMixin,
 )
@@ -149,7 +152,11 @@ def test_brand_methods_resolve_from_mixin_on_gicleeframe_view() -> None:
 
 
 def test_expand_and_readiness_adapters_remain_host_owned() -> None:
-    assert "_toggle_f1_section" in GicleeFrameView.__dict__
+    assert "_toggle_f1_section" not in GicleeFrameView.__dict__
+    assert (
+        GicleeFrameView._toggle_f1_section
+        is GicleeFrameLifecycleInventoryMixin._toggle_f1_section
+    )
     assert "_toggle_f1_section" not in GicleeFrameBrandPanelMixin.__dict__
     assert "_pack_readiness_row" not in GicleeFrameView.__dict__
     assert (
