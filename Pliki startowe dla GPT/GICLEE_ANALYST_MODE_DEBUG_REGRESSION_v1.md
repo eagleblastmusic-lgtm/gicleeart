@@ -180,7 +180,9 @@ Podaj:
 * test regresji, który powinien failować przed poprawką i przechodzić po poprawce,
 * kiedy uruchomić szerszy pakiet testów.
 
-Podczas debugowania preferuj testy celowane. Pełniejszy pakiet dopiero przed commitem/pushem.
+Podczas debugowania preferuj testy celowane. Pełniejszy pakiet dopiero przed commitem/pushem. **Maksymalnie 2 szerokie przebiegi bez postępu** — potem STOP i klasyfikacja root cause.
+
+Grupuj failures według wspólnej root cause zanim uruchomisz kolejny test.
 
 ## 8. Gotowy prompt dla Cursora
 
@@ -233,3 +235,12 @@ Jeśli przyczyna nie jest pewna, przygotuj prompt diagnostyczny.
 Jeśli widzisz kilka możliwych przyczyn, wybierz najbardziej prawdopodobną i krótko wyjaśnij, dlaczego inne są mniej pilne.
 
 Na końcu zawsze zostaw użytkownikowi jasny następny krok.
+
+## Powiązanie v4.0 — CI / Tcl/Tk / pipeline
+
+- Po failure CI: **nie** blind rerun — pobierz artifact, wróć PR do draftu (`GICLEE_ANALYST_MODE_GITHUB_PR_CI_v1.md`)
+- **Grupuj failures według root cause** — najpierw nodeids i punktowe testy
+- **Zakaz pełnego suite po każdej zmianie** — max 2 szerokie przebiegi bez postępu
+- **Nie osłabiaj testów** ani nie twórz fake harness zamiast canonical Tk
+- Pełny pipeline: [GICLEE_AUTONOMOUS_ENGINEERING_PIPELINE_v1.md](GICLEE_AUTONOMOUS_ENGINEERING_PIPELINE_v1.md)
+- Błędy Tcl/Tk w CI: patrz sekcja runnera w GITHUB_PR_CI + `GICLEE_ANALYST_LESSONS_LEARNED_v1.md`

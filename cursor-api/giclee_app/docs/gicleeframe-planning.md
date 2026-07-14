@@ -2,7 +2,7 @@
 
 Hub: [`admin-components-strategy.md`](admin-components-strategy.md) · [`studio-v2-workflows.md`](studio-v2-workflows.md) · [`studio-save-pattern.md`](studio-save-pattern.md) · legacy: [`../../docs/komponenty/gicleeframe.md`](../../docs/komponenty/gicleeframe.md)
 
-**Stan:** app planning component **ready** @ Studio v1.40.8 · page editor workflow **ready (F2.1)** · **F2.2 layout polish** · **F2.2.1 visual hierarchy** · **F2.2.2 premium visual workbench** · **F2.2.3 first-screen composition** · **F2.2.4 premium visual language** · **F2.2.5 section workbench** · **F2.2.6 child layer navigation** · Shopify **not started** · writer/save **blocked**
+**Stan:** app planning component **ready** @ Studio v1.40.8 · page editor workflow **ready (F2.1)** · **F2.2 layout polish** · **F2.2.1 visual hierarchy** · **F2.2.2 premium visual workbench** · **F2.2.3 first-screen composition** · **F2.2.4 premium visual language** · **F2.2.5 section workbench** · **F2.2.6 child layer navigation** · **GF-M1–GF-M18 modularization complete** · **final host boundary complete** · Shopify **not started** · writer/save **blocked** · **next: brak GF-M19**
 
 ---
 
@@ -49,12 +49,22 @@ Disclaimer F2: **„Zmiany są tylko lokalnym draftem w pamięci — nic nie zap
 | `ui/gicleeframe_view.py` | Widok CTk: **F2.1 edytor strony** (top bar / trigger / edytor) + F1 komponent marki |
 | `ui/gicleeframe_view_models.py` | **GF-M1** — czyste kontrakty widoku (dataclass + helpery tekstowe, bez UI) |
 | `ui/gicleeframe_view_primitives.py` | **GF-M2** — bezstanowe prymitywy UI i lokalne tokeny wizualne |
+| `ui/gicleeframe_view_brand.py` | **GF-M3** — panel planowania marki F1 (RAM-only) |
+| `ui/gicleeframe_view_page_readiness.py` | **GF-M4** — panel readiness strony F2 |
+| `ui/gicleeframe_view_structure_dry_run.py` | **GF-M5** — panel structure dry-run F2 |
+| `ui/gicleeframe_view_safety.py` | **GF-M6** — statyczna karta bezpieczeństwa F2 |
+| `ui/gicleeframe_view_readiness_row.py` | **GF-M7** — wspólny renderer wiersza readiness |
+| `ui/gicleeframe_view_top_bar.py` | **GF-M8** — subsystém top bar (context bar, command bar, staggered late-build) |
+| `ui/gicleeframe_view_ram_variants.py` | **GF-M9** — workflow wariantów RAM |
+| `ui/gicleeframe_view_section_list_shell.py` | **GF-M10** — kolumna listy sekcji i static first-visible lane |
+| `ui/gicleeframe_view_section_list_rendering.py` | **GF-M11** — full/incremental rendering i konstrukcja wierszy sekcji |
 | `ui/gicleeframe_view_section_list_interaction.py` | **GF-M12** — dropdown, highlight, row-click gateway i drag/reorder RAM listy sekcji |
 | `ui/gicleeframe_view_selection_orchestration.py` | **GF-M13** — selection orchestration, priority lane, atomic swap i scheduling populate |
 | `ui/gicleeframe_view_editor_shell.py` | **GF-M14** — editor shell, prewarm lifecycle i minimal population |
 | `ui/gicleeframe_view_details_on_demand.py` | **GF-M15** — details-on-demand orchestrator, cache i deferred wrappers |
 | `ui/gicleeframe_view_visual_detail_renderers.py` | **GF-M16** — preview, layer-navigation i children-overview renderers |
 | `ui/gicleeframe_view_page_context.py` | **GF-M17** — page-context shell, lazy groups i inline setting editor |
+| `ui/gicleeframe_view_lifecycle_inventory.py` | **GF-M18** — lifecycle, inventory i shell orchestration |
 | `launcher_studio.py` | Routing: `gicleeframe` → `GicleeFrameView` |
 
 ---
@@ -687,8 +697,9 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M18** — lifecy
 ### Wynik
 
 - **Lifecycle, inventory & shell orchestration** przeniesione do `ui/gicleeframe_view_lifecycle_inventory.py` jako `GicleeFrameLifecycleInventoryMixin`.
-- Przeniesiono dokładnie **58 metod**, **15 stałych** granicy oraz **3 helpery** (`_env_enabled`, `_progressive_boot_enabled`, `_GF_MICRO_DEFER_MS` importowany przez host).
-- Host zachowuje adaptery `_editor_micro_defer_ms()` i `_progressive_boot_enabled_for_selection()` oraz `_apply_edit_to_draft`.
+- Przeniesiono dokładnie **58 metod**, **15 aktywnych stałych** granicy oraz **3 helpery**: `_env_enabled`, `_progressive_boot_enabled`, `_lazy_shell_enabled`.
+- `_GF_MICRO_DEFER_MS` jest jedną z **15 stałych** importowanych przez host — **nie** helperem.
+- Host zachowuje `__init__`, `_editor_micro_defer_ms()`, `_progressive_boot_enabled_for_selection()`, `_apply_edit_to_draft`.
 - Mixin **nie posiada `__init__`**, **nie dziedziczy** po widżecie Tk; **używa `after()` / `after_idle()` / `after_cancel()`** dla przeniesionego lifecycle.
 - Host `GicleeFrameView` dziedziczy **szesnaście mixinów** panelowych/subsystemowych przed `ctk.CTkScrollableFrame` (lifecycle/inventory jako ostatni mixin przed host widget base).
 - Host nadal posiada wyłącznie: `__init__` i inicjalizację pól stanu, dwa adaptery micro-defer/progressive-boot, `_apply_edit_to_draft` i RAM draft mutation.
@@ -696,4 +707,21 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M18** — lifecy
 
 ### Dalsze etapy
 
-**GF-M1–GF-M18 modularization complete.** Kolejna aktywność: finalny audit GICLÉE FRAME — nie GF-M19.
+**GF-M1–GF-M18 modularization complete.** Kolejna aktywność poza GF: Start Files v40, potem oddzielny program Bartosz OS / AgentRuntime / Antigravity SDK discovery. **Brak GF-M19.**
+
+---
+
+## 30. Finalny audit GICLÉE FRAME — 2026-07-14
+
+| Element | Wynik |
+|---------|-------|
+| Master SHA | `f3d830910b2e9a5f108ec0896cc19c88d3d1eb5f` |
+| Modularizacja | **GF-M1–GF-M18 complete** |
+| MRO | **16 mixinów** przed `ctk.CTkScrollableFrame` |
+| Host retention | `__init__`, `_editor_micro_defer_ms()`, `_progressive_boot_enabled_for_selection()`, `_apply_edit_to_draft` |
+| Guardrails | RAM-only — brak writera, zapisu plików, Shopify mutation |
+| CI ready #302 | Hermetic **48 passed**; canonical Tk **6 passed** (Tcl/Tk 8.6.15); full baseline **2342 passed**, 1 optional skip; JUnit **2343 tests**, 0 failures, 0 errors, 1 skipped |
+| Runtime inventory | **714** files scanned, **0** parse errors, **0** findings |
+| Decyzja audit | **PASS** |
+| Następny etap GF | **NO GF-M19** |
+| Następny program | Start Files v40 → Bartosz OS / AgentRuntime / Antigravity SDK discovery (osobny tor) |

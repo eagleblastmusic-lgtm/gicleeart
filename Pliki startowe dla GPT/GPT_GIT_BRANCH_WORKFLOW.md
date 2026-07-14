@@ -4,7 +4,7 @@ Praktyczny przewodnik po bezpiecznej współpracy GPT ↔ GitHub ↔ lokalne mon
 
 **Źródło prawdy po akceptacji:** lokalne pliki w monorepo — nie branch GPT, nie snapshot theme, nie osobne repo `gicleeapp` bez importu.
 
-Szczegóły trybów A/B: `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md` § GPT GIT BRANCH IMPLEMENTATION MODE.
+Szczegóły trybów A/B: `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v40.md` § GPT GIT BRANCH IMPLEMENTATION MODE.
 
 ---
 
@@ -546,3 +546,40 @@ git diff --check -- <dokładne-pliki>
 Komunikat `new blank line at EOF` oznacza dodatkową pustą linię na końcu pliku. Plik powinien kończyć się pojedynczym znakiem nowej linii, bez dodatkowego pustego wiersza.
 
 <!-- gpt-window-3:transactional-reconcile-state:end -->
+
+---
+
+## Dwa workflow implementacji (v4.0)
+
+### A. Import `gpt-work/*` → monorepo (ten dokument)
+
+Branch w `gicleeart-gpt` lub `gicleeapp` → patch/import do `C:\Strona\pusty` → test lokalny → commit lokalny.
+
+**Merge na GitHubie:** tylko przy jawnej autoryzacji użytkownika.
+
+### B. Bezpośredni PR na `gicleeart` (monorepo)
+
+Runtime Foundation, CI, Repository Safety — pełny pipeline:
+
+`GICLEE_ANALYST_MODE_GITHUB_PR_CI_v1.md` + [GICLEE_AUTONOMOUS_ENGINEERING_PIPELINE_v1.md](GICLEE_AUTONOMOUS_ENGINEERING_PIPELINE_v1.md)
+
+Instrukcje konstytucyjne: `GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v40.md`.
+
+**Squash merge** z `expected_head_sha` dozwolony wyłącznie, gdy użytkownik zlecił implementację obejmującą merge albo udzielił wyraźnej zgody. Zielone CI samo nie autoryzuje merge.
+
+---
+
+## v4.0 — model-switch, worktree i selective stage
+
+Pełny pipeline: [GICLEE_AUTONOMOUS_ENGINEERING_PIPELINE_v1.md](GICLEE_AUTONOMOUS_ENGINEERING_PIPELINE_v1.md)
+
+| Zasada | Szczegół |
+|--------|----------|
+| **Single-writer worktree** | Nigdy dwóch agentów edytujących ten sam worktree równolegle |
+| **Model-switch checkpoint** | Przed przełączeniem modelu: branch, HEAD, status, name-status, stat/numstat, ukończony zakres, zielone testy, czerwone nodeids, root cause, pozostałe zadania, zakazane działania |
+| **Expected changed-file budget** | Ustal allowlistę i budżet plików przed implementacją; przekroczenie = anomaly gate |
+| **Selective stage** | Jawne ścieżki; bez `git add -A` / `git add .` |
+| **Exact-head review przed ready** | Diff, pliki, rozmiary, ownership — raport agenta ≠ dowód |
+| **CI artifact / JUnit / runtime inventory przed merge** | Obowiązkowy odczyt przed merge gate |
+| **Merge z `expected_head_sha`** | Tylko po autoryzacji użytkownika i exact-head review |
+| **Post-merge master reread** | Po merge odczytaj aktualny `master` SHA przed kolejnym etapem |

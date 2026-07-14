@@ -94,28 +94,46 @@ def build_zip_read_github_followup_message() -> str:
     )
 
 
-def build_cursor_delegate_followup_message() -> str:
-    """Trzecia wiadomość w Oknie rozmowy — podział ról GPT (analiza) vs Cursor (implementacja)."""
-    return (
-        "Zrobimy tak, że sam będziesz analizował, a Cursor implementował Twoje pomysły. "
-        "Możesz podawać całe kody. Jeśli będziesz chciał, możesz sobie pracę dzielić na mniejsze etapy. "
-        "Daję Tobie wolną rękę. Pamiętaj tylko że Cursor działa na plikach lokalnie a potem ja sam je "
-        "wysyłam na repo do gita, więc jak będziesz do niego pisał to pamiędaj się odnociś do ścieżek lokalnych. "
-        "Napisz czy przyjąłeś do wiadomości"
-    )
-
-
 def build_confirmation_checklist_message() -> str:
-    """Czwarta (ostatnia) wiadomość w Oknie rozmowy — potwierdzenia po ZIP-ie i GitHubie."""
-    return (
-        "1. potwierdź, że rozumiesz instrukcje,\n"
-        "2. potwierdź, jaki plik traktujesz jako główne Instructions,\n"
-        "3. potwierdź, że widzisz aktualny checkpoint z `CURRENT_APP_STATE.md`,\n"
-        "4. potwierdź, czy widzisz pliki trybów analitycznych `GICLEE_ANALYST_*_v1.md`,\n"
-        "5. potwierdź, czy widzisz pliki trybów Shopify `GICLEE_SHOPIFY_MODE_*_v1.md`,\n"
-        "6. potwierdź, że będziesz używać GitHub connectora dla prywatnych repo,\n"
-        "7. potwierdź, że poczekasz na moje konkretne zadanie."
-    )
+    """Trzecia (ostatnia) wiadomość w Oknie rozmowy — potwierdzenia po ZIP-ie i GitHubie."""
+    return """1. Potwierdź, że przeczytałeś wszystkie pliki wiedzy i rozumiesz instrukcje.
+
+2. Potwierdź, że jako główne Instructions traktujesz:
+   GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v40.md
+
+3. Potwierdź, że widzisz aktualny CURRENT_APP_STATE.md,
+   w szczególności sekcję „Current repository state” osobno dla każdego repozytorium.
+
+4. Potwierdź, że widzisz i rozumiesz aktywną roadmapę:
+   GICLEE_PROJECT_REFACTOR_ROADMAP_v2.md
+
+5. Potwierdź, że widzisz pliki trybów analitycznych GICLEE_ANALYST_*_v1.md,
+   w tym sześć nowych modułów v3.9:
+   - GICLEE_ANALYST_MODE_GITHUB_PR_CI_v1.md
+   - GICLEE_ANALYST_MODE_RUNTIME_DATA_OWNERSHIP_v1.md
+   - GICLEE_ANALYST_MODE_WRITER_EXPORT_SAFETY_v1.md
+   - GICLEE_ANALYST_MODE_CROSS_REPO_COORDINATOR_v1.md
+   - GICLEE_ANALYST_MODE_HANDOFF_CONTINUITY_v1.md
+   - GICLEE_ANALYST_LESSONS_LEARNED_v1.md
+
+6. Potwierdź, że widzisz pliki trybów Shopify:
+   GICLEE_SHOPIFY_MODE_*_v1.md
+
+7. Potwierdź status integracji ZIP v40:
+   - 47 plików Knowledge,
+   - integracjagpt v40,
+   - ZIP jest wyłącznie snapshotem.
+
+8. Potwierdź, że dla prywatnych repozytoriów będziesz używać GitHub connectora.
+
+9. Potwierdź, że przed rozpoczęciem zadania sprawdzisz przez connector:
+   - aktualne default branche,
+   - bieżące SHA,
+   - otwarte PR-y,
+   - status CI,
+   - różnice względem CURRENT_APP_STATE.md.
+
+10. Potwierdź, że nie rozpoczniesz review, planu ani implementacji i poczekasz na moje konkretne zadanie."""
 
 
 def build_conversation_start_prompt(
