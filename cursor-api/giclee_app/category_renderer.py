@@ -7,6 +7,7 @@ from dataclasses import dataclass
 import tkinter as tk
 
 from .component_loader import Component
+from .launcher_grid_layout import TileGridSpec, place_tile
 
 
 @dataclass(frozen=True)
@@ -18,6 +19,15 @@ class CategoryRendererConfig:
     columns: int
     tile_pad_x: int
     tile_pad_y: int
+
+    def tile_grid_spec(self, *, row_offset: int = 1) -> TileGridSpec:
+        return TileGridSpec(
+            columns=self.columns,
+            row_offset=row_offset,
+            padx=self.tile_pad_x,
+            pady=self.tile_pad_y,
+            sticky="",
+        )
 
 
 CategoryTileBuilder = Callable[[tk.Misc, str, int], tk.Frame]
@@ -91,16 +101,10 @@ def render_category_index(
         anchor="w",
     ).pack(fill="x", pady=(3, 0))
 
+    grid_spec = config.tile_grid_spec(row_offset=1)
     for index, (title, components) in enumerate(sections):
-        row, column = divmod(index, config.columns)
         tile = build_category_tile(parent, title, len(components))
-        tile.grid(
-            row=row + 1,
-            column=column,
-            padx=config.tile_pad_x,
-            pady=config.tile_pad_y,
-            sticky="",
-        )
+        place_tile(tile, index, grid_spec)
 
 
 def render_category_components(
@@ -171,13 +175,7 @@ def render_category_components(
         anchor="w",
     ).grid(row=1, column=1, sticky="ew", pady=(2, 0))
 
+    grid_spec = config.tile_grid_spec(row_offset=1)
     for index, component in enumerate(components):
-        row, column = divmod(index, config.columns)
         tile = build_component_tile(parent, component)
-        tile.grid(
-            row=row + 1,
-            column=column,
-            padx=config.tile_pad_x,
-            pady=config.tile_pad_y,
-            sticky="",
-        )
+        place_tile(tile, index, grid_spec)
