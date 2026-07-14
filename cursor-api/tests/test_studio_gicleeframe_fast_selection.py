@@ -129,10 +129,14 @@ def test_media_section_selection_defers_heavy_details_to_on_demand() -> None:
 
 
 def test_minimal_editor_path_logs_ready_without_auto_details() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
-    populate = text.split("def _populate_editor(", 1)[1].split("\n    def ", 1)[0]
-    assert "studio.gicleeframe.selection.minimal_editor_ready" in text
+    editor_text = (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_editor_shell.py"
+    ).read_text(encoding="utf-8")
+    populate = _method_block(editor_text, "_populate_editor")
+    combined = (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
+    ).read_text(encoding="utf-8") + "\n" + editor_text
+    assert "studio.gicleeframe.selection.minimal_editor_ready" in combined
     assert "_show_details_on_demand_block" in populate
     assert "_update_section_preview(" not in populate
     assert "_fill_children_overview_buttons(" not in populate

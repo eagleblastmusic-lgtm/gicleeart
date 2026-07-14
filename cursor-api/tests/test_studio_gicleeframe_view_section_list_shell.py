@@ -36,6 +36,7 @@ from giclee_app.ui.gicleeframe_view_section_list_shell import (
     _SECTION_LIST_WIDTH,
     _SECTION_PLACEHOLDER,
 )
+from giclee_app.ui.gicleeframe_view_editor_shell import GicleeFrameEditorShellMixin
 from giclee_app.ui.gicleeframe_view_section_list_interaction import (
     GicleeFrameSectionListInteractionMixin,
 )
@@ -277,6 +278,7 @@ def test_section_list_shell_methods_resolve_by_identity_from_mixin_on_gicleefram
     assert GicleeFrameSectionListShellMixin in GicleeFrameView.__mro__
     assert GicleeFrameSectionListRenderingMixin in GicleeFrameView.__mro__
     assert GicleeFrameSectionListInteractionMixin in GicleeFrameView.__mro__
+    assert GicleeFrameEditorShellMixin in GicleeFrameView.__mro__
     for name in _EXPECTED_METHODS:
         assert name not in GicleeFrameView.__dict__
         assert getattr(GicleeFrameView, name) is getattr(

@@ -20,6 +20,7 @@ from giclee_app.ui.gicleeframe_view_brand import (
 from giclee_app.ui.gicleeframe_view_readiness_row import (
     GicleeFrameReadinessRowMixin,
 )
+from giclee_app.ui.gicleeframe_view_editor_shell import GicleeFrameEditorShellMixin
 from giclee_app.ui.gicleeframe_view_section_list_interaction import (
     GicleeFrameSectionListInteractionMixin,
 )
@@ -127,6 +128,7 @@ def test_brand_panel_mixin_is_wired_into_gicleeframe_view_mro() -> None:
     assert GicleeFrameBrandPanelMixin in GicleeFrameView.__mro__
     assert GicleeFrameSectionListRenderingMixin in GicleeFrameView.__mro__
     assert GicleeFrameSectionListInteractionMixin in GicleeFrameView.__mro__
+    assert GicleeFrameEditorShellMixin in GicleeFrameView.__mro__
 
 
 def test_brand_methods_resolve_from_mixin_on_gicleeframe_view() -> None:

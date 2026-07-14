@@ -30,6 +30,7 @@ from giclee_app.ui.gicleeframe_view_ram_variants import GicleeFrameRamVariantMix
 from giclee_app.ui.gicleeframe_view_section_list_shell import (
     GicleeFrameSectionListShellMixin,
 )
+from giclee_app.ui.gicleeframe_view_editor_shell import GicleeFrameEditorShellMixin
 from giclee_app.ui.gicleeframe_view_section_list_interaction import (
     GicleeFrameSectionListInteractionMixin,
 )
@@ -195,6 +196,7 @@ def test_readiness_row_mixin_is_wired_into_gicleeframe_view_mro() -> None:
     assert GicleeFrameSectionListShellMixin in GicleeFrameView.__mro__
     assert GicleeFrameSectionListRenderingMixin in GicleeFrameView.__mro__
     assert GicleeFrameSectionListInteractionMixin in GicleeFrameView.__mro__
+    assert GicleeFrameEditorShellMixin in GicleeFrameView.__mro__
     assert "_pack_readiness_row" not in GicleeFrameView.__dict__
     assert (
         GicleeFrameView._pack_readiness_row

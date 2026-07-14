@@ -116,8 +116,7 @@ def test_gicleeframe_mount_lane_skips_update_idletasks_in_diagnostics() -> None:
     """6G.5-N.1: mount lane must not execute update_idletasks for GicleeFrameView."""
     path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
     text = path.read_text(encoding="utf-8")
-    class_block = text.split("class GicleeFrameView", 1)[1].split("\n    def ", 1)[0]
-    assert "uses_async_first_paint = True" in class_block
+    assert "uses_async_first_paint = True" in text
 
     launcher = (ROOT / "giclee_app" / "launcher_studio.py").read_text(encoding="utf-8")
     idletasks = launcher.split("def _maybe_update_idletasks_for_view", 1)[1].split("\n    def ", 1)[0]

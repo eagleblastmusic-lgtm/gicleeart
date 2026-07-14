@@ -14,6 +14,12 @@ def _view_text() -> str:
     )
 
 
+def _editor_shell_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_editor_shell.py"
+    ).read_text(encoding="utf-8")
+
+
 def test_control_readiness_and_safety_are_late_cards() -> None:
     text = _view_text()
 
@@ -39,12 +45,12 @@ def test_control_structure_marks_shell_ready_before_late_cards() -> None:
 
 
 def test_late_cards_do_not_break_lazy_editor_fields() -> None:
-    text = _view_text()
+    editor_text = _editor_shell_text()
 
-    assert "studio.gicleeframe.editor.fields_lazy_startup" in text
+    assert "studio.gicleeframe.editor.fields_lazy_startup" in editor_text
 
-    form_start = text.index("def _micro_deferred_editor_form_shell")
-    form_end = text.index("def _micro_deferred_editor_fields")
-    form_body = text[form_start:form_end]
+    form_start = editor_text.index("def _micro_deferred_editor_form_shell")
+    form_end = editor_text.index("def _micro_deferred_editor_fields")
+    form_body = editor_text[form_start:form_end]
 
     assert "_micro_deferred_editor_fields" not in form_body

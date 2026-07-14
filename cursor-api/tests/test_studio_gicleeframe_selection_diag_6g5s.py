@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 ROOT = Path(__file__).resolve().parents[1]
 INTERACTION_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_interaction.py"
 VIEW_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
+EDITOR_SHELL_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_editor_shell.py"
 SELECTION_PATH = (
     ROOT / "giclee_app" / "ui" / "gicleeframe_view_selection_orchestration.py"
 )
@@ -18,6 +19,10 @@ SELECTION_PATH = (
 
 def _view_text() -> str:
     return VIEW_PATH.read_text(encoding="utf-8")
+
+
+def _editor_shell_text() -> str:
+    return EDITOR_SHELL_PATH.read_text(encoding="utf-8")
 
 
 def _interaction_text() -> str:
@@ -35,7 +40,15 @@ def _selection_text() -> str:
 
 
 def _combined_text() -> str:
-    return _view_text() + "\n" + _section_list_shell_text() + "\n" + _selection_text()
+    return (
+        _view_text()
+        + "\n"
+        + _section_list_shell_text()
+        + "\n"
+        + _selection_text()
+        + "\n"
+        + _editor_shell_text()
+    )
 
 
 def _method_block(text: str, name: str) -> str:
@@ -100,10 +113,8 @@ def test_selection_diag_pipeline_events_exist() -> None:
 
 
 def test_selection_diag_editor_segment_events_exist() -> None:
-    text = _view_text()
-    marker = "def _populate_editor("
-    assert marker in text
-    populate_body = text.split(marker, 1)[1].split("\n    def ", 1)[0]
+    text = _editor_shell_text()
+    populate_body = _method_block(text, "_populate_editor")
     for segment in (
         "studio.gicleeframe.selection.editor.ensure_identity",
         "studio.gicleeframe.selection.editor.ensure_rows",
@@ -142,12 +153,14 @@ def test_selection_diag_page_context_events_exist() -> None:
 
 def test_selection_diag_events_include_generation() -> None:
     selection_text = _selection_text()
+    editor_text = _editor_shell_text()
     view_text = _view_text()
     for method in ("_select_element", "_populate_editor_deferred"):
         body = _method_block(selection_text, method)
         assert "generation" in body
     for method in ("_populate_editor", "_populate_page_context_progressive_stable"):
-        body = _method_block(view_text, method)
+        source = editor_text if method == "_populate_editor" else view_text
+        body = _method_block(source, method)
         assert "generation" in body
 
 

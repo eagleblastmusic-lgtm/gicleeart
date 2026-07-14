@@ -14,6 +14,12 @@ def _view_text() -> str:
     )
 
 
+def _editor_shell_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_editor_shell.py"
+    ).read_text(encoding="utf-8")
+
+
 def _method_body(text: str, method_name: str) -> str:
     marker = f"def {method_name}(\n"
     if marker not in text:
@@ -23,18 +29,18 @@ def _method_body(text: str, method_name: str) -> str:
 
 
 def test_gicleeframe_logs_fields_lazy_startup() -> None:
-    text = _view_text()
+    text = _editor_shell_text()
     assert "studio.gicleeframe.editor.fields_lazy_startup" in text
 
 
 def test_form_shell_does_not_chain_editor_fields() -> None:
-    text = _view_text()
+    text = _editor_shell_text()
     body = _method_body(text, "_micro_deferred_editor_form_shell")
     assert "_micro_deferred_editor_fields" not in body
 
 
 def test_lazy_editor_row_helpers_exist() -> None:
-    text = _view_text()
+    text = _editor_shell_text()
     helpers = (
         "_ensure_title_row_built",
         "_ensure_text_row_built",
@@ -50,7 +56,7 @@ def test_lazy_editor_row_helpers_exist() -> None:
 
 
 def test_populate_editor_ensures_lazy_rows() -> None:
-    text = _view_text()
+    text = _editor_shell_text()
     body = _method_body(text, "_populate_editor")
     assert "fields = editor_field_visibility(etype)" in body
     fields_idx = body.index("fields = editor_field_visibility(etype)")
