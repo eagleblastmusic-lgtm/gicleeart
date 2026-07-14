@@ -24,6 +24,8 @@ Pliki:
 
 **LC-3A shortcut decisions:** `launcher_shortcut_controller.py` rozstrzyga zbocza klawiszy oraz wyniki `unmapped / missing / pending / ready`. WinAPI, bindtagi Tk, fokus, statusy i `after_idle` pozostają w `OptionsCategoryGicleeApp`.
 
+**LC-3B Windows adapter:** `launcher_windows_shortcuts.py` izoluje virtual-key mapping, user32, foreground i próbki klawiszy/modyfikatorów. `OptionsCategoryGicleeApp` nadal posiada timery, aktywność, Tk fallback oraz LC-3A orchestration.
+
 ---
 
 ## Co robi

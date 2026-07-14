@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import ctypes
-import os
 import tkinter as tk
 from tkinter import ttk
 from typing import Any
@@ -16,6 +14,13 @@ from .launcher_shortcut_controller import (
     resolve_shortcut_poll,
 )
 from .launcher_shortcut_options import show_shortcut_options
+from .launcher_windows_shortcuts import (
+    load_windows_user32 as _load_windows_user32,
+    sample_windows_shortcut_keys,
+    shortcut_virtual_key,
+    windows_launcher_is_foreground,
+    windows_shortcut_modifiers_down,
+)
 from .launcher_shortcuts import (
     dialog_blocks_shortcuts,
     focus_blocks_shortcuts,
@@ -27,39 +32,6 @@ from .styled_category_launcher import StyledCategoryGicleeApp
 
 
 _WINDOWS_SHORTCUT_POLL_MS = 35
-_GA_ROOT = 2
-_VK_CONTROL = 0x11
-_VK_MENU = 0x12
-
-
-def shortcut_virtual_key(key: str) -> int | None:
-    """Zwraca kod WinAPI dla litery, cyfry albo F1-F12."""
-
-    normalized = str(key or "").strip().lower()
-    if len(normalized) == 1 and normalized.isalpha() and normalized.isascii():
-        return ord(normalized.upper())
-    if len(normalized) == 1 and normalized.isdigit():
-        return ord(normalized)
-    if normalized.startswith("f") and normalized[1:].isdigit():
-        number = int(normalized[1:])
-        if 1 <= number <= 12:
-            return 0x70 + number - 1
-    return None
-
-
-def _load_windows_user32() -> Any | None:
-    if os.name != "nt":
-        return None
-    try:
-        user32 = ctypes.windll.user32
-        user32.GetForegroundWindow.restype = ctypes.c_void_p
-        user32.GetAncestor.argtypes = (ctypes.c_void_p, ctypes.c_uint)
-        user32.GetAncestor.restype = ctypes.c_void_p
-        user32.GetAsyncKeyState.argtypes = (ctypes.c_int,)
-        user32.GetAsyncKeyState.restype = ctypes.c_short
-        return user32
-    except (AttributeError, OSError):
-        return None
 
 
 class OptionsCategoryGicleeApp(StyledCategoryGicleeApp):
@@ -266,39 +238,21 @@ class OptionsCategoryGicleeApp(StyledCategoryGicleeApp):
         if user32 is None:
             return False
         try:
-            hwnd = int(self.root.winfo_id())
-            root_hwnd = int(user32.GetAncestor(ctypes.c_void_p(hwnd), _GA_ROOT) or hwnd)
-            foreground = int(user32.GetForegroundWindow() or 0)
-        except (AttributeError, OSError, TypeError, ValueError, tk.TclError):
+            window_id = int(self.root.winfo_id())
+        except (TypeError, ValueError, tk.TclError):
             return False
-        return foreground != 0 and foreground == root_hwnd
+        return windows_launcher_is_foreground(user32, window_id)
 
     def _poll_windows_shortcuts(self) -> None:
         user32 = self._windows_user32
         if user32 is None:
             return
 
-        current_down: set[str] = set()
-        for key in self._shortcut_map:
-            vk = shortcut_virtual_key(key)
-            if vk is None:
-                continue
-            try:
-                if int(user32.GetAsyncKeyState(vk)) & 0x8000:
-                    current_down.add(key)
-            except (AttributeError, OSError, TypeError, ValueError):
-                continue
+        sample = sample_windows_shortcut_keys(user32, self._shortcut_map)
+        current_down = set(sample.current_down)
 
         active = self._windows_launcher_is_foreground() and self._launcher_shortcuts_active()
-        modifiers_down = False
-        if active:
-            try:
-                ctrl_down = bool(int(user32.GetAsyncKeyState(_VK_CONTROL)) & 0x8000)
-                alt_down = bool(int(user32.GetAsyncKeyState(_VK_MENU)) & 0x8000)
-            except (AttributeError, OSError, TypeError, ValueError):
-                ctrl_down = False
-                alt_down = False
-            modifiers_down = ctrl_down or alt_down
+        modifiers_down = windows_shortcut_modifiers_down(user32) if active else False
 
         decision = resolve_shortcut_poll(
             current_down,
