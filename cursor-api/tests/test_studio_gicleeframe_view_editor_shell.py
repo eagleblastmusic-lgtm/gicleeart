@@ -33,6 +33,7 @@ from giclee_app.ui.gicleeframe_view_details_on_demand import (
 from giclee_app.ui.gicleeframe_view_visual_detail_renderers import (
     GicleeFrameVisualDetailRenderersMixin,
 )
+from giclee_app.ui.gicleeframe_view_page_context import GicleeFramePageContextMixin
 from giclee_app.ui.gicleeframe_view_editor_shell import (
     GicleeFrameEditorShellMixin,
     _EDITOR_FORM_WIDTH,
@@ -161,6 +162,9 @@ _HOST_OWNERSHIP = {
     "_selected_section_label",
     "_apply_edit_to_draft",
     "_since_selection_click_ms",
+}
+
+_PAGE_CONTEXT_ADAPTER = {
     "_show_page_context_shell_state",
     "_hide_page_context_rows",
     "_clear_page_context_loading_label",
@@ -681,7 +685,7 @@ def test_editor_shell_constants_exact_values() -> None:
         assert not _host_defines_constant(name, host_text), name
 
 
-def test_gicleeframe_view_has_fourteen_mixins_before_scrollable_frame() -> None:
+def test_gicleeframe_view_has_fifteen_mixins_before_scrollable_frame() -> None:
     expected = (
         GicleeFrameBrandPanelMixin,
         GicleeFramePageReadinessMixin,
@@ -697,6 +701,7 @@ def test_gicleeframe_view_has_fourteen_mixins_before_scrollable_frame() -> None:
         GicleeFrameEditorShellMixin,
         GicleeFrameDetailsOnDemandMixin,
         GicleeFrameVisualDetailRenderersMixin,
+        GicleeFramePageContextMixin,
         ctk.CTkScrollableFrame,
     )
 
@@ -723,6 +728,10 @@ def test_host_ownership_for_editor_adapters() -> None:
     )
     for name in host_in_view:
         assert name in GicleeFrameView.__dict__
+    for name in _PAGE_CONTEXT_ADAPTER:
+        assert name not in GicleeFrameEditorShellMixin.__dict__
+        assert name not in GicleeFrameView.__dict__
+        assert getattr(GicleeFrameView, name) is getattr(GicleeFramePageContextMixin, name)
     for name in _SELECTION_OWNERSHIP:
         assert name in GicleeFrameSelectionOrchestrationMixin.__dict__
     for name in _INTERACTION_OWNERSHIP:

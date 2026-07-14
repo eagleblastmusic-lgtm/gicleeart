@@ -1,6 +1,6 @@
 # GF-M17 — Page Context & Inline Settings Engine Contract
 
-Status: **CONTRACT FROZEN — NOT IMPLEMENTED**
+Status: **COMPLETED — MRO INTEGRATED**
 
 Repository: `eagleblastmusic-lgtm/gicleeart`  
 Base branch: `master`  

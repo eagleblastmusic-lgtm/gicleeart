@@ -23,6 +23,7 @@ from giclee_app.studio.gicleeframe_page_draft import (
 )
 from giclee_app.ui import gicleeframe_view_ram_variants as ram_module
 from giclee_app.ui.gicleeframe_view import GicleeFrameView
+from giclee_app.ui.gicleeframe_view_page_context import GicleeFramePageContextMixin
 from giclee_app.ui.gicleeframe_view_brand import GicleeFrameBrandPanelMixin
 from giclee_app.ui.gicleeframe_view_page_readiness import (
     GicleeFramePageReadinessMixin,
@@ -220,6 +221,7 @@ def test_ram_variant_methods_resolve_by_identity_from_mixin_on_gicleeframe_view(
     assert GicleeFrameEditorShellMixin in GicleeFrameView.__mro__
     assert GicleeFrameDetailsOnDemandMixin in GicleeFrameView.__mro__
     assert GicleeFrameVisualDetailRenderersMixin in GicleeFrameView.__mro__
+    assert GicleeFramePageContextMixin in GicleeFrameView.__mro__
     for name in _EXPECTED_METHODS:
         assert name not in GicleeFrameView.__dict__
         assert getattr(GicleeFrameView, name) is getattr(GicleeFrameRamVariantMixin, name)

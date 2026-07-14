@@ -93,6 +93,12 @@ _VISUAL_RENDERERS_PATH = (
     / "ui"
     / "gicleeframe_view_visual_detail_renderers.py"
 )
+_PAGE_CONTEXT_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "giclee_app"
+    / "ui"
+    / "gicleeframe_view_page_context.py"
+)
 _NEW_PLANNING_MODULES = (
     "gicleeframe_brief.py",
     "gicleeframe_draft_state.py",
@@ -188,7 +194,8 @@ def test_view_source_f21_editor_labels() -> None:
     assert "_build_section_identity_card" in combined
     assert "_build_action_dock" in combined
     assert "_PREVIEW_SETTINGS_CAPTION" in combined
-    assert "_pack_field_vertical" in text
+    page_context_text = _PAGE_CONTEXT_PATH.read_text(encoding="utf-8")
+    assert "_pack_field_vertical" in page_context_text
     visual_text = _VISUAL_RENDERERS_PATH.read_text(encoding="utf-8")
     assert "_update_section_preview" in visual_text
 

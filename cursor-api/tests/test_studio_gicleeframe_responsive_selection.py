@@ -12,6 +12,7 @@ SELECTION_PATH = (
     ROOT / "giclee_app" / "ui" / "gicleeframe_view_selection_orchestration.py"
 )
 VIEW_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
+PAGE_CONTEXT_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_page_context.py"
 
 
 def test_section_row_click_does_not_collapse_by_default() -> None:
@@ -35,7 +36,7 @@ def test_select_element_has_immediate_and_deferred_pipeline() -> None:
 
 
 def test_page_context_waits_for_stable_selection() -> None:
-    text = VIEW_PATH.read_text(encoding="utf-8")
+    text = PAGE_CONTEXT_PATH.read_text(encoding="utf-8")
 
     assert "_GF_PAGE_CONTEXT_STABLE_DEFER_MS" in text
     assert "_populate_page_context_progressive_stable" in text

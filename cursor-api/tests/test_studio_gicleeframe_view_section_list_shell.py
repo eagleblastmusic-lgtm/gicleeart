@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from giclee_app.ui import gicleeframe_view_section_list_shell as shell_module
 from giclee_app.ui.gicleeframe_view import GicleeFrameView
+from giclee_app.ui.gicleeframe_view_page_context import GicleeFramePageContextMixin
 from giclee_app.ui.gicleeframe_view_brand import GicleeFrameBrandPanelMixin
 from giclee_app.ui.gicleeframe_view_page_readiness import (
     GicleeFramePageReadinessMixin,
@@ -287,6 +288,7 @@ def test_section_list_shell_methods_resolve_by_identity_from_mixin_on_gicleefram
     assert GicleeFrameEditorShellMixin in GicleeFrameView.__mro__
     assert GicleeFrameDetailsOnDemandMixin in GicleeFrameView.__mro__
     assert GicleeFrameVisualDetailRenderersMixin in GicleeFrameView.__mro__
+    assert GicleeFramePageContextMixin in GicleeFrameView.__mro__
     for name in _EXPECTED_METHODS:
         assert name not in GicleeFrameView.__dict__
         assert getattr(GicleeFrameView, name) is getattr(

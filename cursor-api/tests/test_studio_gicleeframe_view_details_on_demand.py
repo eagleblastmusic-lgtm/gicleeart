@@ -64,6 +64,7 @@ from giclee_app.ui.gicleeframe_view_editor_shell import GicleeFrameEditorShellMi
 from giclee_app.ui.gicleeframe_view_visual_detail_renderers import (
     GicleeFrameVisualDetailRenderersMixin,
 )
+from giclee_app.ui.gicleeframe_view_page_context import GicleeFramePageContextMixin
 from giclee_app.ui.gicleeframe_view_models import SectionVisualCacheEntry
 from giclee_app.ui.gicleeframe_view_page_readiness import (
     GicleeFramePageReadinessMixin,
@@ -707,7 +708,7 @@ def test_details_constants_exact_values() -> None:
         assert not _host_defines_constant(name, host_text), name
 
 
-def test_gicleeframe_view_has_fourteen_mixins_before_scrollable_frame() -> None:
+def test_gicleeframe_view_has_fifteen_mixins_before_scrollable_frame() -> None:
     expected = (
         GicleeFrameBrandPanelMixin,
         GicleeFramePageReadinessMixin,
@@ -723,6 +724,7 @@ def test_gicleeframe_view_has_fourteen_mixins_before_scrollable_frame() -> None:
         GicleeFrameEditorShellMixin,
         GicleeFrameDetailsOnDemandMixin,
         GicleeFrameVisualDetailRenderersMixin,
+        GicleeFramePageContextMixin,
         ctk.CTkScrollableFrame,
     )
     assert GicleeFrameView.__mro__[1 : 1 + len(expected)] == expected
@@ -748,12 +750,8 @@ def test_host_ownership_for_excluded_renderer_methods() -> None:
         )
     for name in _HOST_PAGE_CONTEXT_RENDERER_EXCLUSIONS:
         assert name not in GicleeFrameDetailsOnDemandMixin.__dict__
-        assert _host_defines_method(name, host_text), name
-        assert getattr(GicleeFrameView, name) is not getattr(
-            GicleeFrameDetailsOnDemandMixin,
-            name,
-            None,
-        )
+        assert not _host_defines_method(name, host_text), name
+        assert getattr(GicleeFrameView, name) is getattr(GicleeFramePageContextMixin, name)
 
 
 def test_details_source_ownership_in_module() -> None:
