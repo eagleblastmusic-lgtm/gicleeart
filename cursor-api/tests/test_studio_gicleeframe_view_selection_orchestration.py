@@ -401,28 +401,23 @@ def test_host_ownership_for_selection_adapters() -> None:
 def test_progressive_boot_enabled_for_selection_delegates_to_host(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    root = ctk.CTk()
-    root.withdraw()
-    try:
-        view = GicleeFrameView(root)
-        monkeypatch.setattr(
-            "giclee_app.ui.gicleeframe_view._progressive_boot_enabled",
-            lambda: True,
-        )
+    view = object.__new__(GicleeFrameView)
+    monkeypatch.setattr(
+        "giclee_app.ui.gicleeframe_view._progressive_boot_enabled",
+        lambda: True,
+    )
+    assert view._progressive_boot_enabled_for_selection() is True
+    monkeypatch.setattr(
+        "giclee_app.ui.gicleeframe_view._progressive_boot_enabled",
+        lambda: False,
+    )
+    assert view._progressive_boot_enabled_for_selection() is False
+    with patch(
+        "giclee_app.ui.gicleeframe_view._progressive_boot_enabled",
+        return_value=True,
+    ):
         assert view._progressive_boot_enabled_for_selection() is True
-        monkeypatch.setattr(
-            "giclee_app.ui.gicleeframe_view._progressive_boot_enabled",
-            lambda: False,
-        )
-        assert view._progressive_boot_enabled_for_selection() is False
-        with patch(
-            "giclee_app.ui.gicleeframe_view._progressive_boot_enabled",
-            return_value=True,
-        ):
-            assert view._progressive_boot_enabled_for_selection() is True
-            assert view._progressive_boot_enabled_for_selection() == _progressive_boot_enabled()
-    finally:
-        root.destroy()
+        assert view._progressive_boot_enabled_for_selection() == _progressive_boot_enabled()
 
 
 def test_since_selection_click_ms_none_when_absent() -> None:
