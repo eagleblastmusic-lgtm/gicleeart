@@ -45,8 +45,24 @@ def test_startup_hotspot_editor_skeleton_spans_exist() -> None:
     assert "studio.gicleeframe.build.editor_column.skeleton.placeholder_state" in text
 
 
+def _rendering_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_rendering.py"
+    ).read_text(encoding="utf-8")
+
+
+def _section_list_shell_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_shell.py"
+    ).read_text(encoding="utf-8")
+
+
+def _combined_text() -> str:
+    return _view_text() + "\n" + _section_list_shell_text() + "\n" + _rendering_text()
+
+
 def test_startup_hotspot_section_list_first_visible_ready_marker() -> None:
-    text = _view_text()
+    text = _combined_text()
     assert "studio.gicleeframe.section_list.first_visible_ready" in text
     assert "since_enter_ms=self._since_visual_enter_ms()" in text
 

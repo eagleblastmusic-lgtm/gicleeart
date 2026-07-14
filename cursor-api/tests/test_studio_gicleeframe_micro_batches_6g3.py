@@ -16,14 +16,14 @@ def _constant_int(text: str, name: str) -> int:
 
 
 def test_gicleeframe_section_list_uses_bounded_progressive_batches() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
+    rendering_path = ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_rendering.py"
     shell_path = ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_shell.py"
-    text = path.read_text(encoding="utf-8")
+    rendering_text = rendering_path.read_text(encoding="utf-8")
     shell_text = shell_path.read_text(encoding="utf-8")
 
     first_batch = _constant_int(shell_text, "_GF_SECTION_FIRST_BATCH_SIZE")
-    steady_batch = _constant_int(text, "_GF_SECTION_BATCH_SIZE")
-    delay_ms = _constant_int(text, "_GF_SECTION_BATCH_DELAY_MS")
+    steady_batch = _constant_int(rendering_text, "_GF_SECTION_BATCH_SIZE")
+    delay_ms = _constant_int(rendering_text, "_GF_SECTION_BATCH_DELAY_MS")
 
     assert 1 <= first_batch <= steady_batch <= 12
     assert 0 <= delay_ms <= 16

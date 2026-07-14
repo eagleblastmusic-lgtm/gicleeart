@@ -21,8 +21,14 @@ def _section_list_shell_text() -> str:
     ).read_text(encoding="utf-8")
 
 
+def _rendering_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_rendering.py"
+    ).read_text(encoding="utf-8")
+
+
 def _combined_text() -> str:
-    return _view_text() + "\n" + _section_list_shell_text()
+    return _view_text() + "\n" + _section_list_shell_text() + "\n" + _rendering_text()
 
 
 def _constant_int(text: str, name: str) -> int:
@@ -72,7 +78,7 @@ def test_gicleeframe_sections_deferred_packs_card_into_skeleton_column() -> None
 
 
 def test_gicleeframe_section_list_has_progressive_first_batch() -> None:
-    text = _view_text()
+    text = _rendering_text()
     first_batch = _constant_int(_section_list_shell_text(), "_GF_SECTION_FIRST_BATCH_SIZE")
     steady_batch = _constant_int(text, "_GF_SECTION_BATCH_SIZE")
 

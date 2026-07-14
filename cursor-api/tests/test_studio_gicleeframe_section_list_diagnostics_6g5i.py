@@ -14,11 +14,25 @@ def _view_text() -> str:
     )
 
 
+def _rendering_text() -> str:
+    return (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_rendering.py"
+    ).read_text(encoding="utf-8")
+
+
 def _combined_text() -> str:
     top_bar = (ROOT / "giclee_app" / "ui" / "gicleeframe_view_top_bar.py").read_text(
         encoding="utf-8"
     )
-    return _view_text() + "\n" + top_bar + "\n" + _section_list_shell_text()
+    return (
+        _view_text()
+        + "\n"
+        + top_bar
+        + "\n"
+        + _section_list_shell_text()
+        + "\n"
+        + _rendering_text()
+    )
 
 
 def _section_list_shell_text() -> str:
@@ -36,7 +50,7 @@ def test_section_list_incremental_scheduled_event_exists() -> None:
 
 
 def test_section_list_incremental_enter_event_exists() -> None:
-    text = _view_text()
+    text = _rendering_text()
     assert "studio.gicleeframe.section_list.incremental_enter" in text
 
     start = text.index("def _render_section_list_incremental")
@@ -48,12 +62,12 @@ def test_section_list_incremental_enter_event_exists() -> None:
 
 
 def test_section_list_first_batch_start_event_exists() -> None:
-    text = _view_text()
+    text = _rendering_text()
     assert "studio.gicleeframe.section_list.first_batch_start" in text
 
 
 def test_section_list_first_batch_spans_exist() -> None:
-    text = _view_text()
+    text = _rendering_text()
     assert "studio.gicleeframe.section_list.first_batch.prepare" in text
     assert "studio.gicleeframe.section_list.first_batch.rows" in text
     assert "studio.gicleeframe.section_list.first_batch.pack_or_layout" in text

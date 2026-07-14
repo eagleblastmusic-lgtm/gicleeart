@@ -87,10 +87,21 @@ def test_startup_uses_placeholders_not_full_actions() -> None:
     assert "_build_command_bar_primary_actions(" not in cmd_body
 
 
+def _combined_text() -> str:
+    shell = (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_shell.py"
+    ).read_text(encoding="utf-8")
+    rendering = (
+        ROOT / "giclee_app" / "ui" / "gicleeframe_view_section_list_rendering.py"
+    ).read_text(encoding="utf-8")
+    return _view_text() + "\n" + shell + "\n" + rendering
+
+
 def test_top_bar_lazy_preserves_prior_6g5_optimizations() -> None:
     text = _view_text()
+    combined = _combined_text()
     assert "studio.gicleeframe.editor.fields_lazy_startup" in text
     assert "studio.gicleeframe.editor.identity_card_lazy_startup" in text
     assert "studio.gicleeframe.control.deferred_readiness_late" in text
     assert "studio.gicleeframe.populate_editor.preview_deferred_requested" in text
-    assert "studio.gicleeframe.section_list.first_visible_ready" in text
+    assert "studio.gicleeframe.section_list.first_visible_ready" in combined

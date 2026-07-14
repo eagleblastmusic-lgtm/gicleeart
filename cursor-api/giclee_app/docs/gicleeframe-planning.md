@@ -461,7 +461,7 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M10+** — osobn
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M11+** — osobne PR-y. **Section List shell** (GF-M10) zrealizowano; full/incremental rendering, dropdown interaction, selection i reorder pozostają kandydatem GF-M11.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M12+** — osobne PR-y. **Section List shell** (GF-M10) i **rendering** (GF-M11) zrealizowano; dropdown interaction, selection i reorder pozostają kandydatem GF-M12.
 
 ---
 
@@ -486,4 +486,33 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M11+** — osobn
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M11+** — osobne PR-y. Full/incremental row rendering, dropdown interaction, selection i reorder pozostają host-owned kandydatami na GF-M11.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M12+** — osobne PR-y. Dropdown interaction, selection i reorder pozostają host-owned kandydatami na GF-M12.
+
+---
+
+## 22. GF-M11 — Section List Rendering & Row Construction Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** ekstrakcja spójnej granicy full/incremental rendering i konstrukcji wierszy sekcji bez absorpcji dropdown interaction, selection, drag/reorder, inventory, progressive lifecycle gates, editor population ani atomic reveal.
+
+### Wynik
+
+- **Section list rendering** przeniesiony do `ui/gicleeframe_view_section_list_rendering.py` jako `GicleeFrameSectionListRenderingMixin`.
+- Przeniesiono dokładnie **8 metod** oraz **4 stałe** granicy (`_SECTION_ROW_GRIP`, `_SECTION_ROW_HEIGHT`, `_GF_SECTION_BATCH_SIZE`, `_GF_SECTION_BATCH_DELAY_MS`).
+- Renderer importuje `_GF_SECTION_FIRST_BATCH_SIZE` i `_SECTION_PLACEHOLDER` z modułu shell — bez duplikacji.
+- Mixin **nie posiada lifecycle** ani `__init__`, **nie dziedziczy** po widżecie Tk; **używa `after()` i `after_idle()`** wyłącznie dla batchingu renderingu.
+- Host `GicleeFrameView` dziedziczy **dziewięć mixinów** panelowych/subsystemowych przed `ctk.CTkScrollableFrame`.
+- Host nadal posiada:
+  - `__init__` i inicjalizację pól section-list/renderingu,
+  - `_finalize_full_list_render` i politykę initial-selection,
+  - dropdown open/close/collapse, outside-click bindings,
+  - `_on_section_row_click`, `_select_element`, highlighting,
+  - `_start_section_drag`, `_finish_section_drag`, reorder RAM,
+  - `_upgrade_section_list_scroll`, progressive bootstrap/scheduling,
+  - perceived-ready, atomic-reveal i editor population.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M12+** — osobne PR-y. Dropdown interaction, selection/highlighting i drag/reorder pozostają host-owned kandydatami na GF-M12.
