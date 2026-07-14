@@ -342,7 +342,7 @@ Każdy finding musi dostać kategorię:
 
 **Integracja GPT/ZIP v40:** COMPLETED dopiero po walidacji manifestu 47/47 i wygenerowaniu ZIP-a w tym etapie.
 
-**Następny osobny program (nie dalszy numer refaktoru GF):** Bartosz OS / AgentRuntime / Antigravity SDK discovery — oddzielny tor od GICLÉE FRAME modularization.
+**Następny etap pełnego refaktoru:** ETAP 4B — Launcher Composition, po fresh reconnaissance na aktualnym `master`.
 
 ### HISTORICAL — GF-M1 (2026-07-13)
 
@@ -762,20 +762,18 @@ Przy równoległej pracy:
 
 # 8. KOLEJNOŚĆ DALSZEJ REALIZACJI
 
-1. ~~Print Optimize Workspace Safety~~ — **DONE** (podtor inventory closure).
-2. ~~KPiR Store Resolver Clarity~~ — **DONE** (podtor inventory closure).
-3. ~~Karuzela Writer Safety~~ — **DONE** (podtor inventory closure).
-4. ~~GF-M1~~ … ~~GF-M18~~ — **DONE** (GICLÉE FRAME modularization + final audit PASS).
-5. **Start Files v40** — CURRENT / COMPLETED w ramach brancha v40.
-6. **Bartosz OS / AgentRuntime / Antigravity SDK discovery** — NEXT PRIMARY (osobny program).
-7. Launcher composition.
-8. Shopify theme modularization.
-9. Repo/documentation consolidation.
-10. Szerszy ETAP 1 Repository Safety (poza podtorem inventory).
-11. Szerszy ETAP 3A / 3C (poza podtorem inventory).
-12. Theme Page Editor / WS-1.3 (osobny tor partial).
-13. Final starter-files checkpoint.
-14. Dopiero potem generowanie ZIP v39 po osobnym poleceniu (ZIP = snapshot; tylko na polecenie).
+1. ~~Print Optimize Workspace Safety~~ / ~~KPiR Store Resolver Clarity~~ / ~~Karuzela Writer Safety~~ — **DONE** (ukończone podtory safety / inventory closure).
+2. ~~GF-M1~~ … ~~GF-M18~~ — **DONE** (ETAP 4A — GICLÉE FRAME modularization + final audit PASS; brak GF-M19).
+3. **Start Files v40** — CURRENT / do domknięcia w PR #65.
+4. **ETAP 4B — Launcher Composition** — **NEXT PRIMARY**; najpierw L-0 Fresh Reconnaissance & Contract Freeze na aktualnym `master`.
+5. **ETAP 5 — Shopify theme modularization** — po świeżym audycie: 5A Katalog, 5B Własna fotografia, 5C Globalne elementy.
+6. **ETAP 6 — Repo/documentation consolidation**.
+7. Szerszy **ETAP 1 Repository Safety** (poza ukończonym podtorem inventory).
+8. Szerszy **ETAP 3A / 3C** (Runtime Foundation / Runtime State Separation).
+9. **Theme Page Editor / WS-1.3** (osobny tor partial).
+10. **Final starter-files checkpoint**.
+
+ZIP v40 jest snapshotem i może zostać wygenerowany dopiero po osobnym poleceniu oraz po walidacji aktywnych plików.
 
 **Ukończone (nie w aktywnej kolejności):** Integracja GPT v39 — COMPLETED 2026-07-13; Runtime-write inventory closure substream — COMPLETED 2026-07-13.
 

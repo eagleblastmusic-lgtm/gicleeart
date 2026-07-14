@@ -27,7 +27,7 @@ Verified at: 2026-07-14 (`git fetch origin` + `rev-parse origin/master`)
 - **Brak GF-M19** — modularizacja GICLÉE FRAME zamknięta
 - Ready CI **#302**: Hermetic 48 passed; canonical Tk 6 passed (Tcl/Tk 8.6.15); full baseline 2342 passed, 1 optional skip; JUnit 2343 tests, 0 failures, 0 errors, 1 skipped; runtime-write inventory 714 files, 0 parse errors, 0 findings
 
-**NEXT PRIMARY (po ukończeniu Start Files v40):** Bartosz OS / AgentRuntime / Antigravity SDK — discovery i pierwszy vertical slice (osobny program, nie GF-M19).
+**NEXT PRIMARY po domknięciu Start Files v40:** ETAP 4B — Launcher Composition. Przed implementacją wykonać fresh reconnaissance na aktualnym `master` i zamrozić osobny kontrakt.
 
 Guardrails (tor gicleeart): no Shopify mutation; no deploy; no live-theme writer; no automatic data migration; no ZIP generation without explicit instruction; no force-push.
 

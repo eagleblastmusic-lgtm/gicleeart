@@ -14,7 +14,7 @@
 
 4. **Zaktualizowane moduły analyst** — GITHUB_PR_CI, DEBUG_REGRESSION, CURSOR_REVIEW, STAGE_ARCHITECT, HANDOFF_CONTINUITY, LESSONS_LEARNED, `GPT_GIT_BRANCH_WORKFLOW.md`.
 
-5. **`CURRENT_APP_STATE.md`** — GF-M1–GF-M18 complete, final audit PASS, CI #302, next: Bartosz OS discovery.
+5. **`CURRENT_APP_STATE.md`** — GF-M1–GF-M18 complete, final audit PASS, CI #302; next: dalszy refaktor zgodnie z roadmapą, zaczynając od ETAPU 4B — Launcher Composition.
 
 6. **`GICLEE_PROJECT_REFACTOR_ROADMAP_v2.md`** — GF modularization COMPLETED; Start Files v40; brak GF-M19.
 
