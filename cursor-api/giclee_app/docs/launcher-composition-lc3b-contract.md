@@ -1,6 +1,6 @@
 # ETAP 4B / LC-3B — Windows Shortcut Platform Adapter
 
-**Status:** fresh reconnaissance · contract freeze  
+**Status:** LC-3B implemented
 **Repository:** `eagleblastmusic-lgtm/gicleeart`  
 **Base:** `master` @ `639cc7a62b42a8a4593f5755bf8938c80020f68e`  
 **Data weryfikacji:** 2026-07-15
