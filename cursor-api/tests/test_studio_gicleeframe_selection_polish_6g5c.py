@@ -8,6 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 ROOT = Path(__file__).resolve().parents[1]
 VIEW_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
 EDITOR_SHELL_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_editor_shell.py"
+DETAILS_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_details_on_demand.py"
 
 
 def _view_text() -> str:
@@ -18,6 +19,10 @@ def _editor_shell_text() -> str:
     return EDITOR_SHELL_PATH.read_text(encoding="utf-8")
 
 
+def _details_text() -> str:
+    return DETAILS_PATH.read_text(encoding="utf-8")
+
+
 def _method_block(text: str, name: str) -> str:
     marker = f"def {name}"
     assert marker in text
@@ -25,7 +30,7 @@ def _method_block(text: str, name: str) -> str:
 
 
 def test_divider_is_not_deferred_only_for_page_settings() -> None:
-    text = _view_text()
+    text = _details_text()
     body = _method_block(text, "_should_defer_editor_detail_populate")
 
     assert "return True" in body
@@ -35,7 +40,7 @@ def test_divider_is_not_deferred_only_for_page_settings() -> None:
 
 
 def test_media_section_preview_is_deferred() -> None:
-    combined = _view_text() + "\n" + _editor_shell_text()
+    combined = _details_text() + "\n" + _editor_shell_text()
 
     assert "_GF_PREVIEW_DEFER_FOR_HEAVY_TYPES_MS" in combined
     assert "_populate_editor_preview_deferred" in combined
@@ -44,11 +49,14 @@ def test_media_section_preview_is_deferred() -> None:
 
 
 def test_media_section_children_can_be_delayed_later_than_default() -> None:
-    from giclee_app.ui import gicleeframe_view as gfv
+    from giclee_app.ui import gicleeframe_view_details_on_demand as details
 
-    text = _view_text()
+    text = _details_text()
 
-    assert gfv._GF_SELECTION_CHILDREN_LATE_DEFER_MS > gfv._GF_SELECTION_CHILDREN_DEFER_MS
+    assert (
+        details._GF_SELECTION_CHILDREN_LATE_DEFER_MS
+        > details._GF_SELECTION_CHILDREN_DEFER_MS
+    )
     assert "_populate_editor_children_deferred" in text
 
 

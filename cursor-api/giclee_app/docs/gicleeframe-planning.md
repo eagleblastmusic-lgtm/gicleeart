@@ -52,6 +52,7 @@ Disclaimer F2: **„Zmiany są tylko lokalnym draftem w pamięci — nic nie zap
 | `ui/gicleeframe_view_section_list_interaction.py` | **GF-M12** — dropdown, highlight, row-click gateway i drag/reorder RAM listy sekcji |
 | `ui/gicleeframe_view_selection_orchestration.py` | **GF-M13** — selection orchestration, priority lane, atomic swap i scheduling populate |
 | `ui/gicleeframe_view_editor_shell.py` | **GF-M14** — editor shell, prewarm lifecycle i minimal population |
+| `ui/gicleeframe_view_details_on_demand.py` | **GF-M15** — details-on-demand orchestrator, cache i deferred wrappers |
 | `launcher_studio.py` | Routing: `gicleeframe` → `GicleeFrameView` |
 
 ---
@@ -571,7 +572,7 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M14+** — osobn
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M15+** — osobne PR-y. Editor shell/population przeniesiono w GF-M14; details-on-demand, page-context engine, preview renderer, layer-navigation renderer i children population pozostają host-owned kandydatami GF-M15+.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M16+** — osobne PR-y. Editor shell/population przeniesiono w GF-M14; details-on-demand przeniesiono w GF-M15; preview renderer, page-context engine, layer-navigation renderer, children renderer, lifecycle i inventory pozostają host-owned kandydatami GF-M16+.
 
 ---
 
@@ -598,4 +599,28 @@ Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M15+** — osobn
 
 ### Dalsze etapy
 
-Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M15+** — osobne PR-y. Details-on-demand, page-context engine, preview renderer, layer-navigation renderer i children population pozostają host-owned kandydatami GF-M15+.
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M16+** — osobne PR-y. Details-on-demand przeniesiono w GF-M15; preview renderer, page-context engine, layer-navigation renderer, children renderer, lifecycle i inventory pozostają host-owned kandydatami GF-M16+.
+
+---
+
+## 26. GF-M15 — Details-on-Demand Orchestrator & Cache Extraction
+
+**Status:** zakończone — MRO zintegrowany.
+
+**Cel:** ekstrakcja spójnej granicy details-on-demand (CTA timing, stable shell, module shell, cache policy, dispatch, legacy staged pipeline, deferred wrappers, shared visual-cache save) bez absorpcji preview renderer, page-context engine, layer-navigation renderer ani children renderer.
+
+### Wynik
+
+- **Details-on-demand** przeniesiony do `ui/gicleeframe_view_details_on_demand.py` jako `GicleeFrameDetailsOnDemandMixin`.
+- Przeniesiono dokładnie **48 metod** oraz **32 stałe** granicy.
+- Mixin **nie posiada lifecycle** ani `__init__`, **nie dziedziczy** po widżecie Tk; **używa `after()`** wyłącznie dla przeniesionych details/deferred jobs.
+- Host `GicleeFrameView` dziedziczy **trzynaście mixinów** panelowych/subsystemowych przed `ctk.CTkScrollableFrame` (details-on-demand po editor shell).
+- Host nadal posiada:
+  - `__init__` i inicjalizację pól details/page-context/preview/layer/children,
+  - preview renderer, page-context engine, layer-navigation renderer, children renderer,
+  - lifecycle, inventory merge, progressive bootstrap, perceived-ready i atomic-reveal orchestration.
+- Zachowano **RAM-only behavior**: brak writera, brak zapisu plików, brak operacji sieciowych i brak Shopify mutation.
+
+### Dalsze etapy
+
+Kolejne metody klasy `GicleeFrameView` pozostają zakresem **GF-M16+** — osobne PR-y. Preview renderer, page-context engine, layer-navigation renderer, children renderer, lifecycle i inventory pozostają host-owned kandydatami GF-M16+.

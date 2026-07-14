@@ -11,6 +11,7 @@ SELECTION_PATH = (
     ROOT / "giclee_app" / "ui" / "gicleeframe_view_selection_orchestration.py"
 )
 EDITOR_SHELL_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_editor_shell.py"
+DETAILS_PATH = ROOT / "giclee_app" / "ui" / "gicleeframe_view_details_on_demand.py"
 
 
 def _view_text() -> str:
@@ -25,8 +26,20 @@ def _selection_text() -> str:
     return SELECTION_PATH.read_text(encoding="utf-8")
 
 
+def _details_text() -> str:
+    return DETAILS_PATH.read_text(encoding="utf-8")
+
+
 def _selection_source_text() -> str:
-    return _view_text() + "\n" + _selection_text() + "\n" + _editor_shell_text()
+    return (
+        _view_text()
+        + "\n"
+        + _selection_text()
+        + "\n"
+        + _editor_shell_text()
+        + "\n"
+        + _details_text()
+    )
 
 
 def _method_block(text: str, name: str) -> str:
@@ -124,6 +137,7 @@ def test_gicleeframe_has_section_visual_cache() -> None:
     view_text = _view_text()
     selection_text = _selection_text()
     editor_text = _editor_shell_text()
+    details_text = _details_text()
 
     assert "_section_visual_cache" in view_text
     assert "SectionVisualCacheEntry" in view_text
@@ -145,17 +159,23 @@ def test_gicleeframe_has_section_visual_cache() -> None:
         "studio.gicleeframe.editor.layout_shift_guard",
         "studio.gicleeframe.details_on_demand.available",
     ):
-        assert event in view_text or event in selection_text or event in editor_text
+        assert (
+            event in view_text
+            or event in selection_text
+            or event in editor_text
+            or event in details_text
+        )
 
 
 def test_gicleeframe_has_minimal_and_details_cache_events() -> None:
     view_text = _view_text()
     selection_text = _selection_text()
     editor_text = _editor_shell_text()
+    details_text = _details_text()
 
     assert "_minimal_cache_entry" in editor_text
-    assert "_details_cache_entry" in view_text
-    assert "details_cache_preview" in view_text
+    assert "_details_cache_entry" in details_text
+    assert "details_cache_preview" in details_text
     for event in (
         "studio.gicleeframe.selection.minimal_cache_hit",
         "studio.gicleeframe.selection.minimal_cache_miss",
@@ -175,7 +195,12 @@ def test_gicleeframe_has_minimal_and_details_cache_events() -> None:
         "studio.gicleeframe.details_on_demand.applied",
         "studio.gicleeframe.visible_prewarm.suppressed",
     ):
-        assert event in view_text or event in selection_text or event in editor_text
+        assert (
+            event in view_text
+            or event in selection_text
+            or event in editor_text
+            or event in details_text
+        )
 
 
 def test_gicleeframe_section_reentry_uses_minimal_cache() -> None:
@@ -241,7 +266,10 @@ def test_gicleeframe_section_reentry_uses_minimal_cache() -> None:
             "giclee_app.ui.gicleeframe_view_selection_orchestration.log_event",
             side_effect=_capture,
         ):
-            with patch("giclee_app.ui.gicleeframe_view.log_event", side_effect=_capture):
+            with patch(
+                "giclee_app.ui.gicleeframe_view_details_on_demand.log_event",
+                side_effect=_capture,
+            ):
                 with patch(
                     "giclee_app.ui.gicleeframe_view_editor_shell.log_event",
                     side_effect=_capture,
@@ -368,7 +396,10 @@ def test_details_available_keeps_since_click_ms() -> None:
         def _capture(event: str, **kwargs) -> None:  # type: ignore[no-untyped-def]
             logged.append((event, kwargs))
 
-        with patch("giclee_app.ui.gicleeframe_view.log_event", side_effect=_capture):
+        with patch(
+            "giclee_app.ui.gicleeframe_view_details_on_demand.log_event",
+            side_effect=_capture,
+        ):
             view._show_details_on_demand_block(media)
 
         available = next(
@@ -402,7 +433,10 @@ def test_details_shell_on_cta_click_without_auto_stages() -> None:
         def _capture(event: str, **kwargs) -> None:  # type: ignore[no-untyped-def]
             logged.append((event, kwargs))
 
-        with patch("giclee_app.ui.gicleeframe_view.log_event", side_effect=_capture):
+        with patch(
+            "giclee_app.ui.gicleeframe_view_details_on_demand.log_event",
+            side_effect=_capture,
+        ):
             with patch.object(view, "_update_section_preview") as preview_mock:
                 with patch.object(view, "_update_layer_nav") as layer_mock:
                     with patch.object(view, "_fill_children_overview_buttons_range"):
@@ -485,7 +519,10 @@ def test_details_module_preview_loads_only_preview() -> None:
         def _capture(event: str, **kwargs) -> None:  # type: ignore[no-untyped-def]
             logged.append((event, kwargs))
 
-        with patch("giclee_app.ui.gicleeframe_view.log_event", side_effect=_capture):
+        with patch(
+            "giclee_app.ui.gicleeframe_view_details_on_demand.log_event",
+            side_effect=_capture,
+        ):
             with patch.object(view, "after", side_effect=_after):
                 with patch.object(view, "_update_section_preview") as preview_mock:
                     with patch.object(view, "_update_layer_nav") as layer_mock:
@@ -576,7 +613,10 @@ def test_details_module_children_batches_when_more_than_two() -> None:
         def _capture(event: str, **kwargs) -> None:  # type: ignore[no-untyped-def]
             logged.append((event, kwargs))
 
-        with patch("giclee_app.ui.gicleeframe_view.log_event", side_effect=_capture):
+        with patch(
+            "giclee_app.ui.gicleeframe_view_details_on_demand.log_event",
+            side_effect=_capture,
+        ):
             with patch.object(view, "after", side_effect=_after):
                 with patch.object(view, "_tree_row_for_element", return_value=MagicMock(children=child_rows)):
                     with patch.object(view, "_fill_children_overview_buttons_range") as children_mock:
@@ -598,8 +638,7 @@ def test_details_module_children_batches_when_more_than_two() -> None:
 
 
 def test_details_modules_are_separate_not_monolithic() -> None:
-    path = ROOT / "giclee_app" / "ui" / "gicleeframe_view.py"
-    text = path.read_text(encoding="utf-8")
+    text = DETAILS_PATH.read_text(encoding="utf-8")
     module_block = _method_block(text, "_execute_details_module")
 
     assert "_update_section_preview(" in module_block
@@ -660,7 +699,10 @@ def test_details_module_cache_hit_on_second_click() -> None:
         def _capture(event: str, **kwargs) -> None:  # type: ignore[no-untyped-def]
             logged.append((event, kwargs))
 
-        with patch("giclee_app.ui.gicleeframe_view.log_event", side_effect=_capture):
+        with patch(
+            "giclee_app.ui.gicleeframe_view_details_on_demand.log_event",
+            side_effect=_capture,
+        ):
             with patch.object(view, "_apply_cached_preview_module") as preview_cache_mock:
                 with patch.object(view, "_apply_cached_layer_nav_module") as layer_cache_mock:
                     view._on_details_module_clicked("preview")
@@ -711,7 +753,10 @@ def test_details_module_cancelled_when_selecting_other_section() -> None:
             "giclee_app.ui.gicleeframe_view_selection_orchestration.log_event",
             side_effect=_capture,
         ):
-            with patch("giclee_app.ui.gicleeframe_view.log_event", side_effect=_capture):
+            with patch(
+                "giclee_app.ui.gicleeframe_view_details_on_demand.log_event",
+                side_effect=_capture,
+            ):
                 with patch.object(view, "after", side_effect=_after):
                     with patch.object(view, "after_cancel"):
                         with patch.object(view, "_update_section_preview") as preview_mock:

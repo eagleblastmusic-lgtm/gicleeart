@@ -27,6 +27,9 @@ from giclee_app.ui.gicleeframe_view import (
     _GF_MICRO_DEFER_MS,
 )
 from giclee_app.ui.gicleeframe_view_brand import GicleeFrameBrandPanelMixin
+from giclee_app.ui.gicleeframe_view_details_on_demand import (
+    GicleeFrameDetailsOnDemandMixin,
+)
 from giclee_app.ui.gicleeframe_view_editor_shell import (
     GicleeFrameEditorShellMixin,
     _EDITOR_FORM_WIDTH,
@@ -155,7 +158,6 @@ _HOST_OWNERSHIP = {
     "_selected_section_label",
     "_apply_edit_to_draft",
     "_since_selection_click_ms",
-    "_apply_cached_page_context_summary",
     "_show_page_context_shell_state",
     "_hide_page_context_rows",
     "_clear_page_context_loading_label",
@@ -163,16 +165,8 @@ _HOST_OWNERSHIP = {
     "_get_or_create_readonly_card",
     "_show_page_context_row",
     "_get_or_create_page_context_row",
-    "_hide_media_details_stable_shell",
-    "_show_details_on_demand_block",
-    "_save_section_visual_cache",
     "_hide_preview_frames",
     "_fill_children_overview_buttons",
-    "_populate_editor_preview_deferred",
-    "_populate_editor_layer_nav_deferred",
-    "_populate_editor_children_deferred",
-    "_schedule_media_deferred_details",
-    "_populate_editor_media_details_batch",
 }
 
 _MICRO_DEFER_CALLERS = {
@@ -686,7 +680,7 @@ def test_editor_shell_constants_exact_values() -> None:
         assert not _host_defines_constant(name, host_text), name
 
 
-def test_gicleeframe_view_has_twelve_mixins_before_scrollable_frame() -> None:
+def test_gicleeframe_view_has_thirteen_mixins_before_scrollable_frame() -> None:
     expected = (
         GicleeFrameBrandPanelMixin,
         GicleeFramePageReadinessMixin,
@@ -700,6 +694,7 @@ def test_gicleeframe_view_has_twelve_mixins_before_scrollable_frame() -> None:
         GicleeFrameSectionListInteractionMixin,
         GicleeFrameSelectionOrchestrationMixin,
         GicleeFrameEditorShellMixin,
+        GicleeFrameDetailsOnDemandMixin,
         ctk.CTkScrollableFrame,
     )
 
