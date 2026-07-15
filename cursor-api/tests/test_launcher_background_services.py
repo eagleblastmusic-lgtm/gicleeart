@@ -57,7 +57,7 @@ def test_public_constructor_signature() -> None:
 
 
 def test_registration_and_firing_order() -> None:
-    # 2. Rzeczywisty test expected firing order oraz registration order
+    # 2. Rzeczywisty test expected firing order oraz registration order z tożsamością callbacków
     fake_after = FakeAfterFn()
     rescan_calls = 0
 
@@ -79,36 +79,67 @@ def test_registration_and_firing_order() -> None:
     )
     services.start()
 
-    # auto_rescan wywoływany synchronicznie na początku (direct call)
     assert rescan_calls == 1
 
-    # Registration order: rejestracje w after_fn po wywołaniu start()
-    # Oczekiwane opóźnienia w calls:
-    # 1. recurrence auto-rescan — 3000
-    # 2. monthly reminder — 1500
-    # 3. monthly plan — 800
-    # 4. Shopify — 30 000
-    # 5. accounting — 35 000
-    # 6. backup — 2000
-    # 7. cure — 15 000
-    # 8. social — 45 000
-    # 9. weekly — 3000
-    reg_delays = [call[0] for call in fake_after.calls]
-    assert reg_delays == [3000, 1500, 800, 30_000, 35_000, 2000, 15_000, 45_000, 3000]
+    # Funkcja do sprawdzania tożsamości callbacków (bound/unbound)
+    def is_match(cb: Any, target_method: Any) -> bool:
+        if cb is target_method:
+            return True
+        self1 = getattr(cb, "__self__", None)
+        func1 = getattr(cb, "__func__", None)
+        self2 = getattr(target_method, "__self__", None)
+        func2 = getattr(target_method, "__func__", None)
+        if self1 is not None and self2 is not None:
+            return self1 is self2 and func1 is func2
+        return False
 
-    # Initial firing order: wyjmujemy auto-rescan recurrence (pierwsze 3000 ms)
+    # 1. Registration order
+    expected_reg = [
+        (3000, services._run_auto_rescan),
+        (1500, services.monthly_reminder),
+        (800, services.monthly_plan_reminder),
+        (30_000, services._run_shopify_orders),
+        (35_000, services._run_accounting_orders),
+        (2000, services.daily_backup),
+        (15_000, services._run_cure_notifications),
+        (45_000, services._run_social_publisher),
+        (3000, services.weekly_content_reminder),
+    ]
+
+    assert len(fake_after.calls) == len(expected_reg)
+    for i, (delay, cb) in enumerate(fake_after.calls):
+        exp_delay, exp_cb = expected_reg[i]
+        assert delay == exp_delay
+        assert is_match(cb, exp_cb), f"Callback mismatch at index {i}"
+
+    # 2. Initial firing order (bez recurrence auto_rescan)
     initial_calls = []
     first_rescan_skipped = False
     for delay, cb in fake_after.calls:
-        if delay == 3000 and hasattr(cb, "__func__") and cb.__func__ is services._run_auto_rescan.__func__ and not first_rescan_skipped:
+        if delay == 3000 and is_match(cb, services._run_auto_rescan) and not first_rescan_skipped:
             first_rescan_skipped = True
             continue
         initial_calls.append((delay, cb))
 
-    # Sortowanie initial_calls według delay
+    # Sortowanie initial_calls według delayu
     sorted_initial = sorted(initial_calls, key=lambda x: x[0])
-    sorted_delays = [x[0] for x in sorted_initial]
-    assert sorted_delays == [800, 1500, 2000, 3000, 15_000, 30_000, 35_000, 45_000]
+
+    expected_firing = [
+        (800, services.monthly_plan_reminder),
+        (1500, services.monthly_reminder),
+        (2000, services.daily_backup),
+        (3000, services.weekly_content_reminder),
+        (15_000, services._run_cure_notifications),
+        (30_000, services._run_shopify_orders),
+        (35_000, services._run_accounting_orders),
+        (45_000, services._run_social_publisher),
+    ]
+
+    assert len(sorted_initial) == len(expected_firing)
+    for i, (delay, cb) in enumerate(sorted_initial):
+        exp_delay, exp_cb = expected_firing[i]
+        assert delay == exp_delay
+        assert is_match(cb, exp_cb), f"Firing order callback mismatch at index {i}"
 
 
 @pytest.mark.parametrize(
@@ -201,13 +232,41 @@ def test_recurring_services_behavior(run_method_name: str, trigger_attr: str, in
 
 
 def test_background_services_source_guards() -> None:
-    # 4. Prawdziwe source guards schedulera poprzez AST
+    # 5. Prawdziwe source guards schedulera poprzez AST
     services_path = Path(__file__).resolve().parents[1] / "giclee_app" / "launcher_background_services.py"
     source = services_path.read_text(encoding="utf-8")
     tree = ast.parse(source)
 
+    forbidden_patterns = [
+        "timer_id", "timer_ids", "after_id", "after_ids",
+        "cancel", "cancelled", "cancellation", "retry", "retries", "backoff", "jitter"
+    ]
+
     for node in ast.walk(tree):
-        # Sprawdzamy importy
+        # 5.1. Zakazane definicje metod i funkcji
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            assert node.name not in ["stop", "cancel", "retry", "backoff", "jitter"]
+            if not node.name.startswith("_"):
+                assert node.name in ["__init__", "start"]
+
+            # Argumenty funkcji
+            for arg in node.args.posonlyargs + node.args.args + node.args.kwonlyargs:
+                assert arg.arg.lower() not in forbidden_patterns
+
+        # 5.2. Zakazane atrybuty i identyfikatory
+        if isinstance(node, ast.Name):
+            assert node.id.lower() not in forbidden_patterns
+        elif isinstance(node, ast.Attribute):
+            assert node.attr.lower() not in forbidden_patterns
+
+        # Przypisania do self (self.attr = ...)
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Attribute):
+                    if isinstance(target.value, ast.Name) and target.value.id == "self":
+                        assert target.attr.lower() not in forbidden_patterns
+
+        # 5.3. Zakazane wywołania i importy
         if isinstance(node, ast.Import):
             for name in node.names:
                 forbidden = ["Komponenty", "tkinter", "customtkinter", "threading", "time", "json", "os", "pathlib"]
@@ -218,16 +277,3 @@ def test_background_services_source_guards() -> None:
                 forbidden = ["Komponenty", "tkinter", "customtkinter", "threading", "time", "json", "os", "pathlib"]
                 for f in forbidden:
                     assert f not in node.module
-
-        # Sprawdzamy niedozwolone wywołania, nazwy i definicje
-        if isinstance(node, ast.Name):
-            forbidden_names = [
-                "sleep", "Thread", "open", "Path", "status_var", "messagebox",
-                "show_toast", "notify", "stop", "cancel", "jitter", "retry", "backoff"
-            ]
-            assert node.id not in forbidden_names
-        elif isinstance(node, ast.Attribute):
-            assert node.attr not in [
-                "sleep", "Thread", "open", "Path", "status_var", "messagebox",
-                "show_toast", "notify", "stop", "cancel"
-            ]

@@ -377,7 +377,7 @@ def test_lazy_imports_exist_inside_worker_methods_ast() -> None:
     launcher_path = Path(__file__).resolve().parents[1] / "giclee_app" / "launcher.py"
     tree = ast.parse(launcher_path.read_text(encoding="utf-8"))
 
-    expected_lazy_import_methods = {
+    expected_methods = {
         "_check_monthly_plan_reminder",
         "_open_zadania_generator",
         "_check_monthly_reminder",
@@ -388,11 +388,31 @@ def test_lazy_imports_exist_inside_worker_methods_ast() -> None:
         "_poll_accounting_orders",
         "_poll_cykl_publisher",
         "_check_cykl_weekly_reminder",
+        # Dodatkowe metody w launcher.py, które też importują Komponenty
+        "_show_session_status",
+        "_show_activity_log",
+        "_show_token_setup",
+        "_show_help",
+        "_show_inline",
+        "_close_theme_dev_ports",
+        "_show_theme_dev",
+        "_worker",
+        "main",
     }
 
-    found_methods_with_imports = 0
+    # Sprawdzamy brak importu Komponenty na poziomie modułu launcher.py
+    for node in tree.body:
+        if isinstance(node, ast.ImportFrom):
+            if node.module:
+                assert not node.module.startswith("Komponenty")
+        elif isinstance(node, ast.Import):
+            for name in node.names:
+                assert not name.name.startswith("Komponenty")
+
+    # Wyszukujemy metody, w których faktycznie jest import Komponenty
+    methods_with_komponenty_imports = set()
     for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name in expected_lazy_import_methods:
+        if isinstance(node, ast.FunctionDef):
             has_komponenty_import = False
             for child in ast.walk(node):
                 if isinstance(child, ast.ImportFrom):
@@ -404,6 +424,6 @@ def test_lazy_imports_exist_inside_worker_methods_ast() -> None:
                             has_komponenty_import = True
 
             if has_komponenty_import:
-                found_methods_with_imports += 1
+                methods_with_komponenty_imports.add(node.name)
 
-    assert found_methods_with_imports >= 9
+    assert methods_with_komponenty_imports == expected_methods
