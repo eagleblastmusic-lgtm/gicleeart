@@ -232,48 +232,104 @@ def test_recurring_services_behavior(run_method_name: str, trigger_attr: str, in
 
 
 def test_background_services_source_guards() -> None:
-    # 5. Prawdziwe source guards schedulera poprzez AST
+    # 3. Prawdziwe source guards schedulera poprzez AST
     services_path = Path(__file__).resolve().parents[1] / "giclee_app" / "launcher_background_services.py"
     source = services_path.read_text(encoding="utf-8")
     tree = ast.parse(source)
 
-    forbidden_patterns = [
+    forbidden_lifecycle = {"stop", "cancel", "retry", "backoff", "jitter"}
+    forbidden_names = {
         "timer_id", "timer_ids", "after_id", "after_ids",
         "cancel", "cancelled", "cancellation", "retry", "retries", "backoff", "jitter"
-    ]
+    }
+
+    # Helper normalizujący nazwę wywołania z AST
+    def get_call_name(node_expr: ast.expr) -> str:
+        if isinstance(node_expr, ast.Name):
+            return node_expr.id
+        if isinstance(node_expr, ast.Attribute):
+            val_name = get_call_name(node_expr.value)
+            if val_name:
+                return f"{val_name}.{node_expr.attr}"
+            return node_expr.attr
+        return ""
 
     for node in ast.walk(tree):
-        # 5.1. Zakazane definicje metod i funkcji
+        # 3.1. Zakazane importy (sprawdzamy całe segmenty modułów)
+        if isinstance(node, ast.Import):
+            for name in node.names:
+                parts = name.name.split('.')
+                for p in parts:
+                    assert p not in ["Komponenty", "tkinter", "customtkinter", "threading", "time", "json", "os", "pathlib"]
+        elif isinstance(node, ast.ImportFrom):
+            if node.module:
+                parts = node.module.split('.')
+                for p in parts:
+                    assert p not in ["Komponenty", "tkinter", "customtkinter", "threading", "time", "json", "os", "pathlib"]
+
+        # 3.2. Zakazane wywołania
+        if isinstance(node, ast.Call):
+            call_name = get_call_name(node.func)
+            assert call_name not in ["open", "Path", "Thread", "threading.Thread", "sleep", "time.sleep", "show_toast", "notify"]
+            assert not call_name.startswith("messagebox.")
+
+        # 3.3. Zakazane nazwy i atrybuty side effects
+        if isinstance(node, ast.Name):
+            assert node.id not in ["status_var", "messagebox", "show_toast", "notify"]
+        elif isinstance(node, ast.Attribute):
+            assert node.attr not in ["status_var", "messagebox", "show_toast", "notify"]
+
+        # 3.4. Zakazane mechanizmy lifecycle i timer IDs
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            assert node.name not in ["stop", "cancel", "retry", "backoff", "jitter"]
-            if not node.name.startswith("_"):
-                assert node.name in ["__init__", "start"]
+            name_lower = node.name.lower()
+            for fl in forbidden_lifecycle:
+                assert fl != name_lower
+            for fn in forbidden_names:
+                assert fn != name_lower
 
             # Argumenty funkcji
             for arg in node.args.posonlyargs + node.args.args + node.args.kwonlyargs:
-                assert arg.arg.lower() not in forbidden_patterns
+                assert arg.arg.lower() not in forbidden_names
 
-        # 5.2. Zakazane atrybuty i identyfikatory
         if isinstance(node, ast.Name):
-            assert node.id.lower() not in forbidden_patterns
+            assert node.id.lower() not in forbidden_names
         elif isinstance(node, ast.Attribute):
-            assert node.attr.lower() not in forbidden_patterns
+            assert node.attr.lower() not in forbidden_names
 
-        # Przypisania do self (self.attr = ...)
+        # Pola self w Assign (self.<name> = ...)
         if isinstance(node, ast.Assign):
             for target in node.targets:
                 if isinstance(target, ast.Attribute):
                     if isinstance(target.value, ast.Name) and target.value.id == "self":
-                        assert target.attr.lower() not in forbidden_patterns
+                        assert target.attr.lower() not in forbidden_names
 
-        # 5.3. Zakazane wywołania i importy
-        if isinstance(node, ast.Import):
-            for name in node.names:
-                forbidden = ["Komponenty", "tkinter", "customtkinter", "threading", "time", "json", "os", "pathlib"]
-                for f in forbidden:
-                    assert f not in name.name
-        elif isinstance(node, ast.ImportFrom):
-            if node.module:
-                forbidden = ["Komponenty", "tkinter", "customtkinter", "threading", "time", "json", "os", "pathlib"]
-                for f in forbidden:
-                    assert f not in node.module
+        # Pola self w AnnAssign (self.<name>: type = ...)
+        if isinstance(node, ast.AnnAssign):
+            if isinstance(node.target, ast.Attribute):
+                if isinstance(node.target.value, ast.Name) and node.target.value.id == "self":
+                    assert node.target.attr.lower() not in forbidden_names
+
+    # 3.5. Dozwolone API klasy
+    class_node = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "LauncherBackgroundServices":
+            class_node = node
+            break
+
+    assert class_node is not None
+    expected_class_methods = {
+        "__init__",
+        "start",
+        "_run_auto_rescan",
+        "_run_shopify_orders",
+        "_run_accounting_orders",
+        "_run_cure_notifications",
+        "_run_social_publisher"
+    }
+
+    class_methods = set()
+    for item in class_node.body:
+        if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            class_methods.add(item.name)
+
+    assert class_methods == expected_class_methods

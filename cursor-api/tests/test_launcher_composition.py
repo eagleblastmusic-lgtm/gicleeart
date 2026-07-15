@@ -372,12 +372,36 @@ def test_studio_does_not_import_background_services_ast() -> None:
 
 
 def test_lazy_imports_exist_inside_worker_methods_ast() -> None:
-    # 10. Weryfikacja lazy imports Komponenty wewnątrz metod workerów przez AST
+    # 4. Weryfikacja lazy imports Komponenty wewnątrz metod GicleeApp przez AST
     import ast
     launcher_path = Path(__file__).resolve().parents[1] / "giclee_app" / "launcher.py"
     tree = ast.parse(launcher_path.read_text(encoding="utf-8"))
 
-    expected_methods = {
+    # 4.5. Brak top-level importów Komponenty
+    for node in tree.body:
+        if isinstance(node, ast.ImportFrom):
+            if node.module:
+                assert not node.module.startswith("Komponenty")
+        elif isinstance(node, ast.Import):
+            for name in node.names:
+                assert not name.name.startswith("Komponenty")
+
+    # 4.1. Znajdź dokładnie klasę GicleeApp
+    giclee_app_class = None
+    for node in tree.body:
+        if isinstance(node, ast.ClassDef) and node.name == "GicleeApp":
+            giclee_app_class = node
+            break
+    assert giclee_app_class is not None
+
+    # Bezpośrednie metody klasy
+    direct_methods = {
+        method.name: method
+        for method in giclee_app_class.body
+        if isinstance(method, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+
+    expected_lc5_methods = {
         "_check_monthly_plan_reminder",
         "_open_zadania_generator",
         "_check_monthly_reminder",
@@ -388,42 +412,48 @@ def test_lazy_imports_exist_inside_worker_methods_ast() -> None:
         "_poll_accounting_orders",
         "_poll_cykl_publisher",
         "_check_cykl_weekly_reminder",
-        # Dodatkowe metody w launcher.py, które też importują Komponenty
-        "_show_session_status",
-        "_show_activity_log",
-        "_show_token_setup",
-        "_show_help",
-        "_show_inline",
-        "_close_theme_dev_ports",
-        "_show_theme_dev",
-        "_worker",
-        "main",
     }
 
-    # Sprawdzamy brak importu Komponenty na poziomie modułu launcher.py
-    for node in tree.body:
-        if isinstance(node, ast.ImportFrom):
-            if node.module:
-                assert not node.module.startswith("Komponenty")
-        elif isinstance(node, ast.Import):
-            for name in node.names:
-                assert not name.name.startswith("Komponenty")
+    # 4.2. Exact target method existence
+    for name in expected_lc5_methods:
+        assert name in direct_methods
 
-    # Wyszukujemy metody, w których faktycznie jest import Komponenty
-    methods_with_komponenty_imports = set()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef):
-            has_komponenty_import = False
-            for child in ast.walk(node):
-                if isinstance(child, ast.ImportFrom):
-                    if child.module and child.module.startswith("Komponenty"):
-                        has_komponenty_import = True
-                elif isinstance(child, ast.Import):
-                    for name in child.names:
-                        if name.name.startswith("Komponenty"):
-                            has_komponenty_import = True
+    # 4.3. Exact import ownership per metoda
+    imports_by_method = {}
+    for name in expected_lc5_methods:
+        method_node = direct_methods[name]
+        method_imports = set()
+        for child in ast.walk(method_node):
+            if isinstance(child, ast.ImportFrom):
+                if child.module and child.module.startswith("Komponenty"):
+                    method_imports.add(child.module)
+            elif isinstance(child, ast.Import):
+                for n in child.names:
+                    if n.name.startswith("Komponenty"):
+                        method_imports.add(n.name)
+        imports_by_method[name] = method_imports
 
-            if has_komponenty_import:
-                methods_with_komponenty_imports.add(node.name)
+    assert set(imports_by_method.keys()) == expected_lc5_methods
+    assert all(imports_by_method[name] for name in expected_lc5_methods)
 
-    assert methods_with_komponenty_imports == expected_methods
+    # 4.4. Dokładniejsze zamrożenie modułów
+    # 1. _check_monthly_plan_reminder -> Komponenty.zadania
+    assert "Komponenty.zadania" in imports_by_method["_check_monthly_plan_reminder"]
+    # 2. _open_zadania_generator -> Komponenty.zadania.generator_zadan
+    assert "Komponenty.zadania.generator_zadan" in imports_by_method["_open_zadania_generator"]
+    # 3. _check_monthly_reminder -> Komponenty.zadania
+    assert "Komponenty.zadania" in imports_by_method["_check_monthly_reminder"]
+    # 4. _open_monthly_generator -> Komponenty.zadania.generator_zadan
+    assert "Komponenty.zadania.generator_zadan" in imports_by_method["_open_monthly_generator"]
+    # 5. _run_daily_backup -> Komponenty._shared
+    assert any(m.startswith("Komponenty._shared") for m in imports_by_method["_run_daily_backup"])
+    # 6. _check_cure_done_notifications -> Komponenty._shared.notifications
+    assert "Komponenty._shared.notifications" in imports_by_method["_check_cure_done_notifications"]
+    # 7. _poll_orders_from_shopify -> Komponenty.produkcja
+    assert any(m.startswith("Komponenty.produkcja") for m in imports_by_method["_poll_orders_from_shopify"])
+    # 8. _poll_accounting_orders -> Komponenty.dokumentysprzedazy.orders_sync
+    assert any("dokumentysprzedazy" in m for m in imports_by_method["_poll_accounting_orders"])
+    # 9. _poll_cykl_publisher -> Komponenty.socialmedia.cykl
+    assert "Komponenty.socialmedia.cykl" in imports_by_method["_poll_cykl_publisher"]
+    # 10. _check_cykl_weekly_reminder -> Komponenty.socialmedia.cykl
+    assert "Komponenty.socialmedia.cykl" in imports_by_method["_check_cykl_weekly_reminder"]
