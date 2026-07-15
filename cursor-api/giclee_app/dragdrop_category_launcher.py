@@ -9,6 +9,7 @@ from collections.abc import Callable
 from . import launcher as _launcher
 from .category_launcher import category_display_title, category_map
 from .component_loader import Component
+from .launcher_drag_category_persistence import persist_category_reorder
 from .launcher_drag_geometry import (
     DragPoint,
     drag_threshold_reached,
@@ -279,13 +280,16 @@ class DragDropCategoryGicleeApp(OptionsCategoryGicleeApp):
             normally_visible=self._normally_visible,
         )
         visible_titles = [title for title, _components in sections]
-        reordered = reorder_relative(visible_titles, source, target, after=after)
-        if reordered == visible_titles:
+        changed = persist_category_reorder(
+            self._layout,
+            visible_titles,
+            source,
+            target,
+            after=after,
+        )
+        if not changed:
             return
 
-        existing = self._layout.section_order or visible_titles
-        self._layout.section_order = replace_subset_order(existing, reordered)
-        save_layout(self._layout)
         self._render_tiles()
         self._finish_navigation_render()
         self.status_var.set("Zapisano nową kolejność kategorii")

@@ -1,6 +1,6 @@
 # LC-3J — Category Order Persistence Adapter
 
-Status: fresh reconnaissance · contract freeze
+Status: LC-3J implemented
 
 ## 1. Kontekst
 
