@@ -36,6 +36,8 @@ Pliki:
 
 **LC-3G Tk drag target adapter:** `launcher_tk_drag_targets.py` izoluje direct widget lookup, traversal master, odczyt geometrii i nearest fallback. `DragDropCategoryGicleeApp` zachowuje stan gestu, feedback, auto-scroll, decyzję after i persistence.
 
+**LC-3K component order persistence adapter:** `launcher_drag_component_persistence.py` izoluje widoczny reorder, zachowanie ukrytych slotów, reindeksację sort_key oraz zapis layoutu. DragDropCategoryGicleeApp zachowuje aktywną sekcję, resolve widocznych komponentów i UI orchestration.
+
 **LC-3H Tk drag visual feedback adapter:** `launcher_tk_drag_feedback.py` izoluje kolory ramek oraz kursor `fleur`/reset. `DragDropCategoryGicleeApp` zachowuje `_DragState`, target, decyzję `after`, auto-scroll i persistence.
 
 **LC-3I Tk drag auto-scroll adapter:** `launcher_tk_drag_auto_scroll.py` izoluje geometrię canvasu, margin 42 px i pojedynczy `yview_scroll()`. `DragDropCategoryGicleeApp` zachowuje orchestration motion, target lookup i persistence.

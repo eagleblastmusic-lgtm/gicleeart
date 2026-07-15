@@ -1,8 +1,8 @@
 # ETAP 4B / LC-3K — Component Order Persistence Adapter
 
-**Status:** contract frozen, awaiting implementation  
-**Repository:** `eagleblastmusic-lgtm/gicleeart`  
-**Base:** `master` @ `6075ac30579eb8241fb022c0ed1a5b187a854ff9`  
+**Status:** LC-3K implemented
+**Repository:** `eagleblastmusic-lgtm/gicleeart`
+**Base:** `master` @ `6075ac30579eb8241fb022c0ed1a5b187a854ff9`
 **Data weryfikacji:** 2026-07-15
 
 ---
@@ -439,13 +439,19 @@ LC-3K nie zmienia:
 
 ## 9. Allowlista implementacyjna
 
-Implementation PR musi zawierać dokładnie pięć plików:
+Implementation PR musi zawierać dokładnie sześć plików:
 
 1. `cursor-api/giclee_app/launcher_drag_component_persistence.py` — **nowy**;
 2. `cursor-api/giclee_app/dragdrop_category_launcher.py` — usunięcie bloku persistence z `_reorder_component()`;
 3. `cursor-api/tests/test_launcher_drag_component_persistence.py` — **nowy**;
 4. `cursor-api/giclee_app/docs/launcher.md` — wpis LC-3K;
-5. `cursor-api/giclee_app/docs/launcher-composition-lc3k-contract.md` — ten plik.
+5. `cursor-api/giclee_app/docs/launcher-composition-lc3k-contract.md` — ten plik;
+6. `cursor-api/tests/test_launcher_drag_category_persistence.py` — minimalna aktualizacja
+   starego guardu LC-3J: test wcześniej zamrażał inline komponentowy writer
+   (`reorder_relative`, `replace_subset_order`, `sort_key`, `save_layout` bezpośrednio
+   w metodzie), a po LC-3K musi sprawdzać cienką delegację do
+   `persist_component_reorder()`. Zmiana nie wpływa na semantykę LC-3J ani na
+   `persist_category_reorder()`.
 
 Helpery one-shot, workflowy techniczne i pliki tymczasowe nie mogą pozostać w finalnym
 diffie implementacyjnym.
@@ -534,7 +540,7 @@ LC-3K jest zakończony, gdy:
   zapis) znajduje się wyłącznie w `launcher_drag_component_persistence.py`;
 - `_reorder_component()` jest cienkim orkiestratorem: sekcja, `resolve_sections()`,
   `category_map()`, `visible_order`, delegacja, UI effects;
-- finalny diff obejmuje dokładnie pięć allowlistowanych plików;
+- finalny diff obejmuje dokładnie sześć allowlistowanych plików;
 - suite testowy pokrywa wszystkie 27 przypadków;
 - adapter nie importuje `tkinter` ani żadnej warstwy UI;
 - `_reorder_category()` i adapter LC-3J pozostają bez zmian;

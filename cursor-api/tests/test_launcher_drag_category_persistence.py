@@ -275,7 +275,7 @@ def test_launcher_category_save_error_blocks_ui(
     assert events == []
 
 
-def test_launcher_category_method_is_thin_and_component_writer_is_unchanged() -> None:
+def test_launcher_category_method_is_thin_and_component_writer_is_thin() -> None:
     path = (
         Path(__file__).resolve().parents[1]
         / "giclee_app"
@@ -293,7 +293,11 @@ def test_launcher_category_method_is_thin_and_component_writer_is_unchanged() ->
     assert "self._finish_navigation_render()" in category
     assert 'self.status_var.set("Zapisano nową kolejność kategorii")' in category
 
-    assert "reorder_relative(" in component
-    assert "replace_subset_order(" in component
-    assert "entry.sort_key = index * 10" in component
-    assert "save_layout(self._layout)" in component
+    # LC-3K: _reorder_component is now a thin orchestrator delegating to persist_component_reorder
+    assert "persist_component_reorder(" in component
+    assert "reorder_relative(" not in component
+    assert "replace_subset_order(" not in component
+    assert "entry.sort_key = index * 10" not in component
+    assert "save_layout(" not in component
+    assert "self._render_tiles()" in component
+    assert "self._finish_navigation_render()" in component
