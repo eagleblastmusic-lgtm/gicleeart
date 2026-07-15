@@ -284,7 +284,10 @@ class OptionsCategoryGicleeApp(StyledCategoryGicleeApp):
             self._shortcut_launch_pending = False
             self._launch(component)
 
-        self.root.after_idle(launch_selected)
+        try:
+            self.root.after_idle(launch_selected)
+        except tk.TclError:
+            self._shortcut_launch_pending = False
         return True
 
     def _on_launcher_key_shortcut(self, event: tk.Event) -> str | None:
