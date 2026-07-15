@@ -1,0 +1,216 @@
+"""Testy LC-3D: czysta geometria drag-and-drop launchera."""
+
+from __future__ import annotations
+
+import ast
+from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
+
+from giclee_app import dragdrop_category_launcher as dnd
+from giclee_app.launcher_drag_geometry import (
+    DragPoint,
+    DragRect,
+    drag_threshold_reached,
+    drop_after,
+    nearest_rect_index,
+    point_inside,
+)
+
+
+def test_drag_threshold_below_exact_and_above() -> None:
+    start = DragPoint(10, 20)
+    assert drag_threshold_reached(start, DragPoint(16, 24), 8) is False
+    assert drag_threshold_reached(start, DragPoint(18, 20), 8) is True
+    assert drag_threshold_reached(start, DragPoint(19, 20), 8) is True
+
+
+def test_drag_threshold_rejects_negative_value() -> None:
+    with pytest.raises(ValueError, match="non-negative"):
+        drag_threshold_reached(DragPoint(0, 0), DragPoint(0, 0), -1)
+
+
+def test_drag_rect_properties() -> None:
+    rect = DragRect(left=10, top=20, width=30, height=40)
+    assert rect.right == 40
+    assert rect.bottom == 60
+    assert rect.center_x == 25
+    assert rect.center_y == 40
+
+
+@pytest.mark.parametrize(
+    ("point", "expected"),
+    [
+        (DragPoint(10, 20), True),
+        (DragPoint(39.999, 59.999), True),
+        (DragPoint(40, 30), False),
+        (DragPoint(20, 60), False),
+        (DragPoint(9.999, 30), False),
+        (DragPoint(20, 19.999), False),
+    ],
+)
+def test_point_inside_preserves_half_open_bounds(
+    point: DragPoint,
+    expected: bool,
+) -> None:
+    assert point_inside(DragRect(10, 20, 30, 40), point) is expected
+
+
+def test_drop_after_uses_vertical_region_then_horizontal_center() -> None:
+    rect = DragRect(0, 0, 100, 100)
+    assert drop_after(rect, DragPoint(10, 20), vertical_ratio=0.22) is False
+    assert drop_after(rect, DragPoint(10, 80), vertical_ratio=0.22) is True
+    assert drop_after(rect, DragPoint(49, 50), vertical_ratio=0.22) is False
+    assert drop_after(rect, DragPoint(51, 50), vertical_ratio=0.22) is True
+    assert drop_after(rect, DragPoint(50, 50), vertical_ratio=0.22) is False
+
+
+def test_drop_after_preserves_zero_height_floor() -> None:
+    rect = DragRect(0, 10, 100, 0)
+    assert drop_after(rect, DragPoint(40, 9), vertical_ratio=0.22) is False
+    assert drop_after(rect, DragPoint(40, 11), vertical_ratio=0.22) is True
+
+
+def test_drop_after_rejects_negative_ratio() -> None:
+    with pytest.raises(ValueError, match="non-negative"):
+        drop_after(DragRect(0, 0, 1, 1), DragPoint(0, 0), vertical_ratio=-0.1)
+
+
+def test_nearest_rect_returns_index_and_preserves_first_tie() -> None:
+    rects = [
+        DragRect(0, 0, 10, 10),
+        DragRect(20, 0, 10, 10),
+        DragRect(40, 0, 10, 10),
+    ]
+    before = list(rects)
+    assert nearest_rect_index(rects, DragPoint(27, 5)) == 1
+    assert nearest_rect_index(rects[:2], DragPoint(15, 5)) == 0
+    assert nearest_rect_index([], DragPoint(0, 0)) is None
+    assert rects == before
+
+
+def test_geometry_module_has_no_ui_or_application_imports() -> None:
+    path = (
+        Path(__file__).resolve().parents[1]
+        / "giclee_app"
+        / "launcher_drag_geometry.py"
+    )
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    imports: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imports.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            imports.add(node.module)
+
+    assert "tkinter" not in imports
+    assert not any(name.startswith("giclee_app") for name in imports)
+    assert not any(name.startswith("Komponenty") for name in imports)
+
+
+class FakeWidget:
+    def __init__(
+        self,
+        *,
+        left: int,
+        top: int,
+        width: int,
+        height: int,
+        exists: bool = True,
+        kind: str = "component",
+        key: str = "item",
+    ) -> None:
+        self._left = left
+        self._top = top
+        self._width = width
+        self._height = height
+        self._exists = exists
+        self._launcher_dnd_kind = kind
+        self._launcher_dnd_key = key
+
+    def winfo_rootx(self) -> int:
+        return self._left
+
+    def winfo_rooty(self) -> int:
+        return self._top
+
+    def winfo_width(self) -> int:
+        return self._width
+
+    def winfo_height(self) -> int:
+        return self._height
+
+    def winfo_exists(self) -> bool:
+        return self._exists
+
+
+class BrokenWidget(FakeWidget):
+    def winfo_rootx(self) -> int:
+        raise dnd.tk.TclError("gone")
+
+
+def test_widget_rect_and_wrappers_fail_closed() -> None:
+    widget = FakeWidget(left=10, top=20, width=30, height=40)
+    rect = dnd.DragDropCategoryGicleeApp._widget_drag_rect(widget)
+    assert rect == DragRect(10, 20, 30, 40)
+    assert dnd.DragDropCategoryGicleeApp._point_inside_tile(widget, 10, 20)
+    assert not dnd.DragDropCategoryGicleeApp._point_inside_tile(widget, 40, 20)
+    assert dnd.DragDropCategoryGicleeApp._drop_after(widget, 30, 40) is True
+
+    broken = BrokenWidget(left=0, top=0, width=1, height=1)
+    assert dnd.DragDropCategoryGicleeApp._widget_drag_rect(broken) is None
+    assert not dnd.DragDropCategoryGicleeApp._point_inside_tile(broken, 0, 0)
+    assert not dnd.DragDropCategoryGicleeApp._drop_after(broken, 0, 0)
+
+
+def test_pointer_over_canvas_delegates_to_geometry() -> None:
+    app = dnd.DragDropCategoryGicleeApp.__new__(dnd.DragDropCategoryGicleeApp)
+    app.canvas = FakeWidget(left=100, top=200, width=300, height=400)
+    assert app._pointer_over_tiles_area(100, 200)
+    assert not app._pointer_over_tiles_area(400, 200)
+
+
+def test_nearest_fallback_keeps_candidate_order_and_skips_invalid_bounds() -> None:
+    source = FakeWidget(left=0, top=0, width=10, height=10, key="source")
+    broken = BrokenWidget(left=0, top=0, width=10, height=10, key="broken")
+    first = FakeWidget(left=20, top=0, width=10, height=10, key="first")
+    second = FakeWidget(left=40, top=0, width=10, height=10, key="second")
+
+    app = dnd.DragDropCategoryGicleeApp.__new__(dnd.DragDropCategoryGicleeApp)
+    app.root = SimpleNamespace(winfo_containing=lambda _x, _y: None)
+    app.canvas = FakeWidget(left=0, top=0, width=100, height=100)
+    app._dnd_tiles = [source, broken, first, second]
+
+    target = app._find_drop_target("component", 31, 5, exclude=source)
+    assert target is first
+
+
+def test_motion_source_delegates_threshold_and_keeps_side_effects() -> None:
+    path = (
+        Path(__file__).resolve().parents[1]
+        / "giclee_app"
+        / "dragdrop_category_launcher.py"
+    )
+    source = path.read_text(encoding="utf-8")
+    motion = source.split("def _on_tile_motion", 1)[1].split("\n    def ", 1)[0]
+    nearest = source.split("def _find_drop_target", 1)[1].split("\n    @staticmethod", 1)[0]
+
+    assert "drag_threshold_reached(" in motion
+    assert "_DRAG_THRESHOLD_PX" in motion
+    assert "state.dragging = True" in motion
+    assert 'self.root.configure(cursor="fleur")' in motion
+    assert "self._auto_scroll_drag(" in motion
+    assert "nearest_rect_index(" in nearest
+    assert "winfo_containing(" in nearest
+
+
+def test_legacy_order_module_remains_separate() -> None:
+    path = (
+        Path(__file__).resolve().parents[1]
+        / "giclee_app"
+        / "launcher_drag_geometry.py"
+    )
+    source = path.read_text(encoding="utf-8")
+    assert "reorder_relative" not in source
+    assert "replace_subset_order" not in source
