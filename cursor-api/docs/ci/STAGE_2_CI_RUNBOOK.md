@@ -2,55 +2,80 @@
 
 ## Purpose
 
-Stage 2 moves GicleeApp validation from ad-hoc local runs toward reproducible, hermetic GitHub Actions jobs while preserving strict repository-safety and data-safety boundaries.
+Stage 2 provides blocking, reproducible validation for GicleeApp while preserving repository-safety and data-safety boundaries.
 
-The current workflow is:
+Workflow:
 
 ```text
 .github/workflows/stage2-ci-baseline.yml
 ```
 
-## Current CI jobs
+## Blocking job sequence
 
-### Hermetic smoke
+### 1. Hermetic smoke
 
-The blocking smoke job runs on Windows with Python 3.13 and validates deterministic contracts that do not create a real Tk root:
+Runs on Windows 2022 with Python 3.13 and validates contracts that do not require a real Tk root, including repository safety, external AppData stores, packaging and the Tcl/Tk mirror contract.
 
-- repository-safety tracked-cleanup rules;
-- Studio category defaults and overrides;
-- PyInstaller resource packaging;
-- import-safe Resend diagnostics;
-- external AppData store isolation;
-- TytułyAI storage round-trips;
-- Component Hub filtering without GUI.
+This job must remain independent of `tkinter.Tk()` and `customtkinter.CTk()` creation.
 
-It must remain green before a Stage 2 PR can be considered merge-ready. Do not add tests that instantiate `tkinter.Tk`, `customtkinter.CTk` or the full Studio application to this blocking job.
+### 2. Tk GUI smoke
 
-### Tk GUI smoke
+Runs only for ready PRs or manual dispatch after Hermetic passes. It:
 
-The Tk GUI job is diagnostic and non-blocking while the hosted Windows/Python 3.13 Tcl/Tk environment is unstable.
+- creates a unique per-run mirror of the complete `actions/setup-python` Tcl/Tk tree under `RUNNER_TEMP`;
+- validates a full relative-path/length/SHA-256 manifest;
+- points `TCL_LIBRARY` and `TK_LIBRARY` to the mirror;
+- performs a real Tk-root capability probe;
+- executes selected Component Hub, inline lifecycle and Giclée Frame GUI tests;
+- uploads probe, JUnit and pytest evidence.
 
-It performs an explicit Tk-root capability probe, records Tcl/Tk details, and then runs selected Component Hub, inline lifecycle and Giclée Frame GUI tests. Probe output, JUnit and pytest logs are uploaded even when the environment fails.
+A red Tk GUI job is blocking and must be classified as environment, test-contract or product failure. Do not change production behavior to hide a broken runtime.
 
-A red Tk diagnostic must be classified as one of:
+### 3. Full pytest baseline
 
-- runner Tcl/Tk installation failure;
-- deterministic test-contract failure;
-- product regression.
+Runs on a separate Windows 2022 runner after Tk GUI passes. It:
 
-Do not change production code to hide a broken Tcl/Tk runner.
+1. prepares its own isolated application roots;
+2. creates its own unique Tcl/Tk mirror;
+3. installs dependencies;
+4. runs the historical Tk warmup test;
+5. executes `prepare-tk-runtime.ps1 -VerifyOnly` to revalidate every mirrored file and a fresh Tk/ttk preflight;
+6. runs the complete pytest collection;
+7. uploads JUnit, complete pytest output and runtime-write inventory on every outcome.
 
-### Full pytest baseline
+The full baseline is blocking. A PR is not merge-ready until the exact-head artifact reports zero failures and errors.
 
-The full-suite job is temporarily diagnostic and non-blocking while known Stage 2 failure clusters are repaired.
+## Tcl/Tk mirror contract
 
-It still records the real pytest exit code and uploads evidence. Do not change tests or repository-safety baselines merely to make this diagnostic job appear green.
+The source is only:
 
-When the remaining clusters are resolved or intentionally separated into explicit environmental jobs, this job must become blocking.
+```text
+<actions/setup-python root>/tcl/**
+```
 
-## Runtime isolation contract
+The target is unique for `RuntimeName`, `GITHUB_RUN_ID`, `GITHUB_RUN_ATTEMPT` and `GITHUB_JOB`:
 
-Every CI job and every local reproduction must isolate at least:
+```text
+${RUNNER_TEMP}/python-tcl-runtime-<identity>
+```
+
+Only the Tcl/Tk tree is copied. The interpreter, `Lib`, `site-packages` and repository files are not copied.
+
+Preparation fails before tests when:
+
+- required Tcl/Tk files are absent;
+- `robocopy` fails;
+- source and mirror differ by relative path, byte length or SHA-256;
+- `TCL_LIBRARY` or `TK_LIBRARY` resolves outside the mirror;
+- a real Tk root, Spinbox or ttk style cannot be created.
+
+`-VerifyOnly` never recopies the source. It validates the persisted mirror manifest and creates a new independent Tk root immediately before the full baseline.
+
+Do not retry `Tk.__init__` on a partially initialized object.
+
+## Runtime isolation
+
+Every job or local reproduction must isolate at least:
 
 ```text
 LOCALAPPDATA
@@ -58,170 +83,90 @@ APPDATA
 GICLEEAPP_LOCAL_ROOT
 GICLEEAPP_ROAMING_ROOT
 PYTHONPYCACHEPREFIX
-```
-
-The Stage 2 workflow also isolates:
-
-```text
 GPT_STARTER_DIR
 THEME_ROOT
 TEMP
 TMP
 ```
 
-Tests must not read or write the user's real AppData, starter files, theme checkout or mutable repository runtime files.
+Tests must not access user AppData, mutable starter files, the production Shopify store or the archived checkout at `C:\Strona\pusty`.
 
-## External integration contract
+## External integrations
 
-Automated tests must not use:
+Automated tests must use temporary repositories, fixtures and stubs. They must not use:
 
-- real GitHub repositories;
-- real Shopify stores or credentials;
+- production GitHub repositories as mutation targets;
+- real Shopify credentials or stores;
 - production APIs;
-- user-owned mutable data;
-- the archived checkout at `C:\Strona\pusty`.
+- user-owned mutable data.
 
-Tests requiring Git behavior must use temporary local repositories. Shopify-related tests must use fixtures, stubs or temporary theme roots.
+## Local focused reproduction
 
-## Local blocking-smoke reproduction
-
-From `cursor-api` in an isolated environment:
+From `cursor-api`:
 
 ```powershell
-python -m pip install -r requirements-dev.txt
-python -m pip check
-
-python -m pytest -q `
-  tests/test_repository_safety_tracked_cleanup.py `
-  tests/test_studio_categories.py `
-  tests/test_giclee_app_packaging.py `
-  tests/test_resend_diagnostic_script.py `
-  tests/test_stage1e_external_stores_3.py::test_title_drafts_write_external `
-  tests/test_stage1e_external_stores_3.py::test_launcher_config_reads_legacy_and_writes_roaming `
-  tests/test_tytulyai_storage.py `
-  tests/test_studio_component_hub.py::test_filtered_components_without_gui
+python -m pytest -q tests/test_tcl_transient_retry.py
 ```
 
-Do not run this command against unisolated environment variables.
-
-## Local Tk GUI reproduction
-
-First verify that Tk can create and destroy a root:
+For a local GUI reproduction, first verify a real root:
 
 ```powershell
-python -c "import tkinter as tk; root=tk.Tk(); root.withdraw(); print(root.tk.call('info','patchlevel')); print(root.tk.globalgetvar('tcl_library')); root.destroy()"
+python -c "import tkinter as tk; root=tk.Tk(); root.withdraw(); print(root.tk.call('info','patchlevel')); print(root.tk.globalgetvar('tcl_library')); print(root.tk.globalgetvar('tk_library')); root.destroy()"
 ```
 
-Only after the probe succeeds, run the selected GUI set:
+Then run only the relevant focused GUI tests. A failed capability probe is an environment result, not permission for a blanket skip.
 
-```powershell
-python -m pytest -q `
-  tests/test_studio_component_hub.py::test_pin_toggle_does_not_rebuild_card_cache `
-  tests/test_studio_component_hub.py::test_hub_search_during_partial_render `
-  tests/test_studio_launcher_inline.py::test_return_from_inline_restores_hub_tiles `
-  tests/test_studio_launcher_inline.py::test_return_from_inline_with_inline_resize_restores_hub `
-  tests/test_studio_gicleeframe_visual_ready.py::test_gicleeframe_section_reentry_uses_minimal_cache
-```
+## Evidence requirements
 
-A failed capability probe is an environment result, not permission to weaken product behavior or blanket-skip all GUI tests.
+Before merge, review artifacts for the exact head:
 
-## Local full baseline reproduction
+- Hermetic JUnit and pytest output;
+- Tk GUI probe, JUnit and pytest output;
+- full baseline JUnit and pytest output;
+- runtime-write inventory.
 
-From `cursor-api`, after setting isolated runtime roots:
+Required final state:
 
-```powershell
-python -m pytest -q --junitxml="<report-root>\junit.xml"
-```
-
-Capture the complete terminal output and pytest exit code. After the run, verify every participating worktree using:
-
-```powershell
-git status --porcelain=v1 --untracked-files=all
-```
-
-Any unexpected modification is a blocker.
-
-## Artifacts
-
-GitHub Actions uploads:
-
-- a blocking-smoke artifact with JUnit and complete pytest output;
-- a Tk GUI diagnostic artifact with capability-probe output, JUnit when available and complete pytest output;
-- a full-baseline artifact with JUnit and complete pytest output.
-
-Artifacts are evidence for the exact workflow run and must be reviewed before changing a failing contract.
-
-## GUI and Tcl/Tk strategy
-
-GUI/Tk tests require an explicit environment contract.
-
-Do not modify production code to hide a broken Tcl/Tk installation. The dedicated diagnostic job must perform a Tk-root capability check before executing GUI tests.
-
-A skip is permitted only when a specific test has a documented platform contract and the environment check records the reason. Do not apply a blanket GUI skip.
-
-The blocking hermetic smoke must remain independent of Tcl/Tk root creation.
-
-## Async UI testing strategy
-
-Production async behavior must not be changed back to synchronous execution to satisfy old tests.
-
-Tests should use a deterministic fake scheduler or executor that can drain queued `after`, `after_idle` and deferred callbacks without `sleep`.
-
-Prefer behavioral assertions after the queue is drained. Avoid source-text assertions when the behavior can be observed directly.
-
-## Repository-safety rules
-
-- Never weaken a safety test to accept a new blocker.
-- Mutable runtime configuration must not be tracked.
-- Immutable defaults belong in resources or examples.
-- Every bundled resource must be included in package/build configuration.
-- Every commit and PR must use a strict path allowlist.
-- Do not use `git reset --hard`, `git clean`, force push, rebase or history rewriting.
-- Do not delete local branches or worktrees during Stage 2.
-- Do not update `CURRENT_APP_STATE.md` until the final accepted Stage 2 checkpoint.
-
-## PR procedure
-
-1. Start from the exact current `master` SHA.
-2. Create a dedicated `gpt-work/<task-slug>` branch.
-3. Keep changes within the declared allowlist.
-4. Push and open a draft PR.
-5. Review the full diff and changed-file list.
-6. Review GitHub Actions jobs and artifacts.
-7. Fix architecture rather than weakening tests.
-8. Confirm `master` has not moved unexpectedly.
-9. Mark ready and merge with the expected head SHA.
-10. Preserve the local branch and worktree until the final safety checkpoint.
-
-## Stacked PR procedure
-
-Use stacked PRs only when a later package genuinely depends on an unmerged earlier package.
-
-Each stacked PR must state:
-
-- exact base branch and base SHA;
-- exact head branch and head SHA;
-- dependency on the earlier PR;
-- its own path allowlist and validation evidence.
-
-Do not retarget or merge a stack automatically after an unexpected `master` change.
+- zero JUnit failures/errors;
+- expected test count and skips explained;
+- zero runtime-write parse errors;
+- zero runtime source-write findings;
+- PR `behind_by=0`;
+- final diff within allowlist;
+- no unresolved review threads.
 
 ## Failure procedure
 
 For every failed job:
 
-1. identify whether the failure is code, test contract or environment;
-2. inspect JUnit and complete logs;
-3. reproduce with the same isolated variables;
-4. verify worktree cleanliness after reproduction;
-5. fix the smallest coherent architectural package;
-6. rerun focused tests and the relevant CI job;
-7. record intentionally deferred failures explicitly.
+1. inspect JUnit and complete logs;
+2. classify code, test contract or environment;
+3. do not rerun blindly;
+4. reproduce with the same isolated variables when possible;
+5. fix the smallest coherent package;
+6. rerun focused tests and the relevant CI sequence;
+7. record deferred infrastructure failures explicitly.
 
-## Starter files and GPT knowledge
+At most one diagnostically justified repeat of a full baseline is allowed on the same unchanged head. A second failure blocks merge and requires a separate fix.
 
-Do not update starter files after each small PR.
+## Repository-safety rules
 
-After Stage 2 is stabilized, update the starter files in one final documentation package. `CURRENT_APP_STATE.md` remains single-writer and must be updated last.
+- Never weaken safety tests to accept a blocker.
+- Mutable runtime configuration must not be tracked.
+- Every change uses a strict path allowlist.
+- Do not use force push, rebase, `git reset --hard` or `git clean`.
+- Do not update starter files during small Stage 2 packages.
+- Do not generate a GPT knowledge ZIP without separate explicit authorization.
 
-Do not generate a GPT knowledge ZIP without separate explicit authorization. The ZIP is not the source of truth.
+## PR procedure
+
+1. Start from exact current `master`.
+2. Use a dedicated `gpt-work/<task>` branch.
+3. Freeze scope and allowlist.
+4. Open a draft PR.
+5. Pass focused tests and draft Hermetic.
+6. Review the complete diff.
+7. Mark ready to run Tk GUI and full baseline.
+8. Review artifacts and inventory.
+9. Reverify exact head, `behind_by=0` and review threads.
+10. Merge only with the expected head SHA.
