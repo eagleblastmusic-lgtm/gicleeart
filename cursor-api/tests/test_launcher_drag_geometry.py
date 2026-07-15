@@ -4,11 +4,9 @@ from __future__ import annotations
 
 import ast
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
 
-from giclee_app import dragdrop_category_launcher as dnd
 from giclee_app.launcher_drag_geometry import (
     DragPoint,
     DragRect,
@@ -109,83 +107,6 @@ def test_geometry_module_has_no_ui_or_application_imports() -> None:
     assert not any(name.startswith("Komponenty") for name in imports)
 
 
-class FakeWidget:
-    def __init__(
-        self,
-        *,
-        left: int,
-        top: int,
-        width: int,
-        height: int,
-        exists: bool = True,
-        kind: str = "component",
-        key: str = "item",
-    ) -> None:
-        self._left = left
-        self._top = top
-        self._width = width
-        self._height = height
-        self._exists = exists
-        self._launcher_dnd_kind = kind
-        self._launcher_dnd_key = key
-
-    def winfo_rootx(self) -> int:
-        return self._left
-
-    def winfo_rooty(self) -> int:
-        return self._top
-
-    def winfo_width(self) -> int:
-        return self._width
-
-    def winfo_height(self) -> int:
-        return self._height
-
-    def winfo_exists(self) -> bool:
-        return self._exists
-
-
-class BrokenWidget(FakeWidget):
-    def winfo_rootx(self) -> int:
-        raise dnd.tk.TclError("gone")
-
-
-def test_widget_rect_and_wrappers_fail_closed() -> None:
-    widget = FakeWidget(left=10, top=20, width=30, height=40)
-    rect = dnd.DragDropCategoryGicleeApp._widget_drag_rect(widget)
-    assert rect == DragRect(10, 20, 30, 40)
-    assert dnd.DragDropCategoryGicleeApp._point_inside_tile(widget, 10, 20)
-    assert not dnd.DragDropCategoryGicleeApp._point_inside_tile(widget, 40, 20)
-    assert dnd.DragDropCategoryGicleeApp._drop_after(widget, 30, 40) is True
-
-    broken = BrokenWidget(left=0, top=0, width=1, height=1)
-    assert dnd.DragDropCategoryGicleeApp._widget_drag_rect(broken) is None
-    assert not dnd.DragDropCategoryGicleeApp._point_inside_tile(broken, 0, 0)
-    assert not dnd.DragDropCategoryGicleeApp._drop_after(broken, 0, 0)
-
-
-def test_pointer_over_canvas_delegates_to_geometry() -> None:
-    app = dnd.DragDropCategoryGicleeApp.__new__(dnd.DragDropCategoryGicleeApp)
-    app.canvas = FakeWidget(left=100, top=200, width=300, height=400)
-    assert app._pointer_over_tiles_area(100, 200)
-    assert not app._pointer_over_tiles_area(400, 200)
-
-
-def test_nearest_fallback_keeps_candidate_order_and_skips_invalid_bounds() -> None:
-    source = FakeWidget(left=0, top=0, width=10, height=10, key="source")
-    broken = BrokenWidget(left=0, top=0, width=10, height=10, key="broken")
-    first = FakeWidget(left=20, top=0, width=10, height=10, key="first")
-    second = FakeWidget(left=40, top=0, width=10, height=10, key="second")
-
-    app = dnd.DragDropCategoryGicleeApp.__new__(dnd.DragDropCategoryGicleeApp)
-    app.root = SimpleNamespace(winfo_containing=lambda _x, _y: None)
-    app.canvas = FakeWidget(left=0, top=0, width=100, height=100)
-    app._dnd_tiles = [source, broken, first, second]
-
-    target = app._find_drop_target("component", 31, 5, exclude=source)
-    assert target is first
-
-
 def test_motion_source_delegates_threshold_and_keeps_side_effects() -> None:
     path = (
         Path(__file__).resolve().parents[1]
@@ -194,15 +115,16 @@ def test_motion_source_delegates_threshold_and_keeps_side_effects() -> None:
     )
     source = path.read_text(encoding="utf-8")
     motion = source.split("def _on_tile_motion", 1)[1].split("\n    def ", 1)[0]
-    nearest = source.split("def _find_drop_target", 1)[1].split("\n    @staticmethod", 1)[0]
+    wrapper = source.split("def _find_drop_target", 1)[1].split("\n    def ", 1)[0]
 
     assert "drag_threshold_reached(" in motion
     assert "_DRAG_THRESHOLD_PX" in motion
     assert "state.dragging = True" in motion
     assert 'self.root.configure(cursor="fleur")' in motion
     assert "self._auto_scroll_drag(" in motion
-    assert "nearest_rect_index(" in nearest
-    assert "winfo_containing(" in nearest
+    assert "find_drop_target(" in wrapper
+    assert "winfo_containing(" not in wrapper
+    assert "nearest_rect_index(" not in wrapper
 
 
 def test_legacy_order_module_remains_separate() -> None:
