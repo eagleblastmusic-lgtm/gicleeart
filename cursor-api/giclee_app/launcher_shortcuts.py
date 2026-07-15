@@ -164,17 +164,10 @@ def focus_blocks_shortcuts(root: tk.Misc) -> bool:
     return False
 
 
-def dialog_blocks_shortcuts(root: tk.Misc) -> bool:
-    """True gdy fokus jest w dialogu albo nie można go bezpiecznie odczytać."""
+def _widget_is_in_child_toplevel(root: tk.Misc, widget: tk.Misc) -> bool:
+    """True gdy widget należy do potomnego Toplevel; błędy hierarchii blokują skróty."""
 
-    try:
-        focus = root.focus_get()
-    except tk.TclError:
-        return True
-    if focus is None:
-        return False
-
-    cur: tk.Misc | None = focus
+    cur: tk.Misc | None = widget
     while cur is not None:
         if isinstance(cur, tk.Toplevel) and cur != root:
             return True
@@ -183,3 +176,39 @@ def dialog_blocks_shortcuts(root: tk.Misc) -> bool:
         except (AttributeError, tk.TclError):
             return True
     return False
+
+
+def dialog_blocks_shortcuts(root: tk.Misc) -> bool:
+    """True gdy otwarty lub aktywny dialog powinien zablokować skróty launchera."""
+
+    try:
+        grabbed = root.grab_current()
+    except AttributeError:
+        grabbed = None
+    except tk.TclError:
+        return True
+    if grabbed is not None and _widget_is_in_child_toplevel(root, grabbed):
+        return True
+
+    try:
+        children = list(root.winfo_children())
+    except AttributeError:
+        children = []
+    except tk.TclError:
+        return True
+    for child in children:
+        if not isinstance(child, tk.Toplevel) or child == root:
+            continue
+        try:
+            if child.winfo_ismapped():
+                return True
+        except tk.TclError:
+            return True
+
+    try:
+        focus = root.focus_get()
+    except tk.TclError:
+        return True
+    if focus is None:
+        return False
+    return _widget_is_in_child_toplevel(root, focus)
