@@ -28,7 +28,12 @@ jobs:
           python-version: '3.13'
 
       - name: Apply Tk shortcut binding adapter
-        run: python .github/scripts/apply_lc3c.py
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          python .github/scripts/fix_lc3c_escape.py
+          python .github/scripts/apply_lc3c.py
+          git checkout -- .github/scripts/apply_lc3c.py
 
       - name: Install focused test dependencies
         run: >-
@@ -101,7 +106,10 @@ jobs:
           $ErrorActionPreference = 'Stop'
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git rm .github/scripts/apply_lc3c.py .github/workflows/lc3c-one-shot.yml
+          git rm `
+            .github/scripts/apply_lc3c.py `
+            .github/scripts/fix_lc3c_escape.py `
+            .github/workflows/lc3c-one-shot.yml
           git add `
             cursor-api/giclee_app/launcher_tk_shortcut_bindings.py `
             cursor-api/giclee_app/options_category_launcher.py `
