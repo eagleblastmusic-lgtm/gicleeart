@@ -6,6 +6,8 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from enum import Enum
 
+from .launcher_shortcut_keys import normalize_shortcut_key
+
 
 class ShortcutActivationKind(str, Enum):
     """Wynik próby uruchomienia skrótu bez efektów ubocznych."""
@@ -40,8 +42,8 @@ class ShortcutActivation:
 def _normalize_keys(values: Iterable[str]) -> frozenset[str]:
     normalized: set[str] = set()
     for value in values:
-        key = str(value or "").strip().lower()
-        if key:
+        key = normalize_shortcut_key(value)
+        if key is not None:
             normalized.add(key)
     return frozenset(normalized)
 
@@ -75,7 +77,13 @@ def resolve_shortcut_activation(
 ) -> ShortcutActivation:
     """Rozstrzyga mapowanie, brak komponentu, pending albo gotowość launchu."""
 
-    normalized_key = str(key or "").strip().lower()
+    normalized_key = normalize_shortcut_key(key)
+    if normalized_key is None:
+        return ShortcutActivation(
+            kind=ShortcutActivationKind.UNMAPPED,
+            key="",
+        )
+
     folder = str(shortcuts.get(normalized_key) or "").strip()
     if not folder:
         return ShortcutActivation(
