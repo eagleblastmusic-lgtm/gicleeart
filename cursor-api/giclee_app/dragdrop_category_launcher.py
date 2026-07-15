@@ -24,6 +24,7 @@ from .launcher_drag_gesture import (
     resolve_drag_release,
 )
 from .launcher_layout import resolve_sections, save_layout
+from .launcher_tk_drag_bindings import install_tile_drag_bindings
 from .launcher_tile_order import reorder_relative, replace_subset_order
 from .options_category_launcher import OptionsCategoryGicleeApp
 
@@ -97,29 +98,14 @@ class DragDropCategoryGicleeApp(OptionsCategoryGicleeApp):
         setattr(tile, "_launcher_dnd_kind", kind)
         setattr(tile, "_launcher_dnd_key", key)
         self._dnd_tiles.append(tile)
-
-        def bind_recursive(widget: tk.Widget) -> None:
-            # Bazowe kafelki uruchamiały akcję już na Button-1. Przy DnD klik
-            # wykonujemy dopiero na zwolnieniu przycisku, o ile nie rozpoczęto drag.
-            try:
-                widget.unbind("<Button-1>")
-            except tk.TclError:
-                pass
-            widget.bind(
-                "<ButtonPress-1>",
-                lambda event: self._on_tile_press(event, tile, kind, key, activate),
-                add="+",
-            )
-            widget.bind("<B1-Motion>", self._on_tile_motion, add="+")
-            widget.bind("<ButtonRelease-1>", self._on_tile_release, add="+")
-            try:
-                widget.configure(cursor="hand2")
-            except tk.TclError:
-                pass
-            for child in widget.winfo_children():
-                bind_recursive(child)
-
-        bind_recursive(tile)
+        install_tile_drag_bindings(
+            tile,
+            on_press=lambda event: self._on_tile_press(
+                event, tile, kind, key, activate
+            ),
+            on_motion=self._on_tile_motion,
+            on_release=self._on_tile_release,
+        )
 
     def _on_tile_press(
         self,

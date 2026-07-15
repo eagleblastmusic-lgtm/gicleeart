@@ -32,6 +32,8 @@ Pliki:
 
 **LC-3E drag gesture decisions:** `launcher_drag_gesture.py` rozstrzyga `WAITING / START / CONTINUE` dla motion oraz `ACTIVATE / REORDER / NOOP` dla release. Mutable state, widgety, feedback, auto-scroll i persistence pozostają w `DragDropCategoryGicleeApp`.
 
+**LC-3F Tk drag binding adapter:** `launcher_tk_drag_bindings.py` izoluje rekursywne zdjęcie bazowego kliknięcia, trzy bindingi myszy i kursor `hand2`. Metadane kafelka, closure press, stan gestu i persistence pozostają w `DragDropCategoryGicleeApp`.
+
 ---
 
 ## Co robi
