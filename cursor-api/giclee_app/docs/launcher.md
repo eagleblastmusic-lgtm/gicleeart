@@ -40,6 +40,8 @@ Pliki:
 
 **LC-3I Tk drag auto-scroll adapter:** `launcher_tk_drag_auto_scroll.py` izoluje geometrię canvasu, margin 42 px i pojedynczy `yview_scroll()`. `DragDropCategoryGicleeApp` zachowuje orchestration motion, target lookup i persistence.
 
+**LC-3J category order persistence adapter:** `launcher_drag_category_persistence.py` izoluje zmianę `section_order`, zachowanie niewidocznych slotów i pojedynczy `save_layout()`. `DragDropCategoryGicleeApp` zachowuje resolve widocznych sekcji, rerender, reset nawigacji i status.
+
 ---
 
 ## Co robi
