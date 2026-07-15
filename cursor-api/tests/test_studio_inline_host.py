@@ -14,10 +14,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from giclee_app.component_loader import Component
 from giclee_app.ui.inline_host import (
     InlineHostView,
-    _invoke_build_view,
     _sanitize_error_text,
     _short_error,
-    _supports_on_open_component,
+)
+from giclee_app.launcher_inline_builder import (
+    invoke_inline_builder,
+    supports_on_open_component,
 )
 
 
@@ -88,9 +90,9 @@ def test_supports_on_open_component_signature() -> None:
     def kwargs_builder(parent, on_back, **kwargs):  # noqa: ANN001
         pass
 
-    assert _supports_on_open_component(two_arg) is False
-    assert _supports_on_open_component(three_kw) is True
-    assert _supports_on_open_component(kwargs_builder) is True
+    assert supports_on_open_component(two_arg) is False
+    assert supports_on_open_component(three_kw) is True
+    assert supports_on_open_component(kwargs_builder) is True
 
 
 def test_invoke_build_view_two_arg() -> None:
@@ -106,7 +108,7 @@ def test_invoke_build_view_two_arg() -> None:
         return tk.Frame(parent)
 
     mount = tk.Frame(root)
-    _invoke_build_view(builder, mount, lambda: None)
+    invoke_inline_builder(builder, mount, lambda: None)
     assert calls == [2]
     root.destroy()
 
@@ -123,7 +125,7 @@ def test_invoke_build_view_three_kw() -> None:
 
     mount = tk.Frame(root)
     cb = lambda f: None
-    _invoke_build_view(builder, mount, lambda: None, on_open_component=cb)
+    invoke_inline_builder(builder, mount, lambda: None, on_open_component=cb)
     assert calls[0] == "3"
     assert calls[1] is cb
     root.destroy()
@@ -143,7 +145,7 @@ def test_invoke_build_view_passes_callback_to_kwargs_builder() -> None:
 
     mount = tk.Frame(root)
     cb = lambda f: None
-    _invoke_build_view(builder, mount, lambda: None, on_open_component=cb)
+    invoke_inline_builder(builder, mount, lambda: None, on_open_component=cb)
     assert seen == [cb]
     root.destroy()
 
@@ -158,7 +160,7 @@ def test_invoke_build_view_kwargs() -> None:
         return tk.Frame(parent)
 
     mount = tk.Frame(root)
-    _invoke_build_view(builder, mount, lambda: None)
+    invoke_inline_builder(builder, mount, lambda: None)
     root.destroy()
 
 
@@ -319,3 +321,13 @@ def test_launcher_studio_inline_stack_and_cross_nav() -> None:
     assert "cross_nav=True" in text
     assert "_on_escape_back" in text
     assert "Inline Studio / F3" not in text
+
+
+def test_inline_host_source_guards() -> None:
+    path = Path(__file__).resolve().parents[1] / "giclee_app" / "ui" / "inline_host.py"
+    source = path.read_text(encoding="utf-8")
+    assert "invoke_inline_builder" in source
+    assert "_supports_on_open_component" not in source
+    assert "_invoke_build_view" not in source
+    assert "import inspect" not in source
+

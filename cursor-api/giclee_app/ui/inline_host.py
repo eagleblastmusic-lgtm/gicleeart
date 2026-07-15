@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import importlib
-import inspect
 import os
 import re
 import tkinter as tk
@@ -15,6 +14,7 @@ import customtkinter as ctk
 
 from giclee_app.component_loader import Component
 from giclee_app.launcher_delegate import component_log_path
+from giclee_app.launcher_inline_builder import invoke_inline_builder
 from giclee_app.studio.bg import run_async
 
 from . import theme
@@ -46,27 +46,7 @@ def _short_error(exc: BaseException) -> str:
     return f"{name}: {msg}" if msg else name
 
 
-def _supports_on_open_component(builder: Callable[..., Any]) -> bool:
-    try:
-        sig = inspect.signature(builder)
-    except (TypeError, ValueError):
-        return False
-    if "on_open_component" in sig.parameters:
-        return True
-    return any(
-        p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
-    )
 
-
-def _invoke_build_view(
-    builder: Callable[..., Any],
-    parent: tk.Widget,
-    on_back: Callable[[], None],
-    on_open_component: Callable[[str], None] | None = None,
-) -> Any:
-    if _supports_on_open_component(builder):
-        return builder(parent, on_back, on_open_component=on_open_component)
-    return builder(parent, on_back)
 
 
 class InlineHostView(ctk.CTkFrame):
@@ -233,11 +213,11 @@ class InlineHostView(ctk.CTkFrame):
         self._set_studio_inline_flag(True)
 
         try:
-            view = _invoke_build_view(
+            view = invoke_inline_builder(
                 builder,
                 self._tk_mount,
                 self._on_back,
-                self._on_open_component,
+                on_open_component=self._on_open_component,
             )
         except Exception as exc:  # noqa: BLE001
             err = _short_error(exc)

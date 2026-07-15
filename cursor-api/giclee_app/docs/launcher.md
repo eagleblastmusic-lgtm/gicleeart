@@ -46,6 +46,8 @@ Pliki:
 
 **LC-4A classic subprocess launch adapter:** `launcher_classic_subprocess.py` izoluje interpreter, komendę, startowy log i Popen klasycznego launchera. GicleeApp zachowuje wybór trybu, dialogi, listę procesów, status i watcher zakończenia.
 
+**LC-4B neutral inline builder invocation:** `launcher_inline_builder.py` współdzieli analizę sygnatury i pojedyncze wywołanie build_view pomiędzy klasycznym launcherem i Studio. Import modułu, obsługa błędów, pakowanie widoku i lifecycle hostów pozostają w odpowiednich callerach. Klasyczny launcher nie wykonuje już retry po wewnętrznym TypeError buildera.
+
 ---
 
 ## Co robi

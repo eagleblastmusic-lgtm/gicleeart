@@ -47,6 +47,7 @@ from .launcher_classic_subprocess import (
     ClassicSubprocessOutcome,
     start_classic_component_subprocess,
 )
+from .launcher_inline_builder import invoke_inline_builder
 
 try:
     from Komponenty._shared.window_geometry import position_toplevel_screen_center
@@ -933,14 +934,12 @@ class GicleeApp:
         self._next_inline_on_back = None
 
         try:
-            try:
-                view = builder(
-                    self._inline_host,
-                    on_back,
-                    on_open_component=self._open_component_by_folder,
-                )
-            except TypeError:
-                view = builder(self._inline_host, on_back)
+            view = invoke_inline_builder(
+                builder,
+                self._inline_host,
+                on_back,
+                on_open_component=self._open_component_by_folder,
+            )
         except Exception as e:  # noqa: BLE001
             messagebox.showerror(comp.name, f"Blad budowy widoku:\n{e}")
             self._show_tiles()
