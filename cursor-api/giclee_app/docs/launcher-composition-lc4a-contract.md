@@ -1,6 +1,6 @@
 # ETAP 4B / LC-4A — Classic Subprocess Launch Adapter
 
-**Status:** fresh reconnaissance · contract frozen, awaiting implementation
+**Status:** LC-4A implemented
 **Repository:** `eagleblastmusic-lgtm/gicleeart`
 **Base:** `master` @ `9c66274e61e0cab2ca3c75f460a550c317f1d4fd`
 **Data weryfikacji:** 2026-07-15

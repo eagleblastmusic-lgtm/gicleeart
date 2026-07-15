@@ -44,6 +44,8 @@ Pliki:
 
 **LC-3J category order persistence adapter:** `launcher_drag_category_persistence.py` izoluje zmianę `section_order`, zachowanie niewidocznych slotów i pojedynczy `save_layout()`. `DragDropCategoryGicleeApp` zachowuje resolve widocznych sekcji, rerender, reset nawigacji i status.
 
+**LC-4A classic subprocess launch adapter:** `launcher_classic_subprocess.py` izoluje interpreter, komendę, startowy log i Popen klasycznego launchera. GicleeApp zachowuje wybór trybu, dialogi, listę procesów, status i watcher zakończenia.
+
 ---
 
 ## Co robi

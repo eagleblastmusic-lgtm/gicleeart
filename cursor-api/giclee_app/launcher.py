@@ -42,7 +42,11 @@ from .launcher_shortcuts import (
     focus_blocks_shortcuts,
     shortcut_key_from_event,
 )
-from .runtime import get_bundle_root, get_component_cwd, resolve_python_interpreter
+from .runtime import get_bundle_root
+from .launcher_classic_subprocess import (
+    ClassicSubprocessOutcome,
+    start_classic_component_subprocess,
+)
 
 try:
     from Komponenty._shared.window_geometry import position_toplevel_screen_center
@@ -837,48 +841,31 @@ class GicleeApp:
             return
 
         # ----- subprocess (default) -----
-        cwd = get_component_cwd()
-        prefix, py_err = resolve_python_interpreter()
-        if prefix is None:
+        start = start_classic_component_subprocess(comp, logs_dir=_LOGS_DIR)
+
+        if start.outcome is ClassicSubprocessOutcome.NO_PYTHON:
             messagebox.showerror(
                 "Brak Pythona",
-                f"Nie mozna uruchomic komponentu '{comp.name}'.\n\n{py_err}",
+                f"Nie mozna uruchomic komponentu '{comp.name}'.\n\n{start.message}",
             )
             return
-        cmd = [*prefix, "-m", comp.module_path]
-        # Przekierowanie stdout/stderr do logs/<component>.log (append)
-        log_path = self._component_log_write_path(comp)
-        try:
-            log_f = open(log_path, "a", encoding="utf-8", buffering=1)
-            from datetime import datetime as _dt
-            log_f.write(f"\n\n========== {_dt.now().isoformat()} start ==========\n")
-            log_f.flush()
-        except OSError:
-            log_f = None
-        try:
-            proc = subprocess.Popen(  # noqa: S603
-                cmd,
-                cwd=str(cwd),
-                stdout=log_f or subprocess.DEVNULL,
-                stderr=subprocess.STDOUT if log_f else subprocess.DEVNULL,
-                creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
-            )
-        except OSError as e:
-            if log_f:
-                try:
-                    log_f.close()
-                except OSError:
-                    pass
+
+        if start.outcome is ClassicSubprocessOutcome.ERROR:
             messagebox.showerror(
                 "Blad uruchomienia",
-                f"Nie udalo sie uruchomic komponentu '{comp.name}':\n\n{e}",
+                f"Nie udalo sie uruchomic komponentu '{comp.name}':\n\n{start.message}",
             )
             return
+
+        proc = start.proc
+        if proc is None:
+            raise RuntimeError("STARTED result without process")
+
         self._running_procs.append(proc)
         self.status_var.set(f"Uruchomiono: {comp.name} (PID {proc.pid})")
         # W tle czekaj az sie skonczy zeby wyczyscic liste + zamknac plik logu
         threading.Thread(
-            target=self._watch_proc, args=(proc, comp.name, log_f), daemon=True,
+            target=self._watch_proc, args=(proc, comp.name, start.log_file), daemon=True,
         ).start()
 
     def _watch_proc(self, proc: subprocess.Popen, name: str, log_f: Any = None) -> None:
