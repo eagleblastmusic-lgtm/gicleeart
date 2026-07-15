@@ -14,6 +14,11 @@ from .launcher_shortcut_controller import (
     resolve_shortcut_poll,
 )
 from .launcher_shortcut_options import show_shortcut_options
+from .launcher_tk_shortcut_bindings import (
+    bind_shortcut_class,
+    bind_widget_shortcut,
+    install_shortcut_bindtags,
+)
 from .launcher_windows_shortcuts import (
     load_windows_user32 as _load_windows_user32,
     sample_windows_shortcut_keys,
@@ -90,17 +95,11 @@ class OptionsCategoryGicleeApp(StyledCategoryGicleeApp):
 
         if getattr(self, "_windows_user32", None) is not None:
             return
-        try:
-            self.root.unbind_class(self._shortcut_bindtag, "<KeyPress>")
-        except (AttributeError, tk.TclError):
-            pass
-        try:
-            self.root.bind_class(
-                self._shortcut_bindtag,
-                "<KeyPress>",
-                self._on_launcher_key_shortcut,
-            )
-        except (AttributeError, tk.TclError):
+        if not bind_shortcut_class(
+            self.root,
+            self._shortcut_bindtag,
+            self._on_launcher_key_shortcut,
+        ):
             return
         self._install_shortcut_bindtags()
 
@@ -109,34 +108,15 @@ class OptionsCategoryGicleeApp(StyledCategoryGicleeApp):
 
         if getattr(self, "_windows_user32", None) is not None:
             return
-        stack: list[tk.Misc] = [self.root]
-        while stack:
-            widget = stack.pop()
-            try:
-                current = tuple(str(tag) for tag in widget.bindtags())
-                reordered = (self._shortcut_bindtag,) + tuple(
-                    tag for tag in current if tag != self._shortcut_bindtag
-                )
-                if reordered != current:
-                    widget.bindtags(reordered)
-                self._bind_shortcut_directly(widget)
-                stack.extend(widget.winfo_children())
-            except (AttributeError, tk.TclError):
-                continue
+        install_shortcut_bindtags(
+            self.root,
+            self._shortcut_bindtag,
+            self._on_launcher_key_shortcut,
+            bind_direct=self._bind_shortcut_directly,
+        )
 
     def _bind_shortcut_directly(self, widget: tk.Misc) -> None:
-        marker = "_giclee_launcher_shortcut_bound"
-        if getattr(widget, marker, False):
-            return
-        try:
-            binding_id = widget.bind(
-                "<KeyPress>",
-                self._on_launcher_key_shortcut,
-                add="+",
-            )
-            setattr(widget, marker, binding_id or True)
-        except (AttributeError, tk.TclError):
-            pass
+        bind_widget_shortcut(widget, self._on_launcher_key_shortcut)
 
     def _find_widget_by_text(self, parent: tk.Misc, expected: str) -> tk.Widget | None:
         for child in parent.winfo_children():

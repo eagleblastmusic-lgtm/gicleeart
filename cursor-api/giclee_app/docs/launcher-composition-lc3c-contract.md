@@ -1,6 +1,6 @@
 # ETAP 4B / LC-3C — Tk Shortcut Binding Adapter
 
-**Status:** fresh reconnaissance · contract freeze  
+**Status:** LC-3C implemented
 **Repository:** `eagleblastmusic-lgtm/gicleeart`  
 **Base:** `master` @ `2dc2adbe539da2a3f5798b014cebcf6058a81ee7`  
 **Data weryfikacji:** 2026-07-15
