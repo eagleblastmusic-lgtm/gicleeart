@@ -8,6 +8,8 @@ import ctypes
 import os
 from typing import Any
 
+from .launcher_shortcut_keys import shortcut_virtual_key
+
 
 _GA_ROOT = 2
 _VK_CONTROL = 0x11
@@ -19,22 +21,6 @@ class WindowsShortcutSample:
     """Niemutowalna próbka aktualnie wciśniętych skrótów."""
 
     current_down: frozenset[str]
-
-
-def shortcut_virtual_key(key: str) -> int | None:
-    """Zwraca kod WinAPI dla ASCII A-Z, 0-9 albo F1-F12."""
-
-    normalized = str(key or "").strip().lower()
-    if len(normalized) == 1 and normalized.isalpha() and normalized.isascii():
-        return ord(normalized.upper())
-    if len(normalized) == 1 and normalized.isdigit() and normalized.isascii():
-        return ord(normalized)
-    suffix = normalized[1:]
-    if normalized.startswith("f") and suffix.isdigit() and suffix.isascii():
-        number = int(suffix)
-        if 1 <= number <= 12:
-            return 0x70 + number - 1
-    return None
 
 
 def load_windows_user32() -> Any | None:
