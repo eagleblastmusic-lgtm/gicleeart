@@ -14,6 +14,13 @@ from .launcher_drag_geometry import (
     drag_threshold_reached,
     drop_after,
 )
+from .launcher_tk_drag_feedback import (
+    begin_drag_feedback,
+    clear_drag_tile_feedback,
+    clear_previous_drop_target,
+    reset_drag_cursor,
+    show_drop_target,
+)
 from .launcher_tk_drag_targets import find_drop_target, widget_drag_rect
 from .launcher_drag_gesture import (
     DragMotionKind,
@@ -29,9 +36,6 @@ from .options_category_launcher import OptionsCategoryGicleeApp
 
 _DRAG_THRESHOLD_PX = 8
 _DROP_VERTICAL_RATIO = 0.22
-_BORDER_NORMAL = "#dcdce2"
-_BORDER_DRAG_SOURCE = "#7b8798"
-_BORDER_DROP_TARGET = "#496a9b"
 
 
 @dataclass
@@ -143,11 +147,7 @@ class DragDropCategoryGicleeApp(OptionsCategoryGicleeApp):
 
         if motion is DragMotionKind.START:
             state.dragging = True
-            self._set_tile_border(state.source, _BORDER_DRAG_SOURCE)
-            try:
-                self.root.configure(cursor="fleur")
-            except tk.TclError:
-                pass
+            begin_drag_feedback(self.root, state.source)
 
         self._auto_scroll_drag(int(event.y_root))
         target = self._find_drop_target(
@@ -236,14 +236,13 @@ class DragDropCategoryGicleeApp(OptionsCategoryGicleeApp):
         x_root: int,
         y_root: int,
     ) -> None:
-        if state.target is not None and state.target is not target:
-            self._set_tile_border(state.target, _BORDER_NORMAL)
+        clear_previous_drop_target(state.target, target)
         state.target = target
         if target is None:
             state.after = False
             return
         state.after = self._drop_after(target, x_root, y_root)
-        self._set_tile_border(target, _BORDER_DROP_TARGET)
+        show_drop_target(target)
 
     @staticmethod
     def _drop_after(target: tk.Frame, x_root: int, y_root: int) -> bool:
@@ -256,24 +255,12 @@ class DragDropCategoryGicleeApp(OptionsCategoryGicleeApp):
             vertical_ratio=_DROP_VERTICAL_RATIO,
         )
 
-    @staticmethod
-    def _set_tile_border(tile: tk.Frame, color: str) -> None:
-        try:
-            tile.configure(highlightbackground=color, highlightcolor=color)
-        except tk.TclError:
-            pass
-
     def _clear_drag_state(self) -> None:
         state = self._drag_state
         if state is not None:
-            self._set_tile_border(state.source, _BORDER_NORMAL)
-            if state.target is not None:
-                self._set_tile_border(state.target, _BORDER_NORMAL)
+            clear_drag_tile_feedback(state.source, state.target)
         self._drag_state = None
-        try:
-            self.root.configure(cursor="")
-        except (AttributeError, tk.TclError):
-            pass
+        reset_drag_cursor(self.root)
 
     def _auto_scroll_drag(self, y_root: int) -> None:
         try:
