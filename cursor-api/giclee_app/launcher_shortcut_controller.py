@@ -77,7 +77,13 @@ def resolve_shortcut_activation(
 ) -> ShortcutActivation:
     """Rozstrzyga mapowanie, brak komponentu, pending albo gotowość launchu."""
 
-    normalized_key = normalize_shortcut_key(key) or ""
+    normalized_key = normalize_shortcut_key(key)
+    if normalized_key is None:
+        return ShortcutActivation(
+            kind=ShortcutActivationKind.UNMAPPED,
+            key="",
+        )
+
     folder = str(shortcuts.get(normalized_key) or "").strip()
     if not folder:
         return ShortcutActivation(
