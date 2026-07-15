@@ -1,19 +1,24 @@
 name: LC-3H one-shot implementation
 
 on:
-  push:
+  pull_request:
     branches:
-      - gpt-work/launcher-composition-lc3h-tk-drag-feedback
+      - master
+    types:
+      - opened
+      - reopened
+      - synchronize
 
 permissions:
   contents: write
 
 concurrency:
-  group: lc3h-one-shot-${{ github.ref }}
+  group: lc3h-one-shot-${{ github.event.pull_request.number }}
   cancel-in-progress: false
 
 jobs:
   implement:
+    if: github.event.pull_request.head.ref == 'gpt-work/launcher-composition-lc3h-tk-drag-feedback'
     runs-on: windows-2022
     timeout-minutes: 25
     env:
