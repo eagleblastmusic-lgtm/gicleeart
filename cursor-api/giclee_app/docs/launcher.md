@@ -26,6 +26,8 @@ Pliki:
 
 **LC-3B Windows adapter:** `launcher_windows_shortcuts.py` izoluje virtual-key mapping, user32, foreground i próbki klawiszy/modyfikatorów. `OptionsCategoryGicleeApp` nadal posiada timery, aktywność, Tk fallback oraz LC-3A orchestration.
 
+**LC-3C Tk binding adapter:** `launcher_tk_shortcut_bindings.py` izoluje class binding, rekursywne bindtagi i bezpośredni fallback bez duplikatów. Lifecycle, fokus, aktywacja i handler eventu pozostają w `OptionsCategoryGicleeApp`.
+
 ---
 
 ## Co robi
