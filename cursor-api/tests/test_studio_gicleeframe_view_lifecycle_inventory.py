@@ -83,6 +83,11 @@ _EXPECTED_METHODS = {
     "_handle_back",
     "on_show",
     "on_hide",
+    "_view_lifecycle_alive",
+    "_cancel_atomic_reveal_check",
+    "_activate_view_lifecycle",
+    "_deactivate_view_lifecycle",
+    "_on_lifecycle_destroy",
     "_rebuild_page_model_cache",
     "_set_merged",
     "_since_visual_enter_ms",
@@ -520,8 +525,8 @@ class GicleeFrameLifecycleHarness(GicleeFrameLifecycleInventoryMixin):
 # --- Structural / contract ---
 
 
-def test_lifecycle_exact_fifty_eight_method_ownership_and_identity() -> None:
-    assert len(_EXPECTED_METHODS) == 58
+def test_lifecycle_exact_current_method_ownership_and_identity() -> None:
+    assert len(_EXPECTED_METHODS) == 63
     mixin_methods = {
         name
         for name, value in GicleeFrameLifecycleInventoryMixin.__dict__.items()

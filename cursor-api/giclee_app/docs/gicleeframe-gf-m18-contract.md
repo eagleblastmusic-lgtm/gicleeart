@@ -128,6 +128,28 @@ After integration, every moved method must be absent from
 `GicleeFrameView.__dict__` and resolve by identity through the mixin. Do not leave
 host wrappers or duplicate implementations.
 
+### 2.1. Post-integration lifecycle safety extension (2026-07-15)
+
+The original GF-M18 extraction moved exactly **58 pre-existing methods** from the host.
+A later Studio lifecycle maintenance fix adds five cohesive safety methods directly to
+the same lifecycle owner:
+
+```text
+_view_lifecycle_alive
+_cancel_atomic_reveal_check
+_activate_view_lifecycle
+_deactivate_view_lifecycle
+_on_lifecycle_destroy
+```
+
+These methods own cancellation, generation invalidation and stale `after_idle` guards
+for cached-view hide/destroy transitions. They do not introduce persistence, network,
+Shopify, subprocess or draft mutation behavior.
+
+The currently maintained `GicleeFrameLifecycleInventoryMixin` boundary therefore owns
+exactly **63 methods**: the original 58-method extraction plus five lifecycle-safety
+methods. The historical extraction list below remains unchanged.
+
 ## 3. Exact constants and helpers
 
 Move exactly these **15 active constants** with unchanged values:

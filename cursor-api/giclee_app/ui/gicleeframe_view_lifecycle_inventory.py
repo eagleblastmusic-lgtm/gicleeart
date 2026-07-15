@@ -142,6 +142,7 @@ class GicleeFrameLifecycleInventoryMixin:
             self._on_back()
 
     def on_show(self, *, cache_hit: bool = False) -> None:
+        self._activate_view_lifecycle()
         if cache_hit:
             self._begin_visual_session(cache_hit=True)
         elif self._visual_enter_mono is None:
@@ -162,6 +163,7 @@ class GicleeFrameLifecycleInventoryMixin:
         )
 
     def on_hide(self) -> None:
+        self._deactivate_view_lifecycle()
         self._cancel_selection_jobs()
         self._cancel_page_context_jobs()
         self._cancel_details_on_demand_jobs()
@@ -171,6 +173,39 @@ class GicleeFrameLifecycleInventoryMixin:
             merged_count=len(self._merged),
             draft_edits=self._page_draft.draft_edit_count(),
         )
+
+    def _view_lifecycle_alive(self) -> bool:
+        if not getattr(self, "_view_lifecycle_visible", True):
+            return False
+        try:
+            return bool(self.winfo_exists())
+        except (AttributeError, tk.TclError):
+            return False
+
+    def _cancel_atomic_reveal_check(self) -> None:
+        after_id = getattr(self, "_atomic_reveal_after_id", None)
+        self._atomic_reveal_after_id = None
+        if not after_id:
+            return
+        try:
+            self.after_cancel(after_id)
+        except (AttributeError, tk.TclError):
+            pass
+
+    def _activate_view_lifecycle(self) -> None:
+        self._cancel_atomic_reveal_check()
+        self._view_lifecycle_generation = getattr(self, "_view_lifecycle_generation", 0) + 1
+        self._view_lifecycle_visible = True
+
+    def _deactivate_view_lifecycle(self) -> None:
+        self._view_lifecycle_visible = False
+        self._view_lifecycle_generation = getattr(self, "_view_lifecycle_generation", 0) + 1
+        self._cancel_atomic_reveal_check()
+
+    def _on_lifecycle_destroy(self, event: tk.Event | None = None) -> None:
+        if event is not None and getattr(event, "widget", self) is not self:
+            return
+        self._deactivate_view_lifecycle()
 
     # ------------------------------------------------------------------
     # B. RAM model cache and timing
@@ -267,9 +302,29 @@ class GicleeFrameLifecycleInventoryMixin:
 
     def _schedule_atomic_reveal_check(self, *, trigger: str) -> None:
         self._ensure_atomic_reveal_prerequisites()
-        self.after_idle(lambda t=trigger: self._try_atomic_reveal(trigger=t))
+        if not self._view_lifecycle_alive():
+            return
+        if getattr(self, "_atomic_reveal_after_id", None):
+            return
+
+        generation = getattr(self, "_view_lifecycle_generation", 0)
+
+        def run() -> None:
+            self._atomic_reveal_after_id = None
+            if generation != getattr(self, "_view_lifecycle_generation", 0):
+                return
+            if not self._view_lifecycle_alive():
+                return
+            self._try_atomic_reveal(trigger=trigger)
+
+        try:
+            self._atomic_reveal_after_id = self.after_idle(run)
+        except (AttributeError, tk.TclError):
+            self._atomic_reveal_after_id = None
 
     def _try_atomic_reveal(self, *, trigger: str | None = None) -> None:
+        if not self._view_lifecycle_alive():
+            return
         if self._visual_bootstrap_complete:
             return
         missing = self._atomic_reveal_missing_gates()
@@ -311,7 +366,18 @@ class GicleeFrameLifecycleInventoryMixin:
             merged_count=len(self._merged),
             bootstrap_complete=True,
         )
-        self.after_idle(self._mark_idle_ready)
+        generation = getattr(self, "_view_lifecycle_generation", 0)
+
+        def mark_idle_if_current() -> None:
+            if generation != getattr(self, "_view_lifecycle_generation", 0):
+                return
+            if self._view_lifecycle_alive():
+                self._mark_idle_ready()
+
+        try:
+            self.after_idle(mark_idle_if_current)
+        except (AttributeError, tk.TclError):
+            pass
 
     def _ensure_loading_overlay(self) -> None:
         if self._loading_overlay is not None:

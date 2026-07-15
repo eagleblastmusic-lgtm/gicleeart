@@ -56,6 +56,83 @@ _IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
 _VIDEO_SUFFIXES = {".mp4", ".webm", ".mov"}
 _THUMB_SIZE = (128, 96)
 
+def _is_widget_descendant(widget: object, ancestor: tk.Misc) -> bool:
+    current = widget
+    while current is not None:
+        if current is ancestor:
+            return True
+        current = getattr(current, "master", None)
+    return False
+
+
+def _bind_scoped_mousewheel(
+    host: tk.Misc,
+    scroll_area: tk.Misc,
+    canvas: tk.Canvas,
+) -> None:
+    """Przewija panel edycji tylko pod kursorem i odpina binding po zamknięciu widoku."""
+
+    try:
+        window = host.winfo_toplevel()
+    except (AttributeError, tk.TclError):
+        return
+
+    def on_mousewheel(event: tk.Event) -> str | None:
+        try:
+            if not host.winfo_exists() or not scroll_area.winfo_exists() or not canvas.winfo_exists():
+                return None
+
+            target = getattr(event, "widget", None)
+            if target is None or not _is_widget_descendant(target, scroll_area):
+                x_root = getattr(event, "x_root", None)
+                y_root = getattr(event, "y_root", None)
+                if x_root is None or y_root is None:
+                    return None
+                target = window.winfo_containing(x_root, y_root)
+                if target is None or not _is_widget_descendant(target, scroll_area):
+                    return None
+
+            # Kontrolki z własnym przewijaniem zachowują natywne zachowanie.
+            if target is not canvas and isinstance(target, (tk.Text, tk.Listbox, ttk.Treeview)):
+                return None
+
+            delta = int(getattr(event, "delta", 0) or 0)
+            if not delta:
+                return None
+            steps = int(-1 * (delta / 120))
+            if steps == 0:
+                steps = -1 if delta > 0 else 1
+            canvas.yview_scroll(steps, "units")
+            return "break"
+        except (AttributeError, tk.TclError, TypeError, ValueError):
+            return None
+
+    try:
+        bind_id = window.bind("<MouseWheel>", on_mousewheel, add="+")
+    except (AttributeError, tk.TclError):
+        return
+    if not bind_id:
+        return
+
+    cleaned = False
+
+    def cleanup(event: tk.Event | None = None) -> None:
+        nonlocal cleaned
+        if cleaned:
+            return
+        if event is not None and getattr(event, "widget", host) is not host:
+            return
+        cleaned = True
+        try:
+            window.unbind("<MouseWheel>", bind_id)
+        except (AttributeError, tk.TclError):
+            pass
+
+    try:
+        host.bind("<Destroy>", cleanup, add="+")
+    except (AttributeError, tk.TclError):
+        cleanup()
+
 
 def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool = False) -> None:
     state: dict[str, Any] = {
@@ -124,10 +201,7 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
     editor_inner.bind("<Configure>", _on_editor_configure)
     editor_canvas.bind("<Configure>", _on_editor_configure)
 
-    def _bind_mousewheel(event: tk.Event) -> None:
-        editor_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-
-    editor_canvas.bind_all("<MouseWheel>", _bind_mousewheel)
+    _bind_scoped_mousewheel(host, editor_host, editor_canvas)
 
     status_var = tk.StringVar(value="")
     ttk.Label(host, textvariable=status_var, foreground="#444", padding=(14, 0)).pack(anchor="w")

@@ -7,7 +7,7 @@ import tkinter as tk
 import webbrowser
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
-from typing import Any
+from typing import Any, Callable
 
 from Komponenty._shared.toast import show_toast
 from Komponenty._shared.window_geometry import position_toplevel_screen_center
@@ -28,6 +28,33 @@ APP_TITLE = "Strona produktu — mini strony opisu (PDP v3)"
 _IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff", ".bmp"}
 _DEFAULT_PARAGRAPHS_PER_PAGE = 2
 _DETAILS_IID = "details"
+
+
+
+def _widget_exists(widget: tk.Misc) -> bool:
+    """Zwraca False, gdy widok Tk został już zniszczony lub nie jest dostępny."""
+
+    try:
+        return bool(widget.winfo_exists())
+    except (AttributeError, tk.TclError):
+        return False
+
+
+def _schedule_ui(widget: tk.Misc, callback: Callable[[], None]) -> bool:
+    """Planuje callback tylko dla żyjącego widoku i sprawdza go ponownie przy wykonaniu."""
+
+    if not _widget_exists(widget):
+        return False
+
+    def guarded() -> None:
+        if _widget_exists(widget):
+            callback()
+
+    try:
+        widget.after(0, guarded)
+    except (AttributeError, tk.TclError):
+        return False
+    return True
 
 
 def _is_image_path(path: Path) -> bool:
@@ -461,7 +488,7 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
                 show_toast(host, "Wgrano grafikę. Pamiętaj o «Zapisz do Shopify».", duration_ms=3000)
                 _refresh_pages()
 
-            host.after(0, done)
+            _schedule_ui(host, done)
 
         threading.Thread(target=work, daemon=True).start()
 
@@ -506,7 +533,7 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
                 show_toast(host, "Zapisano konfigurację stron.", duration_ms=2500)
                 _mark_selected_row(has_story=True, page_count=len(state["pages"]))
 
-            host.after(0, done)
+            _schedule_ui(host, done)
 
         threading.Thread(target=work, daemon=True).start()
 
@@ -534,7 +561,7 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
                 show_toast(host, "Usunięto konfigurację stron.", duration_ms=2500)
                 _mark_selected_row(has_story=False, page_count=0)
 
-            host.after(0, done)
+            _schedule_ui(host, done)
 
         threading.Thread(target=work, daemon=True).start()
 
@@ -669,7 +696,7 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
                             return
                         image_var.set(url)
 
-                    host.after(0, done)
+                    _schedule_ui(win, done)
 
                 threading.Thread(target=work, daemon=True).start()
 
@@ -789,7 +816,7 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
                     show_toast(host, "Zapisano ustawienia efektów PDP v3.", duration_ms=2500)
                     win.destroy()
 
-                host.after(0, done)
+                _schedule_ui(win, done)
 
             threading.Thread(target=work, daemon=True).start()
 
@@ -816,7 +843,7 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
                     if cfg:
                         _apply_effects(cfg)
 
-                host.after(0, done)
+                _schedule_ui(win, done)
 
             threading.Thread(target=work, daemon=True).start()
 
@@ -867,7 +894,7 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
                 detail_progress_var.set("")
                 _apply_detail(detail)
 
-            host.after(0, done)
+            _schedule_ui(host, done)
 
         threading.Thread(target=work, daemon=True).start()
 
@@ -879,7 +906,7 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
         def work() -> None:
             try:
                 rows = load_catalog_with_story_status(
-                    on_progress=lambda m: host.after(0, lambda: progress_var.set(m)),
+                    on_progress=lambda m: _schedule_ui(host, lambda: progress_var.set(m)),
                 )
                 err = None
             except Exception as exc:  # noqa: BLE001
@@ -896,7 +923,7 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
                 _refresh_tree()
                 show_toast(host, f"Załadowano {len(rows)} produktów.", duration_ms=2000)
 
-            host.after(0, done)
+            _schedule_ui(host, done)
 
         threading.Thread(target=work, daemon=True).start()
 
