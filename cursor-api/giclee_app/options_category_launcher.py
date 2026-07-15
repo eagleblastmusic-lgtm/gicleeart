@@ -182,7 +182,10 @@ class OptionsCategoryGicleeApp(StyledCategoryGicleeApp):
         self._shortcut_map = dict(shortcuts)
         self._windows_shortcut_down.clear()
         self._bind_launcher_shortcuts()
-        self.root.after_idle(self._restore_shortcut_focus)
+        try:
+            self.root.after_idle(self._restore_shortcut_focus)
+        except tk.TclError:
+            pass
         labels = ", ".join(
             shortcut_display_label(key) for key in sorted(self._shortcut_map)
         )
