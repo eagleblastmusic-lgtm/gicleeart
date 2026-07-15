@@ -28,6 +28,8 @@ Pliki:
 
 **LC-3C Tk binding adapter:** `launcher_tk_shortcut_bindings.py` izoluje class binding, rekursywne bindtagi i bezpośredni fallback bez duplikatów. Lifecycle, fokus, aktywacja i handler eventu pozostają w `OptionsCategoryGicleeApp`.
 
+**LC-3D pure drag geometry:** `launcher_drag_geometry.py` izoluje próg ruchu, prostokąty, hit-testing, `drop_after` i wybór najbliższego celu. Stan gestu, eventy Tk, feedback, auto-scroll i zapis pozostają w `DragDropCategoryGicleeApp`.
+
 ---
 
 ## Co robi
