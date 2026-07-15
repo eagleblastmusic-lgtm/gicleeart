@@ -30,6 +30,8 @@ Pliki:
 
 **LC-3D pure drag geometry:** `launcher_drag_geometry.py` izoluje próg ruchu, prostokąty, hit-testing, `drop_after` i wybór najbliższego celu. Stan gestu, eventy Tk, feedback, auto-scroll i zapis pozostają w `DragDropCategoryGicleeApp`.
 
+**LC-3E drag gesture decisions:** `launcher_drag_gesture.py` rozstrzyga `WAITING / START / CONTINUE` dla motion oraz `ACTIVATE / REORDER / NOOP` dla release. Mutable state, widgety, feedback, auto-scroll i persistence pozostają w `DragDropCategoryGicleeApp`.
+
 ---
 
 ## Co robi

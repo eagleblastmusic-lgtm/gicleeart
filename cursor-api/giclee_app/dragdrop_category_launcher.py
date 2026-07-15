@@ -17,6 +17,12 @@ from .launcher_drag_geometry import (
     nearest_rect_index,
     point_inside,
 )
+from .launcher_drag_gesture import (
+    DragMotionKind,
+    DragReleaseKind,
+    resolve_drag_motion,
+    resolve_drag_release,
+)
 from .launcher_layout import resolve_sections, save_layout
 from .launcher_tile_order import reorder_relative, replace_subset_order
 from .options_category_launcher import OptionsCategoryGicleeApp
@@ -144,10 +150,14 @@ class DragDropCategoryGicleeApp(OptionsCategoryGicleeApp):
             DragPoint(int(event.x_root), int(event.y_root)),
             _DRAG_THRESHOLD_PX,
         )
-        if not state.dragging and not threshold_reached:
+        motion = resolve_drag_motion(
+            dragging=state.dragging,
+            threshold_reached=threshold_reached,
+        )
+        if motion is DragMotionKind.WAITING:
             return None
 
-        if not state.dragging:
+        if motion is DragMotionKind.START:
             state.dragging = True
             self._set_tile_border(state.source, _BORDER_DRAG_SOURCE)
             try:
@@ -171,8 +181,16 @@ class DragDropCategoryGicleeApp(OptionsCategoryGicleeApp):
             return None
 
         if not state.dragging:
+            decision = resolve_drag_release(
+                dragging=False,
+                drag_kind=state.kind,
+                source_key=state.key,
+                target_key="",
+                after=False,
+            )
             self._drag_state = None
-            state.activate()
+            if decision.kind is DragReleaseKind.ACTIVATE:
+                state.activate()
             return "break"
 
         target = state.target or self._find_drop_target(
@@ -185,16 +203,29 @@ class DragDropCategoryGicleeApp(OptionsCategoryGicleeApp):
         if target is not None and state.target is None:
             after = self._drop_after(target, int(event.x_root), int(event.y_root))
 
-        source_key = state.key
         target_key = str(getattr(target, "_launcher_dnd_key", "")) if target is not None else ""
-        kind = state.kind
+        decision = resolve_drag_release(
+            dragging=True,
+            drag_kind=state.kind,
+            source_key=state.key,
+            target_key=target_key,
+            after=after,
+        )
         self._clear_drag_state()
 
-        if target_key and target_key != source_key:
-            if kind == "category":
-                self._reorder_category(source_key, target_key, after=after)
-            elif kind == "component":
-                self._reorder_component(source_key, target_key, after=after)
+        if decision.kind is DragReleaseKind.REORDER:
+            if decision.drag_kind == "category":
+                self._reorder_category(
+                    decision.source_key,
+                    decision.target_key,
+                    after=decision.after,
+                )
+            elif decision.drag_kind == "component":
+                self._reorder_component(
+                    decision.source_key,
+                    decision.target_key,
+                    after=decision.after,
+                )
         return "break"
 
     def _find_drop_target(
