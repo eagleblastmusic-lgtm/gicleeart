@@ -32,6 +32,8 @@ from giclee_app.launcher_windows_shortcuts import (
         ("f0", None),
         ("f13", None),
         ("ą", None),
+        ("٧", None),
+        ("f١", None),
         ("ab", None),
         ("", None),
     ],
@@ -138,7 +140,7 @@ def test_sample_keys_normalizes_filters_and_continues_after_error() -> None:
 
     user32 = _fake_user32()
     user32.GetAsyncKeyState.callback = get_state
-    keys = [" A ", "b", "F1", "invalid", "c"]
+    keys = [" A ", "b", "F1", "invalid", "c", "٧", "f١"]
     before = list(keys)
 
     sample = sample_windows_shortcut_keys(user32, keys)
@@ -147,6 +149,12 @@ def test_sample_keys_normalizes_filters_and_continues_after_error() -> None:
         current_down=frozenset({"a", "f1"})
     )
     assert keys == before
+    assert [call[0] for call in user32.GetAsyncKeyState.calls] == [
+        ord("A"),
+        ord("B"),
+        0x70,
+        ord("C"),
+    ]
     with pytest.raises(AttributeError):
         sample.current_down.add("x")  # type: ignore[attr-defined]
 
