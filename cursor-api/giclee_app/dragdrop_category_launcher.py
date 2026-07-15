@@ -11,12 +11,10 @@ from .category_launcher import category_display_title, category_map
 from .component_loader import Component
 from .launcher_drag_geometry import (
     DragPoint,
-    DragRect,
     drag_threshold_reached,
     drop_after,
-    nearest_rect_index,
-    point_inside,
 )
+from .launcher_tk_drag_targets import find_drop_target, widget_drag_rect
 from .launcher_drag_gesture import (
     DragMotionKind,
     DragReleaseKind,
@@ -222,78 +220,14 @@ class DragDropCategoryGicleeApp(OptionsCategoryGicleeApp):
         *,
         exclude: tk.Frame,
     ) -> tk.Frame | None:
-        # Ruch ręki wewnątrz źródłowego kafelka nie może sam z siebie wybrać
-        # najbliższego sąsiada i przypadkowo zmienić kolejności.
-        if self._point_inside_tile(exclude, x_root, y_root):
-            return None
-
-        try:
-            widget = self.root.winfo_containing(x_root, y_root)
-        except tk.TclError:
-            widget = None
-
-        current: tk.Misc | None = widget
-        while current is not None:
-            if (
-                current is not exclude
-                and getattr(current, "_launcher_dnd_kind", None) == kind
-            ):
-                return current if isinstance(current, tk.Frame) else None
-            try:
-                current = current.master
-            except (AttributeError, tk.TclError):
-                break
-
-        if not self._pointer_over_tiles_area(x_root, y_root):
-            return None
-
-        candidates: list[tk.Frame] = []
-        candidate_rects: list[DragRect] = []
-        for tile in self._dnd_tiles:
-            if tile is exclude or getattr(tile, "_launcher_dnd_kind", None) != kind:
-                continue
-            try:
-                exists = bool(tile.winfo_exists())
-            except tk.TclError:
-                continue
-            if not exists:
-                continue
-            rect = self._widget_drag_rect(tile)
-            if rect is None:
-                continue
-            candidates.append(tile)
-            candidate_rects.append(rect)
-
-        index = nearest_rect_index(
-            candidate_rects,
-            DragPoint(x_root, y_root),
+        return find_drop_target(
+            self.root,
+            tiles_area=self.canvas,
+            tiles=self._dnd_tiles,
+            drag_kind=kind,
+            point=DragPoint(x_root, y_root),
+            exclude=exclude,
         )
-        return candidates[index] if index is not None else None
-
-    @staticmethod
-    def _widget_drag_rect(widget: tk.Misc) -> DragRect | None:
-        try:
-            return DragRect(
-                left=widget.winfo_rootx(),
-                top=widget.winfo_rooty(),
-                width=widget.winfo_width(),
-                height=widget.winfo_height(),
-            )
-        except tk.TclError:
-            return None
-
-    @staticmethod
-    def _point_inside_tile(tile: tk.Frame, x_root: int, y_root: int) -> bool:
-        rect = DragDropCategoryGicleeApp._widget_drag_rect(tile)
-        if rect is None:
-            return False
-        return point_inside(rect, DragPoint(x_root, y_root))
-
-    def _pointer_over_tiles_area(self, x_root: int, y_root: int) -> bool:
-        rect = self._widget_drag_rect(self.canvas)
-        if rect is None:
-            return False
-        return point_inside(rect, DragPoint(x_root, y_root))
 
     def _set_drop_target(
         self,
@@ -313,7 +247,7 @@ class DragDropCategoryGicleeApp(OptionsCategoryGicleeApp):
 
     @staticmethod
     def _drop_after(target: tk.Frame, x_root: int, y_root: int) -> bool:
-        rect = DragDropCategoryGicleeApp._widget_drag_rect(target)
+        rect = widget_drag_rect(target)
         if rect is None:
             return False
         return drop_after(

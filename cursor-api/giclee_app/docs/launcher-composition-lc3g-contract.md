@@ -1,6 +1,6 @@
 # ETAP 4B / LC-3G — Tk Drag Target Lookup Adapter
 
-**Status:** fresh reconnaissance · contract freeze  
+**Status:** LC-3G implemented
 **Repository:** `eagleblastmusic-lgtm/gicleeart`  
 **Base:** `master` @ `d27b9e15caefe89364896473ce80512636a0ff29`  
 **Data weryfikacji:** 2026-07-15

@@ -34,6 +34,8 @@ Pliki:
 
 **LC-3F Tk drag binding adapter:** `launcher_tk_drag_bindings.py` izoluje rekursywne zdjęcie bazowego kliknięcia, trzy bindingi myszy i kursor `hand2`. Metadane kafelka, closure press, stan gestu i persistence pozostają w `DragDropCategoryGicleeApp`.
 
+**LC-3G Tk drag target adapter:** `launcher_tk_drag_targets.py` izoluje direct widget lookup, traversal master, odczyt geometrii i nearest fallback. `DragDropCategoryGicleeApp` zachowuje stan gestu, feedback, auto-scroll, decyzję after i persistence.
+
 ---
 
 ## Co robi
