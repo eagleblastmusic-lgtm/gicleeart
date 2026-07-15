@@ -120,7 +120,7 @@ def test_motion_source_delegates_threshold_and_keeps_side_effects() -> None:
     assert "drag_threshold_reached(" in motion
     assert "_DRAG_THRESHOLD_PX" in motion
     assert "state.dragging = True" in motion
-    assert 'self.root.configure(cursor="fleur")' in motion
+    assert "begin_drag_feedback(" in motion
     assert "self._auto_scroll_drag(" in motion
     assert "find_drop_target(" in wrapper
     assert "winfo_containing(" not in wrapper

@@ -1,6 +1,6 @@
 # ETAP 4B / LC-3H — Tk Drag Visual Feedback Adapter
 
-**Status:** fresh reconnaissance · contract freeze  
+**Status:** LC-3H implemented  
 **Repository:** `eagleblastmusic-lgtm/gicleeart`  
 **Base:** `master` @ `718e8a561d49c9aca63a191173004bc756e955f6`  
 **Data weryfikacji:** 2026-07-15
@@ -234,6 +234,10 @@ LC-3H nie zmienia:
 
 ## 7. Allowlista implementacyjna
 
+### Finding z focused validation
+
+Pierwszy focused run wykazał jedną przestarzałą source assertion w `test_launcher_drag_geometry.py`, która nadal wymagała bezpośredniego `self.root.configure(cursor="fleur")` w launcherze. Po LC-3H odpowiedzialność jest delegowana do `begin_drag_feedback()`. To finding testowy, nie regresja runtime; kontrakt zostaje rozszerzony o ten jeden plik przed jego edycją.
+
 Kod:
 
 1. nowy `cursor-api/giclee_app/launcher_tk_drag_feedback.py`;
@@ -242,14 +246,15 @@ Kod:
 Testy:
 
 3. nowy `cursor-api/tests/test_launcher_tk_drag_feedback.py`;
-4. `cursor-api/tests/test_launcher_drag_gesture.py` — przeniesienie szczegółowych asercji efektów Tk do adaptera i potwierdzenie orchestration klasy.
+4. `cursor-api/tests/test_launcher_drag_gesture.py` — przeniesienie szczegółowych asercji efektów Tk do adaptera i potwierdzenie orchestration klasy;
+5. `cursor-api/tests/test_launcher_drag_geometry.py` — aktualizacja przestarzałej source assertion kursora do delegacji LC-3H.
 
 Dokumentacja:
 
-5. `cursor-api/giclee_app/docs/launcher.md`;
-6. ten kontrakt.
+6. `cursor-api/giclee_app/docs/launcher.md`;
+7. ten kontrakt.
 
-Finalny implementation PR obejmuje dokładnie sześć plików. Każde rozszerzenie wymaga osobnego findingu i aktualizacji kontraktu przed edycją.
+Finalny implementation PR obejmuje dokładnie siedem plików. Każde dalsze rozszerzenie wymaga osobnego findingu i aktualizacji kontraktu przed edycją.
 
 Docs-only contract PR obejmuje wyłącznie ten jeden plik.
 
@@ -296,7 +301,7 @@ Focused regression set:
 Dopiero po focused PASS:
 
 - `git diff --check`;
-- dokładny scope guard sześciu plików;
+- dokładny scope guard siedmiu plików;
 - finalny diff bez helperów i workflowów one-shot;
 - Hermetic;
 - Tk GUI smoke;
@@ -332,7 +337,7 @@ LC-3H jest zakończony, gdy:
 - wszystkie best-effort efekty ramek i kursora znajdują się w jednym adapterze Tk;
 - klasa zachowuje ownership stanu, targetu, `after`, auto-scrollu i persistence;
 - kolejność efektów oraz clear-before-reorder pozostają bez zmian;
-- finalny diff obejmuje dokładnie sześć allowlistowanych plików;
+- finalny diff obejmuje dokładnie siedem allowlistowanych plików;
 - focused suite, scope guard, Hermetic, Tk GUI, pełny baseline i inventory są zielone na tym samym exact headzie;
 - review threads = 0;
 - branch jest `behind_by=0`;

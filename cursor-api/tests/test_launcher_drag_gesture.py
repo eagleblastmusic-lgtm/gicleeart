@@ -10,6 +10,7 @@ from types import SimpleNamespace
 import pytest
 
 from giclee_app import dragdrop_category_launcher as dnd
+from giclee_app import launcher_tk_drag_feedback as feedback
 from giclee_app.launcher_drag_gesture import (
     DragMotionKind,
     DragReleaseKind,
@@ -159,8 +160,8 @@ def test_motion_start_sets_visuals_once_then_continues() -> None:
     assert app._drag_state is not None and app._drag_state.dragging is True
     assert source.border_calls == [
         {
-            "highlightbackground": dnd._BORDER_DRAG_SOURCE,
-            "highlightcolor": dnd._BORDER_DRAG_SOURCE,
+            "highlightbackground": feedback.BORDER_DRAG_SOURCE,
+            "highlightcolor": feedback.BORDER_DRAG_SOURCE,
         }
     ]
     assert app.root.configure_calls == [{"cursor": "fleur"}]
@@ -260,6 +261,7 @@ def test_dragdrop_source_delegates_motion_and_release_decisions() -> None:
     assert "DragMotionKind.WAITING" in motion
     assert "DragMotionKind.START" in motion
     assert "state.dragging = True" in motion
+    assert "begin_drag_feedback(" in motion
     assert "self._auto_scroll_drag(" in motion
 
     assert release.count("resolve_drag_release(") == 2
