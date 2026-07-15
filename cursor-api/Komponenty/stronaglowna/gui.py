@@ -97,6 +97,50 @@ from .service import (
 )
 
 APP_TITLE = "Strona główna — landing page"
+
+def _bind_scoped_mousewheel(host: tk.Misc, canvas: tk.Canvas) -> None:
+    # Bind the wheel to the current window and remove this exact callback on destroy.
+    try:
+        window = host.winfo_toplevel()
+    except (AttributeError, tk.TclError):
+        return
+
+    def on_mousewheel(event: tk.Event) -> None:
+        try:
+            if not canvas.winfo_exists():
+                return
+            delta = int(getattr(event, "delta", 0) or 0)
+            if delta:
+                canvas.yview_scroll(int(-1 * (delta / 120)), "units")
+        except (AttributeError, tk.TclError, TypeError, ValueError):
+            return
+
+    try:
+        bind_id = window.bind("<MouseWheel>", on_mousewheel, add="+")
+    except (AttributeError, tk.TclError):
+        return
+    if not bind_id:
+        return
+
+    unbound = False
+
+    def cleanup(event: tk.Event | None = None) -> None:
+        nonlocal unbound
+        if unbound:
+            return
+        if event is not None and getattr(event, "widget", host) is not host:
+            return
+        unbound = True
+        try:
+            window.unbind("<MouseWheel>", bind_id)
+        except (AttributeError, tk.TclError):
+            pass
+
+    try:
+        host.bind("<Destroy>", cleanup, add="+")
+    except (AttributeError, tk.TclError):
+        cleanup()
+
 _IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
 _THUMB_SIZE = (128, 96)
 
@@ -223,10 +267,7 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
     editor_inner.bind("<Configure>", _on_editor_configure)
     editor_canvas.bind("<Configure>", _on_editor_configure)
 
-    def _bind_mousewheel(evt) -> None:
-        editor_canvas.yview_scroll(int(-1 * (evt.delta / 120)), "units")
-
-    editor_canvas.bind_all("<MouseWheel>", _bind_mousewheel)
+    _bind_scoped_mousewheel(host, editor_canvas)
 
     bottom = ttk.Frame(host, padding=(12, 0, 12, 12))
     bottom.pack(fill="x")

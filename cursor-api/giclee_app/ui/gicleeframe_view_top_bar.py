@@ -195,18 +195,38 @@ class GicleeFrameTopBarMixin:
         if self._should_suppress_visible_prewarm():
             self._log_visible_prewarm_suppressed(job="top_bar.context_actions_late")
             return
+        lifecycle_alive = getattr(self, "_view_lifecycle_alive", None)
+        if callable(lifecycle_alive) and not lifecycle_alive():
+            return
         try:
             if not self.winfo_exists():
                 return
         except tk.TclError:
             return
-        if self._top_bar_actions_late_done:
+        if self._top_bar_actions_late_done or self._context_bar_actions_building:
             return
 
         row = self._context_bar_row
-        if row is not None:
+        slot = self._context_bar_actions_slot
+        try:
+            if row is None or slot is None or not row.winfo_exists() or not slot.winfo_exists():
+                return
+        except (AttributeError, tk.TclError):
+            return
+
+        self._context_bar_actions_building = True
+        try:
             with span("studio.gicleeframe.build.context_bar.actions_late"):
                 self._build_context_bar_actions(row)
+        except tk.TclError:
+            try:
+                if not row.winfo_exists() or not slot.winfo_exists():
+                    return
+            except (AttributeError, tk.TclError):
+                return
+            raise
+        finally:
+            self._context_bar_actions_building = False
         log_event("studio.gicleeframe.top_bar.context_actions_late_done")
 
     def _build_command_bar_primary_actions_late(self) -> None:

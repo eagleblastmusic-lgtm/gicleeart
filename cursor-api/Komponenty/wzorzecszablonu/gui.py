@@ -6,7 +6,7 @@ import threading
 import tkinter as tk
 import webbrowser
 from tkinter import messagebox, ttk
-from typing import Any
+from typing import Any, Callable
 
 from Komponenty._shared.storefront_urls import product_storefront_url
 from Komponenty._shared.toast import show_toast
@@ -20,6 +20,24 @@ from .service import (
 )
 
 APP_TITLE = "Wzorzec szablonu — szablon motywu produktu"
+
+
+
+def _schedule_ui(widget: tk.Misc, callback: Callable[[], None]) -> bool:
+    """Wykonuje callback tylko wtedy, gdy widok nadal istnieje."""
+
+    def guarded() -> None:
+        try:
+            if widget.winfo_exists():
+                callback()
+        except (AttributeError, tk.TclError):
+            return
+
+    try:
+        widget.after(0, guarded)
+    except (AttributeError, tk.TclError):
+        return False
+    return True
 
 
 def main() -> None:
@@ -325,14 +343,14 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
 
         def worker() -> None:
             def on_progress(msg: str) -> None:
-                host.after(0, lambda m=msg: progress_var.set(m))
+                _schedule_ui(tree, lambda m=msg: progress_var.set(m))
 
             result = apply_template_suffix_batch(
                 pids,
                 suffix,
                 on_progress=on_progress,
             )
-            host.after(0, lambda: _apply_done(result, suffix, label, selected_set))
+            _schedule_ui(tree, lambda: _apply_done(result, suffix, label, selected_set))
 
         _set_busy(True)
         progress_var.set("Zapisuję w Shopify...")
@@ -377,10 +395,10 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
     def _load_catalog() -> None:
         def worker() -> None:
             def on_progress(msg: str) -> None:
-                host.after(0, lambda m=msg: progress_var.set(m))
+                _schedule_ui(tree, lambda m=msg: progress_var.set(m))
 
             rows, templates = load_catalog_with_template_suffix(on_progress=on_progress)
-            host.after(0, lambda: _catalog_loaded(rows, templates))
+            _schedule_ui(tree, lambda: _catalog_loaded(rows, templates))
 
         _set_busy(True)
         progress_var.set("Pobieram produkty z Shopify...")

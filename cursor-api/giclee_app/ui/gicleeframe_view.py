@@ -266,6 +266,10 @@ class GicleeFrameView(
         self._perceived_ready_logged = False
         self._atomic_reveal_ready_logged = False
         self._atomic_reveal_overlay_shown = False
+        self._view_lifecycle_visible = True
+        self._view_lifecycle_generation = 0
+        self._atomic_reveal_after_id: str | None = None
+        self._context_bar_actions_building = False
         self._inventory_light_ready = False
         self._atomic_swap_suppress_visible = False
         self._atomic_swap_deferred_row_visibility: list[tuple[ctk.CTkFrame | None, bool]] = []
@@ -355,6 +359,7 @@ class GicleeFrameView(
         )
         self._visual_enter_mono = time.perf_counter()
 
+        self.bind("<Destroy>", self._on_lifecycle_destroy, add="+")
         with span("studio.gicleeframe.init"):
             with span("studio.gicleeframe.build_shell"):
                 self._build_shell()
