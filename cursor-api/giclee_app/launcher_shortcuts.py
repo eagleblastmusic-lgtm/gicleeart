@@ -138,10 +138,15 @@ def shortcut_for_component(shortcuts: Mapping[str, str], folder_name: str) -> st
 
 
 def focus_blocks_shortcuts(root: tk.Misc) -> bool:
-    """True gdy fokus jest w polu tekstowym (nie uruchamiaj skrótu)."""
-    focus = root.focus_get()
+    """True gdy fokus jest w polu tekstowym albo nie można go bezpiecznie odczytać."""
+
+    try:
+        focus = root.focus_get()
+    except tk.TclError:
+        return True
     if focus is None:
         return False
+
     widget: tk.Misc | None = focus
     for _ in range(12):
         if widget is None:
@@ -149,24 +154,32 @@ def focus_blocks_shortcuts(root: tk.Misc) -> bool:
         try:
             cls = widget.winfo_class().lower()
         except tk.TclError:
-            break
+            return True
         if "entry" in cls or "text" in cls or "combobox" in cls:
             return True
         try:
             widget = widget.master
         except (AttributeError, tk.TclError):
-            break
+            return True
     return False
 
 
 def dialog_blocks_shortcuts(root: tk.Misc) -> bool:
-    """True gdy fokus jest w osobnym oknie dialogowym (Toplevel)."""
-    focus = root.focus_get()
+    """True gdy fokus jest w dialogu albo nie można go bezpiecznie odczytać."""
+
+    try:
+        focus = root.focus_get()
+    except tk.TclError:
+        return True
     if focus is None:
         return False
+
     cur: tk.Misc | None = focus
     while cur is not None:
         if isinstance(cur, tk.Toplevel) and cur != root:
             return True
-        cur = cur.master  # type: ignore[assignment]
+        try:
+            cur = cur.master  # type: ignore[assignment]
+        except (AttributeError, tk.TclError):
+            return True
     return False
