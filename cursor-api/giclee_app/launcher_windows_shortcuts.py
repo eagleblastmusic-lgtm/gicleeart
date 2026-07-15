@@ -8,7 +8,7 @@ import ctypes
 import os
 from typing import Any
 
-from .launcher_shortcut_keys import shortcut_virtual_key
+from .launcher_shortcut_keys import normalize_shortcut_key, shortcut_virtual_key
 
 
 _GA_ROOT = 2
@@ -56,11 +56,15 @@ def sample_windows_shortcut_keys(
     user32: Any,
     keys: Iterable[str],
 ) -> WindowsShortcutSample:
-    """Pobiera próbkę wyłącznie dla kluczy aktualnej mapy skrótów."""
+    """Pobiera kanoniczną próbkę wyłącznie dla kluczy aktualnej mapy."""
 
     current_down: set[str] = set()
+    sampled: set[str] = set()
     for raw_key in keys:
-        key = str(raw_key or "").strip().lower()
+        key = normalize_shortcut_key(raw_key)
+        if key is None or key in sampled:
+            continue
+        sampled.add(key)
         vk = shortcut_virtual_key(key)
         if vk is None:
             continue
