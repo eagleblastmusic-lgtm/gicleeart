@@ -58,8 +58,11 @@ jobs:
         working-directory: cursor-api
         shell: pwsh
         run: |
-          $ErrorActionPreference = "Stop"
+          $ErrorActionPreference = "Continue"
+          $reportRoot = Join-Path $env:RUNNER_TEMP "lc3h-focused"
+          New-Item -ItemType Directory -Path $reportRoot -Force | Out-Null
           python -m pytest -q `
+            --junitxml="$reportRoot\junit.xml" `
             tests/test_launcher_tk_drag_feedback.py `
             tests/test_launcher_drag_gesture.py `
             tests/test_launcher_tk_drag_targets.py `
@@ -69,7 +72,20 @@ jobs:
             tests/test_launcher_composition.py `
             tests/test_launcher_category_renderer.py `
             tests/test_launcher_grid_layout.py `
-            tests/test_giclee_app_packaging.py
+            tests/test_giclee_app_packaging.py 2>&1 | Tee-Object -FilePath "$reportRoot\pytest.txt"
+          $exitCode = $LASTEXITCODE
+          if ($exitCode -ne 0) {
+            exit $exitCode
+          }
+
+      - name: Upload focused evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lc3h-focused-${{ github.run_id }}
+          path: ${{ runner.temp }}\lc3h-focused
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Validate working diff and technical scope
         shell: pwsh
