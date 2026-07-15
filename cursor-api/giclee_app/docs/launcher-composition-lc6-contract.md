@@ -1,6 +1,6 @@
 # ETAP 4B / LC-6 — Canonical LauncherApp Composition Root
 
-**Status:** implementation complete; awaiting exact CI review  
+**Status:** implementation revision in progress after Stage 2 finding  
 **Repository:** `eagleblastmusic-lgtm/gicleeart`  
 **Reconnaissance base:** `master` @ `0cecf29238c044a4ccb672d52a82ee78a277bede`  
 **Contract merge:** `master` @ `b3ddc60d23ef629d7e9f43a93c6947459a56e3fc`  
@@ -13,27 +13,25 @@
 
 LC-6 domyka ETAP 4B przez utworzenie jednego, jawnego i kanonicznego composition root dla produkcyjnego klasycznego launchera.
 
-Po LC-1 wszystkie warstwy przekazują klasę jawnie do `launcher.main(app_factory=...)`, ale produkcyjny pakiet nadal wybierał finalną aplikację przez bezpośredni import z ostatniej warstwy funkcjonalnej:
+Przed LC-6 `giclee_app/__main__.py` wybierał finalną aplikację przez bezpośredni import z ostatniej warstwy funkcjonalnej:
 
 ```python
 from .dragdrop_category_launcher import main
 ```
 
-w `giclee_app/__main__.py`.
-
-Oznaczało to, że `dragdrop_category_launcher.py` był jednocześnie właścicielem:
+W rezultacie `dragdrop_category_launcher.py` był jednocześnie właścicielem:
 
 - zachowania drag-and-drop;
 - finalnego wyboru produkcyjnej klasy;
 - package entrypointu.
 
-LC-6 rozdziela te odpowiedzialności. `launcher_app.py` jest właścicielem wyłącznie finalnej kompozycji, a warstwa DnD zachowuje swoje zachowanie i samodzielny entrypoint diagnostyczny.
+LC-6 rozdziela te odpowiedzialności. `launcher_app.py` jest właścicielem wyłącznie finalnej kompozycji, a warstwa DnD zachowuje własne zachowanie i samodzielny entrypoint diagnostyczny.
 
 ---
 
-## 2. Stan po LC-1 — LC-5
+## 2. Stan architektury po LC-1 — LC-5
 
-### 2.1. Aktualne MRO
+Aktualne MRO finalnej klasy:
 
 ```text
 DragDropCategoryGicleeApp
@@ -44,63 +42,25 @@ DragDropCategoryGicleeApp
   -> object
 ```
 
-### 2.2. Wydzielone granice
+Wydzielone granice:
 
 - LC-2: navigation model, category renderer i grid placement;
-- LC-3: shortcut decisions, WinAPI, Tk bindings, DnD geometry/gesture/targets/feedback/auto-scroll/persistence;
+- LC-3: shortcut decisions, WinAPI, Tk bindings oraz DnD;
 - LC-4: classic subprocess adapter i neutralne wywołanie builderów inline;
 - LC-5: scheduler dziewięciu usług tła.
 
-### 2.3. Dwa osobne shelle
-
-Klasyczny launcher:
+Repozytorium zachowuje dwa osobne shelle:
 
 ```text
 python -m giclee_app
-```
-
-Studio Preview:
-
-```text
 python -m giclee_app.studio_preview
 ```
 
-Studio używa `GicleeAppStudio`, CustomTkintera i własnego lifecycle. LC-6 nie scala shelli i nie przenosi usług tła do Studio.
+Studio używa `GicleeAppStudio`, CustomTkintera oraz własnego lifecycle. LC-6 nie scala shelli i nie przenosi usług tła do Studio.
 
 ---
 
-## 3. Fresh reconnaissance
-
-### 3.1. Poprzedni package entrypoint
-
-`giclee_app/__main__.py` importował `main` bezpośrednio z `dragdrop_category_launcher.py`.
-
-### 3.2. Finalna warstwa funkcjonalna
-
-`dragdrop_category_launcher.py` posiada `_DragState`, event orchestration DnD, persistence reorder oraz własne:
-
-```python
-def main() -> None:
-    _launcher.main(app_factory=DragDropCategoryGicleeApp)
-```
-
-### 3.3. Brak potrzeby frameworka kompozycji
-
-Reconnaissance nie wykazał potrzeby:
-
-- DI containera;
-- service locatora;
-- dynamicznego buildera klas;
-- mixin factory;
-- nowego lifecycle managera;
-- zmiany MRO;
-- scalenia klasycznego launchera ze Studio.
-
-Najmniejszym prawidłowym rozwiązaniem jest statyczny, osobny composition root.
-
----
-
-## 4. Zamrożone rozwiązanie
+## 3. Zamrożone rozwiązanie
 
 Nowy moduł:
 
@@ -124,24 +84,17 @@ def main() -> None:
 __all__ = ["LauncherApp", "main"]
 ```
 
-### 4.1. Alias zamiast pustej podklasy
+### 3.1. Alias zamiast pustej podklasy
 
-LC-6 nie tworzy nowego typu:
-
-```python
-class LauncherApp(DragDropCategoryGicleeApp):
-    pass
-```
-
-Pusta podklasa zmieniłaby MRO, identity i nazwę runtime bez dodania zachowania.
-
-Wymagane i zaimplementowane jest:
+LC-6 nie tworzy nowego typu. Wymagane jest:
 
 ```python
 LauncherApp is DragDropCategoryGicleeApp
 ```
 
-### 4.2. Package entrypoint
+Dzięki temu identity, MRO i runtime semantics pozostają niezmienione.
+
+### 3.2. Package entrypoint
 
 `giclee_app/__main__.py` importuje:
 
@@ -151,7 +104,7 @@ from .launcher_app import main
 
 Nie importuje bezpośrednio `dragdrop_category_launcher.main`.
 
-### 4.3. Entrypointy warstw
+### 3.3. Entrypointy warstw
 
 Istniejące `main()` pozostają w:
 
@@ -162,20 +115,22 @@ Istniejące `main()` pozostają w:
 
 ---
 
-## 5. Zachowanie, które pozostaje identyczne
+## 4. Zachowanie, które pozostaje identyczne
 
 - exact identity finalnej klasy;
 - exact MRO bez dodatkowej klasy;
 - `launcher.main(app_factory=LauncherApp)`;
 - startup order: root → withdraw → splash → factory raz → deiconify → mainloop;
-- kategorie, styl, Opcje, skróty, DnD, inline, subprocess, URL, logi i scheduler;
-- wszystkie ścieżki AppData i formaty JSON;
+- kategorie, styl, Opcje, skróty i DnD;
+- inline, subprocess, URL i logi;
+- dziewięć usług tła;
+- AppData, legacy fallbacki i formaty JSON;
 - samodzielny entrypoint DnD;
 - osobny `studio_preview.py` i `GicleeAppStudio`.
 
 ---
 
-## 6. Semantyka importów i side effects
+## 5. Semantyka importów i side effects
 
 `launcher_app.py`:
 
@@ -189,7 +144,7 @@ Istniejące `main()` pozostają w:
 
 ---
 
-## 7. Jawnie poza zakresem
+## 6. Jawnie poza zakresem
 
 LC-6 nie:
 
@@ -205,32 +160,61 @@ LC-6 nie:
 
 ---
 
-## 8. Finding implementacyjny i finalna allowlista
+## 7. Findings implementacyjne i finalna allowlista
 
-Pierwotny kontrakt wskazywał rozbudowę `tests/test_launcher_composition.py`. Fresh implementation review wykazał, że plik ten ma ponad 400 linii i łączy kontrakty LC-1 oraz LC-5, w tym rozbudowane testy AST schedulera. Dodawanie do niego LC-6 rozszerzałoby coupling i utrudniało utrzymanie finalnego composition root.
+### 7.1. Osobny focused suite LC-6
 
-LC-6 otrzymał osobny focused suite:
+Pierwotny kontrakt wskazywał rozbudowę `tests/test_launcher_composition.py`. Fresh implementation review wykazał, że plik ten ma ponad 400 linii i łączy kontrakty LC-1 oraz LC-5. LC-6 otrzymał osobny suite:
 
 ```text
 cursor-api/tests/test_launcher_app_composition.py
 ```
 
-`launcher.md` nie wymaga zmiany w tym pakiecie: nadal poprawnie opisuje zachowania launchera, a szczegółowa granica LC-6 jest dokumentowana w tym kontrakcie. Zbiorczy status dokumentacji zostanie ujednolicony w osobnym stabilization pass po LC-6.
+### 7.2. Finding z pierwszego pełnego Stage 2
 
-Finalna implementation allowlista obejmuje dokładnie cztery pliki:
+Pierwszy pełny baseline implementacji wykazał przestarzały test LC-1:
+
+```text
+test_package_main_still_targets_final_dragdrop_entrypoint
+```
+
+Test wymagał dokładnego tekstu:
+
+```python
+from .dragdrop_category_launcher import main
+```
+
+To jest poprzedni kontrakt package entrypointu i dokładnie odpowiedzialność celowo zastępowana przez LC-6. Nowy focused suite poprawnie zamraża delegację przez `launcher_app`, ale stara asercja pozostała równolegle aktywna. Jest to finding testowy, nie regresja runtime.
+
+`tests/test_launcher_composition.py` zostaje dodany do allowlisty wyłącznie w celu aktualizacji tej jednej asercji do nowego kanonicznego root. Pozostałe testy LC-1 i LC-5 w tym pliku nie mogą zostać zmienione ani osłabione.
+
+Ten sam baseline zawierał niezależny błąd środowiska Tcl/Tk:
+
+```text
+couldn't read .../tk8.6/ttk/clamTheme.tcl
+```
+
+Dedykowany Tk GUI smoke był zielony. Błąd środowiskowy nie uzasadnia zmiany kodu produkcyjnego ani testów aplikacji.
+
+### 7.3. Finalna implementation allowlista
+
+Po findingu Stage 2 dokładnie pięć plików:
 
 1. `cursor-api/giclee_app/launcher_app.py` — nowy composition root;
 2. `cursor-api/giclee_app/__main__.py` — package delegation;
-3. `cursor-api/tests/test_launcher_app_composition.py` — focused suite;
-4. `cursor-api/giclee_app/docs/launcher-composition-lc6-contract.md` — finding i status.
+3. `cursor-api/tests/test_launcher_app_composition.py` — focused suite LC-6;
+4. `cursor-api/tests/test_launcher_composition.py` — wyłącznie aktualizacja starej asercji package entrypointu;
+5. `cursor-api/giclee_app/docs/launcher-composition-lc6-contract.md` — findings i status.
+
+`launcher.md` zostanie ujednolicony w osobnym stabilization pass po LC-6.
 
 Każde dalsze rozszerzenie wymaga nowego findingu przed edycją.
 
 ---
 
-## 9. Focused tests
+## 8. Testy kontraktowe
 
-Suite potwierdza:
+Focused suite LC-6 potwierdza:
 
 1. `launcher_app.LauncherApp is DragDropCategoryGicleeApp`;
 2. exact MRO pozostaje bez zmian;
@@ -245,6 +229,8 @@ Suite potwierdza:
 11. cztery layer entrypointy nadal przekazują swoje klasy jawnie;
 12. samodzielny DnD entrypoint nadal przekazuje `DragDropCategoryGicleeApp`;
 13. `studio_preview.py` nie importuje `launcher_app` ani klasycznego `launcher.py`.
+
+Stary test LC-1 ma potwierdzać nową trasę package entrypointu przez `launcher_app` i nadal zabraniać Studio w `__main__.py`.
 
 Focused regression set:
 
@@ -264,21 +250,18 @@ Po focused PASS obowiązują pełny Stage 2, JUnit, inventory i exact-head lock.
 
 ---
 
-## 10. Wynik implementacji
-
-Implementacja utworzyła kanoniczny composition root bez zmiany zachowania:
+## 9. Wynik implementacji
 
 - `launcher_app.LauncherApp` jest aliasem istniejącej finalnej klasy DnD;
 - `launcher_app.main()` deleguje dokładnie raz do `launcher.main(app_factory=LauncherApp)`;
 - package `__main__.py` deleguje do `launcher_app.main`;
-- warstwa DnD zachowuje swój samodzielny `main()`;
+- warstwa DnD zachowuje samodzielny `main()`;
 - Studio pozostaje odseparowane;
-- exact diff obejmuje cztery allowlistowane pliki;
 - nie zmieniono `launcher.py`, warstw funkcjonalnych, danych ani workflow CI.
 
 ---
 
-## 11. Manual smoke
+## 10. Manual smoke
 
 Na Windows:
 
@@ -292,17 +275,17 @@ Na Windows:
 
 ---
 
-## 12. Rollback
+## 11. Rollback
 
 Rollback nie wymaga migracji danych:
 
 - `__main__.py` wraca do importu `dragdrop_category_launcher.main`;
 - `launcher_app.py` zostaje usunięty;
-- test i zmiana kontraktu są revertowane.
+- testy i zmiana kontraktu są revertowane.
 
 ---
 
-## 13. Kryterium zakończenia ETAPU 4B
+## 12. Kryterium zakończenia ETAPU 4B
 
 ETAP 4B jest architektonicznie zakończony, gdy:
 
@@ -311,6 +294,6 @@ ETAP 4B jest architektonicznie zakończony, gdy:
 - `LauncherApp` zachowuje identity i MRO finalnej klasy;
 - warstwa DnD nie jest już właścicielem package composition;
 - Studio pozostaje osobnym shellem;
-- exact czteroplikowy diff przechodzi focused tests i pełny Stage 2;
+- exact pięcioplikowy diff przechodzi focused tests i pełny Stage 2;
 - merge następuje z expected head SHA;
 - kolejny etap to stabilization/release-candidate pass, nie LC-7.
