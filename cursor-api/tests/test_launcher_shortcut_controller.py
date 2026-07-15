@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 from pathlib import Path
+import tkinter as tk
 from types import SimpleNamespace
 
 import pytest
@@ -183,6 +184,7 @@ def test_options_launcher_uses_poll_and_activation_resolvers() -> None:
     assert "for key in decision.pressed_keys" in poll_block
     assert "resolve_shortcut_activation(" in trigger_block
     assert "self.root.after_idle(launch_selected)" in trigger_block
+    assert "except tk.TclError:" in trigger_block
     assert "self._shortcut_launch_pending = False" in trigger_block
     assert "self._launch(component)" in trigger_block
 
@@ -196,19 +198,27 @@ class _StatusRecorder:
 
 
 class _RootRecorder:
-    def __init__(self) -> None:
+    def __init__(self, *, fail_after_idle: bool = False) -> None:
         self.callbacks: list[object] = []
+        self.fail_after_idle = fail_after_idle
 
     def after_idle(self, callback: object) -> None:
+        if self.fail_after_idle:
+            raise tk.TclError("root is unavailable")
         self.callbacks.append(callback)
 
 
-def _app_for_trigger(mapping: dict[str, str], component: object | None):
+def _app_for_trigger(
+    mapping: dict[str, str],
+    component: object | None,
+    *,
+    root: _RootRecorder | None = None,
+):
     app = OptionsCategoryGicleeApp.__new__(OptionsCategoryGicleeApp)
     app._shortcut_map = mapping
     app._shortcut_launch_pending = False
     app.status_var = _StatusRecorder()
-    app.root = _RootRecorder()
+    app.root = root or _RootRecorder()
     app._component_by_folder = lambda _folder: component
     app.launched = []
     app._launch = app.launched.append
@@ -231,6 +241,22 @@ def test_trigger_ready_preserves_status_pending_and_after_idle_launch() -> None:
 
     assert app._shortcut_launch_pending is False
     assert app.launched == [component]
+
+
+def test_trigger_rolls_back_pending_when_after_idle_fails() -> None:
+    component = SimpleNamespace(name="Notatnik")
+    root = _RootRecorder(fail_after_idle=True)
+    app = _app_for_trigger({"n": "notatnik"}, component, root=root)
+
+    assert app._trigger_shortcut("n") is True
+    assert app._shortcut_launch_pending is False
+    assert app.launched == []
+    assert root.callbacks == []
+
+    root.fail_after_idle = False
+    assert app._trigger_shortcut("n") is True
+    assert app._shortcut_launch_pending is True
+    assert len(root.callbacks) == 1
 
 
 def test_trigger_missing_and_unmapped_preserve_handled_contract() -> None:
