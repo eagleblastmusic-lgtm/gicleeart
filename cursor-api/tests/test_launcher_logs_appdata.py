@@ -190,9 +190,12 @@ def test_unsafe_component_folder_is_rejected_portably(
     resolver: LogPathResolver,
 ) -> None:
     _configure_paths(monkeypatch, tmp_path)
+    override = tmp_path / "unsafe-logs"
 
     with pytest.raises(ValueError, match="Unsafe component folder name"):
-        resolver(unsafe_name)
+        resolver(unsafe_name, logs_dir=override)
+
+    assert not override.exists()
 
 
 @pytest.mark.parametrize(
@@ -208,9 +211,12 @@ def test_non_string_component_folder_is_rejected(
     resolver: LogPathResolver,
 ) -> None:
     _configure_paths(monkeypatch, tmp_path)
+    override = tmp_path / "unsafe-type-logs"
 
     with pytest.raises(ValueError, match="Unsafe component folder name"):
-        resolver(123)  # type: ignore[arg-type]
+        resolver(123, logs_dir=override)  # type: ignore[arg-type]
+
+    assert not override.exists()
 
 
 def test_runtime_write_inventory_no_longer_flags_launcher_logs() -> None:
