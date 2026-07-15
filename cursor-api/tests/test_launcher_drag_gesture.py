@@ -270,3 +270,29 @@ def test_dragdrop_source_delegates_motion_and_release_decisions() -> None:
     assert "self._clear_drag_state()" in release
     assert "self._reorder_category(" in release
     assert "self._reorder_component(" in release
+
+
+def test_auto_scroll_wrapper_delegates_canvas_and_y(monkeypatch) -> None:
+    app = dnd.DragDropCategoryGicleeApp.__new__(dnd.DragDropCategoryGicleeApp)
+    app.canvas = object()
+    calls: list[tuple[object, int]] = []
+    monkeypatch.setattr(
+        dnd,
+        "auto_scroll_drag",
+        lambda canvas, y_root: calls.append((canvas, y_root)),
+    )
+
+    app._auto_scroll_drag(123)
+
+    assert calls == [(app.canvas, 123)]
+
+    path = (
+        Path(__file__).resolve().parents[1]
+        / "giclee_app"
+        / "dragdrop_category_launcher.py"
+    )
+    source = path.read_text(encoding="utf-8")
+    wrapper = source.split("def _auto_scroll_drag", 1)[1].split("\n    def ", 1)[0]
+    assert "auto_scroll_drag(self.canvas, y_root)" in wrapper
+    assert "yview_scroll" not in wrapper
+    assert "42" not in wrapper

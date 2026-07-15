@@ -1,6 +1,6 @@
 # ETAP 4B / LC-3I — Tk Drag Auto-Scroll Adapter
 
-**Status:** fresh reconnaissance · contract freeze  
+**Status:** LC-3I implemented  
 **Repository:** `eagleblastmusic-lgtm/gicleeart`  
 **Base:** `master` @ `440a462e195f156c41b3af882cacc38c4172589c`  
 **Data weryfikacji:** 2026-07-15

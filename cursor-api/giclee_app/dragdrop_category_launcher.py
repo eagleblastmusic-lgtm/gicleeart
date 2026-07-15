@@ -14,6 +14,7 @@ from .launcher_drag_geometry import (
     drag_threshold_reached,
     drop_after,
 )
+from .launcher_tk_drag_auto_scroll import auto_scroll_drag
 from .launcher_tk_drag_feedback import (
     begin_drag_feedback,
     clear_drag_tile_feedback,
@@ -263,16 +264,7 @@ class DragDropCategoryGicleeApp(OptionsCategoryGicleeApp):
         reset_drag_cursor(self.root)
 
     def _auto_scroll_drag(self, y_root: int) -> None:
-        try:
-            top = self.canvas.winfo_rooty()
-            bottom = top + self.canvas.winfo_height()
-        except tk.TclError:
-            return
-        margin = 42
-        if y_root < top + margin:
-            self.canvas.yview_scroll(-1, "units")
-        elif y_root > bottom - margin:
-            self.canvas.yview_scroll(1, "units")
+        auto_scroll_drag(self.canvas, y_root)
 
     def _reorder_category(
         self,
