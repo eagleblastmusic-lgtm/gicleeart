@@ -143,11 +143,12 @@ def test_launcher_main_defaults_to_base_launcher_factory(
     assert events == ["withdraw", "splash", "factory", "deiconify", "mainloop"]
 
 
-def test_package_main_still_targets_final_dragdrop_entrypoint() -> None:
+def test_package_main_targets_canonical_launcher_app_entrypoint() -> None:
     source = (
         Path(__file__).resolve().parents[1] / "giclee_app" / "__main__.py"
     ).read_text(encoding="utf-8")
-    assert "from .dragdrop_category_launcher import main" in source
+    assert "from .launcher_app import main" in source
+    assert "dragdrop_category_launcher" not in source
     assert "studio_preview" not in source
 
 

@@ -1,4 +1,4 @@
-from .dragdrop_category_launcher import main
+from .launcher_app import main
 
 if __name__ == "__main__":
     main()
