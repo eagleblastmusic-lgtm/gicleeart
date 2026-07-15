@@ -39,9 +39,9 @@ def bind_widget_shortcut(
 ) -> bool:
     """Dodaje bezpośredni fallback dokładnie raz dla danego widgetu."""
 
-    if getattr(widget, marker, False):
-        return False
     try:
+        if getattr(widget, marker, False):
+            return False
         binding_id = widget.bind(_KEYPRESS_EVENT, callback, add="+")
         setattr(widget, marker, binding_id or True)
     except (AttributeError, tk.TclError):
