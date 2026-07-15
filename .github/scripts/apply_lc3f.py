@@ -77,7 +77,7 @@ def main() -> None:
     replace_once(
         contract,
         "**Status:** fresh reconnaissance · contract freeze  \n",
-        "**Status:** LC-3F implemented  \n",
+        "**Status:** LC-3F implemented\n",
     )
 
 
