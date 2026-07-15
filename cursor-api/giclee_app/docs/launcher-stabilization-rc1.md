@@ -1,8 +1,10 @@
 # GicleeApp Launcher — Stabilization / Release Candidate 1
 
-**Status kanoniczny:** automatyczna walidacja RC1 w toku  
+**Status kanoniczny:** automatyczna walidacja RC1 zakończona; manualny smoke Windows oczekuje  
 **Repository:** `eagleblastmusic-lgtm/gicleeart`  
 **Baza stabilizacji:** `master` @ `7e984794ea0b1ccda2529532ce6fc7bad2d5c0a3`  
+**RC1 validated head:** `28af43b350a63ff2780b19689dccc49fe1d868a9`  
+**PR:** #116  
 **Data:** 2026-07-15
 
 ---
@@ -200,7 +202,35 @@ Poprawiony Stage 2 przeszedł bez retry.
 
 ---
 
-## 8. Znane właściwości CI
+## 8. Dowód automatycznej walidacji RC1
+
+Stage 2 run:
+
+```text
+#448 / run 29436190423
+```
+
+Exact validated head:
+
+```text
+28af43b350a63ff2780b19689dccc49fe1d868a9
+```
+
+Wyniki:
+
+- Hermetic smoke — success;
+- Tk GUI smoke — success;
+- full pytest baseline — `2799 passed, 1 skipped, 3 warnings`;
+- JUnit — 2800 testów, 0 failures, 0 errors, 1 skipped;
+- runtime-write inventory — 734 pliki Python, 0 parse errors, 0 findings;
+- artifact digest — `sha256:cd3aad5a76f3596e9dd285acdef8a3af6ff4e216d4b7f0ecc6e32fe8a78341df`;
+- retry — nie był potrzebny.
+
+RC1 jest docs-only. Ten przebieg potwierdza, że finalny stan kodu po LC-6 pozostaje zielony niezależnie od implementacyjnego PR #115.
+
+---
+
+## 9. Znane właściwości CI
 
 Hosted Windows runner sporadycznie nie odtwarza kompletnego mirrora Tcl/Tk. Obserwowane brakujące pliki obejmowały między innymi:
 
@@ -219,25 +249,26 @@ Nie wolno automatycznie klasyfikować każdego błędu Tk jako infrastrukturalne
 
 ---
 
-## 9. Automatyczne kryteria RC1
+## 10. Automatyczne kryteria RC1
 
 - [x] ETAP 4B LC-1 — LC-6 scalony;
 - [x] kanoniczny `launcher_app.py` istnieje;
 - [x] package entrypoint prowadzi przez `launcher_app.main`;
 - [x] exact identity i MRO finalnej klasy zamrożone testami;
 - [x] Studio pozostaje osobnym shellem;
-- [x] Hermetic green;
-- [x] Tk GUI green;
-- [x] pełny pytest green;
+- [x] Hermetic RC1 green;
+- [x] Tk GUI RC1 green;
+- [x] pełny pytest RC1 green;
 - [x] JUnit bez failures/errors;
 - [x] inventory bez findings;
 - [x] brak otwartych PR-ów po merge LC-6;
 - [x] brak migracji danych i zmian formatów runtime;
-- [ ] docs-only RC1 PR scalony;
+- [x] docs-only RC1 przeszedł pełny Stage 2;
+- [x] RC1 jest gotowy do exact-head merge.
 
 ---
 
-## 10. Manualny smoke Windows — wymagany przed oznaczeniem release-ready
+## 11. Manualny smoke Windows — wymagany przed oznaczeniem release-ready
 
 Tego zestawu nie zastępuje sam CI. Należy wykonać lokalnie na docelowym komputerze Windows:
 
@@ -288,7 +319,7 @@ Tego zestawu nie zastępuje sam CI. Należy wykonać lokalnie na docelowym kompu
 
 ---
 
-## 11. Kryterium przejścia do Shopify
+## 12. Kryterium przejścia do Shopify
 
 Można rozpocząć właściwy refaktor Shopify po spełnieniu łącznie:
 
@@ -312,6 +343,6 @@ Shopify theme fresh inventory
 
 ---
 
-## 12. Rollback RC1
+## 13. Rollback RC1
 
 Ten pakiet jest docs-only. Rollback nie zmienia kodu, AppData ani danych użytkownika. W razie błędu wystarczy revert dokumentacji RC1.
