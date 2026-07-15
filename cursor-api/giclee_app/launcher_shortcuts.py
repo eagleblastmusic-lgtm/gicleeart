@@ -28,13 +28,14 @@ def _shortcuts_path(*, for_write: bool = False) -> Path:
 
 
 def normalize_shortcut_key(value: str) -> str | None:
-    """Normalizuje bezpośredni skrót: litera, cyfra albo F1–F12."""
+    """Normalizuje bezpośredni skrót: ASCII A-Z, 0-9 albo F1-F12."""
 
     raw = str(value or "").strip().lower()
-    if len(raw) == 1 and raw.isalnum():
+    if len(raw) == 1 and raw.isascii() and raw.isalnum():
         return raw
-    if raw.startswith("f") and raw[1:].isdigit():
-        number = int(raw[1:])
+    suffix = raw[1:]
+    if raw.startswith("f") and suffix.isascii() and suffix.isdigit():
+        number = int(suffix)
         if 1 <= number <= 12:
             return f"f{number}"
     return None
