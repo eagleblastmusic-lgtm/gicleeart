@@ -1191,8 +1191,8 @@ class GicleeApp:
                 result = backup.run_daily_backup_if_needed(logger=lambda m: None)
             except Exception as exc:  # noqa: BLE001
                 try:
-                    self.root.after(0, lambda: self.status_var.set(
-                        f"Backup: blad ({exc})"
+                    self.root.after(0, lambda error=exc: self.status_var.set(
+                        f"Backup: blad ({error})"
                     ))
                 except RuntimeError:
                     pass
@@ -1294,8 +1294,8 @@ class GicleeApp:
                 added = orders_sync.sync_orders(logger=lambda m: None)
             except Exception as exc:  # noqa: BLE001
                 try:
-                    self.root.after(0, lambda: self.status_var.set(
-                        f"Produkcja: blad synchronizacji ({exc})"
+                    self.root.after(0, lambda error=exc: self.status_var.set(
+                        f"Produkcja: blad synchronizacji ({error})"
                     ))
                 except RuntimeError:
                     pass
@@ -1342,8 +1342,8 @@ class GicleeApp:
                 new_rows = sync_accounting_orders(days_back=30)
             except Exception as exc:  # noqa: BLE001
                 try:
-                    self.root.after(0, lambda: self.status_var.set(
-                        f"Księgowość: błąd sync Shopify ({exc})"
+                    self.root.after(0, lambda error=exc: self.status_var.set(
+                        f"Księgowość: błąd sync Shopify ({error})"
                     ))
                 except RuntimeError:
                     pass
@@ -1393,8 +1393,8 @@ class GicleeApp:
                 results = cmp.publish_due_items(logger=lambda m: None)
             except Exception as exc:  # noqa: BLE001
                 try:
-                    self.root.after(0, lambda: self.status_var.set(
-                        f"Cykl: blad publishera ({exc})"
+                    self.root.after(0, lambda error=exc: self.status_var.set(
+                        f"Cykl: blad publishera ({error})"
                     ))
                 except RuntimeError:
                     pass
