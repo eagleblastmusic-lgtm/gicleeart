@@ -10,6 +10,8 @@ from giclee_app import launcher_shortcuts as shortcuts
 
 
 class _Root:
+    master = None
+
     def __init__(self, focus: object | None = None, *, fail: bool = False) -> None:
         self.focus = focus
         self.fail = fail
@@ -18,6 +20,9 @@ class _Root:
         if self.fail:
             raise tk.TclError("focus is unavailable")
         return self.focus
+
+    def winfo_class(self) -> str:
+        return "Tk"
 
 
 class _Widget:
