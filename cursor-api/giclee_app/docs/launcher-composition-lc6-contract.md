@@ -1,6 +1,6 @@
 # ETAP 4B / LC-6 — Canonical LauncherApp Composition Root
 
-**Status:** implementation scope amended; implementation in progress  
+**Status:** implementation complete; awaiting exact CI review  
 **Repository:** `eagleblastmusic-lgtm/gicleeart`  
 **Reconnaissance base:** `master` @ `0cecf29238c044a4ccb672d52a82ee78a277bede`  
 **Contract merge:** `master` @ `b3ddc60d23ef629d7e9f43a93c6947459a56e3fc`  
@@ -13,7 +13,7 @@
 
 LC-6 domyka ETAP 4B przez utworzenie jednego, jawnego i kanonicznego composition root dla produkcyjnego klasycznego launchera.
 
-Po LC-1 wszystkie warstwy przekazują klasę jawnie do `launcher.main(app_factory=...)`, ale produkcyjny pakiet nadal wybiera finalną aplikację przez bezpośredni import z ostatniej warstwy funkcjonalnej:
+Po LC-1 wszystkie warstwy przekazują klasę jawnie do `launcher.main(app_factory=...)`, ale produkcyjny pakiet nadal wybierał finalną aplikację przez bezpośredni import z ostatniej warstwy funkcjonalnej:
 
 ```python
 from .dragdrop_category_launcher import main
@@ -21,13 +21,13 @@ from .dragdrop_category_launcher import main
 
 w `giclee_app/__main__.py`.
 
-Oznacza to, że `dragdrop_category_launcher.py` jest jednocześnie właścicielem:
+Oznaczało to, że `dragdrop_category_launcher.py` był jednocześnie właścicielem:
 
 - zachowania drag-and-drop;
 - finalnego wyboru produkcyjnej klasy;
 - package entrypointu.
 
-LC-6 rozdziela te odpowiedzialności. Nowy `launcher_app.py` będzie właścicielem wyłącznie finalnej kompozycji, a warstwa DnD zachowa wyłącznie swoje zachowanie i samodzielny entrypoint diagnostyczny.
+LC-6 rozdziela te odpowiedzialności. `launcher_app.py` jest właścicielem wyłącznie finalnej kompozycji, a warstwa DnD zachowuje swoje zachowanie i samodzielny entrypoint diagnostyczny.
 
 ---
 
@@ -71,13 +71,13 @@ Studio używa `GicleeAppStudio`, CustomTkintera i własnego lifecycle. LC-6 nie 
 
 ## 3. Fresh reconnaissance
 
-### 3.1. Obecny package entrypoint
+### 3.1. Poprzedni package entrypoint
 
-`giclee_app/__main__.py` importuje `main` bezpośrednio z `dragdrop_category_launcher.py`.
+`giclee_app/__main__.py` importował `main` bezpośrednio z `dragdrop_category_launcher.py`.
 
-### 3.2. Obecna finalna warstwa
+### 3.2. Finalna warstwa funkcjonalna
 
-`dragdrop_category_launcher.py` posiada `_DragState`, event orchestration DnD, persistence reorder oraz:
+`dragdrop_category_launcher.py` posiada `_DragState`, event orchestration DnD, persistence reorder oraz własne:
 
 ```python
 def main() -> None:
@@ -135,7 +135,7 @@ class LauncherApp(DragDropCategoryGicleeApp):
 
 Pusta podklasa zmieniłaby MRO, identity i nazwę runtime bez dodania zachowania.
 
-Wymagane jest:
+Wymagane i zaimplementowane jest:
 
 ```python
 LauncherApp is DragDropCategoryGicleeApp
@@ -162,7 +162,7 @@ Istniejące `main()` pozostają w:
 
 ---
 
-## 5. Zachowanie, które musi pozostać identyczne
+## 5. Zachowanie, które pozostaje identyczne
 
 - exact identity finalnej klasy;
 - exact MRO bez dodatkowej klasy;
@@ -209,13 +209,13 @@ LC-6 nie:
 
 Pierwotny kontrakt wskazywał rozbudowę `tests/test_launcher_composition.py`. Fresh implementation review wykazał, że plik ten ma ponad 400 linii i łączy kontrakty LC-1 oraz LC-5, w tym rozbudowane testy AST schedulera. Dodawanie do niego LC-6 rozszerzałoby coupling i utrudniało utrzymanie finalnego composition root.
 
-LC-6 otrzymuje osobny focused suite:
+LC-6 otrzymał osobny focused suite:
 
 ```text
 cursor-api/tests/test_launcher_app_composition.py
 ```
 
-`launcher.md` nie wymaga zmiany w tym pakiecie: nadal poprawnie opisuje wszystkie zachowania launchera, a szczegółowa granica LC-6 jest dokumentowana w tym kontrakcie. Zbiorczy status dokumentacji zostanie ujednolicony w osobnym stabilization pass po LC-6.
+`launcher.md` nie wymaga zmiany w tym pakiecie: nadal poprawnie opisuje zachowania launchera, a szczegółowa granica LC-6 jest dokumentowana w tym kontrakcie. Zbiorczy status dokumentacji zostanie ujednolicony w osobnym stabilization pass po LC-6.
 
 Finalna implementation allowlista obejmuje dokładnie cztery pliki:
 
@@ -230,7 +230,7 @@ Każde dalsze rozszerzenie wymaga nowego findingu przed edycją.
 
 ## 9. Focused tests
 
-Suite musi potwierdzić:
+Suite potwierdza:
 
 1. `launcher_app.LauncherApp is DragDropCategoryGicleeApp`;
 2. exact MRO pozostaje bez zmian;
@@ -241,7 +241,7 @@ Suite musi potwierdzić:
 7. `launcher_app.py` nie definiuje klasy `LauncherApp` i nie używa `type()`;
 8. brak przypisania do `_launcher.GicleeApp`;
 9. brak importów Studio, CustomTkinter i `Komponenty`;
-10. import modułu nie tworzy root, nie uruchamia mainloop i nie wykonuje I/O;
+10. brak import-time root, mainloop, I/O, wątków i timerów;
 11. cztery layer entrypointy nadal przekazują swoje klasy jawnie;
 12. samodzielny DnD entrypoint nadal przekazuje `DragDropCategoryGicleeApp`;
 13. `studio_preview.py` nie importuje `launcher_app` ani klasycznego `launcher.py`.
@@ -264,7 +264,21 @@ Po focused PASS obowiązują pełny Stage 2, JUnit, inventory i exact-head lock.
 
 ---
 
-## 10. Manual smoke
+## 10. Wynik implementacji
+
+Implementacja utworzyła kanoniczny composition root bez zmiany zachowania:
+
+- `launcher_app.LauncherApp` jest aliasem istniejącej finalnej klasy DnD;
+- `launcher_app.main()` deleguje dokładnie raz do `launcher.main(app_factory=LauncherApp)`;
+- package `__main__.py` deleguje do `launcher_app.main`;
+- warstwa DnD zachowuje swój samodzielny `main()`;
+- Studio pozostaje odseparowane;
+- exact diff obejmuje cztery allowlistowane pliki;
+- nie zmieniono `launcher.py`, warstw funkcjonalnych, danych ani workflow CI.
+
+---
+
+## 11. Manual smoke
 
 Na Windows:
 
@@ -278,7 +292,7 @@ Na Windows:
 
 ---
 
-## 11. Rollback
+## 12. Rollback
 
 Rollback nie wymaga migracji danych:
 
@@ -288,7 +302,7 @@ Rollback nie wymaga migracji danych:
 
 ---
 
-## 12. Kryterium zakończenia ETAPU 4B
+## 13. Kryterium zakończenia ETAPU 4B
 
 ETAP 4B jest architektonicznie zakończony, gdy:
 
