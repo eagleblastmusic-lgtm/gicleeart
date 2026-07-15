@@ -114,8 +114,10 @@ def main() -> None:
     )
     replace_exact(
         gesture_tests,
-        "dnd._BORDER_DRAG_SOURCE",
-        "feedback.BORDER_DRAG_SOURCE",
+        "            \"highlightbackground\": dnd._BORDER_DRAG_SOURCE,\n"
+        "            \"highlightcolor\": dnd._BORDER_DRAG_SOURCE,\n",
+        "            \"highlightbackground\": feedback.BORDER_DRAG_SOURCE,\n"
+        "            \"highlightcolor\": feedback.BORDER_DRAG_SOURCE,\n",
     )
     replace_exact(
         gesture_tests,
