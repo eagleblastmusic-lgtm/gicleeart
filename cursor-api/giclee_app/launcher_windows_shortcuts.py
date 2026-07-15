@@ -22,15 +22,16 @@ class WindowsShortcutSample:
 
 
 def shortcut_virtual_key(key: str) -> int | None:
-    """Zwraca kod WinAPI dla litery, cyfry albo F1-F12."""
+    """Zwraca kod WinAPI dla ASCII A-Z, 0-9 albo F1-F12."""
 
     normalized = str(key or "").strip().lower()
     if len(normalized) == 1 and normalized.isalpha() and normalized.isascii():
         return ord(normalized.upper())
-    if len(normalized) == 1 and normalized.isdigit():
+    if len(normalized) == 1 and normalized.isdigit() and normalized.isascii():
         return ord(normalized)
-    if normalized.startswith("f") and normalized[1:].isdigit():
-        number = int(normalized[1:])
+    suffix = normalized[1:]
+    if normalized.startswith("f") and suffix.isdigit() and suffix.isascii():
+        number = int(suffix)
         if 1 <= number <= 12:
             return 0x70 + number - 1
     return None
