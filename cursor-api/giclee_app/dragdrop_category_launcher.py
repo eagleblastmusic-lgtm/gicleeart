@@ -38,6 +38,7 @@ from .options_category_launcher import OptionsCategoryGicleeApp
 
 _DRAG_THRESHOLD_PX = 8
 _DROP_VERTICAL_RATIO = 0.22
+_CATEGORY_BACK_SEQUENCES = ("<Escape>", "<Alt-Left>", "<BackSpace>")
 
 
 @dataclass
@@ -60,6 +61,24 @@ class DragDropCategoryGicleeApp(OptionsCategoryGicleeApp):
         self._dnd_tiles: list[tk.Frame] = []
         self._drag_state: _DragState | None = None
         super().__init__(root)
+
+    def _build_ui(self) -> None:
+        super()._build_ui()
+        self._bind_category_back_shortcuts()
+
+    def _bind_category_back_shortcuts(self) -> None:
+        """Instaluje nawigację w pierwszym bindtagu całego drzewa widgetów."""
+
+        for sequence in _CATEGORY_BACK_SEQUENCES:
+            try:
+                self.root.bind_class(
+                    self._shortcut_bindtag,
+                    sequence,
+                    self._on_category_back,
+                    add="+",
+                )
+            except (AttributeError, tk.TclError):
+                pass
 
     def _render_tiles(self) -> None:
         self._dnd_tiles = []
