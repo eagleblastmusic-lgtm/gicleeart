@@ -1,6 +1,6 @@
 # Stage 2 CI — Per-run Tcl/Tk Runtime Mirror Contract
 
-**Status:** fresh reconnaissance · contract freeze  
+**Status:** CI runtime mirror implemented  
 **Repository:** `eagleblastmusic-lgtm/gicleeart`  
 **Base:** `master` @ `88fa1534e42156be89dccb0d43475da152dfd111`  
 **Data weryfikacji:** 2026-07-15
