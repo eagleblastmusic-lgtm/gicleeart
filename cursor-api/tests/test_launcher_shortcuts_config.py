@@ -28,10 +28,18 @@ def test_normalize_shortcut_key_accepts_direct_keys() -> None:
     assert normalize_shortcut_key("Ctrl+A") is None
 
 
+def test_normalize_shortcut_key_rejects_non_ascii_alphanumerics() -> None:
+    assert normalize_shortcut_key("ą") is None
+    assert normalize_shortcut_key("٧") is None
+    assert normalize_shortcut_key("f١") is None
+
+
 def test_shortcut_key_from_event_reads_letters_and_function_keys() -> None:
     assert shortcut_key_from_event(SimpleNamespace(char="N", keysym="n")) == "n"
     assert shortcut_key_from_event(SimpleNamespace(char="", keysym="F7")) == "f7"
     assert shortcut_key_from_event(SimpleNamespace(char=" ", keysym="space")) is None
+    assert shortcut_key_from_event(SimpleNamespace(char="ą", keysym="aogonek")) is None
+    assert shortcut_key_from_event(SimpleNamespace(char="٧", keysym="٧")) is None
 
 
 def test_windows_virtual_key_mapping() -> None:
@@ -41,6 +49,8 @@ def test_windows_virtual_key_mapping() -> None:
     assert shortcut_virtual_key("F12") == 0x7B
     assert shortcut_virtual_key("f13") is None
     assert shortcut_virtual_key("ctrl+n") is None
+    assert shortcut_virtual_key("٧") is None
+    assert shortcut_virtual_key("f١") is None
 
 
 def test_missing_file_uses_default_shortcut(tmp_path: Path) -> None:
@@ -53,6 +63,36 @@ def test_save_and_load_round_trip(tmp_path: Path) -> None:
     expected = {"n": "notatnik", "f4": "faq"}
     save_launcher_shortcuts(expected, path)
     assert load_launcher_shortcuts(path) == expected
+
+
+def test_save_filters_non_ascii_shortcut_keys(tmp_path: Path) -> None:
+    path = tmp_path / "shortcuts.json"
+
+    save_launcher_shortcuts(
+        {
+            "a": "aktualizujopis",
+            "ą": "polski-znak",
+            "٧": "cyfra-unicode",
+            "f١": "funkcyjny-unicode",
+        },
+        path,
+    )
+
+    assert load_launcher_shortcuts(path) == {"a": "aktualizujopis"}
+
+
+def test_load_filters_non_ascii_shortcut_keys(tmp_path: Path) -> None:
+    path = tmp_path / "shortcuts.json"
+    path.write_text(
+        '{"version": 1, "shortcuts": {'
+        '"ą": "polski-znak", '
+        '"٧": "cyfra-unicode", '
+        '"f١": "funkcyjny-unicode", '
+        '"F2": "faq"}}',
+        encoding="utf-8",
+    )
+
+    assert load_launcher_shortcuts(path) == {"f2": "faq"}
 
 
 def test_empty_saved_mapping_stays_empty(tmp_path: Path) -> None:
@@ -76,6 +116,7 @@ def test_remove_and_lookup_component_shortcut() -> None:
 def test_shortcut_display_label_is_uppercase() -> None:
     assert shortcut_display_label("a") == "A"
     assert shortcut_display_label("f9") == "F9"
+    assert shortcut_display_label("ą") == ""
 
 
 def test_shortcut_binding_uses_bindtag_and_direct_fallback_without_duplicates() -> None:
