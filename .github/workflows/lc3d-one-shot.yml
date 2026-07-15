@@ -86,7 +86,7 @@ jobs:
             'cursor-api/giclee_app/docs/launcher-composition-lc3d-contract.md'
           )
           $changed = @(
-            git diff master...HEAD --name-only
+            git diff origin/master...HEAD --name-only
             git diff --name-only
             git ls-files --others --exclude-standard
           ) | Where-Object { $_ -notlike '.artifacts/*' } | Sort-Object -Unique
