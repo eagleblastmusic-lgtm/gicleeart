@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
 
 from giclee_app import component_logs
 from tools.repository_safety.runtime_writes import scan_python_source
+
+
+LogPathResolver = Callable[..., Path]
 
 
 def _configure_paths(
@@ -97,14 +101,116 @@ def test_explicit_logs_dir_override_remains_supported(
     assert override.is_dir()
 
 
-def test_unsafe_component_folder_is_rejected(
+def test_explicit_read_override_has_no_side_effects(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
     _configure_paths(monkeypatch, tmp_path)
+    override = tmp_path / "read-only-logs"
+
+    read_path = component_logs.component_log_read_path(
+        "produkcja",
+        logs_dir=override,
+    )
+
+    assert read_path == override / "produkcja.log"
+    assert not override.exists()
+
+
+@pytest.mark.parametrize(
+    "safe_name",
+    [
+        "dodajobraz",
+        "social-media.v2",
+        "zażółć_gęślą",
+        "  produkcja  ",
+    ],
+)
+def test_safe_component_folder_names_are_portable(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    safe_name: str,
+) -> None:
+    _configure_paths(monkeypatch, tmp_path)
+    override = tmp_path / "portable-logs"
+
+    result = component_logs.component_log_write_path(
+        safe_name,
+        logs_dir=override,
+    )
+
+    assert result == override / f"{safe_name.strip()}.log"
+
+
+@pytest.mark.parametrize(
+    "unsafe_name",
+    [
+        "",
+        "   ",
+        ".",
+        "..",
+        "../escape",
+        "..\\escape",
+        "nested/name",
+        "nested\\name",
+        "/absolute",
+        "C:\\absolute",
+        "C:relative",
+        "bad:name",
+        "bad*name",
+        "bad?name",
+        "bad|name",
+        "bad<name",
+        "bad>name",
+        'bad"name',
+        "control\x00name",
+        "control\x1fname",
+        "trailing.",
+        "NUL",
+        "con",
+        "PRN.txt",
+        "aux.data",
+        "COM1",
+        "com9.log",
+        "LPT1",
+        "lpt9.txt",
+    ],
+)
+@pytest.mark.parametrize(
+    "resolver",
+    [
+        component_logs.component_log_read_path,
+        component_logs.component_log_write_path,
+    ],
+)
+def test_unsafe_component_folder_is_rejected_portably(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    unsafe_name: str,
+    resolver: LogPathResolver,
+) -> None:
+    _configure_paths(monkeypatch, tmp_path)
 
     with pytest.raises(ValueError, match="Unsafe component folder name"):
-        component_logs.component_log_write_path("../escape")
+        resolver(unsafe_name)
+
+
+@pytest.mark.parametrize(
+    "resolver",
+    [
+        component_logs.component_log_read_path,
+        component_logs.component_log_write_path,
+    ],
+)
+def test_non_string_component_folder_is_rejected(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    resolver: LogPathResolver,
+) -> None:
+    _configure_paths(monkeypatch, tmp_path)
+
+    with pytest.raises(ValueError, match="Unsafe component folder name"):
+        resolver(123)  # type: ignore[arg-type]
 
 
 def test_runtime_write_inventory_no_longer_flags_launcher_logs() -> None:
