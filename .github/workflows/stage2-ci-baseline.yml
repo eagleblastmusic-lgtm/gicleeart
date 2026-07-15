@@ -161,7 +161,7 @@ jobs:
             New-Item -ItemType Directory -Path $entry.Value -Force | Out-Null
           }
 
-      - name: Prepare setup-python Tcl/Tk runtime
+      - name: Prepare mirrored Tcl/Tk runtime
         shell: pwsh
         run: .\.github\scripts\prepare-tk-runtime.ps1 -RuntimeName "tk-gui"
 
@@ -189,6 +189,7 @@ jobs:
           root.withdraw()
           print("tk_patchlevel=" + str(root.tk.call("info", "patchlevel")))
           print("tcl_library=" + str(root.tk.globalgetvar("tcl_library")))
+          print("tk_library=" + str(root.tk.globalgetvar("tk_library")))
           root.destroy()
           '@ | python - 2>&1 | Tee-Object -FilePath "$reportRoot\tk-probe.txt"
 
@@ -229,7 +230,7 @@ jobs:
           - GUI pytest exit code: ${{ steps.tk_gui.outputs.pytest_exit_code }}
           - mode: blocking
           - application runtime roots: isolated under RUNNER_TEMP
-          - Tcl/Tk runtime: direct actions/setup-python
+          - Tcl/Tk runtime: per-run RUNNER_TEMP mirror with SHA-256 manifest
           "@ >> $env:GITHUB_STEP_SUMMARY
 
       - name: Upload Tk GUI evidence
@@ -292,7 +293,7 @@ jobs:
             New-Item -ItemType Directory -Path $entry.Value -Force | Out-Null
           }
 
-      - name: Prepare setup-python Tcl/Tk runtime
+      - name: Prepare mirrored Tcl/Tk runtime
         shell: pwsh
         run: .\.github\scripts\prepare-tk-runtime.ps1 -RuntimeName "full-baseline"
 
@@ -323,6 +324,10 @@ jobs:
             exit $exitCode
           }
 
+      - name: Verify mirrored Tcl/Tk runtime before full baseline
+        shell: pwsh
+        run: .\.github\scripts\prepare-tk-runtime.ps1 -RuntimeName "full-baseline" -VerifyOnly
+
       - name: Run full pytest baseline
         id: full_pytest
         working-directory: cursor-api
@@ -348,11 +353,12 @@ jobs:
 
           - runner: windows-2022
           - warm-up: exact historical failing test on the same runner
+          - pre-baseline mirror verification: path + length + SHA-256 and Tk/ttk preflight
           - pytest step outcome: ${{ steps.full_pytest.outcome }}
           - pytest exit code: ${{ steps.full_pytest.outputs.exit_code }}
           - mode: blocking baseline; evidence is uploaded on every outcome
           - application runtime roots: isolated under RUNNER_TEMP
-          - Tcl/Tk runtime: direct actions/setup-python
+          - Tcl/Tk runtime: per-run RUNNER_TEMP mirror
           "@ >> $env:GITHUB_STEP_SUMMARY
 
       - name: Upload full baseline evidence

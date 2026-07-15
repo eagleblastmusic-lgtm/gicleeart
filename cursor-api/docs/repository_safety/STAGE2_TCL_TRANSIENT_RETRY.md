@@ -1,78 +1,70 @@
-# Stage 2 Tcl/Tk transient retry
+# Stage 2 Tcl/Tk runtime integrity
 
-## Problem
+## Current decision
 
-Self-hosted Windows runner potrafi sporadycznie zwrócić:
+Stage 2 does not retry `Tk.__init__` on a partially initialized object. The compatibility helpers in `tools/stage2_tcl_retry.py` delegate exactly once.
 
-```text
-_tkinter.TclError: Can't find a usable init.tcl
-...
-init.tcl: couldn't read file ...: No error
-```
+The environment boundary is instead a complete, immutable-for-the-job Tcl/Tk mirror under `RUNNER_TEMP`.
 
-Błąd pojawiał się po udanym preflighcie i po wielu wcześniejszych testach Tk.
-Ten sam niezmieniony commit przechodził po ponownym uruchomieniu Full baseline.
-Oznacza to przejściowy problem odczytu pliku runtime, a nie regresję aplikacji.
+## Why direct toolcache is insufficient
 
-## Dwie warstwy ochrony
+On 2026-07-15 two consecutive full baselines on the same LC-3C head passed 2436 tests and then failed because different files disappeared from the direct `actions/setup-python` tree:
 
-### Unikalny runtime dla każdego runu
+- `tk8.6/icons.tcl`;
+- `tk8.6/ttk/classicTheme.tcl`.
 
-`.github/scripts/prepare-tk-runtime.ps1` buduje katalog na podstawie:
+Both runs had already passed Tcl/Tk preflight, warmup and a separate Tk GUI job. This proves that checking a small fixed list once is not enough for a long full-suite process.
 
-- `RuntimeName`,
-- `GITHUB_RUN_ID`,
-- `GITHUB_RUN_ATTEMPT`,
-- `GITHUB_JOB`.
+## Per-run mirror
 
-Rerun nie używa więc katalogu poprzedniej próby i nie usuwa plików aktywnego lub
-historycznego joba o tej samej nazwie.
-
-### Dokładnie jeden retry konstrukcji Tk
-
-`tests/conftest.py` aktywuje adapter wyłącznie, gdy:
-
-- `GITHUB_ACTIONS=true`,
-- istnieje jawne `TCL_LIBRARY` przygotowane przez Stage 2.
-
-Adapter przechwytuje wyłącznie `tk.TclError` zawierający dokładną sygnaturę:
+`.github/scripts/prepare-tk-runtime.ps1` copies only:
 
 ```text
-Can't find a usable init.tcl
+<python-root>/tcl/**
 ```
 
-Przed drugą próbą wykonuje krótki read probe `TCL_LIBRARY/init.tcl`. Następnie
-ponawia `tk.Tk.__init__` jeden raz.
+into a unique target identified by runtime name, run id, attempt and job. It does not copy Python, `Lib`, site-packages or repository files.
 
-Nie są ponawiane:
+After copying, it compares every file using:
 
-- inne `TclError`,
-- błędy aplikacji,
-- assertions,
-- exceptions testów,
-- drugi identyczny błąd init.tcl.
+- relative path;
+- byte length;
+- SHA-256.
 
-Druga porażka pozostaje normalnym, blokującym failure.
+The manifest is persisted outside the mirror. `TCL_LIBRARY` and `TK_LIBRARY` point only into the mirror.
 
-## Zakres
+## Required runtime files
 
-Rozwiązanie działa tylko w testach GitHub Actions. Nie zmienia produkcyjnego
-GicleeApp i nie jest aktywne przy zwykłym lokalnym uruchomieniu pytest bez
-zmiennych CI.
+The contract explicitly includes:
 
-## Testy kontraktu
+- `init.tcl`;
+- `tk.tcl`;
+- `icons.tcl`;
+- `spinbox.tcl`;
+- `ttk/ttk.tcl`;
+- `ttk/defaults.tcl`;
+- `ttk/classicTheme.tcl`;
+- `ttk/winTheme.tcl`.
 
-`tests/test_tcl_transient_retry.py` sprawdza:
+The full manifest covers all additional files as well.
 
-1. aktywację wyłącznie dla GitHub Actions z `TCL_LIBRARY`,
-2. jedną udaną ponowną próbę dokładnej sygnatury,
-3. brak retry dla innego `TclError`,
-4. blokowanie po drugiej porażce,
-5. unikalną tożsamość katalogu w skrypcie PowerShell.
+## Preflight and verify-only
 
-## Interpretacja CI
+Preparation creates a real Tk root, Spinbox and ttk Style and verifies that Tcl and Tk resolve to the mirror.
 
-Retry jednej konstrukcji Tk nie zastępuje pełnego rerunu joba przy innych
-problemach środowiska. Artifact i JUnit nadal są źródłem prawdy. Powtarzający się
-drugi failure init.tcl należy traktować jako realny problem runnera i pozostawić
-job czerwony.
+After the full-baseline warmup, the workflow calls:
+
+```powershell
+prepare-tk-runtime.ps1 -VerifyOnly
+```
+
+This mode does not copy again. It validates the persisted manifest, required files and a new independent Tk root immediately before the complete pytest collection.
+
+## Failure interpretation
+
+- Preparation or manifest failure: infrastructure blocker before tests.
+- Verify-only failure: mirror integrity blocker before full pytest.
+- Tk GUI or full pytest assertion failure: inspect artifact and classify normally.
+- No blanket skips and no production changes are allowed to hide an environment failure.
+
+A second full-baseline failure on an unchanged head blocks merge and requires a separate fix rather than another blind rerun.
