@@ -193,11 +193,16 @@ __all__ = [
 1. **`supports_on_open_component`:**
    - Próbuje pobrać sygnaturę przekazanego obiektu callable za pomocą `inspect.signature()`.
    - W przypadku przechwycenia `TypeError` lub `ValueError` (np. obiekty wbudowane bez sygnatury), zwraca `False`.
-   - Zwraca `True`, jeśli w sygnaturze występuje parametr o nazwie `"on_open_component"` lub w parametrach zadeklarowano `VAR_KEYWORD` (czyli `**kwargs`). W przeciwnym razie zwraca `False`.
+   - Zwraca `True`, jeśli w sygnaturze występuje parametr o nazwie `"on_open_component"`, pod warunkiem, że jego typ to `POSITIONAL_OR_KEYWORD` lub `KEYWORD_ONLY`.
+   - Zwraca `True`, jeśli w parametrach zadeklarowano `VAR_KEYWORD` (czyli `**kwargs`).
+   - Zwraca `False`, jeśli parametr o nazwie `"on_open_component"` ma typ `POSITIONAL_ONLY`.
+   - Zwraca `False`, jeśli zadeklarowano samo `*args` (typ `VAR_POSITIONAL`) bez obecności `**kwargs`.
+   - Publiczny helper służy do wykrywania możliwości wstrzyknięcia argumentu poprzez keyword: `on_open_component=callback`. Parametr `POSITIONAL_ONLY` z definicji nie pozwala na przekazanie go w ten sposób, dlatego callback nie jest do niego wstrzykiwany.
 2. **`invoke_inline_builder`:**
    - Wywołuje `supports_on_open_component()`.
    - Jeśli wynik to `True`, uruchamia: `builder(parent, on_back, on_open_component=on_open_component)`.
-   - Jeśli wynik to `False`, uruchamia: `builder(parent, on_back)`.
+   - Jeśli wynik to `False` (w tym dla builderów z parametrem positional-only `"on_open_component"`), uruchamia: `builder(parent, on_back)`.
+   - Jeśli opcjonalny parametr positional-only ma wartość domyślną, builder zadziała ze swoją wartością domyślną. Jeśli jest on wymagany (brak wartości domyślnej), naturalny błąd `TypeError` (brakujący argument pozycyjny) propaguje się z wywołania bezpośrednio do wywołującego. Nie wolno wykonywać żadnego retry ani próbować zgadywać kolejności argumentów pozycyjnych.
    - Wywołanie następuje **dokładnie raz**. Błędy typu `TypeError` oraz inne wyjątki rzucane z wnętrza funkcji `builder` propagują się bezpośrednio do wywołującego.
    - Brak jakichkolwiek efektów ubocznych w layoucie czy Tkinterze (funkcja nie pakuje widoku ani nie wywołuje `.pack()`).
 
@@ -263,7 +268,7 @@ i zastąpiony przez bezpieczne wywołanie helpera:
             return
 ```
 
-Z importów runtime usunięte zostaną nieużywane już funkcje pomocnicze.
+LC-4B nie zmienia importów runtime w launcher.py; get_bundle_root pozostaje używany.
 
 ---
 
@@ -329,17 +334,21 @@ Przyszły PR implementacyjny musi zawierać **dokładnie siedem plików**:
 Suite testowy w `tests/test_launcher_inline_builder.py` must cover:
 1. **`supports_on_open_component`:**
    - builder z 2 argumentami (`parent, on_back`) -> `False`;
-   - builder z jawnym parametrem `on_open_component` -> `True`;
-   - builder z keyword-only `on_open_component` -> `True`;
+   - builder z jawnym parametrem `on_open_component` (typ `POSITIONAL_OR_KEYWORD`) -> `True`;
+   - builder z keyword-only `on_open_component` (typ `KEYWORD_ONLY`) -> `True`;
    - builder z `**kwargs` -> `True`;
    - builder z `*args` (bez `**kwargs`) -> `False`;
+   - builder z positional-only `on_open_component` (opcjonalnym lub wymaganym) -> `False`;
    - obiekt callable (klasa lub instancja z `__call__`) z odpowiednią sygnaturą;
    - dekorowana funkcja zachowująca sygnaturę;
    - obsługa błędów `inspect.signature` (TypeError/ValueError) -> `False`.
 2. **`invoke_inline_builder`:**
    - przekazanie `parent` oraz `on_back` bez zmian;
    - wywołanie bez `on_open_component` dla buildera dwuargumentowego;
-   - poprawne przekazanie callbacka `on_open_component` dla buildera 3-argumentowego/kwargs;
+   - wymagany positional-only `on_open_component`: helper wywołuje builder raz z 2 argumentami, a `TypeError` o brakującym argumencie propaguje się bez retry;
+   - opcjonalny positional-only `on_open_component`: `supports_on_open_component()` zwraca `False`, builder wywołany raz z 2 argumentami, używając wartości domyślnej;
+   - parametr positional-or-keyword: callback przekazany jako keyword (`on_open_component=callback`);
+   - parametr keyword-only: callback przekazany jako keyword (`on_open_component=callback`);
    - zwrócenie `tk.Widget` / `None` / innego obiektu bez zakłóceń;
    - propagowanie wyjątków (`RuntimeError`, `ValueError`) bezpośrednio z buildera;
    - propagowanie `TypeError` zgłoszonego **wewnątrz** buildera (weryfikacja braku retry);
