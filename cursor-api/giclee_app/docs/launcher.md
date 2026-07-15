@@ -48,6 +48,8 @@ Pliki:
 
 **LC-4B neutral inline builder invocation:** `launcher_inline_builder.py` współdzieli analizę sygnatury i pojedyncze wywołanie build_view pomiędzy klasycznym launcherem i Studio. Import modułu, obsługa błędów, pakowanie widoku i lifecycle hostów pozostają w odpowiednich callerach. Klasyczny launcher nie wykonuje już retry po wewnętrznym TypeError buildera.
 
+**LC-5 background services scheduler:** `launcher_background_services.py` wydziela zarządzanie initial delays oraz recurrence intervals wszystkich dziewięciu usług tła do osobnego, neutralnego modułu. `GicleeApp` zachowuje bound methods (worker/trigger callbacki) oraz mechanizmy wątków roboczych daemon threads.
+
 ---
 
 ## Co robi

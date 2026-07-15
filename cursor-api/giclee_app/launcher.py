@@ -115,39 +115,21 @@ class GicleeApp:
         self._build_ui()
         self._refresh_components()
 
-        # Co ~3s odswiez liste, zeby ewentualnie nowe komponenty pojawialy sie
-        # bez restartu launchera.
-        self._auto_rescan()
+        from .launcher_background_services import LauncherBackgroundServices
 
-        # Powiadomienie miesieczne (1-szy dzien miesiaca -> plan marketingowy).
-        # Odpalamy 1.5s po starcie, zeby UI zdazyl sie pokazac, zanim wyskoczy dialog.
-        self.root.after(1500, self._check_monthly_reminder)
-
-        # Sprawdz przypomnienia (np. "1-szy dzien miesiaca - wygeneruj plan").
-        # Odpalamy z lekkim opoznieniem, zeby okno juz sie wyrenderowalo.
-        self.root.after(800, self._check_monthly_plan_reminder)
-
-        # Polling zamowien Shopify -> Produkcja (co 5 minut).
-        # Pierwszy sync po 30s (zeby OAuth / siec byly juz gotowe).
-        self.root.after(30_000, self._poll_orders_from_shopify)
-
-        # Polling zamówień Shopify → Księgowość / Dokumenty sprzedaży (co 5 min).
-        self.root.after(35_000, self._poll_accounting_orders)
-
-        # Auto-backup raz dziennie (idempotentne).
-        self.root.after(2000, self._run_daily_backup)
-
-        # Monitor konca utwardzania ramek - raz na minute sprawdza i wysyla toast
-        # (zeby user nie musial patrzec na apke).
-        self.root.after(15_000, self._check_cure_done_notifications)
-
-        # Publisher cyklu social-media - co 60s sprawdza zaplanowane posty.
-        # Pierwszy poll po 45s (po pierwszej synchronizacji zamowien).
-        self.root.after(45_000, self._poll_cykl_publisher)
-
-        # Reminder tygodniowy: jesli zostalo <=2 dni wygenerowanej tresci cyklu,
-        # pokaz toast po 3s od startu.
-        self.root.after(3000, self._check_cykl_weekly_reminder)
+        self._background_services = LauncherBackgroundServices(
+            self.root.after,
+            auto_rescan=self._auto_rescan,
+            monthly_reminder=self._check_monthly_reminder,
+            monthly_plan_reminder=self._check_monthly_plan_reminder,
+            shopify_orders=self._poll_orders_from_shopify,
+            accounting_orders=self._poll_accounting_orders,
+            daily_backup=self._run_daily_backup,
+            cure_notifications=self._check_cure_done_notifications,
+            social_publisher=self._poll_cykl_publisher,
+            weekly_content_reminder=self._check_cykl_weekly_reminder,
+        )
+        self._background_services.start()
 
     # ---------- UI ----------
     def _build_ui(self) -> None:
@@ -1069,10 +1051,7 @@ class GicleeApp:
 
     def _auto_rescan(self) -> None:
         # Co 3 sekundy sprawdzaj czy pojawil sie nowy komponent.
-        try:
-            self._refresh_components()
-        finally:
-            self.root.after(3000, self._auto_rescan)
+        self._refresh_components()
 
     # ---------- Reminders ----------
     def _check_monthly_plan_reminder(self) -> None:
@@ -1301,10 +1280,6 @@ class GicleeApp:
                     pass
 
         threading.Thread(target=_worker, daemon=True).start()
-        try:
-            self.root.after(60_000, self._check_cure_done_notifications)
-        except RuntimeError:
-            pass
 
     # ---------- Shopify orders polling ----------
     def _poll_orders_from_shopify(self) -> None:
@@ -1352,11 +1327,6 @@ class GicleeApp:
                     pass
 
         threading.Thread(target=_worker, daemon=True).start()
-        # Zaplanuj nastepny sync za 5 minut
-        try:
-            self.root.after(5 * 60 * 1000, self._poll_orders_from_shopify)
-        except RuntimeError:
-            pass
 
     def _poll_accounting_orders(self) -> None:
         """Co 5 minut — nowe opłacone zamówienia bez dokumentu (panel księgowy)."""
@@ -1406,10 +1376,6 @@ class GicleeApp:
                 pass
 
         threading.Thread(target=_worker, daemon=True).start()
-        try:
-            self.root.after(5 * 60 * 1000, self._poll_accounting_orders)
-        except RuntimeError:
-            pass
 
     # ---------- Cykl social-media publisher ----------
     def _poll_cykl_publisher(self) -> None:
@@ -1445,10 +1411,6 @@ class GicleeApp:
                     pass
 
         threading.Thread(target=_worker, daemon=True).start()
-        try:
-            self.root.after(60_000, self._poll_cykl_publisher)
-        except RuntimeError:
-            pass
 
     def _check_cykl_weekly_reminder(self) -> None:
         """Po starcie: sprawdz czy zostalo <=2 dni wygenerowanej tresci dla cyklu.
