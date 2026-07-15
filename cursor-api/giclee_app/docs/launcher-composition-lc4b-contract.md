@@ -1,6 +1,6 @@
 # ETAP 4B / LC-4B — Neutral Inline Builder Invocation
 
-**Status:** fresh reconnaissance · contract frozen, awaiting implementation
+**Status:** LC-4B implemented
 **Repository:** `eagleblastmusic-lgtm/gicleeart`
 **Base:** `master` @ `c2d5f927a9958f3f34e7a16f010455b3ed2825e5`
 **Data weryfikacji:** 2026-07-15
