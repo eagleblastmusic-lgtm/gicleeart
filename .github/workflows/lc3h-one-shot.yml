@@ -100,6 +100,7 @@ jobs:
             "cursor-api/giclee_app/docs/launcher.md",
             "cursor-api/giclee_app/dragdrop_category_launcher.py",
             "cursor-api/giclee_app/launcher_tk_drag_feedback.py",
+            "cursor-api/tests/test_launcher_drag_geometry.py",
             "cursor-api/tests/test_launcher_drag_gesture.py",
             "cursor-api/tests/test_launcher_tk_drag_feedback.py"
           ) | Sort-Object -Unique
@@ -131,7 +132,7 @@ jobs:
           git add -A
           git commit -m "refactor(launcher): extract Tk drag visual feedback"
 
-      - name: Validate final six-file diff
+      - name: Validate final seven-file diff
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
@@ -142,6 +143,7 @@ jobs:
             "cursor-api/giclee_app/docs/launcher.md",
             "cursor-api/giclee_app/dragdrop_category_launcher.py",
             "cursor-api/giclee_app/launcher_tk_drag_feedback.py",
+            "cursor-api/tests/test_launcher_drag_geometry.py",
             "cursor-api/tests/test_launcher_drag_gesture.py",
             "cursor-api/tests/test_launcher_tk_drag_feedback.py"
           ) | Sort-Object -Unique
@@ -149,7 +151,7 @@ jobs:
 
           $unexpected = @($actual | Where-Object { $_ -notin $expected })
           $missing = @($expected | Where-Object { $_ -notin $actual })
-          if ($actual.Count -ne 6 -or $unexpected.Count -gt 0 -or $missing.Count -gt 0) {
+          if ($actual.Count -ne 7 -or $unexpected.Count -gt 0 -or $missing.Count -gt 0) {
             Write-Host "Final diff:"; $actual | ForEach-Object { Write-Host "  $_" }
             throw "LC-3H final scope guard failed"
           }
