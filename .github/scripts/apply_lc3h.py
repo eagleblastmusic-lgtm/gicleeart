@@ -19,6 +19,7 @@ def replace_exact(path: Path, old: str, new: str) -> None:
 def main() -> None:
     launcher = APP / "dragdrop_category_launcher.py"
     gesture_tests = TESTS / "test_launcher_drag_gesture.py"
+    geometry_tests = TESTS / "test_launcher_drag_geometry.py"
     launcher_docs = APP / "docs" / "launcher.md"
     contract = APP / "docs" / "launcher-composition-lc3h-contract.md"
 
@@ -127,12 +128,53 @@ def main() -> None:
         "    assert \"begin_drag_feedback(\" in motion\n"
         "    assert \"self._auto_scroll_drag(\" in motion\n",
     )
+    replace_exact(
+        geometry_tests,
+        "    assert 'self.root.configure(cursor=\"fleur\")' in motion\n",
+        "    assert \"begin_drag_feedback(\" in motion\n",
+    )
 
     replace_exact(
         launcher_docs,
         "**LC-3G Tk drag target adapter:** `launcher_tk_drag_targets.py` izoluje direct widget lookup, traversal master, odczyt geometrii i nearest fallback. `DragDropCategoryGicleeApp` zachowuje stan gestu, feedback, auto-scroll, decyzję after i persistence.\n\n---",
         "**LC-3G Tk drag target adapter:** `launcher_tk_drag_targets.py` izoluje direct widget lookup, traversal master, odczyt geometrii i nearest fallback. `DragDropCategoryGicleeApp` zachowuje stan gestu, feedback, auto-scroll, decyzję after i persistence.\n\n"
         "**LC-3H Tk drag visual feedback adapter:** `launcher_tk_drag_feedback.py` izoluje kolory ramek oraz kursor `fleur`/reset. `DragDropCategoryGicleeApp` zachowuje `_DragState`, target, decyzję `after`, auto-scroll i persistence.\n\n---",
+    )
+    replace_exact(
+        contract,
+        "## 7. Allowlista implementacyjna\n\nKod:",
+        "## 7. Allowlista implementacyjna\n\n"
+        "### Finding z focused validation\n\n"
+        "Pierwszy focused run wykazał jedną przestarzałą source assertion w `test_launcher_drag_geometry.py`, która nadal wymagała bezpośredniego `self.root.configure(cursor=\"fleur\")` w launcherze. Po LC-3H odpowiedzialność jest delegowana do `begin_drag_feedback()`. To finding testowy, nie regresja runtime; kontrakt zostaje rozszerzony o ten jeden plik przed jego edycją.\n\n"
+        "Kod:",
+    )
+    replace_exact(
+        contract,
+        "Testy:\n\n"
+        "3. nowy `cursor-api/tests/test_launcher_tk_drag_feedback.py`;\n"
+        "4. `cursor-api/tests/test_launcher_drag_gesture.py` — przeniesienie szczegółowych asercji efektów Tk do adaptera i potwierdzenie orchestration klasy.\n\n"
+        "Dokumentacja:\n\n"
+        "5. `cursor-api/giclee_app/docs/launcher.md`;\n"
+        "6. ten kontrakt.\n\n"
+        "Finalny implementation PR obejmuje dokładnie sześć plików. Każde rozszerzenie wymaga osobnego findingu i aktualizacji kontraktu przed edycją.",
+        "Testy:\n\n"
+        "3. nowy `cursor-api/tests/test_launcher_tk_drag_feedback.py`;\n"
+        "4. `cursor-api/tests/test_launcher_drag_gesture.py` — przeniesienie szczegółowych asercji efektów Tk do adaptera i potwierdzenie orchestration klasy;\n"
+        "5. `cursor-api/tests/test_launcher_drag_geometry.py` — aktualizacja przestarzałej source assertion kursora do delegacji LC-3H.\n\n"
+        "Dokumentacja:\n\n"
+        "6. `cursor-api/giclee_app/docs/launcher.md`;\n"
+        "7. ten kontrakt.\n\n"
+        "Finalny implementation PR obejmuje dokładnie siedem plików. Każde dalsze rozszerzenie wymaga osobnego findingu i aktualizacji kontraktu przed edycją.",
+    )
+    replace_exact(
+        contract,
+        "- dokładny scope guard sześciu plików;",
+        "- dokładny scope guard siedmiu plików;",
+    )
+    replace_exact(
+        contract,
+        "- finalny diff obejmuje dokładnie sześć allowlistowanych plików;",
+        "- finalny diff obejmuje dokładnie siedem allowlistowanych plików;",
     )
     replace_exact(
         contract,
