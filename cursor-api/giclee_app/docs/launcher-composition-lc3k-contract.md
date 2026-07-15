@@ -1,8 +1,8 @@
 # ETAP 4B / LC-3K — Component Order Persistence Adapter
 
-**Status:** contract frozen, awaiting implementation  
-**Repository:** `eagleblastmusic-lgtm/gicleeart`  
-**Base:** `master` @ `6075ac30579eb8241fb022c0ed1a5b187a854ff9`  
+**Status:** LC-3K implemented
+**Repository:** `eagleblastmusic-lgtm/gicleeart`
+**Base:** `master` @ `6075ac30579eb8241fb022c0ed1a5b187a854ff9`
 **Data weryfikacji:** 2026-07-15
 
 ---

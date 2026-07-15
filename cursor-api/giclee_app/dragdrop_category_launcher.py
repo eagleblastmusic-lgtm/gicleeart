@@ -30,9 +30,9 @@ from .launcher_drag_gesture import (
     resolve_drag_motion,
     resolve_drag_release,
 )
-from .launcher_layout import resolve_sections, save_layout
+from .launcher_drag_component_persistence import persist_component_reorder
+from .launcher_layout import resolve_sections
 from .launcher_tk_drag_bindings import install_tile_drag_bindings
-from .launcher_tile_order import reorder_relative, replace_subset_order
 from .options_category_launcher import OptionsCategoryGicleeApp
 
 
@@ -304,6 +304,7 @@ class DragDropCategoryGicleeApp(OptionsCategoryGicleeApp):
         section = self._active_section
         if not section:
             return
+
         sections = resolve_sections(
             self._all_components,
             self._layout,
@@ -311,33 +312,18 @@ class DragDropCategoryGicleeApp(OptionsCategoryGicleeApp):
         )
         components = category_map(sections).get(section, [])
         visible_order = [component.folder_name for component in components]
-        reordered_visible = reorder_relative(
+
+        changed = persist_component_reorder(
+            self._layout,
+            section,
             visible_order,
             source,
             target,
             after=after,
         )
-        if reordered_visible == visible_order:
+        if not changed:
             return
 
-        all_in_section = [
-            entry.folder
-            for entry in sorted(
-                (
-                    entry
-                    for entry in self._layout.entries.values()
-                    if entry.section == section
-                ),
-                key=lambda entry: (entry.sort_key, entry.folder.lower()),
-            )
-        ]
-        full_order = replace_subset_order(all_in_section, reordered_visible)
-        for index, folder in enumerate(full_order):
-            entry = self._layout.entries.get(folder)
-            if entry is not None:
-                entry.sort_key = index * 10
-
-        save_layout(self._layout)
         self._render_tiles()
         self._finish_navigation_render()
         self.status_var.set(
