@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from giclee_app.app_paths import log_path
 
@@ -12,11 +12,39 @@ DEFAULT_COMPONENT_LOGS_DIR = log_path(
     f"{_LOG_RELATIVE_DIR}/component.log",
 ).write_path.parent
 
+_WINDOWS_INVALID_FILENAME_CHARS = frozenset('<>:"/\\|?*')
+_WINDOWS_RESERVED_FILENAME_STEMS = frozenset(
+    {
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        *(f"COM{index}" for index in range(1, 10)),
+        *(f"LPT{index}" for index in range(1, 10)),
+    }
+)
+
 
 def _filename(folder_name: str) -> str:
-    name = str(folder_name).strip()
-    if not name or Path(name).name != name or name in {".", ".."}:
+    """Return a portable log filename for one component directory name."""
+
+    if not isinstance(folder_name, str):
         raise ValueError(f"Unsafe component folder name: {folder_name!r}")
+
+    name = folder_name.strip()
+    windows_path = PureWindowsPath(name)
+    if (
+        not name
+        or name in {".", ".."}
+        or PurePosixPath(name).name != name
+        or windows_path.name != name
+        or any(ord(char) < 32 for char in name)
+        or any(char in _WINDOWS_INVALID_FILENAME_CHARS for char in name)
+        or name.endswith(".")
+        or name.split(".", 1)[0].upper() in _WINDOWS_RESERVED_FILENAME_STEMS
+    ):
+        raise ValueError(f"Unsafe component folder name: {folder_name!r}")
+
     return f"{name}.log"
 
 
