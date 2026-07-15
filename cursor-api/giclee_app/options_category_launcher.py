@@ -19,6 +19,7 @@ from .launcher_tk_shortcut_bindings import (
     bind_widget_shortcut,
     install_shortcut_bindtags,
 )
+from .launcher_tk_shortcut_visibility import shortcut_view_is_mapped
 from .launcher_windows_shortcuts import (
     load_windows_user32 as _load_windows_user32,
     sample_windows_shortcut_keys,
@@ -194,7 +195,7 @@ class OptionsCategoryGicleeApp(StyledCategoryGicleeApp):
         )
 
     def _restore_shortcut_focus(self) -> None:
-        if not self.tiles_view.winfo_ismapped():
+        if not shortcut_view_is_mapped(self.tiles_view):
             return
         try:
             self.root.lift()
@@ -208,7 +209,7 @@ class OptionsCategoryGicleeApp(StyledCategoryGicleeApp):
         return shortcut_key_from_event(event)
 
     def _launcher_shortcuts_active(self) -> bool:
-        if not self.tiles_view.winfo_ismapped():
+        if not shortcut_view_is_mapped(self.tiles_view):
             return False
         if dialog_blocks_shortcuts(self.root):
             return False
