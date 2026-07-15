@@ -64,6 +64,13 @@ def install_shortcut_bindtags(
     stack: list[tk.Misc] = [root]
     while stack:
         widget = stack.pop()
+
+        try:
+            children = list(widget.winfo_children())
+        except (AttributeError, tk.TclError):
+            children = []
+        stack.extend(children)
+
         try:
             current = tuple(str(tag) for tag in widget.bindtags())
             reordered = (bindtag,) + tuple(
@@ -71,7 +78,10 @@ def install_shortcut_bindtags(
             )
             if reordered != current:
                 widget.bindtags(reordered)
-            direct(widget)
-            stack.extend(widget.winfo_children())
         except (AttributeError, tk.TclError):
-            continue
+            pass
+
+        try:
+            direct(widget)
+        except (AttributeError, tk.TclError):
+            pass
