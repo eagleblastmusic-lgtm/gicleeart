@@ -54,8 +54,8 @@ class OptionsCategoryGicleeApp(StyledCategoryGicleeApp):
         self._options_button: ttk.Menubutton | None = None
         super().__init__(root)
 
-        # Root jest początkowo withdrawn przez splash. Poller nie potrzebuje fokusu
-        # konkretnego widgetu, ale uruchamiamy go dopiero po zbudowaniu launchera.
+        # Root jest początkowo withdrawn przez splash. Poller WinAPI nie potrzebuje
+        # fokusu widgetu, ale nawigacja Escape/Backspace/Alt+Left nadal korzysta z Tk.
         if self._windows_user32 is not None:
             try:
                 self._windows_shortcut_poll_id = self.root.after(
@@ -64,12 +64,11 @@ class OptionsCategoryGicleeApp(StyledCategoryGicleeApp):
                 )
             except tk.TclError:
                 self._windows_shortcut_poll_id = None
-        else:
-            try:
-                self.root.after(80, self._restore_shortcut_focus)
-                self.root.after(320, self._restore_shortcut_focus)
-            except tk.TclError:
-                pass
+        try:
+            self.root.after(80, self._restore_shortcut_focus)
+            self.root.after(320, self._restore_shortcut_focus)
+        except tk.TclError:
+            pass
 
     def _build_ui(self) -> None:
         super()._build_ui()
