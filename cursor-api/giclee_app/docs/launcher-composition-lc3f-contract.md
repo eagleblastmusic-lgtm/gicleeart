@@ -1,6 +1,6 @@
 # ETAP 4B / LC-3F — Tk Drag Binding Adapter
 
-**Status:** fresh reconnaissance · contract freeze  
+**Status:** LC-3F implemented
 **Repository:** `eagleblastmusic-lgtm/gicleeart`  
 **Base:** `master` @ `fb3f8b5e342e7da651dea86ae3fba158c693e6bb`  
 **Data weryfikacji:** 2026-07-15
