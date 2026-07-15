@@ -8,6 +8,7 @@ import tkinter as tk
 from typing import Mapping
 
 from .app_paths import atomic_write_text, config_path
+from .launcher_shortcut_keys import normalize_shortcut_key
 
 
 DEFAULT_LAUNCHER_SHORTCUTS: dict[str, str] = {
@@ -25,20 +26,6 @@ _SHORTCUTS = config_path("giclee_app/data/launcher_shortcuts.json", legacy=_LEGA
 
 def _shortcuts_path(*, for_write: bool = False) -> Path:
     return _SHORTCUTS.write_path if for_write else _SHORTCUTS.read_path()
-
-
-def normalize_shortcut_key(value: str) -> str | None:
-    """Normalizuje bezpośredni skrót: ASCII A-Z, 0-9 albo F1-F12."""
-
-    raw = str(value or "").strip().lower()
-    if len(raw) == 1 and raw.isascii() and raw.isalnum():
-        return raw
-    suffix = raw[1:]
-    if raw.startswith("f") and suffix.isascii() and suffix.isdigit():
-        number = int(suffix)
-        if 1 <= number <= 12:
-            return f"f{number}"
-    return None
 
 
 def shortcut_key_from_event(event: tk.Event) -> str | None:
@@ -76,7 +63,7 @@ def load_launcher_shortcuts(path: Path | None = None) -> dict[str, str]:
 
     result: dict[str, str] = {}
     for key, folder in raw.items():
-        normalized = normalize_shortcut_key(str(key))
+        normalized = normalize_shortcut_key(key)
         folder_name = str(folder or "").strip()
         if normalized is None or not folder_name:
             continue
@@ -93,7 +80,7 @@ def save_launcher_shortcuts(
     config_path_value = path or _shortcuts_path(for_write=True)
     clean: dict[str, str] = {}
     for key, folder in shortcuts.items():
-        normalized = normalize_shortcut_key(str(key))
+        normalized = normalize_shortcut_key(key)
         folder_name = str(folder or "").strip()
         if normalized is None or not folder_name:
             continue
