@@ -1,0 +1,74 @@
+name: Apply refactor index update
+
+on:
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  update-index:
+    if: github.event.pull_request.head.ref == 'gpt-work/refactor-completion-docs'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - name: Update implemented solutions index
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('cursor-api/docs/GICLEEAPP_IMPLEMENTED_SOLUTIONS_INDEX.md')
+          text = path.read_text(encoding='utf-8')
+
+          replacements = (
+              ('**Ostatnia aktualizacja indeksu:** 2026-07-12',
+               '**Ostatnia aktualizacja indeksu:** 2026-07-16'),
+              ('`name`, `description`, `icon`, `color`, `order`, `mode`, `url`, `hidden`, `inline_width`, `inline_height`, `inline_min_width`, `inline_min_height`',
+               '`name`, `description`, `icon`, `color`, `order`, `mode`, `url`, `hidden`, `inline_width`, `inline_height`, `inline_min_width`, `inline_min_height`, `availability`, `stability`'),
+              ('| Nie commitować | Bez polecenia użytkownika |',
+               '| Nie commitować bezpośrednio do `master` | Branch zadaniowy → PR → exact-head CI → squash merge |'),
+          )
+          for old, new in replacements:
+              if old not in text:
+                  raise SystemExit(f'missing replacement anchor: {old}')
+              text = text.replace(old, new, 1)
+
+          profile_anchor = 'Checklist: [`component-loader.md`](../giclee_app/docs/component-loader.md)\n'
+          profile_block = '''Checklist: [`component-loader.md`](../giclee_app/docs/component-loader.md)\n\n### Profile i kanały komponentów\n\n| Pole | Dozwolone wartości | Zachowanie bez pola |\n|------|---------------------|---------------------|\n| `availability` | `classic`, `studio_preview`, `studio` | Dostępny we wszystkich profilach |\n| `stability` | `stable`, `preview`, `experimental`, `legacy` | `stable` |\n\nProdukcyjne Studio wymaga jednocześnie `availability: studio` i `stability: stable`.\nPreview może pokazywać wszystkie kanały. Szczegóły: [`component-channels.md`](../giclee_app/docs/component-channels.md) i [`studio-production-profile.md`](../giclee_app/docs/studio-production-profile.md).\n'''
+          if '### Profile i kanały komponentów' not in text:
+              if profile_anchor not in text:
+                  raise SystemExit('missing profile insertion anchor')
+              text = text.replace(profile_anchor, profile_block, 1)
+
+          closure_anchor = '## Guardrails\n'
+          closure_block = '''## Zakończona izolacja i refaktor\n\nZakres stabilizacji RC1, STUDIO-ISOLATION-1 — 3 i bezpiecznej konsolidacji repozytorium został zamknięty 2026-07-16. Kanoniczny raport: [`GICLEEAPP_REFACTOR_COMPLETION_2026-07-16.md`](GICLEEAPP_REFACTOR_COMPLETION_2026-07-16.md).\n\nWdrożone wzorce, których nie należy tworzyć drugi raz:\n\n- niemutowalne profile `classic`, `studio_preview`, `studio` z osobnymi namespace stanu/logów;\n- availability/stability komponentów;\n- bezpośrednie service wiring Theme Page Editor bez bootstrap monkey-patcha;\n- conditional CSS i runtime motywu jako testowane kompozycje Liquid;\n- jedno źródło wersji desktop;\n- security contract, tracked-large-file guard i runtime source-write inventory;\n- kontrolowany retry CI tylko dla dokładnej przejściowej awarii Tcl/Tk.\n\n---\n\n## Guardrails\n'''
+          if '## Zakończona izolacja i refaktor' not in text:
+              if closure_anchor not in text:
+                  raise SystemExit('missing closure insertion anchor')
+              text = text.replace(closure_anchor, closure_block, 1)
+
+          docs_anchor = '| [`../giclee_app/docs/studio-preview.md`](../giclee_app/docs/studio-preview.md) | Shell Studio (CTk) |'
+          docs_block = '''| [`../giclee_app/docs/studio-preview.md`](../giclee_app/docs/studio-preview.md) | Shell Studio Preview (CTk) |\n| [`../giclee_app/docs/component-channels.md`](../giclee_app/docs/component-channels.md) | Availability i stability komponentów |\n| [`../giclee_app/docs/studio-production-profile.md`](../giclee_app/docs/studio-production-profile.md) | Produkcyjny profil Giclée Studio |\n| [`GICLEEAPP_REFACTOR_COMPLETION_2026-07-16.md`](GICLEEAPP_REFACTOR_COMPLETION_2026-07-16.md) | Zamknięcie izolacji i refaktoru |\n| [`versioning.md`](versioning.md) | Kanoniczne źródło wersji desktop |\n| [`theme-liquid-runtime.md`](theme-liquid-runtime.md) | Kompozycja runtime motywu |\n| [`tracked-large-files.md`](tracked-large-files.md) | Guard dużych plików w historii Git |\n| [`../../SECURITY.md`](../../SECURITY.md) | Security i secret-handling policy |'''
+          if 'GICLEEAPP_REFACTOR_COMPLETION_2026-07-16.md' not in text.split('## Powiązana dokumentacja', 1)[-1]:
+              if docs_anchor not in text:
+                  raise SystemExit('missing documentation table anchor')
+              text = text.replace(docs_anchor, docs_block, 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cursor-api/docs/GICLEEAPP_IMPLEMENTED_SOLUTIONS_INDEX.md
+          if git diff --cached --quiet; then
+            echo "Index already updated."
+            exit 0
+          fi
+          git commit -m "Update implemented solutions index after refactor"
+          git push origin HEAD:${{ github.head_ref }}
