@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from giclee_app.app_paths import atomic_write_bytes, log_path
-from giclee_app.app_profile import STUDIO_PREVIEW_PROFILE, AppProfile
+from giclee_app.app_profile import STUDIO_PREVIEW_PROFILE, AppProfile, current_profile
 
 _ENV_FLAG = "GICLEE_STUDIO_PERF"
 _LOG_RELATIVE_PATH = "giclee_app/studio_perf.log"
@@ -23,9 +23,9 @@ _LEGACY_LOG_PATH = Path(__file__).resolve().parents[1] / "logs" / "studio_perf.l
 
 
 def studio_perf_store(profile: AppProfile | None = None):
-    """Shell/perf log Studio — namespace Preview (nie klasyczny GicleeApp)."""
+    """Shell/perf log Studio w namespace aktywnego profilu."""
 
-    active = profile or STUDIO_PREVIEW_PROFILE
+    active = profile or current_profile(STUDIO_PREVIEW_PROFILE)
     return log_path(
         _LOG_RELATIVE_PATH,
         legacy=_LEGACY_LOG_PATH,
@@ -33,6 +33,9 @@ def studio_perf_store(profile: AppProfile | None = None):
     )
 
 
+# Entrypoint imports this module inside app_profile_context(profile), so the
+# module default is bound to the selected shell profile. Keeping the resolved
+# path stable also preserves explicit test/runtime overrides of these values.
 _DEFAULT_LOG_PATH = studio_perf_store().write_path
 _LOG_PATH = _DEFAULT_LOG_PATH
 
@@ -42,15 +45,14 @@ def _store():
 
 
 def _write_path() -> Path:
-    """Resolve an explicit override or the external append-only log path."""
+    """Resolve an explicit override or the profile-bound append-only log path."""
 
     current = Path(_LOG_PATH)
     if current != _DEFAULT_LOG_PATH:
         current.parent.mkdir(parents=True, exist_ok=True)
         return current
-
-    # Honor module-level defaults (tests may rebind them) instead of
-    # re-resolving roots from the current environment.
+    # Honor the module-level default. Tests may rebind it, while production
+    # entrypoints bind it during import inside their scoped profile context.
     target = Path(_DEFAULT_LOG_PATH)
     if target.exists():
         return target

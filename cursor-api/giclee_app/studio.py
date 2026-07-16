@@ -1,11 +1,11 @@
-"""Entrypoint GicleeApp Studio Preview.
+"""Entrypoint produkcyjnego profilu Giclée Studio.
 
 Uruchomienie (z cursor-api/):
     pip install -r requirements-dev.txt
-    python -m giclee_app.studio_preview
+    python -m giclee_app.studio
 
-Klasyczny launcher (bez zmian):
-    python -m giclee_app
+Profil produkcyjny używa osobnego namespace stanu/logów i dopuszcza wyłącznie
+komponenty dostępne dla `studio` w kanale stabilności `stable`.
 """
 
 from __future__ import annotations
@@ -28,22 +28,20 @@ def main() -> None:
 
     ctk.set_appearance_mode("dark")
 
-    # Spójna paleta Studio (dark premium + złoty akcent) zamiast domyślnego
-    # niebieskiego "dark-blue" — widgety bez jawnych kolorów dziedziczą Studio look.
     from pathlib import Path
 
-    _theme_json = Path(__file__).resolve().parent / "ui" / "studio_ctk_theme.json"
-    if _theme_json.is_file():
-        ctk.set_default_color_theme(str(_theme_json))
+    theme_json = Path(__file__).resolve().parent / "ui" / "studio_ctk_theme.json"
+    if theme_json.is_file():
+        ctk.set_default_color_theme(str(theme_json))
     else:
         ctk.set_default_color_theme("dark-blue")
 
-    from giclee_app.app_profile import STUDIO_PREVIEW_PROFILE, app_profile_context
+    from giclee_app.app_profile import STUDIO_PROFILE, app_profile_context
 
-    with app_profile_context(STUDIO_PREVIEW_PROFILE):
+    with app_profile_context(STUDIO_PROFILE):
         from giclee_app.launcher_studio import GicleeAppStudio
 
-        app = GicleeAppStudio(profile=STUDIO_PREVIEW_PROFILE)
+        app = GicleeAppStudio(profile=STUDIO_PROFILE)
         app.mainloop()
 
 

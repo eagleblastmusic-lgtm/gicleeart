@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..app_profile import STUDIO_PREVIEW_PROFILE, AppProfile
+from ..app_profile import STUDIO_PREVIEW_PROFILE, AppProfile, current_profile
 from ..component_loader import Component, discover_components, find_components_dir
 from .categories import category_for_folder
 
@@ -20,13 +20,14 @@ class StudioComponentIndex:
 
     @classmethod
     def build(cls, profile: AppProfile | None = None) -> StudioComponentIndex:
-        active_profile = profile or STUDIO_PREVIEW_PROFILE
+        active_profile = profile or current_profile(STUDIO_PREVIEW_PROFILE)
         root = find_components_dir()
         all_components = discover_components(root, include_hidden=True)
         available_components = [
             comp
             for comp in all_components
             if comp.is_available_in(active_profile.profile_id)
+            and active_profile.allows_component_stability(comp.stability)
         ]
         visible_components = [c for c in available_components if not c.hidden]
         by_folder = {c.folder_name: c for c in available_components}
