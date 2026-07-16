@@ -1,18 +1,23 @@
-# Theme post-layout runtime extraction
+# Theme post-layout runtime composition
 
-The post-layout inline runtime previously embedded near the end of `layout/theme.liquid` now lives in:
+`layout/theme.liquid` renders a thin runtime composition root:
 
 ```text
 snippets/giclee-theme-runtime.liquid
 ```
 
-The snippet contains the existing divider, accordion, product-card, homepage mobile, transition, photo-mockup, product-data, accessibility, catalog-panel, and site-notice runtime in its original order. It remains a Liquid snippet rather than a static JavaScript asset because it contains template/request objects, product data loops, asset URLs, conditional Liquid, and nested snippet renders.
+The parent owns ordering only and renders four mechanically extracted domains:
 
-## Scope
+- `giclee-theme-runtime-general.liquid` — divider, accordion, product-card and catalog-panel behavior;
+- `giclee-theme-runtime-navigation.liquid` — homepage/mobile and page-transition runtime;
+- `giclee-theme-runtime-photo-mockup.liquid` — conditional photo-mockup product data and UI runtime;
+- `giclee-theme-runtime-footer.liquid` — link normalization, site notice and FAQ accessibility.
 
-- mechanical move only;
-- no JavaScript statement, Liquid condition, product-data structure, nested render, or execution order change;
+## Contract
+
+- child order is fixed;
+- each child has a recorded line count and SHA-256;
+- recomposing all children must reproduce the original 1,526-line runtime region;
+- reinserting that region into the layout must reproduce the pre-runtime-extraction theme byte-for-byte;
 - critical head and header-height scripts remain in `layout/theme.liquid`;
-- no deploy or live-theme mutation.
-
-The regression contract records both the extracted-region SHA-256 and the original complete-theme SHA-256. Reinserting the snippet at the render marker must restore the pre-extraction theme byte-for-byte.
+- no deploy or live-theme mutation is implied.
