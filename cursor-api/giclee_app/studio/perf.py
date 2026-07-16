@@ -33,6 +33,9 @@ def studio_perf_store(profile: AppProfile | None = None):
     )
 
 
+# Entrypoint imports this module inside app_profile_context(profile), so the
+# module default is bound to the selected shell profile. Keeping the resolved
+# path stable also preserves explicit test/runtime overrides of these values.
 _DEFAULT_LOG_PATH = studio_perf_store().write_path
 _LOG_PATH = _DEFAULT_LOG_PATH
 
@@ -42,16 +45,15 @@ def _store():
 
 
 def _write_path() -> Path:
-    """Resolve an explicit override or the external append-only log path."""
+    """Resolve an explicit override or the profile-bound append-only log path."""
 
     current = Path(_LOG_PATH)
     if current != _DEFAULT_LOG_PATH:
         current.parent.mkdir(parents=True, exist_ok=True)
         return current
-    # The module is imported inside the entrypoint's scoped profile context.
-    # Re-resolve here as well so tests and delayed imports keep the active
-    # namespace without mutating a process-global profile switch.
-    target = Path(_store().write_path)
+    # Honor the module-level default. Tests may rebind it, while production
+    # entrypoints bind it during import inside their scoped profile context.
+    target = Path(_DEFAULT_LOG_PATH)
     if target.exists():
         return target
     legacy = Path(_LEGACY_LOG_PATH)
