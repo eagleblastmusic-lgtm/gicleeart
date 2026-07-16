@@ -1,0 +1,21 @@
+name: Export theme liquid scripts source
+
+on:
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  export-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: theme-liquid-scripts-source-${{ github.run_id }}
+          path: layout/theme.liquid
+          if-no-files-found: error
+          retention-days: 1
