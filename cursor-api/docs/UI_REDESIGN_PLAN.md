@@ -173,6 +173,12 @@ giclee_app/
 
 Szczegóły uruchomienia: [`giclee_app/docs/studio-preview.md`](../giclee_app/docs/studio-preview.md).
 
+## Runtime profiles and data ownership
+
+**STUDIO-ISOLATION-1:** jeden wspólny rdzeń kodu, dwa jawne profile (`classic`, `studio_preview`), osobny stan shella Preview w namespace `GicleeStudioPreview`, wspólne dane biznesowe i komponenty. Klasyczny launcher zachowuje dotychczasowe ścieżki `GicleeApp`. Preview nie uruchamia klasycznych usług tła. Shell/perf logi Studio są w namespace Preview; logi komponentów pozostają wspólne. Następny etap: **STUDIO-ISOLATION-2** (availability / stability channels).
+
+Szczegóły: [`giclee_app/docs/studio-preview.md`](../giclee_app/docs/studio-preview.md) § Runtime profiles and data ownership.
+
 ## Kategorie sidebaru
 
 **v1 (obecny kod):** Dashboard, Strona/Motyw, Produkty, Zamówienia, Produkcja, Finanse, Content/AI, Review/GPT, System — mapowanie w `giclee_app/data/studio_categories.json`.
@@ -190,4 +196,4 @@ Szczegóły uruchomienia: [`giclee_app/docs/studio-preview.md`](../giclee_app/do
 - Stary launcher = produkcja (polling, backup, inline).
 - Studio Preview = UI + read-only statusy + launch subprocess/url + inline embed (F3).
 - Inline w Studio: `InlineHostView` + `Komponenty.<folder>.view` — bez importu `launcher.py`.
-- F2 state: `giclee_app/logs/studio_state.json` (gitignored).
+- F2 state (Preview): AppData `GicleeStudioPreview/data/studio/studio_state.json` (profil `studio_preview`); legacy `giclee_app/logs/studio_state.json` nietknięty.

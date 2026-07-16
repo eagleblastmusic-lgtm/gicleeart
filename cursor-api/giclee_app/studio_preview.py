@@ -38,9 +38,10 @@ def main() -> None:
     else:
         ctk.set_default_color_theme("dark-blue")
 
+    from giclee_app.app_profile import STUDIO_PREVIEW_PROFILE
     from giclee_app.launcher_studio import GicleeAppStudio
 
-    app = GicleeAppStudio()
+    app = GicleeAppStudio(profile=STUDIO_PREVIEW_PROFILE)
     app.mainloop()
 
 
