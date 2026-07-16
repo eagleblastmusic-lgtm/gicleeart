@@ -14,20 +14,31 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator
 
-from giclee_app.app_paths import log_path
+from giclee_app.app_paths import atomic_write_bytes, log_path
+from giclee_app.app_profile import STUDIO_PREVIEW_PROFILE, AppProfile
 
 _ENV_FLAG = "GICLEE_STUDIO_PERF"
 _LOG_RELATIVE_PATH = "giclee_app/studio_perf.log"
 _LEGACY_LOG_PATH = Path(__file__).resolve().parents[1] / "logs" / "studio_perf.log"
-_DEFAULT_LOG_PATH = log_path(
-    _LOG_RELATIVE_PATH,
-    legacy=_LEGACY_LOG_PATH,
-).write_path
+
+
+def studio_perf_store(profile: AppProfile | None = None):
+    """Shell/perf log Studio — namespace Preview (nie klasyczny GicleeApp)."""
+
+    active = profile or STUDIO_PREVIEW_PROFILE
+    return log_path(
+        _LOG_RELATIVE_PATH,
+        legacy=_LEGACY_LOG_PATH,
+        app_name=active.log_namespace,
+    )
+
+
+_DEFAULT_LOG_PATH = studio_perf_store().write_path
 _LOG_PATH = _DEFAULT_LOG_PATH
 
 
 def _store():
-    return log_path(_LOG_RELATIVE_PATH, legacy=_LEGACY_LOG_PATH)
+    return studio_perf_store()
 
 
 def _write_path() -> Path:
@@ -37,7 +48,18 @@ def _write_path() -> Path:
     if current != _DEFAULT_LOG_PATH:
         current.parent.mkdir(parents=True, exist_ok=True)
         return current
-    return _store().seed_from_legacy()
+
+    # Honor module-level defaults (tests may rebind them) instead of
+    # re-resolving roots from the current environment.
+    target = Path(_DEFAULT_LOG_PATH)
+    if target.exists():
+        return target
+    legacy = Path(_LEGACY_LOG_PATH)
+    if legacy.is_file():
+        atomic_write_bytes(target, legacy.read_bytes())
+        return target
+    target.parent.mkdir(parents=True, exist_ok=True)
+    return target
 
 
 def is_enabled() -> bool:

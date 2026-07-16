@@ -31,42 +31,52 @@ def _normalized_relative(value: str | PurePosixPath) -> Path:
     return Path(*parts)
 
 
-def _default_windows_root(env_name: str, fallback_leaf: str) -> Path:
+def _default_windows_root(
+    env_name: str,
+    fallback_leaf: str,
+    *,
+    app_name: str = APP_NAME,
+) -> Path:
     configured = os.environ.get(env_name, "").strip()
     if configured:
-        return Path(configured).expanduser()
+        root = Path(configured).expanduser()
+        # Env override is the classic GicleeApp root. Other namespaces
+        # (e.g. GicleeStudioPreview) resolve as siblings of that root.
+        if app_name == APP_NAME:
+            return root
+        return root.parent / app_name
 
     os_root_name = "LOCALAPPDATA" if env_name == _LOCAL_ROOT_ENV else "APPDATA"
     os_root = os.environ.get(os_root_name, "").strip()
     if os_root:
-        return Path(os_root) / APP_VENDOR / APP_NAME
+        return Path(os_root) / APP_VENDOR / app_name
 
     # Non-Windows and stripped test environments still need a deterministic,
     # user-owned location outside the repository.
-    return Path.home() / ".gicleeart" / APP_NAME / fallback_leaf
+    return Path.home() / ".gicleeart" / app_name / fallback_leaf
 
 
-def local_root() -> Path:
-    """Return the full Local AppData root for GicleeApp."""
+def local_root(*, app_name: str = APP_NAME) -> Path:
+    """Return the full Local AppData root for the given app namespace."""
 
-    return _default_windows_root(_LOCAL_ROOT_ENV, "local")
-
-
-def roaming_root() -> Path:
-    """Return the full Roaming AppData root for GicleeApp."""
-
-    return _default_windows_root(_ROAMING_ROOT_ENV, "roaming")
+    return _default_windows_root(_LOCAL_ROOT_ENV, "local", app_name=app_name)
 
 
-def bucket_root(bucket: Bucket) -> Path:
+def roaming_root(*, app_name: str = APP_NAME) -> Path:
+    """Return the full Roaming AppData root for the given app namespace."""
+
+    return _default_windows_root(_ROAMING_ROOT_ENV, "roaming", app_name=app_name)
+
+
+def bucket_root(bucket: Bucket, *, app_name: str = APP_NAME) -> Path:
     if bucket == "config":
-        return roaming_root() / "config"
+        return roaming_root(app_name=app_name) / "config"
     if bucket == "cache":
         # The accepted migration manifest stores cache-class files in the
         # Local AppData data bucket. Keep runtime resolution byte-for-byte
         # aligned with that destination contract.
-        return local_root() / "data"
-    return local_root() / bucket
+        return local_root(app_name=app_name) / "data"
+    return local_root(app_name=app_name) / bucket
 
 
 @dataclass(frozen=True)
@@ -76,10 +86,13 @@ class AppPath:
     relative: str
     bucket: Bucket
     legacy_path: Path | None = None
+    app_name: str = APP_NAME
 
     @property
     def write_path(self) -> Path:
-        return bucket_root(self.bucket) / _normalized_relative(self.relative)
+        return bucket_root(self.bucket, app_name=self.app_name) / _normalized_relative(
+            self.relative
+        )
 
     def read_path(self) -> Path:
         """Prefer AppData; use the legacy source-tree file only when necessary."""
@@ -114,24 +127,74 @@ class AppPath:
         return target
 
 
-def data_path(relative: str, *, legacy: Path | None = None) -> AppPath:
-    return AppPath(relative=relative, bucket="data", legacy_path=legacy)
+def data_path(
+    relative: str,
+    *,
+    legacy: Path | None = None,
+    app_name: str = APP_NAME,
+) -> AppPath:
+    return AppPath(
+        relative=relative,
+        bucket="data",
+        legacy_path=legacy,
+        app_name=app_name,
+    )
 
 
-def config_path(relative: str, *, legacy: Path | None = None) -> AppPath:
-    return AppPath(relative=relative, bucket="config", legacy_path=legacy)
+def config_path(
+    relative: str,
+    *,
+    legacy: Path | None = None,
+    app_name: str = APP_NAME,
+) -> AppPath:
+    return AppPath(
+        relative=relative,
+        bucket="config",
+        legacy_path=legacy,
+        app_name=app_name,
+    )
 
 
-def cache_path(relative: str, *, legacy: Path | None = None) -> AppPath:
-    return AppPath(relative=relative, bucket="cache", legacy_path=legacy)
+def cache_path(
+    relative: str,
+    *,
+    legacy: Path | None = None,
+    app_name: str = APP_NAME,
+) -> AppPath:
+    return AppPath(
+        relative=relative,
+        bucket="cache",
+        legacy_path=legacy,
+        app_name=app_name,
+    )
 
 
-def log_path(relative: str, *, legacy: Path | None = None) -> AppPath:
-    return AppPath(relative=relative, bucket="logs", legacy_path=legacy)
+def log_path(
+    relative: str,
+    *,
+    legacy: Path | None = None,
+    app_name: str = APP_NAME,
+) -> AppPath:
+    return AppPath(
+        relative=relative,
+        bucket="logs",
+        legacy_path=legacy,
+        app_name=app_name,
+    )
 
 
-def backup_path(relative: str, *, legacy: Path | None = None) -> AppPath:
-    return AppPath(relative=relative, bucket="backups", legacy_path=legacy)
+def backup_path(
+    relative: str,
+    *,
+    legacy: Path | None = None,
+    app_name: str = APP_NAME,
+) -> AppPath:
+    return AppPath(
+        relative=relative,
+        bucket="backups",
+        legacy_path=legacy,
+        app_name=app_name,
+    )
 
 
 def atomic_write_bytes(path: Path, data: bytes) -> None:

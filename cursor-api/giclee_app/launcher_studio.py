@@ -10,6 +10,7 @@ from collections.abc import Callable
 import customtkinter as ctk
 
 from giclee_app import __version__
+from giclee_app.app_profile import STUDIO_PREVIEW_PROFILE, AppProfile
 from giclee_app.component_loader import Component, find_components_dir
 from giclee_app.launcher_delegate import LaunchOutcome, launch
 from giclee_app.launcher_shortcuts import (
@@ -68,19 +69,20 @@ def _safe_int(value: object, lo: int, hi: int, default: int = 0) -> int:
 class GicleeAppStudio(ctk.CTk):
     """Preview shell — bez pollingów / backupów / synców z launcher.py."""
 
-    def __init__(self) -> None:
+    def __init__(self, profile: AppProfile | None = None) -> None:
         super().__init__()
+        self._profile = profile or STUDIO_PREVIEW_PROFILE
         with span("studio.component_index.build"):
             self._component_index = StudioComponentIndex.build()
         with span("studio.state.load"):
-            self._studio_state = StudioState.load()
+            self._studio_state = StudioState.load(profile=self._profile)
         pruned = False
         with span("studio.state.prune"):
             pruned = self._studio_state.prune(self._component_index.by_folder.keys())
         if pruned:
             self._studio_state.save()
 
-        self.title(f"{theme.APP_TITLE} · v{__version__} · {theme.PREVIEW_BADGE}")
+        self.title(f"{self._profile.window_title} · v{__version__}")
         self.configure(fg_color=theme.AppBg)
         w, h = theme.WindowDefault
         self.geometry(f"{w}x{h}")

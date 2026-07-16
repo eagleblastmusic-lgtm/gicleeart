@@ -8,13 +8,30 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+from ..app_paths import data_path
+from ..app_profile import STUDIO_PREVIEW_PROFILE, AppProfile
 from ..component_loader import Component
 
 STATE_VERSION = 1
 MAX_RECENT = 10
 MAX_PINNED = 20
 
-_DEFAULT_STATE_PATH = Path(__file__).resolve().parents[1] / "logs" / "studio_state.json"
+# Stary plik w drzewie źródłowym — pozostaje nietknięty (bez migracji destrukcyjnej).
+LEGACY_STATE_PATH = Path(__file__).resolve().parents[1] / "logs" / "studio_state.json"
+_STATE_RELATIVE = "studio/studio_state.json"
+
+
+def studio_state_store(profile: AppProfile | None = None):
+    """Zwraca AppPath stanu shella Studio dla danego profilu (domyślnie Preview)."""
+
+    active = profile or STUDIO_PREVIEW_PROFILE
+    return data_path(_STATE_RELATIVE, app_name=active.state_namespace)
+
+
+def default_state_path(profile: AppProfile | None = None) -> Path:
+    """Ścieżka zapisu stanu — bez tworzenia katalogów."""
+
+    return studio_state_store(profile).write_path
 
 
 @dataclass
@@ -51,12 +68,17 @@ class RecentEntry:
 class StudioState:
     recent: list[RecentEntry] = field(default_factory=list)
     pinned: list[str] = field(default_factory=list)
-    _path: Path = field(default_factory=lambda: _DEFAULT_STATE_PATH, repr=False)
+    _path: Path = field(default_factory=default_state_path, repr=False)
     _dirty: bool = field(default=False, repr=False)
 
     @classmethod
-    def load(cls, path: Path | None = None) -> StudioState:
-        target = path or _DEFAULT_STATE_PATH
+    def load(
+        cls,
+        path: Path | None = None,
+        *,
+        profile: AppProfile | None = None,
+    ) -> StudioState:
+        target = path if path is not None else default_state_path(profile)
         state = cls(_path=target)
         if not target.is_file():
             return state

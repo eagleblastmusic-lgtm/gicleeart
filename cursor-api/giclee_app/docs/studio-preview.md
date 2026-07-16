@@ -395,9 +395,31 @@ Checklista ręczna w Studio Preview — nie w CI.
 
 ## F2 — panel pracy (zachowane)
 
-- Lokalny state: `giclee_app/logs/studio_state.json`
+- Lokalny state shella Preview: AppData namespace `GicleeStudioPreview` → `data/studio/studio_state.json` (profil `studio_preview`)
+- Legacy repo path `giclee_app/logs/studio_state.json` pozostaje nietknięty (bez destrukcyjnej migracji)
 - Dashboard: statusy, pinned/recent, safe quick actions
 - Hub: sort pinned → recent, filtr trybu, PPM, card cache
+
+---
+
+## Runtime profiles and data ownership
+
+**STUDIO-ISOLATION-1** wprowadza jawne profile uruchomieniowe bez duplikowania aplikacji.
+
+| | |
+|---|---|
+| Wspólny kod | jeden pakiet `giclee_app` + `Komponenty/*` |
+| Osobne shelle | klasyczny `python -m giclee_app` · Preview `python -m giclee_app.studio_preview` |
+| Osobne dane UI/runtime | namespace `GicleeApp` vs `GicleeStudioPreview` (stan shella, shell/perf log) |
+| Wspólne dane biznesowe | produkty, zamówienia, motywy, backupy, sesja Shopify, dane komponentów |
+| Wspólne komponenty | discovery + launch przez `launcher_delegate` / inline host |
+| Usługi tła | **tylko** klasyczny launcher (sync, backup, publisher, polling) |
+| Shell logs | Studio Preview: `GicleeStudioPreview/logs/...` |
+| Component/business logs | wspólne pod `GicleeApp/logs/components/` (bez przenoszenia w tym etapie) |
+
+Moduły: `app_profile.py` (kontrakt profilu), `app_paths.py` (resolver ścieżek z `app_name`).
+
+Następny etap: **STUDIO-ISOLATION-2** — component availability and stability channels (pole `availability` / kanały stabilności). Nie jest częścią tego slice’u.
 
 ---
 
