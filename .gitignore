@@ -31,6 +31,7 @@ venv/
 .env.*
 !.env.example
 .shopify-store-password.local
+.shopify_session.json
 
 # Artefakty audytu / tymczasowe (korzeń repo)
 _audit*
