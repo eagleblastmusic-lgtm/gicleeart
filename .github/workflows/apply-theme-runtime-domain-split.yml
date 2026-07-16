@@ -1,0 +1,97 @@
+name: Apply theme runtime domain split
+
+on:
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  apply-split:
+    if: github.event.pull_request.head.ref == 'gpt-work/theme-runtime-domain-split'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - name: Split runtime into domain snippets
+        shell: bash
+        run: |
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          root = Path.cwd()
+          snippets = root / 'snippets'
+          parent_path = snippets / 'giclee-theme-runtime.liquid'
+          runtime_test = root / 'cursor-api/tests/test_theme_liquid_runtime_extraction.py'
+          css_test = root / 'cursor-api/tests/test_theme_liquid_inline_overrides_extraction.py'
+          runtime_doc = root / 'cursor-api/docs/theme-liquid-runtime.md'
+          css_doc = root / 'cursor-api/docs/theme-liquid-inline-overrides.md'
+
+          expected_parent_sha = '52648125da4c7c0ea6dc773032b77acc7fbd821225193c4bdf91fa7c1efe2d69'
+          child_specs = (
+              ('general', 0, 58, 'bff4c3288415986ecd509f5687f64f4778f3f6e702072f8831409c56fccdcc1c'),
+              ('navigation', 58, 543, '2821ea0013807794ae8442aa56d97fae1d2c4470edf548d186ffb7376280d404'),
+              ('photo-mockup', 543, 1477, '23d3452b47a1a13a2973baff538ba32d6b5d3cbf36682b286eedaab1d765a7b1'),
+              ('footer', 1477, 1526, '8a33ce6ddca2be2cd4f6b721c2e4990f7efa417753b7dc5a5a7b69ec5ff70b7e'),
+          )
+
+          parent = parent_path.read_text(encoding='utf-8')
+          markers = ''.join(
+              "{% render 'giclee-theme-runtime-" + name + "' %}\n"
+              for name, *_ in child_specs
+          )
+
+          if parent != markers:
+              if sha256(parent.encode('utf-8')).hexdigest() != expected_parent_sha:
+                  raise SystemExit('unexpected pre-split runtime digest')
+              lines = parent.splitlines(keepends=True)
+              if len(parent.splitlines()) != 1526:
+                  raise SystemExit('unexpected pre-split runtime line count')
+              reconstructed = markers
+              for name, start, end, expected_sha in child_specs:
+                  block = ''.join(lines[start:end])
+                  if len(block.splitlines()) != end - start:
+                      raise SystemExit(f'{name}: unexpected line count')
+                  if sha256(block.encode('utf-8')).hexdigest() != expected_sha:
+                      raise SystemExit(f'{name}: unexpected digest')
+                  (snippets / f'giclee-theme-runtime-{name}.liquid').write_text(
+                      block,
+                      encoding='utf-8',
+                  )
+                  reconstructed = reconstructed.replace(
+                      "{% render 'giclee-theme-runtime-" + name + "' %}\n",
+                      block,
+                      1,
+                  )
+              if reconstructed != parent:
+                  raise SystemExit('runtime child reconstruction failed')
+              parent_path.write_text(markers, encoding='utf-8')
+
+          runtime_test.write_text('''"""Composition contract for the extracted post-layout theme runtime."""\n\nfrom __future__ import annotations\n\nfrom hashlib import sha256\nfrom pathlib import Path\n\nROOT = Path(__file__).resolve().parents[2]\nTHEME = ROOT / "layout" / "theme.liquid"\nSNIPPETS = ROOT / "snippets"\nPARENT = SNIPPETS / "giclee-theme-runtime.liquid"\nTHEME_RENDER_MARKER = "{% render 'giclee-theme-runtime' %}\\n"\nEXPECTED_RUNTIME_SHA256 = "52648125da4c7c0ea6dc773032b77acc7fbd821225193c4bdf91fa7c1efe2d69"\nEXPECTED_PRE_RUNTIME_THEME_SHA256 = "dc831ecc3eb615144af03b40213e3a2b3700bdd45e9cb058742a22493f9bbaec"\nCHILDREN = (\n    ("general", 58, "bff4c3288415986ecd509f5687f64f4778f3f6e702072f8831409c56fccdcc1c"),\n    ("navigation", 485, "2821ea0013807794ae8442aa56d97fae1d2c4470edf548d186ffb7376280d404"),\n    ("photo-mockup", 934, "23d3452b47a1a13a2973baff538ba32d6b5d3cbf36682b286eedaab1d765a7b1"),\n    ("footer", 49, "8a33ce6ddca2be2cd4f6b721c2e4990f7efa417753b7dc5a5a7b69ec5ff70b7e"),\n)\n\n\ndef _compose_runtime() -> str:\n    composed = PARENT.read_text(encoding="utf-8")\n    for name, _line_count, _digest in CHILDREN:\n        marker = "{% render 'giclee-theme-runtime-" + name + "' %}\\n"\n        block = (SNIPPETS / f"giclee-theme-runtime-{name}.liquid").read_text(encoding="utf-8")\n        assert composed.count(marker) == 1\n        composed = composed.replace(marker, block, 1)\n    return composed\n\n\ndef test_theme_renders_runtime_parent_once_before_body_close() -> None:\n    theme = THEME.read_text(encoding="utf-8")\n    assert theme.count(THEME_RENDER_MARKER) == 1\n    assert theme.index(THEME_RENDER_MARKER) < theme.index("</body>")\n    assert len(theme.splitlines()) == 353\n\n\ndef test_runtime_parent_declares_domain_order_only() -> None:\n    parent = PARENT.read_text(encoding="utf-8")\n    expected = "".join(\n        "{% render 'giclee-theme-runtime-" + name + "' %}\\n"\n        for name, *_ in CHILDREN\n    )\n    assert parent == expected\n    assert len(parent.splitlines()) == 4\n\n\ndef test_runtime_children_preserve_exact_mechanical_blocks() -> None:\n    for name, line_count, digest in CHILDREN:\n        block = (SNIPPETS / f"giclee-theme-runtime-{name}.liquid").read_text(encoding="utf-8")\n        assert len(block.splitlines()) == line_count\n        assert sha256(block.encode("utf-8")).hexdigest() == digest\n\n\ndef test_runtime_domains_keep_expected_ownership_boundaries() -> None:\n    general = (SNIPPETS / "giclee-theme-runtime-general.liquid").read_text(encoding="utf-8")\n    navigation = (SNIPPETS / "giclee-theme-runtime-navigation.liquid").read_text(encoding="utf-8")\n    photo = (SNIPPETS / "giclee-theme-runtime-photo-mockup.liquid").read_text(encoding="utf-8")\n    footer = (SNIPPETS / "giclee-theme-runtime-footer.liquid").read_text(encoding="utf-8")\n    assert "giclee-catalog-panel" in general\n    assert "MALE_ORG.webp" in navigation\n    assert "pm-cart-product-data" in photo\n    assert "assign pm_cart_product = product" in photo\n    assert "giclee-site-notice" in footer\n    assert "enhanceFaqA11y" in footer\n\n\ndef test_runtime_children_recompose_original_region_and_theme() -> None:\n    runtime = _compose_runtime()\n    assert len(runtime.splitlines()) == 1526\n    assert sha256(runtime.encode("utf-8")).hexdigest() == EXPECTED_RUNTIME_SHA256\n\n    theme = THEME.read_text(encoding="utf-8")\n    reconstructed = theme.replace(THEME_RENDER_MARKER, runtime, 1)\n    assert len(reconstructed.splitlines()) == 1878\n    assert sha256(reconstructed.encode("utf-8")).hexdigest() == EXPECTED_PRE_RUNTIME_THEME_SHA256\n''', encoding='utf-8')
+
+          css_test.write_text('''"""Mechanical extraction contract for the large inline theme CSS block."""\n\nfrom __future__ import annotations\n\nfrom hashlib import sha256\nfrom pathlib import Path\n\nROOT = Path(__file__).resolve().parents[2]\nTHEME = ROOT / "layout" / "theme.liquid"\nSNIPPET = ROOT / "snippets" / "giclee-theme-inline-overrides.liquid"\nRENDER_MARKER = "  {% render 'giclee-theme-inline-overrides' %}"\nEXPECTED_SNIPPET_SHA256 = "c50a2cc71a70084bec5d062fc954e1b0b47adacd120fbb48b304a6cc7605c69a"\n\n\ndef test_theme_renders_extracted_inline_overrides_once() -> None:\n    theme = THEME.read_text(encoding="utf-8")\n    assert theme.count(RENDER_MARKER) == 1\n    assert theme.index(RENDER_MARKER) < theme.index("{% render 'skip-to-content-link'")\n\n\ndef test_extracted_snippet_preserves_the_mechanical_source_block() -> None:\n    snippet = SNIPPET.read_text(encoding="utf-8")\n    assert len(snippet.splitlines()) == 1277\n    assert sha256(snippet.encode("utf-8")).hexdigest() == EXPECTED_SNIPPET_SHA256\n    assert snippet.startswith("  <style>\\n    #page-transition {")\n    assert snippet.endswith("  </style>")\n    assert snippet.count("<style>") == 1\n    assert snippet.count("</style>") == 1\n\n\ndef test_liquid_conditions_remain_inside_the_extracted_snippet() -> None:\n    snippet = SNIPPET.read_text(encoding="utf-8")\n    required = (\n        "{% if template.suffix == 'faq' %}",\n        "{% if request.page_type == 'page' %}",\n        "{% if template.suffix == 'contact' %}",\n        "{% if template.suffix == 'fotografia-obraz' or template.suffix == 'szablon-wlasna-fotografia' %}",\n        "{% if template.suffix == 'giclee-frame' %}",\n    )\n    for token in required:\n        assert token in snippet\n\n\ndef test_reinserting_css_restores_the_intermediate_layout_layer() -> None:\n    theme = THEME.read_text(encoding="utf-8")\n    css_snippet = SNIPPET.read_text(encoding="utf-8")\n    with_css = theme.replace(RENDER_MARKER, css_snippet, 1)\n    assert len(theme.splitlines()) == 353\n    assert len(with_css.splitlines()) == 1629\n''', encoding='utf-8')
+
+          runtime_doc.write_text('''# Theme post-layout runtime composition\n\n`layout/theme.liquid` renders a thin runtime composition root:\n\n```text\nsnippets/giclee-theme-runtime.liquid\n```
+\nThe parent owns ordering only and renders four mechanically extracted domains:\n\n- `giclee-theme-runtime-general.liquid` — divider, accordion, product-card and catalog-panel behavior;\n- `giclee-theme-runtime-navigation.liquid` — homepage/mobile and page-transition runtime;\n- `giclee-theme-runtime-photo-mockup.liquid` — conditional photo-mockup product data and UI runtime;\n- `giclee-theme-runtime-footer.liquid` — link normalization, site notice and FAQ accessibility.\n\n## Contract\n\n- child order is fixed;\n- each child has a recorded line count and SHA-256;\n- recomposing all children must reproduce the original 1,526-line runtime region;\n- reinserting that region into the layout must reproduce the pre-runtime-extraction theme byte-for-byte;\n- critical head and header-height scripts remain in `layout/theme.liquid`;\n- no deploy or live-theme mutation is implied.\n''', encoding='utf-8')
+
+          css_doc.write_text('''# Theme inline overrides extraction\n\nThe large conditional CSS layer previously embedded in `layout/theme.liquid` lives in:\n\n```text\nsnippets/giclee-theme-inline-overrides.liquid\n```\n\nThe layout renders it at the original location, immediately after splash markup and before `skip-to-content-link`. It remains Liquid because it contains request/template-dependent conditions.\n\n## Contract\n\n- mechanical move only;\n- the snippet line count and SHA-256 are fixed by regression tests;\n- reinserting the CSS snippet restores the intermediate layout layer;\n- the separate runtime-composition contract verifies reconstruction of the complete historical layout;\n- no deploy or live-theme mutation is implied.\n''', encoding='utf-8')
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add snippets/giclee-theme-runtime*.liquid \
+                  cursor-api/tests/test_theme_liquid_runtime_extraction.py \
+                  cursor-api/tests/test_theme_liquid_inline_overrides_extraction.py \
+                  cursor-api/docs/theme-liquid-runtime.md \
+                  cursor-api/docs/theme-liquid-inline-overrides.md
+          if git diff --cached --quiet; then
+            echo "Runtime domain split already applied."
+            exit 0
+          fi
+          git commit -m "Split theme runtime by domain"
+          git push origin HEAD:${{ github.head_ref }}
