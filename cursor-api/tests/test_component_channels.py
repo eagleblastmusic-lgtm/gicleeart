@@ -1,4 +1,4 @@
-"""STUDIO-ISOLATION-2: availability and stability channel contracts."""
+"""STUDIO-ISOLATION-2/3: availability and stability channel contracts."""
 
 from __future__ import annotations
 
@@ -9,7 +9,12 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from giclee_app.app_profile import CLASSIC_PROFILE, STUDIO_PREVIEW_PROFILE
+from giclee_app.app_profile import (
+    CLASSIC_PROFILE,
+    STUDIO_PREVIEW_PROFILE,
+    STUDIO_PROFILE,
+    app_profile_context,
+)
 from giclee_app.component_loader import (
     DEFAULT_COMPONENT_AVAILABILITY,
     DEFAULT_COMPONENT_STABILITY,
@@ -41,6 +46,12 @@ def _component(folder: str, *, availability: tuple[str, ...], stability: str = "
         availability=availability,
         stability=stability,
     )
+
+
+def _build_index(components: list[Component], *, profile=None) -> StudioComponentIndex:  # noqa: ANN001
+    with patch("giclee_app.studio.component_index.find_components_dir", return_value=Path("/fake")):
+        with patch("giclee_app.studio.component_index.discover_components", return_value=components):
+            return StudioComponentIndex.build(profile=profile)
 
 
 def test_manifest_without_channel_fields_preserves_existing_behavior(tmp_path: Path) -> None:
@@ -108,9 +119,7 @@ def test_preview_index_filters_components_by_profile() -> None:
         _component("preview_only", availability=("studio_preview",), stability="preview"),
     ]
 
-    with patch("giclee_app.studio.component_index.find_components_dir", return_value=Path("/fake")):
-        with patch("giclee_app.studio.component_index.discover_components", return_value=components):
-            index = StudioComponentIndex.build(profile=STUDIO_PREVIEW_PROFILE)
+    index = _build_index(components, profile=STUDIO_PREVIEW_PROFILE)
 
     assert index.profile_id == "studio_preview"
     assert [c.folder_name for c in index.all_components] == [
@@ -129,17 +138,52 @@ def test_classic_profile_can_build_a_distinct_index_contract() -> None:
         _component("preview_only", availability=("studio_preview",)),
     ]
 
-    with patch("giclee_app.studio.component_index.find_components_dir", return_value=Path("/fake")):
-        with patch("giclee_app.studio.component_index.discover_components", return_value=components):
-            index = StudioComponentIndex.build(profile=CLASSIC_PROFILE)
+    index = _build_index(components, profile=CLASSIC_PROFILE)
 
     assert index.profile_id == "classic"
     assert set(index.by_folder) == {"classic_only"}
 
 
-def test_default_studio_index_remains_preview_profile() -> None:
-    with patch("giclee_app.studio.component_index.find_components_dir", return_value=Path("/fake")):
-        with patch("giclee_app.studio.component_index.discover_components", return_value=[]):
-            index = StudioComponentIndex.build()
+def test_production_studio_requires_availability_and_stable_channel() -> None:
+    components = [
+        _component("stable_studio", availability=("studio",), stability="stable"),
+        _component("preview_studio", availability=("studio",), stability="preview"),
+        _component("experimental_studio", availability=("studio",), stability="experimental"),
+        _component("legacy_studio", availability=("studio",), stability="legacy"),
+        _component("stable_preview_only", availability=("studio_preview",), stability="stable"),
+    ]
 
-    assert index.profile_id == STUDIO_PREVIEW_PROFILE.profile_id
+    index = _build_index(components, profile=STUDIO_PROFILE)
+
+    assert index.profile_id == "studio"
+    assert set(index.by_folder) == {"stable_studio"}
+    assert index.availability_counts() == (5, 1, 1)
+
+
+def test_preview_accepts_nonstable_channels() -> None:
+    components = [
+        _component("preview", availability=("studio_preview",), stability="preview"),
+        _component("experimental", availability=("studio_preview",), stability="experimental"),
+        _component("legacy", availability=("studio_preview",), stability="legacy"),
+    ]
+
+    index = _build_index(components, profile=STUDIO_PREVIEW_PROFILE)
+
+    assert set(index.by_folder) == {"preview", "experimental", "legacy"}
+
+
+def test_default_index_uses_scoped_profile_or_preview_fallback() -> None:
+    components = [
+        _component("stable_studio", availability=("studio",), stability="stable"),
+        _component("preview_only", availability=("studio_preview",), stability="preview"),
+    ]
+
+    fallback = _build_index(components)
+    assert fallback.profile_id == STUDIO_PREVIEW_PROFILE.profile_id
+    assert set(fallback.by_folder) == {"preview_only"}
+
+    with app_profile_context(STUDIO_PROFILE):
+        production = _build_index(components)
+
+    assert production.profile_id == STUDIO_PROFILE.profile_id
+    assert set(production.by_folder) == {"stable_studio"}
