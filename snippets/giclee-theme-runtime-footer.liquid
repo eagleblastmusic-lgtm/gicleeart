@@ -1,0 +1,49 @@
+  <script>
+    (function() {
+      var handle = 'twoje-zdjecie-jako-wydruk-giclee-na-papierze-fine-art-w-drewnianej-ramie';
+      var productPath = '/products/' + handle;
+      function fixWlasnaFotografiaLinks() {
+        document.querySelectorAll('a[href*="/pages/fotografia-obraz"]').forEach(function(a) {
+          a.setAttribute('href', productPath);
+        });
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', fixWlasnaFotografiaLinks);
+      } else {
+        fixWlasnaFotografiaLinks();
+      }
+    })();
+  </script>
+  {% render 'giclee-site-notice' %}
+  {% if template.suffix == 'faq' %}
+  <script>
+    /* FAQ a11y — progresywne ulepszenie tylko na stronie FAQ (treść bez zmian) */
+    (function () {
+      function enhanceFaqA11y() {
+        var items = document.querySelectorAll('.accordion accordion-custom');
+        items.forEach(function (item, i) {
+          var details = item.querySelector('details');
+          if (!details) return;
+          var summary = details.querySelector('summary');
+          var content = details.querySelector('.details-content');
+          if (!summary) return;
+
+          if (content) {
+            if (!content.id) content.id = 'faq-answer-' + (i + 1);
+            summary.setAttribute('aria-controls', content.id);
+          }
+          summary.setAttribute('aria-expanded', details.open ? 'true' : 'false');
+
+          details.addEventListener('toggle', function () {
+            summary.setAttribute('aria-expanded', details.open ? 'true' : 'false');
+          });
+        });
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', enhanceFaqA11y);
+      } else {
+        enhanceFaqA11y();
+      }
+    })();
+  </script>
+  {% endif %}

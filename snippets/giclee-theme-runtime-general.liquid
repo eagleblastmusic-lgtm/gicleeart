@@ -1,0 +1,58 @@
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.animation = 'draw-line 1.2s ease-out forwards';
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  document.querySelectorAll('.divider__line').forEach(el => {
+    if (el.closest('.giclee-home-stack-divider--scroll')) return;
+    el.style.flexBasis = '0%';
+    observer.observe(el);
+  });
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const accordionSection = document.querySelectorAll('.accordion');
+
+    accordionSection.forEach(function (section) {
+      const details = section.querySelectorAll('details');
+
+      details.forEach(function (detail) {
+        detail.addEventListener('toggle', function () {
+          if (detail.open) {
+            details.forEach(function (other) {
+              if (other !== detail && other.open) {
+                other.removeAttribute('open');
+              }
+            });
+          }
+        });
+      });
+    });
+  });
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const cards = document.querySelectorAll('.product-grid .product-media');
+  cards.forEach(function(card, index) {
+    card.style.animationDelay = (0.05 + index * 0.1) + 's';
+  });
+});
+</script>
+
+{%- render 'giclee-catalog-panel', part: 'script' -%}
+
+
+
+
+
+
+
+
+
