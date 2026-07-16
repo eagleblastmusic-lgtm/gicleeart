@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from giclee_app.app_paths import atomic_write_bytes, log_path
-from giclee_app.app_profile import STUDIO_PREVIEW_PROFILE, AppProfile
+from giclee_app.app_profile import STUDIO_PREVIEW_PROFILE, AppProfile, current_profile
 
 _ENV_FLAG = "GICLEE_STUDIO_PERF"
 _LOG_RELATIVE_PATH = "giclee_app/studio_perf.log"
@@ -23,9 +23,9 @@ _LEGACY_LOG_PATH = Path(__file__).resolve().parents[1] / "logs" / "studio_perf.l
 
 
 def studio_perf_store(profile: AppProfile | None = None):
-    """Shell/perf log Studio — namespace Preview (nie klasyczny GicleeApp)."""
+    """Shell/perf log Studio w namespace aktywnego profilu."""
 
-    active = profile or STUDIO_PREVIEW_PROFILE
+    active = profile or current_profile(STUDIO_PREVIEW_PROFILE)
     return log_path(
         _LOG_RELATIVE_PATH,
         legacy=_LEGACY_LOG_PATH,
@@ -48,10 +48,10 @@ def _write_path() -> Path:
     if current != _DEFAULT_LOG_PATH:
         current.parent.mkdir(parents=True, exist_ok=True)
         return current
-
-    # Honor module-level defaults (tests may rebind them) instead of
-    # re-resolving roots from the current environment.
-    target = Path(_DEFAULT_LOG_PATH)
+    # The module is imported inside the entrypoint's scoped profile context.
+    # Re-resolve here as well so tests and delayed imports keep the active
+    # namespace without mutating a process-global profile switch.
+    target = Path(_store().write_path)
     if target.exists():
         return target
     legacy = Path(_LEGACY_LOG_PATH)
