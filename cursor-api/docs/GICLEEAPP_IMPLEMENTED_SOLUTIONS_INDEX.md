@@ -2,7 +2,7 @@
 
 Hub warstwy API: [`README.md`](README.md) · Launcher: [`../giclee_app/docs/README.md`](../giclee_app/docs/README.md) · Logika per komponent: [`komponenty/README.md`](komponenty/README.md) · Moduły `_shared`: [`shared.md`](shared.md)
 
-**Ostatnia aktualizacja indeksu:** 2026-07-12
+**Ostatnia aktualizacja indeksu:** 2026-07-16
 
 ---
 
@@ -173,9 +173,19 @@ Dokumentacja biznesowa: [`komponenty/README.md`](komponenty/README.md)
 
 ### `component.json` — typowe pola
 
-`name`, `description`, `icon`, `color`, `order`, `mode`, `url`, `hidden`, `inline_width`, `inline_height`, `inline_min_width`, `inline_min_height`
+`name`, `description`, `icon`, `color`, `order`, `mode`, `url`, `hidden`, `inline_width`, `inline_height`, `inline_min_width`, `inline_min_height`, `availability`, `stability`
 
 Checklist: [`component-loader.md`](../giclee_app/docs/component-loader.md)
+
+### Profile i kanały komponentów
+
+| Pole | Dozwolone wartości | Zachowanie bez pola |
+|------|---------------------|---------------------|
+| `availability` | `classic`, `studio_preview`, `studio` | Dostępny we wszystkich profilach |
+| `stability` | `stable`, `preview`, `experimental`, `legacy` | `stable` |
+
+Produkcyjne Studio wymaga jednocześnie `availability: studio` i `stability: stable`.
+Preview może pokazywać wszystkie kanały. Szczegóły: [`component-channels.md`](../giclee_app/docs/component-channels.md) i [`studio-production-profile.md`](../giclee_app/docs/studio-production-profile.md).
 
 ### Gdzie dopisać poza folderem komponentu
 
@@ -351,6 +361,22 @@ Otwarcie w Explorerze / Finderze — powtarzany wzorzec `subprocess` (`explorer 
 
 ---
 
+## Zakończona izolacja i refaktor
+
+Zakres stabilizacji RC1, STUDIO-ISOLATION-1 — 3 i bezpiecznej konsolidacji repozytorium został zamknięty 2026-07-16. Kanoniczny raport: [`GICLEEAPP_REFACTOR_COMPLETION_2026-07-16.md`](GICLEEAPP_REFACTOR_COMPLETION_2026-07-16.md).
+
+Wdrożone wzorce, których nie należy tworzyć drugi raz:
+
+- niemutowalne profile `classic`, `studio_preview`, `studio` z osobnymi namespace stanu/logów;
+- availability/stability komponentów;
+- bezpośrednie service wiring Theme Page Editor bez bootstrap monkey-patcha;
+- conditional CSS i runtime motywu jako testowane kompozycje Liquid;
+- jedno źródło wersji desktop;
+- security contract, tracked-large-file guard i runtime source-write inventory;
+- kontrolowany retry CI tylko dla dokładnej przejściowej awarii Tcl/Tk.
+
+---
+
 ## Guardrails
 
 | Zasada | Szczegół |
@@ -358,7 +384,7 @@ Otwarcie w Explorerze / Finderze — powtarzany wzorzec `subprocess` (`explorer 
 | Nie ruszać motywu Shopify | Przy lokalnych komponentach GicleeApp — chyba że zadanie dotyczy theme editora |
 | Nie ruszać PDP / homepage / Giclée Frame | Bez wyraźnego sygnału w zadaniu |
 | Mockup katalogowy ≠ mockup klienta | `Komponenty/mockup/` vs motyw + Worker |
-| Nie commitować | Bez polecenia użytkownika |
+| Nie commitować bezpośrednio do `master` | Branch zadaniowy → PR → exact-head CI → squash merge |
 | Nie generować ZIP | Bez polecenia użytkownika |
 | Nie dublować helperów | Sprawdź `_shared/` i ten indeks przed nowym kodem |
 | `_shared` nie jest komponentem | Importuj moduły, nie kopiuj plików |
@@ -388,4 +414,11 @@ Otwarcie w Explorerze / Finderze — powtarzany wzorzec `subprocess` (`explorer 
 | [`../giclee_app/docs/component-loader.md`](../giclee_app/docs/component-loader.md) | Discovery, checklist nowego komponentu |
 | [`../giclee_app/docs/launcher.md`](../giclee_app/docs/launcher.md) | Sekcje kafelków, toolbar |
 | [`../giclee_app/docs/studio-save-pattern.md`](../giclee_app/docs/studio-save-pattern.md) | Wzorzec zapisu Studio |
-| [`../giclee_app/docs/studio-preview.md`](../giclee_app/docs/studio-preview.md) | Shell Studio (CTk) |
+| [`../giclee_app/docs/studio-preview.md`](../giclee_app/docs/studio-preview.md) | Shell Studio Preview (CTk) |
+| [`../giclee_app/docs/component-channels.md`](../giclee_app/docs/component-channels.md) | Availability i stability komponentów |
+| [`../giclee_app/docs/studio-production-profile.md`](../giclee_app/docs/studio-production-profile.md) | Produkcyjny profil Giclée Studio |
+| [`GICLEEAPP_REFACTOR_COMPLETION_2026-07-16.md`](GICLEEAPP_REFACTOR_COMPLETION_2026-07-16.md) | Zamknięcie izolacji i refaktoru |
+| [`versioning.md`](versioning.md) | Kanoniczne źródło wersji desktop |
+| [`theme-liquid-runtime.md`](theme-liquid-runtime.md) | Kompozycja runtime motywu |
+| [`tracked-large-files.md`](tracked-large-files.md) | Guard dużych plików w historii Git |
+| [`../../SECURITY.md`](../../SECURITY.md) | Security i secret-handling policy |
