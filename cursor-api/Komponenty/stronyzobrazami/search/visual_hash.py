@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from io import BytesIO
+from typing import Any
 
 from PIL import Image
 
@@ -16,11 +17,24 @@ def _load_rgb(data: bytes | Image.Image) -> Image.Image:
     return img
 
 
+def _flattened_pixels(img: Image.Image) -> list[Any]:
+    """Use Pillow's non-deprecated flattened-data API when available.
+
+    Pillow versions predating ``get_flattened_data`` remain supported through
+    ``getdata``; those versions do not emit the newer deprecation warning.
+    """
+
+    getter = getattr(img, "get_flattened_data", None)
+    if callable(getter):
+        return list(getter())
+    return list(img.getdata())
+
+
 def dhash(data: bytes | Image.Image, *, size: int = 9) -> int:
     """Difference hash — 64 bity (size=9 -> 8x8 roznic)."""
     img = _load_rgb(data)
     img = img.resize((size, size - 1), Image.Resampling.LANCZOS)
-    pixels = list(img.getdata())
+    pixels = _flattened_pixels(img)
     w = size
     bits = 0
     bit = 0
