@@ -341,8 +341,59 @@ jobs:
             Tee-Object -FilePath "$reportRoot\pytest.txt"
 
           $exitCode = $LASTEXITCODE
+          $transient = "false"
+          if ($exitCode -ne 0) {
+            $transient = (python tools/stage2_tcl_failure.py "$reportRoot\pytest.txt").Trim().ToLowerInvariant()
+            if ($LASTEXITCODE -ne 0) {
+              throw "Nie udało się sklasyfikować wyniku pełnego pytest."
+            }
+          }
+
           "exit_code=$exitCode" >> $env:GITHUB_OUTPUT
-          exit $exitCode
+          "transient_tcl_failure=$transient" >> $env:GITHUB_OUTPUT
+          exit 0
+
+      - name: Prepare fresh Tcl/Tk runtime for transient retry
+        if: steps.full_pytest.outputs.transient_tcl_failure == 'true'
+        shell: pwsh
+        run: .\.github\scripts\prepare-tk-runtime.ps1 -RuntimeName "full-baseline-retry"
+
+      - name: Run full pytest baseline retry
+        id: full_pytest_retry
+        if: steps.full_pytest.outputs.transient_tcl_failure == 'true'
+        working-directory: cursor-api
+        shell: pwsh
+        run: |
+          $reportRoot = Join-Path $env:RUNNER_TEMP "stage2-full-baseline-reports"
+
+          python -m pytest -q `
+            --junitxml="$reportRoot\junit-retry.xml" 2>&1 |
+            Tee-Object -FilePath "$reportRoot\pytest-retry.txt"
+
+          $exitCode = $LASTEXITCODE
+          "exit_code=$exitCode" >> $env:GITHUB_OUTPUT
+          exit 0
+
+      - name: Enforce full pytest baseline result
+        if: always()
+        shell: pwsh
+        run: |
+          $initialExit = "${{ steps.full_pytest.outputs.exit_code }}"
+          $transient = "${{ steps.full_pytest.outputs.transient_tcl_failure }}"
+          $retryExit = "${{ steps.full_pytest_retry.outputs.exit_code }}"
+
+          if (-not $initialExit) {
+            throw "Brak kodu wyjścia pierwszego pełnego pytest."
+          }
+          if ($initialExit -eq "0") {
+            exit 0
+          }
+          if ($transient -ne "true") {
+            throw "Pełny pytest zakończył się błędem nietransientnym (exit=$initialExit)."
+          }
+          if ($retryExit -ne "0") {
+            throw "Jednorazowy retry pełnego pytest nie przeszedł (exit=$retryExit)."
+          }
 
       - name: Write baseline summary
         if: always()
@@ -354,8 +405,10 @@ jobs:
           - runner: windows-2022
           - warm-up: exact historical failing test on the same runner
           - pre-baseline mirror verification: path + length + SHA-256 and Tk/ttk preflight
-          - pytest step outcome: ${{ steps.full_pytest.outcome }}
-          - pytest exit code: ${{ steps.full_pytest.outputs.exit_code }}
+          - initial pytest exit code: ${{ steps.full_pytest.outputs.exit_code }}
+          - exact transient Tcl/Tk signature: ${{ steps.full_pytest.outputs.transient_tcl_failure }}
+          - retry pytest exit code: ${{ steps.full_pytest_retry.outputs.exit_code }}
+          - retry policy: at most once, whole suite, fresh Tcl/Tk mirror and fresh Python process
           - mode: blocking baseline; evidence is uploaded on every outcome
           - application runtime roots: isolated under RUNNER_TEMP
           - Tcl/Tk runtime: per-run RUNNER_TEMP mirror

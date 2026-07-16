@@ -5,6 +5,10 @@ from pathlib import Path
 
 import pytest
 
+from tools.stage2_tcl_failure import (
+    classify_file,
+    is_transient_tcl_runtime_output,
+)
 from tools.stage2_tcl_retry import (
     call_tk_init_with_transient_retry,
     ci_tcl_retry_enabled,
@@ -69,6 +73,34 @@ def test_runtime_detector_accepts_init_and_tk_signatures_only() -> None:
     )
     assert not is_transient_tcl_runtime_error(
         tk.TclError("no display name and no $DISPLAY environment variable")
+    )
+
+
+def test_pytest_output_classifier_accepts_exact_hosted_runtime_failures(tmp_path: Path) -> None:
+    usable = """
+    E   _tkinter.TclError: Can't find a usable init.tcl in the following directories
+    """
+    unreadable = r"""
+    E   _tkinter.TclError: couldn't read file "D:\a\_temp\runtime\tcl8.6\init.tcl": No error
+    """
+
+    assert is_transient_tcl_runtime_output(usable)
+    assert is_transient_tcl_runtime_output(unreadable)
+
+    report = tmp_path / "pytest.txt"
+    report.write_text(unreadable, encoding="utf-8")
+    assert classify_file(report)
+
+
+def test_pytest_output_classifier_rejects_unrelated_or_quoted_text() -> None:
+    assert not is_transient_tcl_runtime_output(
+        "AssertionError: expected Can't find a usable init.tcl"
+    )
+    assert not is_transient_tcl_runtime_output(
+        "_tkinter.TclError: no display name and no $DISPLAY environment variable"
+    )
+    assert not is_transient_tcl_runtime_output(
+        "requests.ConnectionError: couldn't read file init.tcl"
     )
 
 
@@ -186,3 +218,18 @@ def test_stage2_workflow_uses_mirror_and_verify_only_before_full_pytest() -> Non
     assert 'continue-on-error: true' not in workflow
     assert 'stage2-full-baseline-${{ github.run_id }}' in workflow
     assert 'if: always()' in workflow
+
+
+def test_stage2_workflow_retries_whole_suite_once_only_for_exact_tcl_signature() -> None:
+    workflow = _repo_file(".github/workflows/stage2-ci-baseline.yml")
+
+    assert 'transient_tcl_failure' in workflow
+    assert 'python tools/stage2_tcl_failure.py "$reportRoot\\pytest.txt"' in workflow
+    assert 'Prepare fresh Tcl/Tk runtime for transient retry' in workflow
+    assert '-RuntimeName "full-baseline-retry"' in workflow
+    assert 'Run full pytest baseline retry' in workflow
+    assert '--junitxml="$reportRoot\\junit-retry.xml"' in workflow
+    assert 'Tee-Object -FilePath "$reportRoot\\pytest-retry.txt"' in workflow
+    assert workflow.count("steps.full_pytest.outputs.transient_tcl_failure == 'true'") >= 2
+    assert 'Enforce full pytest baseline result' in workflow
+    assert 'continue-on-error' not in workflow
