@@ -4,5 +4,6 @@ Po starcie wyswietla siatke kafelkow - po jednym dla kazdego komponentu wykryteg
 (`python -m Komponenty.<nazwa>`).
 """
 
-# Trzymaj zgodne z `cursor-api/package.json` (wersja aplikacji desktop).
-__version__ = "1.53.0"
+from .version import __version__
+
+__all__ = ["__version__"]
