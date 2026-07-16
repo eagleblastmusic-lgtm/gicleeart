@@ -9,11 +9,22 @@ na kafelku:
       "description": "Krotki opis (1-2 linie)",
       "icon": "🖼️",      // emoji albo sciezka do PNG/ICO
       "color": "#1e88e5",  // kolor akcentu kafelka (hex)
-      "order": 60           // kolejnosc sortowania (mniejsze = wczesniej)
-      "hidden": true        // opcjonalnie: ukryj kafelek w launcherze
-      "inline_width": 1040  // opcjonalnie: szerokosc okna launchera (tryb inline)
-      "inline_height": 900  // opcjonalnie: wysokosc okna launchera (tryb inline)
+      "order": 60,          // kolejnosc sortowania (mniejsze = wczesniej)
+      "hidden": true,       // opcjonalnie: ukryj kafelek w launcherze
+      "inline_width": 1040, // opcjonalnie: szerokosc okna launchera (tryb inline)
+      "inline_height": 900, // opcjonalnie: wysokosc okna launchera (tryb inline)
+      "availability": ["classic", "studio_preview", "studio"],
+      "stability": "stable"
     }
+
+`availability` jest opcjonalnym kontraktem profili uruchomieniowych. Brak pola
+zachowuje dotychczasowe zachowanie i udostepnia komponent we wszystkich znanych
+profilach. Jawna, ale niepoprawna lista jest traktowana fail-closed.
+
+`stability` przyjmuje: stable, preview, experimental albo legacy. Brak pola
+zachowuje dotychczasowy kanal stable; niepoprawna wartosc zostaje zdegradowana
+do experimental, aby przyszly profil produkcyjny Studio nie promowal jej
+przypadkowo.
 
 Jesli brakuje `component.json`, GicleeApp uzywa nazwy folderu i pierwszej linijki
 docstringu z `__init__.py`.
@@ -35,6 +46,66 @@ _FALLBACK_COLORS = (
     "#8a9e6b", "#a97ab8", "#6b9e9e", "#b8a06b",
 )
 
+COMPONENT_AVAILABILITY_TARGETS = (
+    "classic",
+    "studio_preview",
+    "studio",
+)
+VALID_COMPONENT_AVAILABILITY = frozenset(COMPONENT_AVAILABILITY_TARGETS)
+DEFAULT_COMPONENT_AVAILABILITY = COMPONENT_AVAILABILITY_TARGETS
+
+COMPONENT_STABILITY_CHANNELS = (
+    "stable",
+    "preview",
+    "experimental",
+    "legacy",
+)
+VALID_COMPONENT_STABILITY = frozenset(COMPONENT_STABILITY_CHANNELS)
+DEFAULT_COMPONENT_STABILITY = "stable"
+INVALID_COMPONENT_STABILITY_FALLBACK = "experimental"
+
+
+def _normalize_availability(raw: object, *, field_present: bool) -> tuple[str, ...]:
+    """Normalizuje profile dostępności do stałej kolejności kontraktu.
+
+    Brak pola zachowuje pełną kompatybilność wsteczną. Jawne pole z błędną
+    wartością zwraca pusty zbiór, czyli komponent nie zostaje dopuszczony do
+    żadnego profilowanego indeksu Studio.
+    """
+
+    if not field_present:
+        return DEFAULT_COMPONENT_AVAILABILITY
+
+    if isinstance(raw, str):
+        values: list[object] = [raw]
+    elif isinstance(raw, (list, tuple, set, frozenset)):
+        values = list(raw)
+    else:
+        return ()
+
+    requested: set[str] = set()
+    for item in values:
+        value = str(item).strip().lower()
+        if value in VALID_COMPONENT_AVAILABILITY:
+            requested.add(value)
+
+    return tuple(
+        target
+        for target in COMPONENT_AVAILABILITY_TARGETS
+        if target in requested
+    )
+
+
+def _normalize_stability(raw: object) -> str:
+    """Zwraca jawny kanał stabilności z bezpiecznym fallbackiem."""
+
+    if raw is None:
+        return DEFAULT_COMPONENT_STABILITY
+    value = str(raw).strip().lower()
+    if value in VALID_COMPONENT_STABILITY:
+        return value
+    return INVALID_COMPONENT_STABILITY_FALLBACK
+
 
 @dataclass
 class Component:
@@ -48,6 +119,8 @@ class Component:
     mode: str = "subprocess"    # "subprocess" | "inline" | "url"
     url: str = ""               # tylko dla mode=url
     hidden: bool = False        # z component.json — ukryty na siatce klasycznego launchera
+    availability: tuple[str, ...] = DEFAULT_COMPONENT_AVAILABILITY
+    stability: str = DEFAULT_COMPONENT_STABILITY
     extras: dict = field(default_factory=dict)
 
     @property
@@ -59,6 +132,12 @@ class Component:
     def view_module_path(self) -> str:
         """Sciezka modulu z `view.py` (tylko inline)."""
         return f"Komponenty.{self.folder_name}.view"
+
+    def is_available_in(self, profile_id: str) -> bool:
+        """Czy komponent może wejść do indeksu danego profilu aplikacji."""
+
+        return profile_id in self.availability
+
 
 
 def _read_first_docstring_line(init_path: Path) -> str:
@@ -74,6 +153,7 @@ def _read_first_docstring_line(init_path: Path) -> str:
         return first
     except (OSError, SyntaxError, ValueError):
         return ""
+
 
 
 def discover_components(components_dir: Path, *, include_hidden: bool = False) -> list[Component]:
@@ -150,9 +230,25 @@ def discover_components(components_dir: Path, *, include_hidden: bool = False) -
 
         url = str(manifest.get("url") or "").strip()
         is_hidden = bool(manifest.get("hidden"))
+        availability = _normalize_availability(
+            manifest.get("availability"),
+            field_present="availability" in manifest,
+        )
+        stability = _normalize_stability(manifest.get("stability"))
 
         # Extras = wszystkie pozostale pola manifestu (na przyszlosc)
-        known = {"name", "description", "icon", "color", "order", "mode", "url", "hidden"}
+        known = {
+            "name",
+            "description",
+            "icon",
+            "color",
+            "order",
+            "mode",
+            "url",
+            "hidden",
+            "availability",
+            "stability",
+        }
         extras = {k: v for k, v in manifest.items() if k not in known}
 
         out.append(Component(
@@ -166,11 +262,14 @@ def discover_components(components_dir: Path, *, include_hidden: bool = False) -
             mode=mode,
             url=url,
             hidden=is_hidden,
+            availability=availability,
+            stability=stability,
             extras=extras,
         ))
 
     out.sort(key=lambda c: (c.order, c.name.lower()))
     return out
+
 
 
 def find_components_dir(start: Path | None = None) -> Path:
