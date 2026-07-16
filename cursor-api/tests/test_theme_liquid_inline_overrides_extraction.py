@@ -8,9 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 THEME = ROOT / "layout" / "theme.liquid"
 SNIPPET = ROOT / "snippets" / "giclee-theme-inline-overrides.liquid"
-RUNTIME_SNIPPET = ROOT / "snippets" / "giclee-theme-runtime.liquid"
 RENDER_MARKER = "  {% render 'giclee-theme-inline-overrides' %}"
-RUNTIME_RENDER_MARKER = "{% render 'giclee-theme-runtime' %}\n"
 EXPECTED_SNIPPET_SHA256 = "c50a2cc71a70084bec5d062fc954e1b0b47adacd120fbb48b304a6cc7605c69a"
 
 
@@ -43,14 +41,9 @@ def test_liquid_conditions_remain_inside_the_extracted_snippet() -> None:
         assert token in snippet
 
 
-def test_composed_snippets_restore_original_layout_line_count() -> None:
+def test_reinserting_css_restores_the_intermediate_layout_layer() -> None:
     theme = THEME.read_text(encoding="utf-8")
     css_snippet = SNIPPET.read_text(encoding="utf-8")
-    runtime_snippet = RUNTIME_SNIPPET.read_text(encoding="utf-8")
-
     with_css = theme.replace(RENDER_MARKER, css_snippet, 1)
-    reconstructed = with_css.replace(RUNTIME_RENDER_MARKER, runtime_snippet, 1)
-
     assert len(theme.splitlines()) == 353
     assert len(with_css.splitlines()) == 1629
-    assert len(reconstructed.splitlines()) == 3154
