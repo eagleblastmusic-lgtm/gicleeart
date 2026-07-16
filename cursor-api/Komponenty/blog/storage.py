@@ -11,7 +11,7 @@ import json
 import time
 import uuid
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -27,6 +27,12 @@ _ARTICLES_CACHE = cache_path(
     "Komponenty/blog/data/articles_cache.json",
     legacy=_LEGACY_DATA_DIR / "articles_cache.json",
 )
+
+
+def _utc_now_iso_seconds() -> str:
+    """UTC timestamp preserving the historical timezone-naive storage format."""
+
+    return datetime.now(timezone.utc).replace(tzinfo=None).isoformat(timespec="seconds")
 
 
 @dataclass
@@ -45,7 +51,7 @@ class TopicProposal:
             title=title.strip(),
             reason=(reason or "").strip(),
             keywords=[(k or "").strip() for k in (keywords or []) if (k or "").strip()],
-            created_at=datetime.utcnow().isoformat(timespec="seconds"),
+            created_at=_utc_now_iso_seconds(),
             used=False,
         )
 
