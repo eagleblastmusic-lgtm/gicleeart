@@ -1,18 +1,17 @@
 # Theme inline overrides extraction
 
-The large inline CSS block previously embedded in `layout/theme.liquid` now lives in:
+The large conditional CSS layer previously embedded in `layout/theme.liquid` lives in:
 
 ```text
 snippets/giclee-theme-inline-overrides.liquid
 ```
 
-The layout renders the snippet at the exact previous location, immediately after the splash markup and before `skip-to-content-link`.
+The layout renders it at the original location, immediately after splash markup and before `skip-to-content-link`. It remains Liquid because it contains request/template-dependent conditions.
 
-## Scope
+## Contract
 
 - mechanical move only;
-- no selector, declaration, animation, Liquid condition, or ordering change;
-- no conversion to an asset because the block contains request/template-dependent Liquid conditions;
-- no deploy or live-theme mutation.
-
-The regression test records the extracted block SHA-256 and line count, verifies the render location, and confirms that reinserting the snippet restores the original layout line count. Intentional future edits to this snippet must update the recorded digest.
+- the snippet line count and SHA-256 are fixed by regression tests;
+- reinserting the CSS snippet restores the intermediate layout layer;
+- the separate runtime-composition contract verifies reconstruction of the complete historical layout;
+- no deploy or live-theme mutation is implied.
