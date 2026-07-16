@@ -6,13 +6,8 @@ from pathlib import Path
 
 from Komponenty._shared.theme_page_editor import gui_shell
 from Komponenty._shared.theme_page_editor.config import PageEditorConfig
-from Komponenty._shared.theme_page_editor.service_base import shopify_ref_label
 from Komponenty._shared.theme_page_editor.types import TemplateZone
 
-# Hotfix zgodności: gui_shell używa shopify_ref_label przy budowie miniatur i
-# statusu tła, ale starsza powłoka nie importowała tej funkcji bezpośrednio.
-# Wstrzyknięcie na poziomie bootstrapu obejmuje wszystkie cienkie edytory stron.
-gui_shell.shopify_ref_label = shopify_ref_label
 
 
 def component_dir_from_module(module_file: str) -> Path:

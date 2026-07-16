@@ -45,6 +45,7 @@ from .service_base import (
     normalize_video_ref,
     preview_url,
     save_template,
+    shopify_ref_label,
     upload_image,
     upload_video,
 )
