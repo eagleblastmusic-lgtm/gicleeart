@@ -24,9 +24,9 @@
   ].join(',');
 
   function configuredMode() {
-    return String(CONFIG.smoothScrollMode || 'lenis').toLowerCase() === 'native'
-      ? 'native'
-      : 'lenis';
+    return String(CONFIG.smoothScrollMode || 'native').toLowerCase() === 'lenis'
+      ? 'lenis'
+      : 'native';
   }
 
   function queryDisablesSmoothScroll() {
