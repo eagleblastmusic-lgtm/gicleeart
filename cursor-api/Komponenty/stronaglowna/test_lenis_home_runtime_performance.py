@@ -8,6 +8,7 @@ CHROME = ROOT / "assets" / "giclee-home-prehero-chrome.js"
 REVEAL = ROOT / "assets" / "giclee-home-prehero-reveal.js"
 CURTAIN = ROOT / "assets" / "giclee-home-hero-horizontal-curtain.js"
 SCRUB = ROOT / "assets" / "giclee-home-prehero-scrub.js"
+GATE = ROOT / "assets" / "giclee-home-hero-video-gate.js"
 
 
 def test_lenis_uses_direct_progress_in_secondary_scroll_animations() -> None:
@@ -28,12 +29,15 @@ def test_scroll_geometry_is_cached_outside_hot_scroll_handlers() -> None:
     chrome = CHROME.read_text(encoding="utf-8")
     reveal = REVEAL.read_text(encoding="utf-8")
     curtain = CURTAIN.read_text(encoding="utf-8")
+    gate = GATE.read_text(encoding="utf-8")
 
     assert "rootDocumentTop" in chrome
     assert "scrubDocumentTop" in reveal
     assert "runwayDocumentTop" in curtain
+    assert "heroDocumentTop" in gate
     assert "scrollY() - scrubDocumentTop" in reveal
     assert "scrollY() - runwayDocumentTop + viewport" in curtain
+    assert "heroDocumentTop - scrollY()" in gate
 
 
 def test_lenis_adaptively_reduces_video_seek_pressure() -> None:
@@ -45,3 +49,16 @@ def test_lenis_adaptively_reduces_video_seek_pressure() -> None:
     assert "activeSeekIntervalMs()" in source
     assert "activeSeekEpsilon()" in source
     assert "lenisAdaptiveSeeking:" in source
+
+
+def test_video_gate_uses_lightweight_curtain_runtime_and_no_idle_reset_loop() -> None:
+    curtain = CURTAIN.read_text(encoding="utf-8")
+    gate = GATE.read_text(encoding="utf-8")
+
+    assert "GICLEE_HERO_HORIZONTAL_CURTAIN_RUNTIME" in curtain
+    assert "GICLEE_HERO_HORIZONTAL_CURTAIN_RUNTIME" in gate
+    assert "curtainStatusFallbackCount" in gate
+    assert "if (playbackAllowed) stopPlayback();" in gate
+    assert "else collectVideos().forEach(pauseAndReset);" not in gate
+    assert "gateSyncCount:" in gate
+    assert "mediaResetCount:" in gate
