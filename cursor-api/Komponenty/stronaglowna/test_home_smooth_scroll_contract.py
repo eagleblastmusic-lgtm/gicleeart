@@ -26,6 +26,7 @@ def test_smooth_scroll_uses_accessible_homepage_defaults() -> None:
 
     assert "var LERP = 0.11;" in source
     assert "var WHEEL_MULTIPLIER = 1;" in source
+    assert "CONFIG.smoothScrollMode || 'native'" in source
     assert "autoRaf: true" in source
     assert "autoToggle: true" in source
     assert "anchors: true" in source
