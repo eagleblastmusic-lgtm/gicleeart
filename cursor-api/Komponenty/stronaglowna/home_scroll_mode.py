@@ -167,10 +167,7 @@ def _install_gui_decorator() -> None:
 
         host._giclee_scroll_mode_decorated = True  # type: ignore[attr-defined]
         mode_var = tk.StringVar()
-        ttk.Label(row, text="Scroll:", font=("", 9, "bold")).pack(
-            side="left",
-            padx=(12, 0),
-        )
+        label_widget = ttk.Label(row, text="Scroll:", font=("", 9, "bold"))
         combo = ttk.Combobox(
             row,
             textvariable=mode_var,
@@ -189,8 +186,10 @@ def _install_gui_decorator() -> None:
             None,
         )
         try:
+            label_widget.pack(side="left", padx=(12, 0), before=hint_widget)
             combo.pack(side="left", padx=(6, 0), before=hint_widget)
         except tk.TclError:
+            label_widget.pack(side="left", padx=(12, 0))
             combo.pack(side="left", padx=(6, 0))
 
         def refresh_mode() -> None:
