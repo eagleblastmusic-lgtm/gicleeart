@@ -40,6 +40,8 @@
   var mutationObserver = null;
   var stateObserver = null;
   var rafId = 0;
+  var volumeRafId = 0;
+  var currentAudioGain = 1;
   var prompt = null;
   var toggle = null;
   var toggleState = null;
@@ -99,6 +101,7 @@
     video.defaultMuted = !audible;
     video.playsInline = true;
     video.setAttribute('playsinline', '');
+    video.volume = audible ? currentAudioGain : 1;
 
     if (audible) video.removeAttribute('muted');
     else video.setAttribute('muted', '');
@@ -169,7 +172,7 @@
 
   function playAmbient() {
     if (!usesAmbientAudio()) return;
-    ambientAudio.volume = SOUND_VOLUME;
+    ambientAudio.volume = SOUND_VOLUME * currentAudioGain;
     try {
       var promise = ambientAudio.play();
       if (promise && typeof promise.catch === 'function') promise.catch(function () {});
@@ -188,6 +191,51 @@
     } catch (error) {
       return null;
     }
+  }
+
+  function curtainAudioGain() {
+    var status = horizontalStatus();
+    if (!status || !status.active) return 1;
+
+    var progress = Number(status.easedProgress);
+    if (!Number.isFinite(progress)) progress = Number(status.smoothedProgress);
+    if (!Number.isFinite(progress)) return 1;
+
+    return 1 - Math.min(1, Math.max(0, progress));
+  }
+
+  function applyPlaybackVolume() {
+    var gain = curtainAudioGain();
+    currentAudioGain = gain;
+
+    if (ambientAudio) ambientAudio.volume = SOUND_VOLUME * gain;
+    if (audioMaster) audioMaster.volume = gain;
+    if (hero) hero.style.setProperty('--giclee-hero-audio-gain', gain.toFixed(4));
+  }
+
+  function trackPlaybackVolume() {
+    volumeRafId = 0;
+    if (!playbackAllowed || !hasStarted || !soundEnabled) return;
+
+    applyPlaybackVolume();
+    volumeRafId = window.requestAnimationFrame(trackPlaybackVolume);
+  }
+
+  function startVolumeTracking() {
+    if (volumeRafId) window.cancelAnimationFrame(volumeRafId);
+    applyPlaybackVolume();
+    if (soundEnabled) {
+      volumeRafId = window.requestAnimationFrame(trackPlaybackVolume);
+    }
+  }
+
+  function stopVolumeTracking() {
+    if (volumeRafId) window.cancelAnimationFrame(volumeRafId);
+    volumeRafId = 0;
+    currentAudioGain = 1;
+    if (ambientAudio) ambientAudio.volume = SOUND_VOLUME;
+    if (audioMaster) audioMaster.volume = 1;
+    if (hero) hero.style.removeProperty('--giclee-hero-audio-gain');
   }
 
   function curtainComplete() {
@@ -297,6 +345,7 @@
     soundEnabled = !!withSound;
     playbackAllowed = true;
     hasStarted = true;
+    currentAudioGain = curtainAudioGain();
 
     videos.forEach(function (video, index) {
       pauseAndReset(video);
@@ -306,6 +355,7 @@
 
     var begin = function () {
       if (!playbackAllowed || !heroIsPlayable()) return;
+      startVolumeTracking();
       videos.forEach(playVideo);
       if (soundEnabled) playAmbient();
       hero.setAttribute('data-giclee-hero-video-playback', 'playing');
@@ -332,6 +382,7 @@
     hasStarted = false;
     collectVideos().forEach(pauseAndReset);
     stopAmbient();
+    stopVolumeTracking();
     if (hero) hero.setAttribute('data-giclee-hero-video-playback', 'waiting');
   }
 
@@ -424,6 +475,8 @@
         ambientConfigured: !!SOUND_AUDIO_URL,
         ambientActive: !!(ambientAudio && !ambientAudio.paused),
         ambientVolume: SOUND_VOLUME,
+        effectiveAmbientVolume: ambientAudio ? ambientAudio.volume : 0,
+        audioGain: currentAudioGain,
         heroRiseComplete:
           scrubRoot.getAttribute('data-hero-rise-complete') === 'true',
         heroTop: Math.round(rect.top * 100) / 100,
@@ -444,6 +497,7 @@
           return {
             audioMaster: video === audioMaster,
             muted: video.muted,
+            volume: video.volume,
             paused: video.paused,
             currentTime: Math.round(video.currentTime * 1000) / 1000,
             readyState: video.readyState,
