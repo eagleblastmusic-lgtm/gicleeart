@@ -23,18 +23,21 @@ from . import prehero_integration as prehero
 SCROLL_MODE_FILENAME = "home_scroll_mode.json"
 SCROLL_MODE_SCHEMA = 1
 SCROLL_SETTING_KEY = "home_flow_scroll_mode"
-SCROLL_MODE_LENIS = "lenis"
 SCROLL_MODE_NATIVE = "native"
+SCROLL_MODE_NATIVE_V2 = "native-v2"
+SCROLL_MODE_LENIS = "lenis"
 SCROLL_MODE_LABELS = {
-    SCROLL_MODE_LENIS: "Lenis — płynny",
     SCROLL_MODE_NATIVE: "Zwykły — natywny",
+    SCROLL_MODE_NATIVE_V2: "Zwykły v2 — filmowy",
+    SCROLL_MODE_LENIS: "Lenis — płynny",
 }
 _LABEL_TO_MODE = {label: mode for mode, label in SCROLL_MODE_LABELS.items()}
+_VALID_SCROLL_MODES = frozenset(SCROLL_MODE_LABELS)
 
 
 def normalize_scroll_mode(raw: Any) -> str:
     value = str(raw or "").strip().lower()
-    return SCROLL_MODE_LENIS if value == SCROLL_MODE_LENIS else SCROLL_MODE_NATIVE
+    return value if value in _VALID_SCROLL_MODES else SCROLL_MODE_NATIVE
 
 
 def scroll_mode_path(
@@ -223,7 +226,7 @@ def _install_gui_decorator() -> None:
             textvariable=mode_var,
             values=tuple(SCROLL_MODE_LABELS.values()),
             state="readonly",
-            width=20,
+            width=23,
         )
 
         hint_widget = next(
