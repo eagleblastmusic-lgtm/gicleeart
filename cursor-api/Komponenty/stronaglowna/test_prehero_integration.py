@@ -95,9 +95,13 @@ window.GICLEE_HOME_STACK = true;
     assert '"heroHoldVh": 100' in first
     assert '"introHoldVh": 100' in first
     assert "'prehero.mp4' | file_url" in first
+    assert "giclee-home-native-v2.js" in first
     assert "giclee-home-prehero-reveal.js" in first
     assert "giclee-home-prehero-frames.js" in first
     assert "giclee-home-prehero-frame-manifest" in first
+    assert first.index("giclee-home-native-v2.js") < first.index(
+        "giclee-home-prehero-scrub.js"
+    )
     assert first.index("giclee-home-prehero-frames.js") < first.index(
         "giclee-home-prehero-scrub.js"
     )
