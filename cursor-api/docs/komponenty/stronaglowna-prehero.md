@@ -28,6 +28,35 @@ Pre-Hero nie jest osobną natywną sekcją Shopify w `templates/index.json`. Fro
 
 Ustawienia trafiają do `config/settings_data.json`, więc są przechowywane osobno wraz z każdym wariantem strony głównej.
 
+## Tryby scrolla
+
+Selektor GicleeApp przechowuje tryb osobno dla każdego wariantu:
+
+- **Zwykły — natywny** — bez dodatkowej bezwładności; punkt odniesienia wydajności.
+- **Zwykły v2 — filmowy** — pozycja dokumentu nadal jest natywna, ale media pre-Hero otrzymują subtelny poślizg wizualny do `7 px`.
+- **Lenis — płynny** — eksperymentalny pełny smooth scroll; nie jest domyślną ścieżką produkcyjną.
+
+### Zwykły v2 — filmowy
+
+`assets/giclee-home-native-v2.js`:
+
+- nie przechwytuje kółka ani gestów;
+- nie wywołuje `preventDefault()`;
+- nie przesuwa `body` i nie zmienia rzeczywistej pozycji dokumentu;
+- uruchamia pojedynczy RAF tylko po zmianie natywnego scrolla;
+- przesuwa wyłącznie media pre-Hero i wizual portalu;
+- ogranicza poślizg do `7 px`;
+- wygasza ruch po zatrzymaniu;
+- wyłącza się dla reduced motion, urządzeń touch/coarse, Shopify design mode i parametru `?giclee_native_scroll=1`.
+
+Diagnostyka:
+
+```js
+window.GICLEE_NATIVE_V2_STATUS()
+window.GICLEE_SMOOTH_SCROLL_STATUS()
+window.GICLEE_FRAME_MONITOR(8000)
+```
+
 ## Tryby renderowania scrubu
 
 ### Lenis — WebP na Canvas
@@ -56,9 +85,9 @@ snippets/giclee-home-prehero-frame-manifest.liquid
 
 Domyślny limit całej sekwencji wynosi `24 MB`. Można zmniejszyć rozdzielczość, jakość lub FPS parametrami `--width`, `--quality` i `--fps`.
 
-### Scroll natywny — MP4 fallback
+### Scroll natywny i natywny v2 — MP4
 
-Tryb natywny zachowuje dotychczasowe `assets/giclee-home-prehero-scrub.mp4`. Nie zmienia to sprawdzonego baseline strony natywnej i zapewnia fallback, gdy manifest WebP jest wyłączony lub nie zawiera klatek.
+Oba tryby natywne zachowują `assets/giclee-home-prehero-scrub.mp4`. Zwykły v2 dodaje wyłącznie lekką bezwładność warstwy wizualnej i nie zmienia mechanizmu przewijania filmu.
 
 ## Sekwencja
 
@@ -72,14 +101,14 @@ Tryb natywny zachowuje dotychczasowe `assets/giclee-home-prehero-scrub.mp4`. Nie
 
 ## Eksport
 
-`Komponenty/stronaglowna/prehero_integration.py` i `prehero_full_generator.py`:
+`Komponenty/stronaglowna/prehero_integration.py`, `prehero_full_generator.py` i `home_scroll_mode.py`:
 
 1. rejestrują edytowalną strefę przed Hero,
-2. odczytują i zapisują wartości w ustawieniach wariantu,
+2. odczytują i zapisują wartości oraz tryb scrolla wariantu,
 3. owijają `write_home_assets()`,
 4. eksportują `window.GICLEE_PREHERO_CONFIG`,
 5. wybierają URL filmu z Shopify Files albo lokalny asset awaryjny,
-6. zachowują manifest WebP oraz renderer Canvas,
+6. zachowują manifest WebP, renderer Canvas i runtime Native v2,
 7. zabezpieczają `snippets/giclee-home-stack-critical.liquid` przed utratą integracji po zapisie lub wdrożeniu,
 8. ładują assety pionowego portalu i poziomej kurtyny.
 
