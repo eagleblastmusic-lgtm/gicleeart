@@ -1,8 +1,8 @@
 """Per-variant homepage scroll mode and GicleeApp selector.
 
-The setting is stored outside Shopify-generated JSON in a small variant metadata file,
-then bridged into ``settings.json`` and ``window.GICLEE_PREHERO_CONFIG`` during the
-normal homepage save/generation flow.
+The mode is stored in small per-variant metadata. Changing the selector applies only
+that mode to the currently checked-out theme and regenerates homepage assets from
+the live theme files. It never applies an old variant snapshot to the theme.
 """
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import copy
 import json
 import tkinter as tk
 from pathlib import Path
-from tkinter import ttk
+from tkinter import messagebox, ttk
 from typing import Any
 
 from giclee_app.app_paths import atomic_write_text
@@ -98,6 +98,56 @@ def apply_scroll_mode_to_settings(
         settings["current"] = current
     current[SCROLL_SETTING_KEY] = load_scroll_mode(variant_id)
     return settings
+
+
+def apply_scroll_mode_to_live_theme(variant_id: str, mode: Any) -> str:
+    """Apply only the scroll mode to live worktree files.
+
+    The current ``templates/index.json`` and ``config/settings_data.json`` remain the
+    source of truth. No stored homepage variant is loaded or copied over them.
+    """
+    from .final_difference_settings import load_final_difference_config
+    from .home_features import write_home_assets
+    from .scroll_settings import load_scroll_config
+    from .section_bg_effects_settings import load_section_bg_effects_config
+    from .service import (
+        load_index_template,
+        load_theme_settings,
+        mobile_hero_path,
+        save_theme_settings,
+    )
+    from .studio_reveal_settings import load_studio_reveal_config
+
+    selected = normalize_scroll_mode(mode)
+    previous_settings = load_theme_settings()
+    live_settings = copy.deepcopy(previous_settings)
+    current = live_settings.get("current")
+    if not isinstance(current, dict):
+        current = {}
+        live_settings["current"] = current
+    current[SCROLL_SETTING_KEY] = selected
+
+    # The generator reads the just-written live settings when exporting pre-Hero config.
+    # Roll back settings if regeneration fails, so the worktree is never left half-applied.
+    save_theme_settings(live_settings)
+    try:
+        template = load_index_template()
+        mobile_name = mobile_hero_path().name if mobile_hero_path().is_file() else None
+        write_home_assets(
+            template,
+            mobile_slide_urls=[mobile_name] if mobile_name else None,
+            stack_enabled=homepage_variants.variant_uses_home_stack(variant_id),
+            scroll_config=load_scroll_config(variant_id),
+            final_difference_config=load_final_difference_config(variant_id),
+            studio_reveal_config=load_studio_reveal_config(variant_id),
+            section_bg_effects_config=load_section_bg_effects_config(variant_id),
+        )
+    except Exception:
+        save_theme_settings(previous_settings)
+        raise
+
+    save_scroll_mode(variant_id, selected)
+    return selected
 
 
 def _install_variant_bridge() -> None:
@@ -198,12 +248,22 @@ def _install_gui_decorator() -> None:
 
         def save_selected_mode(_event: tk.Event | None = None) -> None:
             selected = _LABEL_TO_MODE.get(mode_var.get(), SCROLL_MODE_LENIS)
-            save_scroll_mode(homepage_variants.active_variant_id(), selected)
-            label = SCROLL_MODE_LABELS[selected]
+            variant_id = homepage_variants.active_variant_id()
+            try:
+                applied = apply_scroll_mode_to_live_theme(variant_id, selected)
+            except Exception as exc:
+                refresh_mode()
+                messagebox.showerror(
+                    "GICLÉE HOME FLOW",
+                    f"Nie udało się zastosować trybu scrolla:\n{exc}",
+                    parent=host,
+                )
+                return
+            label = SCROLL_MODE_LABELS[applied]
             show_toast(
                 host,
-                f"Scroll: {label}. Kliknij główne «Zapisz».",
-                duration_ms=2200,
+                f"Zastosowano: {label}. Odśwież podgląd Theme Dev.",
+                duration_ms=2600,
             )
 
         combo.bind("<<ComboboxSelected>>", save_selected_mode)
