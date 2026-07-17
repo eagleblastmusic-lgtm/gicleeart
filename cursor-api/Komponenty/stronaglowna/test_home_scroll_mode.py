@@ -38,10 +38,10 @@ def test_scroll_mode_is_saved_per_homepage_variant(tmp_path, monkeypatch) -> Non
     _write_variant(tmp_path, "home1")
     _write_variant(tmp_path, "home2")
 
-    save_scroll_mode("home1", SCROLL_MODE_NATIVE)
+    save_scroll_mode("home1", SCROLL_MODE_LENIS)
 
-    assert load_scroll_mode("home1") == SCROLL_MODE_NATIVE
-    assert load_scroll_mode("home2") == SCROLL_MODE_LENIS
+    assert load_scroll_mode("home1") == SCROLL_MODE_LENIS
+    assert load_scroll_mode("home2") == SCROLL_MODE_NATIVE
 
 
 def test_scroll_mode_bridge_reaches_settings_and_public_config(tmp_path, monkeypatch) -> None:
@@ -107,6 +107,7 @@ def test_live_apply_uses_current_theme_instead_of_variant_snapshot(tmp_path, mon
     assert load_scroll_mode("home1") == SCROLL_MODE_NATIVE
 
 
-def test_unknown_scroll_mode_falls_back_to_lenis() -> None:
-    assert normalize_scroll_mode("something-else") == SCROLL_MODE_LENIS
-    assert normalize_scroll_mode(None) == SCROLL_MODE_LENIS
+def test_unknown_scroll_mode_falls_back_to_native() -> None:
+    assert normalize_scroll_mode("something-else") == SCROLL_MODE_NATIVE
+    assert normalize_scroll_mode(None) == SCROLL_MODE_NATIVE
+    assert normalize_scroll_mode(SCROLL_MODE_LENIS) == SCROLL_MODE_LENIS
