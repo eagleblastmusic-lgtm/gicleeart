@@ -15,6 +15,8 @@ from . import studio_reveal_settings
 from .home_scroll_mode import (
     SCROLL_MODE_LENIS,
     SCROLL_MODE_NATIVE,
+    SCROLL_MODE_NATIVE_V2,
+    SCROLL_MODE_LABELS,
     SCROLL_SETTING_KEY,
     apply_scroll_mode_to_live_theme,
     load_scroll_mode,
@@ -39,21 +41,28 @@ def test_scroll_mode_is_saved_per_homepage_variant(tmp_path, monkeypatch) -> Non
     _write_variant(tmp_path, "home2")
 
     save_scroll_mode("home1", SCROLL_MODE_LENIS)
+    save_scroll_mode("home2", SCROLL_MODE_NATIVE_V2)
 
     assert load_scroll_mode("home1") == SCROLL_MODE_LENIS
-    assert load_scroll_mode("home2") == SCROLL_MODE_NATIVE
+    assert load_scroll_mode("home2") == SCROLL_MODE_NATIVE_V2
+
+
+def test_scroll_selector_exposes_native_v2_as_separate_mode() -> None:
+    assert SCROLL_MODE_LABELS[SCROLL_MODE_NATIVE] == "Zwykły — natywny"
+    assert SCROLL_MODE_LABELS[SCROLL_MODE_NATIVE_V2] == "Zwykły v2 — filmowy"
+    assert SCROLL_MODE_LABELS[SCROLL_MODE_LENIS] == "Lenis — płynny"
 
 
 def test_scroll_mode_bridge_reaches_settings_and_public_config(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(homepage_variants, "VARIANTS_ROOT", tmp_path)
     _write_variant(tmp_path, "home1")
-    save_scroll_mode("home1", SCROLL_MODE_NATIVE)
+    save_scroll_mode("home1", SCROLL_MODE_NATIVE_V2)
 
     _template, settings = homepage_variants.load_variant_data("home1")
 
-    assert settings["current"][SCROLL_SETTING_KEY] == SCROLL_MODE_NATIVE
+    assert settings["current"][SCROLL_SETTING_KEY] == SCROLL_MODE_NATIVE_V2
     exported = prehero_integration.export_prehero_config(settings)
-    assert exported["smoothScrollMode"] == SCROLL_MODE_NATIVE
+    assert exported["smoothScrollMode"] == SCROLL_MODE_NATIVE_V2
 
 
 def test_live_apply_uses_current_theme_instead_of_variant_snapshot(tmp_path, monkeypatch) -> None:
@@ -97,17 +106,19 @@ def test_live_apply_uses_current_theme_instead_of_variant_snapshot(tmp_path, mon
 
     monkeypatch.setattr(home_features, "write_home_assets", capture_assets)
 
-    applied = apply_scroll_mode_to_live_theme("home1", SCROLL_MODE_NATIVE)
+    applied = apply_scroll_mode_to_live_theme("home1", SCROLL_MODE_NATIVE_V2)
 
-    assert applied == SCROLL_MODE_NATIVE
+    assert applied == SCROLL_MODE_NATIVE_V2
     assert saved_settings[-1]["current"]["current_homepage_marker"] == "keep-me"
-    assert saved_settings[-1]["current"][SCROLL_SETTING_KEY] == SCROLL_MODE_NATIVE
+    assert saved_settings[-1]["current"][SCROLL_SETTING_KEY] == SCROLL_MODE_NATIVE_V2
     assert generated["template"] == live_template
     assert "current-homepage" in generated["template"]["sections"]
-    assert load_scroll_mode("home1") == SCROLL_MODE_NATIVE
+    assert load_scroll_mode("home1") == SCROLL_MODE_NATIVE_V2
 
 
 def test_unknown_scroll_mode_falls_back_to_native() -> None:
     assert normalize_scroll_mode("something-else") == SCROLL_MODE_NATIVE
     assert normalize_scroll_mode(None) == SCROLL_MODE_NATIVE
+    assert normalize_scroll_mode(SCROLL_MODE_NATIVE) == SCROLL_MODE_NATIVE
+    assert normalize_scroll_mode(SCROLL_MODE_NATIVE_V2) == SCROLL_MODE_NATIVE_V2
     assert normalize_scroll_mode(SCROLL_MODE_LENIS) == SCROLL_MODE_LENIS
