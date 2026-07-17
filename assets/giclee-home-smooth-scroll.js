@@ -3,8 +3,8 @@
   'use strict';
 
   var root = document.documentElement;
-  var LERP = 0.075;
-  var WHEEL_MULTIPLIER = 0.9;
+  var LERP = 0.11;
+  var WHEEL_MULTIPLIER = 1;
   var instance = null;
   var disabledReason = '';
   var classObserver = null;
