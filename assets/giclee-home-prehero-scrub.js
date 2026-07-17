@@ -1,11 +1,8 @@
 /*
- * Homepage pre-hero video scrub.
+ * Homepage pre-hero media scrub.
  *
- * Performance rules:
- * - geometry is measured only on layout changes, never on every scroll event;
- * - at most one media seek is active at a time;
- * - seeks are rate-limited so video decoding cannot monopolise the main thread;
- * - while a seek is active, scroll only updates the newest target (no busy RAF loop).
+ * Native mode keeps the MP4 timeline. Lenis prefers a generated WebP frame
+ * sequence rendered on canvas, avoiding random video.currentTime seeks.
  */
 (function () {
   'use strict';
@@ -34,6 +31,16 @@
 
   function lenisPerformanceActive() {
     return document.documentElement.classList.contains('giclee-lenis-performance');
+  }
+
+  function frameRendererAvailable() {
+    var renderer = window.GICLEE_PREHERO_FRAME_RENDERER;
+    return !!(
+      lenisPerformanceActive() &&
+      renderer &&
+      typeof renderer.available === 'function' &&
+      renderer.available()
+    );
   }
 
   function activeSeekFps() {
@@ -121,8 +128,10 @@
     root.className = 'giclee-prehero-scrub';
     root.setAttribute('data-giclee-prehero-scrub', '1');
     root.setAttribute('data-video-ready', 'false');
+    root.setAttribute('data-frame-sequence-ready', 'false');
     root.setAttribute('data-scrub-progress', '0');
     root.setAttribute('data-prehero-phase', 'scrub');
+    root.setAttribute('data-render-mode', 'mp4-seek');
     root.style.setProperty('--giclee-prehero-scroll-height', SCROLL_HEIGHT_VH + 'vh');
     root.style.setProperty('--giclee-prehero-reveal-overlap', REVEAL_OVERLAP_VH + 'vh');
     root.style.setProperty('--giclee-prehero-hero-rise-height', HERO_RISE_VH + 'vh');
@@ -181,6 +190,17 @@
     var revealOverlapTravel = 0;
     var rootStartY = 0;
     var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var frameController = null;
+    var useFrameSequence = false;
+
+    if (!reducedMotion && frameRendererAvailable()) {
+      frameController = window.GICLEE_PREHERO_FRAME_RENDERER.create(parts);
+      useFrameSequence = !!frameController;
+      if (useFrameSequence) {
+        duration = Number(frameController.duration) || 5;
+        root.setAttribute('data-render-mode', 'webp-frames');
+      }
+    }
 
     function clearRetryTimer() {
       if (retryTimer) window.clearTimeout(retryTimer);
@@ -201,7 +221,7 @@
     }
 
     function updateProgressFromScroll() {
-      if (!duration || reducedMotion) return;
+      if (reducedMotion || (!useFrameSequence && !duration)) return;
       var localScroll = clamp(scrollY() - rootStartY, 0, totalTravel);
       progress = clamp(localScroll / Math.max(1, preHeroTravel), 0, 1);
       heroRiseProgress = clamp(
@@ -210,10 +230,12 @@
         1
       );
       targetTime = progress * Math.max(0, duration - 0.033);
+      requestedTime = targetTime;
       setAttrIfChanged(root, 'data-scrub-progress', progress.toFixed(4));
       setAttrIfChanged(root, 'data-hero-rise-progress', heroRiseProgress.toFixed(4));
       setAttrIfChanged(root, 'data-prehero-phase', phaseFor(localScroll));
-      requestSeek();
+      if (useFrameSequence) frameController.setProgress(progress);
+      else requestSeek();
     }
 
     function measureLayout() {
@@ -230,6 +252,7 @@
         viewport * (REVEAL_OVERLAP_VH / 100)
       );
       revealStart = Math.max(0, preHeroTravel - revealOverlapTravel);
+      if (frameController) frameController.resize();
       updateProgressFromScroll();
     }
 
@@ -244,7 +267,7 @@
 
     function seekTick(now) {
       rafId = 0;
-      if (!duration || reducedMotion || video.seeking || video.readyState < 1) return;
+      if (!duration || reducedMotion || useFrameSequence || video.seeking || video.readyState < 1) return;
       var desired = quantizedTarget();
       requestedTime = desired;
       if (Math.abs(video.currentTime - desired) <= activeSeekEpsilon()) {
@@ -266,11 +289,12 @@
 
     function requestSeek() {
       if (!duration || reducedMotion || video.seeking || rafId || retryTimer) return;
+      if (useFrameSequence) return;
       rafId = window.requestAnimationFrame(seekTick);
     }
 
     function onSeeked() {
-      if (!duration || reducedMotion) return;
+      if (!duration || reducedMotion || useFrameSequence) return;
       var desired = quantizedTarget();
       if (Math.abs(video.currentTime - desired) > activeSeekEpsilon()) {
         scheduleAfterSeekBudget(performance.now());
@@ -278,6 +302,7 @@
     }
 
     function onMetadata() {
+      if (useFrameSequence) return;
       if (!Number.isFinite(video.duration) || video.duration <= 0) return;
       duration = video.duration;
       targetTime = 0;
@@ -303,22 +328,33 @@
       window.addEventListener('pageshow', measureLayout, { passive: true });
     }
 
+    if (useFrameSequence) measureLayout();
+
     window.GICLEE_PREHERO_SCRUB_STATUS = function () {
+      var frameStatus = frameController ? frameController.status() : null;
+      var renderedTime = video.currentTime;
+      if (frameStatus && frameStatus.frameCount > 1 && frameStatus.renderedFrame >= 0) {
+        renderedTime = (frameStatus.renderedFrame / (frameStatus.frameCount - 1)) * duration;
+      }
       return {
-        ready: root.getAttribute('data-video-ready') === 'true',
+        ready: useFrameSequence
+          ? !!(frameStatus && frameStatus.ready)
+          : root.getAttribute('data-video-ready') === 'true',
+        renderMode: useFrameSequence ? 'webp-canvas' : 'mp4-seek',
         phase: root.getAttribute('data-prehero-phase'),
         duration: duration,
         progress: progress,
         targetTime: targetTime,
         smoothedTime: requestedTime,
-        renderedTime: video.currentTime,
-        seeking: video.seeking,
-        seekFps: activeSeekFps(),
+        renderedTime: renderedTime,
+        seeking: useFrameSequence ? false : video.seeking,
+        seekFps: useFrameSequence ? 0 : activeSeekFps(),
         configuredSeekFps: SEEK_FPS,
-        seekIntervalMs: activeSeekIntervalMs(),
+        seekIntervalMs: useFrameSequence ? 0 : activeSeekIntervalMs(),
         seekCount: seekCount,
         skippedSeekCount: skippedSeekCount,
-        lenisAdaptiveSeeking: lenisPerformanceActive(),
+        lenisAdaptiveSeeking: lenisPerformanceActive() && !useFrameSequence,
+        frameSequence: frameStatus,
         totalTravel: totalTravel,
         preHeroTravel: preHeroTravel,
         revealStart: revealStart,
@@ -327,7 +363,7 @@
         heroRiseTravel: heroRiseTravel,
         heroRiseProgress: heroRiseProgress,
         rootStartY: rootStartY,
-        source: video.currentSrc || video.src || '',
+        source: useFrameSequence ? 'generated-webp-sequence' : (video.currentSrc || video.src || ''),
         config: {
           scrollHeightVh: SCROLL_HEIGHT_VH,
           revealOverlapVh: REVEAL_OVERLAP_VH,
@@ -336,6 +372,8 @@
         },
       };
     };
+
+    return { usesFrameSequence: useFrameSequence };
   }
 
   function attachSource(parts) {
@@ -352,12 +390,15 @@
       timer = 0;
     }
 
+    function applyPoster(poster) {
+      if (!poster) return;
+      parts.poster.style.backgroundImage =
+        'url("' + String(poster).replace(/"/g, '%22') + '")';
+    }
+
     function applySource(source, poster) {
       if (!source) return false;
-      if (poster) {
-        parts.poster.style.backgroundImage =
-          'url("' + String(poster).replace(/"/g, '%22') + '")';
-      }
+      applyPoster(poster);
       stopWatching();
       parts.video.src = source;
       parts.video.load();
@@ -394,7 +435,14 @@
       }
     });
 
-    initScrubbing(parts);
+    var scrubState = initScrubbing(parts);
+    if (scrubState && scrubState.usesFrameSequence) {
+      applyPoster(heroFallback().poster);
+      parts.video.preload = 'none';
+      parts.video.setAttribute('preload', 'none');
+      return;
+    }
+
     if (tryAttach()) return;
     observer = new MutationObserver(tryAttach);
     observer.observe(parts.hero, {
