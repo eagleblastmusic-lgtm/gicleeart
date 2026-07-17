@@ -2,7 +2,7 @@
 
 Hub warstwy API: [`README.md`](README.md) · Launcher: [`../giclee_app/docs/README.md`](../giclee_app/docs/README.md) · Logika per komponent: [`komponenty/README.md`](komponenty/README.md) · Moduły `_shared`: [`shared.md`](shared.md)
 
-**Ostatnia aktualizacja indeksu:** 2026-07-16
+**Ostatnia aktualizacja indeksu:** 2026-07-17
 
 ---
 
@@ -215,6 +215,7 @@ Launcher skanuje `Komponenty/` co **~3 s** — nowy folder pojawia się automaty
 | Mini-siatka kafelków w inline | [`tile_grid.py`](../Komponenty/_shared/tile_grid.py) | siatka + external-first `settings.json` w roaming AppData |
 | Centrowanie modala | [`window_geometry.py`](../Komponenty/_shared/window_geometry.py) | `position_toplevel_screen_center(win, w, h)` |
 | Scroll myszką | [`tk_scroll.py`](../Komponenty/_shared/tk_scroll.py) | binding kółka dla Canvas |
+| Cache ekranów nawigacji launchera | [`giclee_app/launcher_navigation_cache.py`](../giclee_app/launcher_navigation_cache.py), [`giclee_app/cached_navigation_launcher.py`](../giclee_app/cached_navigation_launcher.py) | signature-aware reuse ramek indeksu i kategorii; bez cache widoków inline |
 | Theme page editor | [`theme_page_editor/`](../Komponenty/_shared/theme_page_editor/) | `bootstrap.build_page_ui()` |
 | Shopify theme dev | [`theme_dev_gui.py`](../Komponenty/_shared/theme_dev_gui.py) | dialog podglądu :9292 |
 
@@ -373,7 +374,8 @@ Wdrożone wzorce, których nie należy tworzyć drugi raz:
 - conditional CSS i runtime motywu jako testowane kompozycje Liquid;
 - jedno źródło wersji desktop;
 - security contract, tracked-large-file guard i runtime source-write inventory;
-- kontrolowany retry CI tylko dla dokładnej przejściowej awarii Tcl/Tk.
+- kontrolowany retry CI tylko dla dokładnej przejściowej awarii Tcl/Tk;
+- signature-aware cache ekranów nawigacji klasycznego launchera (`launcher_navigation_cache.py` + `cached_navigation_launcher.py`) z lazy invalidation i bez cache widoków inline.
 
 ---
 
@@ -413,6 +415,7 @@ Wdrożone wzorce, których nie należy tworzyć drugi raz:
 | [`shared.md`](shared.md) | Szczegóły modułów `_shared` |
 | [`../giclee_app/docs/component-loader.md`](../giclee_app/docs/component-loader.md) | Discovery, checklist nowego komponentu |
 | [`../giclee_app/docs/launcher.md`](../giclee_app/docs/launcher.md) | Sekcje kafelków, toolbar |
+| [`../giclee_app/docs/launcher-composition-lc7-contract.md`](../giclee_app/docs/launcher-composition-lc7-contract.md) | Cache ekranów nawigacji klasycznego launchera |
 | [`../giclee_app/docs/studio-save-pattern.md`](../giclee_app/docs/studio-save-pattern.md) | Wzorzec zapisu Studio |
 | [`../giclee_app/docs/studio-preview.md`](../giclee_app/docs/studio-preview.md) | Shell Studio Preview (CTk) |
 | [`../giclee_app/docs/component-channels.md`](../giclee_app/docs/component-channels.md) | Availability i stability komponentów |
