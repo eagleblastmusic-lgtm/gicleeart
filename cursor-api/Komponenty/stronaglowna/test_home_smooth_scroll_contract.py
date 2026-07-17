@@ -40,6 +40,10 @@ def test_smooth_scroll_has_native_fallback_and_nested_scroll_escape_hatches() ->
     styles = CSS_PATH.read_text(encoding="utf-8")
 
     assert "giclee_native_scroll" in source
+    assert "CONFIG.smoothScrollMode" in source
+    assert "configuredMode() === 'native'" in source
+    assert "return 'configuration';" in source
+    assert "mode: configuredMode()" in source
     assert "data-lenis-prevent" in source
     assert "data-giclee-smooth-scroll-reason" in source
     assert "GICLEE_SMOOTH_SCROLL_STATUS" in source
