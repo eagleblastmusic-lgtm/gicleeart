@@ -3,6 +3,7 @@
   'use strict';
 
   var root = document.documentElement;
+  var CONFIG = window.GICLEE_PREHERO_CONFIG || {};
   var LERP = 0.11;
   var WHEEL_MULTIPLIER = 1;
   var instance = null;
@@ -20,6 +21,12 @@
     '.predictive-search',
     '.facets-drawer',
   ].join(',');
+
+  function configuredMode() {
+    return String(CONFIG.smoothScrollMode || 'lenis').toLowerCase() === 'native'
+      ? 'native'
+      : 'lenis';
+  }
 
   function queryDisablesSmoothScroll() {
     try {
@@ -42,6 +49,7 @@
 
   function determineDisabledReason() {
     if (queryDisablesSmoothScroll()) return 'query';
+    if (configuredMode() === 'native') return 'configuration';
     if (reducedMotionRequested()) return 'reduced-motion';
     if (designModeActive()) return 'shopify-design-mode';
     if (typeof window.Lenis !== 'function') return 'lenis-unavailable';
@@ -72,6 +80,7 @@
       return {
         ready: !!instance,
         active: root.getAttribute('data-giclee-smooth-scroll') === 'active',
+        mode: configuredMode(),
         disabledReason: disabledReason,
         lerp: LERP,
         wheelMultiplier: WHEEL_MULTIPLIER,
