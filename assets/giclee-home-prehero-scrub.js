@@ -1,19 +1,25 @@
 /*
  * Homepage pre-hero video scrub.
- * Critical performance rule: never issue a new seek while the previous seek is active.
+ *
+ * Performance rules:
+ * - geometry is measured only on layout changes, never on every scroll event;
+ * - at most one media seek is active at a time;
+ * - seeks are rate-limited so video decoding cannot monopolise the main thread;
+ * - while a seek is active, scroll only updates the newest target (no busy RAF loop).
  */
 (function () {
   'use strict';
 
   var ROOT_ID = 'giclee-prehero-video-scrub';
   var CONFIG = window.GICLEE_PREHERO_CONFIG || {};
-  var LERP = configNumber('scrubLerp', 0.08, 0.02, 0.35);
-  var SEEK_EPSILON = 0.01;
+  var SEEK_EPSILON = 0.018;
   var SOURCE_RETRY_MS = 250;
   var SOURCE_RETRY_LIMIT = 80;
   var SCROLL_HEIGHT_VH = configNumber('scrollHeightVh', 600, 300, 2000);
   var REVEAL_OVERLAP_VH = configNumber('revealOverlapVh', 200, 100, 1000);
   var HERO_RISE_VH = configNumber('heroRiseVh', 100, 100, 500);
+  var SEEK_FPS = configNumber('scrubSeekFps', 24, 12, 60);
+  var SEEK_INTERVAL_MS = 1000 / SEEK_FPS;
 
   function configNumber(key, fallback, min, max) {
     var value = Number(CONFIG[key]);
@@ -27,6 +33,22 @@
 
   function viewportHeight() {
     return window.innerHeight || document.documentElement.clientHeight || 800;
+  }
+
+  function scrollY() {
+    return (
+      window.scrollY ||
+      window.pageYOffset ||
+      document.documentElement.scrollTop ||
+      document.body.scrollTop ||
+      0
+    );
+  }
+
+  function setAttrIfChanged(element, name, value) {
+    if (element.getAttribute(name) !== value) {
+      element.setAttribute(name, value);
+    }
   }
 
   function firstMediaSource(video) {
@@ -144,9 +166,12 @@
     var video = parts.video;
     var duration = 0;
     var targetTime = 0;
-    var currentTime = 0;
+    var requestedTime = 0;
     var progress = 0;
     var rafId = 0;
+    var retryTimer = 0;
+    var lastSeekAt = -Infinity;
+    var seekCount = 0;
     var totalTravel = 0;
     var preHeroTravel = 0;
     var heroRiseStart = 0;
@@ -154,13 +179,50 @@
     var heroRiseProgress = 0;
     var revealStart = 0;
     var revealOverlapTravel = 0;
+    var rootStartY = 0;
     var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    function measureProgress() {
+    function clearRetryTimer() {
+      if (retryTimer) window.clearTimeout(retryTimer);
+      retryTimer = 0;
+    }
+
+    function quantizedTarget() {
+      var maxTime = Math.max(0, duration - 0.033);
+      var quantized = Math.round(targetTime * SEEK_FPS) / SEEK_FPS;
+      return clamp(quantized, 0, maxTime);
+    }
+
+    function phaseFor(localScroll) {
+      if (localScroll >= heroRiseStart) return 'hero-rise';
+      if (localScroll >= revealStart) return 'scrub-reveal';
+      return 'scrub';
+    }
+
+    function updateProgressFromScroll() {
       if (!duration || reducedMotion) return;
+
+      var localScroll = clamp(scrollY() - rootStartY, 0, totalTravel);
+      progress = clamp(localScroll / Math.max(1, preHeroTravel), 0, 1);
+      heroRiseProgress = clamp(
+        (localScroll - heroRiseStart) / Math.max(1, heroRiseTravel),
+        0,
+        1
+      );
+      targetTime = progress * Math.max(0, duration - 0.033);
+
+      setAttrIfChanged(root, 'data-scrub-progress', progress.toFixed(4));
+      setAttrIfChanged(root, 'data-hero-rise-progress', heroRiseProgress.toFixed(4));
+      setAttrIfChanged(root, 'data-prehero-phase', phaseFor(localScroll));
+      requestSeek();
+    }
+
+    function measureLayout() {
+      if (reducedMotion) return;
 
       var viewport = viewportHeight();
       var rect = root.getBoundingClientRect();
+      rootStartY = scrollY() + rect.top;
       totalTravel = Math.max(1, root.offsetHeight - viewport);
       heroRiseTravel = Math.min(totalTravel, viewport * (HERO_RISE_VH / 100));
       preHeroTravel = Math.max(1, totalTravel - heroRiseTravel);
@@ -170,65 +232,59 @@
         viewport * (REVEAL_OVERLAP_VH / 100)
       );
       revealStart = Math.max(0, preHeroTravel - revealOverlapTravel);
-
-      var localScroll = clamp(-rect.top, 0, totalTravel);
-      progress = clamp(localScroll / preHeroTravel, 0, 1);
-      heroRiseProgress = clamp(
-        (localScroll - heroRiseStart) / Math.max(1, heroRiseTravel),
-        0,
-        1
-      );
-      targetTime = progress * Math.max(0, duration - 0.033);
-
-      root.setAttribute('data-scrub-progress', progress.toFixed(4));
-      root.setAttribute('data-hero-rise-progress', heroRiseProgress.toFixed(4));
-      root.setAttribute(
-        'data-prehero-phase',
-        localScroll >= heroRiseStart
-          ? 'hero-rise'
-          : localScroll >= revealStart
-            ? 'scrub-reveal'
-            : 'scrub'
-      );
-      requestTick();
+      updateProgressFromScroll();
     }
 
-    function tick() {
+    function scheduleAfterSeekBudget(now) {
+      clearRetryTimer();
+      var wait = Math.max(0, SEEK_INTERVAL_MS - (now - lastSeekAt));
+      retryTimer = window.setTimeout(function () {
+        retryTimer = 0;
+        requestSeek();
+      }, Math.ceil(wait));
+    }
+
+    function seekTick(now) {
       rafId = 0;
-      if (!duration || reducedMotion) return;
+      if (!duration || reducedMotion || video.seeking || video.readyState < 1) return;
 
-      currentTime += (targetTime - currentTime) * LERP;
+      var desired = quantizedTarget();
+      requestedTime = desired;
 
-      if (
-        !video.seeking &&
-        video.readyState >= 1 &&
-        Math.abs(video.currentTime - currentTime) > SEEK_EPSILON
-      ) {
-        try {
-          video.currentTime = currentTime;
-        } catch (error) {
-          /* The media timeline may not be seekable for the first few frames. */
-        }
+      if (Math.abs(video.currentTime - desired) <= SEEK_EPSILON) return;
+
+      if (now - lastSeekAt < SEEK_INTERVAL_MS) {
+        scheduleAfterSeekBudget(now);
+        return;
       }
 
-      if (
-        Math.abs(targetTime - currentTime) > 0.001 ||
-        video.seeking ||
-        Math.abs(video.currentTime - currentTime) > SEEK_EPSILON
-      ) {
-        requestTick();
+      lastSeekAt = now;
+      seekCount += 1;
+      try {
+        video.currentTime = desired;
+      } catch (error) {
+        scheduleAfterSeekBudget(now);
       }
     }
 
-    function requestTick() {
-      if (!rafId) rafId = window.requestAnimationFrame(tick);
+    function requestSeek() {
+      if (!duration || reducedMotion || video.seeking || rafId || retryTimer) return;
+      rafId = window.requestAnimationFrame(seekTick);
+    }
+
+    function onSeeked() {
+      if (!duration || reducedMotion) return;
+      var desired = quantizedTarget();
+      if (Math.abs(video.currentTime - desired) > SEEK_EPSILON) {
+        scheduleAfterSeekBudget(performance.now());
+      }
     }
 
     function onMetadata() {
       if (!Number.isFinite(video.duration) || video.duration <= 0) return;
       duration = video.duration;
-      currentTime = 0;
       targetTime = 0;
+      requestedTime = 0;
       root.setAttribute('data-video-ready', 'true');
 
       try {
@@ -238,17 +294,18 @@
         /* Ignore the initial seek until the media timeline is ready. */
       }
 
-      if (!reducedMotion) measureProgress();
+      if (!reducedMotion) measureLayout();
     }
 
     video.addEventListener('loadedmetadata', onMetadata);
     video.addEventListener('durationchange', onMetadata);
-    video.addEventListener('seeked', requestTick);
+    video.addEventListener('seeked', onSeeked);
 
     if (!reducedMotion) {
-      window.addEventListener('scroll', measureProgress, { passive: true });
-      window.addEventListener('resize', measureProgress, { passive: true });
-      window.addEventListener('orientationchange', measureProgress, { passive: true });
+      window.addEventListener('scroll', updateProgressFromScroll, { passive: true });
+      window.addEventListener('resize', measureLayout, { passive: true });
+      window.addEventListener('orientationchange', measureLayout, { passive: true });
+      window.addEventListener('pageshow', measureLayout, { passive: true });
     }
 
     window.GICLEE_PREHERO_SCRUB_STATUS = function () {
@@ -258,9 +315,11 @@
         duration: duration,
         progress: progress,
         targetTime: targetTime,
-        smoothedTime: currentTime,
+        smoothedTime: requestedTime,
         renderedTime: video.currentTime,
         seeking: video.seeking,
+        seekFps: SEEK_FPS,
+        seekCount: seekCount,
         totalTravel: totalTravel,
         preHeroTravel: preHeroTravel,
         revealStart: revealStart,
@@ -268,11 +327,13 @@
         heroRiseStart: heroRiseStart,
         heroRiseTravel: heroRiseTravel,
         heroRiseProgress: heroRiseProgress,
+        rootStartY: rootStartY,
         source: video.currentSrc || video.src || '',
         config: {
           scrollHeightVh: SCROLL_HEIGHT_VH,
           revealOverlapVh: REVEAL_OVERLAP_VH,
           heroRiseVh: HERO_RISE_VH,
+          scrubSeekFps: SEEK_FPS,
         },
       };
     };
@@ -295,7 +356,8 @@
     function applySource(source, poster) {
       if (!source) return false;
       if (poster) {
-        parts.poster.style.backgroundImage = 'url("' + String(poster).replace(/"/g, '%22') + '")';
+        parts.poster.style.backgroundImage =
+          'url("' + String(poster).replace(/"/g, '%22') + '")';
       }
       stopWatching();
       parts.video.src = source;
