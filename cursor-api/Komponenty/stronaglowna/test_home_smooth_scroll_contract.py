@@ -60,3 +60,27 @@ def test_smooth_scroll_respects_splash_and_page_transition_locks() -> None:
     assert "curtain-pending" in source
     assert "instance.stop();" in source
     assert "instance.start();" in source
+
+
+def test_lenis_performance_profile_removes_competing_motion_layers() -> None:
+    source = JS_PATH.read_text(encoding="utf-8")
+
+    assert "giclee-lenis-performance" in source
+    assert "GICLEE_HOME_SECTION_SCROLL" in source
+    assert "api.destroy();" in source
+    assert "gicleeHomeSectionScroll = 'lenis-bypass'" in source
+    assert "--home-stack-slip-y: 0px !important" in source
+    assert "filter: none !important" in source
+    assert "transition: none !important" in source
+    assert "performanceProfile:" in source
+    assert "sectionScrollBypassed:" in source
+
+
+def test_frame_monitor_reports_scroll_rendering_metrics() -> None:
+    source = JS_PATH.read_text(encoding="utf-8")
+
+    assert "GICLEE_FRAME_MONITOR" in source
+    assert "averageFrameMs" in source
+    assert "p95FrameMs" in source
+    assert "longFramesOver25Ms" in source
+    assert "longFramesOver40Ms" in source
