@@ -16,6 +16,7 @@ INTRO_HOLD_KEY = "prehero_intro_hold_screens"
 FRAME_MANIFEST_SNIPPET = "giclee-home-prehero-frame-manifest.liquid"
 
 FULL_PREHERO_CODE_ASSETS: tuple[str, ...] = (
+    "giclee-home-native-v2.js",
     "giclee-home-prehero-scrub.css",
     "giclee-home-prehero-frames.js",
     "giclee-home-prehero-scrub.js",
@@ -50,6 +51,7 @@ _CSS_ASSETS: tuple[str, ...] = (
 )
 
 _JS_ASSETS: tuple[str, ...] = (
+    "giclee-home-native-v2.js",
     "giclee-home-prehero-frames.js",
     "giclee-home-prehero-scrub.js",
     "giclee-home-prehero-chrome.js",
