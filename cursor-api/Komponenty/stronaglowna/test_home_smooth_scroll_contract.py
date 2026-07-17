@@ -26,8 +26,9 @@ def test_smooth_scroll_uses_accessible_homepage_defaults() -> None:
 
     assert "var LERP = 0.11;" in source
     assert "var WHEEL_MULTIPLIER = 1;" in source
-    assert "CONFIG.smoothScrollMode || 'native'" in source
-    assert "autoRaf: true" in source
+    assert "autoRaf: false" in source
+    assert "instance.raf(time);" in source
+    assert "manual-single-raf" in source
     assert "autoToggle: true" in source
     assert "anchors: true" in source
     assert "smoothWheel: true" in source
@@ -63,7 +64,7 @@ def test_smooth_scroll_respects_splash_and_page_transition_locks() -> None:
     assert "instance.start();" in source
 
 
-def test_lenis_performance_profile_removes_competing_motion_layers() -> None:
+def test_lenis_performance_profile_uses_single_clock_stack_engine() -> None:
     source = JS_PATH.read_text(encoding="utf-8")
 
     assert "giclee-lenis-performance" in source
@@ -73,8 +74,15 @@ def test_lenis_performance_profile_removes_competing_motion_layers() -> None:
     assert "--home-stack-slip-y: 0px !important" in source
     assert "filter: none !important" in source
     assert "transition: none !important" in source
+    assert "window.GICLEE_HOME_STACK = false" in source
+    assert "gicleeHomeStackEngine = 'lenis-single-clock'" in source
+    assert "updateLenisStack(lenis.scroll);" in source
+    assert "lenisStackPairStarts[i] - scrollY" in source
+    assert "independentMotionLoop: false" in source
+    assert "cachedGeometry: true" in source
     assert "performanceProfile:" in source
     assert "sectionScrollBypassed:" in source
+    assert "stackEngine:" in source
 
 
 def test_frame_monitor_reports_scroll_rendering_metrics() -> None:
@@ -85,3 +93,5 @@ def test_frame_monitor_reports_scroll_rendering_metrics() -> None:
     assert "p95FrameMs" in source
     assert "longFramesOver25Ms" in source
     assert "longFramesOver40Ms" in source
+    assert "clock:" in source
+    assert "stackEngine:" in source
