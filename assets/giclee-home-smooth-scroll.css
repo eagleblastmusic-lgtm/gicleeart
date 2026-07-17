@@ -23,8 +23,37 @@ html[data-giclee-smooth-scroll='active'] {
   scroll-behavior: auto !important;
 }
 
+html.giclee-native-v2 {
+  --giclee-native-v2-slip-y: 0px;
+  --giclee-native-v2-slip-soft-y: 0px;
+}
+
+html.giclee-native-v2 .giclee-prehero-scrub__video,
+html.giclee-native-v2 .giclee-prehero-scrub__canvas {
+  translate: 0 var(--giclee-native-v2-slip-y, 0px);
+  scale: 1.012;
+}
+
+html.giclee-native-v2 .giclee-prehero-reveal__visual {
+  translate: 0 var(--giclee-native-v2-slip-soft-y, 0px);
+  scale: 1.006;
+}
+
+html.giclee-native-v2.giclee-native-v2-scrolling .giclee-prehero-scrub__video,
+html.giclee-native-v2.giclee-native-v2-scrolling .giclee-prehero-scrub__canvas,
+html.giclee-native-v2.giclee-native-v2-scrolling .giclee-prehero-reveal__visual {
+  will-change: translate;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html[data-giclee-smooth-scroll] {
     scroll-behavior: auto !important;
+  }
+
+  html.giclee-native-v2 .giclee-prehero-scrub__video,
+  html.giclee-native-v2 .giclee-prehero-scrub__canvas,
+  html.giclee-native-v2 .giclee-prehero-reveal__visual {
+    translate: none;
+    scale: 1;
   }
 }
