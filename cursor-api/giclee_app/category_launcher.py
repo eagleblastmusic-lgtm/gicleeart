@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import time
 import tkinter as tk
 from typing import Any
 
@@ -147,7 +146,7 @@ class CategoryGicleeApp(_launcher.GicleeApp):
             self._subtitle_widget = None
 
     def _render_tiles(self) -> None:
-        self._tile_hover_clearers.clear()
+        self._tile_hover.clear_active()
         for child in list(self.tiles_frame.winfo_children()):
             child.destroy()
 
@@ -331,7 +330,13 @@ class CategoryGicleeApp(_launcher.GicleeApp):
 
         collect(outer)
 
+        hover_active = False
+
         def set_hover(active: bool) -> None:
+            nonlocal hover_active
+            if hover_active == active:
+                return
+            hover_active = active
             new_bg = bg_hover if active else bg_normal
             for widget in background_widgets:
                 try:
@@ -339,16 +344,14 @@ class CategoryGicleeApp(_launcher.GicleeApp):
                 except tk.TclError:
                     pass
 
-        self._tile_hover_clearers.append(lambda: set_hover(False))
-
         def on_enter(_event: object) -> None:
-            if time.monotonic() < self._suppress_tile_hover_until:
-                return
-            set_hover(True)
+            self._tile_hover.enter(
+                outer,
+                lambda: set_hover(True),
+                lambda: set_hover(False),
+            )
 
         def on_leave(_event: object) -> None:
-            if time.monotonic() < self._suppress_tile_hover_until:
-                return
             try:
                 px, py = outer.winfo_pointerxy()
                 ox, oy = outer.winfo_rootx(), outer.winfo_rooty()
@@ -357,7 +360,7 @@ class CategoryGicleeApp(_launcher.GicleeApp):
                 return
             if ox <= px < ox + ow and oy <= py < oy + oh:
                 return
-            set_hover(False)
+            self._tile_hover.leave(outer)
 
         def open_category(_event: object = None, selected: str = title) -> None:
             self._open_category(selected)
