@@ -1,8 +1,4 @@
-/*
- * Homepage pre-hero viewport curtain controller.
- * The native Shopify .header-section and the lower black rail are driven by one RAF value.
- * The video is never translated.
- */
+/* Homepage pre-hero viewport curtain controller. */
 (function () {
   'use strict';
 
@@ -19,6 +15,7 @@
   var headerRow = null;
   var bottomBand = null;
   var headerHeight = 60;
+  var rootDocumentTop = 0;
   var targetProgress = 0;
   var currentProgress = 0;
   var rafId = 0;
@@ -26,6 +23,9 @@
   var reducedMotion = false;
   var startupResetActive = true;
   var startupResetCount = 0;
+  var frameCount = 0;
+  var layoutReadCount = 0;
+  var styleWriteCount = 0;
 
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
@@ -41,14 +41,38 @@
     return 1 - Math.exp(-deltaMs / Math.max(1, tauMs));
   }
 
+  function lenisPerformanceActive() {
+    return document.documentElement.classList.contains('giclee-lenis-performance');
+  }
+
   function getScrollY() {
     return window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+  }
+
+  function setStyleIfChanged(element, property, value, priority, cacheKey) {
+    if (!element) return;
+    var currentValue = element.style.getPropertyValue(property);
+    var currentPriority = element.style.getPropertyPriority(property);
+    if (
+      element[cacheKey] === value &&
+      currentValue === value &&
+      currentPriority === (priority || '')
+    ) {
+      return;
+    }
+    element[cacheKey] = value;
+    element.style.setProperty(property, value, priority || '');
+    styleWriteCount += 1;
+  }
+
+  function setAttrIfChanged(element, name, value) {
+    if (!element || element.getAttribute(name) === value) return;
+    element.setAttribute(name, value);
   }
 
   function findHeader() {
     headerComponent = document.getElementById('header-component');
     if (!headerComponent) return null;
-
     headerRow = headerComponent.querySelector('.header__row--top');
     return headerComponent.closest('.header-section') || headerComponent;
   }
@@ -56,7 +80,6 @@
   function ensureBottomBand() {
     var existing = root.querySelector('.giclee-prehero-scrub__bottom-band');
     if (existing) return existing;
-
     var band = document.createElement('div');
     band.className = 'giclee-prehero-scrub__bottom-band';
     band.setAttribute('aria-hidden', 'true');
@@ -65,17 +88,16 @@
   }
 
   function readCssHeight() {
-    var bodyStyle = getComputedStyle(document.body);
-    var value = parseFloat(bodyStyle.getPropertyValue('--header-height'));
+    var value = parseFloat(getComputedStyle(document.body).getPropertyValue('--header-height'));
     return Number.isFinite(value) && value > 0 ? value : 0;
   }
 
   function measureHeader() {
     if (!header) return;
-
     var rowRect = headerRow ? headerRow.getBoundingClientRect() : null;
     var componentRect = headerComponent ? headerComponent.getBoundingClientRect() : null;
     var headerRect = header.getBoundingClientRect();
+    layoutReadCount += 1 + (rowRect ? 1 : 0) + (componentRect ? 1 : 0);
     var measured = Math.round(
       readCssHeight() ||
       (rowRect && rowRect.height) ||
@@ -83,12 +105,21 @@
       headerRect.height ||
       60
     );
-
     headerHeight = Math.max(1, measured);
-    document.documentElement.style.setProperty(
+    setStyleIfChanged(
+      document.documentElement,
       '--giclee-prehero-header-height',
-      headerHeight + 'px'
+      headerHeight + 'px',
+      '',
+      '_gicleePreheroHeaderHeight'
     );
+  }
+
+  function measureRootDocumentTop() {
+    if (!root) return;
+    var rect = root.getBoundingClientRect();
+    layoutReadCount += 1;
+    rootDocumentTop = getScrollY() + rect.top;
   }
 
   function collapseDistance() {
@@ -105,18 +136,13 @@
 
   function readTargets() {
     if (!root) return;
-
     if (startupResetActive || getScrollY() <= START_SCROLL_EPS) {
       targetProgress = 0;
       requestTick();
       return;
     }
-
     var scrollY = getScrollY();
-    var rootRect = root.getBoundingClientRect();
-    var rootDocumentTop = scrollY + rootRect.top;
     var raw = (scrollY - rootDocumentTop) / Math.max(1, collapseDistance());
-
     targetProgress = smoothstep(clamp(raw, 0, 1));
     requestTick();
   }
@@ -124,61 +150,57 @@
   function disableLegacyFade() {
     if (!headerComponent) return;
     headerComponent.classList.remove('giclee-header-scroll-fade');
-    headerComponent.style.setProperty('--gab-header-fade-opacity', '1', 'important');
-    headerComponent.style.setProperty('opacity', '1', 'important');
-    headerComponent.style.setProperty('visibility', 'visible', 'important');
-    headerComponent.style.setProperty('pointer-events', 'auto', 'important');
+    setStyleIfChanged(headerComponent, '--gab-header-fade-opacity', '1', 'important', '_gicleeChromeFade');
+    setStyleIfChanged(headerComponent, 'opacity', '1', 'important', '_gicleeChromeOpacity');
+    setStyleIfChanged(headerComponent, 'visibility', 'visible', 'important', '_gicleeChromeVisibility');
+    setStyleIfChanged(headerComponent, 'pointer-events', 'auto', 'important', '_gicleeChromePointer');
   }
 
   function applyFrame() {
+    if (!root || !header) return;
+    frameCount += 1;
     var eased = clamp(currentProgress, 0, 1);
     var distance = headerHeight * eased;
     var interactive = eased <= 0.96;
-
-    document.documentElement.style.setProperty(
+    setStyleIfChanged(
+      document.documentElement,
       '--giclee-prehero-header-y',
-      (-distance).toFixed(3) + 'px'
+      (-distance).toFixed(2) + 'px',
+      '',
+      '_gicleeChromeHeaderY'
     );
-    document.documentElement.style.setProperty(
+    setStyleIfChanged(
+      document.documentElement,
       '--giclee-prehero-band-y',
-      distance.toFixed(3) + 'px'
+      distance.toFixed(2) + 'px',
+      '',
+      '_gicleeChromeBandY'
     );
-
-    header.style.setProperty('opacity', '1', 'important');
-    header.style.setProperty('visibility', 'visible', 'important');
-    header.style.setProperty(
+    setStyleIfChanged(
+      header,
       'pointer-events',
       interactive ? 'auto' : 'none',
-      'important'
+      'important',
+      '_gicleeChromeHeaderPointer'
     );
-
-    disableLegacyFade();
-    root.setAttribute('data-chrome-progress', eased.toFixed(4));
+    setAttrIfChanged(root, 'data-chrome-progress', eased.toFixed(3));
+    if (!lenisPerformanceActive()) disableLegacyFade();
   }
 
   function tick(now) {
     rafId = 0;
-    var delta = lastFrameTime ? Math.min(64, now - lastFrameTime) : 16.67;
-    lastFrameTime = now;
-
-    if (reducedMotion) {
+    var direct = reducedMotion || lenisPerformanceActive();
+    if (direct) {
       currentProgress = targetProgress;
     } else {
-      currentProgress +=
-        (targetProgress - currentProgress) * expAlpha(delta, TAU_MS);
+      var delta = lastFrameTime ? Math.min(64, now - lastFrameTime) : 16.67;
+      lastFrameTime = now;
+      currentProgress += (targetProgress - currentProgress) * expAlpha(delta, TAU_MS);
     }
-
-    if (Math.abs(targetProgress - currentProgress) <= EPSILON) {
-      currentProgress = targetProgress;
-    }
-
+    if (Math.abs(targetProgress - currentProgress) <= EPSILON) currentProgress = targetProgress;
     applyFrame();
-
-    if (Math.abs(targetProgress - currentProgress) > EPSILON) {
-      requestTick();
-    } else {
-      lastFrameTime = 0;
-    }
+    if (!direct && Math.abs(targetProgress - currentProgress) > EPSILON) requestTick();
+    else lastFrameTime = 0;
   }
 
   function requestTick() {
@@ -187,6 +209,7 @@
 
   function refreshLayout() {
     measureHeader();
+    measureRootDocumentTop();
     disableLegacyFade();
     readTargets();
   }
@@ -229,26 +252,23 @@
       readTargets();
       return;
     }
-
     startupResetActive = true;
     startupResetCount += 1;
     forceClosedCurtain();
-
     try {
       window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     } catch (error) {
       window.scrollTo(0, 0);
     }
-
     requestAnimationFrame(function () {
       try {
         window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
       } catch (error) {
         window.scrollTo(0, 0);
       }
-
       requestAnimationFrame(function () {
         startupResetActive = false;
+        measureRootDocumentTop();
         forceClosedCurtain();
       });
     });
@@ -256,25 +276,21 @@
 
   function boot() {
     if (document.documentElement.classList.contains(ROOT_CLASS)) return;
-
     root = document.getElementById(ROOT_ID);
     header = findHeader();
     if (!root || !header) return;
-
     reducedMotion = !!(
       window.matchMedia &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches
     );
-
     if ('scrollRestoration' in history && shouldResetToTop()) {
       history.scrollRestoration = 'manual';
     }
-
     measureHeader();
+    measureRootDocumentTop();
     bottomBand = ensureBottomBand();
     header.classList.add(HEADER_CLASS);
     document.documentElement.classList.add(ROOT_CLASS);
-
     disableLegacyFade();
     forceClosedCurtain();
     resetSequenceToTop();
@@ -287,6 +303,7 @@
       forceClosedCurtain();
     }, { passive: true });
     window.addEventListener('pageshow', function () {
+      refreshLayout();
       resetSequenceToTop();
     }, { passive: true });
 
@@ -298,6 +315,7 @@
     window.GICLEE_PREHERO_CHROME_STATUS = function () {
       return {
         headerHeight: headerHeight,
+        rootDocumentTop: rootDocumentTop,
         targetProgress: targetProgress,
         smoothedProgress: currentProgress,
         headerY: -headerHeight * currentProgress,
@@ -306,6 +324,10 @@
         scrollY: getScrollY(),
         startupResetActive: startupResetActive,
         startupResetCount: startupResetCount,
+        directLenisProgress: lenisPerformanceActive(),
+        frameCount: frameCount,
+        layoutReadCount: layoutReadCount,
+        styleWriteCount: styleWriteCount,
         headerTarget: header.className || header.tagName,
         headerRect: rectSnapshot(header),
         headerStyle: styleSnapshot(header),
