@@ -265,7 +265,7 @@
       return;
     }
     var copyIn = smoothstep(rangeProgress(eased, 0.08, 0.34));
-    var copyOut = 1 - smoothstep(rangeProgress(eased, 0.76, 0.95));
+    var copyOut = 1 - smoothstep(rangeProgress(eased, 0.90, 0.995));
     var copyY = 24 * (1 - copyIn) - 12 * (1 - copyOut);
     var copyBlur = 9 * (1 - copyIn) + 3 * (1 - copyOut);
     copy.style.setProperty('--giclee-prehero-copy-y', copyY.toFixed(3) + 'px');
