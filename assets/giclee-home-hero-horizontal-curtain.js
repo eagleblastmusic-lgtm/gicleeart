@@ -237,6 +237,19 @@
     window.addEventListener('orientationchange', measureLayout, { passive: true });
     window.addEventListener('pageshow', measureLayout, { passive: true });
 
+    window.GICLEE_HERO_HORIZONTAL_CURTAIN_RUNTIME = function () {
+      return {
+        active: doc.getAttribute('data-giclee-hero-horizontal-curtain-active') === 'true',
+        opening: doc.getAttribute('data-giclee-hero-horizontal-curtain-opening') === 'true',
+        complete: doc.getAttribute('data-giclee-hero-horizontal-curtain-complete') === 'true',
+        easedProgress: smoothstep(currentProgress),
+        localScroll: localScroll,
+        holdTravel: holdTravel,
+        curtainTravel: curtainTravel,
+        introHoldProgress: introHoldProgress,
+      };
+    };
+
     window.GICLEE_HERO_HORIZONTAL_CURTAIN_STATUS = function () {
       var introStyle = window.getComputedStyle(intro);
       return {
