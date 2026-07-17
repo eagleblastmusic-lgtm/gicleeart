@@ -8,7 +8,6 @@ w kazdym z procesow.
 from __future__ import annotations
 
 import importlib
-import math
 import subprocess
 import sys
 import threading
@@ -48,6 +47,7 @@ from .launcher_classic_subprocess import (
 )
 from .launcher_inline_builder import invoke_inline_builder
 from .launcher_tile_hover import TileHoverController
+from .launcher_scroll_controller import WheelScrollController
 
 try:
     from Komponenty._shared.window_geometry import position_toplevel_screen_center
@@ -101,9 +101,11 @@ class GicleeApp:
         # Jeden aktywny hover zamiast callbacku czyszczacego dla kazdego kafelka.
         # Scroll zeruje wylacznie aktualnie podswietlona karte.
         self._tile_hover = TileHoverController()
-        # Szybkie kolo / touchpad: lacz delty w jednym idle — mniej rysowan canvasu.
-        self._wheel_delta_acc = 0
-        self._wheel_idle_id: str | None = None
+        # Wheel/touchpad deltas use short frame-timed batches.
+        self._wheel_scroll = WheelScrollController(
+            schedule=self.root.after,
+            apply_pixels=self._scroll_tiles_by_pixels,
+        )
         # Stan zwinietych sekcji na ekranie startowym (nazwa sekcji -> True = zwinieta).
         self._section_collapsed: dict[str, bool] = {}
         self._layout = load_layout()
@@ -285,28 +287,38 @@ class GicleeApp:
             return
         if not self._pointer_is_over_tiles_canvas(evt):
             return
-        d = evt.delta
-        if not d:
-            return
-        self._wheel_delta_acc += d
-        if self._wheel_idle_id is not None:
-            try:
-                self.root.after_cancel(self._wheel_idle_id)
-            except (tk.TclError, ValueError):
-                pass
-        self._wheel_idle_id = self.root.after_idle(self._flush_tiles_canvas_wheel)
-
-    def _flush_tiles_canvas_wheel(self) -> None:
-        self._wheel_idle_id = None
-        d = self._wheel_delta_acc
-        self._wheel_delta_acc = 0
-        if not d:
+        delta = evt.delta
+        if not delta:
             return
         self._tile_hover.suspend_for(0.18)
-        step = -d / 120.0
-        if -1 < step < 1 and step != 0:
-            step = math.copysign(1.0, float(-d))
-        self.canvas.yview_scroll(int(step), "units")
+        self._wheel_scroll.add_delta(delta)
+
+    def _scroll_tiles_by_pixels(self, pixels: float) -> None:
+        if not pixels:
+            return
+        try:
+            bbox = self.canvas.bbox("all")
+            if not bbox:
+                return
+            content_height = float(bbox[3] - bbox[1])
+            viewport_height = float(self.canvas.winfo_height())
+            max_offset = max(0.0, content_height - viewport_height)
+            if content_height <= 0.0 or max_offset <= 0.0:
+                return
+            first, _last = self.canvas.yview()
+            current_offset = min(
+                max_offset,
+                max(0.0, float(first) * content_height),
+            )
+            target_offset = min(
+                max_offset,
+                max(0.0, current_offset + float(pixels)),
+            )
+            if abs(target_offset - current_offset) < 0.01:
+                return
+            self.canvas.yview_moveto(target_offset / content_height)
+        except tk.TclError:
+            return
 
     def _sync_tiles_canvas_scroll(self) -> None:
         """Po zwinięciu/rozwinięciu sekcji odśwież wysokość obszaru przewijania."""
