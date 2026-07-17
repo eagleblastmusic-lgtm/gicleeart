@@ -58,6 +58,10 @@
     return Math.min(max, Math.max(min, value));
   }
 
+  function clamp01(value) {
+    return Math.min(1, Math.max(0, value));
+  }
+
   function findHero() {
     var map = window.GICLEE_HOME_SECTIONS || {};
     var heroId = map.hero || 'slideshow_4LMfx7';
@@ -193,6 +197,22 @@
     }
   }
 
+  function heroRiseAudioGain() {
+    if (!scrubRoot) return 1;
+
+    var progress = Number(scrubRoot.getAttribute('data-hero-rise-progress'));
+    if (!Number.isFinite(progress) && typeof window.GICLEE_PREHERO_SCRUB_STATUS === 'function') {
+      try {
+        var status = window.GICLEE_PREHERO_SCRUB_STATUS();
+        progress = status ? Number(status.heroRiseProgress) : NaN;
+      } catch (error) {
+        progress = NaN;
+      }
+    }
+
+    return Number.isFinite(progress) ? clamp01(progress) : 1;
+  }
+
   function curtainAudioGain() {
     var status = horizontalStatus();
     if (!status || !status.active) return 1;
@@ -201,11 +221,15 @@
     if (!Number.isFinite(progress)) progress = Number(status.smoothedProgress);
     if (!Number.isFinite(progress)) return 1;
 
-    return 1 - Math.min(1, Math.max(0, progress));
+    return 1 - clamp01(progress);
+  }
+
+  function sceneAudioGain() {
+    return Math.min(heroRiseAudioGain(), curtainAudioGain());
   }
 
   function applyPlaybackVolume() {
-    var gain = curtainAudioGain();
+    var gain = sceneAudioGain();
     currentAudioGain = gain;
 
     if (ambientAudio) ambientAudio.volume = SOUND_VOLUME * gain;
@@ -250,6 +274,16 @@
 
   function heroIsPlayable() {
     return heroIsSettled() && !curtainComplete();
+  }
+
+  function shouldKeepSilentPlaybackForReverseScroll() {
+    return !!(
+      playbackAllowed &&
+      hasStarted &&
+      choiceResolved &&
+      soundEnabled &&
+      !curtainComplete()
+    );
   }
 
   function decisionWindowExpired() {
@@ -345,7 +379,7 @@
     soundEnabled = !!withSound;
     playbackAllowed = true;
     hasStarted = true;
-    currentAudioGain = curtainAudioGain();
+    currentAudioGain = sceneAudioGain();
 
     videos.forEach(function (video, index) {
       pauseAndReset(video);
@@ -401,6 +435,12 @@
 
     if (!playable) {
       setPromptVisible(false);
+
+      if (shouldKeepSilentPlaybackForReverseScroll()) {
+        applyPlaybackVolume();
+        return;
+      }
+
       if (playbackAllowed) stopPlayback();
       else collectVideos().forEach(pauseAndReset);
       return;
@@ -477,6 +517,8 @@
         ambientVolume: SOUND_VOLUME,
         effectiveAmbientVolume: ambientAudio ? ambientAudio.volume : 0,
         audioGain: currentAudioGain,
+        heroRiseAudioGain: heroRiseAudioGain(),
+        curtainAudioGain: curtainAudioGain(),
         heroRiseComplete:
           scrubRoot.getAttribute('data-hero-rise-complete') === 'true',
         heroTop: Math.round(rect.top * 100) / 100,
