@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const MAX = 980;
-const ALL_PATH = path.join(__dirname, '_giclee_i18n_all.json');
+const ALL_PATH = path.join(__dirname, 'giclee_i18n_all.json');
 const data = JSON.parse(fs.readFileSync(ALL_PATH, 'utf8'));
 
 function splitHtml(html) {

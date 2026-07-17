@@ -22,22 +22,16 @@ Polski jest językiem bazowym sklepu. Treść z edytora motywu (JSON szablonów)
 
 ## Utrzymanie tłumaczeń
 
-1. Ekstrakcja polskich stringów z szablonów: `node _extract_pl_template_text.cjs` → `_extract_pl_template_text.json`.
-2. Master tłumaczeń (6 języków + PL UI): `locales/_giclee_i18n_all.json`.
-3. Merge do plików Shopify: `node locales/_merge_giclee_locales.cjs` (aktualizuje `en.default.json`, `de.json`, `fr.json`, `es.json`, `nl.json`, `it.json` oraz **`pl.json`** — tylko sekcję `giclee.ui`).
+1. Edytuj kanoniczny master: `tools/i18n/giclee_i18n_all.json`.
+2. Wygeneruj pliki: `node tools/i18n/merge_giclee_locales.cjs`.
+3. Sprawdź zgodność: `node tools/i18n/merge_giclee_locales.cjs --check` oraz `python tools/i18n/validate_giclee_i18n.py`.
 
-**Nowy blok tekstowy po polsku:** po dodaniu bloku w Theme Editorze uruchom ekstrakcję, dopisz tłumaczenia do `_giclee_i18n_all.json`, merge, deploy `locales/*.json` + ewentualnie zmienione snippety/sekcje.
+**Nowy blok lub sekcja:** dodaj klucze i tłumaczenia do kanonicznego mastera, a następnie uruchom generator i walidator.
 
-**Limit Shopify:** pojedyncza wartość w locale ≤ ~1000 znaków. Dłuższe HTML (np. strona Giclée Frame) dziel na `text_part1`, `text_part2`, … — skrypt `locales/_split_long_giclee_texts.cjs`; `snippets/text.liquid` skleja part-y automatycznie.
+**Długie wartości:** uruchom `node tools/i18n/split_long_giclee_texts.cjs`, a następnie ponownie generator i walidator.
 
 ## Deploy
 
-```powershell
-shopify theme push --store giclee-art-3.myshopify.com --theme 197314249052 --allow-live `
-  --only "locales/en.default.json" "locales/de.json" "locales/fr.json" "locales/es.json" "locales/nl.json" "locales/it.json" "locales/pl.json" `
-  "snippets/giclee-i18n-text.liquid" "snippets/giclee-i18n-js.liquid" "snippets/text.liquid" "snippets/button.liquid" "snippets/jumbo-text.liquid" `
-  "blocks/_accordion-row.liquid" "sections/giclee-artist-collection-showcase.liquid" "layout/theme.liquid" `
-  "assets/giclee-artist-collection-showcase.js" "assets/giclee-pdp-artwork-preview.js" "assets/giclee-print-analysis.js"
-```
+Narzędzia i18n nie publikują motywu ani nie zmieniają sklepu. Publikacja jest osobnym etapem wymagającym przeglądu zmian, zakończonych testów i jawnej decyzji o wdrożeniu.
 
 Powiązane: [`../../THEME_KNOWLEDGE.md`](../../THEME_KNOWLEDGE.md) §3 (języki motywu vs produktów).
