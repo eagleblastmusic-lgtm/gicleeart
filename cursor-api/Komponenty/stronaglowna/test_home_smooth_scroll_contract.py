@@ -24,8 +24,8 @@ def test_homepage_loads_pinned_lenis_before_local_initializer() -> None:
 def test_smooth_scroll_uses_accessible_homepage_defaults() -> None:
     source = JS_PATH.read_text(encoding="utf-8")
 
-    assert "var LERP = 0.075;" in source
-    assert "var WHEEL_MULTIPLIER = 0.9;" in source
+    assert "var LERP = 0.11;" in source
+    assert "var WHEEL_MULTIPLIER = 1;" in source
     assert "autoRaf: true" in source
     assert "autoToggle: true" in source
     assert "anchors: true" in source
