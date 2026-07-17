@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from . import launcher as _launcher
-from .dragdrop_category_launcher import DragDropCategoryGicleeApp
+from .cached_navigation_launcher import CachedNavigationGicleeApp
 
 
-LauncherApp = DragDropCategoryGicleeApp
+LauncherApp = CachedNavigationGicleeApp
 
 
 def main() -> None:
