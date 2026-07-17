@@ -351,8 +351,9 @@ def test_excluded_timers_exact_calls_exist_in_launcher() -> None:
 
     # 1. Canvas focus in _build_ui()
     assert "self.root.after_idle(self._focus_tiles_canvas)" in source
-    # 2. Wheel flush in _on_canvas_mousewheel()
-    assert "self._wheel_idle_id = self.root.after_idle(self._flush_tiles_canvas_wheel)" in source
+    # 2. Frame-timed wheel controller remains scheduled by Tk.
+    assert "schedule=self.root.after" in source
+    assert "self._wheel_scroll.add_delta(delta)" in source
     # 3. Generator delay 500 ms in _open_zadania_generator()
     assert "self.root.after(500, lambda: open_tasks_generator(self.root, on_saved=lambda _n: None))" in source
     # 4. Log preview win.after(2000, _auto) in _show_component_log()
