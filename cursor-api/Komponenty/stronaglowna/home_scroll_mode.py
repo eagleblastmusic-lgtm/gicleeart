@@ -34,7 +34,7 @@ _LABEL_TO_MODE = {label: mode for mode, label in SCROLL_MODE_LABELS.items()}
 
 def normalize_scroll_mode(raw: Any) -> str:
     value = str(raw or "").strip().lower()
-    return SCROLL_MODE_NATIVE if value == SCROLL_MODE_NATIVE else SCROLL_MODE_LENIS
+    return SCROLL_MODE_LENIS if value == SCROLL_MODE_LENIS else SCROLL_MODE_NATIVE
 
 
 def scroll_mode_path(
@@ -58,13 +58,13 @@ def load_scroll_mode(
 ) -> str:
     path = scroll_mode_path(variant_id, variants_root=variants_root)
     if not path.is_file():
-        return SCROLL_MODE_LENIS
+        return SCROLL_MODE_NATIVE
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError, TypeError):
-        return SCROLL_MODE_LENIS
+        return SCROLL_MODE_NATIVE
     if not isinstance(payload, dict):
-        return SCROLL_MODE_LENIS
+        return SCROLL_MODE_NATIVE
     return normalize_scroll_mode(payload.get("mode"))
 
 
@@ -247,7 +247,7 @@ def _install_gui_decorator() -> None:
             mode_var.set(SCROLL_MODE_LABELS[mode])
 
         def save_selected_mode(_event: tk.Event | None = None) -> None:
-            selected = _LABEL_TO_MODE.get(mode_var.get(), SCROLL_MODE_LENIS)
+            selected = _LABEL_TO_MODE.get(mode_var.get(), SCROLL_MODE_NATIVE)
             variant_id = homepage_variants.active_variant_id()
             try:
                 applied = apply_scroll_mode_to_live_theme(variant_id, selected)
