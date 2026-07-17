@@ -454,7 +454,7 @@ Lejek: wejście → produkt → koszyk → checkout → zakup + lejek konfigurat
 ### Liquid / Shopify
 
 - **Metafields** — `custom.zoom_manifest`, `custom.before_retouch_url`, inne w SHOP_KNOWLEDGE (archiwum)
-- **Locales** — `locales/*.json`, master tłumaczeń: `locales/_giclee_i18n_all.json`
+- **Locales** — `locales/*.json`, master tłumaczeń: `tools/i18n/giclee_i18n_all.json`
 - **Settings schema** — `config/settings_schema.json` (Horizon + custom: `pm_upload_api_url`, `show_cart_invoice_request`)
 
 ---
