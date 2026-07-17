@@ -20,6 +20,7 @@
   var HERO_RISE_VH = configNumber('heroRiseVh', 100, 100, 500);
   var SEEK_FPS = configNumber('scrubSeekFps', 24, 12, 60);
   var SEEK_INTERVAL_MS = 1000 / SEEK_FPS;
+  var LENIS_MAX_SEEK_FPS = 12;
 
   function configNumber(key, fallback, min, max) {
     var value = Number(CONFIG[key]);
@@ -29,6 +30,26 @@
 
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
+  }
+
+  function lenisPerformanceActive() {
+    return document.documentElement.classList.contains('giclee-lenis-performance');
+  }
+
+  function activeSeekFps() {
+    return lenisPerformanceActive() ? Math.min(SEEK_FPS, LENIS_MAX_SEEK_FPS) : SEEK_FPS;
+  }
+
+  function activeSeekIntervalMs() {
+    return lenisPerformanceActive()
+      ? Math.max(SEEK_INTERVAL_MS, 1000 / LENIS_MAX_SEEK_FPS)
+      : SEEK_INTERVAL_MS;
+  }
+
+  function activeSeekEpsilon() {
+    return lenisPerformanceActive()
+      ? Math.max(SEEK_EPSILON, 0.45 / activeSeekFps())
+      : SEEK_EPSILON;
   }
 
   function viewportHeight() {
@@ -46,9 +67,7 @@
   }
 
   function setAttrIfChanged(element, name, value) {
-    if (element.getAttribute(name) !== value) {
-      element.setAttribute(name, value);
-    }
+    if (element.getAttribute(name) !== value) element.setAttribute(name, value);
   }
 
   function firstMediaSource(video) {
@@ -62,12 +81,10 @@
   function firstPosterSource(hero, sourceVideo) {
     var configuredPoster = window.GICLEE_PREHERO_SCRUB_POSTER_URL || '';
     if (configuredPoster) return configuredPoster;
-
     if (sourceVideo) {
       var poster = sourceVideo.getAttribute('poster') || sourceVideo.poster || '';
       if (poster) return poster;
     }
-
     var image = hero ? hero.querySelector('img') : null;
     return image ? image.currentSrc || image.src || '' : '';
   }
@@ -86,25 +103,19 @@
     if (!hero) return null;
     var videos = hero.querySelectorAll('video');
     var fallback = null;
-
     for (var i = 0; i < videos.length; i += 1) {
       var candidate = videos[i];
       if (!fallback) fallback = candidate;
       if (!firstMediaSource(candidate)) continue;
-
       var style = window.getComputedStyle(candidate);
-      if (style.display !== 'none' && style.visibility !== 'hidden') {
-        return candidate;
-      }
+      if (style.display !== 'none' && style.visibility !== 'hidden') return candidate;
     }
-
     return fallback && firstMediaSource(fallback) ? fallback : null;
   }
 
   function createSection(hero) {
     var main = document.getElementById('MainContent');
     if (!main || !hero || document.getElementById(ROOT_ID)) return null;
-
     var root = document.createElement('section');
     root.id = ROOT_ID;
     root.className = 'giclee-prehero-scrub';
@@ -122,10 +133,8 @@
 
     var stage = document.createElement('div');
     stage.className = 'giclee-prehero-scrub__stage';
-
     var poster = document.createElement('div');
     poster.className = 'giclee-prehero-scrub__poster';
-
     var video = document.createElement('video');
     video.className = 'giclee-prehero-scrub__video';
     video.muted = true;
@@ -143,22 +152,12 @@
     video.setAttribute('focusable', 'false');
     video.setAttribute('inert', '');
     video.disablePictureInPicture = true;
-    video.addEventListener('focus', function () {
-      video.blur();
-    });
-
+    video.addEventListener('focus', function () { video.blur(); });
     stage.appendChild(poster);
     stage.appendChild(video);
     root.appendChild(stage);
     main.insertBefore(root, hero);
-
-    return {
-      root: root,
-      stage: stage,
-      poster: poster,
-      video: video,
-      hero: hero,
-    };
+    return { root: root, stage: stage, poster: poster, video: video, hero: hero };
   }
 
   function initScrubbing(parts) {
@@ -172,6 +171,7 @@
     var retryTimer = 0;
     var lastSeekAt = -Infinity;
     var seekCount = 0;
+    var skippedSeekCount = 0;
     var totalTravel = 0;
     var preHeroTravel = 0;
     var heroRiseStart = 0;
@@ -189,7 +189,8 @@
 
     function quantizedTarget() {
       var maxTime = Math.max(0, duration - 0.033);
-      var quantized = Math.round(targetTime * SEEK_FPS) / SEEK_FPS;
+      var fps = activeSeekFps();
+      var quantized = Math.round(targetTime * fps) / fps;
       return clamp(quantized, 0, maxTime);
     }
 
@@ -201,7 +202,6 @@
 
     function updateProgressFromScroll() {
       if (!duration || reducedMotion) return;
-
       var localScroll = clamp(scrollY() - rootStartY, 0, totalTravel);
       progress = clamp(localScroll / Math.max(1, preHeroTravel), 0, 1);
       heroRiseProgress = clamp(
@@ -210,7 +210,6 @@
         1
       );
       targetTime = progress * Math.max(0, duration - 0.033);
-
       setAttrIfChanged(root, 'data-scrub-progress', progress.toFixed(4));
       setAttrIfChanged(root, 'data-hero-rise-progress', heroRiseProgress.toFixed(4));
       setAttrIfChanged(root, 'data-prehero-phase', phaseFor(localScroll));
@@ -219,7 +218,6 @@
 
     function measureLayout() {
       if (reducedMotion) return;
-
       var viewport = viewportHeight();
       var rect = root.getBoundingClientRect();
       rootStartY = scrollY() + rect.top;
@@ -237,7 +235,7 @@
 
     function scheduleAfterSeekBudget(now) {
       clearRetryTimer();
-      var wait = Math.max(0, SEEK_INTERVAL_MS - (now - lastSeekAt));
+      var wait = Math.max(0, activeSeekIntervalMs() - (now - lastSeekAt));
       retryTimer = window.setTimeout(function () {
         retryTimer = 0;
         requestSeek();
@@ -247,17 +245,16 @@
     function seekTick(now) {
       rafId = 0;
       if (!duration || reducedMotion || video.seeking || video.readyState < 1) return;
-
       var desired = quantizedTarget();
       requestedTime = desired;
-
-      if (Math.abs(video.currentTime - desired) <= SEEK_EPSILON) return;
-
-      if (now - lastSeekAt < SEEK_INTERVAL_MS) {
+      if (Math.abs(video.currentTime - desired) <= activeSeekEpsilon()) {
+        skippedSeekCount += 1;
+        return;
+      }
+      if (now - lastSeekAt < activeSeekIntervalMs()) {
         scheduleAfterSeekBudget(now);
         return;
       }
-
       lastSeekAt = now;
       seekCount += 1;
       try {
@@ -275,7 +272,7 @@
     function onSeeked() {
       if (!duration || reducedMotion) return;
       var desired = quantizedTarget();
-      if (Math.abs(video.currentTime - desired) > SEEK_EPSILON) {
+      if (Math.abs(video.currentTime - desired) > activeSeekEpsilon()) {
         scheduleAfterSeekBudget(performance.now());
       }
     }
@@ -286,14 +283,12 @@
       targetTime = 0;
       requestedTime = 0;
       root.setAttribute('data-video-ready', 'true');
-
       try {
         video.pause();
         video.currentTime = Math.min(0.001, Math.max(0, duration - 0.033));
       } catch (error) {
         /* Ignore the initial seek until the media timeline is ready. */
       }
-
       if (!reducedMotion) measureLayout();
     }
 
@@ -318,8 +313,12 @@
         smoothedTime: requestedTime,
         renderedTime: video.currentTime,
         seeking: video.seeking,
-        seekFps: SEEK_FPS,
+        seekFps: activeSeekFps(),
+        configuredSeekFps: SEEK_FPS,
+        seekIntervalMs: activeSeekIntervalMs(),
         seekCount: seekCount,
+        skippedSeekCount: skippedSeekCount,
+        lenisAdaptiveSeeking: lenisPerformanceActive(),
         totalTravel: totalTravel,
         preHeroTravel: preHeroTravel,
         revealStart: revealStart,
@@ -378,12 +377,10 @@
       var fallback = heroFallback();
       var source = dedicatedSource || fallback.source;
       var poster = firstPosterSource(parts.hero, findSourceVideo(parts.hero));
-
       if (!source) {
         if (attempts >= SOURCE_RETRY_LIMIT) stopWatching();
         return false;
       }
-
       return applySource(source, poster);
     }
 
@@ -399,7 +396,6 @@
 
     initScrubbing(parts);
     if (tryAttach()) return;
-
     observer = new MutationObserver(tryAttach);
     observer.observe(parts.hero, {
       childList: true,
@@ -407,7 +403,6 @@
       attributes: true,
       attributeFilter: ['src'],
     });
-
     timer = window.setInterval(tryAttach, SOURCE_RETRY_MS);
   }
 
