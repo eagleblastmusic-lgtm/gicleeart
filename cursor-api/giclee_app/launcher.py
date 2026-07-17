@@ -98,8 +98,8 @@ class GicleeApp:
         self._geometry_before_inline: str | None = None
         self._current_inline_folder: str | None = None
         self._next_inline_on_back: Callable[[], None] | None = None
-        # Jeden aktywny hover zamiast callbacku czyszcz?cego dla ka?dego kafelka.
-        # Scroll zeruje wy??cznie aktualnie pod?wietlon? kart?.
+        # Jeden aktywny hover zamiast callbacku czyszczacego dla kazdego kafelka.
+        # Scroll zeruje wylacznie aktualnie podswietlona karte.
         self._tile_hover = TileHoverController()
         # Szybkie kolo / touchpad: lacz delty w jednym idle — mniej rysowan canvasu.
         self._wheel_delta_acc = 0
