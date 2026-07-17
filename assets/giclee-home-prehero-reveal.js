@@ -43,9 +43,13 @@
   var heroRiseStart = 0;
   var heroRiseTravel = 0;
   var localScroll = 0;
+  var scrubDocumentTop = 0;
   var visualRetryTimer = 0;
   var visualRetryCount = 0;
   var copyOpacity = 0;
+  var frameCount = 0;
+  var layoutReadCount = 0;
+  var styleWriteCount = 0;
 
   function configNumber(key, fallback, min, max) {
     var value = Number(CONFIG[key]);
@@ -80,8 +84,28 @@
     return 1 - Math.exp(-deltaMs / Math.max(1, tauMs));
   }
 
+  function lenisPerformanceActive() {
+    return document.documentElement.classList.contains('giclee-lenis-performance');
+  }
+
   function viewportHeight() {
     return window.innerHeight || document.documentElement.clientHeight || 800;
+  }
+
+  function scrollY() {
+    return window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+  }
+
+  function setStyleIfChanged(element, property, value, cacheKey) {
+    if (!element || element[cacheKey] === value) return;
+    element[cacheKey] = value;
+    element.style.setProperty(property, value);
+    styleWriteCount += 1;
+  }
+
+  function setAttrIfChanged(element, name, value) {
+    if (!element || element.getAttribute(name) === value) return;
+    element.setAttribute(name, value);
   }
 
   function parseCssUrl(value) {
@@ -99,6 +123,7 @@
       var source = img.currentSrc || img.src || img.getAttribute('src') || '';
       if (!source) return;
       var rect = img.getBoundingClientRect();
+      layoutReadCount += 1;
       var area = Math.max(1, rect.width) * Math.max(1, rect.height);
       if (area > bestArea) {
         best = source;
@@ -148,11 +173,9 @@
     if (!COPY_ENABLED || !revealRoot) return null;
     copy = document.createElement('div');
     copy.className = 'giclee-prehero-reveal__copy';
-
     var text = document.createElement('p');
     text.className = 'giclee-prehero-reveal__copy-text';
     text.setAttribute('aria-label', COPY_LINES.join(' '));
-
     COPY_LINES.forEach(function (lineText, index) {
       var line = document.createElement('span');
       line.className = 'giclee-prehero-reveal__copy-line';
@@ -162,7 +185,6 @@
       text.appendChild(line);
       copyLines.push(line);
     });
-
     copy.appendChild(text);
     revealRoot.appendChild(copy);
     return copy;
@@ -181,21 +203,17 @@
         : [];
       return !!nextVisual;
     }
-
     revealRoot = document.createElement('div');
     revealRoot.className = REVEAL_CLASS;
     revealRoot.setAttribute('data-reveal-progress', '0');
-
     nextVisual = document.createElement('div');
     nextVisual.className = 'giclee-prehero-reveal__visual';
     nextVisual.setAttribute('aria-hidden', 'true');
     revealRoot.appendChild(nextVisual);
     createCopy();
-
     spine = document.createElement('div');
     spine.className = 'giclee-prehero-reveal__spine';
     spine.setAttribute('aria-hidden', 'true');
-
     scrubStage.appendChild(revealRoot);
     scrubStage.appendChild(spine);
     return true;
@@ -220,8 +238,9 @@
   function applyVisualSource() {
     var source = resolveHeroVisual();
     if (!source || !nextVisual) return false;
-    nextVisual.style.backgroundImage = 'url("' + String(source).replace(/"/g, '%22') + '")';
-    scrubRoot.setAttribute('data-next-visual-ready', 'true');
+    var background = 'url("' + String(source).replace(/"/g, '%22') + '")';
+    setStyleIfChanged(nextVisual, 'background-image', background, '_gicleeRevealImage');
+    setAttrIfChanged(scrubRoot, 'data-next-visual-ready', 'true');
     stopVisualRetry();
     return true;
   }
@@ -236,26 +255,31 @@
     }, SOURCE_RETRY_MS);
   }
 
-  function measureProgress() {
+  function measureLayout() {
     if (!scrubRoot) return;
     var viewport = viewportHeight();
     var rect = scrubRoot.getBoundingClientRect();
+    layoutReadCount += 1;
+    scrubDocumentTop = scrollY() + rect.top;
     totalTravel = Math.max(1, scrubRoot.offsetHeight - viewport);
     heroRiseTravel = Math.min(totalTravel, viewport * (HERO_RISE_VH / 100));
     preHeroTravel = Math.max(1, totalTravel - heroRiseTravel);
     heroRiseStart = preHeroTravel;
     revealTravel = Math.min(preHeroTravel, viewport * (REVEAL_OVERLAP_VH / 100));
     revealStart = Math.max(0, preHeroTravel - revealTravel);
-    localScroll = clamp(-rect.top, 0, totalTravel);
+    measureProgress();
+  }
 
+  function measureProgress() {
+    if (!scrubRoot) return;
+    localScroll = clamp(scrollY() - scrubDocumentTop, 0, totalTravel);
     targetProgress = clamp((localScroll - revealStart) / Math.max(1, revealTravel), 0, 1);
     heroRiseProgress = smoothstep(
       clamp((localScroll - heroRiseStart) / Math.max(1, heroRiseTravel), 0, 1)
     );
-
-    scrubRoot.setAttribute('data-reveal-active', localScroll >= revealStart - 0.5 ? 'true' : 'false');
-    scrubRoot.setAttribute('data-hero-rise-active', localScroll >= heroRiseStart - 0.5 ? 'true' : 'false');
-    scrubRoot.setAttribute('data-hero-rise-progress', heroRiseProgress.toFixed(4));
+    setAttrIfChanged(scrubRoot, 'data-reveal-active', localScroll >= revealStart - 0.5 ? 'true' : 'false');
+    setAttrIfChanged(scrubRoot, 'data-hero-rise-active', localScroll >= heroRiseStart - 0.5 ? 'true' : 'false');
+    setAttrIfChanged(scrubRoot, 'data-hero-rise-progress', heroRiseProgress.toFixed(3));
     requestTick();
   }
 
@@ -267,51 +291,55 @@
     var copyIn = smoothstep(rangeProgress(eased, 0.08, 0.34));
     var copyOut = 1 - smoothstep(rangeProgress(eased, 0.90, 0.995));
     var copyY = 24 * (1 - copyIn) - 12 * (1 - copyOut);
-    var copyBlur = 9 * (1 - copyIn) + 3 * (1 - copyOut);
-    copy.style.setProperty('--giclee-prehero-copy-y', copyY.toFixed(3) + 'px');
-    copy.style.setProperty('--giclee-prehero-copy-blur', copyBlur.toFixed(3) + 'px');
-
+    setStyleIfChanged(copy, '--giclee-prehero-copy-y', copyY.toFixed(2) + 'px', '_gicleeRevealCopyY');
+    if (!lenisPerformanceActive()) {
+      var copyBlur = 9 * (1 - copyIn) + 3 * (1 - copyOut);
+      setStyleIfChanged(copy, '--giclee-prehero-copy-blur', copyBlur.toFixed(2) + 'px', '_gicleeRevealCopyBlur');
+    }
     copyOpacity = 0;
     copyLines.forEach(function (line, index) {
       var lineStart = 0.08 + index * 0.055;
       var lineIn = smoothstep(rangeProgress(eased, lineStart, lineStart + 0.20));
       var lineOpacity = lineIn * copyOut;
       copyOpacity = Math.max(copyOpacity, lineOpacity);
-      line.style.setProperty('--giclee-prehero-copy-line-opacity', lineOpacity.toFixed(4));
-      line.style.setProperty('--giclee-prehero-copy-line-y', (18 * (1 - lineIn)).toFixed(3) + 'px');
+      setStyleIfChanged(line, '--giclee-prehero-copy-line-opacity', lineOpacity.toFixed(3), '_gicleeRevealLineOpacity');
+      setStyleIfChanged(line, '--giclee-prehero-copy-line-y', (18 * (1 - lineIn)).toFixed(2) + 'px', '_gicleeRevealLineY');
     });
-    copy.style.setProperty('--giclee-prehero-copy-opacity', copyOpacity.toFixed(4));
+    setStyleIfChanged(copy, '--giclee-prehero-copy-opacity', copyOpacity.toFixed(3), '_gicleeRevealCopyOpacity');
   }
 
   function applyFrame() {
     if (!revealRoot || !scrubRoot) return;
+    frameCount += 1;
     var eased = smoothstep(currentProgress);
     var inset = 50 * (1 - eased);
     var active = localScroll >= revealStart - 0.5;
     var spineFade = 1 - smoothstep(clamp(eased / 0.16, 0, 1));
     var spineOpacity = active && eased < 1 ? 0.72 * spineFade : 0;
-
-    revealRoot.style.setProperty('--giclee-prehero-reveal-inset', inset.toFixed(3) + '%');
-    revealRoot.style.setProperty('--giclee-prehero-reveal-progress', eased.toFixed(4));
-    scrubRoot.style.setProperty('--giclee-prehero-reveal-spine-opacity', spineOpacity.toFixed(3));
+    setStyleIfChanged(revealRoot, '--giclee-prehero-reveal-inset', inset.toFixed(2) + '%', '_gicleeRevealInset');
+    setStyleIfChanged(revealRoot, '--giclee-prehero-reveal-progress', eased.toFixed(3), '_gicleeRevealProgress');
+    setStyleIfChanged(scrubRoot, '--giclee-prehero-reveal-spine-opacity', spineOpacity.toFixed(3), '_gicleeRevealSpine');
     applyCopyFrame(eased);
-
-    revealRoot.setAttribute('data-reveal-progress', eased.toFixed(4));
-    scrubRoot.setAttribute('data-reveal-progress', eased.toFixed(4));
-    scrubRoot.setAttribute('data-reveal-complete', eased >= 0.999 ? 'true' : 'false');
-    scrubRoot.setAttribute('data-hero-rise-complete', heroRiseProgress >= 0.999 ? 'true' : 'false');
+    var progressValue = eased.toFixed(3);
+    setAttrIfChanged(revealRoot, 'data-reveal-progress', progressValue);
+    setAttrIfChanged(scrubRoot, 'data-reveal-progress', progressValue);
+    setAttrIfChanged(scrubRoot, 'data-reveal-complete', eased >= 0.999 ? 'true' : 'false');
+    setAttrIfChanged(scrubRoot, 'data-hero-rise-complete', heroRiseProgress >= 0.999 ? 'true' : 'false');
   }
 
   function tick(now) {
     rafId = 0;
-    var delta = lastFrameTime ? Math.min(64, now - lastFrameTime) : 16.67;
-    lastFrameTime = now;
-    currentProgress = reducedMotion
-      ? targetProgress
-      : currentProgress + (targetProgress - currentProgress) * expAlpha(delta, TAU_MS);
+    var direct = reducedMotion || lenisPerformanceActive();
+    if (direct) {
+      currentProgress = targetProgress;
+    } else {
+      var delta = lastFrameTime ? Math.min(64, now - lastFrameTime) : 16.67;
+      lastFrameTime = now;
+      currentProgress += (targetProgress - currentProgress) * expAlpha(delta, TAU_MS);
+    }
     if (Math.abs(targetProgress - currentProgress) <= EPSILON) currentProgress = targetProgress;
     applyFrame();
-    if (Math.abs(targetProgress - currentProgress) > EPSILON) requestTick();
+    if (!direct && Math.abs(targetProgress - currentProgress) > EPSILON) requestTick();
     else lastFrameTime = 0;
   }
 
@@ -321,7 +349,7 @@
 
   function refresh() {
     applyVisualSource();
-    measureProgress();
+    measureLayout();
   }
 
   function rectSnapshot(element) {
@@ -344,14 +372,13 @@
     hero = findHero();
     scrubStage = scrubRoot ? scrubRoot.querySelector('.giclee-prehero-scrub__stage') : null;
     if (!scrubRoot || !scrubStage || !hero || !createIntegratedReveal()) return;
-
     reducedMotion = !!(
       window.matchMedia &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches
     );
     enableOriginalHeroRise();
     startVisualRetry();
-    measureProgress();
+    measureLayout();
     currentProgress = targetProgress;
     applyFrame();
 
@@ -377,6 +404,11 @@
         heroRiseTravel: heroRiseTravel,
         heroRiseProgress: heroRiseProgress,
         localScroll: localScroll,
+        scrubDocumentTop: scrubDocumentTop,
+        directLenisProgress: lenisPerformanceActive(),
+        frameCount: frameCount,
+        layoutReadCount: layoutReadCount,
+        styleWriteCount: styleWriteCount,
         active: scrubRoot.getAttribute('data-reveal-active') === 'true',
         complete: scrubRoot.getAttribute('data-reveal-complete') === 'true',
         heroRiseActive: scrubRoot.getAttribute('data-hero-rise-active') === 'true',
