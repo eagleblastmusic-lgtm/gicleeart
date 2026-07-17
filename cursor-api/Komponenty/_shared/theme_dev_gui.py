@@ -78,11 +78,37 @@ def open_theme_dev_preview(
     open_btn.pack(side="left")
     ttk.Button(btn_row, text="Zamknij", command=win.destroy).pack(side="right")
 
+    def window_alive() -> bool:
+        try:
+            return bool(win.winfo_exists())
+        except tk.TclError:
+            return False
+
     def append(line: str) -> None:
-        log.insert("end", line + "\n")
-        log.see("end")
+        def write() -> None:
+            if not window_alive():
+                return
+            try:
+                if not log.winfo_exists():
+                    return
+                log.insert("end", line + "\n")
+                log.see("end")
+            except tk.TclError:
+                # Okno mogło zostać zamknięte pomiędzy sprawdzeniem i zapisem.
+                return
+
+        if threading.current_thread() is threading.main_thread():
+            write()
+            return
+        try:
+            master.after(0, write)
+        except tk.TclError:
+            # Aplikacja lub interpreter Tk został już zamknięty.
+            return
 
     def poll_ready(attempt: int = 0, network_retry: int = 0) -> None:
+        if not window_alive():
+            return
         preview_local = preview_url(local=True)
         if theme_dev_http_ready(url=preview_local):
             append("—" * 40)
@@ -99,7 +125,10 @@ def open_theme_dev_preview(
         if proc is not None and proc.poll() is not None:
             code = proc.returncode
             if code != 0:
-                log_text = log.get("1.0", "end")
+                try:
+                    log_text = log.get("1.0", "end") if log.winfo_exists() else ""
+                except tk.TclError:
+                    return
                 log_lower = log_text.lower()
                 if "store password" in log_lower or "failed to prompt" in log_lower:
                     msg = (
@@ -125,9 +154,11 @@ def open_theme_dev_preview(
                         )
                     except OSError as exc:
                         append(str(exc))
-                        messagebox.showerror(app_title, str(exc), parent=win)
+                        if window_alive():
+                            messagebox.showerror(app_title, str(exc), parent=win)
                         return
-                    win.after(4000, lambda: poll_ready(0, network_retry + 1))
+                    if window_alive():
+                        win.after(4000, lambda: poll_ready(0, network_retry + 1))
                     return
                 elif "etimedout" in log_lower:
                     msg = (
@@ -149,7 +180,8 @@ def open_theme_dev_preview(
                 append(msg)
                 if status_var is not None:
                     status_var.set("Theme dev — błąd.")
-                messagebox.showerror(app_title, msg, parent=win)
+                if window_alive():
+                    messagebox.showerror(app_title, msg, parent=win)
             return
         if attempt >= THEME_DEV_STARTUP_POLL_SEC:
             append("—" * 40)
@@ -160,17 +192,35 @@ def open_theme_dev_preview(
             if status_var is not None:
                 status_var.set("Theme dev — timeout.")
             return
-        win.after(1000, lambda: poll_ready(attempt + 1))
+        if window_alive():
+            win.after(1000, lambda: poll_ready(attempt + 1))
 
     def worker() -> None:
         try:
             home_features_mod.start_theme_dev(on_line=append, force_restart=True)
-            master.after(500, poll_ready)
+            try:
+                master.after(500, poll_ready)
+            except tk.TclError:
+                return
         except FileNotFoundError as exc:
-            master.after(0, lambda: append(str(exc)))
-            master.after(0, lambda: messagebox.showerror(app_title, str(exc), parent=win))
+            try:
+                master.after(0, lambda: append(str(exc)))
+                master.after(
+                    0,
+                    lambda: window_alive()
+                    and messagebox.showerror(app_title, str(exc), parent=win),
+                )
+            except tk.TclError:
+                return
         except OSError as exc:
-            master.after(0, lambda: append(f"BŁĄD: {exc}"))
-            master.after(0, lambda: messagebox.showerror(app_title, str(exc), parent=win))
+            try:
+                master.after(0, lambda: append(f"BŁĄD: {exc}"))
+                master.after(
+                    0,
+                    lambda: window_alive()
+                    and messagebox.showerror(app_title, str(exc), parent=win),
+                )
+            except tk.TclError:
+                return
 
     threading.Thread(target=worker, daemon=True).start()
