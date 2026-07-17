@@ -1,4 +1,4 @@
-"""Kontrakt LC-6: kanoniczny composition root klasycznego launchera."""
+"""Kontrakt LC-6/LC-7: kanoniczny composition root klasycznego launchera."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from giclee_app import cached_navigation_launcher
 from giclee_app import category_launcher
 from giclee_app import dragdrop_category_launcher
 from giclee_app import launcher
@@ -37,9 +38,13 @@ def _call_name(call: ast.Call) -> str:
     return ""
 
 
-def test_launcher_app_is_exact_final_class_with_unchanged_mro() -> None:
-    assert launcher_app.LauncherApp is dragdrop_category_launcher.DragDropCategoryGicleeApp
+def test_launcher_app_is_exact_final_class_with_unchanged_base_mro() -> None:
+    assert (
+        launcher_app.LauncherApp
+        is cached_navigation_launcher.CachedNavigationGicleeApp
+    )
     assert launcher_app.LauncherApp.__mro__ == (
+        cached_navigation_launcher.CachedNavigationGicleeApp,
         dragdrop_category_launcher.DragDropCategoryGicleeApp,
         options_category_launcher.OptionsCategoryGicleeApp,
         styled_category_launcher.StyledCategoryGicleeApp,
@@ -58,7 +63,6 @@ def test_launcher_app_main_passes_exact_factory_once(
         captured.append(app_factory)
 
     monkeypatch.setattr(launcher_app._launcher, "main", fake_main)
-
     launcher_app.main()
 
     assert captured == [launcher_app.LauncherApp]
@@ -106,7 +110,7 @@ def test_launcher_app_source_is_static_and_import_side_effect_free() -> None:
     ]
     assert len(alias_assignments) == 1
     assert isinstance(alias_assignments[0].value, ast.Name)
-    assert alias_assignments[0].value.id == "DragDropCategoryGicleeApp"
+    assert alias_assignments[0].value.id == "CachedNavigationGicleeApp"
 
     main_nodes = [
         node
@@ -134,6 +138,7 @@ def test_package_main_delegates_only_to_launcher_app() -> None:
     assert imports[0].module == "launcher_app"
     assert [(item.name, item.asname) for item in imports[0].names] == [("main", None)]
     assert "dragdrop_category_launcher" not in source
+    assert "cached_navigation_launcher" not in source
     assert "studio_preview" not in source
 
     guarded_calls = [
@@ -151,6 +156,10 @@ def test_package_main_delegates_only_to_launcher_app() -> None:
         (styled_category_launcher, styled_category_launcher.StyledCategoryGicleeApp),
         (options_category_launcher, options_category_launcher.OptionsCategoryGicleeApp),
         (dragdrop_category_launcher, dragdrop_category_launcher.DragDropCategoryGicleeApp),
+        (
+            cached_navigation_launcher,
+            cached_navigation_launcher.CachedNavigationGicleeApp,
+        ),
     ],
 )
 def test_layer_entrypoints_remain_explicit_and_independent(
@@ -185,4 +194,5 @@ def test_studio_entrypoint_remains_separate_from_classic_composition() -> None:
     assert "giclee_app.launcher" not in imported_modules
     assert "giclee_app.launcher_app" not in imported_modules
     assert "launcher_app" not in imported_modules
+    assert "cached_navigation_launcher" not in imported_modules
     assert "dragdrop_category_launcher" not in imported_modules
