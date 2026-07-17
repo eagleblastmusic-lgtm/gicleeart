@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import time
 import tkinter as tk
 
 from . import launcher as _launcher
@@ -131,7 +130,13 @@ class StyledCategoryGicleeApp(CategoryGicleeApp):
 
         collect(outer)
 
+        hover_active = False
+
         def set_hover(active: bool) -> None:
+            nonlocal hover_active
+            if hover_active == active:
+                return
+            hover_active = active
             new_bg = bg_hover if active else bg_normal
             new_border = border_hover if active else border_normal
             for widget in background_widgets:
@@ -147,16 +152,14 @@ class StyledCategoryGicleeApp(CategoryGicleeApp):
             except tk.TclError:
                 pass
 
-        self._tile_hover_clearers.append(lambda: set_hover(False))
-
         def on_enter(_event: object) -> None:
-            if time.monotonic() < self._suppress_tile_hover_until:
-                return
-            set_hover(True)
+            self._tile_hover.enter(
+                outer,
+                lambda: set_hover(True),
+                lambda: set_hover(False),
+            )
 
         def on_leave(_event: object) -> None:
-            if time.monotonic() < self._suppress_tile_hover_until:
-                return
             try:
                 px, py = outer.winfo_pointerxy()
                 ox, oy = outer.winfo_rootx(), outer.winfo_rooty()
@@ -165,7 +168,7 @@ class StyledCategoryGicleeApp(CategoryGicleeApp):
                 return
             if ox <= px < ox + ow and oy <= py < oy + oh:
                 return
-            set_hover(False)
+            self._tile_hover.leave(outer)
 
         def on_click(_event: object, selected: Component = comp) -> None:
             self._launch(selected)

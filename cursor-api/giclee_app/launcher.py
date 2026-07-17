@@ -12,7 +12,6 @@ import math
 import subprocess
 import sys
 import threading
-import time
 import tkinter as tk
 import webbrowser
 from datetime import date
@@ -48,6 +47,7 @@ from .launcher_classic_subprocess import (
     start_classic_component_subprocess,
 )
 from .launcher_inline_builder import invoke_inline_builder
+from .launcher_tile_hover import TileHoverController
 
 try:
     from Komponenty._shared.window_geometry import position_toplevel_screen_center
@@ -98,10 +98,9 @@ class GicleeApp:
         self._geometry_before_inline: str | None = None
         self._current_inline_folder: str | None = None
         self._next_inline_on_back: Callable[[], None] | None = None
-        # Hover na kafelkach: podczas scrolla canvas kafelki przesuwaja sie pod kursorem
-        # i Tk generuje lawine Enter/Leave -> set bg na wielu widgetach = przycinanie UI.
-        self._suppress_tile_hover_until = 0.0
-        self._tile_hover_clearers: list[Callable[[], None]] = []
+        # Jeden aktywny hover zamiast callbacku czyszcz?cego dla ka?dego kafelka.
+        # Scroll zeruje wy??cznie aktualnie pod?wietlon? kart?.
+        self._tile_hover = TileHoverController()
         # Szybkie kolo / touchpad: lacz delty w jednym idle — mniej rysowan canvasu.
         self._wheel_delta_acc = 0
         self._wheel_idle_id: str | None = None
@@ -303,12 +302,7 @@ class GicleeApp:
         self._wheel_delta_acc = 0
         if not d:
             return
-        self._suppress_tile_hover_until = time.monotonic() + 0.18
-        for clear in self._tile_hover_clearers:
-            try:
-                clear()
-            except tk.TclError:
-                pass
+        self._tile_hover.suspend_for(0.18)
         step = -d / 120.0
         if -1 < step < 1 and step != 0:
             step = math.copysign(1.0, float(-d))
@@ -385,7 +379,7 @@ class GicleeApp:
         )
 
     def _render_tiles(self) -> None:
-        self._tile_hover_clearers.clear()
+        self._tile_hover.clear_active()
         for child in list(self.tiles_frame.winfo_children()):
             child.destroy()
 
@@ -738,7 +732,13 @@ class GicleeApp:
 
         _collect_bg(outer)
 
+        hover_active = False
+
         def _set_hover(active: bool) -> None:
+            nonlocal hover_active
+            if hover_active == active:
+                return
+            hover_active = active
             new_bg = BG_HOVER if active else BG_NORMAL
             for w in bg_widgets:
                 try:
@@ -746,16 +746,14 @@ class GicleeApp:
                 except tk.TclError:
                     pass
 
-        self._tile_hover_clearers.append(lambda: _set_hover(False))
-
         def _on_enter(_evt: object) -> None:
-            if time.monotonic() < self._suppress_tile_hover_until:
-                return
-            _set_hover(True)
+            self._tile_hover.enter(
+                outer,
+                lambda: _set_hover(True),
+                lambda: _set_hover(False),
+            )
 
         def _on_leave(_evt: object) -> None:
-            if time.monotonic() < self._suppress_tile_hover_until:
-                return
             # W Tk rodzic dostaje <Leave> gdy mysz wjedzie na DZIECKO.
             # Sprawdzamy czy mysz wciaz jest w bbox outer-a - jesli tak,
             # ignorujemy (nie ma faktycznego opuszczenia kafelka).
@@ -767,7 +765,7 @@ class GicleeApp:
                 return
             if ox <= px < ox + ow and oy <= py < oy + oh:
                 return
-            _set_hover(False)
+            self._tile_hover.leave(outer)
 
         def _on_click(_evt: object, c: Component = comp) -> None:
             self._launch(c)
