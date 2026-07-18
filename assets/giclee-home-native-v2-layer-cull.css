@@ -5,6 +5,52 @@ html.giclee-native-v2.giclee-native-v2-layer-cull
   pointer-events: none !important;
 }
 
+/*
+ * During an active wheel easing keep the cinematic opacity/transform motion, but
+ * avoid full-screen blur, brightness and shadow repaints in the heavy lower stack.
+ * Once the easing ends, normal hover/focus styling remains available.
+ */
+html.giclee-native-v2.giclee-native-v2-scrolling
+  :is(.giclee-home-studio-reveal__heading, .giclee-home-studio-reveal__paragraph) {
+  filter: none !important;
+  transition-property: opacity, transform !important;
+}
+
+html.giclee-native-v2.giclee-native-v2-scrolling
+  :is(
+    .giclee-home-studio-reveal__bg .background-image-container,
+    .giclee-home-studio-reveal__bg .background-image-container img,
+    .giclee-home-studio-reveal__bg video-background-component video
+  ) {
+  filter: none !important;
+  transition-property: opacity, transform !important;
+}
+
+html.giclee-native-v2.giclee-native-v2-scrolling
+  :is(.giclee-home-studio-reveal__card, .giclee-home-studio-reveal__copy) {
+  filter: none !important;
+  box-shadow: none !important;
+  transition-property: opacity, transform !important;
+}
+
+html.giclee-native-v2.giclee-native-v2-scrolling
+  :is(
+    .giclee-home-final-difference .giclee-final-difference__media--left,
+    .giclee-home-final-difference .giclee-final-difference__media--right,
+    .giclee-home-final-difference .giclee-final-difference__bg .background-image-container,
+    .giclee-home-final-difference .giclee-final-difference__bg .background-image-container img,
+    .giclee-home-final-difference .giclee-final-difference__bg video-background-component video
+  ) {
+  filter: none !important;
+  transition-property: opacity, transform !important;
+}
+
+html.giclee-native-v2.giclee-native-v2-scrolling
+  comparison-slider-component
+  .comparison-slider__layer {
+  transition-duration: 0s !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html.giclee-native-v2
     .shopify-section.giclee-native-v2-covered[data-giclee-home-stack]:not(.giclee-home-stack-divider) {
