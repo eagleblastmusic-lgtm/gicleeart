@@ -85,26 +85,39 @@ def test_lenis_performance_profile_uses_cached_active_pair_stack() -> None:
     assert "stackEngine:" in source
 
 
-def test_native_v2_keeps_native_document_scroll_and_uses_visual_inertia_only() -> None:
+def test_native_v2_keeps_native_document_scroll_and_uses_visible_visual_inertia() -> None:
     source = NATIVE_V2_PATH.read_text(encoding="utf-8")
     styles = CSS_PATH.read_text(encoding="utf-8")
     snippet = CRITICAL_SNIPPET.read_text(encoding="utf-8")
 
     assert "mode !== 'native-v2'" in source
-    assert "MAX_SLIP_PX = 7" in source
+    assert "MAX_SLIP_PX = 18" in source
+    assert "VELOCITY_GAIN = 2.85" in source
+    assert "RETURN_TAU_MS = 260" in source
+    assert "INPUT_HOLD_MS = 78" in source
+    assert "cinematic-visible-v2" in source
     assert "window.addEventListener('scroll', onScroll" in source
     assert "window.requestAnimationFrame(tick)" in source
     assert "--giclee-native-v2-slip-y" in source
+    assert "--giclee-native-v2-slip-soft-y" in source
+    assert "--giclee-native-v2-slip-far-y" in source
+    assert "--giclee-native-v2-media-scale" in source
     assert "GICLEE_NATIVE_V2_STATUS" in source
     assert "native-v2-visual-raf" in source
     assert "new window.Lenis" not in source
     assert "preventDefault" not in source
     assert "wheel" not in source.lower()
     assert "document.body.style.transform" not in source
+
     assert "giclee-prehero-scrub__video" in styles
     assert "giclee-prehero-scrub__canvas" in styles
+    assert "giclee-prehero-scrub__poster" in styles
     assert "giclee-prehero-reveal__visual" in styles
-    assert "will-change: translate" in styles
+    assert "giclee-prehero-reveal__copy" in styles
+    assert "giclee-prehero-hero-rise" in styles
+    assert "giclee-hero-horizontal-curtain__intro-layer" in styles
+    assert "data-giclee-home-stack" in styles
+    assert "will-change: translate, scale" in styles
     assert "giclee-home-native-v2.js" in snippet
     assert snippet.index("giclee-home-native-v2.js") < snippet.index(
         "giclee-home-prehero-scrub.js"
