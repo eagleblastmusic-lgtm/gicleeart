@@ -85,39 +85,36 @@ def test_lenis_performance_profile_uses_cached_active_pair_stack() -> None:
     assert "stackEngine:" in source
 
 
-def test_native_v2_keeps_native_document_scroll_and_uses_visible_visual_inertia() -> None:
+def test_native_v2_smooths_real_mouse_wheel_and_restores_native_visual_layers() -> None:
     source = NATIVE_V2_PATH.read_text(encoding="utf-8")
     styles = CSS_PATH.read_text(encoding="utf-8")
     snippet = CRITICAL_SNIPPET.read_text(encoding="utf-8")
 
     assert "mode !== 'native-v2'" in source
-    assert "MAX_SLIP_PX = 18" in source
-    assert "VELOCITY_GAIN = 2.85" in source
-    assert "RETURN_TAU_MS = 260" in source
-    assert "INPUT_HOLD_MS = 78" in source
-    assert "cinematic-visible-v2" in source
-    assert "window.addEventListener('scroll', onScroll" in source
-    assert "window.requestAnimationFrame(tick)" in source
-    assert "--giclee-native-v2-slip-y" in source
-    assert "--giclee-native-v2-slip-soft-y" in source
-    assert "--giclee-native-v2-slip-far-y" in source
-    assert "--giclee-native-v2-media-scale" in source
+    assert "WHEEL_GAIN = 1" in source
+    assert "FOLLOW_TAU_MS = 105" in source
+    assert "MAX_TARGET_LEAD_PX = 1200" in source
+    assert "window.addEventListener('wheel', onWheel, { passive: false })" in source
+    assert "event.preventDefault();" in source
+    assert "window.scrollTo(0, value);" in source
+    assert "normalizeWheelDelta" in source
+    assert "shouldBypassWheel" in source
+    assert "elementCanConsumeVerticalWheel" in source
+    assert "data-giclee-wheel-native" in source
+    assert "data-lenis-prevent" in source
+    assert "wheel-cinematic-v1" in source
+    assert "native-v2-wheel-raf" in source
     assert "GICLEE_NATIVE_V2_STATUS" in source
-    assert "native-v2-visual-raf" in source
     assert "new window.Lenis" not in source
-    assert "preventDefault" not in source
-    assert "wheel" not in source.lower()
     assert "document.body.style.transform" not in source
 
-    assert "giclee-prehero-scrub__video" in styles
-    assert "giclee-prehero-scrub__canvas" in styles
-    assert "giclee-prehero-scrub__poster" in styles
-    assert "giclee-prehero-reveal__visual" in styles
-    assert "giclee-prehero-reveal__copy" in styles
-    assert "giclee-prehero-hero-rise" in styles
-    assert "giclee-hero-horizontal-curtain__intro-layer" in styles
-    assert "data-giclee-home-stack" in styles
-    assert "will-change: translate, scale" in styles
+    assert "changes only the mouse-wheel timeline" in styles
+    assert "--giclee-native-v2-slip-y" not in styles
+    assert "giclee-prehero-scrub__video" not in styles
+    assert "giclee-prehero-reveal__visual" not in styles
+    assert "giclee-prehero-hero-rise" not in styles
+    assert "giclee-hero-horizontal-curtain__intro-layer" not in styles
+
     assert "giclee-home-native-v2.js" in snippet
     assert snippet.index("giclee-home-native-v2.js") < snippet.index(
         "giclee-home-prehero-scrub.js"
@@ -136,8 +133,10 @@ def test_native_v2_has_accessibility_and_runtime_safety_guards() -> None:
     assert "curtain-pending" in source
     assert "document.hidden" in source
     assert "visibilitychange" in source
-    assert "scrollend" in source
-    assert "stopMotion();" in source
+    assert "pointerdown" in source
+    assert "keydown" in source
+    assert "cancelAnimation" in source
+    assert "resetPosition" in source
 
 
 def test_frame_monitor_reports_scroll_rendering_metrics() -> None:
