@@ -7,8 +7,11 @@ ROOT = Path(__file__).resolve().parents[3]
 LAYOUT_PATH = ROOT / "layout" / "theme.liquid"
 JS_PATH = ROOT / "assets" / "giclee-home-smooth-scroll.js"
 NATIVE_V2_PATH = ROOT / "assets" / "giclee-home-native-v2.js"
+NATIVE_V2_CULL_JS_PATH = ROOT / "assets" / "giclee-home-native-v2-layer-cull.js"
+NATIVE_V2_CULL_CSS_PATH = ROOT / "assets" / "giclee-home-native-v2-layer-cull.css"
 CSS_PATH = ROOT / "assets" / "giclee-home-smooth-scroll.css"
 CRITICAL_SNIPPET = ROOT / "snippets" / "giclee-home-stack-critical.liquid"
+GENERATOR_PATH = ROOT / "cursor-api" / "Komponenty" / "stronaglowna" / "prehero_full_generator.py"
 
 
 def test_homepage_loads_pinned_lenis_before_local_initializer() -> None:
@@ -130,6 +133,41 @@ def test_native_v2_smooths_real_mouse_wheel_and_uses_cached_active_pair_stack() 
     assert snippet.index("giclee-home-native-v2.js") < snippet.index(
         "giclee-home-prehero-scrub.js"
     )
+
+
+def test_native_v2_culls_only_fully_covered_stack_layers_without_layout_changes() -> None:
+    source = NATIVE_V2_CULL_JS_PATH.read_text(encoding="utf-8")
+    styles = NATIVE_V2_CULL_CSS_PATH.read_text(encoding="utf-8")
+    snippet = CRITICAL_SNIPPET.read_text(encoding="utf-8")
+    generator = GENERATOR_PATH.read_text(encoding="utf-8")
+
+    assert "resolveLayerState" in source
+    assert "transitionStart = pairStarts[i] - vh" in source
+    assert "transitionEnd = pairStarts[i] - STACK_PIN_TOP" in source
+    assert "cullBefore: resolvedActivePair >= 0 ? resolvedActivePair : resolvedFrontIndex" in source
+    assert "index < state.cullBefore" in source
+    assert "giclee-native-v2-covered" in source
+    assert "GICLEE_NATIVE_V2_LAYER_CULL_STATUS" in source
+    assert "geometryPreserved: true" in source
+    assert "paintOnlyCulling: true" in source
+    assert "video.pause()" in source
+    assert "video.play()" in source
+    assert "window.addEventListener('scroll', scheduleApply" in source
+    assert "ResizeObserver" in source
+
+    assert "visibility: hidden !important" in styles
+    assert "pointer-events: none !important" in styles
+    assert "display: none" not in styles
+    assert "position:" not in styles
+    assert "transform:" not in styles
+
+    assert "giclee-home-native-v2-layer-cull.css" in snippet
+    assert "giclee-home-native-v2-layer-cull.js" in snippet
+    assert snippet.index("giclee-home-native-v2.js") < snippet.index(
+        "giclee-home-native-v2-layer-cull.js"
+    )
+    assert "giclee-home-native-v2-layer-cull.css" in generator
+    assert "giclee-home-native-v2-layer-cull.js" in generator
 
 
 def test_native_v2_has_accessibility_and_runtime_safety_guards() -> None:
