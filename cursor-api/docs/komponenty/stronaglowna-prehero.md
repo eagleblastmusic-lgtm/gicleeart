@@ -47,8 +47,11 @@ Selektor GicleeApp przechowuje tryb osobno dla każdego wariantu:
 - pozostawia natywne przewijanie w modalach, drawerach, formularzach i zagnieżdżonych kontenerach;
 - zachowuje natywne zachowanie klawiatury, paska przewijania oraz urządzeń touch/coarse;
 - kumuluje kolejne impulsy do maksymalnego wyprzedzenia `1800 px`;
-- używa profilu `wheel-cinematic-nous-v2`: gain `1.35`, stała wygładzania `230 ms` i około `0,7–1 s` wyhamowania;
+- używa profilu `wheel-cinematic-nous-v3-fast-stack`: gain `1.35`, stała wygładzania `230 ms` i około `0,7–1 s` wyhamowania;
 - własne zdarzenia `scroll` generowane przez easing nie przerywają aktywnej animacji;
+- zastępuje legacy stack lekkim rendererem `native-v2-fast-active-pair`;
+- przechowuje pozycje par sekcji w cache i aktualizuje tylko aktywne przejście;
+- nie uruchamia drugiej, niezależnej pętli wygładzania dolnych sekcji;
 - wyłącza się dla reduced motion, Shopify design mode i parametru `?giclee_native_scroll=1`.
 
 Diagnostyka:
@@ -56,8 +59,11 @@ Diagnostyka:
 ```js
 window.GICLEE_NATIVE_V2_STATUS()
 window.GICLEE_SMOOTH_SCROLL_STATUS()
+window.GICLEE_HOME_STACK_PERFORMANCE_STATUS()
 window.GICLEE_FRAME_MONITOR(8000)
 ```
+
+`GICLEE_FRAME_MONITOR()` zwraca również pola `zones.upperHalf` i `zones.lowerHalf`, dzięki czemu można osobno porównać górną i dolną część strony.
 
 ## Tryby renderowania scrubu
 
