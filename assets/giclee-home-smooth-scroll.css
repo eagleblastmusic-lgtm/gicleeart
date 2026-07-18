@@ -26,23 +26,77 @@ html[data-giclee-smooth-scroll='active'] {
 html.giclee-native-v2 {
   --giclee-native-v2-slip-y: 0px;
   --giclee-native-v2-slip-soft-y: 0px;
+  --giclee-native-v2-slip-far-y: 0px;
+  --giclee-native-v2-energy: 0;
+  --giclee-native-v2-media-scale: 1.018;
+  --giclee-native-v2-hero-scale: 1.006;
 }
 
+/* Main camera layer: visible lag against native document movement. */
 html.giclee-native-v2 .giclee-prehero-scrub__video,
-html.giclee-native-v2 .giclee-prehero-scrub__canvas {
+html.giclee-native-v2 .giclee-prehero-scrub__canvas,
+html.giclee-native-v2 .giclee-prehero-scrub__poster {
   translate: 0 var(--giclee-native-v2-slip-y, 0px);
-  scale: 1.012;
+  scale: var(--giclee-native-v2-media-scale, 1.018);
+  transform-origin: center center;
 }
 
+/* Portal background follows with a softer delay, creating depth. */
 html.giclee-native-v2 .giclee-prehero-reveal__visual {
   translate: 0 var(--giclee-native-v2-slip-soft-y, 0px);
-  scale: 1.006;
+  scale: var(--giclee-native-v2-media-scale, 1.018);
+  transform-origin: center center;
+}
+
+/* Editorial copy remains readable but no longer feels welded to the viewport. */
+html.giclee-native-v2 .giclee-prehero-reveal__copy {
+  translate: 0 var(--giclee-native-v2-slip-far-y, 0px);
+}
+
+/* The live Hero inherits a restrained version of the same camera inertia. */
+html.giclee-native-v2
+  #MainContent
+  > .shopify-section.giclee-prehero-hero-rise
+  > .slideshow-section,
+html.giclee-native-v2
+  #MainContent
+  > .shopify-section.giclee-hero-horizontal-curtain-source
+  > .slideshow-section {
+  translate: 0 var(--giclee-native-v2-slip-soft-y, 0px);
+  scale: var(--giclee-native-v2-hero-scale, 1.006);
+  transform-origin: center center;
+}
+
+/* Curtain reveal and section backgrounds move on the far depth plane. */
+html.giclee-native-v2 .giclee-hero-horizontal-curtain__intro-layer,
+html.giclee-native-v2
+  #MainContent
+  > .shopify-section[data-giclee-home-stack]:not([data-giclee-home-stack='1'])
+  > .section-background {
+  translate: 0 var(--giclee-native-v2-slip-far-y, 0px);
+  scale: var(--giclee-native-v2-hero-scale, 1.006);
+  transform-origin: center center;
 }
 
 html.giclee-native-v2.giclee-native-v2-scrolling .giclee-prehero-scrub__video,
 html.giclee-native-v2.giclee-native-v2-scrolling .giclee-prehero-scrub__canvas,
-html.giclee-native-v2.giclee-native-v2-scrolling .giclee-prehero-reveal__visual {
-  will-change: translate;
+html.giclee-native-v2.giclee-native-v2-scrolling .giclee-prehero-scrub__poster,
+html.giclee-native-v2.giclee-native-v2-scrolling .giclee-prehero-reveal__visual,
+html.giclee-native-v2.giclee-native-v2-scrolling .giclee-prehero-reveal__copy,
+html.giclee-native-v2.giclee-native-v2-scrolling
+  #MainContent
+  > .shopify-section.giclee-prehero-hero-rise
+  > .slideshow-section,
+html.giclee-native-v2.giclee-native-v2-scrolling
+  #MainContent
+  > .shopify-section.giclee-hero-horizontal-curtain-source
+  > .slideshow-section,
+html.giclee-native-v2.giclee-native-v2-scrolling .giclee-hero-horizontal-curtain__intro-layer,
+html.giclee-native-v2.giclee-native-v2-scrolling
+  #MainContent
+  > .shopify-section[data-giclee-home-stack]:not([data-giclee-home-stack='1'])
+  > .section-background {
+  will-change: translate, scale;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -52,8 +106,24 @@ html.giclee-native-v2.giclee-native-v2-scrolling .giclee-prehero-reveal__visual 
 
   html.giclee-native-v2 .giclee-prehero-scrub__video,
   html.giclee-native-v2 .giclee-prehero-scrub__canvas,
-  html.giclee-native-v2 .giclee-prehero-reveal__visual {
+  html.giclee-native-v2 .giclee-prehero-scrub__poster,
+  html.giclee-native-v2 .giclee-prehero-reveal__visual,
+  html.giclee-native-v2 .giclee-prehero-reveal__copy,
+  html.giclee-native-v2
+    #MainContent
+    > .shopify-section.giclee-prehero-hero-rise
+    > .slideshow-section,
+  html.giclee-native-v2
+    #MainContent
+    > .shopify-section.giclee-hero-horizontal-curtain-source
+    > .slideshow-section,
+  html.giclee-native-v2 .giclee-hero-horizontal-curtain__intro-layer,
+  html.giclee-native-v2
+    #MainContent
+    > .shopify-section[data-giclee-home-stack]:not([data-giclee-home-stack='1'])
+    > .section-background {
     translate: none;
     scale: 1;
+    will-change: auto;
   }
 }
