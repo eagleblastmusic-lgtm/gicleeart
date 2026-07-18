@@ -1,40 +1,35 @@
-/* Native cinematic scroll profile: native document scroll + visible visual inertia. */
+/* Native cinematic wheel profile: real wheel smoothing without Lenis or visual layer drift. */
 (function () {
   'use strict';
 
   var root = document.documentElement;
   var config = window.GICLEE_PREHERO_CONFIG || {};
   var mode = String(config.smoothScrollMode || 'native').trim().toLowerCase();
-  var MAX_SLIP_PX = 18;
-  var VELOCITY_GAIN = 2.85;
-  var TARGET_MEMORY = 0.18;
-  var FOLLOW_TAU_MS = 72;
-  var RETURN_TAU_MS = 260;
-  var INPUT_HOLD_MS = 78;
-  var SOFT_RATIO = 0.58;
-  var FAR_RATIO = 0.28;
-  var BASE_MEDIA_SCALE = 1.018;
-  var ACTIVE_MEDIA_SCALE = 0.012;
-  var BASE_HERO_SCALE = 1.006;
-  var ACTIVE_HERO_SCALE = 0.006;
-  var STOP_EPSILON_PX = 0.05;
+
+  var WHEEL_GAIN = 1;
+  var LINE_HEIGHT_PX = 40;
+  var PAGE_DELTA_RATIO = 0.9;
+  var MAX_WHEEL_DELTA_PX = 420;
+  var MAX_TARGET_LEAD_PX = 1200;
+  var FOLLOW_TAU_MS = 105;
+  var STOP_EPSILON_PX = 0.35;
+  var MAX_FRAME_DELTA_MS = 48;
+  var PROGRAMMATIC_SCROLL_TOLERANCE_PX = 2;
+  var PROGRAMMATIC_SCROLL_WINDOW_MS = 64;
 
   var enabled = false;
   var disabledReason = '';
   var frameId = 0;
   var lastFrameTime = 0;
-  var lastInputTime = 0;
-  var lastScrollY = currentScrollY();
-  var targetSlip = 0;
-  var currentSlip = 0;
-  var appliedVisualKey = '';
+  var targetScrollY = currentScrollY();
+  var lastProgrammaticScrollY = targetScrollY;
+  var lastProgrammaticWriteAt = 0;
+  var interceptedWheelCount = 0;
+  var bypassedWheelCount = 0;
+  var externalSyncCount = 0;
   var frameCount = 0;
-  var styleWriteCount = 0;
-  var peakSlip = 0;
-  var inputCount = 0;
-  var directionChanges = 0;
-  var lastDirection = 0;
-  var lastVelocity = 0;
+  var lastWheelDelta = 0;
+  var peakTargetLead = 0;
 
   if (mode !== 'native-v2') return;
 
@@ -50,6 +45,18 @@
       document.body.scrollTop ||
       0
     );
+  }
+
+  function maxScrollY() {
+    var doc = document.documentElement;
+    var body = document.body;
+    var height = Math.max(
+      doc ? doc.scrollHeight : 0,
+      body ? body.scrollHeight : 0,
+      doc ? doc.offsetHeight : 0,
+      body ? body.offsetHeight : 0
+    );
+    return Math.max(0, height - (window.innerHeight || doc.clientHeight || 0));
   }
 
   function expAlpha(deltaMs, tauMs) {
@@ -99,49 +106,88 @@
     return '';
   }
 
-  function applyVisualState(value) {
-    var rounded = Math.abs(value) <= STOP_EPSILON_PX
-      ? 0
-      : Math.round(value * 10) / 10;
-    var energy = clamp(Math.abs(rounded) / MAX_SLIP_PX, 0, 1);
-    var mediaScale = BASE_MEDIA_SCALE + energy * ACTIVE_MEDIA_SCALE;
-    var heroScale = BASE_HERO_SCALE + energy * ACTIVE_HERO_SCALE;
-    var key = [
-      rounded.toFixed(1),
-      energy.toFixed(3),
-      mediaScale.toFixed(4),
-      heroScale.toFixed(4),
-    ].join('|');
-    if (key === appliedVisualKey) return;
-    appliedVisualKey = key;
-
-    root.style.setProperty('--giclee-native-v2-slip-y', rounded.toFixed(1) + 'px');
-    root.style.setProperty(
-      '--giclee-native-v2-slip-soft-y',
-      (rounded * SOFT_RATIO).toFixed(1) + 'px'
-    );
-    root.style.setProperty(
-      '--giclee-native-v2-slip-far-y',
-      (rounded * FAR_RATIO).toFixed(1) + 'px'
-    );
-    root.style.setProperty('--giclee-native-v2-energy', energy.toFixed(3));
-    root.style.setProperty('--giclee-native-v2-media-scale', mediaScale.toFixed(4));
-    root.style.setProperty('--giclee-native-v2-hero-scale', heroScale.toFixed(4));
-    styleWriteCount += 6;
+  function normalizeWheelDelta(event) {
+    var delta = Number(event.deltaY) || 0;
+    if (event.deltaMode === 1) delta *= LINE_HEIGHT_PX;
+    if (event.deltaMode === 2) {
+      delta *= (window.innerHeight || 800) * PAGE_DELTA_RATIO;
+    }
+    return clamp(delta, -MAX_WHEEL_DELTA_PX, MAX_WHEEL_DELTA_PX);
   }
 
-  function stopMotion() {
-    targetSlip = 0;
-    currentSlip = 0;
-    lastFrameTime = 0;
+  function eventPath(event) {
+    if (typeof event.composedPath === 'function') return event.composedPath();
+    var path = [];
+    var node = event.target;
+    while (node) {
+      path.push(node);
+      node = node.parentNode;
+    }
+    return path;
+  }
+
+  function isExplicitNativeWheelZone(element) {
+    if (!element || element.nodeType !== 1) return false;
+    if (element.hasAttribute('data-giclee-wheel-native')) return true;
+    if (element.hasAttribute('data-lenis-prevent')) return true;
+    if (element.tagName === 'IFRAME' || element.tagName === 'SELECT') return true;
+    if (element.matches('input[type="number"], textarea, [contenteditable="true"]')) return true;
+    if (element.matches('dialog, [role="dialog"], .drawer, .modal, .popover')) return true;
+    return false;
+  }
+
+  function elementCanConsumeVerticalWheel(element, delta) {
+    if (!element || element.nodeType !== 1) return false;
+    if (element === document.body || element === document.documentElement) return false;
+
+    var style = window.getComputedStyle(element);
+    var overflowY = style.overflowY;
+    if (overflowY !== 'auto' && overflowY !== 'scroll' && overflowY !== 'overlay') {
+      return false;
+    }
+    if (element.scrollHeight <= element.clientHeight + 1) return false;
+
+    if (delta < 0) return element.scrollTop > 0;
+    if (delta > 0) {
+      return element.scrollTop + element.clientHeight < element.scrollHeight - 1;
+    }
+    return false;
+  }
+
+  function shouldBypassWheel(event, delta) {
+    if (event.defaultPrevented) return true;
+    if (event.ctrlKey || event.metaKey || event.shiftKey) return true;
+    if (Math.abs(Number(event.deltaX) || 0) > Math.abs(delta)) return true;
+
+    var path = eventPath(event);
+    for (var i = 0; i < path.length; i += 1) {
+      var element = path[i];
+      if (isExplicitNativeWheelZone(element)) return true;
+      if (elementCanConsumeVerticalWheel(element, delta)) return true;
+    }
+    return false;
+  }
+
+  function clearAnimationClass() {
+    root.classList.remove('giclee-native-v2-scrolling');
+  }
+
+  function cancelAnimation(syncTarget) {
     if (frameId) window.cancelAnimationFrame(frameId);
     frameId = 0;
-    applyVisualState(0);
-    root.classList.remove('giclee-native-v2-scrolling');
+    lastFrameTime = 0;
+    if (syncTarget !== false) targetScrollY = currentScrollY();
+    clearAnimationClass();
   }
 
   function scheduleFrame() {
     if (!frameId) frameId = window.requestAnimationFrame(tick);
+  }
+
+  function writeScrollY(value) {
+    lastProgrammaticScrollY = value;
+    lastProgrammaticWriteAt = performance.now();
+    window.scrollTo(0, value);
   }
 
   function tick(now) {
@@ -149,70 +195,86 @@
     frameCount += 1;
 
     if (!enabled || pageInteractionLocked() || document.hidden) {
-      stopMotion();
+      cancelAnimation(true);
       return;
     }
 
-    var delta = lastFrameTime ? Math.min(48, now - lastFrameTime) : 16.67;
+    var current = currentScrollY();
+    targetScrollY = clamp(targetScrollY, 0, maxScrollY());
+    var remaining = targetScrollY - current;
+
+    if (Math.abs(remaining) <= STOP_EPSILON_PX) {
+      if (Math.abs(remaining) > 0.01) writeScrollY(targetScrollY);
+      cancelAnimation(false);
+      return;
+    }
+
+    var deltaMs = lastFrameTime
+      ? Math.min(MAX_FRAME_DELTA_MS, now - lastFrameTime)
+      : 16.67;
     lastFrameTime = now;
 
-    if (now - lastInputTime > INPUT_HOLD_MS) targetSlip = 0;
-
-    var returning = Math.abs(targetSlip) <= STOP_EPSILON_PX;
-    var tau = returning ? RETURN_TAU_MS : FOLLOW_TAU_MS;
-    currentSlip += (targetSlip - currentSlip) * expAlpha(delta, tau);
-
-    if (Math.abs(targetSlip - currentSlip) <= STOP_EPSILON_PX && returning) {
-      currentSlip = 0;
-    }
-
-    peakSlip = Math.max(peakSlip, Math.abs(currentSlip));
-    applyVisualState(currentSlip);
-
-    var recentlyActive = now - lastInputTime <= INPUT_HOLD_MS + 36;
-    if (
-      recentlyActive ||
-      Math.abs(targetSlip) > STOP_EPSILON_PX ||
-      Math.abs(currentSlip) > STOP_EPSILON_PX
-    ) {
-      scheduleFrame();
-      return;
-    }
-
-    lastFrameTime = 0;
-    root.classList.remove('giclee-native-v2-scrolling');
-  }
-
-  function onScroll() {
-    if (!enabled || pageInteractionLocked()) return;
-    var nextScrollY = currentScrollY();
-    var delta = nextScrollY - lastScrollY;
-    lastScrollY = nextScrollY;
-    if (!delta) return;
-
-    var now = performance.now();
-    var elapsed = lastInputTime ? clamp(now - lastInputTime, 8, 48) : 16.67;
-    var velocity = delta / elapsed;
-    var direction = delta > 0 ? 1 : -1;
-    if (lastDirection && direction !== lastDirection) directionChanges += 1;
-    lastDirection = direction;
-    lastVelocity = velocity;
-
-    inputCount += 1;
-    lastInputTime = now;
-    targetSlip = clamp(
-      targetSlip * TARGET_MEMORY + velocity * VELOCITY_GAIN,
-      -MAX_SLIP_PX,
-      MAX_SLIP_PX
-    );
-    root.classList.add('giclee-native-v2-scrolling');
-    root.setAttribute('data-giclee-native-v2-direction', direction > 0 ? 'down' : 'up');
+    var next = current + remaining * expAlpha(deltaMs, FOLLOW_TAU_MS);
+    if (Math.abs(targetScrollY - next) <= STOP_EPSILON_PX) next = targetScrollY;
+    writeScrollY(next);
     scheduleFrame();
   }
 
+  function onWheel(event) {
+    if (!enabled || pageInteractionLocked() || document.hidden) return;
+
+    var delta = normalizeWheelDelta(event);
+    if (!delta) return;
+    if (shouldBypassWheel(event, delta)) {
+      bypassedWheelCount += 1;
+      return;
+    }
+
+    event.preventDefault();
+    interceptedWheelCount += 1;
+    lastWheelDelta = delta;
+
+    var current = currentScrollY();
+    var remaining = targetScrollY - current;
+    if (remaining && Math.sign(remaining) !== Math.sign(delta)) {
+      targetScrollY = current;
+    }
+
+    var proposed = targetScrollY + delta * WHEEL_GAIN;
+    proposed = clamp(
+      proposed,
+      current - MAX_TARGET_LEAD_PX,
+      current + MAX_TARGET_LEAD_PX
+    );
+    targetScrollY = clamp(proposed, 0, maxScrollY());
+    peakTargetLead = Math.max(peakTargetLead, Math.abs(targetScrollY - current));
+
+    root.classList.add('giclee-native-v2-scrolling');
+    root.setAttribute('data-giclee-native-v2-direction', delta > 0 ? 'down' : 'up');
+    scheduleFrame();
+  }
+
+  function onNativeScroll() {
+    if (!enabled) return;
+    var current = currentScrollY();
+    var recentProgrammaticWrite =
+      performance.now() - lastProgrammaticWriteAt <= PROGRAMMATIC_SCROLL_WINDOW_MS;
+    var matchesProgrammaticWrite =
+      Math.abs(current - lastProgrammaticScrollY) <= PROGRAMMATIC_SCROLL_TOLERANCE_PX;
+
+    if (frameId && recentProgrammaticWrite && matchesProgrammaticWrite) return;
+
+    targetScrollY = current;
+    if (frameId) {
+      externalSyncCount += 1;
+      cancelAnimation(false);
+    }
+  }
+
   function resetPosition() {
-    lastScrollY = currentScrollY();
-    stopMotion();
+    targetScrollY = currentScrollY();
+    lastProgrammaticScrollY = targetScrollY;
+    cancelAnimation(false);
   }
 
   function installFrameMonitor() {
@@ -244,7 +306,7 @@
             longFramesOver25Ms: samples.filter(function (value) { return value > 25; }).length,
             longFramesOver40Ms: samples.filter(function (value) { return value > 40; }).length,
             mode: 'native-v2',
-            clock: 'native-v2-visual-raf',
+            clock: 'native-v2-wheel-raf',
             stackEngine: root.dataset.gicleeHomeStackEngine || 'legacy-native-v2',
           };
           console.log('[giclee frame monitor]', result);
@@ -268,25 +330,28 @@
 
   function publishStatus() {
     window.GICLEE_NATIVE_V2_STATUS = function () {
+      var current = currentScrollY();
       return {
         ready: enabled,
         active: enabled,
         mode: 'native-v2',
+        profile: 'wheel-cinematic-v1',
         disabledReason: disabledReason,
-        clock: 'native-v2-visual-raf',
-        profile: 'cinematic-visible-v2',
-        maxSlipPx: MAX_SLIP_PX,
+        clock: 'native-v2-wheel-raf',
+        wheelSmoothing: true,
+        wheelGain: WHEEL_GAIN,
         followTauMs: FOLLOW_TAU_MS,
-        returnTauMs: RETURN_TAU_MS,
-        inputHoldMs: INPUT_HOLD_MS,
-        targetSlipPx: Math.round(targetSlip * 100) / 100,
-        currentSlipPx: Math.round(currentSlip * 100) / 100,
-        peakSlipPx: Math.round(peakSlip * 100) / 100,
-        lastVelocityPxMs: Math.round(lastVelocity * 1000) / 1000,
-        directionChanges: directionChanges,
-        inputCount: inputCount,
+        maxWheelDeltaPx: MAX_WHEEL_DELTA_PX,
+        maxTargetLeadPx: MAX_TARGET_LEAD_PX,
+        currentScrollY: Math.round(current * 10) / 10,
+        targetScrollY: Math.round(targetScrollY * 10) / 10,
+        remainingPx: Math.round((targetScrollY - current) * 10) / 10,
+        interceptedWheelCount: interceptedWheelCount,
+        bypassedWheelCount: bypassedWheelCount,
+        externalSyncCount: externalSyncCount,
         frameCount: frameCount,
-        styleWriteCount: styleWriteCount,
+        lastWheelDelta: Math.round(lastWheelDelta * 10) / 10,
+        peakTargetLeadPx: Math.round(peakTargetLead * 10) / 10,
         running: !!frameId,
       };
     };
@@ -307,10 +372,9 @@
         mode: 'native-v2',
         disabledReason: disabledReason,
         performanceProfile: false,
-        clock: 'native-v2-visual-raf',
+        wheelSmoothing: true,
+        clock: 'native-v2-wheel-raf',
         stackEngine: root.dataset.gicleeHomeStackEngine || 'legacy-native-v2',
-        slipPx: Math.round(currentSlip * 100) / 100,
-        maxSlipPx: MAX_SLIP_PX,
       });
     };
   }
@@ -323,35 +387,38 @@
     }
 
     enabled = true;
+    targetScrollY = currentScrollY();
+    lastProgrammaticScrollY = targetScrollY;
     root.classList.add('giclee-native-v2');
     root.setAttribute('data-giclee-smooth-scroll', 'native-v2');
     root.removeAttribute('data-giclee-smooth-scroll-reason');
     root.dataset.gicleeHomeStackEngine = 'legacy-native-v2';
-    applyVisualState(0);
 
-    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('wheel', onWheel, { passive: false });
+    window.addEventListener('scroll', onNativeScroll, { passive: true });
     window.addEventListener('resize', resetPosition, { passive: true });
     window.addEventListener('orientationchange', resetPosition, { passive: true });
     window.addEventListener('pageshow', resetPosition, { passive: true });
+    window.addEventListener('pointerdown', function () {
+      if (frameId) resetPosition();
+    }, { passive: true });
+    window.addEventListener('keydown', function () {
+      if (frameId) resetPosition();
+    }, { passive: true });
     document.addEventListener('visibilitychange', function () {
-      if (document.hidden) stopMotion();
+      if (document.hidden) cancelAnimation(true);
       else resetPosition();
     });
-    if ('onscrollend' in window) {
-      window.addEventListener('scrollend', function () {
-        targetSlip = 0;
-        scheduleFrame();
-      }, { passive: true });
-    }
 
     installFrameMonitor();
     publishStatus();
+    window.GICLEE_NATIVE_V2_STOP = resetPosition;
     window.dispatchEvent(
       new CustomEvent('giclee:native-v2-ready', {
         detail: {
-          maxSlipPx: MAX_SLIP_PX,
-          clock: 'native-v2-visual-raf',
-          profile: 'cinematic-visible-v2',
+          profile: 'wheel-cinematic-v1',
+          clock: 'native-v2-wheel-raf',
+          followTauMs: FOLLOW_TAU_MS,
         },
       })
     );
