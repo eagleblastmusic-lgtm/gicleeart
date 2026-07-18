@@ -85,7 +85,7 @@ def test_lenis_performance_profile_uses_cached_active_pair_stack() -> None:
     assert "stackEngine:" in source
 
 
-def test_native_v2_smooths_real_mouse_wheel_and_restores_native_visual_layers() -> None:
+def test_native_v2_smooths_real_mouse_wheel_and_uses_cached_active_pair_stack() -> None:
     source = NATIVE_V2_PATH.read_text(encoding="utf-8")
     styles = CSS_PATH.read_text(encoding="utf-8")
     snippet = CRITICAL_SNIPPET.read_text(encoding="utf-8")
@@ -94,8 +94,6 @@ def test_native_v2_smooths_real_mouse_wheel_and_restores_native_visual_layers() 
     assert "WHEEL_GAIN = 1.35" in source
     assert "FOLLOW_TAU_MS = 230" in source
     assert "MAX_TARGET_LEAD_PX = 1800" in source
-    assert "animationActive" in source
-    assert "if (animationActive) return;" in source
     assert "window.addEventListener('wheel', onWheel, { passive: false })" in source
     assert "event.preventDefault();" in source
     assert "window.scrollTo(0, value);" in source
@@ -104,11 +102,22 @@ def test_native_v2_smooths_real_mouse_wheel_and_restores_native_visual_layers() 
     assert "elementCanConsumeVerticalWheel" in source
     assert "data-giclee-wheel-native" in source
     assert "data-lenis-prevent" in source
-    assert "wheel-cinematic-nous-v2" in source
+    assert "wheel-cinematic-nous-v3-fast-stack" in source
     assert "native-v2-wheel-raf" in source
     assert "GICLEE_NATIVE_V2_STATUS" in source
     assert "new window.Lenis" not in source
     assert "document.body.style.transform" not in source
+
+    assert "prepareFastStackTakeover" in source
+    assert "listener.name === 'initHomeStack'" in source
+    assert "native-v2-fast-active-pair" in source
+    assert "fastStackPairStarts[pairIndex] - scrollY" in source
+    assert "scheduleFastStackRender(value);" in source
+    assert "cachedGeometry: true" in source
+    assert "activePairOnly: true" in source
+    assert "independentMotionLoop: false" in source
+    assert "legacyListenerIntercepted" in source
+    assert "GICLEE_HOME_STACK_PERFORMANCE_STATUS" in source
 
     assert "changes only the mouse-wheel timeline" in styles
     assert "--giclee-native-v2-slip-y" not in styles
@@ -139,6 +148,8 @@ def test_native_v2_has_accessibility_and_runtime_safety_guards() -> None:
     assert "keydown" in source
     assert "cancelAnimation" in source
     assert "resetPosition" in source
+    assert "ResizeObserver" in source
+    assert "shopify:section:load" in source
 
 
 def test_frame_monitor_reports_scroll_rendering_metrics() -> None:
@@ -153,3 +164,7 @@ def test_frame_monitor_reports_scroll_rendering_metrics() -> None:
         assert "longFramesOver40Ms" in current
         assert "clock:" in current
         assert "stackEngine:" in current
+
+    assert "zones:" in native_v2
+    assert "upperHalf:" in native_v2
+    assert "lowerHalf:" in native_v2
