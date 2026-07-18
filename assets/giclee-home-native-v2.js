@@ -1,4 +1,4 @@
-/* Native cinematic wheel profile: real wheel smoothing without Lenis or visual layer drift. */
+/* Native cinematic wheel profile: pronounced real wheel smoothing without Lenis or visual layer drift. */
 (function () {
   'use strict';
 
@@ -6,30 +6,29 @@
   var config = window.GICLEE_PREHERO_CONFIG || {};
   var mode = String(config.smoothScrollMode || 'native').trim().toLowerCase();
 
-  var WHEEL_GAIN = 1;
+  /* Tuned to the longer, visibly eased wheel response used by cinematic portals. */
+  var WHEEL_GAIN = 1.35;
   var LINE_HEIGHT_PX = 40;
   var PAGE_DELTA_RATIO = 0.9;
   var MAX_WHEEL_DELTA_PX = 420;
-  var MAX_TARGET_LEAD_PX = 1200;
-  var FOLLOW_TAU_MS = 105;
-  var STOP_EPSILON_PX = 0.35;
+  var MAX_TARGET_LEAD_PX = 1800;
+  var FOLLOW_TAU_MS = 230;
+  var STOP_EPSILON_PX = 0.25;
   var MAX_FRAME_DELTA_MS = 48;
-  var PROGRAMMATIC_SCROLL_TOLERANCE_PX = 2;
-  var PROGRAMMATIC_SCROLL_WINDOW_MS = 64;
 
   var enabled = false;
   var disabledReason = '';
   var frameId = 0;
+  var animationActive = false;
   var lastFrameTime = 0;
   var targetScrollY = currentScrollY();
-  var lastProgrammaticScrollY = targetScrollY;
-  var lastProgrammaticWriteAt = 0;
   var interceptedWheelCount = 0;
   var bypassedWheelCount = 0;
   var externalSyncCount = 0;
   var frameCount = 0;
   var lastWheelDelta = 0;
   var peakTargetLead = 0;
+  var animationCount = 0;
 
   if (mode !== 'native-v2') return;
 
@@ -175,6 +174,7 @@
   function cancelAnimation(syncTarget) {
     if (frameId) window.cancelAnimationFrame(frameId);
     frameId = 0;
+    animationActive = false;
     lastFrameTime = 0;
     if (syncTarget !== false) targetScrollY = currentScrollY();
     clearAnimationClass();
@@ -185,8 +185,6 @@
   }
 
   function writeScrollY(value) {
-    lastProgrammaticScrollY = value;
-    lastProgrammaticWriteAt = performance.now();
     window.scrollTo(0, value);
   }
 
@@ -249,6 +247,8 @@
     targetScrollY = clamp(proposed, 0, maxScrollY());
     peakTargetLead = Math.max(peakTargetLead, Math.abs(targetScrollY - current));
 
+    if (!animationActive) animationCount += 1;
+    animationActive = true;
     root.classList.add('giclee-native-v2-scrolling');
     root.setAttribute('data-giclee-native-v2-direction', delta > 0 ? 'down' : 'up');
     scheduleFrame();
@@ -256,25 +256,18 @@
 
   function onNativeScroll() {
     if (!enabled) return;
+
+    /* Scroll events emitted by our own window.scrollTo() are part of the active easing.
+       Do not resynchronise or cancel them. Pointer/keyboard input explicitly cancels first. */
+    if (animationActive) return;
+
     var current = currentScrollY();
-    var recentProgrammaticWrite =
-      performance.now() - lastProgrammaticWriteAt <= PROGRAMMATIC_SCROLL_WINDOW_MS;
-    var matchesProgrammaticWrite =
-      Math.abs(current - lastProgrammaticScrollY) <= PROGRAMMATIC_SCROLL_TOLERANCE_PX;
-
-    if (frameId && recentProgrammaticWrite && matchesProgrammaticWrite) return;
-
+    if (Math.abs(targetScrollY - current) > 1) externalSyncCount += 1;
     targetScrollY = current;
-    if (frameId) {
-      externalSyncCount += 1;
-      cancelAnimation(false);
-    }
   }
 
   function resetPosition() {
-    targetScrollY = currentScrollY();
-    lastProgrammaticScrollY = targetScrollY;
-    cancelAnimation(false);
+    cancelAnimation(true);
   }
 
   function installFrameMonitor() {
@@ -335,7 +328,7 @@
         ready: enabled,
         active: enabled,
         mode: 'native-v2',
-        profile: 'wheel-cinematic-v1',
+        profile: 'wheel-cinematic-nous-v2',
         disabledReason: disabledReason,
         clock: 'native-v2-wheel-raf',
         wheelSmoothing: true,
@@ -349,10 +342,11 @@
         interceptedWheelCount: interceptedWheelCount,
         bypassedWheelCount: bypassedWheelCount,
         externalSyncCount: externalSyncCount,
+        animationCount: animationCount,
         frameCount: frameCount,
         lastWheelDelta: Math.round(lastWheelDelta * 10) / 10,
         peakTargetLeadPx: Math.round(peakTargetLead * 10) / 10,
-        running: !!frameId,
+        running: animationActive || !!frameId,
       };
     };
 
@@ -388,7 +382,6 @@
 
     enabled = true;
     targetScrollY = currentScrollY();
-    lastProgrammaticScrollY = targetScrollY;
     root.classList.add('giclee-native-v2');
     root.setAttribute('data-giclee-smooth-scroll', 'native-v2');
     root.removeAttribute('data-giclee-smooth-scroll-reason');
@@ -400,10 +393,10 @@
     window.addEventListener('orientationchange', resetPosition, { passive: true });
     window.addEventListener('pageshow', resetPosition, { passive: true });
     window.addEventListener('pointerdown', function () {
-      if (frameId) resetPosition();
+      if (animationActive || frameId) resetPosition();
     }, { passive: true });
     window.addEventListener('keydown', function () {
-      if (frameId) resetPosition();
+      if (animationActive || frameId) resetPosition();
     }, { passive: true });
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) cancelAnimation(true);
@@ -416,7 +409,7 @@
     window.dispatchEvent(
       new CustomEvent('giclee:native-v2-ready', {
         detail: {
-          profile: 'wheel-cinematic-v1',
+          profile: 'wheel-cinematic-nous-v2',
           clock: 'native-v2-wheel-raf',
           followTauMs: FOLLOW_TAU_MS,
         },
