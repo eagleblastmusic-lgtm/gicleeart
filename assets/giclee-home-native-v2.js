@@ -1,15 +1,22 @@
-/* Native cinematic scroll profile: native document scroll + subtle visual inertia. */
+/* Native cinematic scroll profile: native document scroll + visible visual inertia. */
 (function () {
   'use strict';
 
   var root = document.documentElement;
   var config = window.GICLEE_PREHERO_CONFIG || {};
   var mode = String(config.smoothScrollMode || 'native').trim().toLowerCase();
-  var MAX_SLIP_PX = 7;
-  var INPUT_GAIN = 0.11;
-  var FOLLOW_TAU_MS = 58;
-  var RETURN_TAU_MS = 155;
-  var INPUT_HOLD_MS = 42;
+  var MAX_SLIP_PX = 18;
+  var VELOCITY_GAIN = 2.85;
+  var TARGET_MEMORY = 0.18;
+  var FOLLOW_TAU_MS = 72;
+  var RETURN_TAU_MS = 260;
+  var INPUT_HOLD_MS = 78;
+  var SOFT_RATIO = 0.58;
+  var FAR_RATIO = 0.28;
+  var BASE_MEDIA_SCALE = 1.018;
+  var ACTIVE_MEDIA_SCALE = 0.012;
+  var BASE_HERO_SCALE = 1.006;
+  var ACTIVE_HERO_SCALE = 0.006;
   var STOP_EPSILON_PX = 0.05;
 
   var enabled = false;
@@ -20,11 +27,14 @@
   var lastScrollY = currentScrollY();
   var targetSlip = 0;
   var currentSlip = 0;
-  var appliedSlip = '';
+  var appliedVisualKey = '';
   var frameCount = 0;
   var styleWriteCount = 0;
   var peakSlip = 0;
   var inputCount = 0;
+  var directionChanges = 0;
+  var lastDirection = 0;
+  var lastVelocity = 0;
 
   if (mode !== 'native-v2') return;
 
@@ -89,19 +99,35 @@
     return '';
   }
 
-  function applySlip(value) {
+  function applyVisualState(value) {
     var rounded = Math.abs(value) <= STOP_EPSILON_PX
       ? 0
       : Math.round(value * 10) / 10;
-    var key = rounded.toFixed(1);
-    if (key === appliedSlip) return;
-    appliedSlip = key;
-    root.style.setProperty('--giclee-native-v2-slip-y', key + 'px');
+    var energy = clamp(Math.abs(rounded) / MAX_SLIP_PX, 0, 1);
+    var mediaScale = BASE_MEDIA_SCALE + energy * ACTIVE_MEDIA_SCALE;
+    var heroScale = BASE_HERO_SCALE + energy * ACTIVE_HERO_SCALE;
+    var key = [
+      rounded.toFixed(1),
+      energy.toFixed(3),
+      mediaScale.toFixed(4),
+      heroScale.toFixed(4),
+    ].join('|');
+    if (key === appliedVisualKey) return;
+    appliedVisualKey = key;
+
+    root.style.setProperty('--giclee-native-v2-slip-y', rounded.toFixed(1) + 'px');
     root.style.setProperty(
       '--giclee-native-v2-slip-soft-y',
-      (rounded * 0.52).toFixed(1) + 'px'
+      (rounded * SOFT_RATIO).toFixed(1) + 'px'
     );
-    styleWriteCount += 2;
+    root.style.setProperty(
+      '--giclee-native-v2-slip-far-y',
+      (rounded * FAR_RATIO).toFixed(1) + 'px'
+    );
+    root.style.setProperty('--giclee-native-v2-energy', energy.toFixed(3));
+    root.style.setProperty('--giclee-native-v2-media-scale', mediaScale.toFixed(4));
+    root.style.setProperty('--giclee-native-v2-hero-scale', heroScale.toFixed(4));
+    styleWriteCount += 6;
   }
 
   function stopMotion() {
@@ -110,7 +136,7 @@
     lastFrameTime = 0;
     if (frameId) window.cancelAnimationFrame(frameId);
     frameId = 0;
-    applySlip(0);
+    applyVisualState(0);
     root.classList.remove('giclee-native-v2-scrolling');
   }
 
@@ -141,10 +167,14 @@
     }
 
     peakSlip = Math.max(peakSlip, Math.abs(currentSlip));
-    applySlip(currentSlip);
+    applyVisualState(currentSlip);
 
-    var recentlyActive = now - lastInputTime <= INPUT_HOLD_MS + 24;
-    if (recentlyActive || Math.abs(targetSlip) > STOP_EPSILON_PX || Math.abs(currentSlip) > STOP_EPSILON_PX) {
+    var recentlyActive = now - lastInputTime <= INPUT_HOLD_MS + 36;
+    if (
+      recentlyActive ||
+      Math.abs(targetSlip) > STOP_EPSILON_PX ||
+      Math.abs(currentSlip) > STOP_EPSILON_PX
+    ) {
       scheduleFrame();
       return;
     }
@@ -160,15 +190,23 @@
     lastScrollY = nextScrollY;
     if (!delta) return;
 
+    var now = performance.now();
+    var elapsed = lastInputTime ? clamp(now - lastInputTime, 8, 48) : 16.67;
+    var velocity = delta / elapsed;
+    var direction = delta > 0 ? 1 : -1;
+    if (lastDirection && direction !== lastDirection) directionChanges += 1;
+    lastDirection = direction;
+    lastVelocity = velocity;
+
     inputCount += 1;
-    lastInputTime = performance.now();
+    lastInputTime = now;
     targetSlip = clamp(
-      targetSlip * 0.24 + delta * INPUT_GAIN,
+      targetSlip * TARGET_MEMORY + velocity * VELOCITY_GAIN,
       -MAX_SLIP_PX,
       MAX_SLIP_PX
     );
     root.classList.add('giclee-native-v2-scrolling');
-    root.setAttribute('data-giclee-native-v2-direction', delta > 0 ? 'down' : 'up');
+    root.setAttribute('data-giclee-native-v2-direction', direction > 0 ? 'down' : 'up');
     scheduleFrame();
   }
 
@@ -236,10 +274,16 @@
         mode: 'native-v2',
         disabledReason: disabledReason,
         clock: 'native-v2-visual-raf',
+        profile: 'cinematic-visible-v2',
         maxSlipPx: MAX_SLIP_PX,
+        followTauMs: FOLLOW_TAU_MS,
+        returnTauMs: RETURN_TAU_MS,
+        inputHoldMs: INPUT_HOLD_MS,
         targetSlipPx: Math.round(targetSlip * 100) / 100,
         currentSlipPx: Math.round(currentSlip * 100) / 100,
         peakSlipPx: Math.round(peakSlip * 100) / 100,
+        lastVelocityPxMs: Math.round(lastVelocity * 1000) / 1000,
+        directionChanges: directionChanges,
         inputCount: inputCount,
         frameCount: frameCount,
         styleWriteCount: styleWriteCount,
@@ -266,6 +310,7 @@
         clock: 'native-v2-visual-raf',
         stackEngine: root.dataset.gicleeHomeStackEngine || 'legacy-native-v2',
         slipPx: Math.round(currentSlip * 100) / 100,
+        maxSlipPx: MAX_SLIP_PX,
       });
     };
   }
@@ -282,7 +327,7 @@
     root.setAttribute('data-giclee-smooth-scroll', 'native-v2');
     root.removeAttribute('data-giclee-smooth-scroll-reason');
     root.dataset.gicleeHomeStackEngine = 'legacy-native-v2';
-    applySlip(0);
+    applyVisualState(0);
 
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', resetPosition, { passive: true });
@@ -306,6 +351,7 @@
         detail: {
           maxSlipPx: MAX_SLIP_PX,
           clock: 'native-v2-visual-raf',
+          profile: 'cinematic-visible-v2',
         },
       })
     );
