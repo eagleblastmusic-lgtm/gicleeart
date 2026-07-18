@@ -91,9 +91,11 @@ def test_native_v2_smooths_real_mouse_wheel_and_restores_native_visual_layers() 
     snippet = CRITICAL_SNIPPET.read_text(encoding="utf-8")
 
     assert "mode !== 'native-v2'" in source
-    assert "WHEEL_GAIN = 1" in source
-    assert "FOLLOW_TAU_MS = 105" in source
-    assert "MAX_TARGET_LEAD_PX = 1200" in source
+    assert "WHEEL_GAIN = 1.35" in source
+    assert "FOLLOW_TAU_MS = 230" in source
+    assert "MAX_TARGET_LEAD_PX = 1800" in source
+    assert "animationActive" in source
+    assert "if (animationActive) return;" in source
     assert "window.addEventListener('wheel', onWheel, { passive: false })" in source
     assert "event.preventDefault();" in source
     assert "window.scrollTo(0, value);" in source
@@ -102,7 +104,7 @@ def test_native_v2_smooths_real_mouse_wheel_and_restores_native_visual_layers() 
     assert "elementCanConsumeVerticalWheel" in source
     assert "data-giclee-wheel-native" in source
     assert "data-lenis-prevent" in source
-    assert "wheel-cinematic-v1" in source
+    assert "wheel-cinematic-nous-v2" in source
     assert "native-v2-wheel-raf" in source
     assert "GICLEE_NATIVE_V2_STATUS" in source
     assert "new window.Lenis" not in source
