@@ -17,6 +17,8 @@ FRAME_MANIFEST_SNIPPET = "giclee-home-prehero-frame-manifest.liquid"
 
 FULL_PREHERO_CODE_ASSETS: tuple[str, ...] = (
     "giclee-home-native-v2.js",
+    "giclee-home-native-v2-layer-cull.css",
+    "giclee-home-native-v2-layer-cull.js",
     "giclee-home-prehero-scrub.css",
     "giclee-home-prehero-frames.js",
     "giclee-home-prehero-scrub.js",
@@ -38,6 +40,7 @@ FULL_PREHERO_CODE_ASSETS: tuple[str, ...] = (
 )
 
 _CSS_ASSETS: tuple[str, ...] = (
+    "giclee-home-native-v2-layer-cull.css",
     "giclee-home-prehero-scrub.css",
     "giclee-home-prehero-chrome.css",
     "giclee-home-prehero-reveal.css",
@@ -52,6 +55,7 @@ _CSS_ASSETS: tuple[str, ...] = (
 
 _JS_ASSETS: tuple[str, ...] = (
     "giclee-home-native-v2.js",
+    "giclee-home-native-v2-layer-cull.js",
     "giclee-home-prehero-frames.js",
     "giclee-home-prehero-scrub.js",
     "giclee-home-prehero-chrome.js",
