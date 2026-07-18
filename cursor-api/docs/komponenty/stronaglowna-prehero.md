@@ -33,31 +33,23 @@ Ustawienia trafiają do `config/settings_data.json`, więc są przechowywane oso
 Selektor GicleeApp przechowuje tryb osobno dla każdego wariantu:
 
 - **Zwykły — natywny** — bez dodatkowej bezwładności; punkt odniesienia wydajności.
-- **Zwykły v2 — filmowy** — wygładza faktyczny ruch wywołany kółkiem myszy, zachowując natywny wygląd i geometrię strony.
+- **Zwykły v2 — filmowy** — rzeczywiste impulsy pionowego kółka myszy są akumulowane i prowadzą dokument do pozycji docelowej przez dłuższy easing.
 - **Lenis — płynny** — eksperymentalny pełny smooth scroll; nie jest domyślną ścieżką produkcyjną.
 
 ### Zwykły v2 — filmowy
 
 `assets/giclee-home-native-v2.js`:
 
-- przechwytuje pionowe zdarzenie `wheel` wyłącznie na desktopie i rejestruje listener jako `passive: false`;
-- zatrzymuje natychmiastowy skok tylko dla obsługiwanego kółka przez `preventDefault()`;
-- kumuluje impulsy kółka w docelowej pozycji dokumentu;
-- prowadzi rzeczywisty `window.scrollTo()` jednym krótkim RAF-em z lekkim wygaszeniem;
-- nie używa Lenisa, nie przesuwa `body` i nie transformuje warstw strony;
-- pozostawia natywne sterowanie dla klawiatury, paska przewijania, touch/coarse, gestów powiększania i przewijanych paneli zagnieżdżonych;
-- omija elementy oznaczone `data-giclee-wheel-native` lub `data-lenis-prevent`, dialogi, drawery, modale, iframe i formularze wymagające natywnej obsługi;
-- od razu synchronizuje się z ręcznym przeciągnięciem paska, klawiaturą, pointerdown, zmianą rozmiaru i pageshow;
-- wyłącza się dla reduced motion, urządzeń touch/coarse, Shopify design mode i parametru `?giclee_native_scroll=1`.
-
-Profil początkowy:
-
-```text
-wheelGain: 1
-followTauMs: 105
-maxWheelDeltaPx: 420
-maxTargetLeadPx: 1200
-```
+- przechwytuje wyłącznie pionowe zdarzenia `wheel` na desktopie;
+- używa `preventDefault()` tylko dla głównego dokumentu;
+- animuje rzeczywistą pozycję strony przez `window.scrollTo()`;
+- nie przesuwa `body` ani żadnych warstw wizualnych;
+- pozostawia natywne przewijanie w modalach, drawerach, formularzach i zagnieżdżonych kontenerach;
+- zachowuje natywne zachowanie klawiatury, paska przewijania oraz urządzeń touch/coarse;
+- kumuluje kolejne impulsy do maksymalnego wyprzedzenia `1800 px`;
+- używa profilu `wheel-cinematic-nous-v2`: gain `1.35`, stała wygładzania `230 ms` i około `0,7–1 s` wyhamowania;
+- własne zdarzenia `scroll` generowane przez easing nie przerywają aktywnej animacji;
+- wyłącza się dla reduced motion, Shopify design mode i parametru `?giclee_native_scroll=1`.
 
 Diagnostyka:
 
@@ -97,7 +89,7 @@ Domyślny limit całej sekwencji wynosi `24 MB`. Można zmniejszyć rozdzielczo�
 
 ### Scroll natywny i natywny v2 — MP4
 
-Oba tryby natywne zachowują `assets/giclee-home-prehero-scrub.mp4`. Zwykły v2 zmienia wyłącznie oś czasu ruchu dokumentu uruchamianą przez kółko myszy; warstwy wizualne i mechanizm przewijania filmu pozostają takie jak w zwykłym trybie natywnym.
+Oba tryby natywne zachowują `assets/giclee-home-prehero-scrub.mp4`. Zwykły v2 zmienia wyłącznie fizykę pionowego kółka myszy; warstwy wizualne pozostają identyczne jak w trybie zwykłym.
 
 ## Sekwencja
 
