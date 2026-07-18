@@ -33,21 +33,31 @@ Ustawienia trafiają do `config/settings_data.json`, więc są przechowywane oso
 Selektor GicleeApp przechowuje tryb osobno dla każdego wariantu:
 
 - **Zwykły — natywny** — bez dodatkowej bezwładności; punkt odniesienia wydajności.
-- **Zwykły v2 — filmowy** — pozycja dokumentu nadal jest natywna, ale media pre-Hero otrzymują subtelny poślizg wizualny do `7 px`.
+- **Zwykły v2 — filmowy** — wygładza faktyczny ruch wywołany kółkiem myszy, zachowując natywny wygląd i geometrię strony.
 - **Lenis — płynny** — eksperymentalny pełny smooth scroll; nie jest domyślną ścieżką produkcyjną.
 
 ### Zwykły v2 — filmowy
 
 `assets/giclee-home-native-v2.js`:
 
-- nie przechwytuje kółka ani gestów;
-- nie wywołuje `preventDefault()`;
-- nie przesuwa `body` i nie zmienia rzeczywistej pozycji dokumentu;
-- uruchamia pojedynczy RAF tylko po zmianie natywnego scrolla;
-- przesuwa wyłącznie media pre-Hero i wizual portalu;
-- ogranicza poślizg do `7 px`;
-- wygasza ruch po zatrzymaniu;
+- przechwytuje pionowe zdarzenie `wheel` wyłącznie na desktopie i rejestruje listener jako `passive: false`;
+- zatrzymuje natychmiastowy skok tylko dla obsługiwanego kółka przez `preventDefault()`;
+- kumuluje impulsy kółka w docelowej pozycji dokumentu;
+- prowadzi rzeczywisty `window.scrollTo()` jednym krótkim RAF-em z lekkim wygaszeniem;
+- nie używa Lenisa, nie przesuwa `body` i nie transformuje warstw strony;
+- pozostawia natywne sterowanie dla klawiatury, paska przewijania, touch/coarse, gestów powiększania i przewijanych paneli zagnieżdżonych;
+- omija elementy oznaczone `data-giclee-wheel-native` lub `data-lenis-prevent`, dialogi, drawery, modale, iframe i formularze wymagające natywnej obsługi;
+- od razu synchronizuje się z ręcznym przeciągnięciem paska, klawiaturą, pointerdown, zmianą rozmiaru i pageshow;
 - wyłącza się dla reduced motion, urządzeń touch/coarse, Shopify design mode i parametru `?giclee_native_scroll=1`.
+
+Profil początkowy:
+
+```text
+wheelGain: 1
+followTauMs: 105
+maxWheelDeltaPx: 420
+maxTargetLeadPx: 1200
+```
 
 Diagnostyka:
 
@@ -87,7 +97,7 @@ Domyślny limit całej sekwencji wynosi `24 MB`. Można zmniejszyć rozdzielczo�
 
 ### Scroll natywny i natywny v2 — MP4
 
-Oba tryby natywne zachowują `assets/giclee-home-prehero-scrub.mp4`. Zwykły v2 dodaje wyłącznie lekką bezwładność warstwy wizualnej i nie zmienia mechanizmu przewijania filmu.
+Oba tryby natywne zachowują `assets/giclee-home-prehero-scrub.mp4`. Zwykły v2 zmienia wyłącznie oś czasu ruchu dokumentu uruchamianą przez kółko myszy; warstwy wizualne i mechanizm przewijania filmu pozostają takie jak w zwykłym trybie natywnym.
 
 ## Sekwencja
 
