@@ -1,0 +1,67 @@
+name: Install pre-Hero JPG sequence
+
+on:
+  push:
+    branches:
+      - gpt-work/home-hero-audio-curtain-fade
+    paths:
+      - '.giclee-prehero-source/**'
+      - '.github/workflows/prehero-jpg-install.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prehero-jpg-install
+  cancel-in-progress: false
+
+jobs:
+  install:
+    if: ${{ !contains(github.event.head_commit.message, '[prehero-assets]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure FFmpeg
+        shell: bash
+        run: |
+          if ! command -v ffmpeg >/dev/null 2>&1 || ! command -v ffprobe >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y ffmpeg
+          fi
+
+      - name: Build replacement media
+        run: python .giclee-prehero-source/install.py
+
+      - name: Run targeted contracts
+        run: |
+          python -m pytest \
+            cursor-api/Komponenty/stronaglowna/test_prehero_frame_sequence.py \
+            cursor-api/Komponenty/stronaglowna/test_prehero_integration.py \
+            cursor-api/Komponenty/stronaglowna/test_prehero_scrub_performance.py \
+            cursor-api/Komponenty/stronaglowna/test_prehero_copy_hold.py \
+            cursor-api/Komponenty/stronaglowna/test_home_smooth_scroll_contract.py \
+            -q
+
+      - name: Commit final assets to PR branch
+        shell: bash
+        run: |
+          rm -rf .giclee-prehero-source
+          rm -f .github/workflows/prehero-jpg-install.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A -- \
+            'assets/giclee-home-prehero-scrub.mp4' \
+            'assets/giclee-prehero-frame-*.webp' \
+            'assets/giclee-prehero-frame-*.jpg' \
+            'snippets/giclee-home-prehero-frame-manifest.liquid' \
+            'cursor-api/Komponenty/stronaglowna/test_prehero_frame_sequence.py' \
+            '.giclee-prehero-source' \
+            '.github/workflows/prehero-jpg-install.yml'
+          test "$(git diff --cached --name-only | grep -Ec '^assets/giclee-prehero-frame-[0-9]{4}\.jpg$')" -eq 117
+          test "$(git diff --cached --name-only | grep -Ec '^assets/giclee-prehero-frame-[0-9]{4}\.webp$')" -eq 100
+          git commit -m 'feat(home): replace prehero media with 24fps jpg sequence [prehero-assets]'
+          git push origin HEAD:gpt-work/home-hero-audio-curtain-fade
