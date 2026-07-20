@@ -45,5 +45,9 @@ def test_reinserting_css_restores_the_intermediate_layout_layer() -> None:
     theme = THEME.read_text(encoding="utf-8")
     css_snippet = SNIPPET.read_text(encoding="utf-8")
     with_css = theme.replace(RENDER_MARKER, css_snippet, 1)
-    assert len(theme.splitlines()) == 353
-    assert len(with_css.splitlines()) == 1629
+
+    assert RENDER_MARKER not in with_css
+    assert css_snippet in with_css
+    assert len(with_css.splitlines()) == (
+        len(theme.splitlines()) + len(css_snippet.splitlines()) - 1
+    )

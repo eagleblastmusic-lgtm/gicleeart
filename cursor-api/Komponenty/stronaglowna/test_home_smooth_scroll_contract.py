@@ -14,6 +14,13 @@ CRITICAL_SNIPPET = ROOT / "snippets" / "giclee-home-stack-critical.liquid"
 GENERATOR_PATH = ROOT / "cursor-api" / "Komponenty" / "stronaglowna" / "prehero_full_generator.py"
 
 
+def _css_rule_body(source: str, selector_fragment: str) -> str:
+    selector_start = source.index(selector_fragment)
+    opening_brace = source.index("{", selector_start)
+    closing_brace = source.index("}", opening_brace)
+    return source[opening_brace + 1 : closing_brace]
+
+
 def test_homepage_loads_pinned_lenis_before_local_initializer() -> None:
     layout = LAYOUT_PATH.read_text(encoding="utf-8")
 
@@ -155,11 +162,15 @@ def test_native_v2_culls_only_fully_covered_stack_layers_without_layout_changes(
     assert "window.addEventListener('scroll', scheduleApply" in source
     assert "ResizeObserver" in source
 
-    assert "visibility: hidden !important" in styles
-    assert "pointer-events: none !important" in styles
-    assert "display: none" not in styles
-    assert "position:" not in styles
-    assert "transform:" not in styles
+    cull_rule = _css_rule_body(
+        styles,
+        ".shopify-section.giclee-native-v2-covered[data-giclee-home-stack]",
+    )
+    assert "visibility: hidden !important" in cull_rule
+    assert "pointer-events: none !important" in cull_rule
+    assert "display:" not in cull_rule
+    assert "position:" not in cull_rule
+    assert "transform:" not in cull_rule
 
     assert "giclee-home-native-v2-layer-cull.css" in snippet
     assert "giclee-home-native-v2-layer-cull.js" in snippet

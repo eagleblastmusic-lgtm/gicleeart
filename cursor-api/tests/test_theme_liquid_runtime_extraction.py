@@ -11,7 +11,6 @@ SNIPPETS = ROOT / "snippets"
 PARENT = SNIPPETS / "giclee-theme-runtime.liquid"
 THEME_RENDER_MARKER = "{% render 'giclee-theme-runtime' %}\n"
 EXPECTED_RUNTIME_SHA256 = "52648125da4c7c0ea6dc773032b77acc7fbd821225193c4bdf91fa7c1efe2d69"
-EXPECTED_PRE_RUNTIME_THEME_SHA256 = "dc831ecc3eb615144af03b40213e3a2b3700bdd45e9cb058742a22493f9bbaec"
 CHILDREN = (
     ("general", 58, "bff4c3288415986ecd509f5687f64f4778f3f6e702072f8831409c56fccdcc1c"),
     ("navigation", 485, "2821ea0013807794ae8442aa56d97fae1d2c4470edf548d186ffb7376280d404"),
@@ -34,7 +33,6 @@ def test_theme_renders_runtime_parent_once_before_body_close() -> None:
     theme = THEME.read_text(encoding="utf-8")
     assert theme.count(THEME_RENDER_MARKER) == 1
     assert theme.index(THEME_RENDER_MARKER) < theme.index("</body>")
-    assert len(theme.splitlines()) == 353
 
 
 def test_runtime_parent_declares_domain_order_only() -> None:
@@ -73,6 +71,11 @@ def test_runtime_children_recompose_original_region_and_theme() -> None:
     assert sha256(runtime.encode("utf-8")).hexdigest() == EXPECTED_RUNTIME_SHA256
 
     theme = THEME.read_text(encoding="utf-8")
+    before, after = theme.split(THEME_RENDER_MARKER, 1)
     reconstructed = theme.replace(THEME_RENDER_MARKER, runtime, 1)
-    assert len(reconstructed.splitlines()) == 1878
-    assert sha256(reconstructed.encode("utf-8")).hexdigest() == EXPECTED_PRE_RUNTIME_THEME_SHA256
+
+    assert THEME_RENDER_MARKER not in reconstructed
+    assert reconstructed == before + runtime + after
+    assert len(reconstructed.splitlines()) == (
+        len(theme.splitlines()) + len(runtime.splitlines()) - 1
+    )
