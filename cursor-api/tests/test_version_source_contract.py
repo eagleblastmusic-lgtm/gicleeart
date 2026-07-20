@@ -19,7 +19,7 @@ VERSION_FILE = ROOT / "giclee_app" / "version.py"
 
 
 def test_python_package_reexports_canonical_version() -> None:
-    assert canonical_version == "1.53.0"
+    assert canonical_version == "1.6.0"
     assert giclee_app.__version__ == canonical_version
     assert read_canonical_version(VERSION_FILE) == canonical_version
 
