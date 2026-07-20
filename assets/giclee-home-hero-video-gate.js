@@ -29,6 +29,7 @@
   var root = document.documentElement;
   var scrubRoot = null;
   var hero = null;
+  var heroDocumentTop = 0;
   var videos = [];
   var audioMaster = null;
   var ambientAudio = null;
@@ -39,11 +40,20 @@
   var choiceMode = 'pending';
   var mutationObserver = null;
   var stateObserver = null;
+  var curtainObserver = null;
   var rafId = 0;
+  var volumeRafId = 0;
+  var currentAudioGain = 1;
+  var appliedAudioGain = '';
   var prompt = null;
   var toggle = null;
   var toggleState = null;
   var promptVisible = false;
+  var gateSyncCount = 0;
+  var layoutReadCount = 0;
+  var mediaResetCount = 0;
+  var curtainRuntimeReadCount = 0;
+  var curtainStatusFallbackCount = 0;
 
   function textConfig(key, fallback) {
     var value = String(CONFIG[key] == null ? '' : CONFIG[key]).trim();
@@ -56,6 +66,14 @@
     return Math.min(max, Math.max(min, value));
   }
 
+  function clamp01(value) {
+    return Math.min(1, Math.max(0, value));
+  }
+
+  function scrollY() {
+    return window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+  }
+
   function findHero() {
     var map = window.GICLEE_HOME_SECTIONS || {};
     var heroId = map.hero || 'slideshow_4LMfx7';
@@ -66,17 +84,31 @@
     );
   }
 
+  function measureHeroDocumentTop() {
+    if (!hero) return;
+    var rect = hero.getBoundingClientRect();
+    layoutReadCount += 1;
+    heroDocumentTop = scrollY() + rect.top;
+  }
+
+  function estimatedHeroTop() {
+    return Math.max(0, heroDocumentTop - scrollY());
+  }
+
   function safeSeekStart(media) {
     if (!media || (!Number.isFinite(media.duration) && media.readyState < 1)) return;
     try {
-      if (Math.abs(media.currentTime) > 0.025) media.currentTime = 0;
+      if (Math.abs(media.currentTime) > 0.025) {
+        media.currentTime = 0;
+        mediaResetCount += 1;
+      }
     } catch (error) {}
   }
 
   function pauseAndReset(media) {
     if (!media) return;
     try {
-      media.pause();
+      if (!media.paused) media.pause();
     } catch (error) {}
     safeSeekStart(media);
   }
@@ -94,12 +126,11 @@
     if (!video) return;
     var audible =
       soundEnabled && !usesAmbientAudio() && video === audioMaster && index === 0;
-
     video.muted = !audible;
     video.defaultMuted = !audible;
     video.playsInline = true;
     video.setAttribute('playsinline', '');
-
+    video.volume = audible ? currentAudioGain : 1;
     if (audible) video.removeAttribute('muted');
     else video.setAttribute('muted', '');
   }
@@ -115,7 +146,6 @@
 
   function prepareVideo(video) {
     if (!video || video.dataset.gicleeHeroVideoGate === '1') return;
-
     video.dataset.gicleeHeroVideoGate = '1';
     video.autoplay = false;
     video.removeAttribute('autoplay');
@@ -125,7 +155,6 @@
     video.setAttribute('muted', '');
     video.setAttribute('playsinline', '');
     video.preload = 'auto';
-
     video.addEventListener('play', onPrematurePlay);
     video.addEventListener('playing', onPrematurePlay);
     video.addEventListener('loadedmetadata', function () {
@@ -136,7 +165,6 @@
         playVideo(video, videos.indexOf(video));
       }
     });
-
     if (playbackAllowed && hasStarted) {
       safeSeekStart(video);
       window.requestAnimationFrame(function () {
@@ -169,7 +197,7 @@
 
   function playAmbient() {
     if (!usesAmbientAudio()) return;
-    ambientAudio.volume = SOUND_VOLUME;
+    ambientAudio.volume = SOUND_VOLUME * currentAudioGain;
     try {
       var promise = ambientAudio.play();
       if (promise && typeof promise.catch === 'function') promise.catch(function () {});
@@ -177,51 +205,128 @@
   }
 
   function stopAmbient() {
-    if (!ambientAudio) return;
-    pauseAndReset(ambientAudio);
+    if (ambientAudio) pauseAndReset(ambientAudio);
   }
 
-  function horizontalStatus() {
-    if (typeof window.GICLEE_HERO_HORIZONTAL_CURTAIN_STATUS !== 'function') return null;
-    try {
-      return window.GICLEE_HERO_HORIZONTAL_CURTAIN_STATUS();
-    } catch (error) {
-      return null;
+  function curtainRuntime() {
+    if (typeof window.GICLEE_HERO_HORIZONTAL_CURTAIN_RUNTIME === 'function') {
+      curtainRuntimeReadCount += 1;
+      try {
+        return window.GICLEE_HERO_HORIZONTAL_CURTAIN_RUNTIME();
+      } catch (error) {
+        return null;
+      }
     }
+    if (typeof window.GICLEE_HERO_HORIZONTAL_CURTAIN_STATUS === 'function') {
+      curtainStatusFallbackCount += 1;
+      try {
+        return window.GICLEE_HERO_HORIZONTAL_CURTAIN_STATUS();
+      } catch (error) {
+        return null;
+      }
+    }
+    return null;
   }
 
-  function curtainComplete() {
+  function heroRiseAudioGain() {
+    if (!scrubRoot) return 1;
+    var progress = Number(scrubRoot.getAttribute('data-hero-rise-progress'));
+    return Number.isFinite(progress) ? clamp01(progress) : 1;
+  }
+
+  function curtainAudioGain(runtime) {
+    var status = runtime || curtainRuntime();
+    if (!status || !status.active) return 1;
+    var progress = Number(status.easedProgress);
+    if (!Number.isFinite(progress)) progress = Number(status.smoothedProgress);
+    return Number.isFinite(progress) ? 1 - clamp01(progress) : 1;
+  }
+
+  function sceneAudioGain(runtime) {
+    return Math.min(heroRiseAudioGain(), curtainAudioGain(runtime));
+  }
+
+  function applyPlaybackVolume(runtime) {
+    var gain = sceneAudioGain(runtime);
+    currentAudioGain = gain;
+    var key = gain.toFixed(3);
+    if (key === appliedAudioGain) return;
+    appliedAudioGain = key;
+    if (ambientAudio) ambientAudio.volume = SOUND_VOLUME * gain;
+    if (audioMaster) audioMaster.volume = gain;
+    if (hero) hero.style.setProperty('--giclee-hero-audio-gain', key);
+  }
+
+  function trackPlaybackVolume() {
+    volumeRafId = 0;
+    if (!playbackAllowed || !hasStarted || !soundEnabled) return;
+    applyPlaybackVolume();
+    volumeRafId = window.requestAnimationFrame(trackPlaybackVolume);
+  }
+
+  function startVolumeTracking() {
+    if (volumeRafId) window.cancelAnimationFrame(volumeRafId);
+    applyPlaybackVolume();
+    if (soundEnabled) volumeRafId = window.requestAnimationFrame(trackPlaybackVolume);
+  }
+
+  function stopVolumeTracking() {
+    if (volumeRafId) window.cancelAnimationFrame(volumeRafId);
+    volumeRafId = 0;
+    currentAudioGain = 1;
+    appliedAudioGain = '';
+    if (ambientAudio) ambientAudio.volume = SOUND_VOLUME;
+    if (audioMaster) audioMaster.volume = 1;
+    if (hero) hero.style.removeProperty('--giclee-hero-audio-gain');
+  }
+
+  function curtainComplete(runtime) {
+    if (runtime && typeof runtime.complete === 'boolean') return runtime.complete;
     return root.getAttribute('data-giclee-hero-horizontal-curtain-complete') === 'true';
   }
 
   function heroIsSettled() {
     if (!scrubRoot || !hero) return false;
     if (scrubRoot.getAttribute('data-hero-rise-complete') !== 'true') return false;
-    return Math.abs(hero.getBoundingClientRect().top) <= CENTER_TOLERANCE_PX;
+    return estimatedHeroTop() <= CENTER_TOLERANCE_PX;
   }
 
-  function heroIsPlayable() {
-    return heroIsSettled() && !curtainComplete();
+  function heroIsPlayable(runtime) {
+    return heroIsSettled() && !curtainComplete(runtime);
   }
 
-  function decisionWindowExpired() {
-    var status = horizontalStatus();
+  function shouldKeepSilentPlaybackForReverseScroll(runtime) {
+    return !!(
+      playbackAllowed &&
+      hasStarted &&
+      choiceResolved &&
+      soundEnabled &&
+      !curtainComplete(runtime)
+    );
+  }
+
+  function decisionWindowExpired(runtime) {
+    var status = runtime || curtainRuntime();
     if (!status || !status.active || !status.holdTravel) return false;
     if (AUTO_MUTED_HOLD_FRACTION <= 0) return true;
     return status.localScroll >= status.holdTravel * AUTO_MUTED_HOLD_FRACTION;
   }
 
   function updateToggleCopy() {
-    if (!toggleState || !toggle) return;
-    toggleState.textContent = toggle.checked ? 'Włączony' : 'Wyłączony';
+    if (toggleState && toggle) {
+      toggleState.textContent = toggle.checked ? 'Włączony' : 'Wyłączony';
+    }
   }
 
   function setPromptVisible(visible) {
-    promptVisible = !!visible && SOUND_CONSENT_ENABLED;
-    root.setAttribute(
-      'data-giclee-hero-sound-prompt',
-      promptVisible ? 'visible' : 'hidden'
-    );
+    var nextVisible = !!visible && SOUND_CONSENT_ENABLED;
+    var nextState = nextVisible ? 'visible' : 'hidden';
+    if (
+      promptVisible === nextVisible &&
+      root.getAttribute('data-giclee-hero-sound-prompt') === nextState
+    ) return;
+    promptVisible = nextVisible;
+    root.setAttribute('data-giclee-hero-sound-prompt', nextState);
     if (!prompt) return;
     prompt.setAttribute('aria-hidden', promptVisible ? 'false' : 'true');
     if ('inert' in prompt) prompt.inert = !promptVisible;
@@ -231,81 +336,67 @@
     var existing = document.querySelector('.' + PROMPT_CLASS);
     if (existing) existing.remove();
     if (!SOUND_CONSENT_ENABLED) return null;
-
     prompt = document.createElement('div');
     prompt.className = PROMPT_CLASS;
     prompt.setAttribute('aria-hidden', 'true');
-
     var inner = document.createElement('div');
     inner.className = PROMPT_CLASS + '__inner';
-
     var question = document.createElement('p');
     question.className = PROMPT_CLASS + '__question';
     question.textContent = SOUND_QUESTION;
-
     var label = document.createElement('label');
     label.className = PROMPT_CLASS + '__toggle';
-
     var labelText = document.createElement('span');
     labelText.className = PROMPT_CLASS + '__toggle-label';
     labelText.textContent = SOUND_TOGGLE_LABEL;
-
     toggle = document.createElement('input');
     toggle.className = PROMPT_CLASS + '__input';
     toggle.type = 'checkbox';
     toggle.checked = false;
     toggle.setAttribute('aria-label', SOUND_TOGGLE_LABEL);
-
     var switchVisual = document.createElement('span');
     switchVisual.className = PROMPT_CLASS + '__switch';
     switchVisual.setAttribute('aria-hidden', 'true');
-
     toggleState = document.createElement('span');
     toggleState.className = PROMPT_CLASS + '__toggle-state';
-
     label.appendChild(labelText);
     label.appendChild(toggle);
     label.appendChild(switchVisual);
     label.appendChild(toggleState);
-
     var startButton = document.createElement('button');
     startButton.className = PROMPT_CLASS + '__start';
     startButton.type = 'button';
     startButton.textContent = SOUND_START_LABEL;
-
     inner.appendChild(question);
     inner.appendChild(label);
     inner.appendChild(startButton);
     prompt.appendChild(inner);
     document.body.appendChild(prompt);
-
     toggle.addEventListener('change', updateToggleCopy);
     startButton.addEventListener('click', function () {
-      if (!heroIsPlayable() || choiceResolved) return;
+      if (!heroIsPlayable(curtainRuntime()) || choiceResolved) return;
       resolveChoice(!!toggle.checked, 'user');
     });
-
     updateToggleCopy();
-    setPromptVisible(false);
     return prompt;
   }
 
   function startPlayback(withSound, directFromGesture) {
     collectVideos();
-    if (!videos.length || !heroIsPlayable()) return;
-
+    var runtime = curtainRuntime();
+    if (!videos.length || !heroIsPlayable(runtime)) return;
     soundEnabled = !!withSound;
     playbackAllowed = true;
     hasStarted = true;
-
+    currentAudioGain = sceneAudioGain(runtime);
     videos.forEach(function (video, index) {
       pauseAndReset(video);
       applyVideoSound(video, index);
     });
     stopAmbient();
-
     var begin = function () {
-      if (!playbackAllowed || !heroIsPlayable()) return;
+      if (!playbackAllowed || !heroIsPlayable(curtainRuntime())) return;
+      startVolumeTracking();
       videos.forEach(playVideo);
       if (soundEnabled) playAmbient();
       hero.setAttribute('data-giclee-hero-video-playback', 'playing');
@@ -321,8 +412,6 @@
         })
       );
     };
-
-    /* Unmuted media and Audio.play() must be invoked inside the click gesture. */
     if (directFromGesture) begin();
     else window.requestAnimationFrame(begin);
   }
@@ -330,8 +419,9 @@
   function stopPlayback() {
     playbackAllowed = false;
     hasStarted = false;
-    collectVideos().forEach(pauseAndReset);
+    videos.forEach(pauseAndReset);
     stopAmbient();
+    stopVolumeTracking();
     if (hero) hero.setAttribute('data-giclee-hero-video-playback', 'waiting');
   }
 
@@ -346,40 +436,50 @@
 
   function syncGate() {
     rafId = 0;
-    var playable = heroIsPlayable();
+    gateSyncCount += 1;
+    var runtime = curtainRuntime();
+    var playable = heroIsPlayable(runtime);
 
     if (!playable) {
       setPromptVisible(false);
+      if (shouldKeepSilentPlaybackForReverseScroll(runtime)) {
+        applyPlaybackVolume(runtime);
+        return;
+      }
       if (playbackAllowed) stopPlayback();
-      else collectVideos().forEach(pauseAndReset);
       return;
     }
 
     if (!choiceResolved) {
       if (!SOUND_CONSENT_ENABLED) {
         resolveChoice(false, 'disabled');
-      } else if (decisionWindowExpired()) {
+      } else if (decisionWindowExpired(runtime)) {
         resolveChoice(false, 'auto-muted');
       } else {
         setPromptVisible(true);
-        collectVideos().forEach(pauseAndReset);
       }
       return;
     }
 
     setPromptVisible(false);
     if (!playbackAllowed) startPlayback(soundEnabled, false);
+    else if (soundEnabled) applyPlaybackVolume(runtime);
   }
 
   function requestSync() {
     if (!rafId) rafId = window.requestAnimationFrame(syncGate);
   }
 
+  function refreshLayout() {
+    measureHeroDocumentTop();
+    requestSync();
+  }
+
   function boot() {
     scrubRoot = document.getElementById(SCRUB_ROOT_ID);
     hero = findHero();
     if (!scrubRoot || !hero || !document.body) return;
-
+    measureHeroDocumentTop();
     createAmbientAudio();
     createPrompt();
     collectVideos();
@@ -397,23 +497,33 @@
         attributes: true,
         attributeFilter: ['data-hero-rise-complete', 'data-hero-rise-progress'],
       });
+
+      curtainObserver = new MutationObserver(requestSync);
+      curtainObserver.observe(root, {
+        attributes: true,
+        attributeFilter: [
+          'data-giclee-hero-horizontal-curtain-active',
+          'data-giclee-hero-horizontal-curtain-opening',
+          'data-giclee-hero-horizontal-curtain-complete',
+        ],
+      });
     }
 
     window.addEventListener('scroll', requestSync, { passive: true });
-    window.addEventListener('resize', requestSync, { passive: true });
-    window.addEventListener('orientationchange', requestSync, { passive: true });
-    window.addEventListener('pageshow', requestSync, { passive: true });
-
+    window.addEventListener('resize', refreshLayout, { passive: true });
+    window.addEventListener('orientationchange', refreshLayout, { passive: true });
+    window.addEventListener('pageshow', refreshLayout, { passive: true });
+    window.addEventListener('giclee:home-stack-ready', refreshLayout, { passive: true });
     requestSync();
 
     window.GICLEE_HERO_VIDEO_GATE_STATUS = function () {
       var rect = hero.getBoundingClientRect();
-      var status = horizontalStatus();
+      var status = curtainRuntime();
       var promptRect = prompt ? prompt.getBoundingClientRect() : null;
       return {
         ready: true,
         settled: heroIsSettled(),
-        playable: heroIsPlayable(),
+        playable: heroIsPlayable(status),
         playbackAllowed: playbackAllowed,
         hasStarted: hasStarted,
         choiceResolved: choiceResolved,
@@ -424,9 +534,20 @@
         ambientConfigured: !!SOUND_AUDIO_URL,
         ambientActive: !!(ambientAudio && !ambientAudio.paused),
         ambientVolume: SOUND_VOLUME,
+        effectiveAmbientVolume: ambientAudio ? ambientAudio.volume : 0,
+        audioGain: currentAudioGain,
+        heroRiseAudioGain: heroRiseAudioGain(),
+        curtainAudioGain: curtainAudioGain(status),
         heroRiseComplete:
           scrubRoot.getAttribute('data-hero-rise-complete') === 'true',
         heroTop: Math.round(rect.top * 100) / 100,
+        estimatedHeroTop: Math.round(estimatedHeroTop() * 100) / 100,
+        heroDocumentTop: heroDocumentTop,
+        gateSyncCount: gateSyncCount,
+        layoutReadCount: layoutReadCount,
+        mediaResetCount: mediaResetCount,
+        curtainRuntimeReadCount: curtainRuntimeReadCount,
+        curtainStatusFallbackCount: curtainStatusFallbackCount,
         holdFraction:
           status && status.holdTravel
             ? Math.round((status.localScroll / status.holdTravel) * 1000) / 1000
@@ -444,6 +565,7 @@
           return {
             audioMaster: video === audioMaster,
             muted: video.muted,
+            volume: video.volume,
             paused: video.paused,
             currentTime: Math.round(video.currentTime * 1000) / 1000,
             readyState: video.readyState,

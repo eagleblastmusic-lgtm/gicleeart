@@ -14,9 +14,11 @@ install_prehero_full_generator()
 
 from .home_flow_phase_settings import install_home_flow_phase_settings
 from .home_flow_phase_validation import install_home_flow_phase_validation
+from .home_scroll_mode import install_home_scroll_mode
 
 install_home_flow_phase_settings()
 install_home_flow_phase_validation()
+install_home_scroll_mode()
 
 # Przechwytujemy oryginalny callback sekcji tylko po to, aby uzyskać bezpośredni
 # dostęp do bazowego renderera _show_zone. Treeview nie steruje już panelem przez

@@ -13,9 +13,14 @@ from typing import Any, Callable
 from . import prehero_integration as _base
 
 INTRO_HOLD_KEY = "prehero_intro_hold_screens"
+FRAME_MANIFEST_SNIPPET = "giclee-home-prehero-frame-manifest.liquid"
 
 FULL_PREHERO_CODE_ASSETS: tuple[str, ...] = (
+    "giclee-home-native-v2.js",
+    "giclee-home-native-v2-layer-cull.css",
+    "giclee-home-native-v2-layer-cull.js",
     "giclee-home-prehero-scrub.css",
+    "giclee-home-prehero-frames.js",
     "giclee-home-prehero-scrub.js",
     "giclee-home-prehero-chrome.css",
     "giclee-home-prehero-chrome.js",
@@ -35,6 +40,7 @@ FULL_PREHERO_CODE_ASSETS: tuple[str, ...] = (
 )
 
 _CSS_ASSETS: tuple[str, ...] = (
+    "giclee-home-native-v2-layer-cull.css",
     "giclee-home-prehero-scrub.css",
     "giclee-home-prehero-chrome.css",
     "giclee-home-prehero-reveal.css",
@@ -48,6 +54,9 @@ _CSS_ASSETS: tuple[str, ...] = (
 )
 
 _JS_ASSETS: tuple[str, ...] = (
+    "giclee-home-native-v2.js",
+    "giclee-home-native-v2-layer-cull.js",
+    "giclee-home-prehero-frames.js",
     "giclee-home-prehero-scrub.js",
     "giclee-home-prehero-chrome.js",
     "giclee-home-prehero-reveal.js",
@@ -63,6 +72,7 @@ def _full_asset_block() -> str:
     lines.extend(
         "{{ '" + name + "' | asset_url | stylesheet_tag }}" for name in _CSS_ASSETS
     )
+    lines.append("<script>{% render 'giclee-home-prehero-frame-manifest' %}</script>")
     lines.extend(
         "<script src=\"{{ '" + name + "' | asset_url }}\" defer></script>"
         for name in _JS_ASSETS
@@ -158,12 +168,20 @@ def _install_asset_block_upgrade() -> None:
 def _missing_assets(config: dict[str, Any]) -> list[str]:
     from .service import theme_root
 
-    assets_dir = theme_root() / "assets"
-    missing = [name for name in FULL_PREHERO_CODE_ASSETS if not (assets_dir / name).is_file()]
+    root = theme_root()
+    assets_dir = root / "assets"
+    missing = [
+        f"assets/{name}"
+        for name in FULL_PREHERO_CODE_ASSETS
+        if not (assets_dir / name).is_file()
+    ]
+    manifest = root / "snippets" / FRAME_MANIFEST_SNIPPET
+    if not manifest.is_file():
+        missing.append(f"snippets/{FRAME_MANIFEST_SNIPPET}")
     video_ref = str(config.get("videoRef") or "")
     if not video_ref.startswith(("shopify://files/videos/", "gid://shopify/Video/")):
         if not (assets_dir / _base.PREHERO_VIDEO_ASSET).is_file():
-            missing.append(_base.PREHERO_VIDEO_ASSET)
+            missing.append(f"assets/{_base.PREHERO_VIDEO_ASSET}")
     return missing
 
 
@@ -183,7 +201,7 @@ def _install_safe_writer_guard() -> None:
             if config.get("enabled", True):
                 missing = _missing_assets(config)
                 if missing:
-                    detail = "\n".join(f"• assets/{name}" for name in missing)
+                    detail = "\n".join(f"• {name}" for name in missing)
                     raise RuntimeError(
                         "Zapis GICLÉE HOME FLOW został zatrzymany, aby nie usunąć działającej "
                         "sekwencji pre-Hero. Brakuje wymaganych plików:\n" + detail

@@ -1,0 +1,129 @@
+/* Native v2: fully covered sticky layers keep geometry but leave paint/compositing. */
+html.giclee-native-v2.giclee-native-v2-layer-cull
+  .shopify-section.giclee-native-v2-covered[data-giclee-home-stack]:not(.giclee-home-stack-divider) {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/*
+ * The legacy stack dims the outgoing full-screen section by recalculating a
+ * large blur on its background, media and copy every frame. Native v2 keeps
+ * the same fade amount on one compositor surface and removes the paint-heavy
+ * child filters. Hero remains on its dedicated curtain path.
+ */
+html.giclee-native-v2
+  .shopify-section.is-stack-under-dim[data-giclee-home-stack]:not([data-giclee-home-stack='1']):not(.giclee-home-stack-divider)
+  > .section {
+  opacity: calc(1 - var(--home-stack-under-dim, 0) * 0.72);
+  will-change: opacity;
+}
+
+html.giclee-native-v2
+  .shopify-section.is-stack-under-dim[data-giclee-home-stack]:not([data-giclee-home-stack='1']):not(.giclee-home-stack-divider)
+  > .section
+  :is(.background-image-container, video-background-component, .section-content-wrapper) {
+  filter: none !important;
+  opacity: 1 !important;
+  will-change: auto !important;
+}
+
+/* Keep comparison-slider repaints inside their own composited paint island. */
+html.giclee-native-v2 comparison-slider-component {
+  contain: paint style;
+  isolation: isolate;
+}
+
+html.giclee-native-v2 comparison-slider-component .comparison-slider__media-wrapper {
+  contain: paint;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+html.giclee-native-v2 comparison-slider-component .comparison-slider__layer {
+  backface-visibility: hidden;
+}
+
+/*
+ * During an active wheel easing keep the cinematic opacity/transform motion, but
+ * avoid full-screen blur, brightness and shadow repaints in the heavy lower stack.
+ * Once the easing ends, normal hover/focus styling remains available.
+ */
+html.giclee-native-v2.giclee-native-v2-scrolling
+  :is(.giclee-home-studio-reveal__heading, .giclee-home-studio-reveal__paragraph) {
+  filter: none !important;
+  transition-property: opacity, transform !important;
+}
+
+html.giclee-native-v2.giclee-native-v2-scrolling
+  :is(
+    .giclee-home-studio-reveal__bg .background-image-container,
+    .giclee-home-studio-reveal__bg .background-image-container img,
+    .giclee-home-studio-reveal__bg video-background-component video
+  ) {
+  filter: none !important;
+  transition-property: opacity, transform !important;
+}
+
+html.giclee-native-v2.giclee-native-v2-scrolling
+  :is(.giclee-home-studio-reveal__card, .giclee-home-studio-reveal__copy) {
+  filter: none !important;
+  box-shadow: none !important;
+  transition-property: opacity, transform !important;
+}
+
+html.giclee-native-v2.giclee-native-v2-scrolling
+  :is(
+    .giclee-home-final-difference .giclee-final-difference__media--left,
+    .giclee-home-final-difference .giclee-final-difference__media--right,
+    .giclee-home-final-difference .giclee-final-difference__bg .background-image-container,
+    .giclee-home-final-difference .giclee-final-difference__bg .background-image-container img,
+    .giclee-home-final-difference .giclee-final-difference__bg video-background-component video
+  ) {
+  filter: none !important;
+  transition-property: opacity, transform !important;
+}
+
+/* Pause large decorative gradients while the document is actively moving. */
+html.giclee-native-v2.giclee-native-v2-scrolling
+  .giclee-home-studio-reveal.giclee-home-studio-reveal--motion::before {
+  animation-play-state: paused !important;
+}
+
+html.giclee-native-v2.giclee-native-v2-scrolling
+  :is(
+    .giclee-home-studio-reveal__copy::before,
+    .giclee-home-final-difference .giclee-final-difference__copy::before
+  ) {
+  opacity: 0 !important;
+  transition: none !important;
+}
+
+/* Use one fixed gradient texture and animate only its opacity during overlap. */
+html.giclee-native-v2.giclee-native-v2-scrolling
+  .shopify-section[data-giclee-home-stack]:not([data-giclee-home-stack='1']):not(.giclee-home-stack-divider)
+  > .section::before {
+  height: 28px !important;
+  background: linear-gradient(to bottom, rgb(0 0 0 / 0.58), transparent) !important;
+  opacity: var(--home-stack-over-depth, 0);
+  will-change: opacity;
+}
+
+html.giclee-native-v2.giclee-native-v2-scrolling
+  comparison-slider-component
+  .comparison-slider__layer {
+  transition-duration: 0s !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.giclee-native-v2
+    .shopify-section.giclee-native-v2-covered[data-giclee-home-stack]:not(.giclee-home-stack-divider) {
+    visibility: visible !important;
+    pointer-events: auto;
+  }
+
+  html.giclee-native-v2
+    .shopify-section.is-stack-under-dim[data-giclee-home-stack]:not(.giclee-home-stack-divider)
+    > .section {
+    opacity: 1 !important;
+  }
+}

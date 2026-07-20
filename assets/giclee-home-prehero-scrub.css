@@ -1,7 +1,7 @@
 /*
- * Homepage pre-hero video scrub.
+ * Homepage pre-hero video / frame-sequence scrub.
  * The 600vh section produces 500vh of sticky travel:
- * - first 400vh: video scrub with the centred reveal during its final 200vh,
+ * - first 400vh: media scrub with the centred reveal during its final 200vh,
  * - final 100vh: the original live Hero rises naturally from the viewport bottom.
  */
 
@@ -30,6 +30,7 @@
 }
 
 .giclee-prehero-scrub__video,
+.giclee-prehero-scrub__canvas,
 .giclee-prehero-scrub__poster {
   position: absolute;
   inset: 0;
@@ -37,21 +38,37 @@
   height: 100%;
 }
 
-.giclee-prehero-scrub__video {
+.giclee-prehero-scrub__video,
+.giclee-prehero-scrub__canvas {
   z-index: 1;
   display: block;
-  object-fit: cover;
-  object-position: center center;
   opacity: 0;
   background: #000;
   transform: translateZ(0);
   backface-visibility: hidden;
   will-change: opacity;
-  transition: opacity 280ms ease;
+  transition: opacity 220ms ease;
 }
 
-.giclee-prehero-scrub[data-video-ready='true'] .giclee-prehero-scrub__video {
+.giclee-prehero-scrub__video {
+  object-fit: cover;
+  object-position: center center;
+}
+
+.giclee-prehero-scrub__canvas {
+  pointer-events: none;
+}
+
+.giclee-prehero-scrub[data-video-ready='true']:not([data-render-mode='webp-frames'])
+  .giclee-prehero-scrub__video,
+.giclee-prehero-scrub[data-frame-sequence-ready='true']
+  .giclee-prehero-scrub__canvas {
   opacity: 1;
+}
+
+.giclee-prehero-scrub[data-render-mode='webp-frames']
+  .giclee-prehero-scrub__video {
+  display: none;
 }
 
 .giclee-prehero-scrub__poster {
@@ -83,7 +100,8 @@
     position: relative;
   }
 
-  .giclee-prehero-scrub__video {
+  .giclee-prehero-scrub__video,
+  .giclee-prehero-scrub__canvas {
     transition: none;
   }
 }

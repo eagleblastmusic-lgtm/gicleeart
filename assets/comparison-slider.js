@@ -36,8 +36,28 @@ export class ComparisonSliderComponent extends Component {
     // Initialize the position
     this.sync();
 
+    // Native v2 already animates the document for every wheel impulse. Running the
+    // 1.6 s comparison-slider hint while sticky sections are moving causes large
+    // clip-path repaints, so keep the slider interactive but skip only the hint.
+    if (this.nativeV2AutoHintDisabled()) {
+      this.hasAnimated = true;
+      mediaWrapper.style.setProperty('--transition-duration', '0s');
+      this.dataset.gicleeNativeV2Hint = 'disabled';
+      return;
+    }
+
     // Set up intersection observer for animation
     this.setupIntersectionObserver();
+  }
+
+  /**
+   * Disable only the automatic hint on the homepage cinematic wheel profile.
+   * Manual input remains fully functional.
+   */
+  nativeV2AutoHintDisabled() {
+    const config = window.GICLEE_PREHERO_CONFIG || {};
+    const mode = String(config.smoothScrollMode || '').trim().toLowerCase();
+    return mode === 'native-v2' || document.documentElement.classList.contains('giclee-native-v2');
   }
 
   /**

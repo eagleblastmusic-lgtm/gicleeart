@@ -42,6 +42,11 @@
 </style>
 
     {%- if request.page_type == 'index' -%}
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lenis@1.3.25/dist/lenis.css">
+    <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.25/dist/lenis.min.js" defer></script>
+    {{ 'giclee-home-smooth-scroll.css' | asset_url | stylesheet_tag }}
+    <script src="{{ 'giclee-home-smooth-scroll.js' | asset_url }}" defer></script>
     {% render 'giclee-home-stack-critical' %}
     <script src="{{ 'giclee-home-sections.js' | asset_url }}" defer></script>
     <script src="{{ 'giclee-home-mobile.js' | asset_url }}" defer></script>
