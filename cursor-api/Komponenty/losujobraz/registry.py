@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from Komponenty._shared.theme_page_editor.types import TemplateField, TemplateZone, _s
 
+
 PAGE_ZONES: tuple[TemplateZone, ...] = (
     TemplateZone(
         zone_id="random_artwork",
@@ -48,6 +49,74 @@ PAGE_ZONES: tuple[TemplateZone, ...] = (
                 "bool",
                 _s("random_artwork", "settings", "background_parallax"),
                 hint="Subtelny ruch obrazu lub filmu przy ruszaniu kursorem — jak w karuzeli / konfiguratorze.",
+            ),
+        ),
+    ),
+    TemplateZone(
+        zone_id="random_artwork_atmosphere",
+        label="Edytuj atmosferę…",
+        description=(
+            "Parametry wariantu V2 — atmosfera muzealna. W V1 wartości są zachowane, "
+            "ale warstwa atmosfery nie jest ładowana. Zakresy są podane przy każdym polu."
+        ),
+        section_key="random_artwork",
+        settings_only=True,
+        fields=(
+            TemplateField(
+                "atmosphere_intensity",
+                "Glow kursora — intensywność (%)",
+                "int",
+                _s("random_artwork", "settings", "atmosphere_intensity"),
+                hint="0–70. Domyślnie 35. Steruje jasnością miękkiej poświaty.",
+            ),
+            TemplateField(
+                "atmosphere_glow_size",
+                "Glow kursora — rozmiar (%)",
+                "int",
+                _s("random_artwork", "settings", "atmosphere_glow_size"),
+                hint="60–160. Domyślnie 100. Większa wartość daje szersze, bardziej ambientowe światło.",
+            ),
+            TemplateField(
+                "atmosphere_glow_response",
+                "Glow kursora — responsywność (%)",
+                "int",
+                _s("random_artwork", "settings", "atmosphere_glow_response"),
+                hint="10–100. Domyślnie 50. Niżej = większy lag i bardziej miękki ruch; wyżej = szybsze śledzenie.",
+            ),
+            TemplateField(
+                "atmosphere_haze",
+                "Mgiełka — intensywność (%)",
+                "int",
+                _s("random_artwork", "settings", "atmosphere_haze"),
+                hint="0–100. Domyślnie 100. Skaluje jasność obu warstw ambientowej głębi.",
+            ),
+            TemplateField(
+                "atmosphere_haze_speed",
+                "Mgiełka — szybkość ruchu (%)",
+                "int",
+                _s("random_artwork", "settings", "atmosphere_haze_speed"),
+                hint="0–200. Domyślnie 100. 0 zatrzymuje ruch; 200 przyspiesza go dwukrotnie.",
+            ),
+            TemplateField(
+                "atmosphere_dust",
+                "Pył — widoczność (%)",
+                "int",
+                _s("random_artwork", "settings", "atmosphere_dust"),
+                hint="0–60. Domyślnie 25. Steruje przezroczystością drobinek.",
+            ),
+            TemplateField(
+                "atmosphere_dust_amount",
+                "Pył — ilość (%)",
+                "int",
+                _s("random_artwork", "settings", "atmosphere_dust_amount"),
+                hint="0–100. Domyślnie 50. Steruje liczbą drobinek, niezależnie od ich widoczności.",
+            ),
+            TemplateField(
+                "atmosphere_dust_speed",
+                "Pył — szybkość ruchu (%)",
+                "int",
+                _s("random_artwork", "settings", "atmosphere_dust_speed"),
+                hint="0–200. Domyślnie 100. 0 zatrzymuje pył; 200 przyspiesza go dwukrotnie.",
             ),
         ),
     ),
