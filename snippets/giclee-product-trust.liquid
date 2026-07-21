@@ -90,8 +90,8 @@
 </section>
 
 {% style %}
-  /* PDP v3 bez sekcji przed/po: pusta kotwica tworzyła dodatkowy rząd gridu,
-     a wraz z normalnym gapem dawała dwa pełnoszerokie pasy nad process + trust. */
+  /* PDP v3 bez sekcji przed/po: pusta kotwica wraz z grid gapem tworzyła
+     pełnoszerokie pasy między konfiguratorem a końcową sceną. */
   main[data-template='product.szablon-produktu-v3']
     .product-information
     .giclee-before-after-target:empty {
@@ -121,47 +121,100 @@
     background: rgb(0 0 0 / 0.45);
   }
 
-  /* Proces i trust muszą zajmować dwa kolejne viewporty. Ujemny margin -100dvh
-     ustawiał oba bloki w tej samej pozycji, więc ich treści nakładały się od
-     pierwszej klatki. Trust wjeżdża teraz naturalnie dopiero po procesie. */
+  /* Jedna końcowa scena: wrapper zapewnia dystans scrolla, a stage pozostaje
+     przypięty przez jeden viewport. Proces i trust zajmują dokładnie tę samą
+     powierzchnię i korzystają wyłącznie z jednego tła wrappera. */
   main[data-template='product.szablon-produktu-v3']
-    .product-information
-    .giclee-trust {
-    margin-top: 0;
+    .pdp-v3-pt-wrap[data-pdp-v3-pt-scene] {
+    min-height: 200vh;
+    min-height: 200dvh;
+    --pdp-v3-process-opacity: 1;
+    --pdp-v3-process-y: 0px;
+    --pdp-v3-trust-opacity: 0;
+    --pdp-v3-trust-y: 18px;
   }
 
-  /* Pełne tło trustu kryje sticky proces dopiero podczas naturalnego wjazdu
-     drugiego viewportu; fixed attachment zachowuje ciągłość wspólnej grafiki. */
   main[data-template='product.szablon-produktu-v3']
-    .pdp-v3-pt-wrap.has-bg
-    .giclee-trust::before {
-    background-color: #000;
-    background-image:
-      linear-gradient(rgb(0 0 0 / 0.45), rgb(0 0 0 / 0.45)),
-      var(--pdp-v3-pt-image);
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-    filter: blur(var(--pdp-v3-pt-blur, 0px))
-      brightness(var(--pdp-v3-pt-brightness, 1));
-    transform: translateX(-50%) scale(1.03);
+    .pdp-v3-pt-stage {
+    position: sticky;
+    top: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    overflow: clip;
+    isolation: isolate;
   }
 
-  /* Zachowany kompatybilny selektor dla starszej wersji skryptu z brancha. */
+  main[data-template='product.szablon-produktu-v3']
+    .pdp-v3-pt-stage
+    > .giclee-process,
+  main[data-template='product.szablon-produktu-v3']
+    .pdp-v3-pt-stage
+    > .giclee-trust {
+    position: relative;
+    top: auto;
+    grid-area: 1 / 1;
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    margin: 0;
+    pointer-events: none;
+    will-change: opacity, transform;
+  }
+
+  main[data-template='product.szablon-produktu-v3']
+    .pdp-v3-pt-stage
+    > .giclee-process {
+    z-index: 1;
+    opacity: var(--pdp-v3-process-opacity);
+    transform: translate3d(0, var(--pdp-v3-process-y), 0);
+  }
+
+  main[data-template='product.szablon-produktu-v3']
+    .pdp-v3-pt-stage
+    > .giclee-trust {
+    z-index: 2;
+    opacity: var(--pdp-v3-trust-opacity);
+    transform: translate3d(0, var(--pdp-v3-trust-y), 0);
+  }
+
+  /* Nie wolno odtwarzać obrazu osobno na panelu trust. Tło i przyciemnienie
+     istnieją tylko na ::before/::after wspólnego .pdp-v3-pt-wrap. */
   main[data-template='product.szablon-produktu-v3']
     .pdp-v3-pt-wrap.has-bg
-    .giclee-trust.is-covering-process::before {
-    background-color: #000;
-    background-image:
-      linear-gradient(rgb(0 0 0 / 0.45), rgb(0 0 0 / 0.45)),
-      var(--pdp-v3-pt-image);
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-    filter: blur(var(--pdp-v3-pt-blur, 0px))
-      brightness(var(--pdp-v3-pt-brightness, 1));
-    transform: translateX(-50%) scale(1.03);
+    .pdp-v3-pt-stage
+    > .giclee-process,
+  main[data-template='product.szablon-produktu-v3']
+    .pdp-v3-pt-wrap.has-bg
+    .pdp-v3-pt-stage
+    > .giclee-trust {
+    background-color: transparent;
+  }
+
+  main[data-template='product.szablon-produktu-v3']
+    .pdp-v3-pt-wrap.has-bg
+    .pdp-v3-pt-stage
+    > .giclee-process::before,
+  main[data-template='product.szablon-produktu-v3']
+    .pdp-v3-pt-wrap.has-bg
+    .pdp-v3-pt-stage
+    > .giclee-trust::before {
+    background: transparent;
+    box-shadow: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-stage
+      > .giclee-process,
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-stage
+      > .giclee-trust {
+      transform: none;
+      will-change: auto;
+    }
   }
 {% endstyle %}
