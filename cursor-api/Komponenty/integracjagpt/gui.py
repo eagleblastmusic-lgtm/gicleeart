@@ -12,13 +12,12 @@ from Komponenty._shared.theme_dev_gui import open_theme_dev_preview
 from Komponenty._shared.toast import show_toast
 from Komponenty._shared.window_geometry import position_toplevel_screen_center
 
-from .config import load_config, save_config
+from .config import GPT_KNOWLEDGE_PACK_VERSION, load_config, save_config
 from .handoff import (
     build_conversation_start_prompt,
     build_plan_evaluation_message,
     build_review_request,
     build_zip_read_github_followup_message,
-    build_cursor_delegate_followup_message,
     build_confirmation_checklist_message,
 )
 from .mirror import build_review_package, sync_theme_to_mirror
@@ -233,7 +232,7 @@ class IntegracjaGptApp:
         ).pack(side="left", padx=(0, 6))
         ttk.Button(
             btn_row2,
-            text="Kopiuj: compact instructions (v35)",
+            text=f"Kopiuj: compact instructions ({GPT_KNOWLEDGE_PACK_VERSION})",
             command=self._copy_compact_instructions,
         ).pack(side="left", padx=(0, 6))
         ttk.Button(btn_row2, text="Otwórz review-demos", command=self._open_review_demos).pack(side="left")
@@ -318,7 +317,7 @@ class IntegracjaGptApp:
         self._starter_files_btn.pack(side="left")
         ttk.Label(
             ga_starter_row,
-            text="monorepo master → Pliki startowe dla GPT (+ ZIP v38)",
+            text="monorepo master → Pliki startowe dla GPT (+ ZIP v40)",
             foreground="#666",
         ).pack(side="left", padx=(10, 0))
 
@@ -517,12 +516,11 @@ class IntegracjaGptApp:
             dlg,
             text=(
                 "Przygotuj rozmowę w ChatGPT (nowe okno + załącznik ZIP):\n"
-                "1. «Skopiuj .zip» — archiwum wiedzy CLEAN_PACK v38 ze schowka plików\n"
+                "1. «Skopiuj .zip» — archiwum wiedzy CLEAN_PACK v40 (47 plików) ze schowka plików\n"
                 "2. Wklej ZIP w ChatGPT\n"
                 "3. «Skopiuj Wiadomość początkową» — tekst startowy do wklejenia obok ZIP-a\n"
                 "4. «Skopiuj wiadomość follow-up» — prośba o przeczytanie ZIP-a i połączenie z GitHubem\n"
-                "5. «Skopiuj wiadomość o roli» — GPT analizuje, Cursor implementuje\n"
-                "6. «Skopiuj wiadomość potwierdzeń» — checklista Instructions, checkpoint, tryby, GitHub"
+                "5. «Skopiuj wiadomość potwierdzeń» — checklista Instructions, checkpoint, tryby, GitHub"
             ),
             padding=(12, 12, 12, 8),
             wraplength=480,
@@ -678,38 +676,9 @@ class IntegracjaGptApp:
             self._copy_text(build_zip_read_github_followup_message())
             show_toast(dlg, "Wiadomość follow-up — wklej w ChatGPT.")
             dlg.destroy()
-            self._open_cursor_delegate_message_window(parent)
-
-        ttk.Button(btn_row, text="Skopiuj wiadomość follow-up", command=copy_followup).pack(side="left")
-        ttk.Button(btn_row, text="Później", command=dlg.destroy).pack(side="right")
-
-    def _open_cursor_delegate_message_window(self, parent: tk.Misc) -> None:
-        dlg = tk.Toplevel(parent)
-        dlg.title("Skopiuj wiadomość o roli")
-        position_toplevel_screen_center(dlg, 520, 180)
-        dlg.transient(parent)
-        dlg.grab_set()
-
-        ttk.Label(
-            dlg,
-            text=(
-                "Kolejny krok: skopiuj wiadomość o podziale ról — "
-                "Ty (GPT) analizujesz, Cursor implementuje."
-            ),
-            padding=(12, 12, 12, 8),
-            wraplength=480,
-        ).pack(anchor="w")
-
-        btn_row = ttk.Frame(dlg, padding=(12, 4, 12, 12))
-        btn_row.pack(fill="x")
-
-        def copy_delegate() -> None:
-            self._copy_text(build_cursor_delegate_followup_message())
-            show_toast(dlg, "Wiadomość o roli — wklej w ChatGPT.")
-            dlg.destroy()
             self._open_confirmation_checklist_message_window(parent)
 
-        ttk.Button(btn_row, text="Skopiuj wiadomość o roli", command=copy_delegate).pack(side="left")
+        ttk.Button(btn_row, text="Skopiuj wiadomość follow-up", command=copy_followup).pack(side="left")
         ttk.Button(btn_row, text="Później", command=dlg.destroy).pack(side="right")
 
     def _open_confirmation_checklist_message_window(self, parent: tk.Misc) -> None:
@@ -743,7 +712,7 @@ class IntegracjaGptApp:
     def _load_knowledge_zip(self) -> None:
         path = filedialog.askopenfilename(
             parent=self.root,
-            title="Wybierz ZIP wiedzy (CLEAN_PACK v38)",
+            title="Wybierz ZIP wiedzy (CLEAN_PACK v40)",
             filetypes=[("Archiwum ZIP", "*.zip"), ("Wszystkie pliki", "*.*")],
         )
         if not path:

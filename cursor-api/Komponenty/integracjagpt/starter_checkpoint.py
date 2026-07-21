@@ -17,16 +17,16 @@ _MARKER_BLOCK_RE = re.compile(
     re.escape(MARKER_START) + r".*?" + re.escape(MARKER_END),
     re.DOTALL,
 )
-
 _VERSION_RE = re.compile(r'__version__\s*=\s*["\']([^"\']+)["\']')
 
+# Jedyny plik dynamicznego checkpointu. Wersjonowane Instructions, indeks i
+# Wiadomość początkowa są źródłami ręcznie kontrolowanymi i nie mogą być
+# nadpisywane jako efekt uboczny pushu aplikacji.
 _STARTER_FILES_WITH_MARKERS: tuple[str, ...] = (
     "CURRENT_APP_STATE.md",
-    "GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md",
-    "Wiadomość początkowa.txt",
 )
 
-_MASTER_INDEX_FILE = "GICLEE_CURSOR_MASTER_INDEX_v38.md"
+_MASTER_INDEX_FILE = config.GPT_MASTER_INDEX_FILE
 
 
 @dataclass
@@ -139,23 +139,21 @@ def build_checkpoint_context(
 def _local_monorepo_lines(ctx: GicleeAppPushCheckpointContext) -> list[str]:
     if not ctx.monorepo.local_commits:
         return []
-    lines = [
-        "Lokalne commity monorepo (nie na origin/master, push pending):",
-    ]
+    lines = ["Lokalne commity monorepo (nie na origin/master, push pending):"]
     for short_sha, subject in ctx.monorepo.local_commits[:8]:
         lines.append(f"- `{short_sha}` {subject}")
     if len(ctx.monorepo.local_commits) > 8:
-        extra = len(ctx.monorepo.local_commits) - 8
-        lines.append(f"- … i {extra} więcej")
+        lines.append(f"- … i {len(ctx.monorepo.local_commits) - 8} więcej")
     return lines
 
 
 def _branch_status_lines(ctx: GicleeAppPushCheckpointContext) -> list[str]:
     lines = [
         (
-            f"- **GitHub gicleeapp:** v{ctx.version} / `main` @ `{ctx.gicleeapp_sha_short}` "
+            f"- **GitHub gicleeapp:** v{ctx.version} / `main` @ "
+            f"`{ctx.gicleeapp_sha_short}` "
             f"(auto-sync po Push GicleeApp, {ctx.pushed_at_label})"
-        ),
+        )
     ]
     if ctx.monorepo.origin_short:
         origin_tail = ctx.monorepo.origin_subject or "origin/master"
@@ -166,8 +164,8 @@ def _branch_status_lines(ctx: GicleeAppPushCheckpointContext) -> list[str]:
         lines.append("- **monorepo origin/master:** n/d (brak danych git lokalnie)")
     if ctx.monorepo.local_commits:
         lines.append(
-            "- **lokalnie monorepo:** dodatkowe commity względem origin/master — push pending "
-            "(nie zakładać push monorepo bez potwierdzenia użytkownika)"
+            "- **lokalnie monorepo:** dodatkowe commity względem origin/master — "
+            "push pending (nie zakładać push monorepo bez potwierdzenia użytkownika)"
         )
         for short_sha, subject in ctx.monorepo.local_commits[:5]:
             lines.append(f"  - `{short_sha}` {subject}")
@@ -181,7 +179,7 @@ def render_current_app_state_block(ctx: GicleeAppPushCheckpointContext) -> str:
         "GitHub / aktualna wersja aplikacji (`eagleblastmusic-lgtm/gicleeapp`):",
         (
             f"v{ctx.version} — zgodnie z `cursor-api/giclee_app/__init__.py` "
-            f"i `cursor-api/package.json`"
+            "i `cursor-api/package.json`"
         ),
         (
             f"Ostatni push GicleeApp: `{ctx.gicleeapp_sha_short}` na `main` "
@@ -201,137 +199,75 @@ def render_current_app_state_block(ctx: GicleeAppPushCheckpointContext) -> str:
     if local_lines:
         lines.extend(local_lines)
         lines.append("")
+
     lines.extend(
         [
-            "Previous checkpoint:",
-            "46fc718 feat(studio): add GICLÉE FRAME page inventory RAM editor (v1.40.0)",
-            "",
             "Branch status:",
             *_branch_status_lines(ctx),
             "",
             "GPT starter files:",
             (
                 f"auto-sync po Push GicleeApp {ctx.pushed_at_label} "
-                f"(gicleeapp `{ctx.gicleeapp_sha_short}`, v{ctx.version}; paczka v38; "
-                f"źródło = ten folder, nie ZIP)"
+                f"(gicleeapp `{ctx.gicleeapp_sha_short}`, v{ctx.version}; paczka v40; "
+                "źródło = ten folder, nie ZIP)"
             ),
             "",
             "Recent context:",
             (
-                f"- **GitHub gicleeapp:** v{ctx.version} / `main` @ `{ctx.gicleeapp_sha_short}` "
-                f"— auto-sync po Push GicleeApp"
-            ),
-            (
-                "- GICLÉE FRAME™ F2.1: closed + pushed (historycznie v1.40.1 / `4647c1b`; "
-                "aktualna wersja aplikacji na GitHub jest nowsza)"
+                f"- **GitHub gicleeapp:** v{ctx.version} / `main` @ "
+                f"`{ctx.gicleeapp_sha_short}` — auto-sync po Push GicleeApp"
             ),
         ]
     )
-    if ctx.monorepo.local_commits:
-        for short_sha, subject in ctx.monorepo.local_commits[:3]:
-            if "perf-agent" in subject.lower() or "performance agent" in subject.lower():
-                lines.append(
-                    f"- **Performance Agent** — lokalny commit monorepo `{short_sha}`; "
-                    "push monorepo pending (nie mylić z pushem gicleeapp)"
-                )
-                break
+
+    for short_sha, subject in ctx.monorepo.local_commits[:3]:
+        if "perf-agent" in subject.lower() or "performance agent" in subject.lower():
+            lines.append(
+                f"- **Performance Agent** — lokalny commit monorepo `{short_sha}`; "
+                "push monorepo pending (nie mylić z pushem gicleeapp)"
+            )
+            break
+
     lines.append(
-        "- Local runtime/untracked still outside commit and remote (working tree hygiene pending)"
+        "- Local runtime/untracked still outside commit and remote "
+        "(working tree hygiene pending)"
     )
     return "\n".join(lines)
 
 
 def render_compact_checkpoint_block(ctx: GicleeAppPushCheckpointContext) -> str:
-    lines = [
-        (
-            "Repo kanoniczne: `eagleblastmusic-lgtm/gicleeapp` "
-            "(monorepo `gicleeart`, branch `master`, app w `cursor-api/`)"
-        ),
-        "",
-        (
-            f"GitHub / aktualna wersja aplikacji: **v{ctx.version}** "
-            f"(`giclee_app/__init__.py`, `package.json`)"
-        ),
-        (
-            f"Ostatni push GicleeApp: `{ctx.gicleeapp_sha_short}` na `main` "
-            f"({ctx.pushed_at_label}) — {ctx.commit_message}"
-        ),
-    ]
-    if ctx.monorepo.origin_short:
-        lines.append(
-            f"Monorepo origin/master: `{ctx.monorepo.origin_short}` — {ctx.monorepo.origin_subject}"
-        )
-    lines.extend(
+    """Kompatybilny renderer historyczny; nie jest już zapisywany automatycznie."""
+    return "\n".join(
         [
-            "Ostatni pushed feature checkpoint aplikacji (F2.1, historia): `4647c1b` — v1.40.1",
-        ]
-    )
-    if ctx.monorepo.local_commits:
-        for short_sha, subject in ctx.monorepo.local_commits[:3]:
-            lines.append(
-                f"Lokalny commit monorepo (push pending): `{short_sha}` — {subject}"
-            )
-    lines.extend(
-        [
-            "Poprzedni checkpoint: `46fc718` — GICLÉE FRAME page inventory RAM editor (v1.40.0)",
-            f"Wersja aplikacji: **GicleeApp Studio v{ctx.version}**",
             (
-                f"Branch: GitHub gicleeapp **v{ctx.version}** / `main` @ `{ctx.gicleeapp_sha_short}`; "
-                f"monorepo origin/master `{ctx.monorepo.origin_short or 'n/d'}`"
-                + (
-                    "; lokalny monorepo ma commity pending względem origin/master"
-                    if ctx.monorepo.local_commits
-                    else ""
-                )
+                "Repo kanoniczne: `eagleblastmusic-lgtm/gicleeapp` "
+                "(monorepo `gicleeart`, branch `master`, app w `cursor-api/`)"
+            ),
+            "",
+            (
+                f"GitHub / aktualna wersja aplikacji: **v{ctx.version}** "
+                "(`giclee_app/__init__.py`, `package.json`)"
+            ),
+            (
+                f"Ostatni push GicleeApp: `{ctx.gicleeapp_sha_short}` na `main` "
+                f"({ctx.pushed_at_label}) — {ctx.commit_message}"
             ),
         ]
     )
-    return "\n".join(lines)
 
 
 def render_wiadomosc_block(ctx: GicleeAppPushCheckpointContext) -> str:
-    lines = [
-        f"- GicleeApp Studio v{ctx.version}",
-        "",
-        (
-            f"- GitHub / aktualna wersja aplikacji: v{ctx.version} — zgodnie z "
-            f"`cursor-api/giclee_app/__init__.py` i `cursor-api/package.json`"
-        ),
-        "",
-        (
-            f"- Ostatni push GicleeApp: {ctx.gicleeapp_sha_short} na main "
-            f"({ctx.pushed_at_label}) — {ctx.commit_message}"
-        ),
-        "",
-    ]
-    if ctx.monorepo.origin_short:
-        lines.extend(
-            [
-                f"- Monorepo origin/master: {ctx.monorepo.origin_short} {ctx.monorepo.origin_subject}",
-                "",
-            ]
-        )
-    lines.extend(
+    """Kompatybilny renderer historyczny; nie jest już zapisywany automatycznie."""
+    return "\n".join(
         [
-            "- Ostatni pushed feature checkpoint aplikacji (F2.1, historia): "
-            "4647c1b feat(studio): GICLÉE FRAME F2.1 editor workflow polish (v1.40.1)",
+            f"- GicleeApp Studio v{ctx.version}",
             "",
-            "- Branch:",
-            f"  - GitHub gicleeapp: v{ctx.version} / main @ {ctx.gicleeapp_sha_short} (auto-sync po Push GicleeApp)",
+            (
+                f"- Ostatni push GicleeApp: {ctx.gicleeapp_sha_short} na main "
+                f"({ctx.pushed_at_label}) — {ctx.commit_message}"
+            ),
         ]
     )
-    if ctx.monorepo.origin_short:
-        lines.append(
-            f"  - monorepo origin/master: {ctx.monorepo.origin_short} (docs / projekt)"
-        )
-    if ctx.monorepo.local_commits:
-        lines.append(
-            "  - lokalnie monorepo: commity pending względem origin/master "
-            "(nie zakładać push monorepo bez potwierdzenia)"
-        )
-        for short_sha, subject in ctx.monorepo.local_commits[:5]:
-            lines.append(f"    - {short_sha} {subject}")
-    return "\n".join(lines)
 
 
 def _wrap_marker_block(body: str) -> str:
@@ -345,32 +281,23 @@ def _replace_marker_block(text: str, body: str) -> str | None:
     return None
 
 
-def _update_master_index_version_lines(text: str, ctx: GicleeAppPushCheckpointContext) -> str:
+def _update_master_index_version_lines(
+    text: str,
+    ctx: GicleeAppPushCheckpointContext,
+) -> str:
+    """Historyczny helper pozostawiony dla zgodności importów; brak auto-zapisu."""
     updated = re.sub(
         r"GicleeApp Studio v[\d.]+",
         f"GicleeApp Studio v{ctx.version}",
         text,
         count=1,
     )
-    checkpoint_line = (
-        f"Aktualny checkpoint GicleeApp Studio: sekcja **AKTUALNY CHECKPOINT** w "
-        f"`GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md` oraz `CURRENT_APP_STATE.md` "
-        f"(GitHub gicleeapp **v{ctx.version}** / `main` @ `{ctx.gicleeapp_sha_short}`; "
-        f"monorepo origin/master `{ctx.monorepo.origin_short or 'n/d'}`)."
-    )
-    updated = re.sub(
-        r"Aktualny checkpoint GicleeApp Studio:.*",
-        checkpoint_line,
-        updated,
-        count=1,
-    )
-    updated = re.sub(
+    return re.sub(
         r"checkpoint v[\d.]+;",
         f"checkpoint v{ctx.version};",
         updated,
         count=1,
     )
-    return updated
 
 
 def sync_starter_files_after_gicleeapp_push(
@@ -409,8 +336,6 @@ def sync_starter_files_after_gicleeapp_push(
 
     renderers = {
         "CURRENT_APP_STATE.md": render_current_app_state_block,
-        "GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md": render_compact_checkpoint_block,
-        "Wiadomość początkowa.txt": render_wiadomosc_block,
     }
 
     for rel_name in _STARTER_FILES_WITH_MARKERS:
@@ -418,28 +343,19 @@ def sync_starter_files_after_gicleeapp_push(
         if not path.is_file():
             result.skipped_files.append(rel_name)
             continue
+
         original = path.read_text(encoding="utf-8")
-        renderer = renderers[rel_name]
-        updated = _replace_marker_block(original, renderer(ctx))
+        updated = _replace_marker_block(original, renderers[rel_name](ctx))
         if updated is None:
             result.skipped_files.append(rel_name)
             if log is not None:
                 log.append(f"GPT starter: pominięto {rel_name} (brak markerów auto-sync)")
             continue
+
         if updated != original:
             path.write_text(updated, encoding="utf-8")
             result.updated_files.append(rel_name)
             if log is not None:
                 log.append(f"GPT starter: zaktualizowano {rel_name}")
-
-    master_index = root / _MASTER_INDEX_FILE
-    if master_index.is_file():
-        original = master_index.read_text(encoding="utf-8")
-        updated = _update_master_index_version_lines(original, ctx)
-        if updated != original:
-            master_index.write_text(updated, encoding="utf-8")
-            result.updated_files.append(_MASTER_INDEX_FILE)
-            if log is not None:
-                log.append(f"GPT starter: zaktualizowano {_MASTER_INDEX_FILE}")
 
     return result
