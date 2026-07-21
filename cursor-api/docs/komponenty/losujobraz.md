@@ -12,7 +12,18 @@ Tryb: `inline` (sekcja **Administracja strony**). Uruchomienie: `python -m Kompo
 
 **Szablon:** `templates/page.losuj-produkt.json` · **Podgląd:** `/pages/losuj-produkt`
 
-**Warianty:** domyślnie jedna wersja (`lo1`); **Dodaj nową…** kopiuje bieżącą.
+## Warianty designu w Giclee App
+
+Lista **Wersja** w edytorze Losuj Obraz pełni rolę bezpiecznego selektora wariantów designu:
+
+| Wariant | ID | Efekt |
+|---------|----|-------|
+| **V1 — podstawowa** | `lo1` / `design_variant: v1` | Dotychczasowy wygląd bez dodatkowej warstwy światła, pyłu i mgiełki. |
+| **V2 — atmosfera muzealna** | `lo2` / `design_variant: v2` | Subtelny ivory/champagne glow kursora, oszczędny pył i ambientowa głębia. |
+
+Aktywnym wariantem jest `lo2`. Przełączenie pozycji na liście wczytuje pełny zapis danego wariantu, a **Zapisz** utrwala go w `templates/page.losuj-produkt.json` oraz w danych wariantu. Mechanizm korzysta z istniejącego systemu kopii zapasowych i nie dokłada drugiego, konkurencyjnego selektora.
+
+W Shopify Theme Editor ta sama decyzja jest dostępna jako ustawienie sekcji **Wariant designu**. V1 nie ładuje plików atmosfery; V2 ładuje `giclee-random-artwork-atmosphere.css` i `giclee-random-artwork-atmosphere.js`.
 
 ## Własne tło (obraz / film / animacja)
 
