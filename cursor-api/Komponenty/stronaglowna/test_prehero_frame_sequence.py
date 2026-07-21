@@ -54,11 +54,12 @@ def test_frame_renderer_has_monotonic_fallback_and_exact_final_draw() -> None:
     assert "publishRenderedFrame(targetFrame, exact.source, true);" in source
 
 
-def test_native_v2_and_lenis_prefer_webp_sequence_over_mp4_seek() -> None:
+def test_native_v2_and_lenis_use_mp4_without_explicit_webp_opt_in() -> None:
     source = SCRUB.read_text(encoding="utf-8")
 
     assert "frameRendererAvailable()" in source
-    assert "lenisPerformanceActive() || document.documentElement.classList.contains('giclee-native-v2')" in source
+    assert "String(CONFIG.preheroRenderer || 'mp4')" in source
+    assert "if (rendererMode !== 'webp') return false;" in source
     assert "renderMode: useFrameSequence ? 'webp-canvas' : 'mp4-seek'" in source
     assert "if (useFrameSequence) frameController.setProgress(progress);" in source
     assert "if (scrubState && scrubState.usesFrameSequence)" in source

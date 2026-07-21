@@ -34,7 +34,9 @@
   }
 
   function frameRendererAvailable() {
+    var rendererMode = String(CONFIG.preheroRenderer || 'mp4').trim().toLowerCase();
     var renderer = window.GICLEE_PREHERO_FRAME_RENDERER;
+    if (rendererMode !== 'webp') return false;
     return !!(
       (lenisPerformanceActive() || document.documentElement.classList.contains('giclee-native-v2')) &&
       renderer &&
