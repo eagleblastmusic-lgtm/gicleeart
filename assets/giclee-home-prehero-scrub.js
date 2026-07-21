@@ -1,21 +1,22 @@
 /*
  * Homepage pre-hero media scrub.
  *
- * Native mode keeps the MP4 timeline. Lenis prefers a generated WebP frame
- * sequence rendered on canvas, avoiding random video.currentTime seeks.
+ * MP4 is the default scrub renderer in every scroll profile. The optional
+ * WebP canvas renderer is available only through explicit configuration.
  */
 (function () {
   'use strict';
 
   var ROOT_ID = 'giclee-prehero-video-scrub';
   var CONFIG = window.GICLEE_PREHERO_CONFIG || {};
-  var SEEK_EPSILON = 0.018;
+  var SEEK_EPSILON = 0.004;
+  var FRAME_END_EPSILON = 0.0005;
   var SOURCE_RETRY_MS = 250;
   var SOURCE_RETRY_LIMIT = 80;
   var SCROLL_HEIGHT_VH = configNumber('scrollHeightVh', 600, 300, 2000);
   var REVEAL_OVERLAP_VH = configNumber('revealOverlapVh', 200, 100, 1000);
   var HERO_RISE_VH = configNumber('heroRiseVh', 100, 100, 500);
-  var SEEK_FPS = configNumber('scrubSeekFps', 24, 12, 60);
+  var SEEK_FPS = configNumber('scrubSeekFps', 60, 12, 60);
   var SEEK_INTERVAL_MS = 1000 / SEEK_FPS;
   var LENIS_MAX_SEEK_FPS = 12;
 
@@ -183,6 +184,7 @@
     var lastSeekAt = -Infinity;
     var seekCount = 0;
     var skippedSeekCount = 0;
+    var renderedMp4Frames = new Set();
     var totalTravel = 0;
     var preHeroTravel = 0;
     var heroRiseStart = 0;
@@ -209,11 +211,29 @@
       retryTimer = 0;
     }
 
+    function mp4FrameCount() {
+      return Math.max(1, Math.round(duration * SEEK_FPS));
+    }
+
+    function maxMp4Frame() {
+      return Math.max(0, mp4FrameCount() - 1);
+    }
+
+    function mp4TargetFrame() {
+      return clamp(Math.round(progress * maxMp4Frame()), 0, maxMp4Frame());
+    }
+
+    function mp4RenderedFrame() {
+      return clamp(Math.round(video.currentTime * SEEK_FPS), 0, maxMp4Frame());
+    }
+
+    function timeForMp4Frame(frameIndex) {
+      var lastFrameTime = Math.max(0, duration - FRAME_END_EPSILON);
+      return clamp(frameIndex / SEEK_FPS, 0, lastFrameTime);
+    }
+
     function quantizedTarget() {
-      var maxTime = Math.max(0, duration - 0.033);
-      var fps = activeSeekFps();
-      var quantized = Math.round(targetTime * fps) / fps;
-      return clamp(quantized, 0, maxTime);
+      return timeForMp4Frame(mp4TargetFrame());
     }
 
     function phaseFor(localScroll) {
@@ -231,7 +251,9 @@
         0,
         1
       );
-      targetTime = progress * Math.max(0, duration - 0.033);
+      targetTime = useFrameSequence
+        ? progress * Math.max(0, duration - FRAME_END_EPSILON)
+        : quantizedTarget();
       requestedTime = targetTime;
       setAttrIfChanged(root, 'data-scrub-progress', progress.toFixed(4));
       setAttrIfChanged(root, 'data-hero-rise-progress', heroRiseProgress.toFixed(4));
@@ -297,6 +319,7 @@
 
     function onSeeked() {
       if (!duration || reducedMotion || useFrameSequence) return;
+      renderedMp4Frames.add(mp4RenderedFrame());
       var desired = quantizedTarget();
       if (Math.abs(video.currentTime - desired) > activeSeekEpsilon()) {
         scheduleAfterSeekBudget(performance.now());
@@ -309,10 +332,12 @@
       duration = video.duration;
       targetTime = 0;
       requestedTime = 0;
+      renderedMp4Frames.clear();
+      renderedMp4Frames.add(0);
       root.setAttribute('data-video-ready', 'true');
       try {
         video.pause();
-        video.currentTime = Math.min(0.001, Math.max(0, duration - 0.033));
+        video.currentTime = Math.min(0.001, Math.max(0, duration - FRAME_END_EPSILON));
       } catch (error) {
         /* Ignore the initial seek until the media timeline is ready. */
       }
@@ -355,6 +380,21 @@
         seekIntervalMs: useFrameSequence ? 0 : activeSeekIntervalMs(),
         seekCount: seekCount,
         skippedSeekCount: skippedSeekCount,
+        sourceFrameCount: useFrameSequence
+          ? (frameStatus ? frameStatus.frameCount : 0)
+          : mp4FrameCount(),
+        targetFrame: useFrameSequence
+          ? (frameStatus ? frameStatus.targetFrame : -1)
+          : mp4TargetFrame(),
+        renderedFrame: useFrameSequence
+          ? (frameStatus ? frameStatus.renderedFrame : -1)
+          : mp4RenderedFrame(),
+        uniqueRenderedFrameCount: useFrameSequence
+          ? 0
+          : renderedMp4Frames.size,
+        allFramesRendered: useFrameSequence
+          ? false
+          : renderedMp4Frames.size >= mp4FrameCount(),
         lenisAdaptiveSeeking: lenisPerformanceActive() && !useFrameSequence,
         frameSequence: frameStatus,
         totalTravel: totalTravel,
