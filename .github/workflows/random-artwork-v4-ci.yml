@@ -1,0 +1,63 @@
+name: Losuj Obraz V4 CI
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "assets/giclee-random-artwork*.css"
+      - "assets/giclee-random-artwork*.js"
+      - "sections/giclee-random-artwork.liquid"
+      - "snippets/giclee-random-artwork-pool.liquid"
+      - "templates/page.losuj-produkt.json"
+      - "cursor-api/Komponenty/losujobraz/**"
+      - "cursor-api/tests/test_random_artwork*.py"
+      - ".github/workflows/random-artwork-v4-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: random-artwork-v4-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  targeted-tests:
+    name: Targeted component tests (Windows 2022 / Python 3.13)
+    runs-on: windows-2022
+    timeout-minutes: 15
+    env:
+      PYTHONUTF8: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: cursor-api/requirements-dev.txt
+
+      - name: Install test dependencies
+        working-directory: cursor-api
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+          python -m pip check
+
+      - name: Run Losuj Obraz targeted tests
+        working-directory: cursor-api
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          python -m pytest -q `
+            tests/test_random_artwork_atmosphere.py `
+            tests/test_random_artwork_living_museum.py `
+            tests/test_random_artwork_v3_dust_controls.py `
+            tests/test_random_artwork_v4_finale.py
