@@ -6,6 +6,11 @@
   produktow na render. Pelna pula (>50) jest doczytywana po stronie klienta
   z /collections/all/products.json (warstwa 2 w giclee-random-artwork.js).
 
+  Kontrakt danych artysty:
+  - vendor sklepu to stale "Giclee Art", dlatego nie jest zrodlem artysty;
+  - kanoniczny tytul produktu ma postac "Artysta - Tytul";
+  - oba zrodla danych sa normalizowane do tego samego modelu w JS.
+
   Parametry:
     pool_collection - obiekt kolekcji (domyslnie collections.all)
     pool_limit      - maks. liczba produktow (1..50)
@@ -29,10 +34,21 @@
       if grw_image == blank
         assign grw_image = product.featured_image
       endif
+      assign grw_title_parts = product.title | split: ' - '
+      assign grw_artist = ''
+      if grw_title_parts.size > 1
+        assign grw_artist = grw_title_parts.first | strip
+      endif
     -%}
+    {%- capture grw_artist_display -%}
+      {%- render 'giclee-artist-catalog-name', name: grw_artist -%}
+    {%- endcapture -%}
+    {%- assign grw_artist_display = grw_artist_display | strip -%}
     {%- if grw_emitted > 0 %},{% endif -%}
     {
+      "rawTitle": {{ product.title | json }},
       "title": {{ product.title | json }},
+      "artist": {{ grw_artist_display | json }},
       "handle": {{ product.handle | json }},
       "url": {{ product.url | json }},
       "available": {{ product.available }},
