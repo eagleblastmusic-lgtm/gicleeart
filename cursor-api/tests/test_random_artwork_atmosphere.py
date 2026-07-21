@@ -9,6 +9,24 @@ SECTION_PATH = ROOT / "sections" / "giclee-random-artwork.liquid"
 BASE_CSS_PATH = ROOT / "assets" / "giclee-random-artwork.css"
 ATMOSPHERE_CSS_PATH = ROOT / "assets" / "giclee-random-artwork-atmosphere.css"
 ATMOSPHERE_JS_PATH = ROOT / "assets" / "giclee-random-artwork-atmosphere.js"
+TEMPLATE_PATH = ROOT / "templates" / "page.losuj-produkt.json"
+COMPONENT_DIR = ROOT / "cursor-api" / "Komponenty" / "losujobraz"
+MANIFEST_PATH = COMPONENT_DIR / "data" / "variants" / "manifest.json"
+V1_PATH = COMPONENT_DIR / "data" / "variants" / "lo1" / "page.losuj-produkt.json"
+V2_PATH = COMPONENT_DIR / "data" / "variants" / "lo2" / "page.losuj-produkt.json"
+GUI_PATH = COMPONENT_DIR / "gui.py"
+
+
+def _strip_json_header(raw: str) -> str:
+    if raw.lstrip().startswith("/*"):
+        end = raw.find("*/")
+        if end >= 0:
+            return raw[end + 2 :]
+    return raw
+
+
+def _json_file(path: Path) -> dict:
+    return json.loads(_strip_json_header(path.read_text(encoding="utf-8")))
 
 
 def _schema(source: str) -> dict:
@@ -22,6 +40,7 @@ def test_random_artwork_wires_atmosphere_below_content() -> None:
 
     assert "giclee-random-artwork-atmosphere.css" in section
     assert "giclee-random-artwork-atmosphere.js" in section
+    assert 'data-design-variant="{{ design_variant }}"' in section
     assert 'data-atmosphere-enabled=' in section
     assert 'data-atmosphere-intensity=' in section
     assert 'data-atmosphere-dust=' in section
@@ -39,7 +58,17 @@ def test_random_artwork_wires_atmosphere_below_content() -> None:
     assert "z-index: 2;" in base_css
 
 
-def test_random_artwork_atmosphere_is_configurable_in_shopify_schema() -> None:
+def test_random_artwork_v1_does_not_load_v2_atmosphere() -> None:
+    section = SECTION_PATH.read_text(encoding="utf-8")
+
+    assert "assign design_variant = section.settings.design_variant | default: 'v1'" in section
+    assert "assign enable_atmosphere = false" in section
+    assert "if design_variant == 'v2'" in section
+    assert section.count("{%- if enable_atmosphere -%}") == 2
+    assert "section.settings.enable_atmosphere" not in section
+
+
+def test_random_artwork_design_variant_is_configurable_in_shopify_schema() -> None:
     schema = _schema(SECTION_PATH.read_text(encoding="utf-8"))
     settings = {
         item.get("id"): item
@@ -47,11 +76,43 @@ def test_random_artwork_atmosphere_is_configurable_in_shopify_schema() -> None:
         if isinstance(item, dict) and item.get("id")
     }
 
-    assert settings["enable_atmosphere"]["default"] is True
+    design = settings["design_variant"]
+    assert design["type"] == "select"
+    assert design["default"] == "v1"
+    assert design["options"] == [
+        {"value": "v1", "label": "V1 — podstawowa"},
+        {"value": "v2", "label": "V2 — atmosfera muzealna"},
+    ]
+    assert "enable_atmosphere" not in settings
     assert settings["atmosphere_intensity"]["default"] == 35
     assert settings["atmosphere_intensity"]["max"] == 70
     assert settings["atmosphere_dust"]["default"] == 25
     assert settings["atmosphere_dust"]["max"] == 60
+
+
+def test_giclee_app_exposes_named_v1_and_v2_design_versions() -> None:
+    manifest = _json_file(MANIFEST_PATH)
+    assert manifest["active"] == "lo2"
+    assert manifest["variants"] == [
+        {"id": "lo1", "label": "V1 — podstawowa"},
+        {"id": "lo2", "label": "V2 — atmosfera muzealna"},
+    ]
+
+    v1_settings = _json_file(V1_PATH)["sections"]["random_artwork"]["settings"]
+    v2_settings = _json_file(V2_PATH)["sections"]["random_artwork"]["settings"]
+    live_settings = _json_file(TEMPLATE_PATH)["sections"]["random_artwork"]["settings"]
+
+    assert v1_settings["design_variant"] == "v1"
+    assert v2_settings["design_variant"] == "v2"
+    assert live_settings["design_variant"] == "v2"
+    assert v1_settings["atmosphere_intensity"] == 35
+    assert v2_settings["atmosphere_intensity"] == 35
+    assert v1_settings["atmosphere_dust"] == 25
+    assert v2_settings["atmosphere_dust"] == 25
+
+    gui = GUI_PATH.read_text(encoding="utf-8")
+    assert "Lista «Wersja» jest listą wariantów designu" in gui
+    assert 'variant_label_default="V1 — podstawowa"' in gui
 
 
 def test_random_artwork_atmosphere_keeps_input_and_motion_accessible() -> None:
