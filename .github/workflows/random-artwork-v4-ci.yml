@@ -54,9 +54,19 @@ jobs:
         working-directory: cursor-api
         shell: pwsh
         run: |
-          $ErrorActionPreference = "Stop"
+          $report = Join-Path $env:RUNNER_TEMP "losuj-obraz-v4-pytest.txt"
           python -m pytest -q --tb=short `
             tests/test_random_artwork_atmosphere.py `
             tests/test_random_artwork_living_museum.py `
             tests/test_random_artwork_v3_dust_controls.py `
-            tests/test_random_artwork_v4_finale.py
+            tests/test_random_artwork_v4_finale.py 2>&1 | Tee-Object -FilePath $report
+          exit $LASTEXITCODE
+
+      - name: Upload targeted test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: losuj-obraz-v4-tests-${{ github.run_id }}
+          path: ${{ runner.temp }}\losuj-obraz-v4-pytest.txt
+          if-no-files-found: error
+          retention-days: 14
