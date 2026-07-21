@@ -26,7 +26,9 @@ def test_pdp_v3_process_and_trust_share_one_static_viewport() -> None:
     source = TRUST_SNIPPET.read_text(encoding="utf-8")
 
     assert ".pdp-v3-pt-wrap {" in source
-    assert "grid-template-rows: minmax(0, 58fr) minmax(0, 42fr);" in source
+    assert "grid-template-rows: auto auto;" in source
+    assert "align-content: start;" in source
+    assert "row-gap: 0;" in source
     assert "height: 100dvh;" in source
     assert "min-height: 100dvh;" in source
     assert "> .giclee-process" in source
@@ -35,6 +37,14 @@ def test_pdp_v3_process_and_trust_share_one_static_viewport() -> None:
     assert "min-height: 0;" in source
     assert "min-height: 200dvh;" not in source
     assert ".pdp-v3-pt-stage" not in source
+
+
+def test_pdp_v3_static_viewport_starts_content_at_the_top() -> None:
+    source = TRUST_SNIPPET.read_text(encoding="utf-8")
+
+    assert "justify-content: flex-start;" in source
+    assert "grid-template-rows: minmax(0, 58fr) minmax(0, 42fr);" not in source
+    assert "grid-template-rows: minmax(0, 60fr) minmax(0, 40fr);" not in source
 
 
 def test_pdp_v3_static_viewport_is_true_full_bleed() -> None:
