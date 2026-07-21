@@ -167,7 +167,7 @@ def test_existing_webgl_and_draw_regressions_remain_intact() -> None:
     assert "this.setState(STATE.DRAWING);" in main
     assert "createOracleScene" in main
     assert "DUST_COUNT" in webgl
-    assert "controller.destroy()" in main
+    assert "this.sceneController.destroy()" in main
     assert "grw--webgl" in main
 
 
