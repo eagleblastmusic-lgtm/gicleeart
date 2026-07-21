@@ -36,7 +36,7 @@
   function frameRendererAvailable() {
     var renderer = window.GICLEE_PREHERO_FRAME_RENDERER;
     return !!(
-      lenisPerformanceActive() &&
+      (lenisPerformanceActive() || document.documentElement.classList.contains('giclee-native-v2')) &&
       renderer &&
       typeof renderer.available === 'function' &&
       renderer.available()
