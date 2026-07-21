@@ -27,6 +27,9 @@
         "atmosphere_dust": 25,
         "atmosphere_dust_amount": 50,
         "atmosphere_dust_speed": 100,
+        "living_light_enabled": true,
+        "living_dust_enabled": true,
+        "living_light_intensity": 45,
         "color_scheme": "scheme-1"
       }
     },
