@@ -21,6 +21,14 @@ def _walk_widgets(widget: tk.Misc):
         yield from _walk_widgets(child)
 
 
+def _is_page_zone_list(widget: tk.Listbox) -> bool:
+    try:
+        rows = tuple(str(value).removesuffix(" [wył.]") for value in widget.get(0, "end"))
+    except tk.TclError:
+        return False
+    return rows == tuple(zone.label for zone in PAGE_ZONES)
+
+
 def _open_atmosphere_editor(host: tk.Misc) -> None:
     try:
         zone_index = next(
@@ -31,11 +39,9 @@ def _open_atmosphere_editor(host: tk.Misc) -> None:
         return
 
     for widget in _walk_widgets(host):
-        if not isinstance(widget, tk.Listbox):
+        if not isinstance(widget, tk.Listbox) or not _is_page_zone_list(widget):
             continue
         try:
-            if widget.size() != len(PAGE_ZONES):
-                continue
             widget.selection_clear(0, "end")
             widget.selection_set(zone_index)
             widget.activate(zone_index)
