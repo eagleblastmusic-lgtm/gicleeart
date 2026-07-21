@@ -9,8 +9,9 @@
   if section.settings.enable_webgl == nil
     assign enable_webgl = true
   endif
-  assign enable_atmosphere = section.settings.enable_atmosphere
-  if section.settings.enable_atmosphere == nil
+  assign design_variant = section.settings.design_variant | default: 'v1'
+  assign enable_atmosphere = false
+  if design_variant == 'v2'
     assign enable_atmosphere = true
   endif
   assign atmosphere_intensity = section.settings.atmosphere_intensity | default: 35
@@ -45,6 +46,7 @@
 <giclee-random-artwork
   class="giclee-random-artwork color-{{ section.settings.color_scheme }}{% if custom_bg != 'none' %} grw--custom-bg grw--custom-bg-{{ custom_bg }}{% endif %}"
   data-state="idle"
+  data-design-variant="{{ design_variant }}"
   data-root-url="{{ routes.root_url }}"
   data-products-endpoint="{{ routes.root_url }}/collections/all/products.json"
   data-fetch-full="{% if fetch_full %}true{% else %}false{% endif %}"
@@ -328,22 +330,33 @@
     },
     {
       "type": "header",
-      "content": "Atmosfera premium"
+      "content": "Wariant designu"
+    },
+    {
+      "type": "select",
+      "id": "design_variant",
+      "label": "Wariant",
+      "options": [
+        {
+          "value": "v1",
+          "label": "V1 — podstawowa"
+        },
+        {
+          "value": "v2",
+          "label": "V2 — atmosfera muzealna"
+        }
+      ],
+      "default": "v1",
+      "info": "V1 zachowuje podstawowy wyglad. V2 wlacza subtelne swiatlo kursora, pyl i ambientowa glebie."
     },
     {
       "type": "paragraph",
-      "content": "Subtelne swiatlo galerii i delikatny pyl. Na telefonach i przy ograniczeniu ruchu pozostaje tylko statyczna, lekka mgielka."
-    },
-    {
-      "type": "checkbox",
-      "id": "enable_atmosphere",
-      "label": "Wlacz atmosfere muzealna",
-      "default": true
+      "content": "Parametry ponizej dotycza tylko V2. Na telefonach i przy ograniczeniu ruchu pozostaje lekka, statyczna mgielka."
     },
     {
       "type": "range",
       "id": "atmosphere_intensity",
-      "label": "Intensywnosc swiatla",
+      "label": "V2 — intensywnosc swiatla",
       "min": 0,
       "max": 70,
       "step": 5,
@@ -353,7 +366,7 @@
     {
       "type": "range",
       "id": "atmosphere_dust",
-      "label": "Widocznosc pylu",
+      "label": "V2 — widocznosc pylu",
       "min": 0,
       "max": 60,
       "step": 5,
