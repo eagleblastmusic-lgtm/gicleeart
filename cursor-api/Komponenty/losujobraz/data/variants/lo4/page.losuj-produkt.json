@@ -1,0 +1,52 @@
+{
+  "sections": {
+    "random_artwork": {
+      "type": "giclee-random-artwork",
+      "settings": {
+        "eyebrow": "Fine Art Oracle",
+        "heading": "Niech sztuka wybierze Ciebie",
+        "subtitle": "Kliknij i odkryj losowo wybrane dzieło z naszej kolekcji — być może właśnie ono miało trafić do Twojego wnętrza.",
+        "button_label": "Losuj obraz",
+        "loading_text": "Przeszukuję kolekcję…",
+        "result_heading": "Wybrany obraz",
+        "view_label": "Zobacz obraz",
+        "replay_label": "Wylosuj ponownie",
+        "error_text": "Nie udało się wczytać kolekcji. Spróbuj ponownie.",
+        "retry_label": "Spróbuj ponownie",
+        "pool_limit": 50,
+        "fetch_full_pool": true,
+        "background_image": "shopify://shop_images/Printmaker_carrying_framed_artwork_2K_202607071636.jpg",
+        "background_video": "",
+        "background_parallax": true,
+        "design_variant": "v4",
+        "atmosphere_intensity": 35,
+        "atmosphere_glow_size": 100,
+        "atmosphere_glow_response": 50,
+        "atmosphere_haze": 100,
+        "atmosphere_haze_speed": 100,
+        "atmosphere_dust": 25,
+        "atmosphere_dust_amount": 50,
+        "atmosphere_dust_speed": 100,
+        "living_light_enabled": true,
+        "living_dust_enabled": true,
+        "living_light_intensity": 45,
+        "living_dust_particles": 120,
+        "living_dust_opacity": 115,
+        "living_dust_size": 125,
+        "living_dust_speed": 75,
+        "living_dust_fps": 24,
+        "living_dust_dpr_cap": 125,
+        "color_scheme": "scheme-1"
+      }
+    },
+    "main": {
+      "type": "main-page",
+      "disabled": true,
+      "settings": {}
+    }
+  },
+  "order": [
+    "random_artwork",
+    "main"
+  ]
+}
