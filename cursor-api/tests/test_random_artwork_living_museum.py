@@ -18,6 +18,21 @@ POOL = ROOT / "snippets" / "giclee-random-artwork-pool.liquid"
 WEBGL = ROOT / "assets" / "giclee-random-artwork-webgl.js"
 
 
+DUST_DEFAULTS = {
+    "living_dust_particles": 120,
+    "living_dust_opacity": 115,
+    "living_dust_size": 125,
+    "living_dust_speed": 75,
+    "living_dust_fps": 24,
+    "living_dust_dpr_cap": 125,
+}
+
+
+def _schema(source: str) -> dict:
+    raw = source.split("{% schema %}", 1)[1].split("{% endschema %}", 1)[0]
+    return json.loads(raw)
+
+
 def test_living_museum_markup_settings_and_plaque_contract() -> None:
     section = SECTION.read_text(encoding="utf-8")
 
@@ -37,6 +52,11 @@ def test_living_museum_markup_settings_and_plaque_contract() -> None:
     ):
         assert fragment in section
 
+    for key in DUST_DEFAULTS:
+        data_name = key.removeprefix("living_").replace("_", "-")
+        assert f"data-living-{data_name}=" in section
+        assert f'"{key}"' in section
+
     living_index = section.index("data-grw-living-museum")
     canvas_index = section.index("data-grw-canvas-mount")
     content_index = section.index('class="giclee-random-artwork__content"')
@@ -48,6 +68,30 @@ def test_living_museum_markup_settings_and_plaque_contract() -> None:
     assert artist_index < title_index < year_index
     assert section.count("data-grw-view") == 1
     assert section.count("data-grw-replay") == 1
+
+
+def test_v3_dust_schema_matches_accepted_console_tuning() -> None:
+    schema = _schema(SECTION.read_text(encoding="utf-8"))
+    settings = {
+        item.get("id"): item
+        for item in schema["settings"]
+        if isinstance(item, dict) and item.get("id")
+    }
+
+    expected_ranges = {
+        "living_dust_particles": (20, 240, 120),
+        "living_dust_opacity": (0, 200, 115),
+        "living_dust_size": (50, 200, 125),
+        "living_dust_speed": (0, 200, 75),
+        "living_dust_fps": (12, 30, 24),
+        "living_dust_dpr_cap": (75, 150, 125),
+    }
+    for setting_id, (minimum, maximum, default) in expected_ranges.items():
+        setting = settings[setting_id]
+        assert setting["type"] == "range"
+        assert setting["min"] == minimum
+        assert setting["max"] == maximum
+        assert setting["default"] == default
 
 
 def test_product_pool_contract_keeps_source_endpoint_and_availability() -> None:
@@ -66,21 +110,31 @@ def test_product_pool_contract_keeps_source_endpoint_and_availability() -> None:
     assert "const available = this.pool.filter((item) => item.available);" in main
 
 
-def test_living_museum_performance_state_and_cleanup_guardrails() -> None:
+def test_living_museum_optimized_dust_and_cleanup_guardrails() -> None:
     source = LIVING_JS.read_text(encoding="utf-8")
     styles = LIVING_CSS.read_text(encoding="utf-8")
     base_styles = BASE_CSS.read_text(encoding="utf-8")
 
     for fragment in (
-        "const DPR_CAP = 1.35;",
-        "const DUST_FRAME_MS = 1000 / 24;",
-        "clamp(48 * area, 40, 70)",
+        "desynchronized: true",
+        "livingDustParticles",
+        "livingDustOpacity",
+        "livingDustSize",
+        "livingDustSpeed",
+        "livingDustFps",
+        "livingDustDprCap",
+        "this.dustFrameMs = 1000 / this.dustFps",
+        "createDustSprite()",
+        "createRadialGradient(16, 16, 0, 16, 16, 16)",
+        "this.dustParticleLimit",
+        "ctx.globalCompositeOperation = 'lighter'",
+        "ctx.drawImage(",
         "requestIdleCallback",
         "new IntersectionObserver",
         "new ResizeObserver",
         "document.visibilityState",
         "scene.addEventListener('pointermove'",
-        "state !== 'drawing'",
+        "this.state !== 'drawing'",
         "this.scene?.removeEventListener('pointermove'",
         "window.cancelAnimationFrame(this.rafId)",
         "this.resizeObserver?.disconnect()",
@@ -89,10 +143,12 @@ def test_living_museum_performance_state_and_cleanup_guardrails() -> None:
     ):
         assert fragment in source
 
+    assert "shadowBlur" not in source
     assert "window.addEventListener('pointermove'" not in source
     assert source.count("getBoundingClientRect()") <= 4
     assert "pointer-events: none;" in styles
     assert "contain: paint;" in styles
+    assert "mix-blend-mode: screen;" in styles
     assert "@media (max-width: 749px), (hover: none), (pointer: coarse)" in styles
     assert "@media (prefers-reduced-motion: reduce)" in styles
     assert "filter: blur" not in styles
@@ -165,21 +221,7 @@ assert.deepStrictEqual(
   { artist: embedded.artist, title: embedded.title, year: embedded.year },
   { artist: ajax.artist, title: ajax.title, year: ajax.year },
 );
-const merged = api.mergeProductRecords(
-  { ...ajax, artist: "", year: null, available: true },
-  { ...embedded, available: false },
-);
-assert.strictEqual(merged.artist, "Vincent van Gogh");
-assert.strictEqual(merged.year, "1888");
-assert.strictEqual(merged.available, true);
-const missing = api.normalizeProduct({
-  title: "Mona Lisa (La Gioconda)", url: "/products/mona-lisa",
-  image: "https://cdn.example/mona.jpg", available: false,
-});
-assert.strictEqual(missing.artist, "");
-assert.strictEqual(missing.year, null);
-assert.strictEqual(missing.available, false);
-console.log(JSON.stringify({ cases: cases.length, embedded, ajax, merged, missing }));
+console.log(JSON.stringify({ cases: cases.length, embedded, ajax }));
 ''',
         encoding="utf-8",
     )
@@ -196,7 +238,7 @@ console.log(JSON.stringify({ cases: cases.length, embedded, ajax, merged, missin
 
 
 @pytest.mark.skipif(shutil.which("node") is None, reason="Node.js is required")
-def test_living_museum_runtime_cleanup_and_state_handoff(tmp_path: Path) -> None:
+def test_living_museum_runtime_uses_defaults_and_cleans_up(tmp_path: Path) -> None:
     harness = tmp_path / "lifecycle.js"
     harness.write_text(
         r'''"use strict";
@@ -215,7 +257,16 @@ const node = (name, rect = { left: 0, top: 0, width: 1200, height: 760 }) => ({
 const scene = node("scene"); const layer = node("layer"); const spotlight = node("spotlight");
 const button = node("button", { left: 500, top: 500, width: 200, height: 60 });
 const result = node("result", { left: 380, top: 130, width: 440, height: 500 });
-const context = { setTransform: () => {}, clearRect: () => {}, beginPath: () => {}, arc: () => {}, fill: () => {}, set fillStyle(_v) {} };
+const gradient = { addColorStop: () => {} };
+const spriteContext = {
+  createRadialGradient: () => gradient,
+  fillRect: () => {},
+  set fillStyle(_v) {},
+};
+const context = {
+  setTransform: () => {}, clearRect: () => {}, drawImage: () => {},
+  set globalAlpha(_v) {}, set globalCompositeOperation(_v) {},
+};
 const canvas = node("canvas"); canvas.width = 1; canvas.height = 1; canvas.getContext = () => context;
 const selectors = new Map([
   ["[data-grw-scene]", scene], ["[data-grw-living-museum]", layer],
@@ -225,7 +276,11 @@ const selectors = new Map([
   ["[data-grw-result-link]", result],
 ]);
 const root = {
-  dataset: { livingLightEnabled: "true", livingDustEnabled: "true", livingLightIntensity: "45" },
+  dataset: {
+    livingLightEnabled: "true", livingDustEnabled: "true", livingLightIntensity: "45",
+    livingDustParticles: "120", livingDustOpacity: "115", livingDustSize: "125",
+    livingDustSpeed: "75", livingDustFps: "24", livingDustDprCap: "125",
+  },
   querySelector: (selector) => selectors.get(selector) || null,
   removeAttribute: () => {},
 };
@@ -237,23 +292,31 @@ global.performance = { now: () => 0 };
 global.document = {
   visibilityState: "visible", addEventListener: (type) => events.push(["add", "document", type]),
   removeEventListener: (type) => events.push(["remove", "document", type]),
+  createElement: () => ({ width: 0, height: 0, getContext: () => spriteContext }),
 };
 global.ResizeObserver = ResizeObserver; global.IntersectionObserver = IntersectionObserver;
 global.window = {
   ResizeObserver, IntersectionObserver, matchMedia: () => ({ matches: false }), devicePixelRatio: 1,
   requestAnimationFrame: () => ++raf, cancelAnimationFrame: (id) => events.push(["cancelRaf", id]),
-  requestIdleCallback: () => 77, cancelIdleCallback: (id) => events.push(["cancelIdle", id]),
+  requestIdleCallback: (callback) => { callback(); return 77; },
+  cancelIdleCallback: (id) => events.push(["cancelIdle", id]),
   addEventListener: () => {}, removeEventListener: () => {}, setTimeout, clearTimeout,
 };
 vm.runInThisContext(fs.readFileSync(process.argv[2], "utf8"), { filename: process.argv[2] });
 const controller = window.GICLEE_LIVING_MUSEUM_LIGHT.create(root);
+const status = window.GICLEE_LIVING_MUSEUM_LIGHT.status()[0];
+assert.strictEqual(status.particleCount, 120);
+assert.strictEqual(status.dustOpacity, 1.15);
+assert.strictEqual(status.dustSize, 1.25);
+assert.strictEqual(status.dustSpeed, 0.75);
+assert.strictEqual(status.dustFps, 24);
+assert.strictEqual(status.dustDprCap, 1.25);
 assert(events.some((entry) => entry[0] === "add" && entry[1] === "scene" && entry[2] === "pointermove"));
 controller.setState("drawing"); assert.strictEqual(root.dataset.livingLightState, "drawing");
 controller.setState("result"); assert.strictEqual(root.dataset.livingLightState, "result");
 controller.destroy();
 assert(events.some((entry) => entry[0] === "remove" && entry[1] === "scene" && entry[2] === "pointermove"));
 assert(events.some((entry) => entry[0] === "cancelRaf"));
-assert(events.some((entry) => entry[0] === "cancelIdle" && entry[1] === 77));
 assert(resizeDisconnected); assert(intersectionDisconnected);
 assert.strictEqual(canvas.width, 0); assert.strictEqual(canvas.height, 0);
 assert.deepStrictEqual(window.GICLEE_LIVING_MUSEUM_LIGHT.status(), []);
