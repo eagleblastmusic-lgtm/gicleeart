@@ -4,8 +4,8 @@
 
   if (window.GICLEE_RANDOM_ARTWORK_V4) return;
 
-  const FRAME_TO_IDENTITY_MS = 310;
-  const IDENTITY_TO_ACTIONS_MS = 390;
+  const FRAME_TO_IDENTITY_MS = 300;
+  const IDENTITY_TO_ACTIONS_MS = 250;
   const ROOT_SELECTOR = 'giclee-random-artwork[data-design-variant="v4"]';
 
   class CeremonialResultController {
