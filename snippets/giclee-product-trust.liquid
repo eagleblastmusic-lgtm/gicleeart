@@ -121,9 +121,34 @@
     background: rgb(0 0 0 / 0.45);
   }
 
-  /* Tło maskujące włącza się dopiero, gdy trust faktycznie wchodzi w viewport.
-     Wcześniej proces pozostaje w pełni widoczny; podczas overlayu dolna treść
-     jest zasłonięta tym samym fixed backgroundem, bez podwójnych napisów. */
+  /* Proces i trust muszą zajmować dwa kolejne viewporty. Ujemny margin -100dvh
+     ustawiał oba bloki w tej samej pozycji, więc ich treści nakładały się od
+     pierwszej klatki. Trust wjeżdża teraz naturalnie dopiero po procesie. */
+  main[data-template='product.szablon-produktu-v3']
+    .product-information
+    .giclee-trust {
+    margin-top: 0;
+  }
+
+  /* Pełne tło trustu kryje sticky proces dopiero podczas naturalnego wjazdu
+     drugiego viewportu; fixed attachment zachowuje ciągłość wspólnej grafiki. */
+  main[data-template='product.szablon-produktu-v3']
+    .pdp-v3-pt-wrap.has-bg
+    .giclee-trust::before {
+    background-color: #000;
+    background-image:
+      linear-gradient(rgb(0 0 0 / 0.45), rgb(0 0 0 / 0.45)),
+      var(--pdp-v3-pt-image);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    filter: blur(var(--pdp-v3-pt-blur, 0px))
+      brightness(var(--pdp-v3-pt-brightness, 1));
+    transform: translateX(-50%) scale(1.03);
+  }
+
+  /* Zachowany kompatybilny selektor dla starszej wersji skryptu z brancha. */
   main[data-template='product.szablon-produktu-v3']
     .pdp-v3-pt-wrap.has-bg
     .giclee-trust.is-covering-process::before {
