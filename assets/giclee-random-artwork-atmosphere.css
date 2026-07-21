@@ -1,0 +1,139 @@
+/*
+ * Losuj Obraz — museum atmosphere.
+ * A quiet ivory/champagne light field and restrained airborne dust layer.
+ * Decorative only: never captures input and always stays below the content layer.
+ */
+
+.giclee-random-artwork__atmosphere {
+  --grw-atmosphere-level: 0.38;
+  --grw-dust-level: 0.28;
+
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+  contain: paint;
+}
+
+.giclee-random-artwork__atmosphere-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: clamp(420px, 46vw, 700px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(255, 249, 232, 0.15) 0%,
+      rgba(230, 205, 134, 0.075) 24%,
+      rgba(201, 168, 76, 0.028) 48%,
+      transparent 72%
+    );
+  filter: blur(20px);
+  mix-blend-mode: screen;
+  opacity: calc(var(--grw-atmosphere-level) * 0.72);
+  transform: translate3d(-50%, -50%, 0);
+  scale: 1;
+  will-change: transform, opacity;
+  transition:
+    opacity 500ms var(--grw-ease),
+    scale 700ms var(--grw-ease);
+}
+
+.giclee-random-artwork__atmosphere-haze {
+  position: absolute;
+  inset: -12%;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.giclee-random-artwork__atmosphere-haze--gallery {
+  background:
+    radial-gradient(48% 38% at 48% 32%, rgba(255, 247, 226, 0.07), transparent 72%),
+    radial-gradient(44% 42% at 78% 74%, rgba(201, 168, 76, 0.038), transparent 75%);
+  filter: blur(34px);
+  opacity: calc(var(--grw-atmosphere-level) * 0.46);
+  animation: grw-atmosphere-breathe 22s ease-in-out infinite alternate;
+}
+
+.giclee-random-artwork__atmosphere-haze--depth {
+  background:
+    linear-gradient(112deg, transparent 18%, rgba(255, 249, 235, 0.028) 48%, transparent 74%),
+    radial-gradient(70% 52% at 50% 96%, rgba(195, 160, 86, 0.028), transparent 78%);
+  filter: blur(42px);
+  opacity: calc(var(--grw-atmosphere-level) * 0.34);
+  animation: grw-atmosphere-drift 30s ease-in-out infinite alternate;
+}
+
+.giclee-random-artwork__atmosphere-dust {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: calc(0.2 + var(--grw-dust-level) * 0.8);
+  pointer-events: none;
+}
+
+.giclee-random-artwork:has(
+    .giclee-random-artwork__draw:hover,
+    .giclee-random-artwork__cta:hover,
+    .giclee-random-artwork__frame:hover
+  )
+  .giclee-random-artwork__atmosphere-glow {
+  opacity: calc(var(--grw-atmosphere-level) * 0.86);
+  scale: 1.035;
+}
+
+.giclee-random-artwork[data-state="loading"] .giclee-random-artwork__atmosphere-haze--gallery,
+.giclee-random-artwork[data-state="drawing"] .giclee-random-artwork__atmosphere-haze--gallery {
+  opacity: calc(var(--grw-atmosphere-level) * 0.52);
+}
+
+@keyframes grw-atmosphere-breathe {
+  0% {
+    transform: translate3d(-1.4%, -0.8%, 0) scale(0.99);
+  }
+  100% {
+    transform: translate3d(1.2%, 1%, 0) scale(1.025);
+  }
+}
+
+@keyframes grw-atmosphere-drift {
+  0% {
+    transform: translate3d(-1.2%, 0.6%, 0) rotate(-0.35deg);
+  }
+  100% {
+    transform: translate3d(1.4%, -0.8%, 0) rotate(0.35deg);
+  }
+}
+
+@media (max-width: 749px), (hover: none), (pointer: coarse) {
+  .giclee-random-artwork__atmosphere-glow,
+  .giclee-random-artwork__atmosphere-dust {
+    display: none;
+  }
+
+  .giclee-random-artwork__atmosphere-haze--gallery {
+    opacity: calc(var(--grw-atmosphere-level) * 0.24);
+  }
+
+  .giclee-random-artwork__atmosphere-haze--depth {
+    opacity: calc(var(--grw-atmosphere-level) * 0.16);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giclee-random-artwork__atmosphere-glow,
+  .giclee-random-artwork__atmosphere-dust {
+    display: none;
+  }
+
+  .giclee-random-artwork__atmosphere-haze {
+    animation: none;
+    transform: none;
+  }
+}
