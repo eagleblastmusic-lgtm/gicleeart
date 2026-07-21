@@ -120,8 +120,8 @@
     background: rgb(0 0 0 / 0.45);
   }
 
-  /* Jeden pełnoekranowy blok. Obie części układają się od górnej krawędzi,
-     bez centrowania wewnątrz wysokich rzędów i bez pustej strefy nad procesem. */
+  /* Jeden pełnoekranowy blok. Obie części zaczynają się od górnej krawędzi,
+     bez centrowania w wysokich rzędach i bez pustej strefy nad procesem. */
   main[data-template='product.szablon-produktu-v3']
     .product-information
     .pdp-v3-pt-wrap {
@@ -174,8 +174,7 @@
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    padding: clamp(0.25rem, 0.6vh, 0.55rem) clamp(1.25rem, 4vw, 5rem)
-      clamp(0.35rem, 0.8vh, 0.7rem);
+    padding: 0 clamp(1.25rem, 4vw, 5rem) clamp(0.35rem, 0.8vh, 0.7rem);
   }
 
   main[data-template='product.szablon-produktu-v3']
