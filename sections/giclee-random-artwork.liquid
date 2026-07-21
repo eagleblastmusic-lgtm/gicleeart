@@ -15,7 +15,13 @@
     assign enable_atmosphere = true
   endif
   assign atmosphere_intensity = section.settings.atmosphere_intensity | default: 35
+  assign atmosphere_glow_size = section.settings.atmosphere_glow_size | default: 100
+  assign atmosphere_glow_response = section.settings.atmosphere_glow_response | default: 50
+  assign atmosphere_haze = section.settings.atmosphere_haze | default: 100
+  assign atmosphere_haze_speed = section.settings.atmosphere_haze_speed | default: 100
   assign atmosphere_dust = section.settings.atmosphere_dust | default: 25
+  assign atmosphere_dust_amount = section.settings.atmosphere_dust_amount | default: 50
+  assign atmosphere_dust_speed = section.settings.atmosphere_dust_speed | default: 100
   assign custom_bg = 'none'
   if section.settings.background_video != blank
     assign custom_bg = 'video'
@@ -35,10 +41,10 @@
 {%- if enable_atmosphere -%}
   <link
     rel="stylesheet"
-    href="{{ 'giclee-random-artwork-atmosphere.css' | asset_url }}?v=grw-museum-atmosphere-20260721"
+    href="{{ 'giclee-random-artwork-atmosphere.css' | asset_url }}?v=grw-museum-atmosphere-controls-20260721"
   >
   <script
-    src="{{ 'giclee-random-artwork-atmosphere.js' | asset_url }}?v=grw-museum-atmosphere-20260721"
+    src="{{ 'giclee-random-artwork-atmosphere.js' | asset_url }}?v=grw-museum-atmosphere-controls-20260721"
     defer
   ></script>
 {%- endif -%}
@@ -53,7 +59,13 @@
   data-enable-webgl="{% if enable_webgl %}true{% else %}false{% endif %}"
   data-atmosphere-enabled="{% if enable_atmosphere %}true{% else %}false{% endif %}"
   data-atmosphere-intensity="{{ atmosphere_intensity }}"
+  data-atmosphere-glow-size="{{ atmosphere_glow_size }}"
+  data-atmosphere-glow-response="{{ atmosphere_glow_response }}"
+  data-atmosphere-haze="{{ atmosphere_haze }}"
+  data-atmosphere-haze-speed="{{ atmosphere_haze_speed }}"
   data-atmosphere-dust="{{ atmosphere_dust }}"
+  data-atmosphere-dust-amount="{{ atmosphere_dust_amount }}"
+  data-atmosphere-dust-speed="{{ atmosphere_dust_speed }}"
   data-webgl-url="{{ 'giclee-random-artwork-webgl.js' | asset_url }}"
   data-three-url="{{ 'three.module.js' | asset_url }}"
   data-phase-1="{{ section.settings.loading_text | escape }}"
@@ -351,12 +363,12 @@
     },
     {
       "type": "paragraph",
-      "content": "Parametry ponizej dotycza tylko V2. Na telefonach i przy ograniczeniu ruchu pozostaje lekka, statyczna mgielka."
+      "content": "Parametry ponizej dotycza tylko V2. W Giclee App otworz je przyciskiem Edytuj atmosfere."
     },
     {
       "type": "range",
       "id": "atmosphere_intensity",
-      "label": "V2 — intensywnosc swiatla",
+      "label": "V2 — glow: intensywnosc",
       "min": 0,
       "max": 70,
       "step": 5,
@@ -365,13 +377,73 @@
     },
     {
       "type": "range",
+      "id": "atmosphere_glow_size",
+      "label": "V2 — glow: rozmiar",
+      "min": 60,
+      "max": 160,
+      "step": 5,
+      "unit": "%",
+      "default": 100
+    },
+    {
+      "type": "range",
+      "id": "atmosphere_glow_response",
+      "label": "V2 — glow: responsywnosc",
+      "min": 10,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 50
+    },
+    {
+      "type": "range",
+      "id": "atmosphere_haze",
+      "label": "V2 — mgielka: intensywnosc",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 100
+    },
+    {
+      "type": "range",
+      "id": "atmosphere_haze_speed",
+      "label": "V2 — mgielka: szybkosc",
+      "min": 0,
+      "max": 200,
+      "step": 10,
+      "unit": "%",
+      "default": 100
+    },
+    {
+      "type": "range",
       "id": "atmosphere_dust",
-      "label": "V2 — widocznosc pylu",
+      "label": "V2 — pyl: widocznosc",
       "min": 0,
       "max": 60,
       "step": 5,
       "unit": "%",
       "default": 25
+    },
+    {
+      "type": "range",
+      "id": "atmosphere_dust_amount",
+      "label": "V2 — pyl: ilosc",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 50
+    },
+    {
+      "type": "range",
+      "id": "atmosphere_dust_speed",
+      "label": "V2 — pyl: szybkosc",
+      "min": 0,
+      "max": 200,
+      "step": 10,
+      "unit": "%",
+      "default": 100
     },
     {
       "type": "header",
