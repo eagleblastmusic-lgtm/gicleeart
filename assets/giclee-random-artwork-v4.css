@@ -8,6 +8,15 @@
   --grw-v4-surface: rgba(12, 11, 10, 0.48);
 }
 
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__canvas,
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__portal {
+  z-index: 2;
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__content {
+  z-index: 3;
+}
+
 /* Result remains one scene: the WebGL winner crossfades into this exhibit. */
 .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result {
   width: min(760px, 100%);
@@ -250,9 +259,8 @@
 
 /* The mechanism becomes a quiet exhibition light after selection. */
 .giclee-random-artwork[data-design-variant="v4"][data-state="result"] .giclee-random-artwork__portal {
-  width: clamp(380px, 56vw, 760px);
   opacity: 0.18;
-  scale: 1.18 0.58;
+  scale: 1.34 0.62;
   filter: blur(1px) drop-shadow(0 0 46px rgba(218, 190, 120, 0.18));
   transition:
     opacity 1.15s var(--grw-ease),
