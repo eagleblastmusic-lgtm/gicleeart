@@ -24,8 +24,8 @@
       this.canvas = root.querySelector('[data-grw-atmosphere-dust]');
       this.ctx = this.canvas?.getContext('2d', { alpha: true }) || null;
 
-      this.intensity = clamp(Number(root.dataset.atmosphereIntensity || 38) / 100, 0, 1);
-      this.dustLevel = clamp(Number(root.dataset.atmosphereDust || 28) / 100, 0, 1);
+      this.intensity = clamp(Number(root.dataset.atmosphereIntensity || 35) / 100, 0, 1);
+      this.dustLevel = clamp(Number(root.dataset.atmosphereDust || 25) / 100, 0, 1);
       this.enabled = root.dataset.atmosphereEnabled !== 'false';
       this.reducedMotion = window.matchMedia?.(REDUCED_MOTION_QUERY).matches ?? false;
       this.mobileMode = window.matchMedia?.(MOBILE_QUERY).matches ?? false;
@@ -33,6 +33,8 @@
       this.width = 0;
       this.height = 0;
       this.dpr = 1;
+      this.glowSize = 560;
+      this.sceneRect = null;
       this.targetX = 0;
       this.targetY = 0;
       this.currentX = 0;
@@ -50,6 +52,7 @@
       this.onPointerEnter = this.onPointerEnter.bind(this);
       this.onPointerLeave = this.onPointerLeave.bind(this);
       this.onVisibilityChange = this.onVisibilityChange.bind(this);
+      this.resize = this.resize.bind(this);
       this.tick = this.tick.bind(this);
 
       this.init();
@@ -65,24 +68,31 @@
       this.layer.style.setProperty('--grw-dust-level', this.dustLevel.toFixed(3));
       this.root.dataset.atmosphereReady = 'true';
 
-      this.resizeObserver = new ResizeObserver(() => this.resize());
-      this.resizeObserver.observe(this.scene);
+      if ('ResizeObserver' in window) {
+        this.resizeObserver = new ResizeObserver(this.resize);
+        this.resizeObserver.observe(this.scene);
+      } else {
+        window.addEventListener('resize', this.resize, { passive: true });
+      }
 
-      this.intersectionObserver = new IntersectionObserver(
-        (entries) => {
-          const entry = entries[entries.length - 1];
-          this.visible = Boolean(entry?.isIntersecting);
-          this.updateLoopState();
-        },
-        { rootMargin: '120px 0px', threshold: 0.01 },
-      );
-      this.intersectionObserver.observe(this.root);
+      if ('IntersectionObserver' in window) {
+        this.intersectionObserver = new IntersectionObserver(
+          (entries) => {
+            const entry = entries[entries.length - 1];
+            this.visible = Boolean(entry?.isIntersecting);
+            this.updateLoopState();
+          },
+          { rootMargin: '120px 0px', threshold: 0.01 },
+        );
+        this.intersectionObserver.observe(this.root);
+      }
 
       document.addEventListener('visibilitychange', this.onVisibilityChange, { passive: true });
 
       this.resize();
 
       if (!this.mobileMode && !this.reducedMotion && this.glow) {
+        this.root.dataset.atmosphereMode = 'interactive';
         this.scene.addEventListener('pointermove', this.onPointerMove, { passive: true });
         this.scene.addEventListener('pointerenter', this.onPointerEnter, { passive: true });
         this.scene.addEventListener('pointerleave', this.onPointerLeave, { passive: true });
@@ -96,9 +106,11 @@
     resize() {
       if (!this.scene) return;
       const rect = this.scene.getBoundingClientRect();
+      this.sceneRect = rect;
       this.width = Math.max(1, rect.width);
       this.height = Math.max(1, rect.height);
       this.dpr = Math.min(window.devicePixelRatio || 1, MAX_DEVICE_PIXEL_RATIO);
+      this.glowSize = this.glow?.offsetWidth || 560;
 
       if (!this.currentX && !this.currentY) {
         this.targetX = this.currentX = this.width * 0.5;
@@ -147,7 +159,7 @@
     }
 
     onPointerMove(event) {
-      const rect = this.scene.getBoundingClientRect();
+      const rect = this.sceneRect || this.scene.getBoundingClientRect();
       this.targetX = clamp(event.clientX - rect.left, 0, rect.width);
       this.targetY = clamp(event.clientY - rect.top, 0, rect.height);
       this.targetPresence = 1;
@@ -155,6 +167,7 @@
     }
 
     onPointerEnter() {
+      this.sceneRect = this.scene.getBoundingClientRect();
       this.targetPresence = 0.82;
       this.updateLoopState();
     }
@@ -211,9 +224,8 @@
 
     positionGlow() {
       if (!this.glow) return;
-      const size = this.glow.getBoundingClientRect().width || 560;
-      const x = this.currentX - size / 2;
-      const y = this.currentY - size / 2;
+      const x = this.currentX - this.glowSize / 2;
+      const y = this.currentY - this.glowSize / 2;
       this.glow.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
       this.glow.style.opacity = String(
         clamp(this.intensity * (0.38 + this.currentPresence * 0.42), 0, 0.42).toFixed(3),
@@ -285,6 +297,7 @@
       this.rafId = 0;
       this.resizeObserver?.disconnect();
       this.intersectionObserver?.disconnect();
+      window.removeEventListener('resize', this.resize);
       document.removeEventListener('visibilitychange', this.onVisibilityChange);
       this.scene?.removeEventListener('pointermove', this.onPointerMove);
       this.scene?.removeEventListener('pointerenter', this.onPointerEnter);
