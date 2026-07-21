@@ -1,14 +1,12 @@
 /*
  * Losuj Obraz V3 — Living Museum Light.
- * One scoped pointer model drives spotlight, optional background parallax and dust.
+ * One scoped pointer model drives spotlight, optional background parallax and optimized dust.
  */
 (() => {
   'use strict';
 
   if (window.GICLEE_LIVING_MUSEUM_LIGHT) return;
 
-  const DPR_CAP = 1.35;
-  const DUST_FRAME_MS = 1000 / 24;
   const MOBILE_QUERY = '(max-width: 749px), (hover: none), (pointer: coarse)';
   const REDUCED_QUERY = '(prefers-reduced-motion: reduce)';
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
@@ -24,19 +22,37 @@
       this.layer = root.querySelector('[data-grw-living-museum]');
       this.spotlight = root.querySelector('[data-grw-living-spotlight]');
       this.dustCanvas = root.querySelector('[data-grw-living-dust]');
-      this.dustContext = this.dustCanvas?.getContext('2d', { alpha: true }) || null;
+      this.dustContext =
+        this.dustCanvas?.getContext('2d', { alpha: true, desynchronized: true }) || null;
       this.drawButton = root.querySelector('[data-grw-draw]');
       this.portal = root.querySelector('[data-grw-portal]');
-      this.backgroundLayers = root.querySelector('.grw--custom-bg-parallax .giclee-random-artwork__custom-bg-layers');
+      this.backgroundLayers = root.querySelector(
+        '.grw--custom-bg-parallax .giclee-random-artwork__custom-bg-layers',
+      );
 
       this.lightEnabled = root.dataset.livingLightEnabled !== 'false';
       this.dustEnabled = root.dataset.livingDustEnabled !== 'false';
       this.intensity = readNumber(root, 'livingLightIntensity', 45, 0, 100) / 100;
+
+      // Defaults match the console-tuned version accepted for V3.
+      this.dustParticleLimit = Math.round(
+        readNumber(root, 'livingDustParticles', 120, 20, 240),
+      );
+      this.dustOpacity = readNumber(root, 'livingDustOpacity', 115, 0, 200) / 100;
+      this.dustSize = readNumber(root, 'livingDustSize', 125, 50, 200) / 100;
+      this.dustSpeed = readNumber(root, 'livingDustSpeed', 75, 0, 200) / 100;
+      this.dustFps = Math.round(readNumber(root, 'livingDustFps', 24, 12, 30));
+      this.dustDprCap = readNumber(root, 'livingDustDprCap', 125, 75, 150) / 100;
+      this.dustFrameMs = 1000 / this.dustFps;
+
       this.reducedMotion = window.matchMedia?.(REDUCED_QUERY).matches ?? false;
       this.coarsePointer = window.matchMedia?.(MOBILE_QUERY).matches ?? false;
-      this.lowMemory = Boolean(globalThis.navigator?.deviceMemory && globalThis.navigator.deviceMemory < 4);
+      this.lowMemory = Boolean(
+        globalThis.navigator?.deviceMemory && globalThis.navigator.deviceMemory < 4,
+      );
       this.allowTracking = this.lightEnabled && !this.reducedMotion && !this.coarsePointer;
-      this.allowDust = this.dustEnabled && !this.reducedMotion && !this.coarsePointer && !this.lowMemory;
+      this.allowDust =
+        this.dustEnabled && !this.reducedMotion && !this.coarsePointer && !this.lowMemory;
 
       this.state = 'idle';
       this.visible = true;
@@ -63,6 +79,7 @@
       this.lastFrameAt = 0;
       this.lastDustAt = 0;
       this.dustReady = false;
+      this.dustSprite = null;
       this.particles = [];
       this.idleHandle = 0;
       this.destroyed = false;
@@ -83,7 +100,8 @@
       if (!this.scene || !this.layer || !this.spotlight) return;
       this.layer.style.setProperty('--grw-lml-intensity', this.intensity.toFixed(3));
       this.root.dataset.livingMuseumReady = 'true';
-      this.root.dataset.livingLightMode = this.reducedMotion || this.coarsePointer ? 'static' : 'interactive';
+      this.root.dataset.livingLightMode =
+        this.reducedMotion || this.coarsePointer ? 'static' : 'interactive';
 
       if ('ResizeObserver' in window) {
         this.resizeObserver = new ResizeObserver(this.onResize);
@@ -119,7 +137,8 @@
         const startDust = () => {
           this.idleHandle = 0;
           if (this.destroyed) return;
-          this.dustReady = true;
+          this.dustSprite = this.createDustSprite();
+          this.dustReady = Boolean(this.dustSprite);
           this.resizeDust();
           this.updateLoop();
         };
@@ -138,12 +157,29 @@
       }
     }
 
+    createDustSprite() {
+      const sprite = document.createElement('canvas');
+      sprite.width = 32;
+      sprite.height = 32;
+      const context = sprite.getContext('2d', { alpha: true });
+      if (!context) return null;
+
+      const gradient = context.createRadialGradient(16, 16, 0, 16, 16, 16);
+      gradient.addColorStop(0, 'rgba(255, 252, 238, 1)');
+      gradient.addColorStop(0.22, 'rgba(255, 242, 205, 0.75)');
+      gradient.addColorStop(0.55, 'rgba(224, 194, 132, 0.22)');
+      gradient.addColorStop(1, 'rgba(224, 194, 132, 0)');
+      context.fillStyle = gradient;
+      context.fillRect(0, 0, 32, 32);
+      return sprite;
+    }
+
     onResize() {
       if (!this.scene) return;
       this.sceneRect = this.scene.getBoundingClientRect();
       this.width = Math.max(1, this.sceneRect.width);
       this.height = Math.max(1, this.sceneRect.height);
-      this.dpr = Math.min(window.devicePixelRatio || 1, DPR_CAP);
+      this.dpr = Math.min(window.devicePixelRatio || 1, this.dustDprCap);
       this.spotlightWidth = this.spotlight?.offsetWidth || 760;
       this.spotlightHeight = this.spotlight?.offsetHeight || 420;
       if (!this.currentX && !this.currentY) {
@@ -160,32 +196,40 @@
       if (!this.dustCanvas || !this.dustContext || !this.dustReady) return;
       const pixelWidth = Math.max(1, Math.round(this.width * this.dpr));
       const pixelHeight = Math.max(1, Math.round(this.height * this.dpr));
-      if (this.dustCanvas.width !== pixelWidth || this.dustCanvas.height !== pixelHeight) {
+      const sizeChanged =
+        this.dustCanvas.width !== pixelWidth || this.dustCanvas.height !== pixelHeight;
+
+      if (sizeChanged) {
         this.dustCanvas.width = pixelWidth;
         this.dustCanvas.height = pixelHeight;
         this.dustCanvas.style.width = `${this.width}px`;
         this.dustCanvas.style.height = `${this.height}px`;
         this.dustContext.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+      }
+
+      if (sizeChanged || this.particles.length !== this.dustParticleLimit) {
         this.createParticles();
       }
     }
 
+    makeParticle(randomY = true) {
+      return {
+        x: Math.random() * this.width,
+        y: randomY ? Math.random() * this.height : this.height + Math.random() * 20,
+        size: (3.2 + Math.random() * 5.2) * this.dustSize,
+        alpha: 0.18 + Math.random() * 0.3,
+        rise: 4 + Math.random() * 8,
+        drift: 2 + Math.random() * 5,
+        phase: Math.random() * Math.PI * 2,
+        depth: 0.35 + Math.random() * 0.65,
+      };
+    }
+
     createParticles() {
-      const area = clamp((this.width * this.height) / (1440 * 900), 0.6, 1.25);
-      const count = Math.round(clamp(48 * area, 40, 70));
-      this.particles = Array.from({ length: count }, (_, index) => {
-        const depth = 0.24 + ((index % 3) / 2) * 0.66;
-        return {
-          x: Math.random() * this.width,
-          y: Math.random() * this.height,
-          depth,
-          radius: 0.38 + Math.random() * 1.05,
-          rise: 1 + Math.random() * 3.1,
-          drift: 1.2 + Math.random() * 3.2,
-          phase: Math.random() * Math.PI * 2,
-          alpha: 0.018 + Math.random() * 0.05,
-        };
-      });
+      this.particles = Array.from(
+        { length: this.dustParticleLimit },
+        () => this.makeParticle(true),
+      );
     }
 
     onPointerMove(event) {
@@ -258,8 +302,16 @@
       const rect = element?.getBoundingClientRect();
       if (!rect || !this.sceneRect) return;
       this.resultRect = rect;
-      this.targetX = clamp(rect.left - this.sceneRect.left + rect.width * 0.5, 0, this.width);
-      this.targetY = clamp(rect.top - this.sceneRect.top + rect.height * 0.28, 0, this.height);
+      this.targetX = clamp(
+        rect.left - this.sceneRect.left + rect.width * 0.5,
+        0,
+        this.width,
+      );
+      this.targetY = clamp(
+        rect.top - this.sceneRect.top + rect.height * 0.28,
+        0,
+        this.height,
+      );
       this.updateLoop();
     }
 
@@ -298,8 +350,10 @@
       let x = this.targetX;
       let y = this.targetY;
       if (this.state === 'idle' && this.buttonHover && this.buttonRect && this.sceneRect) {
-        const buttonX = this.buttonRect.left - this.sceneRect.left + this.buttonRect.width * 0.5;
-        const buttonY = this.buttonRect.top - this.sceneRect.top + this.buttonRect.height * 0.5;
+        const buttonX =
+          this.buttonRect.left - this.sceneRect.left + this.buttonRect.width * 0.5;
+        const buttonY =
+          this.buttonRect.top - this.sceneRect.top + this.buttonRect.height * 0.5;
         x += (buttonX - x) * 0.11;
         y += (buttonY - y) * 0.11;
       }
@@ -345,8 +399,8 @@
       this.renderLight();
       this.renderParallax();
 
-      if (this.shouldAnimateDust() && now - this.lastDustAt >= DUST_FRAME_MS) {
-        this.drawDust(now, Math.max(DUST_FRAME_MS, now - this.lastDustAt));
+      if (this.shouldAnimateDust() && now - this.lastDustAt >= this.dustFrameMs) {
+        this.drawDust(now, Math.max(this.dustFrameMs, now - this.lastDustAt));
         this.lastDustAt = now;
       } else if (!this.shouldAnimateDust() && this.dustContext) {
         this.dustContext.clearRect(0, 0, this.width, this.height);
@@ -368,7 +422,8 @@
       const x = this.currentX - this.spotlightWidth * 0.5;
       const y = this.currentY - this.spotlightHeight * 0.48;
       this.spotlight.style.transform =
-        `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) rotate(-7deg) scale(${this.currentScale.toFixed(4)})`;
+        `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) rotate(-7deg) ` +
+        `scale(${this.currentScale.toFixed(4)})`;
       this.spotlight.style.opacity = clamp(this.currentOpacity, 0, 0.55).toFixed(4);
       this.layer?.style.setProperty('--grw-lml-x', `${this.currentX.toFixed(2)}px`);
       this.layer?.style.setProperty('--grw-lml-y', `${this.currentY.toFixed(2)}px`);
@@ -383,45 +438,59 @@
     }
 
     dustStateGain() {
-      if (this.state === 'loading') return 1.16;
-      if (this.state === 'result') return 0.22;
-      if (this.state === 'error') return 0.15;
+      if (this.state === 'loading') return 1.05;
+      if (this.state === 'error') return 0.55;
       return 1;
     }
 
     drawDust(now, deltaMs) {
-      if (!this.dustContext || !this.particles.length) return;
+      if (!this.dustContext || !this.dustSprite || !this.particles.length) return;
       const ctx = this.dustContext;
-      const deltaSeconds = Math.min(0.08, deltaMs / 1000);
-      const radiusX = Math.max(280, this.width * 0.34);
-      const radiusY = Math.max(180, this.height * 0.28);
+      const deltaSeconds = Math.min(0.06, deltaMs / 1000);
+      const radiusX = Math.max(340, this.width * 0.38);
+      const radiusY = Math.max(220, this.height * 0.34);
       const stateGain = this.dustStateGain();
 
       ctx.clearRect(0, 0, this.width, this.height);
+      ctx.globalCompositeOperation = 'lighter';
+
       for (const particle of this.particles) {
         const speedGain = 0.55 + particle.depth * 0.65;
-        particle.y -= particle.rise * speedGain * deltaSeconds;
-        particle.x += Math.sin(now * 0.00016 + particle.phase) * particle.drift * deltaSeconds;
+        particle.y -= particle.rise * this.dustSpeed * speedGain * deltaSeconds;
+        particle.x +=
+          Math.sin(now * 0.00025 + particle.phase) * particle.drift * deltaSeconds;
 
-        if (particle.y < -8) {
-          particle.y = this.height + 8;
-          particle.x = Math.random() * this.width;
+        if (particle.y < -20) {
+          Object.assign(particle, this.makeParticle(false));
         }
-        if (particle.x < -8) particle.x = this.width + 8;
-        if (particle.x > this.width + 8) particle.x = -8;
+        if (particle.x < -20) particle.x = this.width + 20;
+        if (particle.x > this.width + 20) particle.x = -20;
 
         const dx = (particle.x - this.currentX) / radiusX;
         const dy = (particle.y - this.currentY) / radiusY;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        const lightCatch = clamp(1 - distance, 0, 1);
-        const alpha = particle.alpha * stateGain * (0.06 + Math.pow(lightCatch, 2.2) * 1.12) * (0.65 + particle.depth * 0.45);
-        if (alpha < 0.002) continue;
+        const lightCatch = Math.max(0, 1 - distance);
 
-        ctx.beginPath();
-        ctx.fillStyle = `rgba(255, 247, 225, ${alpha.toFixed(4)})`;
-        ctx.arc(particle.x, particle.y, particle.radius * (0.74 + particle.depth * 0.42), 0, Math.PI * 2);
-        ctx.fill();
+        ctx.globalAlpha = Math.min(
+          0.8,
+          particle.alpha *
+            this.dustOpacity *
+            stateGain *
+            (0.28 + lightCatch * 1.45),
+        );
+
+        const size = particle.size * (0.7 + particle.depth * 0.45);
+        ctx.drawImage(
+          this.dustSprite,
+          particle.x - size / 2,
+          particle.y - size / 2,
+          size,
+          size,
+        );
       }
+
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
     }
 
     status() {
@@ -432,6 +501,11 @@
         allowTracking: this.allowTracking,
         allowDust: this.allowDust,
         particleCount: this.particles.length,
+        dustOpacity: this.dustOpacity,
+        dustSize: this.dustSize,
+        dustSpeed: this.dustSpeed,
+        dustFps: this.dustFps,
+        dustDprCap: this.dustDprCap,
         visible: this.visible,
         dpr: this.dpr,
       };
@@ -460,6 +534,7 @@
         this.dustCanvas.height = 0;
       }
       this.particles = [];
+      this.dustSprite = null;
       this.dustContext = null;
       this.dustCanvas = null;
       this.resultElement = null;
