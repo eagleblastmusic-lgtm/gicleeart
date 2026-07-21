@@ -3,11 +3,11 @@
   "variants": [
     {
       "id": "lo1",
-      "label": "Wersja 1"
+      "label": "V1 — podstawowa"
     },
     {
       "id": "lo2",
-      "label": "Kopia Wersja 2"
+      "label": "V2 — atmosfera muzealna"
     }
   ]
 }
