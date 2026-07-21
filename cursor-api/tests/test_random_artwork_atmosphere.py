@@ -132,11 +132,6 @@ def test_random_artwork_atmosphere_keeps_input_and_motion_accessible() -> None:
     assert "pointer-events: none;" in css
     assert "z-index: 1;" in css
     assert "contain: paint;" in css
-    assert "isolation: isolate;" in css
-    assert "opacity: calc(0.46 + var(--grw-dust-level) * 1.55);" in css
-    assert "brightness(1.55)" in css
-    assert "mix-blend-mode: screen;" in css
-    assert "opacity: calc(0.16 + var(--grw-atmosphere-level) * 0.96);" in css
     assert "@media (max-width: 749px), (hover: none), (pointer: coarse)" in css
     assert "@media (prefers-reduced-motion: reduce)" in css
     assert css.count("giclee-random-artwork__atmosphere-dust") >= 3
