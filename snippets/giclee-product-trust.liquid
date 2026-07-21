@@ -121,12 +121,12 @@
     background: rgb(0 0 0 / 0.45);
   }
 
-  /* Trust wjeżdża jako wyższa warstwa nad procesem. Odtworzenie tego samego
-     fixed background na pseudo-elemencie trustu maskuje dolną treść bez zmiany
-     choreografii sticky ani wizualnego ciągu wspólnego obrazu. */
+  /* Tło maskujące włącza się dopiero, gdy trust faktycznie wchodzi w viewport.
+     Wcześniej proces pozostaje w pełni widoczny; podczas overlayu dolna treść
+     jest zasłonięta tym samym fixed backgroundem, bez podwójnych napisów. */
   main[data-template='product.szablon-produktu-v3']
     .pdp-v3-pt-wrap.has-bg
-    .giclee-trust::before {
+    .giclee-trust.is-covering-process::before {
     background-color: #000;
     background-image:
       linear-gradient(rgb(0 0 0 / 0.45), rgb(0 0 0 / 0.45)),
