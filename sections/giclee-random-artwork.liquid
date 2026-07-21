@@ -34,6 +34,12 @@
     assign living_dust_enabled = true
   endif
   assign living_light_intensity = section.settings.living_light_intensity | default: 45
+  assign living_dust_particles = section.settings.living_dust_particles | default: 120
+  assign living_dust_opacity = section.settings.living_dust_opacity | default: 115
+  assign living_dust_size = section.settings.living_dust_size | default: 125
+  assign living_dust_speed = section.settings.living_dust_speed | default: 75
+  assign living_dust_fps = section.settings.living_dust_fps | default: 24
+  assign living_dust_dpr_cap = section.settings.living_dust_dpr_cap | default: 125
   assign custom_bg = 'none'
   if section.settings.background_video != blank
     assign custom_bg = 'video'
@@ -44,7 +50,7 @@
 
 <link
   rel="stylesheet"
-  href="{{ 'giclee-random-artwork.css' | asset_url }}?v=grw-living-museum-v3-20260721"
+  href="{{ 'giclee-random-artwork.css' | asset_url }}?v=grw-living-museum-dust-controls-20260721"
 >
 {%- if enable_atmosphere -%}
   <link
@@ -58,15 +64,15 @@
 {%- elsif enable_living_museum -%}
   <link
     rel="stylesheet"
-    href="{{ 'giclee-random-artwork-living-museum.css' | asset_url }}?v=grw-living-museum-v3-20260721"
+    href="{{ 'giclee-random-artwork-living-museum.css' | asset_url }}?v=grw-living-museum-dust-controls-20260721"
   >
   <script
-    src="{{ 'giclee-random-artwork-living-museum.js' | asset_url }}?v=grw-living-museum-v3-20260721"
+    src="{{ 'giclee-random-artwork-living-museum.js' | asset_url }}?v=grw-living-museum-dust-controls-20260721"
     defer
   ></script>
 {%- endif -%}
 <script
-  src="{{ 'giclee-random-artwork.js' | asset_url }}?v=grw-living-museum-v3-20260721"
+  src="{{ 'giclee-random-artwork.js' | asset_url }}?v=grw-living-museum-dust-controls-20260721"
   defer
 ></script>
 
@@ -90,6 +96,12 @@
   data-living-light-enabled="{% if living_light_enabled %}true{% else %}false{% endif %}"
   data-living-dust-enabled="{% if living_dust_enabled %}true{% else %}false{% endif %}"
   data-living-light-intensity="{{ living_light_intensity }}"
+  data-living-dust-particles="{{ living_dust_particles }}"
+  data-living-dust-opacity="{{ living_dust_opacity }}"
+  data-living-dust-size="{{ living_dust_size }}"
+  data-living-dust-speed="{{ living_dust_speed }}"
+  data-living-dust-fps="{{ living_dust_fps }}"
+  data-living-dust-dpr-cap="{{ living_dust_dpr_cap }}"
   data-webgl-url="{{ 'giclee-random-artwork-webgl.js' | asset_url }}"
   data-three-url="{{ 'three.module.js' | asset_url }}"
   data-phase-1="{{ section.settings.loading_text | escape }}"
@@ -273,10 +285,16 @@
     { "type": "range", "id": "atmosphere_dust_amount", "label": "V2 — pyl: ilosc", "min": 0, "max": 100, "step": 5, "unit": "%", "default": 50 },
     { "type": "range", "id": "atmosphere_dust_speed", "label": "V2 — pyl: szybkosc", "min": 0, "max": 200, "step": 10, "unit": "%", "default": 100 },
     { "type": "header", "content": "V3 — Living Museum Light" },
-    { "type": "paragraph", "content": "Minimalne ustawienia V3. Parametry techniczne pozostaja bezpiecznymi stalymi w kodzie." },
+    { "type": "paragraph", "content": "Domyslne parametry pylu odpowiadaja zaakceptowanej wersji: 120 drobinek, 115% widocznosci, 125% rozmiaru, 75% szybkosci, 24 FPS i DPR 1.25." },
     { "type": "checkbox", "id": "living_light_enabled", "label": "Wlacz reflektor kursora", "default": true },
     { "type": "checkbox", "id": "living_dust_enabled", "label": "Wlacz pyl ambientowy", "default": true },
     { "type": "range", "id": "living_light_intensity", "label": "Intensywnosc swiatla", "min": 0, "max": 100, "step": 5, "unit": "%", "default": 45 },
+    { "type": "range", "id": "living_dust_particles", "label": "Pyl — liczba drobinek", "min": 20, "max": 240, "step": 10, "default": 120 },
+    { "type": "range", "id": "living_dust_opacity", "label": "Pyl — widocznosc", "min": 0, "max": 200, "step": 5, "unit": "%", "default": 115 },
+    { "type": "range", "id": "living_dust_size", "label": "Pyl — rozmiar", "min": 50, "max": 200, "step": 5, "unit": "%", "default": 125 },
+    { "type": "range", "id": "living_dust_speed", "label": "Pyl — szybkosc", "min": 0, "max": 200, "step": 5, "unit": "%", "default": 75 },
+    { "type": "range", "id": "living_dust_fps", "label": "Pyl — limit FPS", "min": 12, "max": 30, "step": 1, "default": 24 },
+    { "type": "range", "id": "living_dust_dpr_cap", "label": "Pyl — limit jakosci DPR", "min": 75, "max": 150, "step": 5, "unit": "%", "default": 125 },
     { "type": "header", "content": "Wyglad" },
     { "type": "checkbox", "id": "enable_webgl", "label": "Wlacz efekt WebGL (Three.js)", "default": true, "info": "Wylaczenie zostawia elegancki wariant CSS." },
     { "type": "color_scheme", "id": "color_scheme", "label": "Schemat kolorow", "default": "scheme-1" }
