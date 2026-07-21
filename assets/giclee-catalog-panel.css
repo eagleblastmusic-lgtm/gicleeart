@@ -208,3 +208,19 @@ body.curtain-content-hide #giclee-preview-img {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* Wariant Grafika V2: jaśniejszy podgląd, przyciemnienie lokalne tylko pod opisem. */
+#giclee-catalog-panel[data-preview-graphics-variant='v2'] #giclee-preview-img {
+  filter: brightness(0.68) saturate(0.88) contrast(1.02);
+}
+
+#giclee-catalog-panel[data-preview-graphics-variant='v2'] #giclee-preview-info {
+  background:
+    linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.92) 0%,
+      rgba(0, 0, 0, 0.62) 34%,
+      rgba(0, 0, 0, 0.18) 68%,
+      transparent 100%
+    );
+}

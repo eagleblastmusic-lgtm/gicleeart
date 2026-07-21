@@ -5,6 +5,10 @@ from __future__ import annotations
 from Komponenty._shared.theme_page_editor.types import TemplateField, TemplateZone
 
 from .effects import ARTIST_HOVER_EFFECT_FIELD_ID, ARTIST_HOVER_EFFECT_FIELD_LABEL
+from .graphics import (
+    PREVIEW_GRAPHICS_VARIANT_FIELD_ID,
+    PREVIEW_GRAPHICS_VARIANT_FIELD_LABEL,
+)
 
 PAGE_ZONES: tuple[TemplateZone, ...] = (
     TemplateZone(
@@ -93,6 +97,13 @@ PAGE_ZONES: tuple[TemplateZone, ...] = (
         section_key="appearance",
         settings_only=True,
         fields=(
+            TemplateField(
+                PREVIEW_GRAPHICS_VARIANT_FIELD_ID,
+                PREVIEW_GRAPHICS_VARIANT_FIELD_LABEL,
+                "graphics_variant",  # type: ignore[arg-type] — readonly Combobox komponentu.
+                ("appearance", PREVIEW_GRAPHICS_VARIANT_FIELD_ID),
+                hint="V1 zachowuje obecny wygląd; V2 rozjaśnia obraz i przyciemnia tylko strefę tekstu.",
+            ),
             TemplateField(
                 "preview_width_px",
                 "Szerokość podglądu (px)",
