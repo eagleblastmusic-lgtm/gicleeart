@@ -39,6 +39,12 @@
         "living_light_enabled": true,
         "living_dust_enabled": true,
         "living_light_intensity": 45,
+        "living_dust_particles": 120,
+        "living_dust_opacity": 115,
+        "living_dust_size": 125,
+        "living_dust_speed": 75,
+        "living_dust_fps": 24,
+        "living_dust_dpr_cap": 125,
         "color_scheme": "scheme-1"
       }
     },
