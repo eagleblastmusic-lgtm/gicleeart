@@ -1,4 +1,4 @@
-/* Losuj Obraz V4 — staged ceremonial result reveal. */
+/* Losuj Obraz V4 — staged ceremonial result reveal and V3 runtime inheritance. */
 (() => {
   'use strict';
 
@@ -6,6 +6,7 @@
 
   const FRAME_TO_IDENTITY_MS = 310;
   const IDENTITY_TO_ACTIONS_MS = 390;
+  const ROOT_SELECTOR = 'giclee-random-artwork[data-design-variant="v4"]';
 
   class CeremonialResultController {
     constructor(root) {
@@ -44,6 +45,7 @@
       if (!this.result || this.destroyed) return;
       this.clearTimers();
 
+      // Main controller populates identity before setState('result').
       if (this.artist) this.artist.hidden = !this.artist.textContent?.trim();
       if (this.year) this.year.hidden = !this.year.textContent?.trim();
 
@@ -93,7 +95,8 @@
   }
 
   const controllers = new Set();
-  window.GICLEE_RANDOM_ARTWORK_V4 = {
+
+  const api = {
     create(root) {
       const controller = new CeremonialResultController(root);
       controllers.add(controller);
@@ -108,4 +111,59 @@
       return Array.from(controllers, (controller) => controller.status());
     },
   };
+
+  window.GICLEE_RANDOM_ARTWORK_V4 = api;
+
+  const enhance = (root) => {
+    if (!root || root.dataset.designVariant !== 'v4') return;
+
+    if (!root.livingMuseumLight && window.GICLEE_LIVING_MUSEUM_LIGHT?.create) {
+      // V4 inherits the accepted V3 light/dust implementation and removes the
+      // fallback global parallax listener created by the base controller.
+      root.cleanupCustomBgParallax?.();
+      root.livingMuseumLight = window.GICLEE_LIVING_MUSEUM_LIGHT.create(root);
+      root.livingMuseumLight.setState?.(root.dataset.state || 'idle');
+    }
+
+    if (!root.v4Finale) {
+      root.v4Finale = api.create(root);
+      root.v4Finale.setState(root.dataset.state || 'idle');
+    }
+  };
+
+  const ElementClass = window.customElements?.get('giclee-random-artwork');
+  const prototype = ElementClass?.prototype;
+
+  if (prototype && !prototype.__grwV4FinalePatched) {
+    const connected = prototype.connectedCallback;
+    const disconnected = prototype.disconnectedCallback;
+    const setState = prototype.setState;
+
+    prototype.connectedCallback = function connectedCallbackV4(...args) {
+      const result = connected?.apply(this, args);
+      enhance(this);
+      return result;
+    };
+
+    prototype.setState = function setStateV4(state, ...args) {
+      const result = setState?.call(this, state, ...args);
+      this.v4Finale?.setState?.(state);
+      return result;
+    };
+
+    prototype.disconnectedCallback = function disconnectedCallbackV4(...args) {
+      this.v4Finale?.destroy?.();
+      this.v4Finale = null;
+      return disconnected?.apply(this, args);
+    };
+
+    Object.defineProperty(prototype, '__grwV4FinalePatched', {
+      value: true,
+      configurable: false,
+      enumerable: false,
+      writable: false,
+    });
+  }
+
+  document.querySelectorAll(ROOT_SELECTOR).forEach(enhance);
 })();
