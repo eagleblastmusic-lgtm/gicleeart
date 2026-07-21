@@ -88,3 +88,36 @@
     </li>
   </ul>
 </section>
+
+{% style %}
+  /* PDP v3 bez sekcji przed/po: pusta kotwica tworzyła dodatkowy rząd gridu,
+     a wraz z normalnym gapem dawała dwa pełnoszerokie pasy nad process + trust. */
+  main[data-template='product.szablon-produktu-v3']
+    .product-information
+    .giclee-before-after-target:empty {
+    display: none;
+  }
+
+  main[data-template='product.szablon-produktu-v3']
+    .product-information
+    .giclee-before-after-target:empty
+    + .pdp-v3-pt-wrap {
+    margin-top: calc(-1 * var(--gap, 48px));
+  }
+
+  main[data-template='product.szablon-produktu-v3']
+    .product-information
+    .giclee-before-after-target:empty
+    + .pdp-v3-pt-wrap.has-bg::before {
+    clip-path: inset(0);
+    transform: translateX(-50%) scaleX(1.03);
+  }
+
+  main[data-template='product.szablon-produktu-v3']
+    .product-information
+    .giclee-before-after-target:empty
+    + .pdp-v3-pt-wrap.has-bg::after {
+    top: 0;
+    background: rgb(0 0 0 / 0.45);
+  }
+{% endstyle %}
