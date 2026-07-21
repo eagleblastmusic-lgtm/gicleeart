@@ -46,6 +46,7 @@ var DEFAULT_CATALOG_SUBMENU_CONFIG = {
     link_transition_ms: 220
   },
   appearance: {
+    preview_graphics_variant: 'v1',
     preview_width_px: 560,
     panel_max_height_vh: 82
   }
@@ -55,6 +56,7 @@ var catalogSubmenuConfig = DEFAULT_CATALOG_SUBMENU_CONFIG;
 var HIDDEN_CATALOG_ARTISTS = new Set();
 var CATALOG_LIST_COLUMNS = 3;
 var CATALOG_SHOW_HEADER = true;
+var CATALOG_PREVIEW_GRAPHICS_VARIANT = 'v1';
 var catalogSubmenuConfigLoaded = false;
 var catalogPanelScript = document.currentScript;
 var catalogSubmenuConfigUrl = catalogPanelScript && catalogPanelScript.dataset
@@ -73,6 +75,17 @@ function _catalogHiddenHandlesFromText(text) {
     .filter(Boolean);
 }
 
+function _catalogPreviewGraphicsVariant(value) {
+  return String(value || '').trim().toLowerCase() === 'v2' ? 'v2' : 'v1';
+}
+
+function applyCatalogPreviewGraphicsVariant() {
+  var panel = document.getElementById('giclee-catalog-panel');
+  if (panel) {
+    panel.setAttribute('data-preview-graphics-variant', CATALOG_PREVIEW_GRAPHICS_VARIANT);
+  }
+}
+
 function applyCatalogSubmenuConfig(cfg) {
   var merged = DEFAULT_CATALOG_SUBMENU_CONFIG;
   if (cfg && typeof cfg === 'object') {
@@ -88,6 +101,10 @@ function applyCatalogSubmenuConfig(cfg) {
   CATALOG_LIST_COLUMNS = Math.max(1, Math.min(5, Math.round(_catalogCfgNum(merged.list.columns, 3))));
   CATALOG_SHOW_HEADER = merged.list.show_header !== false;
   HIDDEN_CATALOG_ARTISTS = new Set(_catalogHiddenHandlesFromText(merged.list.hidden_artists_text));
+  CATALOG_PREVIEW_GRAPHICS_VARIANT = _catalogPreviewGraphicsVariant(
+    merged.appearance.preview_graphics_variant
+  );
+  applyCatalogPreviewGraphicsVariant();
 
   var previewWidth = Math.max(320, Math.round(_catalogCfgNum(merged.appearance.preview_width_px, 560)));
   var panelMaxHeight = Math.max(40, Math.min(100, Math.round(_catalogCfgNum(merged.appearance.panel_max_height_vh, 82))));
@@ -454,6 +471,7 @@ function initGalleryCatalog() {
   panel.id = 'giclee-catalog-panel';
   panel._catalogInlineStagger = true;
   panel._linkTimers = [];
+  panel.setAttribute('data-preview-graphics-variant', CATALOG_PREVIEW_GRAPHICS_VARIANT);
 
   const listCol = document.createElement('div');
   listCol.id = 'giclee-artists-list';

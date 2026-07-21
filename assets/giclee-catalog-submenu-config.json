@@ -1,21 +1,22 @@
 {
-    "version":  1,
-    "list":  {
-                 "columns":  3,
-                 "show_header":  true,
-                 "artist_hover_effect":  "museum_marker",
-                 "hidden_artists_text":  "francois-boucher\nwilliam-bradford\npaul-fisher\njean-auguste-ingres\npeder-severin-kryer\nedmund-blair-leighton\ncharles-sillem-lidderdale\ngiordano-luca\nanders-andersen-lundby\njohan-thomas-lundbye\nanton-melbye\njean-francois-millet\nclaude-monet\nthomas-moran\nbartolome-esteban-murillo\nharmenszoon-van-rijn-rembrandt\nguido-reni\naguste-renoir\nwillem-roelofs\ndante-gabriel-rossetti\nrafael-santi\nalfred-sisley\ntycjan-tiziano-vecellio\nclaude-joseph-vernet"
-             },
-    "animation":  {
-                      "open_reveal_delay_ms":  120,
-                      "max_cascade_ms":  2200,
-                      "min_interval_ms":  20,
-                      "max_interval_ms":  92,
-                      "interval_curve":  1.75,
-                      "link_transition_ms":  220
-                  },
-    "appearance":  {
-                       "preview_width_px":  560,
-                       "panel_max_height_vh":  82
-                   }
+  "version": 1,
+  "list": {
+    "columns": 3,
+    "show_header": true,
+    "artist_hover_effect": "museum_marker",
+    "hidden_artists_text": "francois-boucher\nwilliam-bradford\npaul-fisher\njean-auguste-ingres\npeder-severin-kryer\nedmund-blair-leighton\ncharles-sillem-lidderdale\ngiordano-luca\nanders-andersen-lundby\njohan-thomas-lundbye\nanton-melbye\njean-francois-millet\nclaude-monet\nthomas-moran\nbartolome-esteban-murillo\nharmenszoon-van-rijn-rembrandt\nguido-reni\naguste-renoir\nwillem-roelofs\ndante-gabriel-rossetti\nrafael-santi\nalfred-sisley\ntycjan-tiziano-vecellio\nclaude-joseph-vernet"
+  },
+  "animation": {
+    "open_reveal_delay_ms": 120,
+    "max_cascade_ms": 2200,
+    "min_interval_ms": 20,
+    "max_interval_ms": 92,
+    "interval_curve": 1.75,
+    "link_transition_ms": 220
+  },
+  "appearance": {
+    "preview_width_px": 560,
+    "panel_max_height_vh": 82,
+    "preview_graphics_variant": "v1"
+  }
 }

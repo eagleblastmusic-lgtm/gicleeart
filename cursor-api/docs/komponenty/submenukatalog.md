@@ -18,7 +18,13 @@ Tryb: `inline` (sekcja **Administracja strony**). Uruchomienie: `python -m Kompo
 
 - **Lista artystów** — liczba kolumn, nagłówek «Artyści», ukryci autorzy (handle kolekcji, jeden na linię)
 - **Animacja wejścia** — opóźnienie, kaskada, odstępy między linkami
-- **Wygląd panelu** — szerokość podglądu, maks. wysokość panelu
+- **Wygląd panelu** — pole readonly **Grafika** (V1/V2), szerokość podglądu, maks. wysokość panelu
+
+## Warianty grafiki
+
+- **V1** — dotychczasowy filtr `brightness(0.5) saturate(0.75)`.
+- **V2** — jaśniejszy obraz (`brightness(0.68) saturate(0.88) contrast(1.02)`) i lokalny gradient wyłącznie pod tekstem.
+- Motyw zapisuje wybór jako `data-preview-graphics-variant` na `#giclee-catalog-panel`.
 
 ## Motyw
 
