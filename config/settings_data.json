@@ -485,7 +485,26 @@
           "selected_variant_hover_border_color": "#1a1a1a"
         }
       }
-    }
+    },
+    "home_flow_sound_enabled": true,
+    "home_flow_sound_question": "Doświadczyć tej sceny z dźwiękiem?",
+    "home_flow_sound_toggle_label": "Dźwięk",
+    "home_flow_sound_start_label": "Rozpocznij",
+    "home_flow_sound_audio_url": "",
+    "home_flow_sound_volume": 28,
+    "home_flow_sound_auto_muted_fraction": 35,
+    "prehero_enabled": true,
+    "prehero_video": "",
+    "prehero_scroll_screens": 6,
+    "prehero_reveal_screens": 2,
+    "prehero_hero_rise_screens": 1,
+    "prehero_copy_enabled": true,
+    "prehero_copy_text": "Fotografia i obraz zaczynają żyć w pełni\ndopiero wtedy, gdy opuszczają ekran\ni stają się częścią świata fizycznego.",
+    "prehero_horizontal_curtain_enabled": true,
+    "prehero_hero_hold_screens": 1,
+    "prehero_horizontal_curtain_screens": 1,
+    "prehero_intro_hold_screens": 1,
+    "home_flow_scroll_mode": "native-v2"
   },
   "presets": {
     "Horizon": {
