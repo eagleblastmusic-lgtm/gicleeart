@@ -1,0 +1,247 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-page",
+      "blocks": {
+        "heading": {
+          "type": "text",
+          "name": "Title",
+          "disabled": true,
+          "settings": {
+            "text": "<h1>{{ closest.page.title }}</h1>",
+            "width": "100%",
+            "max_width": "normal",
+            "alignment": "left",
+            "type_preset": "h2",
+            "font": "var(--font-primary--family)",
+            "font_size": "",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "color": "",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        },
+        "page-content": {
+          "type": "page-content",
+          "disabled": true,
+          "settings": {},
+          "blocks": {}
+        },
+        "text_nPizan": {
+          "type": "text",
+          "name": "t:names.text",
+          "disabled": true,
+          "settings": {
+            "text": "<h5>Jesteś fotografem lub fotografką sesyjną i chcesz współpracować z Giclée Art? Zapraszam do kontaktu.</h5><h5>W ramach współpracy otrzymujesz:</h5><h5><br/>– zniżki dla swoich klientów na produkty Giclée Art<br/>– prezentację Twoich wybranych prac na stronie Giclée Art wraz z linkiem do Twoich social mediów<br/>– promocję Twojej twórczości w mediach społecznościowych Giclée Art</h5><h5>Współpraca ma charakter partnerski — łączymy estetykę fotografii z artystycznym drukiem premium.</h5>",
+            "width": "fit-content",
+            "max_width": "normal",
+            "alignment": "left",
+            "type_preset": "rte",
+            "font": "var(--font-body--family)",
+            "font_size": "1rem",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "color": "var(--color-foreground)",
+            "background": false,
+            "background_color": "#00000012",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "heading",
+        "page-content",
+        "text_nPizan"
+      ],
+      "disabled": true,
+      "settings": {
+        "content_direction": "column",
+        "gap": 32,
+        "color_scheme": "",
+        "padding-block-start": 40,
+        "padding-block-end": 80
+      }
+    },
+    "divider_QhH86h": {
+      "type": "divider",
+      "name": "t:names.divider_section",
+      "settings": {
+        "color_scheme": "scheme-6",
+        "section_width": "full-width",
+        "thickness": 1,
+        "corner_radius": "square",
+        "width_percent": 100,
+        "alignment_horizontal": "center",
+        "padding-block-start": 16,
+        "padding-block-end": 16
+      }
+    },
+    "hero_NaxrxE": {
+      "type": "hero",
+      "blocks": {
+        "text_HJGb9e": {
+          "type": "text",
+          "settings": {
+            "text": "<h2>Często zadawane pytania</h2>",
+            "width": "fit-content",
+            "max_width": "narrow",
+            "alignment": "left",
+            "type_preset": "h3",
+            "font": "var(--font-body--family)",
+            "font_size": "1rem",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "color": "var(--color-foreground)",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "text_HJGb9e"
+      ],
+      "name": "t:names.hero",
+      "settings": {
+        "media_type_1": "image",
+        "image_1": "shopify://shop_images/Gloves_on_archival_paper_print_202v607081020.jpg",
+        "media_type_2": "image",
+        "stack_media_on_mobile": false,
+        "custom_mobile_media": false,
+        "media_type_1_mobile": "image",
+        "media_type_2_mobile": "image",
+        "link": "",
+        "open_in_new_tab": false,
+        "content_direction": "column",
+        "vertical_on_mobile": true,
+        "horizontal_alignment": "flex-start",
+        "vertical_alignment": "center",
+        "align_baseline": false,
+        "horizontal_alignment_flex_direction_column": "center",
+        "vertical_alignment_flex_direction_column": "center",
+        "gap": 16,
+        "section_width": "page-width",
+        "section_height": "custom",
+        "section_height_custom": 25,
+        "color_scheme": "scheme-5",
+        "toggle_overlay": true,
+        "overlay_color": "#00000026",
+        "overlay_style": "solid",
+        "gradient_direction": "to top",
+        "blurred_reflection": true,
+        "reflection_opacity": 50,
+        "padding-block-start": 40,
+        "padding-block-end": 40,
+        "image_1_object_y": 50
+      }
+    },
+    "divider_YLiHg7": {
+      "type": "divider",
+      "name": "t:names.divider_section",
+      "settings": {
+        "color_scheme": "scheme-6",
+        "section_width": "full-width",
+        "thickness": 1,
+        "corner_radius": "square",
+        "width_percent": 100,
+        "alignment_horizontal": "center",
+        "padding-block-start": 16,
+        "padding-block-end": 16
+      }
+    },
+    "section_9YgpHf": {
+      "type": "giclee-editorial-faq",
+      "blocks": {
+        "faq_mUQFCU": {
+          "type": "faq_item",
+          "settings": {
+            "question": "Jaki jest czas realizacji zamówienia?",
+            "answer": "<p>Czas realizacji zamówienia wynosi od 3 do 7 dni. Jest to związane z czasem dostawy drewna oraz materiałów potrzebnych do produkcji. Staram się zawsze trzymać minimalne zapasy drewna jednak przed wykończeniem, które impregnuje, drewno jest podatne na paczenie. Dlatego produkty od początku do końca realizuję z materiałów dostarczonych na świeżo.</p><p>Proces produkcji składa się z wielu różnych etapów, od cięcia drewna, przez nakładanie różnych warstw wykończenia, które schną dlatego trzeba liczyć 1 dzień cięcie i malowanie podkładem, 2 dzień olejowanie i drukowanie, kolejne 3 dni wstępnego schnięcia i utwardzania olejowosku, a także schnięcie papieru po zastosowaniu sprayu ochronnego</p>",
+            "anchor": "czas-realizacji"
+          }
+        },
+        "faq_gq7xgd": {
+          "type": "faq_item",
+          "settings": {
+            "question": "Jaki jest czas wysyłki?",
+            "answer": "<p>Po ukończeniu produktu obraz jest bezzwłocznie pakowany oraz wysyłany bez względu na porę dnia i nocy przez paczkomat. Po wysłaniu zamówienia otrzymasz e-mail z dalszymi informacjami. Przesyłki z reguły dochodzą w 1-2 dni roboczych</p>",
+            "anchor": "czas-wysylki"
+          }
+        },
+        "faq_fxrNFP": {
+          "type": "faq_item",
+          "settings": {
+            "question": "Czy jest możliwość kontaktu telefonicznego?",
+            "answer": "<p>Niestety nie ma. Działalność prowadzę sam i nie jestem w stanie podczas pracy w ciągu dnia odbierać telefonów. Proszę o kontakt emailowy. Zazwyczaj wieczorem albo w nocy odpisuję.</p>",
+            "anchor": "kontakt-telefoniczny"
+          }
+        },
+        "faq_VwgmXW": {
+          "type": "faq_item",
+          "settings": {
+            "question": "Gdzie są produkowane wasze produkty?",
+            "answer": "<p>Moja pracownia mieści się w Pucku woj. Pomorskie, jednak brak możliwości jest odbiorów osobistych</p>",
+            "anchor": "miejsce-produkcji"
+          }
+        },
+        "faq_7nCpLH": {
+          "type": "faq_item",
+          "settings": {
+            "question": "Ile kosztuje wysyłka?",
+            "answer": "<p>Wysyłka jest całkowicie darmowa</p>",
+            "anchor": "koszt-wysylki"
+          }
+        }
+      },
+      "block_order": [
+        "faq_mUQFCU",
+        "faq_gq7xgd",
+        "faq_fxrNFP",
+        "faq_VwgmXW",
+        "faq_7nCpLH"
+      ],
+      "name": "Editorial FAQ Archive",
+      "settings": {
+        "eyebrow": "Archiwum informacji",
+        "heading": "Często zadawane pytania",
+        "description": "",
+        "color_scheme": "scheme-e18462de-e99c-420d-a3cb-9a769e695267",
+        "section_width": "page-width",
+        "padding_top": 64,
+        "padding_bottom": 88,
+        "open_first": false,
+        "premium_motion": true
+      }
+    }
+  },
+  "order": [
+    "main",
+    "divider_QhH86h",
+    "hero_NaxrxE",
+    "divider_YLiHg7",
+    "section_9YgpHf"
+  ]
+}

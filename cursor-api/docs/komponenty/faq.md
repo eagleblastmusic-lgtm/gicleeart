@@ -4,10 +4,10 @@
 
 | Plik | Rola |
 |------|------|
-| `Komponenty/faq/registry.py` | Mapowanie stref → ścieżki JSON; Hero FAQ deklaruje jawny selektor celu efektów grafiki |
+| `Komponenty/faq/registry.py` | Mapowanie wspólnych pól na strukturę Wersji 1 (`fq1`) i Wersji 2 (`fq2`) |
 | `Komponenty/faq/gui.py` | Cienka warstwa → `_shared/theme_page_editor` |
 | `Komponenty/_shared/theme_page_editor/` | Wspólny edytor (warianty, backup, deploy, eksport efektów sekcji) |
-| `sections/giclee-editorial-faq.liquid` | Izolowana sekcja Editorial FAQ Archive |
+| `sections/giclee-editorial-faq.liquid` | Izolowana sekcja Editorial FAQ Archive używana przez Wersję 2 |
 | `assets/giclee-editorial-faq.css` | Redakcyjny indeks, asymetryczna karta i responsive layout |
 | `assets/giclee-editorial-faq.js` | Progressive enhancement, morphing, hash, Theme Editor i cleanup |
 
@@ -15,9 +15,15 @@ Tryb: `inline` (sekcja **Administracja strony**). Uruchomienie: `python -m Kompo
 
 **Szablon:** `templates/page.faq.json` · **Podgląd:** `/pages/faq`
 
-**Warianty:** domyślnie jedna wersja (`fq1`); **Dodaj nową…** kopiuje bieżącą. Wariant `fq1` i template motywu muszą zachowywać ten sam kontrakt bloków `faq_item`, aby zapis z GicleeApp nie przywracał starego accordionu.
+## Warianty GicleeApp
 
-## Editorial FAQ Archive
+- `fq1` — **Wersja 1**: zachowany klasyczny accordion bez zmian strukturalnych.
+- `fq2` — **Wersja 2**: Editorial FAQ Archive; jest aktywną wersją i odpowiada `templates/page.faq.json`.
+- `manifest.json` zachowuje oba warianty i wskazuje `fq2` jako aktywny.
+- `registry.py` wybiera ścieżki pól zależnie od aktywnego wariantu, dlatego oba układy pozostają edytowalne z tego samego interfejsu.
+- Efekty obrazu Hero są skopiowane do `fq2/section-effects.json`, a frontowy asset wskazuje wariant `fq2`.
+
+## Editorial FAQ Archive — Wersja 2
 
 - Sekcja `section_9YgpHf` używa typu `giclee-editorial-faq`.
 - Każde pytanie jest bezpośrednim blokiem `faq_item` z polami `question`, `answer` i opcjonalnym `anchor`.
