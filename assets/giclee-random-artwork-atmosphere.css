@@ -10,6 +10,8 @@
   --grw-haze-gallery-opacity: 0.161;
   --grw-haze-depth-opacity: 0.119;
   --grw-haze-loading-opacity: 0.182;
+  --grw-haze-gallery-mobile-opacity: 0.084;
+  --grw-haze-depth-mobile-opacity: 0.056;
   --grw-haze-gallery-duration: 22s;
   --grw-haze-depth-duration: 30s;
 
@@ -128,11 +130,11 @@
   }
 
   .giclee-random-artwork__atmosphere-haze--gallery {
-    opacity: calc(var(--grw-haze-gallery-opacity) * 0.52);
+    opacity: var(--grw-haze-gallery-mobile-opacity);
   }
 
   .giclee-random-artwork__atmosphere-haze--depth {
-    opacity: calc(var(--grw-haze-depth-opacity) * 0.47);
+    opacity: var(--grw-haze-depth-mobile-opacity);
   }
 }
 
