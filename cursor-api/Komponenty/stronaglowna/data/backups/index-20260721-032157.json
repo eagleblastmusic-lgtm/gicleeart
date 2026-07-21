@@ -65,11 +65,11 @@
         "autoplay_speed": 3,
         "padding-block-start": 0,
         "padding-block-end": 0,
-        "enable_audio": true,
+        "enable_audio": false,
         "audio_url": "",
-        "audio_label_on": "Dźwięk",
-        "audio_label_off": "Wycisz",
-        "audio_volume": 28
+        "audio_label_on": "",
+        "audio_label_off": "",
+        "audio_volume": 0
       }
     },
     "divider_7d3JBN": {
