@@ -1,10 +1,11 @@
 /*
- * Losuj Obraz — Fine Art Oracle (kontroler).
- * Dane (Liquid + AJAX), losowanie, maszyna stanow, capability gate.
- * Scene WebGL uruchamia giclee-random-artwork-webgl.js (dynamic import).
- * Wynik, tytul, zdjecie i CTA pozostaja w HTML/CSS.
+ * Losuj Obraz — Fine Art Oracle controller.
+ * Product data, identity parsing, draw state machine, WebGL capability gate,
+ * optional V3 Living Museum Light hand-off, and complete lifecycle cleanup.
  */
 (() => {
+  'use strict';
+
   const STATE = {
     IDLE: 'idle',
     LOADING: 'loading',
@@ -22,6 +23,12 @@
   const SAMPLE_MOBILE = 8;
   const SCENE_SAFETY_MS = 9000;
   const RESULT_TEARDOWN_MS = 700;
+  const ARTIST_SEPARATOR_RE = /\s[-–—]\s/;
+  const YEAR_TOKEN_RE = /(?:\b(?:ok\.?|około|circa|ca\.?)\s*)?(?:1\d{3}|20[0-2]\d)(?:\s*[\-–—]\s*(?:1\d{3}|20[0-2]\d))?/iu;
+  const ARTIST_PARTICLES = new Set([
+    'af', 'al', 'av', 'da', 'de', 'del', 'dell', 'della', 'den', 'der', 'di',
+    'do', 'dos', 'du', 'el', 'la', 'le', 'les', 'lo', 'ten', 'ter', 'van', 'von',
+  ]);
 
   const prefersReducedMotion = () =>
     window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -34,34 +41,73 @@
 
   const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
-  /** Tytuł podstawowy — bez wariantów w nawiasach, np. „(lub … (1866))”. */
-  const primaryProductTitle = (title) => {
-    const text = String(title || '').trim();
-    if (!text) return text;
+  const cleanText = (value) => String(value || '').replace(/\s+/g, ' ').trim();
 
-    let result = '';
-    let i = 0;
-    while (i < text.length) {
-      if (text[i] === '(') {
-        let depth = 1;
-        let j = i + 1;
-        while (j < text.length && depth > 0) {
-          if (text[j] === '(') depth += 1;
-          else if (text[j] === ')') depth -= 1;
-          j += 1;
-        }
-        if (depth === 0) {
-          while (result.length && /\s/.test(result[result.length - 1])) {
-            result = result.slice(0, -1);
-          }
-          i = j;
-          continue;
-        }
-      }
-      result += text[i];
-      i += 1;
+  const cleanupTitleTail = (value) =>
+    cleanText(value)
+      .replace(/[\s,;:|/\\\-–—]+$/u, '')
+      .trim();
+
+  const extractYear = (rawTitle) => {
+    const match = cleanText(rawTitle).match(YEAR_TOKEN_RE);
+    return match ? cleanText(match[0]).replace(/\s*([\-–—])\s*/u, '$1') : '';
+  };
+
+  const parseArtworkIdentity = (rawTitle) => {
+    const raw = cleanText(rawTitle);
+    const year = extractYear(raw);
+    let title = raw.split('(', 1)[0] || raw;
+
+    if (year) {
+      const escapedYear = year.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      title = title.replace(new RegExp(escapedYear.replace(/[\-–—]/g, '[\\-–—]'), 'iu'), '');
     }
-    return result.replace(/\s{2,}/g, ' ').trim();
+
+    title = cleanupTitleTail(title);
+    return { rawTitle: raw, title, year: year || null };
+  };
+
+  const formatArtistDisplayName = (value) => {
+    const raw = cleanText(value);
+    if (!raw || !raw.includes(',')) return raw;
+
+    const parts = raw.split(',').map((item) => item.trim()).filter(Boolean);
+    if (parts.length < 2) return raw;
+
+    let surname = parts.shift();
+    let given = parts.shift();
+    const suffix = parts.length ? `, ${parts.join(', ')}` : '';
+    const givenWords = given.split(/\s+/u).filter(Boolean);
+    const lastGiven = (givenWords.at(-1) || '').toLocaleLowerCase('pl-PL').replace(/\.$/u, '');
+
+    if (givenWords.length > 1 && ARTIST_PARTICLES.has(lastGiven)) {
+      const particle = givenWords.pop();
+      surname = `${particle} ${surname}`;
+      given = givenWords.join(' ');
+    }
+
+    return cleanText(`${given} ${surname}${suffix}`);
+  };
+
+  const splitProductIdentity = (rawProductTitle, explicitArtist = '') => {
+    const full = cleanText(rawProductTitle);
+    let artist = cleanText(explicitArtist);
+    let rawArtworkTitle = full;
+    const match = full.match(ARTIST_SEPARATOR_RE);
+
+    if (match?.index >= 0) {
+      const prefix = full.slice(0, match.index).trim();
+      const remainder = full.slice(match.index + match[0].length).trim();
+      if (!artist) artist = prefix;
+      if (!artist || prefix.toLocaleLowerCase('pl-PL') === artist.toLocaleLowerCase('pl-PL')) {
+        rawArtworkTitle = remainder || full;
+      }
+    }
+
+    return {
+      artist: formatArtistDisplayName(artist),
+      rawArtworkTitle,
+    };
   };
 
   const hasWebGL = () => {
@@ -97,16 +143,51 @@
   };
 
   const normalizeProduct = (raw) => {
-    if (!raw || !raw.title || !raw.image || !raw.url) return null;
-    const title = primaryProductTitle(raw.title);
+    if (!raw || !raw.image || !raw.url) return null;
+    const sourceTitle = cleanText(raw.rawTitle || raw.title);
+    if (!sourceTitle) return null;
+
+    const split = splitProductIdentity(sourceTitle, raw.artist);
+    const identity = parseArtworkIdentity(split.rawArtworkTitle);
+    if (!identity.title) return null;
+
     return {
-      title,
+      rawTitle: identity.rawTitle,
+      title: identity.title,
+      year: identity.year,
+      artist: split.artist,
       url: String(raw.url),
       image: String(raw.image),
-      imageAlt: raw.imageAlt ? primaryProductTitle(raw.imageAlt) : title,
+      imageAlt: cleanText(raw.imageAlt) || cleanText(`${split.artist} — ${identity.title}`),
       available: raw.available !== false,
     };
   };
+
+  const mergeProductRecords = (preferred, candidate) => {
+    if (!preferred) return candidate;
+    if (!candidate) return preferred;
+    return {
+      rawTitle: preferred.rawTitle || candidate.rawTitle,
+      title: preferred.title || candidate.title,
+      year: preferred.year || candidate.year || null,
+      artist: preferred.artist || candidate.artist,
+      url: preferred.url || candidate.url,
+      image: preferred.image || candidate.image,
+      imageAlt: preferred.imageAlt || candidate.imageAlt,
+      available:
+        typeof preferred.available === 'boolean'
+          ? preferred.available
+          : candidate.available !== false,
+    };
+  };
+
+  window.GICLEE_RANDOM_ARTWORK_TEST_API = Object.freeze({
+    parseArtworkIdentity,
+    splitProductIdentity,
+    formatArtistDisplayName,
+    normalizeProduct,
+    mergeProductRecords,
+  });
 
   class GicleeRandomArtwork extends HTMLElement {
     connectedCallback() {
@@ -114,6 +195,7 @@
       this.endpoint = this.dataset.productsEndpoint || `${this.rootUrl}/collections/all/products.json`;
       this.fetchFull = this.dataset.fetchFull === 'true';
       this.enableWebgl = this.dataset.enableWebgl !== 'false';
+      this.designVariant = this.dataset.designVariant || 'v1';
       this.webglUrl = this.dataset.webglUrl || '';
       this.threeUrl = this.dataset.threeUrl || '';
 
@@ -125,7 +207,7 @@
       this.canvasMount = this.querySelector('[data-grw-canvas-mount]');
 
       this.phases = [this.dataset.phase1, this.dataset.phase2, this.dataset.phase3]
-        .map((text) => (text || '').trim())
+        .map((text) => cleanText(text))
         .filter(Boolean);
 
       this.intro = this.querySelector('[data-grw-intro]');
@@ -134,7 +216,9 @@
       this.resultPanel = this.querySelector('[data-grw-result]');
       this.resultLink = this.querySelector('[data-grw-result-link]');
       this.resultImage = this.querySelector('[data-grw-result-image]');
+      this.resultArtist = this.querySelector('[data-grw-result-artist]');
       this.resultTitle = this.querySelector('[data-grw-result-title]');
+      this.resultYear = this.querySelector('[data-grw-result-year]');
       this.viewCta = this.querySelector('[data-grw-view]');
       this.replayButton = this.querySelector('[data-grw-replay]');
       this.errorPanel = this.querySelector('[data-grw-error]');
@@ -142,16 +226,26 @@
 
       this.pool = this.parseEmbeddedPool();
 
-      this.drawButton?.addEventListener('click', () => this.draw());
-      this.replayButton?.addEventListener('click', () => this.draw());
-      this.retryButton?.addEventListener('click', () => this.draw());
+      this._onDrawClick = () => this.draw();
+      this.drawButton?.addEventListener('click', this._onDrawClick);
+      this.replayButton?.addEventListener('click', this._onDrawClick);
+      this.retryButton?.addEventListener('click', this._onDrawClick);
+
+      if (this.designVariant === 'v3' && window.GICLEE_LIVING_MUSEUM_LIGHT?.create) {
+        this.livingMuseumLight = window.GICLEE_LIVING_MUSEUM_LIGHT.create(this);
+      }
 
       this.setState(STATE.IDLE);
-      this.initCustomBgParallax();
+      if (!this.livingMuseumLight) this.initCustomBgParallax();
     }
 
     disconnectedCallback() {
+      this.drawButton?.removeEventListener('click', this._onDrawClick);
+      this.replayButton?.removeEventListener('click', this._onDrawClick);
+      this.retryButton?.removeEventListener('click', this._onDrawClick);
       this.cleanupCustomBgParallax();
+      this.livingMuseumLight?.destroy?.();
+      this.livingMuseumLight = null;
       window.clearTimeout(this.resultTeardownTimer);
       this.teardownScene();
     }
@@ -237,6 +331,7 @@
       if (this.drawButton) {
         this.drawButton.disabled = state === STATE.LOADING || state === STATE.DRAWING;
       }
+      this.livingMuseumLight?.setState?.(state);
     }
 
     setPhase(text) {
@@ -254,7 +349,6 @@
         return;
       }
       panel.hidden = false;
-      // Wymuszenie reflow, aby przejscie opacity/transform zadzialalo po odkryciu.
       void panel.offsetWidth;
       this.setState(state);
     }
@@ -268,7 +362,8 @@
 
       const byUrl = new Map();
       for (const item of [...this.pool, ...fetched]) {
-        if (item && !byUrl.has(item.url)) byUrl.set(item.url, item);
+        if (!item) continue;
+        byUrl.set(item.url, mergeProductRecords(byUrl.get(item.url), item));
       }
       this.pool = Array.from(byUrl.values());
     }
@@ -295,7 +390,8 @@
             ? product.variants.some((variant) => variant?.available)
             : true;
           products.push({
-            title: product.title,
+            rawTitle: product.title,
+            artist: '',
             url: `${this.rootUrl}/products/${product.handle}`,
             image: sizedImageUrl(image, 1280),
             imageAlt: product.title,
@@ -381,7 +477,6 @@
         if (ran) return;
       }
 
-      // Fallback CSS — narracyjne teksty na portalu CSS.
       if (prefersReducedMotion()) {
         await wait(300);
         return;
@@ -445,7 +540,6 @@
             })
             .then((controller) => {
               this.sceneController = controller;
-              // Jesli teardown poproszono zanim scena sie zainicjalizowala.
               if (this.wantTeardown) this.teardownScene();
             })
             .catch(finish);
@@ -465,7 +559,7 @@
         try {
           this.sceneController.destroy();
         } catch {
-          /* scena moze byc juz zwolniona */
+          /* Scene can already be disposed. */
         }
         this.sceneController = null;
       }
@@ -478,12 +572,22 @@
         this.resultImage.src = winner.image;
         this.resultImage.alt = winner.imageAlt;
       }
+
+      const showMuseumIdentity = this.designVariant === 'v3';
+      if (this.resultArtist) {
+        this.resultArtist.textContent = winner.artist || '';
+        this.resultArtist.hidden = !showMuseumIdentity || !winner.artist;
+      }
       if (this.resultTitle) this.resultTitle.textContent = winner.title;
+      if (this.resultYear) {
+        this.resultYear.textContent = winner.year ? `, ${winner.year}` : '';
+        this.resultYear.hidden = !showMuseumIdentity || !winner.year;
+      }
       if (this.resultLink) this.resultLink.href = winner.url;
       if (this.viewCta) this.viewCta.href = winner.url;
       this.revealPanel(this.resultPanel, STATE.RESULT);
+      this.livingMuseumLight?.focusResult?.(this.resultLink);
 
-      // Karta wyniku wjezdza, potem scena WebGL wygasa i zwalnia zasoby.
       if (this.classList.contains('grw--webgl')) {
         this.resultTeardownTimer = window.setTimeout(() => this.teardownScene(), RESULT_TEARDOWN_MS);
       }
