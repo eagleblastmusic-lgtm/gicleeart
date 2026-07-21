@@ -22,38 +22,39 @@ def test_pdp_v3_process_trust_overlay_covers_the_transition_gap() -> None:
     assert "pointer-events: none;" in source
 
 
-def test_pdp_v3_process_and_trust_share_one_sticky_scene() -> None:
+def test_pdp_v3_process_and_trust_share_one_static_viewport() -> None:
     source = TRUST_SNIPPET.read_text(encoding="utf-8")
 
-    assert ".pdp-v3-pt-wrap[data-pdp-v3-pt-scene]" in source
-    assert "min-height: 200dvh;" in source
-    assert ".pdp-v3-pt-stage" in source
-    assert "position: sticky;" in source
-    assert "grid-area: 1 / 1;" in source
-    assert "opacity: var(--pdp-v3-process-opacity);" in source
-    assert "opacity: var(--pdp-v3-trust-opacity);" in source
-    assert "background: transparent;" in source
+    assert ".pdp-v3-pt-wrap {" in source
+    assert "grid-template-rows: minmax(0, 58fr) minmax(0, 42fr);" in source
+    assert "height: 100dvh;" in source
+    assert "min-height: 100dvh;" in source
+    assert "> .giclee-process" in source
+    assert "> .giclee-trust" in source
+    assert "position: relative;" in source
+    assert "min-height: 0;" in source
+    assert "min-height: 200dvh;" not in source
+    assert ".pdp-v3-pt-stage" not in source
 
 
-def test_pdp_v3_shared_scene_does_not_duplicate_the_background() -> None:
+def test_pdp_v3_static_section_uses_only_the_wrapper_background() -> None:
     source = TRUST_SNIPPET.read_text(encoding="utf-8")
 
     assert "var(--pdp-v3-pt-image)" not in source
     assert "background-attachment: fixed" not in source
     assert "is-covering-process" not in source
-    assert "margin-top: calc(-100dvh" not in source
+    assert "--pdp-v3-process-opacity" not in source
+    assert "--pdp-v3-trust-opacity" not in source
+    assert "background-color: transparent;" in source
 
 
-def test_pdp_v3_scene_progress_is_scroll_driven_without_text_overlap() -> None:
+def test_pdp_v3_process_script_only_reveals_static_content() -> None:
     source = PROCESS_SCRIPT.read_text(encoding="utf-8")
 
-    assert "document.createElement('div')" in source
-    assert "stage.className = 'pdp-v3-pt-stage';" in source
-    assert "scene.setAttribute('data-pdp-v3-pt-scene', '');" in source
-    assert "separator.remove();" in source
-    assert "var processExit = rangeProgress(progress, 0.32, 0.48);" in source
-    assert "var trustEnter = rangeProgress(progress, 0.52, 0.68);" in source
-    assert "--pdp-v3-process-opacity" in source
-    assert "--pdp-v3-trust-opacity" in source
-    assert "window.requestAnimationFrame(updateScene);" in source
-    assert "is-covering-process" not in source
+    assert "IntersectionObserver" in source
+    assert "section.classList.add('is-revealed');" in source
+    assert "document.createElement('div')" not in source
+    assert "requestAnimationFrame" not in source
+    assert "data-pdp-v3-pt-scene" not in source
+    assert "--pdp-v3-process-opacity" not in source
+    assert "--pdp-v3-trust-opacity" not in source
