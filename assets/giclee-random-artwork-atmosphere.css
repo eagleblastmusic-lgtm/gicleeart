@@ -5,8 +5,13 @@
  */
 
 .giclee-random-artwork__atmosphere {
-  --grw-atmosphere-level: 0.38;
-  --grw-dust-level: 0.28;
+  --grw-atmosphere-level: 0.35;
+  --grw-dust-level: 0.25;
+  --grw-haze-gallery-opacity: 0.161;
+  --grw-haze-depth-opacity: 0.119;
+  --grw-haze-loading-opacity: 0.182;
+  --grw-haze-gallery-duration: 22s;
+  --grw-haze-depth-duration: 30s;
 
   position: absolute;
   inset: 0;
@@ -55,8 +60,8 @@
     radial-gradient(48% 38% at 48% 32%, rgba(255, 247, 226, 0.07), transparent 72%),
     radial-gradient(44% 42% at 78% 74%, rgba(201, 168, 76, 0.038), transparent 75%);
   filter: blur(34px);
-  opacity: calc(var(--grw-atmosphere-level) * 0.46);
-  animation: grw-atmosphere-breathe 22s ease-in-out infinite alternate;
+  opacity: var(--grw-haze-gallery-opacity);
+  animation: grw-atmosphere-breathe var(--grw-haze-gallery-duration) ease-in-out infinite alternate;
 }
 
 .giclee-random-artwork__atmosphere-haze--depth {
@@ -64,8 +69,13 @@
     linear-gradient(112deg, transparent 18%, rgba(255, 249, 235, 0.028) 48%, transparent 74%),
     radial-gradient(70% 52% at 50% 96%, rgba(195, 160, 86, 0.028), transparent 78%);
   filter: blur(42px);
-  opacity: calc(var(--grw-atmosphere-level) * 0.34);
-  animation: grw-atmosphere-drift 30s ease-in-out infinite alternate;
+  opacity: var(--grw-haze-depth-opacity);
+  animation: grw-atmosphere-drift var(--grw-haze-depth-duration) ease-in-out infinite alternate;
+}
+
+.giclee-random-artwork[data-atmosphere-haze-paused="true"]
+  .giclee-random-artwork__atmosphere-haze {
+  animation-play-state: paused;
 }
 
 .giclee-random-artwork__atmosphere-dust {
@@ -90,7 +100,7 @@
 
 .giclee-random-artwork[data-state="loading"] .giclee-random-artwork__atmosphere-haze--gallery,
 .giclee-random-artwork[data-state="drawing"] .giclee-random-artwork__atmosphere-haze--gallery {
-  opacity: calc(var(--grw-atmosphere-level) * 0.52);
+  opacity: var(--grw-haze-loading-opacity);
 }
 
 @keyframes grw-atmosphere-breathe {
@@ -118,11 +128,11 @@
   }
 
   .giclee-random-artwork__atmosphere-haze--gallery {
-    opacity: calc(var(--grw-atmosphere-level) * 0.24);
+    opacity: calc(var(--grw-haze-gallery-opacity) * 0.52);
   }
 
   .giclee-random-artwork__atmosphere-haze--depth {
-    opacity: calc(var(--grw-atmosphere-level) * 0.16);
+    opacity: calc(var(--grw-haze-depth-opacity) * 0.47);
   }
 }
 
