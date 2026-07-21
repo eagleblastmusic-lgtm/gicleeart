@@ -1,0 +1,421 @@
+/*
+ * Losuj Obraz V4 — ceremonial WebGL finale.
+ * Preserves the V3 oracle scene while extending only the selection-to-exhibit handoff.
+ */
+
+const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+const easeInOutCubic = (t) =>
+  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const easeInOutSine = (t) => -(Math.cos(Math.PI * t) - 1) / 2;
+const clamp01 = (t) => Math.min(1, Math.max(0, t));
+const smoothstep = (edge0, edge1, x) => {
+  const t = clamp01((x - edge0) / (edge1 - edge0));
+  return t * t * (3 - 2 * t);
+};
+const TAU = Math.PI * 2;
+const FINALE_EXTRA_MS = 800;
+
+function radialSprite(THREE, stops) {
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const gradient = ctx.createRadialGradient(
+    size / 2,
+    size / 2,
+    0,
+    size / 2,
+    size / 2,
+    size / 2,
+  );
+  for (const [offset, color] of stops) gradient.addColorStop(offset, color);
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, size, size);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+export async function createOracleScene(options) {
+  const {
+    mount,
+    threeUrl,
+    cards = [],
+    winnerIndex = 0,
+    reducedMotion = false,
+    isMobile = false,
+    onPhase,
+    onComplete,
+  } = options;
+
+  const THREE = await import(threeUrl);
+
+  const BASE_TOTAL_MS = reducedMotion ? 2600 : isMobile ? 4800 : 5400;
+  const TOTAL_MS = BASE_TOTAL_MS + (reducedMotion ? 0 : FINALE_EXTRA_MS);
+  const TURNS = isMobile ? 1.5 : 2.25;
+  const DUST_COUNT = reducedMotion ? 0 : isMobile ? 160 : 440;
+  const timeline = (baseFraction) => (baseFraction * BASE_TOTAL_MS) / TOTAL_MS;
+
+  // Preserve the existing oracle timing, then reserve 800 ms for exhibition handoff.
+  const T_INTRO = timeline(0.15);
+  const T_ORBIT = timeline(0.58);
+  const T_SLOW = timeline(0.8);
+  const T_SELECT = timeline(0.86);
+
+  const width = () => mount.clientWidth || mount.offsetWidth || window.innerWidth;
+  const height = () => mount.clientHeight || mount.offsetHeight || window.innerHeight;
+
+  const renderer = new THREE.WebGLRenderer({
+    antialias: !isMobile,
+    alpha: true,
+    powerPreference: 'high-performance',
+  });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.25 : 1.5));
+  renderer.setSize(width(), height(), false);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.domElement.className = 'giclee-random-artwork__gl';
+  mount.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x06060a, 0.085);
+
+  const camera = new THREE.PerspectiveCamera(50, width() / height(), 0.1, 100);
+  camera.position.set(0, 0.2, 8.4);
+  camera.lookAt(0, 0, 0);
+
+  const disposables = [];
+  const track = (object) => {
+    disposables.push(object);
+    return object;
+  };
+
+  // ── Portal ──
+  const portal = new THREE.Group();
+  scene.add(portal);
+
+  const glowTex = track(
+    radialSprite(THREE, [
+      [0, 'rgba(255,244,214,0.9)'],
+      [0.25, 'rgba(201,168,76,0.45)'],
+      [0.6, 'rgba(201,168,76,0.12)'],
+      [1, 'rgba(201,168,76,0)'],
+    ]),
+  );
+  const glowMat = track(
+    new THREE.SpriteMaterial({
+      map: glowTex,
+      color: 0xffffff,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      opacity: 0,
+    }),
+  );
+  const glow = new THREE.Sprite(glowMat);
+  glow.scale.set(6, 6, 1);
+  portal.add(glow);
+
+  const ringGeo = track(new THREE.TorusGeometry(1.7, 0.012, 16, 120));
+  const ringMat = track(
+    new THREE.MeshBasicMaterial({
+      color: 0xc9a84c,
+      transparent: true,
+      opacity: 0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    }),
+  );
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  portal.add(ring);
+
+  const ringInnerGeo = track(new THREE.TorusGeometry(1.28, 0.006, 16, 120));
+  const ringInnerMat = track(
+    new THREE.MeshBasicMaterial({
+      color: 0xe6cd86,
+      transparent: true,
+      opacity: 0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    }),
+  );
+  const ringInner = new THREE.Mesh(ringInnerGeo, ringInnerMat);
+  portal.add(ringInner);
+
+  // ── Light dust ──
+  let dust = null;
+  if (DUST_COUNT > 0) {
+    const positions = new Float32Array(DUST_COUNT * 3);
+    for (let index = 0; index < DUST_COUNT; index += 1) {
+      positions[index * 3] = (Math.random() - 0.5) * 16;
+      positions[index * 3 + 1] = (Math.random() - 0.5) * 10;
+      positions[index * 3 + 2] = (Math.random() - 0.5) * 10 - 1;
+    }
+    const dustGeo = track(new THREE.BufferGeometry());
+    dustGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const dustTex = track(
+      radialSprite(THREE, [
+        [0, 'rgba(255,240,210,0.9)'],
+        [0.5, 'rgba(201,168,76,0.4)'],
+        [1, 'rgba(201,168,76,0)'],
+      ]),
+    );
+    const dustMat = track(
+      new THREE.PointsMaterial({
+        size: isMobile ? 0.04 : 0.052,
+        map: dustTex,
+        color: 0xcdb488,
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+        sizeAttenuation: true,
+        blending: THREE.AdditiveBlending,
+      }),
+    );
+    dust = new THREE.Points(dustGeo, dustMat);
+    scene.add(dust);
+  }
+
+  // ── Product cards ──
+  const loader = new THREE.TextureLoader();
+  loader.crossOrigin = 'anonymous';
+  const loadTexture = (src) =>
+    new Promise((resolve) => {
+      if (!src) {
+        resolve(null);
+        return;
+      }
+      loader.load(
+        src,
+        (texture) => {
+          texture.colorSpace = THREE.SRGBColorSpace;
+          texture.anisotropy = Math.min(
+            4,
+            renderer.capabilities.getMaxAnisotropy?.() || 1,
+          );
+          resolve(texture);
+        },
+        undefined,
+        () => resolve(null),
+      );
+    });
+
+  const count = cards.length;
+  const radius = isMobile ? 2.7 : 3.4;
+  const cardW = isMobile ? 1.05 : 1.25;
+  const textures = await Promise.all(cards.map((card) => loadTexture(card.image)));
+
+  const cardEntries = cards.map((card, index) => {
+    const texture = textures[index];
+    if (texture) track(texture);
+    let aspect = 0.72;
+    if (texture?.image?.width && texture?.image?.height) {
+      aspect = texture.image.width / texture.image.height;
+    }
+    const cardH = Math.min(1.85, Math.max(0.85, cardW / aspect));
+
+    const pivot = new THREE.Group();
+    const frameGeo = track(new THREE.PlaneGeometry(cardW + 0.09, cardH + 0.09));
+    const frameMat = track(
+      new THREE.MeshBasicMaterial({ color: 0x16120b, transparent: true, opacity: 0 }),
+    );
+    const frame = new THREE.Mesh(frameGeo, frameMat);
+    pivot.add(frame);
+
+    const artGeo = track(new THREE.PlaneGeometry(cardW, cardH));
+    const artMat = track(
+      new THREE.MeshBasicMaterial({
+        color: texture ? 0xffffff : 0x2a2418,
+        map: texture || null,
+        transparent: true,
+        opacity: 0,
+      }),
+    );
+    const art = new THREE.Mesh(artGeo, artMat);
+    art.position.z = 0.012;
+    pivot.add(art);
+    scene.add(pivot);
+
+    return {
+      pivot,
+      mats: [frameMat, artMat],
+      baseAngle: (index / count) * TAU,
+      yBase: (Math.random() - 0.5) * 1.1,
+      bobPhase: Math.random() * TAU,
+      isWinner: index === winnerIndex,
+    };
+  });
+
+  const winnerBase = cardEntries[winnerIndex]?.baseAngle ?? 0;
+  let landing = (-winnerBase) % TAU;
+  if (landing < 0) landing += TAU;
+  const spinTotal = TURNS * TAU + landing;
+  const winnerTarget = new THREE.Vector3(0, 0.1, 2.18);
+
+  // ── Animation loop ──
+  let rafId = 0;
+  let startTime = 0;
+  let destroyed = false;
+  let contextLost = false;
+  let completed = false;
+  const phaseFired = { orbit: false, slow: false };
+
+  const finish = () => {
+    if (completed) return;
+    completed = true;
+    onComplete?.();
+  };
+
+  const render = (now) => {
+    if (destroyed || contextLost) return;
+    if (!startTime) startTime = now;
+    const p = clamp01((now - startTime) / TOTAL_MS);
+    const time = (now - startTime) / 1000;
+
+    if (!phaseFired.orbit && p >= T_INTRO) {
+      phaseFired.orbit = true;
+      onPhase?.(1);
+    }
+    if (!phaseFired.slow && p >= T_ORBIT) {
+      phaseFired.slow = true;
+      onPhase?.(2);
+    }
+
+    const introEase = easeOutCubic(clamp01(p / T_INTRO));
+    const spin = easeOutCubic(clamp01(p / T_SLOW)) * spinTotal;
+    const select = smoothstep(T_SLOW, T_SELECT, p);
+    const reveal = p > T_SELECT
+      ? easeInOutCubic(clamp01((p - T_SELECT) / (1 - T_SELECT)))
+      : 0;
+    const retreat = easeInOutSine(reveal);
+
+    const settle = easeInOutSine(p);
+    camera.position.z = 8.6 - easeInOutCubic(p) * 3.05;
+    camera.position.x = Math.sin(time * 0.26) * 0.22 * (1 - settle);
+    camera.position.y = 0.18 + Math.sin(time * 0.4) * 0.07 * (1 - settle * 0.7);
+    camera.lookAt(0, 0, 0);
+
+    // Portal changes from mechanism into a wide, quiet exhibition halo.
+    const flare = select * (1 - reveal * 0.72);
+    glowMat.opacity = introEase * (
+      0.32 +
+      0.11 * Math.sin(time * 1.1) +
+      0.5 * flare +
+      0.18 * reveal
+    );
+    ringMat.opacity = introEase * (0.4 + 0.35 * flare) * (1 - reveal * 0.96);
+    ringInnerMat.opacity = introEase * (0.32 + 0.4 * flare) * (1 - reveal * 0.98);
+    glow.scale.set(6 + reveal * 2.4, 6 - reveal * 2.6, 1);
+    portal.scale.setScalar(1 + flare * 0.1 + Math.sin(time * 0.7) * 0.006);
+    ring.rotation.z = time * 0.16;
+    ringInner.rotation.z = -time * 0.22;
+
+    if (dust) {
+      dust.material.opacity = introEase * (0.34 - reveal * 0.27);
+      dust.rotation.y = time * 0.03;
+      dust.rotation.x = Math.sin(time * 0.1) * 0.04;
+    }
+
+    for (const entry of cardEntries) {
+      const { pivot, mats } = entry;
+      const angle = entry.baseAngle + spin;
+      const orbitX = Math.sin(angle) * radius;
+      const orbitZ = Math.cos(angle) * radius;
+      const bob = Math.sin(time * 0.7 + entry.bobPhase) * 0.1 * (1 - reveal);
+      const orbitY = entry.yBase * (1 - reveal * 0.6) + bob;
+      const baseScale = 0.62 + introEase * 0.38;
+
+      let opacity;
+      let scale;
+
+      if (entry.isWinner) {
+        pivot.position.set(
+          THREE.MathUtils.lerp(orbitX, winnerTarget.x, reveal),
+          THREE.MathUtils.lerp(orbitY, winnerTarget.y, reveal),
+          THREE.MathUtils.lerp(orbitZ, winnerTarget.z, reveal),
+        );
+        const ceremonialLift = Math.sin(reveal * Math.PI) * 0.035;
+        scale = baseScale * (1 + select * 0.045) + reveal * 0.82 + ceremonialLift;
+        opacity = introEase;
+      } else {
+        const outwardX = orbitX * (1 + retreat * 0.16);
+        const outwardY = orbitY + Math.sign(entry.yBase || 1) * retreat * 0.2;
+        pivot.position.set(outwardX, outwardY, orbitZ - retreat * 3.6);
+        scale = baseScale * (1 - select * 0.05) * (1 - retreat * 0.42);
+        // Keep a faint trace until the handoff; no brutal cut.
+        opacity = introEase * (1 - select * 0.3) * (1 - retreat * 0.96);
+      }
+
+      pivot.scale.setScalar(scale);
+      pivot.lookAt(camera.position);
+      mats[0].opacity = opacity * 0.82;
+      mats[1].opacity = opacity;
+    }
+
+    renderer.render(scene, camera);
+
+    if (p >= 1) {
+      finish();
+      return;
+    }
+    rafId = requestAnimationFrame(render);
+  };
+
+  rafId = requestAnimationFrame(render);
+
+  // ── Resize ──
+  const onResize = () => {
+    if (destroyed) return;
+    const nextWidth = width();
+    const nextHeight = height();
+    if (!nextWidth || !nextHeight) return;
+    camera.aspect = nextWidth / nextHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(nextWidth, nextHeight, false);
+  };
+  window.addEventListener('resize', onResize);
+
+  let resizeObserver = null;
+  if (typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(onResize);
+    resizeObserver.observe(mount);
+  }
+
+  const onContextLost = (event) => {
+    event.preventDefault();
+    contextLost = true;
+    cancelAnimationFrame(rafId);
+    finish();
+  };
+  renderer.domElement.addEventListener('webglcontextlost', onContextLost, false);
+
+  const destroy = () => {
+    if (destroyed) return;
+    destroyed = true;
+    cancelAnimationFrame(rafId);
+    window.removeEventListener('resize', onResize);
+    resizeObserver?.disconnect();
+    renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
+
+    const canvas = renderer.domElement;
+    canvas.style.transition = 'opacity 0.72s cubic-bezier(0.22, 1, 0.36, 1)';
+    canvas.style.opacity = '0';
+
+    const disposeAll = () => {
+      for (const object of disposables) object.dispose?.();
+      scene.traverse((node) => {
+        node.geometry?.dispose?.();
+        if (Array.isArray(node.material)) node.material.forEach((material) => material.dispose?.());
+        else node.material?.dispose?.();
+      });
+      renderer.dispose();
+      renderer.forceContextLoss?.();
+      canvas.parentNode?.removeChild(canvas);
+    };
+
+    if (contextLost) disposeAll();
+    else window.setTimeout(disposeAll, 740);
+  };
+
+  return { destroy };
+}
