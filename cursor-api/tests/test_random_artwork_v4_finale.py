@@ -73,6 +73,8 @@ def test_v4_result_is_larger_lighter_and_does_not_create_page_overflow() -> None
     assert "max-height: min(62vh, 650px);" in css
     assert "max-height: min(62vh, calc(100svh - 292px));" in css
     assert "--grw-v4-frame-max: min(92vw, 520px);" in css
+    assert ".giclee-random-artwork__canvas" in css
+    assert "z-index: 3;" in css
     assert "body:has(.giclee-random-artwork)" in base_css
     assert "overflow: hidden;" in base_css
 
@@ -85,7 +87,7 @@ def test_v4_portal_becomes_exhibition_halo_and_resets_by_state() -> None:
         '[data-state="result"] .giclee-random-artwork__portal'
     )
     assert result_portal in css
-    assert "scale: 1.18 0.58;" in css
+    assert "scale: 1.34 0.62;" in css
     assert "opacity: 0.18;" in css
     assert "portal-ring" in css
     assert "opacity: 0;" in css
