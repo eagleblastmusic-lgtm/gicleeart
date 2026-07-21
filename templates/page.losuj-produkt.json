@@ -29,7 +29,13 @@
         "background_parallax": true,
         "design_variant": "v2",
         "atmosphere_intensity": 35,
+        "atmosphere_glow_size": 100,
+        "atmosphere_glow_response": 50,
+        "atmosphere_haze": 100,
+        "atmosphere_haze_speed": 100,
         "atmosphere_dust": 25,
+        "atmosphere_dust_amount": 50,
+        "atmosphere_dust_speed": 100,
         "color_scheme": "scheme-1"
       }
     },
