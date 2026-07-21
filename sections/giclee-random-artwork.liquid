@@ -11,8 +11,11 @@
   endif
   assign design_variant = section.settings.design_variant | default: 'v1'
   assign enable_atmosphere = false
+  assign enable_living_museum = false
   if design_variant == 'v2'
     assign enable_atmosphere = true
+  elsif design_variant == 'v3'
+    assign enable_living_museum = true
   endif
   assign atmosphere_intensity = section.settings.atmosphere_intensity | default: 35
   assign atmosphere_glow_size = section.settings.atmosphere_glow_size | default: 100
@@ -22,6 +25,15 @@
   assign atmosphere_dust = section.settings.atmosphere_dust | default: 25
   assign atmosphere_dust_amount = section.settings.atmosphere_dust_amount | default: 50
   assign atmosphere_dust_speed = section.settings.atmosphere_dust_speed | default: 100
+  assign living_light_enabled = section.settings.living_light_enabled
+  if section.settings.living_light_enabled == nil
+    assign living_light_enabled = true
+  endif
+  assign living_dust_enabled = section.settings.living_dust_enabled
+  if section.settings.living_dust_enabled == nil
+    assign living_dust_enabled = true
+  endif
+  assign living_light_intensity = section.settings.living_light_intensity | default: 45
   assign custom_bg = 'none'
   if section.settings.background_video != blank
     assign custom_bg = 'video'
@@ -32,12 +44,8 @@
 
 <link
   rel="stylesheet"
-  href="{{ 'giclee-random-artwork.css' | asset_url }}?v=grw-parallax-20260708"
+  href="{{ 'giclee-random-artwork.css' | asset_url }}?v=grw-living-museum-v3-20260721"
 >
-<script
-  src="{{ 'giclee-random-artwork.js' | asset_url }}?v=grw-title-parens-20260708"
-  defer
-></script>
 {%- if enable_atmosphere -%}
   <link
     rel="stylesheet"
@@ -47,7 +55,20 @@
     src="{{ 'giclee-random-artwork-atmosphere.js' | asset_url }}?v=grw-museum-atmosphere-controls-20260721"
     defer
   ></script>
+{%- elsif enable_living_museum -%}
+  <link
+    rel="stylesheet"
+    href="{{ 'giclee-random-artwork-living-museum.css' | asset_url }}?v=grw-living-museum-v3-20260721"
+  >
+  <script
+    src="{{ 'giclee-random-artwork-living-museum.js' | asset_url }}?v=grw-living-museum-v3-20260721"
+    defer
+  ></script>
 {%- endif -%}
+<script
+  src="{{ 'giclee-random-artwork.js' | asset_url }}?v=grw-living-museum-v3-20260721"
+  defer
+></script>
 
 <giclee-random-artwork
   class="giclee-random-artwork color-{{ section.settings.color_scheme }}{% if custom_bg != 'none' %} grw--custom-bg grw--custom-bg-{{ custom_bg }}{% endif %}"
@@ -66,6 +87,9 @@
   data-atmosphere-dust="{{ atmosphere_dust }}"
   data-atmosphere-dust-amount="{{ atmosphere_dust_amount }}"
   data-atmosphere-dust-speed="{{ atmosphere_dust_speed }}"
+  data-living-light-enabled="{% if living_light_enabled %}true{% else %}false{% endif %}"
+  data-living-dust-enabled="{% if living_dust_enabled %}true{% else %}false{% endif %}"
+  data-living-light-intensity="{{ living_light_intensity }}"
   data-webgl-url="{{ 'giclee-random-artwork-webgl.js' | asset_url }}"
   data-three-url="{{ 'three.module.js' | asset_url }}"
   data-phase-1="{{ section.settings.loading_text | escape }}"
@@ -99,7 +123,6 @@
       </div>
     {%- endif -%}
 
-    {%- comment -%} Warstwy tla — gradienty, swiatlo, ziarno, winieta {%- endcomment -%}
     <div class="giclee-random-artwork__bg" aria-hidden="true">
       <span class="giclee-random-artwork__bg-aurora"></span>
       <span class="giclee-random-artwork__bg-beams"></span>
@@ -107,11 +130,17 @@
       <span class="giclee-random-artwork__bg-vignette"></span>
     </div>
 
-    {%- comment -%} Punkt montazu sceny WebGL (ETAP 3) {%- endcomment -%}
+    {%- if enable_living_museum -%}
+      <div class="giclee-random-artwork__living-museum" data-grw-living-museum aria-hidden="true">
+        <span class="giclee-random-artwork__living-spotlight" data-grw-living-spotlight></span>
+        <canvas class="giclee-random-artwork__living-dust" data-grw-living-dust></canvas>
+        <span class="giclee-random-artwork__living-vignette"></span>
+      </div>
+    {%- endif -%}
+
     <div class="giclee-random-artwork__canvas" data-grw-canvas-mount aria-hidden="true"></div>
 
     {%- if enable_atmosphere -%}
-      {%- comment -%} Subtelne swiatlo galerii + pyl. Warstwa dekoracyjna nad scena i pod trescia. {%- endcomment -%}
       <div class="giclee-random-artwork__atmosphere" data-grw-atmosphere aria-hidden="true">
         <span class="giclee-random-artwork__atmosphere-haze giclee-random-artwork__atmosphere-haze--gallery"></span>
         <span class="giclee-random-artwork__atmosphere-haze giclee-random-artwork__atmosphere-haze--depth"></span>
@@ -120,7 +149,6 @@
       </div>
     {%- endif -%}
 
-    {%- comment -%} Portal CSS — placeholder swietlistej soczewki muzealnej {%- endcomment -%}
     <div class="giclee-random-artwork__portal" data-grw-portal aria-hidden="true">
       <span class="giclee-random-artwork__portal-halo"></span>
       <span class="giclee-random-artwork__portal-ring giclee-random-artwork__portal-ring--outer"></span>
@@ -129,7 +157,6 @@
     </div>
 
     <div class="giclee-random-artwork__content">
-      {%- comment -%} Intro / hero {%- endcomment -%}
       <header class="giclee-random-artwork__intro" data-grw-intro>
         {%- if section.settings.eyebrow != blank -%}
           <span class="giclee-random-artwork__eyebrow">{{ section.settings.eyebrow | escape }}</span>
@@ -146,12 +173,10 @@
         </button>
       </header>
 
-      {%- comment -%} Faza losowania — teksty narracyjne {%- endcomment -%}
       <div class="giclee-random-artwork__phase" data-grw-phase-wrap aria-live="polite">
         <span class="giclee-random-artwork__phase-text" data-grw-phase>{{ section.settings.loading_text | escape }}</span>
       </div>
 
-      {%- comment -%} Karta wyniku — eksponat muzealny {%- endcomment -%}
       <div class="giclee-random-artwork__result" data-grw-result hidden>
         <span class="giclee-random-artwork__result-eyebrow">{{ section.settings.result_heading | escape }}</span>
         <a class="giclee-random-artwork__frame" data-grw-result-link href="#">
@@ -167,9 +192,12 @@
             >
           </span>
         </a>
-        <span class="giclee-random-artwork__plaque">
-          <h2 class="giclee-random-artwork__result-title" data-grw-result-title></h2>
-        </span>
+        <div class="giclee-random-artwork__plaque">
+          <span class="giclee-random-artwork__result-artist" data-grw-result-artist hidden></span>
+          <h2 class="giclee-random-artwork__result-title">
+            <span data-grw-result-title></span><span class="giclee-random-artwork__result-year" data-grw-result-year hidden></span>
+          </h2>
+        </div>
         <div class="giclee-random-artwork__actions">
           <a class="giclee-random-artwork__cta giclee-random-artwork__cta--primary" data-grw-view href="#">
             {{ section.settings.view_label | escape }}
@@ -180,7 +208,6 @@
         </div>
       </div>
 
-      {%- comment -%} Stan bledu {%- endcomment -%}
       <div class="giclee-random-artwork__error" data-grw-error hidden role="alert">
         <p class="giclee-random-artwork__error-text">{{ section.settings.error_text | escape }}</p>
         <button type="button" class="giclee-random-artwork__cta giclee-random-artwork__cta--ghost" data-grw-retry>
@@ -196,277 +223,64 @@
   "name": "Losuj Obraz — oracle",
   "tag": "section",
   "class": "giclee-random-artwork-section",
-  "disabled_on": {
-    "groups": ["header", "footer"]
-  },
+  "disabled_on": { "groups": ["header", "footer"] },
   "settings": [
-    {
-      "type": "header",
-      "content": "Tresci"
-    },
-    {
-      "type": "text",
-      "id": "eyebrow",
-      "label": "Etykieta nad tytulem",
-      "default": "Fine Art Oracle"
-    },
-    {
-      "type": "text",
-      "id": "heading",
-      "label": "Naglowek",
-      "default": "Niech sztuka wybierze Ciebie"
-    },
-    {
-      "type": "textarea",
-      "id": "subtitle",
-      "label": "Podtytul",
-      "default": "Kliknij i odkryj losowo wybrane dzielo z naszej kolekcji — byc moze wlasnie ono mialo trafic do Twojego wnetrza."
-    },
-    {
-      "type": "text",
-      "id": "button_label",
-      "label": "Przycisk glowny",
-      "default": "Losuj obraz"
-    },
-    {
-      "type": "header",
-      "content": "Teksty fazy losowania"
-    },
-    {
-      "type": "text",
-      "id": "loading_text",
-      "label": "Tekst 1 (ladowanie)",
-      "default": "Przeszukuje kolekcje…"
-    },
-    {
-      "type": "text",
-      "id": "phase_text_2",
-      "label": "Tekst 2",
-      "default": "Obrazy zaczynaja mowic…"
-    },
-    {
-      "type": "text",
-      "id": "phase_text_3",
-      "label": "Tekst 3",
-      "default": "Jedno dzielo przyciaga wzrok…"
-    },
-    {
-      "type": "header",
-      "content": "Wynik"
-    },
-    {
-      "type": "text",
-      "id": "result_heading",
-      "label": "Naglowek wyniku",
-      "default": "Wybrany obraz"
-    },
-    {
-      "type": "text",
-      "id": "view_label",
-      "label": "CTA — zobacz obraz",
-      "default": "Zobacz obraz"
-    },
-    {
-      "type": "text",
-      "id": "replay_label",
-      "label": "CTA — wylosuj ponownie",
-      "default": "Wylosuj ponownie"
-    },
-    {
-      "type": "header",
-      "content": "Stan bledu"
-    },
-    {
-      "type": "text",
-      "id": "error_text",
-      "label": "Komunikat bledu",
-      "default": "Nie udalo sie wczytac kolekcji. Sprobuj ponownie."
-    },
-    {
-      "type": "text",
-      "id": "retry_label",
-      "label": "CTA — ponow",
-      "default": "Sprobuj ponownie"
-    },
-    {
-      "type": "header",
-      "content": "Pula produktow"
-    },
-    {
-      "type": "collection",
-      "id": "pool_collection",
-      "label": "Kolekcja zrodlowa",
-      "info": "Puste = wszystkie produkty (collections/all)."
-    },
-    {
-      "type": "range",
-      "id": "pool_limit",
-      "label": "Startowa pula z Liquid",
-      "min": 6,
-      "max": 50,
-      "step": 1,
-      "default": 50,
-      "info": "Shopify zwraca maks. 50 produktow w Liquid. Pelna pula doczytywana jest po stronie klienta."
-    },
-    {
-      "type": "checkbox",
-      "id": "fetch_full_pool",
-      "label": "Doczytaj pelna pule (AJAX)",
-      "default": true,
-      "info": "Pobiera wszystkie opublikowane produkty z /collections/all/products.json. Wylacz, gdy endpoint JSON jest zablokowany — zostaje pula z Liquid."
-    },
-    {
-      "type": "header",
-      "content": "Wlasne tlo"
-    },
-    {
-      "type": "paragraph",
-      "content": "Film ma pierwszenstwo przed obrazem. Puste pola = domyslna scena (aurora + WebGL)."
-    },
-    {
-      "type": "image_picker",
-      "id": "background_image",
-      "label": "Obraz tla"
-    },
-    {
-      "type": "video",
-      "id": "background_video",
-      "label": "Film / animacja tla"
-    },
-    {
-      "type": "checkbox",
-      "id": "background_parallax",
-      "label": "Parallax tla (mysz)",
-      "default": false,
-      "info": "Subtelny ruch obrazu lub filmu w tle przy ruszaniu kursorem — jak w karuzeli / konfiguratorze produktu. Dziala dla obrazu i filmu."
-    },
-    {
-      "type": "header",
-      "content": "Wariant designu"
-    },
+    { "type": "header", "content": "Tresci" },
+    { "type": "text", "id": "eyebrow", "label": "Etykieta nad tytulem", "default": "Fine Art Oracle" },
+    { "type": "text", "id": "heading", "label": "Naglowek", "default": "Niech sztuka wybierze Ciebie" },
+    { "type": "textarea", "id": "subtitle", "label": "Podtytul", "default": "Kliknij i odkryj losowo wybrane dzielo z naszej kolekcji — byc moze wlasnie ono mialo trafic do Twojego wnetrza." },
+    { "type": "text", "id": "button_label", "label": "Przycisk glowny", "default": "Losuj obraz" },
+    { "type": "header", "content": "Teksty fazy losowania" },
+    { "type": "text", "id": "loading_text", "label": "Tekst 1 (ladowanie)", "default": "Przeszukuje kolekcje…" },
+    { "type": "text", "id": "phase_text_2", "label": "Tekst 2", "default": "Obrazy zaczynaja mowic…" },
+    { "type": "text", "id": "phase_text_3", "label": "Tekst 3", "default": "Jedno dzielo przyciaga wzrok…" },
+    { "type": "header", "content": "Wynik" },
+    { "type": "text", "id": "result_heading", "label": "Naglowek wyniku", "default": "Wybrany obraz" },
+    { "type": "text", "id": "view_label", "label": "CTA — zobacz obraz", "default": "Zobacz obraz" },
+    { "type": "text", "id": "replay_label", "label": "CTA — wylosuj ponownie", "default": "Wylosuj ponownie" },
+    { "type": "header", "content": "Stan bledu" },
+    { "type": "text", "id": "error_text", "label": "Komunikat bledu", "default": "Nie udalo sie wczytac kolekcji. Sprobuj ponownie." },
+    { "type": "text", "id": "retry_label", "label": "CTA — ponow", "default": "Sprobuj ponownie" },
+    { "type": "header", "content": "Pula produktow" },
+    { "type": "collection", "id": "pool_collection", "label": "Kolekcja zrodlowa", "info": "Puste = wszystkie produkty (collections/all)." },
+    { "type": "range", "id": "pool_limit", "label": "Startowa pula z Liquid", "min": 6, "max": 50, "step": 1, "default": 50, "info": "Shopify zwraca maks. 50 produktow w Liquid. Pelna pula doczytywana jest po stronie klienta." },
+    { "type": "checkbox", "id": "fetch_full_pool", "label": "Doczytaj pelna pule (AJAX)", "default": true, "info": "Pobiera wszystkie opublikowane produkty z /collections/all/products.json." },
+    { "type": "header", "content": "Wlasne tlo" },
+    { "type": "paragraph", "content": "Film ma pierwszenstwo przed obrazem. Puste pola = domyslna scena (aurora + WebGL)." },
+    { "type": "image_picker", "id": "background_image", "label": "Obraz tla" },
+    { "type": "video", "id": "background_video", "label": "Film / animacja tla" },
+    { "type": "checkbox", "id": "background_parallax", "label": "Parallax tla (mysz)", "default": false, "info": "Subtelny ruch obrazu lub filmu w tle przy ruszaniu kursorem." },
+    { "type": "header", "content": "Wariant designu" },
     {
       "type": "select",
       "id": "design_variant",
       "label": "Wariant",
       "options": [
-        {
-          "value": "v1",
-          "label": "V1 — podstawowa"
-        },
-        {
-          "value": "v2",
-          "label": "V2 — atmosfera muzealna"
-        }
+        { "value": "v1", "label": "V1 — podstawowa" },
+        { "value": "v2", "label": "V2 — atmosfera muzealna" },
+        { "value": "v3", "label": "V3 — Living Museum Light" }
       ],
       "default": "v1",
-      "info": "V1 zachowuje podstawowy wyglad. V2 wlacza subtelne swiatlo kursora, pyl i ambientowa glebie."
+      "info": "V1 to baza. V2 dodaje edytowalna atmosfere. V3 choreografuje reflektor, pyl, WebGL i swiatlo wyniku."
     },
-    {
-      "type": "paragraph",
-      "content": "Parametry ponizej dotycza tylko V2. W Giclee App otworz je przyciskiem Edytuj atmosfere."
-    },
-    {
-      "type": "range",
-      "id": "atmosphere_intensity",
-      "label": "V2 — glow: intensywnosc",
-      "min": 0,
-      "max": 70,
-      "step": 5,
-      "unit": "%",
-      "default": 35
-    },
-    {
-      "type": "range",
-      "id": "atmosphere_glow_size",
-      "label": "V2 — glow: rozmiar",
-      "min": 60,
-      "max": 160,
-      "step": 5,
-      "unit": "%",
-      "default": 100
-    },
-    {
-      "type": "range",
-      "id": "atmosphere_glow_response",
-      "label": "V2 — glow: responsywnosc",
-      "min": 10,
-      "max": 100,
-      "step": 5,
-      "unit": "%",
-      "default": 50
-    },
-    {
-      "type": "range",
-      "id": "atmosphere_haze",
-      "label": "V2 — mgielka: intensywnosc",
-      "min": 0,
-      "max": 100,
-      "step": 5,
-      "unit": "%",
-      "default": 100
-    },
-    {
-      "type": "range",
-      "id": "atmosphere_haze_speed",
-      "label": "V2 — mgielka: szybkosc",
-      "min": 0,
-      "max": 200,
-      "step": 10,
-      "unit": "%",
-      "default": 100
-    },
-    {
-      "type": "range",
-      "id": "atmosphere_dust",
-      "label": "V2 — pyl: widocznosc",
-      "min": 0,
-      "max": 60,
-      "step": 5,
-      "unit": "%",
-      "default": 25
-    },
-    {
-      "type": "range",
-      "id": "atmosphere_dust_amount",
-      "label": "V2 — pyl: ilosc",
-      "min": 0,
-      "max": 100,
-      "step": 5,
-      "unit": "%",
-      "default": 50
-    },
-    {
-      "type": "range",
-      "id": "atmosphere_dust_speed",
-      "label": "V2 — pyl: szybkosc",
-      "min": 0,
-      "max": 200,
-      "step": 10,
-      "unit": "%",
-      "default": 100
-    },
-    {
-      "type": "header",
-      "content": "Wyglad"
-    },
-    {
-      "type": "checkbox",
-      "id": "enable_webgl",
-      "label": "Wlacz efekt WebGL (Three.js)",
-      "default": true,
-      "info": "Wylaczenie zostawia elegancki wariant CSS (portal + teksty). WebGL i tak nie startuje przy prefers-reduced-motion lub braku obslugi."
-    },
-    {
-      "type": "color_scheme",
-      "id": "color_scheme",
-      "label": "Schemat kolorow",
-      "default": "scheme-1"
-    }
+    { "type": "paragraph", "content": "Parametry V2 sa dostepne w Giclee App przez Edytuj atmosfere." },
+    { "type": "range", "id": "atmosphere_intensity", "label": "V2 — glow: intensywnosc", "min": 0, "max": 70, "step": 5, "unit": "%", "default": 35 },
+    { "type": "range", "id": "atmosphere_glow_size", "label": "V2 — glow: rozmiar", "min": 60, "max": 160, "step": 5, "unit": "%", "default": 100 },
+    { "type": "range", "id": "atmosphere_glow_response", "label": "V2 — glow: responsywnosc", "min": 10, "max": 100, "step": 5, "unit": "%", "default": 50 },
+    { "type": "range", "id": "atmosphere_haze", "label": "V2 — mgielka: intensywnosc", "min": 0, "max": 100, "step": 5, "unit": "%", "default": 100 },
+    { "type": "range", "id": "atmosphere_haze_speed", "label": "V2 — mgielka: szybkosc", "min": 0, "max": 200, "step": 10, "unit": "%", "default": 100 },
+    { "type": "range", "id": "atmosphere_dust", "label": "V2 — pyl: widocznosc", "min": 0, "max": 60, "step": 5, "unit": "%", "default": 25 },
+    { "type": "range", "id": "atmosphere_dust_amount", "label": "V2 — pyl: ilosc", "min": 0, "max": 100, "step": 5, "unit": "%", "default": 50 },
+    { "type": "range", "id": "atmosphere_dust_speed", "label": "V2 — pyl: szybkosc", "min": 0, "max": 200, "step": 10, "unit": "%", "default": 100 },
+    { "type": "header", "content": "V3 — Living Museum Light" },
+    { "type": "paragraph", "content": "Minimalne ustawienia V3. Parametry techniczne pozostaja bezpiecznymi stalymi w kodzie." },
+    { "type": "checkbox", "id": "living_light_enabled", "label": "Wlacz reflektor kursora", "default": true },
+    { "type": "checkbox", "id": "living_dust_enabled", "label": "Wlacz pyl ambientowy", "default": true },
+    { "type": "range", "id": "living_light_intensity", "label": "Intensywnosc swiatla", "min": 0, "max": 100, "step": 5, "unit": "%", "default": 45 },
+    { "type": "header", "content": "Wyglad" },
+    { "type": "checkbox", "id": "enable_webgl", "label": "Wlacz efekt WebGL (Three.js)", "default": true, "info": "Wylaczenie zostawia elegancki wariant CSS." },
+    { "type": "color_scheme", "id": "color_scheme", "label": "Schemat kolorow", "default": "scheme-1" }
   ],
-  "presets": [
-    {
-      "name": "Losuj Obraz — oracle"
-    }
-  ]
+  "presets": [{ "name": "Losuj Obraz — oracle" }]
 }
 {% endschema %}
