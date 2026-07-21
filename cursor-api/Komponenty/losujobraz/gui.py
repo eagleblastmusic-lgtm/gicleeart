@@ -66,11 +66,11 @@ def _config(host: tk.Misc):
         app_title=APP_TITLE,
         intro_title="Strona Losuj Obraz (/pages/losuj-produkt)",
         intro_body=(
-            "Lista «Wersja» jest listą wariantów designu: V1 — podstawowa oraz "
-            "V2 — atmosfera muzealna. Przycisk «Edytuj atmosferę…» otwiera ustawienia "
-            "glow, mgiełki i pyłu dla bieżącego wariantu. Edytujesz też treści sekcji w "
-            "templates/page.losuj-produkt.json. Przed zapisem tworzona jest kopia zapasowa. "
-            "Wdróż motyw, aby opublikować na sklepie."
+            "Lista «Wersja» wybiera design: V1 — podstawowa, V2 — atmosfera muzealna "
+            "oraz V3 — Living Museum Light. Przycisk «Edytuj atmosferę…» otwiera "
+            "ustawienia V2 i minimalne sterowanie reflektorem oraz pyłem V3 dla bieżącego "
+            "wariantu. Edytujesz też treści sekcji w templates/page.losuj-produkt.json. "
+            "Przed zapisem tworzona jest kopia zapasowa. Wdróż motyw, aby opublikować na sklepie."
         ),
         template_rel="templates/page.losuj-produkt.json",
         preview_path="/pages/losuj-produkt",
