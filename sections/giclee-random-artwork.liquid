@@ -12,10 +12,16 @@
   assign design_variant = section.settings.design_variant | default: 'v1'
   assign enable_atmosphere = false
   assign enable_living_museum = false
+  assign enable_v4_finale = false
+  assign webgl_asset = 'giclee-random-artwork-webgl.js'
   if design_variant == 'v2'
     assign enable_atmosphere = true
   elsif design_variant == 'v3'
     assign enable_living_museum = true
+  elsif design_variant == 'v4'
+    assign enable_living_museum = true
+    assign enable_v4_finale = true
+    assign webgl_asset = 'giclee-random-artwork-webgl-v4.js'
   endif
   assign atmosphere_intensity = section.settings.atmosphere_intensity | default: 35
   assign atmosphere_glow_size = section.settings.atmosphere_glow_size | default: 100
@@ -50,7 +56,7 @@
 
 <link
   rel="stylesheet"
-  href="{{ 'giclee-random-artwork.css' | asset_url }}?v=grw-living-museum-dust-controls-20260721"
+  href="{{ 'giclee-random-artwork.css' | asset_url }}?v=grw-v4-ceremonial-finale-20260722"
 >
 {%- if enable_atmosphere -%}
   <link
@@ -71,14 +77,27 @@
     defer
   ></script>
 {%- endif -%}
+{%- if enable_v4_finale -%}
+  <link
+    rel="stylesheet"
+    href="{{ 'giclee-random-artwork-v4.css' | asset_url }}?v=grw-v4-ceremonial-finale-20260722"
+  >
+{%- endif -%}
 <script
-  src="{{ 'giclee-random-artwork.js' | asset_url }}?v=grw-living-museum-dust-controls-20260721"
+  src="{{ 'giclee-random-artwork.js' | asset_url }}?v=grw-v4-ceremonial-finale-20260722"
   defer
 ></script>
+{%- if enable_v4_finale -%}
+  <script
+    src="{{ 'giclee-random-artwork-v4.js' | asset_url }}?v=grw-v4-ceremonial-finale-20260722"
+    defer
+  ></script>
+{%- endif -%}
 
 <giclee-random-artwork
   class="giclee-random-artwork color-{{ section.settings.color_scheme }}{% if custom_bg != 'none' %} grw--custom-bg grw--custom-bg-{{ custom_bg }}{% endif %}"
   data-state="idle"
+  data-result-stage="hidden"
   data-design-variant="{{ design_variant }}"
   data-root-url="{{ routes.root_url }}"
   data-products-endpoint="{{ routes.root_url }}/collections/all/products.json"
@@ -102,7 +121,7 @@
   data-living-dust-speed="{{ living_dust_speed }}"
   data-living-dust-fps="{{ living_dust_fps }}"
   data-living-dust-dpr-cap="{{ living_dust_dpr_cap }}"
-  data-webgl-url="{{ 'giclee-random-artwork-webgl.js' | asset_url }}"
+  data-webgl-url="{{ webgl_asset | asset_url }}"
   data-three-url="{{ 'three.module.js' | asset_url }}"
   data-phase-1="{{ section.settings.loading_text | escape }}"
   data-phase-2="{{ section.settings.phase_text_2 | escape }}"
@@ -270,12 +289,13 @@
       "options": [
         { "value": "v1", "label": "V1 — podstawowa" },
         { "value": "v2", "label": "V2 — atmosfera muzealna" },
-        { "value": "v3", "label": "V3 — Living Museum Light" }
+        { "value": "v3", "label": "V3 — Living Museum Light" },
+        { "value": "v4", "label": "V4 — finał muzealny" }
       ],
       "default": "v1",
-      "info": "V1 to baza. V2 dodaje edytowalna atmosfere. V3 choreografuje reflektor, pyl, WebGL i swiatlo wyniku."
+      "info": "V1 to baza. V2 dodaje edytowalna atmosfere. V3 dodaje Living Museum Light. V4 zachowuje V3 i przebudowuje ceremonialny final ekspozycji."
     },
-    { "type": "paragraph", "content": "Parametry V2 sa dostepne w Giclee App przez Edytuj atmosfere." },
+    { "type": "paragraph", "content": "Parametry V2 oraz Living Museum Light dla V3/V4 sa dostepne w Giclee App przez Edytuj atmosfere." },
     { "type": "range", "id": "atmosphere_intensity", "label": "V2 — glow: intensywnosc", "min": 0, "max": 70, "step": 5, "unit": "%", "default": 35 },
     { "type": "range", "id": "atmosphere_glow_size", "label": "V2 — glow: rozmiar", "min": 60, "max": 160, "step": 5, "unit": "%", "default": 100 },
     { "type": "range", "id": "atmosphere_glow_response", "label": "V2 — glow: responsywnosc", "min": 10, "max": 100, "step": 5, "unit": "%", "default": 50 },
@@ -284,7 +304,7 @@
     { "type": "range", "id": "atmosphere_dust", "label": "V2 — pyl: widocznosc", "min": 0, "max": 60, "step": 5, "unit": "%", "default": 25 },
     { "type": "range", "id": "atmosphere_dust_amount", "label": "V2 — pyl: ilosc", "min": 0, "max": 100, "step": 5, "unit": "%", "default": 50 },
     { "type": "range", "id": "atmosphere_dust_speed", "label": "V2 — pyl: szybkosc", "min": 0, "max": 200, "step": 10, "unit": "%", "default": 100 },
-    { "type": "header", "content": "V3 — Living Museum Light" },
+    { "type": "header", "content": "V3/V4 — Living Museum Light" },
     { "type": "paragraph", "content": "Domyslne parametry pylu odpowiadaja zaakceptowanej wersji: 120 drobinek, 115% widocznosci, 125% rozmiaru, 75% szybkosci, 24 FPS i DPR 1.25." },
     { "type": "checkbox", "id": "living_light_enabled", "label": "Wlacz reflektor kursora", "default": true },
     { "type": "checkbox", "id": "living_dust_enabled", "label": "Wlacz pyl ambientowy", "default": true },
