@@ -9,6 +9,12 @@
   if section.settings.enable_webgl == nil
     assign enable_webgl = true
   endif
+  assign enable_atmosphere = section.settings.enable_atmosphere
+  if section.settings.enable_atmosphere == nil
+    assign enable_atmosphere = true
+  endif
+  assign atmosphere_intensity = section.settings.atmosphere_intensity | default: 35
+  assign atmosphere_dust = section.settings.atmosphere_dust | default: 25
   assign custom_bg = 'none'
   if section.settings.background_video != blank
     assign custom_bg = 'video'
@@ -25,6 +31,16 @@
   src="{{ 'giclee-random-artwork.js' | asset_url }}?v=grw-title-parens-20260708"
   defer
 ></script>
+{%- if enable_atmosphere -%}
+  <link
+    rel="stylesheet"
+    href="{{ 'giclee-random-artwork-atmosphere.css' | asset_url }}?v=grw-museum-atmosphere-20260721"
+  >
+  <script
+    src="{{ 'giclee-random-artwork-atmosphere.js' | asset_url }}?v=grw-museum-atmosphere-20260721"
+    defer
+  ></script>
+{%- endif -%}
 
 <giclee-random-artwork
   class="giclee-random-artwork color-{{ section.settings.color_scheme }}{% if custom_bg != 'none' %} grw--custom-bg grw--custom-bg-{{ custom_bg }}{% endif %}"
@@ -33,6 +49,9 @@
   data-products-endpoint="{{ routes.root_url }}/collections/all/products.json"
   data-fetch-full="{% if fetch_full %}true{% else %}false{% endif %}"
   data-enable-webgl="{% if enable_webgl %}true{% else %}false{% endif %}"
+  data-atmosphere-enabled="{% if enable_atmosphere %}true{% else %}false{% endif %}"
+  data-atmosphere-intensity="{{ atmosphere_intensity }}"
+  data-atmosphere-dust="{{ atmosphere_dust }}"
   data-webgl-url="{{ 'giclee-random-artwork-webgl.js' | asset_url }}"
   data-three-url="{{ 'three.module.js' | asset_url }}"
   data-phase-1="{{ section.settings.loading_text | escape }}"
@@ -76,6 +95,16 @@
 
     {%- comment -%} Punkt montazu sceny WebGL (ETAP 3) {%- endcomment -%}
     <div class="giclee-random-artwork__canvas" data-grw-canvas-mount aria-hidden="true"></div>
+
+    {%- if enable_atmosphere -%}
+      {%- comment -%} Subtelne swiatlo galerii + pyl. Warstwa dekoracyjna nad scena i pod trescia. {%- endcomment -%}
+      <div class="giclee-random-artwork__atmosphere" data-grw-atmosphere aria-hidden="true">
+        <span class="giclee-random-artwork__atmosphere-haze giclee-random-artwork__atmosphere-haze--gallery"></span>
+        <span class="giclee-random-artwork__atmosphere-haze giclee-random-artwork__atmosphere-haze--depth"></span>
+        <span class="giclee-random-artwork__atmosphere-glow" data-grw-atmosphere-glow></span>
+        <canvas class="giclee-random-artwork__atmosphere-dust" data-grw-atmosphere-dust></canvas>
+      </div>
+    {%- endif -%}
 
     {%- comment -%} Portal CSS — placeholder swietlistej soczewki muzealnej {%- endcomment -%}
     <div class="giclee-random-artwork__portal" data-grw-portal aria-hidden="true">
@@ -296,6 +325,40 @@
       "label": "Parallax tla (mysz)",
       "default": false,
       "info": "Subtelny ruch obrazu lub filmu w tle przy ruszaniu kursorem — jak w karuzeli / konfiguratorze produktu. Dziala dla obrazu i filmu."
+    },
+    {
+      "type": "header",
+      "content": "Atmosfera premium"
+    },
+    {
+      "type": "paragraph",
+      "content": "Subtelne swiatlo galerii i delikatny pyl. Na telefonach i przy ograniczeniu ruchu pozostaje tylko statyczna, lekka mgielka."
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_atmosphere",
+      "label": "Wlacz atmosfere muzealna",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "atmosphere_intensity",
+      "label": "Intensywnosc swiatla",
+      "min": 0,
+      "max": 70,
+      "step": 5,
+      "unit": "%",
+      "default": 35
+    },
+    {
+      "type": "range",
+      "id": "atmosphere_dust",
+      "label": "Widocznosc pylu",
+      "min": 0,
+      "max": 60,
+      "step": 5,
+      "unit": "%",
+      "default": 25
     },
     {
       "type": "header",
