@@ -11,7 +11,10 @@ from pathlib import Path
 
 from .config import (
     DATA_DIR,
+    GPT_CLEAN_PACK_FILE,
     GPT_COMPACT_INSTRUCTIONS_FILE,
+    GPT_MASTER_INDEX_FILE,
+    GPT_README_UPDATE_FILE,
     GPT_STARTER_DIR,
     GPT_STARTER_ZIP_NAME,
     GPT_START_MESSAGE_FILE,
@@ -21,14 +24,16 @@ KNOWLEDGE_ZIP_BASENAME = "gpt_knowledge.zip"
 # Alias kompatybilnościowy — lokalny runtime ZIP w DATA_DIR (testy / starsze importy).
 KNOWLEDGE_ZIP_FILE = DATA_DIR / KNOWLEDGE_ZIP_BASENAME
 
-# Zgodne z «Pliki startowe dla GPT/GICLEE_CURSOR_ARCHITECT_CLEAN_PACK_v38.md».
-CLEAN_PACK_V38_ACTIVE_FILES: tuple[str, ...] = (
+# Zgodne z «Pliki startowe dla GPT/GICLEE_CURSOR_ARCHITECT_CLEAN_PACK_v40.md» (47 plików).
+CLEAN_PACK_V40_ACTIVE_FILES: tuple[str, ...] = (
     "CURRENT_APP_STATE.md",
     "GICLEEAPP_STUDIO_2_0_MODULE_TEMPLATE.md",
+    "GICLEE_PROJECT_REFACTOR_ROADMAP_v2.md",
+    "GICLEE_AUTONOMOUS_ENGINEERING_PIPELINE_v1.md",
     GPT_COMPACT_INSTRUCTIONS_FILE,
-    "GICLEE_CURSOR_ARCHITECT_CLEAN_PACK_v38.md",
-    "GICLEE_CURSOR_MASTER_INDEX_v38.md",
-    "README_GICLEE_CURSOR_ARCHITECT_UPDATE_v38.md",
+    GPT_CLEAN_PACK_FILE,
+    GPT_MASTER_INDEX_FILE,
+    GPT_README_UPDATE_FILE,
     "GPT_GIT_BRANCH_WORKFLOW.md",
     "GICLEE_AWWWARDS_MOTION_SYSTEM_v3.md",
     "GICLEE_BAD_EFFECTS_BLACKLIST_v31.md",
@@ -53,6 +58,12 @@ CLEAN_PACK_V38_ACTIVE_FILES: tuple[str, ...] = (
     "GICLEE_ANALYST_MODE_SHOPIFY_SNAPSHOT_v1.md",
     "GICLEE_ANALYST_MODE_GPT_ZIP_INTEGRATION_v1.md",
     "GICLEE_ANALYST_MODE_VEO_FLOW_IMAGE_VIDEO_PROMPT_DIRECTOR_v1.md",
+    "GICLEE_ANALYST_MODE_GITHUB_PR_CI_v1.md",
+    "GICLEE_ANALYST_MODE_RUNTIME_DATA_OWNERSHIP_v1.md",
+    "GICLEE_ANALYST_MODE_WRITER_EXPORT_SAFETY_v1.md",
+    "GICLEE_ANALYST_MODE_CROSS_REPO_COORDINATOR_v1.md",
+    "GICLEE_ANALYST_MODE_HANDOFF_CONTINUITY_v1.md",
+    "GICLEE_ANALYST_LESSONS_LEARNED_v1.md",
     "GICLEE_SHOPIFY_MODE_HOMEPAGE_ART_DIRECTION_v1.md",
     "GICLEE_SHOPIFY_MODE_PRODUCT_PAGE_PDP_v1.md",
     "GICLEE_SHOPIFY_MODE_COLLECTION_CATALOG_v1.md",
@@ -63,6 +74,10 @@ CLEAN_PACK_V38_ACTIVE_FILES: tuple[str, ...] = (
     "GICLEE_SHOPIFY_MODE_SEO_CONTENT_v1.md",
     "GICLEE_SHOPIFY_MODE_TRANSLATION_MARKETS_v1.md",
 )
+
+# Alias kompatybilnościowy (starsze importy / testy patchujące nazwę).
+CLEAN_PACK_V39_ACTIVE_FILES = CLEAN_PACK_V40_ACTIVE_FILES
+CLEAN_PACK_V38_ACTIVE_FILES = CLEAN_PACK_V40_ACTIVE_FILES
 
 
 def _knowledge_zip_file() -> Path:
@@ -81,14 +96,14 @@ def gpt_starter_files_dir() -> Path:
 
 
 def list_starter_markdown_files(folder: Path | None = None) -> list[Path]:
-    """Pliki z manifestu CLEAN_PACK v38 (bez archiwalnych wersji na dysku)."""
+    """Pliki z manifestu CLEAN_PACK v40 (bez archiwalnych wersji na dysku)."""
     root = (folder or gpt_starter_files_dir()).resolve()
     if not root.is_dir():
         raise FileNotFoundError(f"Brak folderu z plikami startowymi GPT: {root}")
 
     files: list[Path] = []
     missing: list[str] = []
-    for name in CLEAN_PACK_V38_ACTIVE_FILES:
+    for name in CLEAN_PACK_V40_ACTIVE_FILES:
         path = root / name
         if path.is_file():
             files.append(path)
@@ -97,13 +112,13 @@ def list_starter_markdown_files(folder: Path | None = None) -> list[Path]:
 
     if missing:
         raise FileNotFoundError(
-            f"Brak plików CLEAN_PACK v38 w {root}: {', '.join(missing)}"
+            f"Brak plików CLEAN_PACK v40 w {root}: {', '.join(missing)}"
         )
     return files
 
 
 def build_starter_knowledge_zip(folder: Path | None = None) -> Path:
-    """Tworzy giclee_cursor_architect_knowledge_v38.zip wg manifestu CLEAN_PACK v38."""
+    """Tworzy giclee_cursor_architect_knowledge_v40.zip wg manifestu CLEAN_PACK v40."""
     root = (folder or gpt_starter_files_dir()).resolve()
     md_files = list_starter_markdown_files(root)
     zip_path = root / GPT_STARTER_ZIP_NAME
@@ -118,7 +133,7 @@ def build_starter_knowledge_zip(folder: Path | None = None) -> Path:
 
 
 def read_compact_instructions(folder: Path | None = None) -> str:
-    """Treść GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md (główne instrukcje w ZIP-ie)."""
+    """Treść głównych Instructions (COMPACT v40) z folderu startowego."""
     root = (folder or gpt_starter_files_dir()).resolve()
     path = root / GPT_COMPACT_INSTRUCTIONS_FILE
     if not path.is_file():

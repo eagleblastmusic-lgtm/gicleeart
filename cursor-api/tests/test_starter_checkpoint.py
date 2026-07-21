@@ -31,12 +31,14 @@ def starter_env(tmp_path, monkeypatch):
     theme.mkdir()
 
     (source / "giclee_app").mkdir()
-    (source / "giclee_app" / "__init__.py").write_text('__version__ = "1.41.2"\n', encoding="utf-8")
+    (source / "giclee_app" / "__init__.py").write_text(
+        '__version__ = "1.41.2"\n',
+        encoding="utf-8",
+    )
 
-    marker_body = "PLACEHOLDER"
     for name in sc._STARTER_FILES_WITH_MARKERS:
         (starter / name).write_text(
-            f"# Title\n\n{sc.MARKER_START}\n{marker_body}\n{sc.MARKER_END}\n\nTail\n",
+            f"# Title\n\n{sc.MARKER_START}\nPLACEHOLDER\n{sc.MARKER_END}\n\nTail\n",
             encoding="utf-8",
         )
     (starter / sc._MASTER_INDEX_FILE).write_text(
@@ -49,10 +51,20 @@ def starter_env(tmp_path, monkeypatch):
     subprocess.run(["git", "add", "-A"], cwd=theme, check=True, capture_output=True)
     subprocess.run(["git", "commit", "-m", "root"], cwd=theme, check=True, capture_output=True)
     subprocess.run(["git", "branch", "-M", "master"], cwd=theme, check=True, capture_output=True)
-    subprocess.run(["git", "update-ref", "refs/remotes/origin/master", "HEAD"], cwd=theme, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "update-ref", "refs/remotes/origin/master", "HEAD"],
+        cwd=theme,
+        check=True,
+        capture_output=True,
+    )
     (theme / "local-only.txt").write_text("x\n", encoding="utf-8")
     subprocess.run(["git", "add", "local-only.txt"], cwd=theme, check=True, capture_output=True)
-    subprocess.run(["git", "commit", "-m", "feat(perf-agent): add guided performance audit workflow"], cwd=theme, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "commit", "-m", "feat(perf-agent): add guided performance audit workflow"],
+        cwd=theme,
+        check=True,
+        capture_output=True,
+    )
 
     monkeypatch.setattr(cfg, "CURSOR_API_DIR", source)
     monkeypatch.setattr(cfg, "GPT_STARTER_DIR", starter)
@@ -80,13 +92,11 @@ def test_sync_starter_files_after_gicleeapp_push(starter_env) -> None:
         theme_root=theme,
         pushed_at=datetime(2026, 7, 7, 12, 0, tzinfo=timezone.utc),
     )
+
     assert result.ok
     assert result.version == "1.41.2"
     assert result.gicleeapp_sha_short == "abc1234"
-    assert "CURRENT_APP_STATE.md" in result.updated_files
-    assert "GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v38.md" in result.updated_files
-    assert "Wiadomość początkowa.txt" in result.updated_files
-    assert sc._MASTER_INDEX_FILE in result.updated_files
+    assert result.updated_files == ["CURRENT_APP_STATE.md"]
 
     current = (starter / "CURRENT_APP_STATE.md").read_text(encoding="utf-8")
     assert sc.MARKER_START in current
@@ -94,7 +104,8 @@ def test_sync_starter_files_after_gicleeapp_push(starter_env) -> None:
     assert "`abc1234`" in current
     assert "Refresh GicleeApp repository snapshot" in current
     assert "feat(perf-agent)" in current
+    assert "paczka v40" in current
 
     master = (starter / sc._MASTER_INDEX_FILE).read_text(encoding="utf-8")
-    assert "GicleeApp Studio v1.41.2" in master
-    assert "abc1234" in master
+    assert "v1.40.1" in master
+    assert "abc1234" not in master

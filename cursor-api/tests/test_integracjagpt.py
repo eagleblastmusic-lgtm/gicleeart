@@ -286,13 +286,40 @@ def test_build_confirmation_checklist_message() -> None:
     from Komponenty.integracjagpt.handoff import build_confirmation_checklist_message
 
     msg = build_confirmation_checklist_message()
-    assert "GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS" not in msg
+    assert "GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v40.md" in msg
+    assert "GICLEE_PROJECT_REFACTOR_ROADMAP_v2.md" in msg
     assert "CURRENT_APP_STATE.md" in msg
     assert "GICLEE_ANALYST_*_v1.md" in msg
     assert "GICLEE_SHOPIFY_MODE_*_v1.md" in msg
     assert "GitHub connectora" in msg
+    assert "47 plików Knowledge" in msg
+    assert "integracjagpt v40" in msg
     assert msg.strip().startswith("1.")
-    assert "7. potwierdź" in msg
+    assert "10. Potwierdź" in msg
+
+
+def test_exact_head_review_stale_version_labels_removed() -> None:
+    from Komponenty.integracjagpt.config import (
+        GPT_KNOWLEDGE_PACK_VERSION,
+        GPT_STARTER_DIR,
+        GPT_START_MESSAGE_FILE,
+    )
+    from Komponenty.integracjagpt.handoff import build_confirmation_checklist_message
+
+    gui_source = (GPT_STARTER_DIR.parent / "cursor-api" / "Komponenty" / "integracjagpt" / "gui.py").read_text(
+        encoding="utf-8"
+    )
+    assert "compact instructions (v35)" not in gui_source
+    assert "GPT_KNOWLEDGE_PACK_VERSION" in gui_source
+    assert 'f"Kopiuj: compact instructions ({GPT_KNOWLEDGE_PACK_VERSION})"' in gui_source
+
+    checklist = build_confirmation_checklist_message()
+    assert "nowych modułów v3.9" not in checklist
+    assert "aktywnych modułów analyst" in checklist
+
+    start_message = (GPT_STARTER_DIR / GPT_START_MESSAGE_FILE).read_text(encoding="utf-8")
+    assert "planowania małych, bezpiecznych etapów pracy" not in start_message
+    assert "autonomicznych etapów pracy z wewnętrznymi bramami bezpieczeństwa" in start_message
 
 
 def test_find_newest_obs_recording(tmp_path) -> None:
@@ -424,10 +451,10 @@ def test_build_starter_knowledge_zip_from_md_files(tmp_path, monkeypatch) -> Non
     data_dir = tmp_path / "data"
     monkeypatch.setattr(zk, "GPT_STARTER_DIR", starter)
     monkeypatch.setattr(zk, "DATA_DIR", data_dir)
-    monkeypatch.setattr(zk, "CLEAN_PACK_V38_ACTIVE_FILES", manifest)
+    monkeypatch.setattr(zk, "CLEAN_PACK_V40_ACTIVE_FILES", manifest)
 
     zip_path = zk.build_starter_knowledge_zip()
-    assert zip_path.name == "giclee_cursor_architect_knowledge_v38.zip"
+    assert zip_path.name == "giclee_cursor_architect_knowledge_v40.zip"
     assert zip_path.is_file()
     assert data_dir.joinpath("gpt_knowledge.zip").is_file()
 
@@ -460,3 +487,24 @@ def test_write_start_message(tmp_path, monkeypatch) -> None:
     assert path.name == "Wiadomość początkowa.txt"
     assert zk.read_start_message() == "Nowa wiadomość\n\n".strip()
     assert zk.read_start_message_draft() == "Nowa wiadomość\n\n".strip()
+
+
+def test_clean_pack_v40_manifest_count_and_uniqueness() -> None:
+    from Komponenty.integracjagpt import config as cfg
+    from Komponenty.integracjagpt import zip_knowledge as zk
+
+    manifest = zk.CLEAN_PACK_V40_ACTIVE_FILES
+    assert len(manifest) == 47
+    assert len(set(manifest)) == 47
+    assert cfg.GPT_KNOWLEDGE_PACK_VERSION == "v40"
+    assert cfg.GPT_COMPACT_INSTRUCTIONS_FILE.endswith("_v40.md")
+    assert "GICLEE_AUTONOMOUS_ENGINEERING_PIPELINE_v1.md" in manifest
+    assert "GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v40.md" in manifest
+    assert "GICLEE_CURSOR_ARCHITECT_INSTRUCTIONS_COMPACT_v39.md" not in manifest
+
+
+def test_clean_pack_v40_files_exist_on_disk() -> None:
+    from Komponenty.integracjagpt import zip_knowledge as zk
+
+    files = zk.list_starter_markdown_files()
+    assert len(files) == 47
