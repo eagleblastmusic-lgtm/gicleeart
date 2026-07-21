@@ -27,6 +27,9 @@
         "background_image": "shopify://shop_images/Artwork_hanging_on_gallery_wall_202607080727.jpg",
         "background_video": "",
         "background_parallax": false,
+        "design_variant": "v1",
+        "atmosphere_intensity": 35,
+        "atmosphere_dust": 25,
         "color_scheme": "scheme-1"
       }
     },
