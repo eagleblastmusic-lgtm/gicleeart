@@ -121,17 +121,22 @@
     background: rgb(0 0 0 / 0.45);
   }
 
-  /* Jedna statyczna końcowa sekcja 100vh na jednym tle. Proces zajmuje górną
-     część, a zaufanie dolną; oba bloki są widoczne razem bez przełączania. */
+  /* Jedna statyczna końcowa sekcja na cały ekran. Wrapper wychodzi poza
+     centralną kolumnę PDP i zajmuje dokładnie 100vw × 100dvh. */
   main[data-template='product.szablon-produktu-v3']
+    .product-information
     .pdp-v3-pt-wrap {
     display: grid;
+    grid-column: 1 / -1;
     grid-template-rows: minmax(0, 58fr) minmax(0, 42fr);
-    width: 100%;
+    width: 100vw;
+    min-width: 100vw;
+    max-width: none;
     height: 100vh;
     height: 100dvh;
     min-height: 100vh;
     min-height: 100dvh;
+    margin-left: calc(50% - 50vw);
     overflow: clip;
     box-sizing: border-box;
   }
@@ -168,7 +173,8 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: clamp(0.65rem, 1.5vh, 1.25rem) 0 clamp(0.45rem, 1vh, 0.85rem);
+    padding: clamp(0.65rem, 1.5vh, 1.25rem) clamp(1.25rem, 4vw, 5rem)
+      clamp(0.45rem, 1vh, 0.85rem);
   }
 
   main[data-template='product.szablon-produktu-v3']
@@ -177,7 +183,8 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: clamp(0.35rem, 0.8vh, 0.7rem) 0 clamp(0.65rem, 1.5vh, 1.15rem);
+    padding: clamp(0.35rem, 0.8vh, 0.7rem) clamp(1.25rem, 4vw, 5rem)
+      clamp(0.65rem, 1.5vh, 1.15rem);
   }
 
   main[data-template='product.szablon-produktu-v3']
