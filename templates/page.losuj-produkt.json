@@ -27,6 +27,9 @@
         "background_image": "shopify://shop_images/Printmaker_carrying_framed_artwork_2K_202607071636.jpg",
         "background_video": "",
         "background_parallax": true,
+        "design_variant": "v2",
+        "atmosphere_intensity": 35,
+        "atmosphere_dust": 25,
         "color_scheme": "scheme-1"
       }
     },
