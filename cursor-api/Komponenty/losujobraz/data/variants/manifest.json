@@ -1,5 +1,5 @@
 {
-  "active": "lo2",
+  "active": "lo3",
   "variants": [
     {
       "id": "lo1",
@@ -8,6 +8,10 @@
     {
       "id": "lo2",
       "label": "V2 — atmosfera muzealna"
+    },
+    {
+      "id": "lo3",
+      "label": "V3 — Living Museum Light"
     }
   ]
 }
