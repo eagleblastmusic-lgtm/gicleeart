@@ -98,9 +98,12 @@ def test_giclee_app_exposes_named_v1_and_v2_design_versions() -> None:
         {"id": "lo2", "label": "V2 — atmosfera muzealna"},
     ]
 
-    v1_settings = _json_file(V1_PATH)["sections"]["random_artwork"]["settings"]
-    v2_settings = _json_file(V2_PATH)["sections"]["random_artwork"]["settings"]
-    live_settings = _json_file(TEMPLATE_PATH)["sections"]["random_artwork"]["settings"]
+    v1 = _json_file(V1_PATH)
+    v2 = _json_file(V2_PATH)
+    live = _json_file(TEMPLATE_PATH)
+    v1_settings = v1["sections"]["random_artwork"]["settings"]
+    v2_settings = v2["sections"]["random_artwork"]["settings"]
+    live_settings = live["sections"]["random_artwork"]["settings"]
 
     assert v1_settings["design_variant"] == "v1"
     assert v2_settings["design_variant"] == "v2"
@@ -109,6 +112,13 @@ def test_giclee_app_exposes_named_v1_and_v2_design_versions() -> None:
     assert v2_settings["atmosphere_intensity"] == 35
     assert v1_settings["atmosphere_dust"] == 25
     assert v2_settings["atmosphere_dust"] == 25
+
+    v1_without_mode = dict(v1_settings)
+    v2_without_mode = dict(v2_settings)
+    v1_without_mode.pop("design_variant")
+    v2_without_mode.pop("design_variant")
+    assert v1_without_mode == v2_without_mode
+    assert v2 == live
 
     gui = GUI_PATH.read_text(encoding="utf-8")
     assert "Lista «Wersja» jest listą wariantów designu" in gui
