@@ -52,7 +52,7 @@ PAGE_ZONES: tuple[TemplateZone, ...] = (
         label="Edytuj atmosferę…",
         description=(
             "V1 zachowuje wartości bez ładowania warstwy. V2 używa parametrów glow, "
-            "mgiełki i pyłu. V3 używa minimalnych ustawień reflektora oraz pyłu Living Museum Light."
+            "mgiełki i pyłu. V3 używa reflektora i zoptymalizowanego pyłu Living Museum Light."
         ),
         section_key="random_artwork",
         settings_only=True,
@@ -85,6 +85,48 @@ PAGE_ZONES: tuple[TemplateZone, ...] = (
                 "int",
                 _s("random_artwork", "settings", "living_light_intensity"),
                 hint="0–100. Domyślnie 45.",
+            ),
+            TemplateField(
+                "living_dust_particles",
+                "V3 — pył: liczba drobinek",
+                "int",
+                _s("random_artwork", "settings", "living_dust_particles"),
+                hint="20–240. Domyślnie 120.",
+            ),
+            TemplateField(
+                "living_dust_opacity",
+                "V3 — pył: widoczność (%)",
+                "int",
+                _s("random_artwork", "settings", "living_dust_opacity"),
+                hint="0–200. Domyślnie 115.",
+            ),
+            TemplateField(
+                "living_dust_size",
+                "V3 — pył: rozmiar (%)",
+                "int",
+                _s("random_artwork", "settings", "living_dust_size"),
+                hint="50–200. Domyślnie 125.",
+            ),
+            TemplateField(
+                "living_dust_speed",
+                "V3 — pył: szybkość (%)",
+                "int",
+                _s("random_artwork", "settings", "living_dust_speed"),
+                hint="0–200. Domyślnie 75.",
+            ),
+            TemplateField(
+                "living_dust_fps",
+                "V3 — pył: limit FPS",
+                "int",
+                _s("random_artwork", "settings", "living_dust_fps"),
+                hint="12–30. Domyślnie 24.",
+            ),
+            TemplateField(
+                "living_dust_dpr_cap",
+                "V3 — pył: limit jakości DPR (%)",
+                "int",
+                _s("random_artwork", "settings", "living_dust_dpr_cap"),
+                hint="75–150. Domyślnie 125 = DPR 1.25.",
             ),
         ),
     ),
