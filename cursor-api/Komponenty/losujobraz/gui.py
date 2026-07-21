@@ -21,13 +21,16 @@ def _config():
         app_title=APP_TITLE,
         intro_title="Strona Losuj Obraz (/pages/losuj-produkt)",
         intro_body=(
-            "Edytujesz etykiety sekcji WebGL w templates/page.losuj-produkt.json. "
-            "Przed zapisem tworzona jest kopia zapasowa. Wdróż motyw, aby opublikować na sklepie."
+            "Lista «Wersja» jest listą wariantów designu: V1 — podstawowa oraz "
+            "V2 — atmosfera muzealna. Edytujesz też treści sekcji w "
+            "templates/page.losuj-produkt.json. Przed zapisem tworzona jest kopia zapasowa. "
+            "Wdróż motyw, aby opublikować na sklepie."
         ),
         template_rel="templates/page.losuj-produkt.json",
         preview_path="/pages/losuj-produkt",
         variant_id_prefix="lo",
         zones=PAGE_ZONES,
+        variant_label_default="V1 — podstawowa",
     )
 
 
