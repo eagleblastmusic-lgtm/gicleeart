@@ -43,6 +43,7 @@ def test_pdp_v3_static_viewport_starts_content_at_the_top() -> None:
     source = TRUST_SNIPPET.read_text(encoding="utf-8")
 
     assert "justify-content: flex-start;" in source
+    assert "padding: 0 clamp(1.25rem, 4vw, 5rem)" in source
     assert "grid-template-rows: minmax(0, 58fr) minmax(0, 42fr);" not in source
     assert "grid-template-rows: minmax(0, 60fr) minmax(0, 40fr);" not in source
 
