@@ -1,0 +1,329 @@
+/* Losuj Obraz V4 — ceremonial exhibition finale. */
+
+.giclee-random-artwork[data-design-variant="v4"] {
+  --grw-v4-frame-max: min(540px, 88vw);
+  --grw-v4-warm-white: #eee8dc;
+  --grw-v4-champagne: rgba(226, 203, 145, 0.82);
+  --grw-v4-line: rgba(238, 232, 220, 0.2);
+  --grw-v4-surface: rgba(12, 11, 10, 0.48);
+}
+
+/* Result remains one scene: the WebGL winner crossfades into this exhibit. */
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result {
+  width: min(760px, 100%);
+  gap: clamp(9px, 1.25vw, 15px);
+  transform: none;
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-eyebrow {
+  display: none;
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__frame {
+  max-width: var(--grw-v4-frame-max);
+  padding: clamp(5px, 0.7vw, 8px);
+  border: 1px solid rgba(238, 232, 220, 0.18);
+  border-radius: 1px;
+  background: var(--grw-v4-surface);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 34px 78px -42px rgba(0, 0, 0, 0.92),
+    0 0 56px -34px rgba(219, 190, 120, 0.3);
+  transform-origin: 50% 48%;
+  transition:
+    opacity 0.72s var(--grw-ease),
+    transform 0.86s var(--grw-ease),
+    border-color 0.45s var(--grw-ease),
+    box-shadow 0.55s var(--grw-ease);
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__frame-glow {
+  inset: -18%;
+  background: radial-gradient(ellipse at 50% 48%, rgba(226, 203, 145, 0.15), transparent 66%);
+  opacity: 0.42;
+  filter: blur(18px);
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__frame:hover {
+  transform: translateY(-2px);
+  border-color: rgba(230, 205, 134, 0.34);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.07) inset,
+    0 38px 86px -44px rgba(0, 0, 0, 0.94),
+    0 0 62px -34px rgba(219, 190, 120, 0.36);
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__frame:hover .giclee-random-artwork__frame-glow {
+  opacity: 0.54;
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__frame-mat {
+  padding: clamp(5px, 0.75vw, 9px);
+  background: rgba(225, 219, 207, 0.9);
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-image {
+  max-height: min(62vh, 650px);
+  background: #0b0907;
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__plaque {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(5px, 0.8vw, 9px);
+  max-width: min(610px, 90vw);
+  padding: clamp(9px, 1vw, 13px) 1rem 0.25rem;
+  border: 0;
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-artist {
+  display: block;
+  font-family: var(--font-accent--family, var(--font-body--family));
+  font-size: clamp(0.68rem, 1.1vw, 0.78rem);
+  line-height: 1.35;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--grw-v4-champagne);
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-artist[hidden],
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-year[hidden] {
+  display: none;
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-title {
+  max-width: 30ch;
+  font-family: var(--font-heading--family, Georgia, "Times New Roman", serif);
+  font-size: clamp(1.22rem, 2.35vw, 1.78rem);
+  font-weight: 400;
+  line-height: 1.22;
+  letter-spacing: 0.006em;
+  color: var(--grw-v4-warm-white);
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-year {
+  font-size: 0.82em;
+  font-style: italic;
+  font-weight: 400;
+  color: rgba(238, 232, 220, 0.58);
+  white-space: nowrap;
+}
+
+/* One gallery action and one quiet secondary action. */
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__actions {
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  margin-top: clamp(5px, 0.9vw, 10px);
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__cta {
+  min-height: 0;
+  border-radius: 3px;
+  font-size: clamp(0.84rem, 1.2vw, 0.92rem);
+  letter-spacing: 0.075em;
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__cta--primary {
+  min-width: min(260px, 82vw);
+  height: 50px;
+  padding: 0 1.35rem;
+  border: 1px solid var(--grw-v4-line);
+  background: rgba(12, 11, 10, 0.62);
+  color: var(--grw-v4-warm-white);
+  font-weight: 400;
+  box-shadow: 0 16px 42px -30px rgba(0, 0, 0, 0.95);
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__cta--primary::after {
+  content: "→";
+  margin-left: 0.72rem;
+  color: var(--grw-v4-champagne);
+  transition: transform 0.35s var(--grw-ease), color 0.35s var(--grw-ease);
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__cta--primary:hover {
+  transform: translateY(-1px);
+  border-color: rgba(230, 205, 134, 0.42);
+  background: rgba(24, 21, 17, 0.74);
+  box-shadow: 0 20px 48px -30px rgba(0, 0, 0, 0.96);
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__cta--primary:hover::after {
+  transform: translateX(4px);
+  color: #f0dca6;
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__cta--ghost {
+  min-height: 36px;
+  padding: 0.42rem 0.65rem;
+  border: 0;
+  background: transparent;
+  color: rgba(238, 232, 220, 0.62);
+  font-size: 0.78rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  box-shadow: none;
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__cta--ghost::before {
+  content: "↻";
+  margin-right: 0.48rem;
+  font-size: 1rem;
+  line-height: 1;
+  transition: transform 0.4s var(--grw-ease);
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__cta--ghost:hover {
+  transform: none;
+  border-color: transparent;
+  color: var(--grw-v4-warm-white);
+  background: transparent;
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__cta--ghost:hover::before {
+  transform: rotate(-26deg);
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__cta:focus-visible,
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__frame:focus-visible {
+  outline: 1px solid rgba(230, 205, 134, 0.86);
+  outline-offset: 5px;
+}
+
+/* Ceremonial reveal: frame, identity, then actions. */
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__frame,
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-artist,
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-title,
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__actions {
+  opacity: 0;
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__frame {
+  transform: translateY(10px) scale(0.88);
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-artist {
+  transform: translateY(7px);
+  transition: opacity 0.48s var(--grw-ease), transform 0.58s var(--grw-ease);
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-title {
+  transform: translateY(9px);
+  transition: opacity 0.58s var(--grw-ease), transform 0.68s var(--grw-ease);
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__actions {
+  transform: translateY(8px);
+  transition: opacity 0.52s var(--grw-ease), transform 0.62s var(--grw-ease);
+}
+
+.giclee-random-artwork[data-design-variant="v4"][data-result-stage="frame"] .giclee-random-artwork__frame,
+.giclee-random-artwork[data-design-variant="v4"][data-result-stage="identity"] .giclee-random-artwork__frame,
+.giclee-random-artwork[data-design-variant="v4"][data-result-stage="actions"] .giclee-random-artwork__frame {
+  opacity: 1;
+  transform: none;
+}
+
+.giclee-random-artwork[data-design-variant="v4"][data-result-stage="identity"] .giclee-random-artwork__result-artist,
+.giclee-random-artwork[data-design-variant="v4"][data-result-stage="actions"] .giclee-random-artwork__result-artist {
+  opacity: 1;
+  transform: none;
+}
+
+.giclee-random-artwork[data-design-variant="v4"][data-result-stage="identity"] .giclee-random-artwork__result-title,
+.giclee-random-artwork[data-design-variant="v4"][data-result-stage="actions"] .giclee-random-artwork__result-title {
+  opacity: 1;
+  transform: none;
+  transition-delay: 0.11s;
+}
+
+.giclee-random-artwork[data-design-variant="v4"][data-result-stage="actions"] .giclee-random-artwork__actions {
+  opacity: 1;
+  transform: none;
+}
+
+/* The mechanism becomes a quiet exhibition light after selection. */
+.giclee-random-artwork[data-design-variant="v4"][data-state="result"] .giclee-random-artwork__portal {
+  width: clamp(380px, 56vw, 760px);
+  opacity: 0.18;
+  scale: 1.18 0.58;
+  filter: blur(1px) drop-shadow(0 0 46px rgba(218, 190, 120, 0.18));
+  transition:
+    opacity 1.15s var(--grw-ease),
+    scale 1.25s var(--grw-ease),
+    filter 1.15s var(--grw-ease);
+}
+
+.giclee-random-artwork[data-design-variant="v4"][data-state="result"] .giclee-random-artwork__portal-ring {
+  opacity: 0;
+  animation-play-state: paused;
+  transition: opacity 0.8s var(--grw-ease);
+}
+
+.giclee-random-artwork[data-design-variant="v4"][data-state="result"] .giclee-random-artwork__portal-halo {
+  background: radial-gradient(ellipse, rgba(235, 216, 170, 0.24) 0%, rgba(201, 168, 76, 0.08) 38%, transparent 72%);
+  filter: blur(24px);
+  animation-duration: 11s;
+}
+
+.giclee-random-artwork[data-design-variant="v4"][data-state="result"] .giclee-random-artwork__portal-core {
+  inset: 20%;
+  background: radial-gradient(ellipse, rgba(255, 247, 225, 0.16), rgba(201, 168, 76, 0.035) 52%, transparent 75%);
+  filter: blur(14px);
+}
+
+@media (min-width: 750px) {
+  body:has(.giclee-random-artwork) .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-image {
+    max-height: min(62vh, calc(100svh - 292px));
+  }
+}
+
+@media (max-width: 749px) {
+  .giclee-random-artwork[data-design-variant="v4"] {
+    --grw-v4-frame-max: min(92vw, 520px);
+  }
+
+  .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__content {
+    padding-inline: 14px;
+  }
+
+  .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result {
+    gap: 8px;
+  }
+
+  .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-image {
+    max-height: 51svh;
+  }
+
+  .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__cta--primary {
+    width: min(280px, 84vw);
+  }
+
+  .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__actions {
+    width: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__frame,
+  .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-artist,
+  .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-title,
+  .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__actions,
+  .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__portal {
+    transition-duration: 0.18s;
+    transition-delay: 0s;
+  }
+
+  .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__frame,
+  .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-artist,
+  .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-title,
+  .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__actions {
+    transform: none;
+  }
+}
