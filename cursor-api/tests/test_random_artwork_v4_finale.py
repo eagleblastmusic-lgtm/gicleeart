@@ -170,7 +170,17 @@ ElementClass.prototype.disconnectedCallback = function() {};
 ElementClass.prototype.setState = function(state) { this.dataset.state = state; };
 global.window = {
   matchMedia: () => ({ matches: false }),
-  setTimeout: (callback, delay) => { const id = ++timerId; timers.set(id, { callback, delay }); return id; },
+  setTimeout: (callback, delay) => {
+    const id = ++timerId;
+    timers.set(id, {
+      delay,
+      callback: () => {
+        timers.delete(id);
+        callback();
+      },
+    });
+    return id;
+  },
   clearTimeout: (id) => timers.delete(id),
   customElements: { get: () => ElementClass },
 };
