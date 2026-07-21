@@ -182,296 +182,67 @@
       }
     },
     "section_9YgpHf": {
-      "type": "section",
+      "type": "giclee-editorial-faq",
       "blocks": {
-        "text_dQBDL3": {
-          "type": "text",
-          "name": "t:names.heading",
-          "disabled": true,
+        "faq_mUQFCU": {
+          "type": "faq_item",
           "settings": {
-            "text": "<h2>Często zadawane pytania</h2>",
-            "width": "fit-content",
-            "max_width": "narrow",
-            "alignment": "left",
-            "type_preset": "h3",
-            "font": "var(--font-body--family)",
-            "font_size": "1rem",
-            "line_height": "normal",
-            "letter_spacing": "normal",
-            "case": "none",
-            "wrap": "pretty",
-            "color": "var(--color-foreground)",
-            "background": false,
-            "background_color": "#00000026",
-            "corner_radius": 0,
-            "padding-block-start": 0,
-            "padding-block-end": 0,
-            "padding-inline-start": 0,
-            "padding-inline-end": 0
-          },
-          "blocks": {}
+            "question": "Jaki jest czas realizacji zamówienia?",
+            "answer": "<p>Czas realizacji zamówienia wynosi od 3 do 7 dni. Jest to związane z czasem dostawy drewna oraz materiałów potrzebnych do produkcji. Staram się zawsze trzymać minimalne zapasy drewna jednak przed wykończeniem, które impregnuje, drewno jest podatne na paczenie. Dlatego produkty od początku do końca realizuję z materiałów dostarczonych na świeżo.</p><p>Proces produkcji składa się z wielu różnych etapów, od cięcia drewna, przez nakładanie różnych warstw wykończenia, które schną dlatego trzeba liczyć 1 dzień cięcie i malowanie podkładem, 2 dzień olejowanie i drukowanie, kolejne 3 dni wstępnego schnięcia i utwardzania olejowosku, a także schnięcie papieru po zastosowaniu sprayu ochronnego</p>",
+            "anchor": "czas-realizacji"
+          }
         },
-        "accordion_3BVjAx": {
-          "type": "accordion",
-          "name": "t:names.accordion",
+        "faq_gq7xgd": {
+          "type": "faq_item",
           "settings": {
-            "icon": "caret",
-            "dividers": false,
-            "type_preset": "h5",
-            "inherit_color_scheme": true,
-            "color_scheme": "",
-            "border": "none",
-            "border_width": 1,
-            "border_opacity": 100,
-            "border_radius": 0,
-            "padding-block-start": 0,
-            "padding-block-end": 0,
-            "padding-inline-start": 0,
-            "padding-inline-end": 0
-          },
-          "blocks": {
-            "accordion_row_mUQFCU": {
-              "type": "_accordion-row",
-              "settings": {
-                "heading": "Jaki jest czas realizacji zamówienia?",
-                "open_by_default": false,
-                "icon": "none",
-                "width": 20
-              },
-              "blocks": {
-                "text_Q8RMTC": {
-                  "type": "text",
-                  "settings": {
-                    "text": "<p>Czas realizacji zamówienia wynosi od 3 do 7 dni. Jest to związane z czasem dostawy drewna oraz materiałów potrzebnych do produkcji. Staram się zawsze trzymać minimalne zapasy drewna jednak przed wykończeniem, które impregnuje, drewno jest podatne na paczenie. Dlatego produkty od początku do końca realizuję z materiałów dostarczonych na świeżo.</p><p>Proces produkcji składa się z wielu różnych etapów, od cięcia drewna, przez nakładanie różnych warstw wykończenia, które schną dlatego trzeba liczyć 1 dzień cięcie i malowanie podkładem, 2 dzień olejowanie i drukowanie, kolejne 3 dni wstępnego schnięcia i utwardzania olejowosku, a także schnięcie papieru po zastosowaniu sprayu ochronnego</p>",
-                    "width": "100%",
-                    "max_width": "normal",
-                    "alignment": "left",
-                    "type_preset": "rte",
-                    "font": "var(--font-body--family)",
-                    "font_size": "1rem",
-                    "line_height": "normal",
-                    "letter_spacing": "normal",
-                    "case": "none",
-                    "wrap": "pretty",
-                    "color": "var(--color-foreground)",
-                    "background": false,
-                    "background_color": "#00000026",
-                    "corner_radius": 0,
-                    "padding-block-start": 0,
-                    "padding-block-end": 0,
-                    "padding-inline-start": 0,
-                    "padding-inline-end": 0
-                  },
-                  "blocks": {}
-                }
-              },
-              "block_order": [
-                "text_Q8RMTC"
-              ]
-            },
-            "accordion_row_gq7xgd": {
-              "type": "_accordion-row",
-              "name": "t:names.accordion_row",
-              "settings": {
-                "heading": "Jaki jest czas wysyłki?",
-                "open_by_default": false,
-                "icon": "none",
-                "width": 20
-              },
-              "blocks": {
-                "text_dbKFYM": {
-                  "type": "text",
-                  "name": "t:names.text",
-                  "settings": {
-                    "text": "<p>Po ukończeniu produktu obraz jest bezzwłocznie pakowany oraz wysyłany bez względu na porę dnia i nocy przez paczkomat. Po wysłaniu zamówienia otrzymasz e-mail z dalszymi informacjami. Przesyłki z reguły dochodzą w 1-2 dni roboczych</p>",
-                    "width": "100%",
-                    "max_width": "normal",
-                    "alignment": "left",
-                    "type_preset": "rte",
-                    "font": "var(--font-body--family)",
-                    "font_size": "1rem",
-                    "line_height": "normal",
-                    "letter_spacing": "normal",
-                    "case": "none",
-                    "wrap": "pretty",
-                    "color": "var(--color-foreground)",
-                    "background": false,
-                    "background_color": "#00000026",
-                    "corner_radius": 0,
-                    "padding-block-start": 0,
-                    "padding-block-end": 0,
-                    "padding-inline-start": 0,
-                    "padding-inline-end": 0
-                  },
-                  "blocks": {}
-                }
-              },
-              "block_order": [
-                "text_dbKFYM"
-              ]
-            },
-            "accordion_row_fxrNFP": {
-              "type": "_accordion-row",
-              "settings": {
-                "heading": "Czy jest możliwość kontaktu telefonicznego?",
-                "open_by_default": false,
-                "icon": "none",
-                "width": 20
-              },
-              "blocks": {
-                "text_KT9gtp": {
-                  "type": "text",
-                  "settings": {
-                    "text": "<p>Niestety nie ma. Działalność prowadzę sam i nie jestem w stanie podczas pracy w ciągu dnia odbierać telefonów. Proszę o kontakt emailowy. Zazwyczaj wieczorem albo w nocy odpisuję.</p>",
-                    "width": "100%",
-                    "max_width": "normal",
-                    "alignment": "left",
-                    "type_preset": "rte",
-                    "font": "var(--font-body--family)",
-                    "font_size": "1rem",
-                    "line_height": "normal",
-                    "letter_spacing": "normal",
-                    "case": "none",
-                    "wrap": "pretty",
-                    "color": "var(--color-foreground)",
-                    "background": false,
-                    "background_color": "#00000026",
-                    "corner_radius": 0,
-                    "padding-block-start": 0,
-                    "padding-block-end": 0,
-                    "padding-inline-start": 0,
-                    "padding-inline-end": 0
-                  },
-                  "blocks": {}
-                }
-              },
-              "block_order": [
-                "text_KT9gtp"
-              ]
-            },
-            "accordion_row_VwgmXW": {
-              "type": "_accordion-row",
-              "name": "t:names.accordion_row",
-              "settings": {
-                "heading": "Gdzie są produkowane wasze produkty?",
-                "open_by_default": false,
-                "icon": "none",
-                "width": 20
-              },
-              "blocks": {
-                "text_kCYhHF": {
-                  "type": "text",
-                  "name": "t:names.text",
-                  "settings": {
-                    "text": "<p>Moja pracownia mieści się w Pucku woj. Pomorskie, jednak brak możliwości jest odbiorów osobistych</p>",
-                    "width": "100%",
-                    "max_width": "normal",
-                    "alignment": "left",
-                    "type_preset": "rte",
-                    "font": "var(--font-body--family)",
-                    "font_size": "1rem",
-                    "line_height": "normal",
-                    "letter_spacing": "normal",
-                    "case": "none",
-                    "wrap": "pretty",
-                    "color": "var(--color-foreground)",
-                    "background": false,
-                    "background_color": "#00000026",
-                    "corner_radius": 0,
-                    "padding-block-start": 0,
-                    "padding-block-end": 0,
-                    "padding-inline-start": 0,
-                    "padding-inline-end": 0
-                  },
-                  "blocks": {}
-                }
-              },
-              "block_order": [
-                "text_kCYhHF"
-              ]
-            },
-            "accordion_row_7nCpLH": {
-              "type": "_accordion-row",
-              "name": "t:names.accordion_row",
-              "settings": {
-                "heading": "Ile kosztuje wysyłka?",
-                "open_by_default": false,
-                "icon": "none",
-                "width": 20
-              },
-              "blocks": {
-                "text_BnRprG": {
-                  "type": "text",
-                  "name": "t:names.text",
-                  "settings": {
-                    "text": "<p>Wysyłka jest całkowicie darmowa</p>",
-                    "width": "100%",
-                    "max_width": "normal",
-                    "alignment": "left",
-                    "type_preset": "rte",
-                    "font": "var(--font-body--family)",
-                    "font_size": "1rem",
-                    "line_height": "normal",
-                    "letter_spacing": "normal",
-                    "case": "none",
-                    "wrap": "pretty",
-                    "color": "var(--color-foreground)",
-                    "background": false,
-                    "background_color": "#00000026",
-                    "corner_radius": 0,
-                    "padding-block-start": 0,
-                    "padding-block-end": 0,
-                    "padding-inline-start": 0,
-                    "padding-inline-end": 0
-                  },
-                  "blocks": {}
-                }
-              },
-              "block_order": [
-                "text_BnRprG"
-              ]
-            }
-          },
-          "block_order": [
-            "accordion_row_mUQFCU",
-            "accordion_row_gq7xgd",
-            "accordion_row_fxrNFP",
-            "accordion_row_VwgmXW",
-            "accordion_row_7nCpLH"
-          ]
+            "question": "Jaki jest czas wysyłki?",
+            "answer": "<p>Po ukończeniu produktu obraz jest bezzwłocznie pakowany oraz wysyłany bez względu na porę dnia i nocy przez paczkomat. Po wysłaniu zamówienia otrzymasz e-mail z dalszymi informacjami. Przesyłki z reguły dochodzą w 1-2 dni roboczych</p>",
+            "anchor": "czas-wysylki"
+          }
+        },
+        "faq_fxrNFP": {
+          "type": "faq_item",
+          "settings": {
+            "question": "Czy jest możliwość kontaktu telefonicznego?",
+            "answer": "<p>Niestety nie ma. Działalność prowadzę sam i nie jestem w stanie podczas pracy w ciągu dnia odbierać telefonów. Proszę o kontakt emailowy. Zazwyczaj wieczorem albo w nocy odpisuję.</p>",
+            "anchor": "kontakt-telefoniczny"
+          }
+        },
+        "faq_VwgmXW": {
+          "type": "faq_item",
+          "settings": {
+            "question": "Gdzie są produkowane wasze produkty?",
+            "answer": "<p>Moja pracownia mieści się w Pucku woj. Pomorskie, jednak brak możliwości jest odbiorów osobistych</p>",
+            "anchor": "miejsce-produkcji"
+          }
+        },
+        "faq_7nCpLH": {
+          "type": "faq_item",
+          "settings": {
+            "question": "Ile kosztuje wysyłka?",
+            "answer": "<p>Wysyłka jest całkowicie darmowa</p>",
+            "anchor": "koszt-wysylki"
+          }
         }
       },
       "block_order": [
-        "text_dQBDL3",
-        "accordion_3BVjAx"
+        "faq_mUQFCU",
+        "faq_gq7xgd",
+        "faq_fxrNFP",
+        "faq_VwgmXW",
+        "faq_7nCpLH"
       ],
-      "name": "t:names.faq_section",
+      "name": "Editorial FAQ Archive",
       "settings": {
-        "content_direction": "column",
-        "vertical_on_mobile": true,
-        "horizontal_alignment": "flex-start",
-        "vertical_alignment": "center",
-        "align_baseline": false,
-        "horizontal_alignment_flex_direction_column": "center",
-        "vertical_alignment_flex_direction_column": "center",
-        "gap": 32,
-        "section_width": "page-width",
-        "section_height": "",
-        "section_height_custom": 50,
+        "eyebrow": "Archiwum informacji",
+        "heading": "Często zadawane pytania",
+        "description": "",
         "color_scheme": "scheme-e18462de-e99c-420d-a3cb-9a769e695267",
-        "background_media": "none",
-        "video_position": "cover",
-        "background_image_position": "cover",
-        "border": "none",
-        "border_width": 1,
-        "border_opacity": 100,
-        "border_radius": 0,
-        "toggle_overlay": false,
-        "overlay_color": "#00000026",
-        "overlay_style": "solid",
-        "gradient_direction": "to top",
-        "padding-block-start": 48,
-        "padding-block-end": 48
+        "section_width": "page-width",
+        "padding_top": 64,
+        "padding_bottom": 88,
+        "open_first": false,
+        "premium_motion": true
       }
     }
   },
