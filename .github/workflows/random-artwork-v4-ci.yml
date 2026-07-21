@@ -47,8 +47,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements-dev.txt
+          python -m pip install --disable-pip-version-check --quiet -r requirements-dev.txt
           python -m pip check
 
       - name: Run Losuj Obraz targeted tests
@@ -56,7 +55,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          python -m pytest -q `
+          python -m pytest -q --tb=short `
             tests/test_random_artwork_atmosphere.py `
             tests/test_random_artwork_living_museum.py `
             tests/test_random_artwork_v3_dust_controls.py `
