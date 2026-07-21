@@ -18,7 +18,7 @@ VARIANTS = tuple(
     / "variants"
     / variant
     / "page.losuj-produkt.json"
-    for variant in ("lo1", "lo2", "lo3")
+    for variant in ("lo1", "lo2", "lo3", "lo4")
 )
 
 
@@ -54,7 +54,7 @@ def _schema() -> dict:
     return json.loads(raw)
 
 
-def test_v3_dust_defaults_are_persisted_in_all_variants_and_live_template() -> None:
+def test_living_dust_defaults_are_persisted_in_all_variants_and_live_template() -> None:
     documents = [*_json_variants(), _json(TEMPLATE)]
     for document in documents:
         settings = document["sections"]["random_artwork"]["settings"]
@@ -64,14 +64,15 @@ def test_v3_dust_defaults_are_persisted_in_all_variants_and_live_template() -> N
     assert documents[0]["sections"]["random_artwork"]["settings"]["design_variant"] == "v1"
     assert documents[1]["sections"]["random_artwork"]["settings"]["design_variant"] == "v2"
     assert documents[2]["sections"]["random_artwork"]["settings"]["design_variant"] == "v3"
-    assert documents[3] == documents[2]
+    assert documents[3]["sections"]["random_artwork"]["settings"]["design_variant"] == "v4"
+    assert documents[4] == documents[3]
 
 
 def _json_variants() -> list[dict]:
     return [_json(path) for path in VARIANTS]
 
 
-def test_v3_dust_controls_are_exposed_in_giclee_app_and_shopify_schema() -> None:
+def test_living_dust_controls_are_exposed_in_giclee_app_and_shopify_schema() -> None:
     registry = REGISTRY.read_text(encoding="utf-8")
     settings = {
         item.get("id"): item
@@ -86,7 +87,7 @@ def test_v3_dust_controls_are_exposed_in_giclee_app_and_shopify_schema() -> None
         assert (settings[key]["min"], settings[key]["max"]) == RANGES[key]
 
 
-def test_v3_uses_optimized_sprite_renderer_without_particle_shadows() -> None:
+def test_v3_v4_use_optimized_sprite_renderer_without_particle_shadows() -> None:
     source = LIVING_JS.read_text(encoding="utf-8")
 
     assert "desynchronized: true" in source
