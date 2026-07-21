@@ -37,6 +37,17 @@ def test_pdp_v3_process_and_trust_share_one_static_viewport() -> None:
     assert ".pdp-v3-pt-stage" not in source
 
 
+def test_pdp_v3_static_viewport_is_true_full_bleed() -> None:
+    source = TRUST_SNIPPET.read_text(encoding="utf-8")
+
+    assert "grid-column: 1 / -1;" in source
+    assert "width: 100vw;" in source
+    assert "min-width: 100vw;" in source
+    assert "max-width: none;" in source
+    assert "margin-left: calc(50% - 50vw);" in source
+    assert "clamp(1.25rem, 4vw, 5rem)" in source
+
+
 def test_pdp_v3_static_section_uses_only_the_wrapper_background() -> None:
     source = TRUST_SNIPPET.read_text(encoding="utf-8")
 
