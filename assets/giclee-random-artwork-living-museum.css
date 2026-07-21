@@ -1,0 +1,157 @@
+/* Losuj Obraz V3 — Living Museum Light */
+
+.giclee-random-artwork[data-design-variant="v3"] {
+  --grw-lml-intensity: 0.45;
+}
+
+.giclee-random-artwork[data-design-variant="v3"] .giclee-random-artwork__canvas {
+  z-index: 2;
+}
+
+.giclee-random-artwork[data-design-variant="v3"] .giclee-random-artwork__portal {
+  z-index: 2;
+}
+
+.giclee-random-artwork[data-design-variant="v3"] .giclee-random-artwork__content {
+  z-index: 3;
+}
+
+.giclee-random-artwork__living-museum {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+  contain: paint;
+}
+
+.giclee-random-artwork__living-spotlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: clamp(540px, 58vw, 920px);
+  height: clamp(280px, 36vw, 560px);
+  border-radius: 48% 52% 46% 54% / 54% 43% 57% 46%;
+  background:
+    radial-gradient(
+      ellipse at 48% 48%,
+      rgba(255, 250, 236, 0.15) 0%,
+      rgba(239, 226, 191, 0.09) 24%,
+      rgba(205, 177, 111, 0.035) 52%,
+      transparent 76%
+    );
+  mix-blend-mode: screen;
+  opacity: 0;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+.giclee-random-artwork__living-dust {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.giclee-random-artwork__living-vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(65% 68% at var(--grw-lml-x, 50%) var(--grw-lml-y, 44%), transparent 36%, rgba(0, 0, 0, 0.09) 68%, rgba(0, 0, 0, 0.24) 100%);
+  opacity: 0;
+  transition: opacity 900ms var(--grw-ease);
+}
+
+.giclee-random-artwork[data-living-light-state="loading"] .giclee-random-artwork__living-museum {
+  opacity: 0.94;
+}
+
+.giclee-random-artwork[data-living-light-state="drawing"] .giclee-random-artwork__living-museum {
+  opacity: 0;
+  transition: opacity 520ms var(--grw-ease);
+}
+
+.giclee-random-artwork[data-living-light-state="result"] .giclee-random-artwork__living-museum {
+  opacity: 1;
+  transition: opacity 760ms var(--grw-ease);
+}
+
+.giclee-random-artwork[data-living-light-state="result"] .giclee-random-artwork__living-vignette {
+  opacity: 1;
+}
+
+.giclee-random-artwork[data-living-light-state="error"] .giclee-random-artwork__living-museum {
+  opacity: 0.45;
+}
+
+.giclee-random-artwork[data-design-variant="v3"] .giclee-random-artwork__plaque {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.36rem;
+  max-width: min(620px, 90vw);
+  padding: 0.8rem 1.5rem 0.7rem;
+}
+
+.giclee-random-artwork[data-design-variant="v3"] .giclee-random-artwork__result-artist {
+  display: block;
+  font-family: var(--font-accent--family, var(--font-body--family));
+  font-size: clamp(0.7rem, 1.25vw, 0.82rem);
+  line-height: 1.3;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(230, 205, 134, 0.82);
+}
+
+.giclee-random-artwork[data-design-variant="v3"] .giclee-random-artwork__result-artist[hidden],
+.giclee-random-artwork[data-design-variant="v3"] .giclee-random-artwork__result-year[hidden] {
+  display: none;
+}
+
+.giclee-random-artwork[data-design-variant="v3"] .giclee-random-artwork__result-title {
+  max-width: 26ch;
+  font-size: clamp(1.3rem, 2.8vw, 2rem);
+  line-height: 1.16;
+}
+
+.giclee-random-artwork[data-design-variant="v3"] .giclee-random-artwork__result-year {
+  color: rgba(239, 231, 214, 0.72);
+  white-space: nowrap;
+}
+
+@media (max-width: 749px), (hover: none), (pointer: coarse) {
+  .giclee-random-artwork__living-dust {
+    display: none;
+  }
+
+  .giclee-random-artwork__living-spotlight {
+    left: 50%;
+    top: 42%;
+    width: min(130vw, 680px);
+    height: min(84vw, 410px);
+    opacity: calc(var(--grw-lml-intensity) * 0.26) !important;
+    transform: translate3d(-50%, -50%, 0) rotate(-6deg) !important;
+    will-change: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giclee-random-artwork__living-dust {
+    display: none;
+  }
+
+  .giclee-random-artwork__living-spotlight {
+    left: 50%;
+    top: 43%;
+    opacity: calc(var(--grw-lml-intensity) * 0.2) !important;
+    transform: translate3d(-50%, -50%, 0) rotate(-6deg) !important;
+    will-change: auto;
+  }
+
+  .giclee-random-artwork__living-vignette {
+    transition: none;
+  }
+}
