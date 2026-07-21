@@ -36,9 +36,11 @@ def test_appearance_zone_exposes_graphics_before_dimensions() -> None:
     assert zone.fields[0].path == ("appearance", PREVIEW_GRAPHICS_VARIANT_FIELD_ID)
 
 
-def test_deploy_config_defaults_to_v1() -> None:
+def test_deploy_config_uses_supported_variant_without_changing_code_default() -> None:
     payload = json.loads(CONFIG.read_text(encoding="utf-8"))
-    assert payload["appearance"]["preview_graphics_variant"] == "v1"
+    supported = {variant_id for variant_id, _label in PREVIEW_GRAPHICS_VARIANT_OPTIONS}
+    assert payload["appearance"]["preview_graphics_variant"] in supported
+    assert DEFAULT_PREVIEW_GRAPHICS_VARIANT == "v1"
 
 
 def test_frontend_applies_data_attribute_and_v2_css_only() -> None:
