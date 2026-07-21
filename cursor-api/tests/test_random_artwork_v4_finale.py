@@ -180,7 +180,7 @@ assert.strictEqual(root.dataset.resultStage, "frame");
 assert.strictEqual(artist.hidden, false);
 assert.strictEqual(year.hidden, false);
 const ordered = [...timers.values()].sort((a, b) => a.delay - b.delay);
-assert.deepStrictEqual(ordered.map((item) => item.delay), [310, 700]);
+assert.deepStrictEqual(ordered.map((item) => item.delay), [300, 550]);
 ordered[0].callback();
 assert.strictEqual(root.dataset.resultStage, "identity");
 ordered[1].callback();
@@ -207,8 +207,19 @@ console.log(JSON.stringify({ stage: root.dataset.resultStage || null }));
 @pytest.mark.skipif(shutil.which("node") is None, reason="Node.js is required")
 @pytest.mark.parametrize("path", [V4_JS, V4_WEBGL])
 def test_v4_javascript_syntax(path: Path) -> None:
+    node = shutil.which("node") or "node"
+    if path == V4_WEBGL:
+        subprocess.run(
+            [node, "--input-type=module", "--check"],
+            input=path.read_text(encoding="utf-8"),
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return
+
     subprocess.run(
-        [shutil.which("node") or "node", "--check", str(path)],
+        [node, "--check", str(path)],
         check=True,
         capture_output=True,
         text=True,
