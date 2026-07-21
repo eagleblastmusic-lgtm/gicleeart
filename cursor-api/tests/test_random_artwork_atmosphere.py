@@ -15,6 +15,18 @@ MANIFEST_PATH = COMPONENT_DIR / "data" / "variants" / "manifest.json"
 V1_PATH = COMPONENT_DIR / "data" / "variants" / "lo1" / "page.losuj-produkt.json"
 V2_PATH = COMPONENT_DIR / "data" / "variants" / "lo2" / "page.losuj-produkt.json"
 GUI_PATH = COMPONENT_DIR / "gui.py"
+REGISTRY_PATH = COMPONENT_DIR / "registry.py"
+
+ATMOSPHERE_DEFAULTS = {
+    "atmosphere_intensity": 35,
+    "atmosphere_glow_size": 100,
+    "atmosphere_glow_response": 50,
+    "atmosphere_haze": 100,
+    "atmosphere_haze_speed": 100,
+    "atmosphere_dust": 25,
+    "atmosphere_dust_amount": 50,
+    "atmosphere_dust_speed": 100,
+}
 
 
 def _strip_json_header(raw: str) -> str:
@@ -42,8 +54,17 @@ def test_random_artwork_wires_atmosphere_below_content() -> None:
     assert "giclee-random-artwork-atmosphere.js" in section
     assert 'data-design-variant="{{ design_variant }}"' in section
     assert 'data-atmosphere-enabled=' in section
-    assert 'data-atmosphere-intensity=' in section
-    assert 'data-atmosphere-dust=' in section
+    for key in (
+        "intensity",
+        "glow-size",
+        "glow-response",
+        "haze",
+        "haze-speed",
+        "dust",
+        "dust-amount",
+        "dust-speed",
+    ):
+        assert f'data-atmosphere-{key}=' in section
     assert "data-grw-atmosphere" in section
     assert "data-grw-atmosphere-glow" in section
     assert "data-grw-atmosphere-dust" in section
@@ -68,7 +89,7 @@ def test_random_artwork_v1_does_not_load_v2_atmosphere() -> None:
     assert "section.settings.enable_atmosphere" not in section
 
 
-def test_random_artwork_design_variant_is_configurable_in_shopify_schema() -> None:
+def test_random_artwork_design_variant_and_atmosphere_schema() -> None:
     schema = _schema(SECTION_PATH.read_text(encoding="utf-8"))
     settings = {
         item.get("id"): item
@@ -84,13 +105,26 @@ def test_random_artwork_design_variant_is_configurable_in_shopify_schema() -> No
         {"value": "v2", "label": "V2 — atmosfera muzealna"},
     ]
     assert "enable_atmosphere" not in settings
-    assert settings["atmosphere_intensity"]["default"] == 35
-    assert settings["atmosphere_intensity"]["max"] == 70
-    assert settings["atmosphere_dust"]["default"] == 25
-    assert settings["atmosphere_dust"]["max"] == 60
+
+    expected_ranges = {
+        "atmosphere_intensity": (0, 70, 35),
+        "atmosphere_glow_size": (60, 160, 100),
+        "atmosphere_glow_response": (10, 100, 50),
+        "atmosphere_haze": (0, 100, 100),
+        "atmosphere_haze_speed": (0, 200, 100),
+        "atmosphere_dust": (0, 60, 25),
+        "atmosphere_dust_amount": (0, 100, 50),
+        "atmosphere_dust_speed": (0, 200, 100),
+    }
+    for setting_id, (minimum, maximum, default) in expected_ranges.items():
+        setting = settings[setting_id]
+        assert setting["type"] == "range"
+        assert setting["min"] == minimum
+        assert setting["max"] == maximum
+        assert setting["default"] == default
 
 
-def test_giclee_app_exposes_named_v1_and_v2_design_versions() -> None:
+def test_giclee_app_exposes_named_variants_and_atmosphere_editor() -> None:
     manifest = _json_file(MANIFEST_PATH)
     assert manifest["active"] == "lo2"
     assert manifest["variants"] == [
@@ -108,10 +142,10 @@ def test_giclee_app_exposes_named_v1_and_v2_design_versions() -> None:
     assert v1_settings["design_variant"] == "v1"
     assert v2_settings["design_variant"] == "v2"
     assert live_settings["design_variant"] == "v2"
-    assert v1_settings["atmosphere_intensity"] == 35
-    assert v2_settings["atmosphere_intensity"] == 35
-    assert v1_settings["atmosphere_dust"] == 25
-    assert v2_settings["atmosphere_dust"] == 25
+    for key, value in ATMOSPHERE_DEFAULTS.items():
+        assert v1_settings[key] == value
+        assert v2_settings[key] == value
+        assert live_settings[key] == value
 
     v1_without_mode = dict(v1_settings)
     v2_without_mode = dict(v2_settings)
@@ -121,8 +155,15 @@ def test_giclee_app_exposes_named_v1_and_v2_design_versions() -> None:
     assert v2 == live
 
     gui = GUI_PATH.read_text(encoding="utf-8")
+    registry = REGISTRY_PATH.read_text(encoding="utf-8")
     assert "Lista «Wersja» jest listą wariantów designu" in gui
     assert 'variant_label_default="V1 — podstawowa"' in gui
+    assert 'extra_toolbar=(("Edytuj atmosferę…"' in gui
+    assert '_ATMOSPHERE_ZONE_ID = "random_artwork_atmosphere"' in gui
+    assert 'zone_id="random_artwork_atmosphere"' in registry
+    assert 'label="Edytuj atmosferę…"' in registry
+    for key in ATMOSPHERE_DEFAULTS:
+        assert f'"{key}"' in registry
 
 
 def test_random_artwork_atmosphere_keeps_input_and_motion_accessible() -> None:
@@ -132,17 +173,33 @@ def test_random_artwork_atmosphere_keeps_input_and_motion_accessible() -> None:
     assert "pointer-events: none;" in css
     assert "z-index: 1;" in css
     assert "contain: paint;" in css
+    assert "--grw-haze-gallery-opacity" in css
+    assert "--grw-haze-depth-opacity" in css
+    assert "--grw-haze-gallery-duration" in css
+    assert "--grw-haze-depth-duration" in css
+    assert 'data-atmosphere-haze-paused="true"' in css
     assert "@media (max-width: 749px), (hover: none), (pointer: coarse)" in css
     assert "@media (prefers-reduced-motion: reduce)" in css
     assert css.count("giclee-random-artwork__atmosphere-dust") >= 3
     assert "display: none;" in css
 
 
-def test_random_artwork_atmosphere_is_viewport_scoped_and_frame_limited() -> None:
+def test_random_artwork_atmosphere_is_tunable_and_frame_limited() -> None:
     source = ATMOSPHERE_JS_PATH.read_text(encoding="utf-8")
 
     assert "const MAX_DEVICE_PIXEL_RATIO = 1.5;" in source
     assert "const DUST_FRAME_INTERVAL_MS = 1000 / 24;" in source
+    for dataset_key in (
+        "atmosphereIntensity",
+        "atmosphereGlowSize",
+        "atmosphereGlowResponse",
+        "atmosphereHaze",
+        "atmosphereHazeSpeed",
+        "atmosphereDust",
+        "atmosphereDustAmount",
+        "atmosphereDustSpeed",
+    ):
+        assert f"'{dataset_key}'" in source
     assert "new IntersectionObserver" in source
     assert "new ResizeObserver" in source
     assert "document.hidden" in source
@@ -152,5 +209,8 @@ def test_random_artwork_atmosphere_is_viewport_scoped_and_frame_limited() -> Non
     assert "cancelAnimationFrame" in source
     assert "setInterval" not in source
     assert "window.addEventListener('pointermove'" not in source
-    assert "10, 36" in source
+    assert "baseCount * amountScale" in source
+    assert "clamp(baseCount * amountScale, 0, 48)" in source
+    assert "particle.speed * this.dustSpeed" in source
+    assert "responseTimeMs" in source
     assert source.count("getBoundingClientRect()") <= 3
