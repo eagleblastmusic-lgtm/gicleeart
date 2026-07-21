@@ -1,52 +1,43 @@
 # Komponent: losujobraz
 
-**Cel:** Edycja wyglądu i treści szablonu motywu `templates/page.losuj-produkt.json` — pozycja menu **Losuj Obraz**.
+**Cel:** edycja wyglądu i treści `templates/page.losuj-produkt.json` dla pozycji menu **Losuj Obraz**.
 
-| Plik | Rola |
-|------|------|
-| `Komponenty/losujobraz/registry.py` | Mapowanie stref → ścieżki JSON |
-| `Komponenty/losujobraz/gui.py` | Cienka warstwa → `_shared/theme_page_editor` |
-| `Komponenty/_shared/theme_page_editor/` | Wspólny edytor (warianty, backup, deploy) |
-
-Tryb: `inline` (sekcja **Administracja strony**). Uruchomienie: `python -m Komponenty.losujobraz`.
-
-**Szablon:** `templates/page.losuj-produkt.json` · **Podgląd:** `/pages/losuj-produkt`
+Tryb: `inline` w sekcji **Administracja strony**. Uruchomienie: `python -m Komponenty.losujobraz`. Podgląd: `/pages/losuj-produkt`.
 
 ## Warianty designu w Giclee App
 
-Lista **Wersja** w edytorze Losuj Obraz pełni rolę bezpiecznego selektora wariantów designu:
+Lista **Wersja** jest selektorem pełnych wariantów strony:
 
 | Wariant | ID | Efekt |
-|---------|----|-------|
-| **V1 — podstawowa** | `lo1` / `design_variant: v1` | Dotychczasowy wygląd bez dodatkowej warstwy światła, pyłu i mgiełki. |
-| **V2 — atmosfera muzealna** | `lo2` / `design_variant: v2` | Subtelny ivory/champagne glow kursora, oszczędny pył i ambientowa głębia. |
+|---|---|---|
+| **V1 — podstawowa** | `lo1` / `v1` | Baza bez dodatkowej warstwy atmosfery. |
+| **V2 — atmosfera muzealna** | `lo2` / `v2` | Edytowalny glow, mgiełka i pył V2. |
+| **V3 — Living Museum Light** | `lo3` / `v3` | Reflektor galerii, pył zależny od światła, handoff do WebGL oraz muzealna tabliczka artysta / tytuł / rok. |
 
-Aktywnym wariantem jest `lo2`. Przełączenie pozycji na liście wczytuje pełny zapis danego wariantu, a **Zapisz** utrwala go w `templates/page.losuj-produkt.json` oraz w danych wariantu. Mechanizm korzysta z istniejącego systemu kopii zapasowych i nie dokłada drugiego, konkurencyjnego selektora.
+Aktywnym wariantem jest `lo3`. **Zapisz** utrwala bieżący wariant i aktywny szablon przez istniejący workflow kopii zapasowej i zapisu edytora stron.
 
-W Shopify Theme Editor ta sama decyzja jest dostępna jako ustawienie sekcji **Wariant designu**. V1 nie ładuje plików atmosfery; V2 ładuje `giclee-random-artwork-atmosphere.css` i `giclee-random-artwork-atmosphere.js`.
+## Edytuj atmosferę…
 
-## Własne tło (obraz / film / animacja)
+Przycisk na pasku narzędzi otwiera strefę ustawień atmosfery bieżącego wariantu.
 
-Strefa **Losuj obraz — interfejs** ma dwa pola mediów (drag & drop + „Ostatnie ▾”):
+V2 zachowuje szczegółowe parametry glow, mgiełki i pyłu. V3 udostępnia minimalny zestaw:
 
-| Pole | Ścieżka JSON | Uwagi |
-|------|--------------|-------|
-| Własne tło — obraz | `sections.random_artwork.settings.background_image` | ref `shopify://shop_images/…` |
-| Kadrowanie tła (góra–dół) | `sections.random_artwork.settings.background_image_object_y` | 0–100 (domyślnie 50) |
-| Własne tło — film / animacja | `sections.random_artwork.settings.background_video` | ref `shopify://files/videos/…`; **priorytet nad obrazem** |
-| Parallax tła (mysz) | `sections.random_artwork.settings.background_parallax` | checkbox; subtelny ruch obrazu/filmu jak w konfiguratorze PDP (`MAX_X=22`, `MAX_Y=14`, `EASE=0.075`) |
+- `living_light_enabled` — włącz reflektor;
+- `living_dust_enabled` — włącz pył ambientowy;
+- `living_light_intensity` — intensywność 0–100, domyślnie 45.
 
-Puste oba pola = domyślna scena (aurora + WebGL). Logika wyboru jest w motywie:
-`sections/giclee-random-artwork.liquid` liczy `custom_bg` (`video` › `image` › `none`) i renderuje
-warstwę `.giclee-random-artwork__custom-bg` przez snippet `snippets/background-media.liquid`
-(styl: `assets/giclee-random-artwork.css`). Film odtwarza `video-background-component`
-(`assets/video-background.js`, ładowany globalnie w `snippets/scripts.liquid`).
+V1 zachowuje wartości w JSON, ale nie ładuje żadnego assetu atmosfery. Dzięki temu przełączanie wariantów nie kasuje strojenia.
 
-Pola mediów obsługuje wspólny edytor (`_shared/theme_page_editor/gui_shell.py`, gałąź
-`shopify_image`/`shopify_video`); upload wideo przez `service_base.upload_video`.
+## Własne tło
 
-Parallax: `background_parallax` włącza klasę `grw--custom-bg-parallax` i logikę w
-`assets/giclee-random-artwork.js` (`initCustomBgParallax`) — te same parametry co
-`initConfigBg` w `giclee-product-story.js`. Działa dla obrazu i filmu w tle.
+Strefa **Losuj obraz — interfejs** obsługuje obraz, film i `background_parallax`. W V1/V2 parallax pozostaje w głównym kontrolerze. W V3 ten sam model pozycji wskaźnika steruje reflektorem, pyłem i parallaxem, dzięki czemu nie powstaje drugi globalny listener ani konkurująca pętla RAF.
 
-→ [`README.md`](README.md) · wzorzec: [`stronaglowna.md`](stronaglowna.md)
+## Pliki danych
+
+- manifest: `Komponenty/losujobraz/data/variants/manifest.json`;
+- warianty: `lo1`, `lo2`, `lo3`;
+- aktywny szablon: `templates/page.losuj-produkt.json`;
+- mapowanie pól: `Komponenty/losujobraz/registry.py`;
+- skrót panelu: `Komponenty/losujobraz/gui.py`.
+
+Kod motywu i pełny kontrakt V3 opisuje `docs/motyw/losuj-obraz.md`.
