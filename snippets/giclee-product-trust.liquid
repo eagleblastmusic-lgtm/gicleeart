@@ -90,7 +90,9 @@
 </section>
 
 {% style %}
-  /* Brak sekcji przed/po nie może zostawiać pustego rzędu ani grid gapu. */
+  /* Brak sekcji przed/po nie może zostawiać pustego rzędu ani grid gapu.
+     Między kotwicą i wrapperem pozostaje inline <script>, dlatego potrzebny
+     jest selektor rodzeństwa ~, a nie selektor bezpośredni +. */
   main[data-template='product.szablon-produktu-v3']
     .product-information
     .giclee-before-after-target:empty {
@@ -100,14 +102,14 @@
   main[data-template='product.szablon-produktu-v3']
     .product-information
     .giclee-before-after-target:empty
-    + .pdp-v3-pt-wrap {
+    ~ .pdp-v3-pt-wrap {
     margin-top: calc(-1 * var(--gap, 48px));
   }
 
   main[data-template='product.szablon-produktu-v3']
     .product-information
     .giclee-before-after-target:empty
-    + .pdp-v3-pt-wrap.has-bg::before {
+    ~ .pdp-v3-pt-wrap.has-bg::before {
     clip-path: inset(0);
     transform: translateX(-50%) scaleX(1.03);
   }
@@ -115,7 +117,7 @@
   main[data-template='product.szablon-produktu-v3']
     .product-information
     .giclee-before-after-target:empty
-    + .pdp-v3-pt-wrap.has-bg::after {
+    ~ .pdp-v3-pt-wrap.has-bg::after {
     top: 0;
     background: rgb(0 0 0 / 0.45);
   }
