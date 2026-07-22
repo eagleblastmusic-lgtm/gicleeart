@@ -213,3 +213,15 @@ main[data-template='product.szablon-produktu-v3'] .pdp-v3-pt-wrap.has-bg::after 
   transform: translateX(-50%) scale(1.03);
   pointer-events: none;
 }
+
+/* PDP v3: separator renderowany po końcowym wrapperze jest ostatnim grid itemem.
+   Jego linia i gap nie są potrzebne, bo wrapper jest pełnoekranowym finałem. */
+main[data-template='product.szablon-produktu-v3']
+  .product-information
+  .pdp-v3-pt-wrap
+  + .product-description-trailing-separator {
+  display: none;
+  margin: 0;
+  height: 0;
+  border: 0;
+}
