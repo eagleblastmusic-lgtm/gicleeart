@@ -22,6 +22,15 @@ def test_pdp_v3_process_trust_overlay_covers_the_transition_gap() -> None:
     assert "pointer-events: none;" in source
 
 
+def test_pdp_v3_trailing_separator_after_finale_is_hidden() -> None:
+    source = TRUST_CSS.read_text(encoding="utf-8")
+
+    assert ".pdp-v3-pt-wrap\n  + .product-description-trailing-separator" in source
+    assert "display: none;" in source
+    assert "height: 0;" in source
+    assert "border: 0;" in source
+
+
 def test_pdp_v3_gap_rule_crosses_inline_mount_script() -> None:
     source = TRUST_SNIPPET.read_text(encoding="utf-8")
 
