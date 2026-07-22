@@ -22,6 +22,15 @@ def test_pdp_v3_process_trust_overlay_covers_the_transition_gap() -> None:
     assert "pointer-events: none;" in source
 
 
+def test_pdp_v3_gap_rule_crosses_inline_mount_script() -> None:
+    source = TRUST_SNIPPET.read_text(encoding="utf-8")
+
+    assert ".giclee-before-after-target:empty\n    ~ .pdp-v3-pt-wrap {" in source
+    assert ".giclee-before-after-target:empty\n    ~ .pdp-v3-pt-wrap.has-bg::before" in source
+    assert ".giclee-before-after-target:empty\n    ~ .pdp-v3-pt-wrap.has-bg::after" in source
+    assert ".giclee-before-after-target:empty\n    + .pdp-v3-pt-wrap" not in source
+
+
 def test_pdp_v3_process_and_trust_share_one_static_viewport() -> None:
     source = TRUST_SNIPPET.read_text(encoding="utf-8")
 
