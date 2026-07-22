@@ -122,15 +122,15 @@
     background: rgb(0 0 0 / 0.45);
   }
 
-  /* Jeden pełnoekranowy blok. Obie części zaczynają się od górnej krawędzi,
-     bez centrowania w wysokich rzędach i bez pustej strefy nad procesem. */
+  /* Jedna pełnoekranowa kompozycja: proces ma spokojną górną strefę,
+     a zaufanie uporządkowaną dolną strefę na tym samym tle. */
   main[data-template='product.szablon-produktu-v3']
     .product-information
     .pdp-v3-pt-wrap {
     display: grid;
     grid-column: 1 / -1;
-    grid-template-rows: auto auto;
-    align-content: start;
+    grid-template-rows: minmax(0, 56fr) minmax(0, 44fr);
+    align-content: stretch;
     row-gap: 0;
     width: 100vw;
     min-width: 100vw;
@@ -162,7 +162,7 @@
     top: auto;
     z-index: auto;
     width: 100%;
-    height: auto;
+    height: 100%;
     min-height: 0;
     margin: 0;
     background-color: transparent;
@@ -170,86 +170,179 @@
     box-sizing: border-box;
   }
 
-  main[data-template='product.szablon-produktu-v3']
-    .pdp-v3-pt-wrap
-    > .giclee-process {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    padding: 0 clamp(1.25rem, 4vw, 5rem) clamp(0.35rem, 0.8vh, 0.7rem);
-  }
+  @media screen and (min-width: 990px) {
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap
+      > .giclee-process {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: clamp(1.1rem, 2.6vh, 2.15rem) clamp(2rem, 5vw, 6rem)
+        clamp(0.8rem, 1.8vh, 1.45rem);
+    }
 
-  main[data-template='product.szablon-produktu-v3']
-    .pdp-v3-pt-wrap
-    > .giclee-trust {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    padding: clamp(0.25rem, 0.6vh, 0.55rem) clamp(1.25rem, 4vw, 5rem)
-      clamp(0.65rem, 1.5vh, 1.15rem);
-  }
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap
+      > .giclee-trust {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding: clamp(0.45rem, 1.1vh, 0.9rem) clamp(2rem, 5vw, 6rem)
+        clamp(1.25rem, 2.8vh, 2.25rem);
+    }
 
-  main[data-template='product.szablon-produktu-v3']
-    .pdp-v3-pt-wrap
-    .giclee-process__eyebrow {
-    margin-top: 0;
-    margin-bottom: clamp(0.2rem, 0.5vh, 0.45rem);
-  }
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap
+      .giclee-process__eyebrow {
+      margin: 0 0 clamp(0.2rem, 0.45vh, 0.4rem);
+      font-size: clamp(0.68rem, 0.75vw, 0.78rem);
+      letter-spacing: 0.24em;
+      color: rgb(var(--color-foreground-rgb, 255, 255, 255) / 0.62);
+      text-shadow: 0 1px 1rem rgb(0 0 0 / 0.45);
+    }
 
-  main[data-template='product.szablon-produktu-v3']
-    .pdp-v3-pt-wrap
-    .giclee-process__heading {
-    margin-top: 0;
-    margin-bottom: clamp(0.75rem, 1.8vh, 1.35rem);
-  }
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap
+      .giclee-process__heading,
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap
+      .giclee-trust__heading {
+      margin-top: 0;
+      line-height: 1.08;
+      text-shadow: 0 2px 1.25rem rgb(0 0 0 / 0.5);
+    }
 
-  main[data-template='product.szablon-produktu-v3']
-    .pdp-v3-pt-wrap
-    .giclee-trust__heading {
-    margin-top: 0;
-    margin-bottom: clamp(0.55rem, 1.35vh, 1rem);
-  }
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap
+      .giclee-process__heading {
+      margin-bottom: clamp(0.85rem, 1.9vh, 1.5rem);
+      font-size: clamp(1.5rem, 2vw, 1.95rem);
+    }
 
-  main[data-template='product.szablon-produktu-v3']
-    .pdp-v3-pt-wrap
-    .giclee-process__grid,
-  main[data-template='product.szablon-produktu-v3']
-    .pdp-v3-pt-wrap
-    .giclee-trust__grid {
-    gap: clamp(0.75rem, 1.6vw, 1.35rem);
-  }
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap
+      .giclee-trust__heading {
+      margin-bottom: clamp(0.75rem, 1.55vh, 1.25rem);
+      font-size: clamp(1.4rem, 1.8vw, 1.75rem);
+    }
 
-  main[data-template='product.szablon-produktu-v3']
-    .pdp-v3-pt-wrap
-    .giclee-process__step-body,
-  main[data-template='product.szablon-produktu-v3']
-    .pdp-v3-pt-wrap
-    .giclee-trust__item-body {
-    gap: clamp(0.2rem, 0.55vh, 0.45rem);
-  }
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap
+      .giclee-process__grid,
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap
+      .giclee-trust__grid {
+      width: min(100%, 96rem);
+      margin-inline: auto;
+      align-items: start;
+      column-gap: clamp(1rem, 2.4vw, 2.75rem);
+    }
 
-  main[data-template='product.szablon-produktu-v3']
-    .pdp-v3-pt-wrap
-    .giclee-trust__logo-slot {
-    height: clamp(2.6rem, 4.8vh, 4rem);
-  }
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap
+      .giclee-process__step-body,
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap
+      .giclee-trust__item-body {
+      gap: clamp(0.22rem, 0.48vh, 0.4rem);
+    }
 
-  main[data-template='product.szablon-produktu-v3']
-    .pdp-v3-pt-wrap
-    .giclee-trust__icon {
-    width: clamp(2.25rem, 3.9vh, 3.25rem);
-    height: clamp(2.25rem, 3.9vh, 3.25rem);
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap
+      .giclee-process__icon {
+      width: clamp(1.65rem, 2.1vw, 2rem);
+      height: clamp(1.65rem, 2.1vw, 2rem);
+      margin-bottom: 0.05rem;
+    }
+
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap
+      .giclee-process__num {
+      font-size: clamp(0.66rem, 0.72vw, 0.76rem);
+      letter-spacing: 0.11em;
+    }
+
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap
+      .giclee-process__title {
+      font-size: clamp(0.92rem, 1.2vw, 1.1rem);
+      line-height: 1.18;
+    }
+
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap
+      .giclee-process__text {
+      margin-top: 0.08rem;
+      max-width: 23ch;
+      font-size: clamp(0.76rem, 0.92vw, 0.9rem);
+      line-height: 1.38;
+      color: rgb(var(--color-foreground-rgb, 255, 255, 255) / 0.7);
+      text-shadow: 0 1px 0.8rem rgb(0 0 0 / 0.55);
+    }
+
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap
+      .giclee-trust__logo-slot {
+      height: clamp(2.65rem, 4.5vh, 3.65rem);
+    }
+
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap
+      .giclee-trust__logo--epson {
+      width: min(100%, 10rem);
+    }
+
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap
+      .giclee-trust__logo--hahnemuhle {
+      width: min(100%, 10.5rem);
+    }
+
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap
+      .giclee-trust__logo--rubio {
+      width: min(100%, 7.6rem);
+      max-height: clamp(2.75rem, 4.25vh, 3.5rem);
+    }
+
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap
+      .giclee-trust__icon {
+      width: clamp(2.25rem, 3.4vh, 2.85rem);
+      height: clamp(2.25rem, 3.4vh, 2.85rem);
+    }
+
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap
+      .giclee-trust__detail {
+      max-width: 21ch;
+      font-size: clamp(0.76rem, 0.9vw, 0.88rem);
+      line-height: 1.34;
+      color: rgb(var(--color-foreground-rgb, 255, 255, 255) / 0.74);
+      text-shadow: 0 1px 0.8rem rgb(0 0 0 / 0.55);
+    }
   }
 
   @media screen and (min-width: 990px) and (max-height: 760px) {
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap {
+      grid-template-rows: minmax(0, 57fr) minmax(0, 43fr);
+    }
+
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap
+      > .giclee-process {
+      padding-top: clamp(0.65rem, 1.5vh, 1rem);
+    }
+
     main[data-template='product.szablon-produktu-v3']
       .pdp-v3-pt-wrap
       .giclee-process__text,
     main[data-template='product.szablon-produktu-v3']
       .pdp-v3-pt-wrap
       .giclee-trust__detail {
-      font-size: clamp(0.78rem, 1.4vh, 0.9rem);
-      line-height: 1.32;
+      font-size: clamp(0.72rem, 1.2vh, 0.82rem);
+      line-height: 1.28;
     }
   }
 
@@ -261,6 +354,16 @@
       min-height: 100vh;
       min-height: 100dvh;
       overflow: visible;
+    }
+
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap
+      > .giclee-process,
+    main[data-template='product.szablon-produktu-v3']
+      .pdp-v3-pt-wrap
+      > .giclee-trust {
+      height: auto;
+      padding-inline: clamp(1.25rem, 5vw, 2rem);
     }
   }
 {% endstyle %}
