@@ -44,8 +44,8 @@ def test_pdp_v3_process_and_trust_share_one_static_viewport() -> None:
     source = TRUST_SNIPPET.read_text(encoding="utf-8")
 
     assert ".pdp-v3-pt-wrap {" in source
-    assert "grid-template-rows: auto auto;" in source
-    assert "align-content: start;" in source
+    assert "grid-template-rows: minmax(0, 56fr) minmax(0, 44fr);" in source
+    assert "align-content: stretch;" in source
     assert "row-gap: 0;" in source
     assert "height: 100dvh;" in source
     assert "min-height: 100dvh;" in source
@@ -57,13 +57,27 @@ def test_pdp_v3_process_and_trust_share_one_static_viewport() -> None:
     assert ".pdp-v3-pt-stage" not in source
 
 
-def test_pdp_v3_static_viewport_starts_content_at_the_top() -> None:
+def test_pdp_v3_premium_rhythm_separates_process_and_trust() -> None:
     source = TRUST_SNIPPET.read_text(encoding="utf-8")
 
+    assert "justify-content: center;" in source
     assert "justify-content: flex-start;" in source
-    assert "padding: 0 clamp(1.25rem, 4vw, 5rem)" in source
-    assert "grid-template-rows: minmax(0, 58fr) minmax(0, 42fr);" not in source
-    assert "grid-template-rows: minmax(0, 60fr) minmax(0, 40fr);" not in source
+    assert "width: min(100%, 96rem);" in source
+    assert "column-gap: clamp(1rem, 2.4vw, 2.75rem);" in source
+    assert "max-width: 23ch;" in source
+    assert "max-width: 21ch;" in source
+
+
+def test_pdp_v3_partner_marks_have_optically_balanced_sizes() -> None:
+    source = TRUST_SNIPPET.read_text(encoding="utf-8")
+
+    assert ".giclee-trust__logo--epson" in source
+    assert "width: min(100%, 10rem);" in source
+    assert ".giclee-trust__logo--hahnemuhle" in source
+    assert "width: min(100%, 10.5rem);" in source
+    assert ".giclee-trust__logo--rubio" in source
+    assert "width: min(100%, 7.6rem);" in source
+    assert "width: clamp(2.25rem, 3.4vh, 2.85rem);" in source
 
 
 def test_pdp_v3_static_viewport_is_true_full_bleed() -> None:
@@ -74,7 +88,7 @@ def test_pdp_v3_static_viewport_is_true_full_bleed() -> None:
     assert "min-width: 100vw;" in source
     assert "max-width: none;" in source
     assert "margin-left: calc(50% - 50vw);" in source
-    assert "clamp(1.25rem, 4vw, 5rem)" in source
+    assert "clamp(2rem, 5vw, 6rem)" in source
 
 
 def test_pdp_v3_static_section_uses_only_the_wrapper_background() -> None:
