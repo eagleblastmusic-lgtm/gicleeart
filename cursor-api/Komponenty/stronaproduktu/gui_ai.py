@@ -1,4 +1,4 @@
-"""Nak┼éadka GUI: istniej─ůcy edytor PDP v3 + inteligentne kadry Gemini."""
+"""Nakładka GUI: istniejący edytor PDP v3 + inteligentne kadry Gemini."""
 
 from __future__ import annotations
 
@@ -97,7 +97,7 @@ def _load_photo(path: Path | None, image_url: str, *, max_size: tuple[int, int])
         from Komponenty._shared.clipboard_image import fetch_image_bytes, shopify_sized_image_url
         from io import BytesIO
     except ImportError as exc:
-        raise RuntimeError("Podgl─ůd wymaga Pillow: pip install Pillow") from exc
+        raise RuntimeError("Podgląd wymaga Pillow: pip install Pillow") from exc
 
     if path and path.is_file():
         source: Any = path
@@ -127,13 +127,13 @@ def _open_crop_window(
     if _has_unsaved_changes(host):
         messagebox.showinfo(
             APP_TITLE,
-            "Najpierw kliknij ┬źZapisz do Shopify┬╗. AI pracuje na zapisanym podziale stron, "
-            "dzi─Öki czemu nie utraci istniej─ůcych grafik.",
+            "Najpierw kliknij «Zapisz do Shopify». AI pracuje na zapisanym podziale stron, "
+            "dzięki czemu nie utraci istniejących grafik.",
         )
         return
 
     win = tk.Toplevel(host)
-    win.title("AI ÔÇö kadry mini-stron z g┼é├│wnego obrazu")
+    win.title("AI — kadry mini-stron z głównego obrazu")
     position_toplevel_screen_center(win, 1180, 760)
     win.minsize(980, 640)
     win.transient(host)
@@ -149,7 +149,7 @@ def _open_crop_window(
 
     outer = ttk.Frame(win, padding=14)
     outer.pack(fill="both", expand=True)
-    title_var = tk.StringVar(value="Analizuj─Ö obraz i teksty mini-stron...")
+    title_var = tk.StringVar(value="Analizuję obraz i teksty mini-stron...")
     status_var = tk.StringVar(value="Pobieram dane produktu...")
     ttk.Label(outer, textvariable=title_var, font=("Segoe UI", 13, "bold")).pack(anchor="w")
     ttk.Label(outer, textvariable=status_var, foreground="#555", wraplength=1120).pack(
@@ -201,10 +201,10 @@ def _open_crop_window(
         for child in footer.winfo_children():
             child.destroy()
 
-        title_var.set(f"{session.title} ÔÇö propozycje kadr├│w")
+        title_var.set(f"{session.title} — propozycje kadrów")
         status_var.set(
-            f"Model: {session.model_used} ┬Ě ┼║r├│d┼éo: {session.source_size[0]}├Ś{session.source_size[1]} px. "
-            "Strona 1 u┼╝ywa pe┼énego obrazu bez duplikowania pliku."
+            f"Model: {session.model_used} · źródło: {session.source_size[0]}×{session.source_size[1]} px. "
+            "Strona 1 używa pełnego obrazu bez duplikowania pliku."
         )
 
         enabled: set[int] = {
@@ -215,17 +215,17 @@ def _open_crop_window(
         paned = ttk.Panedwindow(content, orient="horizontal")
         paned.pack(fill="both", expand=True)
         left = ttk.Frame(paned, padding=(0, 0, 10, 0))
-        right = ttk.LabelFrame(paned, text="Podgl─ůd wybranego kadru", padding=10)
+        right = ttk.LabelFrame(paned, text="Podgląd wybranego kadru", padding=10)
         paned.add(left, weight=2)
         paned.add(right, weight=3)
 
         columns = ("use", "page", "subject", "confidence", "current")
         tree = ttk.Treeview(left, columns=columns, show="headings", selectmode="browse")
         labels = {
-            "use": "U┼╝yj",
+            "use": "Użyj",
             "page": "Strona",
             "subject": "Dopasowany motyw",
-            "confidence": "Pewno┼Ť─ç",
+            "confidence": "Pewność",
             "current": "Obecna grafika",
         }
         widths = {"use": 55, "page": 65, "subject": 245, "confidence": 75, "current": 130}
@@ -250,10 +250,10 @@ def _open_crop_window(
 
         def row_values(proposal: Any) -> tuple[str, str, str, str, str]:
             variant = proposal.variants[proposal.selected_variant]
-            current = "w┼éasna" if proposal.existing_image else "g┼é├│wny obraz"
-            confidence = "ÔÇö" if variant.is_full_view else f"{variant.confidence * 100:.0f}%"
+            current = "własna" if proposal.existing_image else "główny obraz"
+            confidence = "—" if variant.is_full_view else f"{variant.confidence * 100:.0f}%"
             return (
-                "Ôťô" if proposal.page_index in enabled else "ÔÇö",
+                "✓" if proposal.page_index in enabled else "—",
                 str(proposal.page_index + 1),
                 variant.matched_subject,
                 confidence,
@@ -289,18 +289,18 @@ def _open_crop_window(
                     max_size=(650, 430),
                 )
             except Exception as exc:  # noqa: BLE001
-                preview_label.configure(image="", text=f"Nie uda┼éo si─Ö wy┼Ťwietli─ç podgl─ůdu:\n{exc}")
+                preview_label.configure(image="", text=f"Nie udało się wyświetlić podglądu:\n{exc}")
                 preview_label._photo_ref = None  # type: ignore[attr-defined]
             else:
                 preview_label.configure(image=photo, text="")
                 preview_label._photo_ref = photo  # type: ignore[attr-defined]
             subject_var.set(
                 f"Strona {proposal.page_index + 1}: {variant.matched_subject}"
-                + (" ┬Ě pe┼ény obraz" if variant.is_full_view else "")
+                + (" · pełny obraz" if variant.is_full_view else "")
             )
             reason_var.set(variant.reason)
             snippet = " ".join(proposal.page_text.split())
-            text_var.set((snippet[:360] + "ÔÇŽ") if len(snippet) > 360 else snippet)
+            text_var.set((snippet[:360] + "…") if len(snippet) > 360 else snippet)
 
         def toggle_selected() -> None:
             proposal = selected_proposal()
@@ -327,8 +327,8 @@ def _open_crop_window(
 
         actions = ttk.Frame(left)
         actions.pack(fill="x", pady=(8, 0))
-        ttk.Button(actions, text="W┼é─ůcz / wy┼é─ůcz", command=toggle_selected).pack(side="left")
-        ttk.Button(actions, text="Nast─Öpny wariant", command=next_variant).pack(side="left", padx=(8, 0))
+        ttk.Button(actions, text="Włącz / wyłącz", command=toggle_selected).pack(side="left")
+        ttk.Button(actions, text="Następny wariant", command=next_variant).pack(side="left", padx=(8, 0))
 
         def apply() -> None:
             selections = {
@@ -337,19 +337,19 @@ def _open_crop_window(
                 if proposal.page_index in enabled
             }
             if not selections:
-                messagebox.showinfo(APP_TITLE, "Nie zaznaczono ┼╝adnej strony.", parent=win)
+                messagebox.showinfo(APP_TITLE, "Nie zaznaczono żadnej strony.", parent=win)
                 return
             replacements = sum(
                 1 for p in session.proposals if p.page_index in selections and p.existing_image
             )
             warning = (
-                f"\n\nZostanie zast─ůpionych istniej─ůcych grafik: {replacements}."
+                f"\n\nZostanie zastąpionych istniejących grafik: {replacements}."
                 if replacements
                 else ""
             )
             if not messagebox.askyesno(
                 APP_TITLE,
-                f"Wgra─ç i zapisa─ç grafiki dla {len(selections)} stron?{warning}",
+                f"Wgrać i zapisać grafiki dla {len(selections)} stron?{warning}",
                 parent=win,
             ):
                 return
@@ -379,7 +379,7 @@ def _open_crop_window(
                         progress.pack_forget()
                         messagebox.showerror(
                             APP_TITLE,
-                            f"Nie uda┼éo si─Ö zapisa─ç kadr├│w:\n{error or (result or {}).get('error')}",
+                            f"Nie udało się zapisać kadrów:\n{error or (result or {}).get('error')}",
                             parent=win,
                         )
                         try:
@@ -402,12 +402,12 @@ def _open_crop_window(
 
             threading.Thread(target=work_save, daemon=True).start()
 
-        apply_button = ttk.Button(footer, text="Zatwierd┼║ i zapisz do Shopify", command=apply)
+        apply_button = ttk.Button(footer, text="Zatwierdź i zapisz do Shopify", command=apply)
         apply_button.pack(side="right")
         ttk.Button(footer, text="Anuluj", command=_close).pack(side="right", padx=(0, 8))
         ttk.Label(
             footer,
-            text="Dwuklik w wiersz prze┼é─ůcza u┼╝ycie. Istniej─ůce grafiki s─ů domy┼Ťlnie wy┼é─ůczone.",
+            text="Dwuklik w wiersz przełącza użycie. Istniejące grafiki są domyślnie wyłączone.",
             foreground="#666",
         ).pack(side="left")
 
@@ -432,7 +432,7 @@ def _open_crop_window(
                 progress.pack_forget()
                 state["busy"] = False
                 status_var.set("")
-                messagebox.showerror(APP_TITLE, f"Nie uda┼éo si─Ö przygotowa─ç kadr├│w:\n{error}", parent=win)
+                messagebox.showerror(APP_TITLE, f"Nie udało się przygotować kadrów:\n{error}", parent=win)
                 _close()
                 return
             build_preview(session)
@@ -447,13 +447,13 @@ def _attach_ai_controls(host: tk.Misc) -> None:
         return
     product_tree = _find_tree(host, ("artist", "painting_title", "handle", "story_status"))
     pages_tree = _find_tree(host, ("page", "count", "range", "image"))
-    upload_button = _find_button(host, "Wgraj grafik─Ö strony...")
+    upload_button = _find_button(host, "Wgraj grafikę strony...")
     if product_tree is None or pages_tree is None or upload_button is None:
         return
     setattr(host, "_giclee_ai_crops_attached", True)
     ttk.Button(
         upload_button.master,
-        text="AI ÔÇö dobierz kadry...",
+        text="AI — dobierz kadry...",
         command=lambda: _open_crop_window(
             host,
             product_tree=product_tree,

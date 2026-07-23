@@ -20,7 +20,7 @@ def test_build_page_texts_respects_counts() -> None:
 
 def test_parse_crop_plan_accepts_fenced_json_and_normalized_boxes() -> None:
     raw = """```json
-    {"pages":[{"page_index":1,"candidates":[{"box_2d":[100,200,700,800],"confidence":0.8,"matched_subject":"posta─ç"}]}]}
+    {"pages":[{"page_index":1,"candidates":[{"box_2d":[100,200,700,800],"confidence":0.8,"matched_subject":"postać"}]}]}
     ```"""
     plan = ai.parse_crop_plan(raw, page_count=3)
     candidate = plan[1][0]
@@ -49,7 +49,7 @@ def test_rank_candidates_penalizes_duplicate_of_previous_detail() -> None:
             ai.CropCandidate(ai.NormalizedBox(0.1, 0.1, 0.5, 0.6), "subject", "A", "A", 0.8)
         ],
         2: [
-            ai.CropCandidate(ai.NormalizedBox(0.1, 0.1, 0.5, 0.6), "subject", "powt├│rka", "x", 0.9),
+            ai.CropCandidate(ai.NormalizedBox(0.1, 0.1, 0.5, 0.6), "subject", "powtórka", "x", 0.9),
             ai.CropCandidate(ai.NormalizedBox(0.55, 0.2, 0.95, 0.7), "detail", "B", "B", 0.82),
         ],
     }

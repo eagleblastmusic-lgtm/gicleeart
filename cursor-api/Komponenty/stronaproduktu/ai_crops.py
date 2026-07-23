@@ -1,7 +1,7 @@
 """Gemini + lokalne kadrowanie grafik mini-stron PDP v3.
 
 Gemini analizuje tekst wszystkich stron i wskazuje obszary obrazu. GicleeApp
-wycina wy┼é─ůcznie oryginalne piksele przez Pillow; model nie generuje ani nie
+wycina wyłącznie oryginalne piksele przez Pillow; model nie generuje ani nie
 retuszuje reprodukcji.
 """
 
@@ -28,12 +28,12 @@ ShouldAbort = Callable[[], bool] | None
 
 
 class SmartCropError(RuntimeError):
-    """B┼é─ůd przygotowania inteligentnych kadr├│w."""
+    """Błąd przygotowania inteligentnych kadrów."""
 
 
 @dataclass(frozen=True)
 class NormalizedBox:
-    """Ramka [0..1] w uk┼éadzie xmin, ymin, xmax, ymax."""
+    """Ramka [0..1] w układzie xmin, ymin, xmax, ymax."""
 
     xmin: float
     ymin: float
@@ -122,7 +122,7 @@ class ProductStoryContext:
 
 
 def build_page_texts(paragraphs: Iterable[str], paragraph_counts: Iterable[int]) -> list[str]:
-    """Dzieli akapity wed┼éug bie┼╝─ůcego uk┼éadu mini-stron."""
+    """Dzieli akapity według bieżącego układu mini-stron."""
 
     source = [str(p).strip() for p in paragraphs]
     out: list[str] = []
@@ -139,7 +139,7 @@ def build_page_texts(paragraphs: Iterable[str], paragraph_counts: Iterable[int])
 
 
 def extract_product_image_url(product: dict[str, Any]) -> str:
-    """Zwraca g┼é├│wny URL obrazu z odpowiedzi Shopify REST."""
+    """Zwraca główny URL obrazu z odpowiedzi Shopify REST."""
 
     image = product.get("image") or {}
     if isinstance(image, dict):
@@ -156,7 +156,7 @@ def extract_product_image_url(product: dict[str, Any]) -> str:
 
 
 def resolve_product_story_context(handle: str) -> ProductStoryContext:
-    """Pobiera produkt, akapity, konfiguracj─Ö stron i g┼é├│wny obraz."""
+    """Pobiera produkt, akapity, konfigurację stron i główny obraz."""
 
     from Komponenty.dodajobraz import shopify_client as sc
     from .service import load_product_story, normalize_story_config
@@ -184,13 +184,13 @@ def resolve_product_story_context(handle: str) -> ProductStoryContext:
 
     detail = load_product_story(product_id)
     if not detail.get("ok"):
-        raise SmartCropError(str(detail.get("error") or "Nie uda┼éo si─Ö wczyta─ç opisu produktu."))
+        raise SmartCropError(str(detail.get("error") or "Nie udało się wczytać opisu produktu."))
 
     image_url = extract_product_image_url(product)
     if not image_url:
         image_url = extract_product_image_url(sc.get_product(shop, token, product_id))
     if not image_url:
-        raise SmartCropError("Produkt nie ma g┼é├│wnego obrazu.")
+        raise SmartCropError("Produkt nie ma głównego obrazu.")
 
     config = normalize_story_config(detail.get("config") or {})
     return ProductStoryContext(
@@ -230,15 +230,15 @@ def _parse_box(raw: Any) -> NormalizedBox | None:
 
 
 def parse_crop_plan(raw: str, *, page_count: int) -> dict[int, list[CropCandidate]]:
-    """Parsuje odpowied┼║ Gemini; pomija wadliwe wpisy bez wywracania sesji."""
+    """Parsuje odpowiedź Gemini; pomija wadliwe wpisy bez wywracania sesji."""
 
     try:
         payload = json.loads(_strip_json_wrapper(raw))
     except json.JSONDecodeError as exc:
-        raise SmartCropError(f"Gemini nie zwr├│ci┼é poprawnego JSON: {exc}") from exc
+        raise SmartCropError(f"Gemini nie zwrócił poprawnego JSON: {exc}") from exc
     pages = payload.get("pages") if isinstance(payload, dict) else None
     if not isinstance(pages, list):
-        raise SmartCropError("Odpowied┼║ Gemini nie zawiera tablicy pages.")
+        raise SmartCropError("Odpowiedź Gemini nie zawiera tablicy pages.")
 
     out: dict[int, list[CropCandidate]] = {}
     for item in pages:
@@ -268,7 +268,7 @@ def parse_crop_plan(raw: str, *, page_count: int) -> dict[int, list[CropCandidat
                 CropCandidate(
                     box=box,
                     crop_type=str(candidate.get("crop_type") or "detail").strip()[:80],
-                    matched_subject=str(candidate.get("matched_subject") or "fragment dzie┼éa").strip()[:160],
+                    matched_subject=str(candidate.get("matched_subject") or "fragment dzieła").strip()[:160],
                     reason=str(candidate.get("reason") or "Dopasowanie do tekstu strony.").strip()[:500],
                     confidence=max(0.0, min(1.0, confidence)),
                 )
@@ -299,11 +299,11 @@ def fit_box_to_aspect(
     min_width_px: int = MIN_CROP_WIDTH_PX,
     padding: float = 0.08,
 ) -> NormalizedBox:
-    """Rozszerza ramk─Ö do ratio pola PDP bez wyj┼Ťcia poza obraz."""
+    """Rozszerza ramkę do ratio pola PDP bez wyjścia poza obraz."""
 
     source_w, source_h = source_size
     if source_w <= 0 or source_h <= 0:
-        raise ValueError("Niepoprawny rozmiar obrazu ┼║r├│d┼éowego.")
+        raise ValueError("Niepoprawny rozmiar obrazu źródłowego.")
     b = box.clamped()
     cx, cy = b.center
     width = min(1.0, max(b.width * (1.0 + 2.0 * padding), min_width_px / source_w))
@@ -341,7 +341,7 @@ def rank_page_candidates(
     page_count: int,
     source_size: tuple[int, int],
 ) -> dict[int, list[CropCandidate]]:
-    """Wybiera z kandydat├│w r├│┼╝norodne, poprawne kompozycyjnie warianty."""
+    """Wybiera z kandydatów różnorodne, poprawne kompozycyjnie warianty."""
 
     selected_boxes: list[NormalizedBox] = [FULL_BOX]
     result: dict[int, list[CropCandidate]] = {}
@@ -379,8 +379,8 @@ def rank_page_candidates(
                 CropCandidate(
                     box=fit_box_to_aspect(FULL_BOX, source_size=source_size, padding=0.0),
                     crop_type="safe_wide",
-                    matched_subject="szerszy widok dzie┼éa",
-                    reason="Model nie wskaza┼é pewnego detalu; u┼╝yto bezpiecznego szerokiego kadru.",
+                    matched_subject="szerszy widok dzieła",
+                    reason="Model nie wskazał pewnego detalu; użyto bezpiecznego szerokiego kadru.",
                     confidence=0.25,
                 )
             ]
@@ -396,21 +396,21 @@ def build_gemini_prompt(*, title: str, page_texts: list[str]) -> str:
         indent=2,
     )
     return f"""
-Jeste┼Ť kuratorem sztuki i analitykiem kompozycji obrazu. Analizujesz reprodukcj─Ö
-oraz teksty kolejnych mini-stron produktu ÔÇ×{title}ÔÇŁ. Masz wskaza─ç wy┼é─ůcznie
+Jesteś kuratorem sztuki i analitykiem kompozycji obrazu. Analizujesz reprodukcję
+oraz teksty kolejnych mini-stron produktu „{title}”. Masz wskazać wyłącznie
 kadry z ORYGINALNEGO obrazu; niczego nie generuj, nie retuszuj i nie dopowiadaj.
 
 Zasady:
-1. Strona 0 zawsze poka┼╝e pe┼ény obraz ÔÇö NIE zwracaj dla niej kandydat├│w.
-2. Dla ka┼╝dej kolejnej strony znajd┼║ 2ÔÇô3 r├│┼╝ne kadry pasuj─ůce do tre┼Ťci.
-3. Szukaj konkretnych postaci, gest├│w, architektury, nieba, ┼Ťwiat┼éa, tkanin,
-   przedmiot├│w, fragment├│w pejza┼╝u lub innych element├│w faktycznie widocznych.
-4. Przy tek┼Ťcie abstrakcyjnym wybierz szerszy kadr atmosferyczny.
-5. Unikaj niemal identycznych kadr├│w mi─Ödzy stronami i przypadkowego ucinania
-   twarzy, d┼éoni oraz g┼é├│wnych obiekt├│w.
-6. box_2d ma format [ymin, xmin, ymax, xmax], wsp├│┼érz─Ödne ca┼ékowite 0ÔÇô1000.
-7. confidence ma by─ç liczb─ů 0ÔÇô1.
-8. Zwr├│─ç WY┼ü─äCZNIE poprawny JSON, bez markdownu i komentarzy.
+1. Strona 0 zawsze pokaże pełny obraz — NIE zwracaj dla niej kandydatów.
+2. Dla każdej kolejnej strony znajdź 2–3 różne kadry pasujące do treści.
+3. Szukaj konkretnych postaci, gestów, architektury, nieba, światła, tkanin,
+   przedmiotów, fragmentów pejzażu lub innych elementów faktycznie widocznych.
+4. Przy tekście abstrakcyjnym wybierz szerszy kadr atmosferyczny.
+5. Unikaj niemal identycznych kadrów między stronami i przypadkowego ucinania
+   twarzy, dłoni oraz głównych obiektów.
+6. box_2d ma format [ymin, xmin, ymax, xmax], współrzędne całkowite 0–1000.
+7. confidence ma być liczbą 0–1.
+8. Zwróć WYŁĄCZNIE poprawny JSON, bez markdownu i komentarzy.
 
 Wymagany format:
 {{
@@ -421,8 +421,8 @@ Wymagany format:
         {{
           "box_2d": [100, 200, 800, 750],
           "crop_type": "subject_detail",
-          "matched_subject": "kr├│tka nazwa widocznego motywu",
-          "reason": "kr├│tkie uzasadnienie po polsku",
+          "matched_subject": "krótka nazwa widocznego motywu",
+          "reason": "krótkie uzasadnienie po polsku",
           "confidence": 0.86
         }}
       ]
@@ -450,7 +450,7 @@ def _prepare_images(source_bytes: bytes) -> tuple[Any, bytes, str, tuple[int, in
             source = ImageOps.exif_transpose(opened).copy()
             metadata = {"icc_profile": opened.info.get("icc_profile")}
     except Exception as exc:
-        raise SmartCropError(f"Nie uda┼éo si─Ö otworzy─ç obrazu produktu: {exc}") from exc
+        raise SmartCropError(f"Nie udało się otworzyć obrazu produktu: {exc}") from exc
 
     if source.mode not in ("RGB", "L"):
         background = Image.new("RGB", source.size, "white")
@@ -502,7 +502,7 @@ def generate_crop_session(
     on_status: StatusCallback = None,
     should_abort: ShouldAbort = None,
 ) -> CropSession:
-    """Pe┼ény etap: Shopify Ôćĺ Gemini Ôćĺ lokalne warianty crop├│w do podgl─ůdu."""
+    """Pełny etap: Shopify → Gemini → lokalne warianty cropów do podglądu."""
 
     from Komponenty._shared.clipboard_image import fetch_image_bytes, shopify_sized_image_url
     from Komponenty._shared.gemini_client import DEFAULT_MODEL, generate_from_image_bytes
@@ -520,12 +520,12 @@ def generate_crop_session(
     if not texts:
         raise SmartCropError("Brak mini-stron do analizy.")
 
-    status("Pobieram g┼é├│wny obraz w wysokiej jako┼Ťci...")
+    status("Pobieram główny obraz w wysokiej jakości...")
     source_url = shopify_sized_image_url(context.image_url, width=SOURCE_MAX_WIDTH)
     source_bytes = fetch_image_bytes(source_url, timeout=60.0)
     source, analysis_bytes, analysis_mime, source_size, metadata = _prepare_images(source_bytes)
 
-    model_used = "bez wywo┼éania Gemini"
+    model_used = "bez wywołania Gemini"
     ranked: dict[int, list[CropCandidate]] = {}
     if len(texts) > 1:
         prompt = build_gemini_prompt(title=context.title, page_texts=texts)
@@ -548,8 +548,8 @@ def generate_crop_session(
     full_variant = RenderedVariant(
         box=FULL_BOX,
         crop_type="full_view",
-        matched_subject="pe┼ény obraz",
-        reason="Pe┼ény obraz produktu ÔÇö bez tworzenia kopii w Shopify Files.",
+        matched_subject="pełny obraz",
+        reason="Pełny obraz produktu — bez tworzenia kopii w Shopify Files.",
         confidence=1.0,
         local_path=full_preview_path,
         is_full_view=True,
@@ -588,7 +588,7 @@ def generate_crop_session(
         source.close()
     except Exception:
         pass
-    status("Kadry s─ů gotowe do podgl─ůdu.")
+    status("Kadry są gotowe do podglądu.")
     return CropSession(
         product_id=context.product_id,
         title=context.title,
@@ -638,7 +638,7 @@ def save_selected_crops(
             raise SmartCropError(f"Brak lokalnego kadru dla strony {page_index + 1}.")
         if on_status:
             on_status(f"Wgrywam kadr strony {page_index + 1}/{len(session.proposals)}...")
-        alt = f"{session.title} ÔÇö fragment do strony {page_index + 1}"
+        alt = f"{session.title} — fragment do strony {page_index + 1}"
         url = upload_story_image(variant.local_path, alt=alt)
         pages[page_index]["image"] = url
         uploaded[page_index] = url
@@ -648,7 +648,7 @@ def save_selected_crops(
     if details_image:
         config["details_image"] = details_image
     if on_status:
-        on_status("Zapisuj─Ö konfiguracj─Ö mini-stron w Shopify...")
+        on_status("Zapisuję konfigurację mini-stron w Shopify...")
     result = save_story_config(session.product_id, config)
     result["uploaded"] = uploaded
     return result
