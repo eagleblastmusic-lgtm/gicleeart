@@ -77,6 +77,16 @@ def test_remote_must_be_gicleeart_gpt(gicleeart_env) -> None:
         gap.validate_mirror_config(bad)
 
 
+def test_remote_must_match_exact_owner_and_repo(gicleeart_env) -> None:
+    from Komponenty.integracjagpt import gicleeart_gpt_push as gap
+
+    _, _, gpt_cfg = gicleeart_env
+    gpt_cfg.remote_url = "https://github.com/inna-organizacja/gicleeart-gpt.git"
+
+    with pytest.raises(ValueError, match="dokładnie"):
+        gap.validate_mirror_config(gpt_cfg)
+
+
 def test_remote_gicleeapp_rejected(gicleeart_env) -> None:
     from Komponenty.integracjagpt import gicleeart_gpt_push as gap
 
@@ -297,7 +307,7 @@ def test_gui_old_push_removed_or_redirected() -> None:
     assert "push_mirror_to_github" not in source
     assert "_run_push" not in source
     assert "Push → GPT GitHub" not in source
-    assert "Push GicleeArt-GPT do GitHub" in source
+    assert "Sprawdź i push do repo roboczego GPT" in source
 
 
 def test_full_cycle_uses_secured_gicleeart_flow() -> None:

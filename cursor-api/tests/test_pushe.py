@@ -46,6 +46,17 @@ def test_github_remote_must_be_gicleeart(pushe_env) -> None:
     from Komponenty.pushe.service import assert_github_remote
 
     assert_github_remote("https://github.com/eagleblastmusic-lgtm/gicleeart.git")
+    assert_github_remote("git@github.com:eagleblastmusic-lgtm/gicleeart.git")
+
+
+def test_github_remote_rejects_similar_repo_name(pushe_env) -> None:
+    from Komponenty.pushe.service import assert_github_remote
+
+    with pytest.raises(ValueError, match="musi wskazywać"):
+        assert_github_remote("https://github.com/eagleblastmusic-lgtm/gicleeart-backup.git")
+
+    with pytest.raises(ValueError, match="musi wskazywać"):
+        assert_github_remote("https://github.com/inna-organizacja/gicleeart.git")
 
 
 def test_remote_gicleeart_gpt_blocked(pushe_env) -> None:
@@ -342,6 +353,45 @@ def test_no_changes_no_empty_commit(pushe_env, monkeypatch) -> None:
     result = svc.commit_and_push_github(report, on_line=None)
     assert result.ok
     assert not commits
+
+
+def test_push_only_sends_existing_local_commits_without_empty_commit(pushe_env, monkeypatch) -> None:
+    from Komponenty.pushe import service as svc
+
+    calls: list[list[str]] = []
+
+    def fake_run_git(args, *, cwd, on_line=None):
+        calls.append(args)
+
+        class P:
+            returncode = 0
+            stdout = (
+                "1234567890abcdef1234567890abcdef12345678\n"
+                if args == ["rev-parse", "HEAD"]
+                else ""
+            )
+            stderr = ""
+
+        return P()
+
+    monkeypatch.setattr(svc, "_run_git", fake_run_git)
+    monkeypatch.setattr(
+        svc,
+        "inspect_branch_sync",
+        lambda *args, **kwargs: svc.BranchSyncStatus(ok=True, ahead=2),
+    )
+    report = svc.GithubAuditReport(
+        branch="master",
+        remote_url="https://github.com/eagleblastmusic-lgtm/gicleeart.git",
+        push_only=True,
+        unpushed_commits=2,
+    )
+
+    result = svc.commit_and_push_github(report)
+
+    assert result.ok
+    assert ["push", "origin", "master"] in calls
+    assert not any(call[:1] in (["add"], ["commit"]) for call in calls)
 
 
 def test_module_does_not_import_integracjagpt_push() -> None:

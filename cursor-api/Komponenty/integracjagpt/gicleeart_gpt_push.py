@@ -152,10 +152,22 @@ def _norm_rel(path: str | Path) -> str:
 
 def _assert_gicleeart_gpt_remote(remote_url: str) -> None:
     u = remote_url.rstrip("/").lower()
-    if "gicleeart-gpt" not in u:
-        raise ValueError(f"remote_url musi wskazywać gicleeart-gpt: {remote_url}")
     if "gicleeapp" in u:
         raise ValueError(f"remote_url wskazuje gicleeapp zamiast gicleeart-gpt: {remote_url}")
+    if "gicleeart-gpt" not in u:
+        raise ValueError(f"remote_url musi wskazywać gicleeart-gpt: {remote_url}")
+
+    normalized = u
+    if normalized.startswith("git@github.com:"):
+        normalized = "https://github.com/" + normalized.removeprefix("git@github.com:")
+    elif normalized.startswith("ssh://git@github.com/"):
+        normalized = "https://github.com/" + normalized.removeprefix("ssh://git@github.com/")
+    normalized = normalized.removesuffix(".git").rstrip("/")
+    if normalized != "https://github.com/eagleblastmusic-lgtm/gicleeart-gpt":
+        raise ValueError(
+            "remote_url musi wskazywać dokładnie "
+            f"eagleblastmusic-lgtm/gicleeart-gpt: {remote_url}"
+        )
 
 
 def validate_mirror_config(cfg: GptConfig, *, log: OnLine = None) -> None:

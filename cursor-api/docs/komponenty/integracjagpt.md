@@ -1,6 +1,6 @@
 # Komponent: integracjagpt
 
-**Cel:** Integracja motywu GicleeArt z Custom GPT — lustro GitHub (bez `cursor-api/`), nagrania Playwright, paczka review, wiadomości do schowka.
+**Cel:** Integracja projektu GicleeArt z GitHubem i Custom GPT — bezpieczny push do repo głównego, robocze lustro GPT, nagrania Playwright, paczka review i wiadomości do schowka.
 
 | Plik | Rola |
 |------|------|
@@ -19,9 +19,20 @@
 
 Tryb: `subprocess`. Sekcja launchera: **Narzędzia pomocnicze**.
 
-## Push GicleeArt-GPT (motyw Shopify)
+## Panel „Repozytoria GitHub GicleeArt”
 
-Osobny workflow w GUI **Integracja z GPT** — sekcja **Push GicleeArt-GPT (motyw Shopify)**.
+GUI pokazuje dwa główne, jednoznacznie opisane cele:
+
+| Przycisk | Repozytorium | Zakres |
+|----------|--------------|--------|
+| **Sprawdź i push do repo głównego** | `eagleblastmusic-lgtm/gicleeart`, branch `master` | Pełny lokalny projekt; korzysta z bezpiecznego workflow `Komponenty/pushe/service.py` |
+| **Sprawdź i push do repo roboczego GPT** | `eagleblastmusic-lgtm/gicleeart-gpt`, branch `main` | Allowlistowany snapshot motywu w `.gpt_mirror` do pracy i review z GPT |
+
+Obie akcje wykonują dry-run, kontrolę brancha i remote, audyt sekretów/runtime, podgląd plików oraz osobne potwierdzenie przed commitem i pushem. Remote musi wskazywać dokładnie właściwe repozytorium. Jeżeli working tree repo głównego jest czysty, ale istnieją lokalne commity `ahead`, przycisk potrafi wykonać push bez tworzenia pustego commita.
+
+## Push do repo roboczego GPT (motyw Shopify)
+
+Drugi workflow w GUI **Integracja z GPT** — karta **Repo robocze GPT**.
 
 | Etap | Działanie |
 |------|-----------|
@@ -38,7 +49,7 @@ Po commicie obowiązkowo: `_finalize_manifest_snapshot_commit` + `_verify_manife
 
 ## Push GicleeApp (aplikacja lokalna)
 
-Osobny workflow w GUI **Integracja z GPT** — sekcja **Push GicleeApp (aplikacja lokalna)**.
+Starszy, zachowany moduł backendowy. Nie jest już osobnym przyciskiem w głównym panelu GUI; pełny lokalny projekt trafia do `eagleblastmusic-lgtm/gicleeart` przez przycisk repo głównego.
 
 | Etap | Działanie |
 |------|-----------|
@@ -70,7 +81,7 @@ Po pushu GicleeApp GUI może zaproponować **Push plików startowych GPT** do mo
 
 ## Push plików startowych GPT (monorepo)
 
-Osobny przycisk w sekcji **Push GicleeApp** — **Push pliki startowe GPT do GitHub**.
+Starszy, zachowany workflow allowlisty plików startowych. Nie jest już osobnym przyciskiem w głównym panelu repozytoriów.
 
 | Etap | Działanie |
 |------|-----------|
@@ -85,7 +96,7 @@ Implementacja: `starter_files_push.py`.
 
 ## Push Giclee Viewer
 
-Osobna sekcja w GUI **Integracja z GPT** — **Push Giclee Viewer do GitHub**.
+Starszy, zachowany moduł backendowy dla osobnego projektu. Nie jest już osobną sekcją w głównym panelu repozytoriów.
 
 | Etap | Działanie |
 |------|-----------|

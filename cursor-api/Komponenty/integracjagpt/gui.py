@@ -51,9 +51,7 @@ class IntegracjaGptApp:
         self._busy = False
         self._full_cycle_prompt_ready = False
         self._obs_recording = False
-        self._gicleeapp_audit = None
-        self._starter_files_audit = None
-        self._giclee_viewer_audit = None
+        self._main_repo_audit = None
         self._gicleeart_audit = None
         self._gicleeart_full_cycle_on_success = None
         self._build_ui()
@@ -258,91 +256,81 @@ class IntegracjaGptApp:
         self.zip_status_var = tk.StringVar(value="ZIP wiedzy: nie załadowany")
         ttk.Label(btn_row3, textvariable=self.zip_status_var, foreground="#666").pack(side="left", padx=(8, 0))
 
-        gicleeart_frame = ttk.LabelFrame(self.root, text="Push GicleeArt-GPT (motyw Shopify)", padding=10)
-        gicleeart_frame.pack(fill="x", padx=12, pady=(0, 8))
+        repos_frame = ttk.LabelFrame(self.root, text="Repozytoria GitHub GicleeArt", padding=10)
+        repos_frame.pack(fill="x", padx=12, pady=(0, 8))
         ttk.Label(
-            gicleeart_frame,
+            repos_frame,
             text=(
-                "Snapshot motywu dla review ChatGPT: motyw → .gpt_mirror → "
-                "eagleblastmusic-lgtm/gicleeart-gpt. Nie dotyczy GicleeApp ani Shopify dev/live."
+                "Wybierz cel świadomie: repo główne przechowuje pełny projekt, "
+                "a repo robocze jest odseparowanym snapshotem motywu do pracy i review z GPT."
             ),
             foreground="#555",
             wraplength=920,
         ).pack(anchor="w", pady=(0, 8))
-        ga_theme_row = ttk.Frame(gicleeart_frame)
-        ga_theme_row.pack(fill="x")
+
+        main_repo_card = ttk.Frame(repos_frame, padding=(8, 6))
+        main_repo_card.pack(fill="x")
+        ttk.Label(
+            main_repo_card,
+            text="Repo główne",
+            font=("Segoe UI", 10, "bold"),
+        ).pack(anchor="w")
+        ttk.Label(
+            main_repo_card,
+            text=(
+                "eagleblastmusic-lgtm/gicleeart  •  branch master\n"
+                "Pełny lokalny projekt: motyw Shopify, GicleeApp i narzędzia. "
+                "Pliki runtime, logi i sekrety są pomijane albo blokują push."
+            ),
+            foreground="#555",
+            wraplength=900,
+            justify="left",
+        ).pack(anchor="w", pady=(2, 6))
+        main_repo_row = ttk.Frame(main_repo_card)
+        main_repo_row.pack(fill="x")
+        self._main_repo_btn = ttk.Button(
+            main_repo_row,
+            text="Sprawdź i push do repo głównego",
+            command=self._start_main_repo_push,
+        )
+        self._main_repo_btn.pack(side="left")
+        ttk.Label(
+            main_repo_row,
+            text="Dry-run → audyt → potwierdzenie → commit + push (master)",
+            foreground="#666",
+        ).pack(side="left", padx=(10, 0))
+
+        ttk.Separator(repos_frame, orient="horizontal").pack(fill="x", pady=8)
+
+        work_repo_card = ttk.Frame(repos_frame, padding=(8, 6))
+        work_repo_card.pack(fill="x")
+        ttk.Label(
+            work_repo_card,
+            text="Repo robocze GPT",
+            font=("Segoe UI", 10, "bold"),
+        ).pack(anchor="w")
+        ttk.Label(
+            work_repo_card,
+            text=(
+                "eagleblastmusic-lgtm/gicleeart-gpt  •  branch main\n"
+                "Snapshot do pracy z GPT: allowlistowany motyw → .gpt_mirror. "
+                "Nie zmienia repo głównego ani Shopify dev/live."
+            ),
+            foreground="#555",
+            wraplength=900,
+            justify="left",
+        ).pack(anchor="w", pady=(2, 6))
+        work_repo_row = ttk.Frame(work_repo_card)
+        work_repo_row.pack(fill="x")
         self._gicleeart_btn = ttk.Button(
-            ga_theme_row,
-            text="Push GicleeArt-GPT do GitHub",
+            work_repo_row,
+            text="Sprawdź i push do repo roboczego GPT",
             command=self._start_gicleeart_gpt_push,
         )
         self._gicleeart_btn.pack(side="left")
         ttk.Label(
-            ga_theme_row,
+            work_repo_row,
             text="Dry-run → audyt → potwierdzenie → commit + push (main)",
-            foreground="#666",
-        ).pack(side="left", padx=(10, 0))
-
-        gicleeapp_frame = ttk.LabelFrame(self.root, text="Push GicleeApp (aplikacja lokalna)", padding=10)
-        gicleeapp_frame.pack(fill="x", padx=12, pady=(0, 8))
-        ttk.Label(
-            gicleeapp_frame,
-            text=(
-                "Osobny workflow: cursor-api → staging → eagleblastmusic-lgtm/gicleeapp. "
-                "Nie dotyczy motywu Shopify ani repo gicleeart-gpt."
-            ),
-            foreground="#555",
-            wraplength=920,
-        ).pack(anchor="w", pady=(0, 8))
-        ga_row = ttk.Frame(gicleeapp_frame)
-        ga_row.pack(fill="x")
-        self._gicleeapp_btn = ttk.Button(
-            ga_row,
-            text="Push GicleeApp do GitHub",
-            command=self._start_gicleeapp_push,
-        )
-        self._gicleeapp_btn.pack(side="left")
-        ttk.Label(
-            ga_row,
-            text="Dry-run → audyt → potwierdzenie → commit + push (main)",
-            foreground="#666",
-        ).pack(side="left", padx=(10, 0))
-        ga_starter_row = ttk.Frame(gicleeapp_frame)
-        ga_starter_row.pack(fill="x", pady=(8, 0))
-        self._starter_files_btn = ttk.Button(
-            ga_starter_row,
-            text="Push pliki startowe GPT do GitHub",
-            command=self._start_starter_files_push,
-        )
-        self._starter_files_btn.pack(side="left")
-        ttk.Label(
-            ga_starter_row,
-            text="monorepo master → Pliki startowe dla GPT (+ ZIP v40)",
-            foreground="#666",
-        ).pack(side="left", padx=(10, 0))
-
-        giclee_viewer_frame = ttk.LabelFrame(self.root, text="Push Giclee Viewer", padding=10)
-        giclee_viewer_frame.pack(fill="x", padx=12, pady=(0, 8))
-        ttk.Label(
-            giclee_viewer_frame,
-            text=(
-                "Osobny workflow: C:\\Strona\\giclee-viewer → eagleblastmusic-lgtm/giclee-viewer. "
-                "Nie dotyczy GicleeApp, motywu Shopify ani plików startowych GPT."
-            ),
-            foreground="#555",
-            wraplength=920,
-        ).pack(anchor="w", pady=(0, 8))
-        gv_row = ttk.Frame(giclee_viewer_frame)
-        gv_row.pack(fill="x")
-        self._giclee_viewer_btn = ttk.Button(
-            gv_row,
-            text="Push Giclee Viewer do GitHub",
-            command=self._start_giclee_viewer_push,
-        )
-        self._giclee_viewer_btn.pack(side="left")
-        ttk.Label(
-            gv_row,
-            text="Dry-run → audyt → potwierdzenie → commit + push (master)",
             foreground="#666",
         ).pack(side="left", padx=(10, 0))
 
@@ -1022,6 +1010,171 @@ class IntegracjaGptApp:
             log.append("Paczka gotowa w .gpt_mirror/ — bez pusha. Sprawdź REVIEW_MANIFEST.json i SYNC_NOTES.md.")
 
         self._run_async("Review package only", worker)
+
+    def _start_main_repo_push(self) -> None:
+        if self._busy:
+            messagebox.showinfo(
+                APP_TITLE,
+                "Poczekaj na zakończenie bieżącej operacji.",
+                parent=self.root,
+            )
+            return
+
+        self._clear_log()
+        self._main_repo_audit = None
+        self._set_busy(True, "Sprawdzam repo główne gicleeart…")
+        self._main_repo_btn.configure(state="disabled")
+
+        def run() -> None:
+            from Komponenty.pushe.service import dry_run_github_push
+
+            lines: list[str] = []
+            report = dry_run_github_push(on_line=lines.append)
+            self.root.after(0, lambda: self._finish_main_repo_dry_run(lines, report))
+
+        threading.Thread(
+            target=run,
+            daemon=True,
+            name="integracjagpt-main-repo-dry-run",
+        ).start()
+
+    def _finish_main_repo_dry_run(self, lines: list[str], report) -> None:
+        for line in lines:
+            self._append_log(line)
+        for line in report.format_report():
+            self._append_log(line)
+
+        self._main_repo_audit = report
+        self._main_repo_btn.configure(state="normal")
+
+        if report.blocked:
+            self._set_busy(False, "Push repo głównego: zablokowany")
+            messagebox.showerror(
+                APP_TITLE,
+                report.error or "Audyt wykrył blokady — commit i push anulowane.",
+                parent=self.root,
+            )
+            return
+
+        if report.no_changes:
+            self._set_busy(False, "Brak zmian — repo główne jest aktualne")
+            messagebox.showinfo(
+                APP_TITLE,
+                "Brak zmian — eagleblastmusic-lgtm/gicleeart jest aktualne.",
+                parent=self.root,
+            )
+            return
+
+        self._set_busy(False, "Repo główne gotowe — potwierdź push")
+        preview_lines: list[str] = []
+        if report.push_only:
+            preview_lines.append(
+                f"• working tree clean — wypchnięcie {report.unpushed_commits} lokalnych commitów"
+            )
+        else:
+            for path in report.commit_candidates[:30]:
+                preview_lines.append(f"• {path}")
+            if len(report.commit_candidates) > 30:
+                preview_lines.append(f"… i {len(report.commit_candidates) - 30} więcej")
+        if report.deletable_files:
+            preview_lines.append("")
+            preview_lines.append("Usunięcia (opcjonalne):")
+            for path in report.deletable_files[:20]:
+                preview_lines.append(f"• {path}")
+
+        include_deletions = False
+        if report.deletable_files:
+            include_deletions = messagebox.askyesno(
+                APP_TITLE,
+                f"Wykryto {len(report.deletable_files)} usuniętych plików.\n\n"
+                "Uwzględnić je w commicie do repo głównego?",
+                parent=self.root,
+            )
+
+        if not report.push_only and not report.commit_candidates and not include_deletions:
+            self.status_var.set("Brak bezpiecznych plików do commita.")
+            messagebox.showinfo(
+                APP_TITLE,
+                "Brak bezpiecznych plików do commita (bez usunięć).",
+                parent=self.root,
+            )
+            return
+
+        action = "Push" if report.push_only else "Commit + push"
+        commit_line = (
+            f"Commity do wypchnięcia: {report.unpushed_commits}\n"
+            if report.push_only
+            else f"Commit: {report.commit_message}\n"
+        )
+        if not messagebox.askyesno(
+            APP_TITLE,
+            f"{action} do repo głównego?\n\n"
+            f"Repo: eagleblastmusic-lgtm/gicleeart ({report.branch})\n"
+            + commit_line
+            + (
+                ""
+                if report.push_only
+                else (
+                    f"Pliki: {len(report.commit_candidates)}"
+                    + (f" + {len(report.deletable_files)} usunięć" if include_deletions else "")
+                )
+            )
+            + "\n\n"
+            + "\n".join(preview_lines),
+            parent=self.root,
+        ):
+            self.status_var.set("Push repo głównego anulowany.")
+            return
+
+        self._run_main_repo_commit_push(include_deletions)
+
+    def _run_main_repo_commit_push(self, include_deletions: bool) -> None:
+        report = self._main_repo_audit
+        if report is None:
+            return
+
+        self._set_busy(True, "Pushuję do repo głównego gicleeart…")
+        self._main_repo_btn.configure(state="disabled")
+
+        def run() -> None:
+            from Komponenty.pushe.service import commit_and_push_github
+
+            lines: list[str] = []
+            result = commit_and_push_github(
+                report,
+                include_deletions=include_deletions,
+                on_line=lines.append,
+            )
+            self.root.after(0, lambda: self._finish_main_repo_push(lines, result))
+
+        threading.Thread(
+            target=run,
+            daemon=True,
+            name="integracjagpt-main-repo-push",
+        ).start()
+
+    def _finish_main_repo_push(self, lines: list[str], result) -> None:
+        for line in lines:
+            self._append_log(line)
+        self._main_repo_btn.configure(state="normal")
+
+        if result.ok:
+            self._set_busy(False, "Repo główne zaktualizowane")
+            if result.commit_sha:
+                self._append_log(f"Commit SHA: {result.commit_sha}")
+            if result.committed_files:
+                self._append_log("Pliki w commicie:")
+                for path in result.committed_files:
+                    self._append_log(f"  • {path}")
+            show_toast(self.root, result.message or "Repo główne zaktualizowane")
+            self.status_var.set(result.message or "Repo główne zaktualizowane")
+        else:
+            self._set_busy(False, "Push repo głównego: błąd")
+            messagebox.showerror(
+                APP_TITLE,
+                result.message or "Push nie powiódł się.",
+                parent=self.root,
+            )
 
     def _start_gicleeart_gpt_push(self, *, skip_sync: bool = False, sync_result=None, include_recordings: bool = False) -> None:
         if self._busy:

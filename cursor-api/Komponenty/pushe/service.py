@@ -79,6 +79,8 @@ class GithubAuditReport:
     branch_status: BranchSyncStatus = field(default_factory=BranchSyncStatus)
     blocked: bool = False
     no_changes: bool = False
+    push_only: bool = False
+    unpushed_commits: int = 0
     commit_message: str = ""
     error: str = ""
 
@@ -117,12 +119,17 @@ class GithubAuditReport:
             lines.extend(self.diff_stat.strip().splitlines())
         lines.append("")
         lines.append(f"Kandydaci do commita: {len(self.commit_candidates)}")
+        if self.push_only:
+            lines.append(f"Lokalne commity do wypchnięcia: {self.unpushed_commits}")
         if self.blocked:
             lines.append("")
             lines.append("WORKFLOW ZATRZYMANY — napraw blokady przed pushem.")
         elif self.no_changes:
             lines.append("")
             lines.append("Brak zmian do bezpiecznego commita.")
+        elif self.push_only:
+            lines.append("")
+            lines.append("Working tree jest czysty — potwierdź push istniejących lokalnych commitów.")
         else:
             lines.append("")
             lines.append(f"Proponowany commit: {self.commit_message}")
@@ -193,13 +200,16 @@ def assert_github_remote(remote_url: str) -> None:
         )
     if "gicleeapp" in u:
         raise ValueError(f"remote wskazuje gicleeapp zamiast gicleeart: {remote_url}")
-    normalized = u.replace("git@", "").replace(":", "/")
-    if "eagleblastmusic-lgtm/gicleeart" not in normalized:
+    normalized = u
+    if normalized.startswith("git@github.com:"):
+        normalized = "https://github.com/" + normalized.removeprefix("git@github.com:")
+    elif normalized.startswith("ssh://git@github.com/"):
+        normalized = "https://github.com/" + normalized.removeprefix("ssh://git@github.com/")
+    normalized = normalized.removesuffix(".git").rstrip("/")
+    if normalized != "https://github.com/eagleblastmusic-lgtm/gicleeart":
         raise ValueError(
             f"remote musi wskazywać eagleblastmusic-lgtm/gicleeart.git: {remote_url}"
         )
-    if normalized.endswith("/gicleeart-gpt") or normalized.endswith("/gicleeart-gpt.git"):
-        raise ValueError(f"remote wskazuje gicleeart-gpt: {remote_url}")
 
 
 def _parse_branch_tracking(status_line: str) -> tuple[int, int, bool]:
@@ -456,7 +466,11 @@ def audit_repo_for_github_push(
     report.commit_message = msg or default_commit_message()
 
     if not report.commit_candidates and not report.deletable_files:
-        report.no_changes = True
+        if report.branch_status.ahead > 0:
+            report.push_only = True
+            report.unpushed_commits = report.branch_status.ahead
+        else:
+            report.no_changes = True
     elif not report.commit_candidates and report.deletable_files:
         report.no_changes = False
 
@@ -484,11 +498,41 @@ def commit_and_push_github(
     if report.no_changes:
         return PushOutcome(ok=True, message="Brak zmian do wysłania na GitHub.")
 
+    root = repo_root()
+    branch = (report.branch or GITHUB_DEFAULT_BRANCH).strip()
+
+    if report.push_only:
+        try:
+            assert_github_remote(report.remote_url)
+        except ValueError as exc:
+            return PushOutcome(ok=False, message=str(exc))
+
+        branch_status = inspect_branch_sync(root, branch, pull_ff_only=True, on_line=on_line)
+        if not branch_status.ok:
+            return PushOutcome(ok=False, message=branch_status.message)
+
+        push = _run_git(["push", "origin", branch], cwd=root, on_line=on_line)
+        if push.returncode != 0:
+            err = (push.stderr or push.stdout or "").strip()
+            return PushOutcome(
+                ok=False,
+                message=err or "git push nie powiódł się — sprawdź auth GitHub.",
+            )
+
+        sha_proc = _run_git(["rev-parse", "HEAD"], cwd=root, on_line=on_line)
+        sha = (sha_proc.stdout or "").strip()
+        return PushOutcome(
+            ok=True,
+            message=(
+                f"GitHub OK ({report.unpushed_commits} lokalnych commitów → "
+                f"origin/{branch}, {sha[:12] if sha else '?'})."
+            ),
+            commit_sha=sha,
+        )
+
     if not report.commit_candidates and not (include_deletions and report.deletable_files):
         return PushOutcome(ok=True, message="Brak bezpiecznych plików do commita.")
 
-    root = repo_root()
-    branch = (report.branch or GITHUB_DEFAULT_BRANCH).strip()
     _emit(on_line, "=== Commit + push gicleeart ===")
 
     try:
