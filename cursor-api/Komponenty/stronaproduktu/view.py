@@ -7,7 +7,7 @@ from collections.abc import Callable
 
 from Komponenty._shared.inline_view_shell import mount_inline_view
 
-from .gui import APP_TITLE, _build_ui
+from .gui_ai import APP_TITLE, _build_ui
 
 
 def build_view(parent: tk.Widget, on_back: Callable[[], None]) -> tk.Widget:

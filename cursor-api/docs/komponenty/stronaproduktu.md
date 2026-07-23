@@ -1,10 +1,12 @@
 # Komponent: stronaproduktu
 
-**Cel:** Konfiguracja stronicowanego opisu («mini strony») na PDP `szablon-produktu-v3` — podział akapitów na strony + grafika per strona. Dodatkowo globalne **Ustawienia efektów PDP v3** (immersive zoom, blur R2, tła sekcji).
+**Cel:** Konfiguracja stronicowanego opisu («mini strony») na PDP `szablon-produktu-v3` — podział akapitów na strony + grafika per strona. Moduł potrafi również zaproponować semantycznie dopasowane wycinki głównego obrazu przez Gemini API. Dodatkowo obsługuje globalne **Ustawienia efektów PDP v3** (immersive zoom, blur R2, tła sekcji).
 
 | Plik | Rola |
 |------|------|
-| `gui.py` | Lista produktów, edytor stron (liczba akapitów, podgląd tekstu, upload grafik), okno «Ustawienia efektów (PDP v3)…» |
+| `gui.py` | Bazowy edytor stron (lista produktów, liczba akapitów, ręczny upload grafik, ustawienia efektów) |
+| `gui_ai.py` | Nakładka GUI z akcją «AI — dobierz kadry…», podglądem wariantów i zatwierdzaniem |
+| `ai_crops.py` | Gemini: interpretacja obrazu i tekstu; lokalne kadrowanie przez Pillow; walidacja, upload i zapis |
 | `service.py` | Metafieldy `custom.story_pages` (produkt) i `custom.pdp_v3_effects` (sklep), Shopify Files, parsowanie akapitów z `body_html` |
 
 Tryb: `inline` (w launcherze — «← Powrót»). Sekcja: **Administracja strony** (kafelek «Strona produktu»).
@@ -26,13 +28,54 @@ Tryb: `inline` (w launcherze — «← Powrót»). Sekcja: **Administracja stron
 - Ostatnia strona (panel **SZCZEGÓŁY**) jest dokładana automatycznie przez motyw — nie liczy się w `pages`.
 - **Bez metafielda** motyw dzieli akapity automatycznie (~850 znaków/strona) i używa featured image.
 
-## Workflow
+## Workflow ręczny
 
 1. Uruchom kafelek **Strona produktu** w GicleeApp.
 2. Wybierz produkt (filtr, checkbox «Tylko bez konfiguracji stron»).
 3. Ustaw strony: «Dodaj/Usuń stronę», «+/− akapit» (podgląd tekstu strony po prawej).
 4. «Wgraj grafikę strony…» dla wybranej strony (także dla wiersza SZCZEGÓŁY).
 5. **Zapisz do Shopify** → metafield. «Usuń konfigurację» przywraca auto-podział.
+
+## Inteligentne kadry Gemini
+
+Przycisk **AI — dobierz kadry…** analizuje jednocześnie główny obraz produktu i tekst wszystkich zapisanych mini-stron.
+
+### Zasady
+
+- Najpierw zapisz podział stron przyciskiem **Zapisz do Shopify**. Funkcja AI nie pracuje na niezapisanym stanie, aby nie utracić istniejących adresów grafik.
+- Strona 1 używa pełnego głównego obrazu. Aplikacja nie wysyła jego duplikatu do Shopify Files — pozostawia `pages[0].image` puste.
+- Dla kolejnych stron Gemini wskazuje 2–3 obszary obrazu pasujące do tekstu: postać, gest, detal architektury, niebo, światło, tkaninę, przedmiot lub szerszy kadr atmosferyczny.
+- Gemini zwraca wyłącznie plan kadrowania. Reprodukcja nie jest generowana ani retuszowana.
+- GicleeApp wycina oryginalne piksele lokalnie przez Pillow, dopasowuje kadr do proporcji pola PDP v3 (`4 / 3.4`) i pilnuje minimalnej rozdzielczości.
+- Kandydaci są oceniani pod kątem pewności i różnorodności; niemal identyczne kadry są obniżane w rankingu.
+- Przy braku pewnego detalu stosowany jest bezpieczny szerszy kadr.
+- Istniejące własne grafiki są w oknie podglądu domyślnie **wyłączone z nadpisania**.
+- Panel **SZCZEGÓŁY** oraz `details_image` nie są zmieniane przez tę funkcję.
+
+### Podgląd i zapis
+
+1. Kliknij **AI — dobierz kadry…**.
+2. Poczekaj na analizę Gemini i lokalne przygotowanie cropów.
+3. Zaznacz strony, dla których mają zostać zapisane grafiki.
+4. Użyj **Następny wariant**, aby przełączać propozycje; ostatnim wariantem jest zawsze pełny obraz.
+5. Kliknij **Zatwierdź i zapisz do Shopify**.
+6. Dopiero wtedy wybrane cropy są wysyłane do Shopify Files, a `custom.story_pages` zostaje zaktualizowany.
+
+### Konfiguracja
+
+W `cursor-api/.env`:
+
+```env
+GEMINI_API_KEY=...
+```
+
+Klient i retry są współdzielone z komponentem `tytulyai` (`Komponenty/_shared/gemini_client.py`). Klucz nie może trafić do repozytorium ani logów.
+
+Funkcja wymaga Pillow:
+
+```powershell
+pip install Pillow
+```
 
 ## Metafield `custom.pdp_v3_effects` (JSON, owner: SHOP)
 
@@ -57,6 +100,7 @@ Globalne ustawienia efektów PDP v3 — okno **Ustawienia efektów (PDP v3)…**
 ## Warstwa motywu
 
 `snippets/giclee-product-story.liquid` + `assets/giclee-product-story.css/.js` — tylko `szablon-produktu-v3`.
-Szczegóły: [`../../../docs/motyw/szablony-i-strony.md`](../../../docs/motyw/szablony-i-strony.md).
+
+Proporcje grafiki w motywie: `.giclee-story__frame { aspect-ratio: 4 / 3.4; object-fit: cover; }`.
 
 → [`README.md`](README.md)
