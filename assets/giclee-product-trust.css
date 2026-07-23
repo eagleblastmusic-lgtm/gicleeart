@@ -172,7 +172,6 @@
   transition: color 0.38s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-
 @media screen and (max-width: 989px) {
   .giclee-trust__grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -202,4 +201,27 @@
   .giclee-trust__detail {
     max-width: 28ch;
   }
+}
+
+/* PDP v3: domknij przyciemnienie wspolnego tla process + trust nad szczelina.
+   Warstwa bazowa w giclee-product-story.css ma top i gradient, ale bez pelnej
+   geometrii kurczyla sie do zera, odslaniajac jasny rozmyty pas nad sekcja. */
+main[data-template='product.szablon-produktu-v3'] .pdp-v3-pt-wrap.has-bg::after {
+  bottom: 0;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%) scale(1.03);
+  pointer-events: none;
+}
+
+/* PDP v3: separator renderowany po końcowym wrapperze jest ostatnim grid itemem.
+   Jego linia i gap nie są potrzebne, bo wrapper jest pełnoekranowym finałem. */
+main[data-template='product.szablon-produktu-v3']
+  .product-information
+  .pdp-v3-pt-wrap
+  + .product-description-trailing-separator {
+  display: none;
+  margin: 0;
+  height: 0;
+  border: 0;
 }

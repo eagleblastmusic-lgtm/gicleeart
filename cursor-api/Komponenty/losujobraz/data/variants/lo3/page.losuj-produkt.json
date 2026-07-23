@@ -36,7 +36,8 @@
         "living_dust_speed": 75,
         "living_dust_fps": 24,
         "living_dust_dpr_cap": 125,
-        "color_scheme": "scheme-1"
+        "color_scheme": "scheme-1",
+        "background_image_object_y": 50
       }
     },
     "main": {

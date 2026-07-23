@@ -45,7 +45,20 @@
         "living_dust_speed": 75,
         "living_dust_fps": 24,
         "living_dust_dpr_cap": 125,
-        "color_scheme": "scheme-1"
+        "cursor_smoke_enabled": true,
+        "cursor_smoke_preset": "elegant",
+        "cursor_smoke_quality": "standard",
+        "cursor_smoke_intensity": 100,
+        "cursor_smoke_opacity": 100,
+        "cursor_smoke_size": 100,
+        "cursor_smoke_force": 100,
+        "cursor_smoke_persistence": 100,
+        "cursor_smoke_swirl": 100,
+        "cursor_smoke_bloom": 100,
+        "cursor_smoke_auto_enabled": true,
+        "cursor_smoke_auto_frequency": 100,
+        "color_scheme": "scheme-1",
+        "background_image_object_y": 50
       }
     },
     "main": {

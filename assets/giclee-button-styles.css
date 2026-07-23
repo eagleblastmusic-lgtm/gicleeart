@@ -1,0 +1,592 @@
+/*
+ * Globalny system przycisków GicleeApp → Style.
+ * "basic" nie nakłada żadnych zmian. Reguły poniżej działają wyłącznie dla "nocturne".
+ */
+
+html[data-giclee-button-style='nocturne'] {
+  --giclee-button-nocturne-white: #e6e6e6;
+  --giclee-button-nocturne-silver: #b0b3b8;
+  --giclee-button-nocturne-steel: #6b7077;
+  --giclee-button-nocturne-graphite: #2a2d33;
+  --giclee-button-nocturne-black: #0b0d10;
+  --giclee-button-nocturne-glow: rgb(230 230 230 / 0.6);
+}
+
+html[data-giclee-button-style='nocturne']
+  :is(
+    .button:not(
+      .button-secondary,
+      .button-unstyled,
+      .button--unstyled,
+      .close-button,
+      .menu-drawer__back-button,
+      .header-actions__action,
+      .localization-selector,
+      [class*='predictive-search__']
+    ),
+    button.shopify-payment-button__button--unbranded,
+    .giclee-artist-showcase__cta,
+    .giclee-random-artwork__cta--primary,
+    .pm-cta,
+    .giclee-site-notice__btn,
+    .back-btn,
+    .blik-checkout-button
+  ),
+html[data-giclee-button-style='nocturne']
+  :is(
+    .button-secondary:not(.button-unstyled, .button--unstyled),
+    .pm-upload-btn
+  ) {
+  --button-color: var(--giclee-button-nocturne-white);
+  --button-background-color: var(--giclee-button-nocturne-black);
+  --button-border-color: var(--giclee-button-nocturne-steel);
+  --button-border-width: 1px;
+
+  position: relative;
+  isolation: isolate;
+  min-block-size: 44px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 24px;
+  border: 1px solid var(--giclee-button-nocturne-steel);
+  border-radius: 2px;
+  color: var(--giclee-button-nocturne-white);
+  background:
+    linear-gradient(180deg, rgb(230 230 230 / 0.055) 0%, transparent 45%),
+    linear-gradient(135deg, var(--giclee-button-nocturne-graphite), var(--giclee-button-nocturne-black) 72%);
+  box-shadow:
+    inset 0 1px 0 rgb(230 230 230 / 0.11),
+    inset 0 0 0 1px rgb(11 13 16 / 0.6),
+    0 8px 28px rgb(0 0 0 / 0.18);
+  font-family: 'Montserrat', 'Sora', var(--font-body--family), sans-serif;
+  font-size: clamp(0.72rem, 0.7rem + 0.08vw, 0.84rem);
+  font-style: normal;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition:
+    color 260ms ease,
+    border-color 260ms ease,
+    background 260ms ease,
+    box-shadow 320ms ease,
+    transform 180ms ease;
+}
+
+html[data-giclee-button-style='nocturne']
+  :is(
+    .button-secondary:not(.button-unstyled, .button--unstyled),
+    .pm-upload-btn
+  ) {
+  --button-background-color: transparent;
+
+  color: var(--giclee-button-nocturne-silver);
+  background:
+    linear-gradient(180deg, rgb(230 230 230 / 0.035), transparent 52%),
+    rgb(11 13 16 / 0.72);
+}
+
+html[data-giclee-button-style='nocturne']
+  :is(
+    .button:not(
+      .button-secondary,
+      .button-unstyled,
+      .button--unstyled,
+      .close-button,
+      .menu-drawer__back-button,
+      .header-actions__action,
+      .localization-selector,
+      [class*='predictive-search__']
+    ),
+    .button-secondary:not(.button-unstyled, .button--unstyled),
+    button.shopify-payment-button__button--unbranded,
+    .giclee-artist-showcase__cta,
+    .giclee-random-artwork__cta--primary,
+    .pm-cta,
+    .pm-upload-btn,
+    .giclee-site-notice__btn,
+    .back-btn,
+    .blik-checkout-button
+  ):hover:not(:disabled, [aria-disabled='true']) {
+  --button-color: #ffffff;
+  --button-background-color: var(--giclee-button-nocturne-graphite);
+  --button-border-color: var(--giclee-button-nocturne-white);
+
+  color: #ffffff;
+  border-color: var(--giclee-button-nocturne-white);
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.13), transparent 48%),
+    linear-gradient(135deg, #30343a, #101318 72%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    inset 0 0 0 1px rgb(11 13 16 / 0.48),
+    0 0 8px rgb(230 230 230 / 0.3),
+    0 0 24px rgb(230 230 230 / 0.18),
+    0 12px 34px rgb(0 0 0 / 0.28);
+  transform: translateY(-1px);
+}
+
+html[data-giclee-button-style='nocturne']
+  :is(
+    .button:not(
+      .button-unstyled,
+      .button--unstyled,
+      .close-button,
+      .menu-drawer__back-button,
+      .header-actions__action,
+      .localization-selector,
+      [class*='predictive-search__']
+    ),
+    .button-secondary:not(.button-unstyled, .button--unstyled),
+    button.shopify-payment-button__button--unbranded,
+    .giclee-artist-showcase__cta,
+    .giclee-random-artwork__cta--primary,
+    .pm-cta,
+    .pm-upload-btn,
+    .giclee-site-notice__btn,
+    .back-btn,
+    .blik-checkout-button
+  ):active:not(:disabled, [aria-disabled='true']) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 0 16px rgb(0 0 0 / 0.5),
+    0 0 10px rgb(230 230 230 / 0.18);
+}
+
+html[data-giclee-button-style='nocturne']
+  :is(
+    .button:not(
+      .button-unstyled,
+      .button--unstyled,
+      .close-button,
+      .menu-drawer__back-button,
+      .header-actions__action,
+      .localization-selector,
+      [class*='predictive-search__']
+    ),
+    .button-secondary:not(.button-unstyled, .button--unstyled),
+    button.shopify-payment-button__button--unbranded,
+    .giclee-artist-showcase__cta,
+    .giclee-random-artwork__cta,
+    .pm-cta,
+    .pm-upload-btn,
+    .giclee-site-notice__btn,
+    .back-btn,
+    .blik-checkout-button
+  ):focus-visible {
+  outline: 1px solid var(--giclee-button-nocturne-white);
+  outline-offset: 4px;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.2),
+    0 0 0 2px rgb(11 13 16 / 0.88),
+    0 0 18px var(--giclee-button-nocturne-glow);
+}
+
+html[data-giclee-button-style='nocturne']
+  :is(
+    .button:not(
+      .button-unstyled,
+      .button--unstyled,
+      .close-button,
+      .menu-drawer__back-button,
+      .header-actions__action,
+      .localization-selector,
+      [class*='predictive-search__']
+    ),
+    .button-secondary,
+    button.shopify-payment-button__button--unbranded,
+    .giclee-artist-showcase__cta,
+    .giclee-random-artwork__cta,
+    .pm-cta,
+    .pm-upload-btn,
+    .giclee-site-notice__btn,
+    .back-btn,
+    .blik-checkout-button
+  ):is(:disabled, [aria-disabled='true']) {
+  opacity: 0.38;
+  filter: saturate(0.35);
+  box-shadow: inset 0 1px 0 rgb(230 230 230 / 0.04);
+  transform: none;
+}
+
+/* Linki CTA otrzymują znak kierunku; przyciski formularzy zachowują własne ikony i loading. */
+html[data-giclee-button-style='nocturne']
+  a.button:not(
+    .button-secondary,
+    .button-unstyled,
+    .button--unstyled,
+    .close-button,
+    .menu-drawer__back-button,
+    .header-actions__action,
+    .localization-selector,
+    [class*='predictive-search__']
+  )::after,
+html[data-giclee-button-style='nocturne'] .giclee-artist-showcase__cta::after,
+html[data-giclee-button-style='nocturne'] .pm-cta::after {
+  content: '→';
+  display: inline-block;
+  margin-inline-start: 4px;
+  font-family: Arial, sans-serif;
+  font-size: 1.35em;
+  font-weight: 300;
+  line-height: 0.8;
+  letter-spacing: 0;
+  transition: transform 260ms ease;
+}
+
+html[data-giclee-button-style='nocturne']
+  :is(
+    a.button:not(
+      .button-secondary,
+      .button-unstyled,
+      .button--unstyled,
+      .close-button,
+      .menu-drawer__back-button,
+      .header-actions__action,
+      .localization-selector,
+      [class*='predictive-search__']
+    ),
+    .giclee-artist-showcase__cta,
+    .pm-cta
+  ):hover::after {
+  transform: translateX(4px);
+}
+
+/* Ghost / text — mniejsza akcja nie konkuruje z głównym CTA. */
+html[data-giclee-button-style='nocturne']
+  .giclee-random-artwork[data-design-variant='v4']
+  .giclee-random-artwork__cta--ghost {
+  min-block-size: 44px;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  color: var(--giclee-button-nocturne-silver);
+  background: transparent;
+  font-family: 'Montserrat', 'Sora', var(--font-body--family), sans-serif;
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition:
+    color 240ms ease,
+    border-color 240ms ease,
+    text-shadow 240ms ease;
+}
+
+html[data-giclee-button-style='nocturne']
+  .giclee-random-artwork[data-design-variant='v4']
+  .giclee-random-artwork__cta--ghost:hover {
+  color: #ffffff;
+  border-color: var(--giclee-button-nocturne-steel);
+  background: rgb(11 13 16 / 0.34);
+  text-shadow: 0 0 12px rgb(230 230 230 / 0.38);
+}
+
+/* V4 ma bardziej szczegółowy selektor, dlatego główne CTA otrzymuje jawne nadpisanie. */
+html[data-giclee-button-style='nocturne']
+  .giclee-random-artwork[data-design-variant='v4']
+  .giclee-random-artwork__cta--primary {
+  min-block-size: 44px;
+  padding: 12px 24px;
+  border: 1px solid var(--giclee-button-nocturne-steel);
+  border-radius: 2px;
+  color: var(--giclee-button-nocturne-white);
+  background:
+    linear-gradient(180deg, rgb(230 230 230 / 0.055), transparent 45%),
+    linear-gradient(135deg, var(--giclee-button-nocturne-graphite), var(--giclee-button-nocturne-black) 72%);
+  box-shadow:
+    inset 0 1px 0 rgb(230 230 230 / 0.11),
+    0 8px 28px rgb(0 0 0 / 0.18);
+  font-family: 'Montserrat', 'Sora', var(--font-body--family), sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+html[data-giclee-button-style='nocturne']
+  .giclee-random-artwork[data-design-variant='v4']
+  .giclee-random-artwork__cta--primary:hover {
+  border-color: var(--giclee-button-nocturne-white);
+  color: #ffffff;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.13), transparent 48%),
+    linear-gradient(135deg, #30343a, #101318 72%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    0 0 8px rgb(230 230 230 / 0.3),
+    0 0 24px rgb(230 230 230 / 0.18);
+}
+
+/* Tekstowe warianty produktu: kolor, rozmiar, drewno i passe-partout.
+ * Próbki typu swatch zachowują kolory produktu i własny kształt. */
+html[data-giclee-button-style='nocturne']
+  .variant-option__button-label:not(.variant-option__button-label--has-swatch) {
+  --variant-picker-stroke-color: var(--giclee-button-nocturne-steel);
+
+  min-block-size: 44px;
+  padding: 11px 18px;
+  border: 1px solid var(--giclee-button-nocturne-steel);
+  border-radius: 2px;
+  color: var(--giclee-button-nocturne-silver);
+  background:
+    linear-gradient(180deg, rgb(230 230 230 / 0.035), transparent 52%),
+    rgb(11 13 16 / 0.76);
+  box-shadow:
+    inset 0 1px 0 rgb(230 230 230 / 0.08),
+    inset 0 0 0 1px rgb(11 13 16 / 0.58),
+    0 7px 22px rgb(0 0 0 / 0.14);
+  font-family: 'Montserrat', 'Sora', var(--font-body--family), sans-serif;
+  font-size: clamp(0.76rem, 0.74rem + 0.08vw, 0.88rem);
+  font-style: normal;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.025em;
+  transition:
+    color 240ms ease,
+    border-color 240ms ease,
+    background 240ms ease,
+    box-shadow 280ms ease,
+    transform 180ms ease;
+}
+
+html[data-giclee-button-style='nocturne']
+  .variant-option__button-label:not(.variant-option__button-label--has-swatch)::before {
+  inset: -1px;
+  border: 1px solid var(--giclee-button-nocturne-steel);
+  border-radius: 2px;
+}
+
+html[data-giclee-button-style='nocturne']
+  .variant-option__button-label:not(.variant-option__button-label--has-swatch)
+  .variant-option__button-label__pill {
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.11), transparent 48%),
+    linear-gradient(135deg, var(--giclee-button-nocturne-graphite), #101318 74%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.14),
+    inset 0 0 18px rgb(230 230 230 / 0.035);
+}
+
+html[data-giclee-button-style='nocturne']
+  .variant-option__button-label:not(.variant-option__button-label--has-swatch):hover:not(
+    :has([data-option-available='false'])
+  ) {
+  color: #ffffff;
+  border-color: var(--giclee-button-nocturne-silver);
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.09), transparent 50%),
+    rgb(18 21 26 / 0.86);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.16),
+    inset 0 0 0 1px rgb(11 13 16 / 0.5),
+    0 0 8px rgb(230 230 230 / 0.2),
+    0 0 20px rgb(230 230 230 / 0.1),
+    0 10px 26px rgb(0 0 0 / 0.22);
+  transform: translateY(-1px);
+}
+
+html[data-giclee-button-style='nocturne']
+  .variant-option__button-label:not(.variant-option__button-label--has-swatch):has(:checked) {
+  --variant-picker-stroke-color: var(--giclee-button-nocturne-white);
+
+  color: #ffffff;
+  border-color: var(--giclee-button-nocturne-white);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.2),
+    inset 0 0 0 1px rgb(11 13 16 / 0.48),
+    0 0 9px rgb(230 230 230 / 0.28),
+    0 0 24px rgb(230 230 230 / 0.14),
+    0 10px 28px rgb(0 0 0 / 0.24);
+}
+
+html[data-giclee-button-style='nocturne']
+  .variant-option__button-label:not(.variant-option__button-label--has-swatch):has(:checked)::before {
+  border-color: var(--giclee-button-nocturne-white);
+}
+
+html[data-giclee-button-style='nocturne']
+  .variant-option__button-label:not(.variant-option__button-label--has-swatch):has(:checked):hover
+  .variant-option__button-label__pill {
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.16), transparent 48%),
+    linear-gradient(135deg, #34383f, #12151a 74%);
+}
+
+html[data-giclee-button-style='nocturne']
+  .variant-option__button-label:not(.variant-option__button-label--has-swatch):active:not(
+    :has([data-option-available='false'])
+  ) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 0 16px rgb(0 0 0 / 0.5),
+    0 0 10px rgb(230 230 230 / 0.18);
+}
+
+html[data-giclee-button-style='nocturne']
+  .variant-option__button-label:not(.variant-option__button-label--has-swatch):has(:focus-visible) {
+  --variant-picker-stroke-color: var(--giclee-button-nocturne-white);
+
+  border-color: var(--giclee-button-nocturne-white);
+  outline: 1px solid var(--giclee-button-nocturne-white);
+  outline-offset: 4px;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.18),
+    0 0 0 2px rgb(11 13 16 / 0.88),
+    0 0 18px var(--giclee-button-nocturne-glow);
+}
+
+html[data-giclee-button-style='nocturne']
+  .variant-option__button-label:not(.variant-option__button-label--has-swatch):has(
+    [data-option-available='false']
+  ) {
+  color: rgb(176 179 184 / 0.48);
+  background: rgb(11 13 16 / 0.52);
+  opacity: 0.58;
+  filter: saturate(0.35);
+  box-shadow: inset 0 1px 0 rgb(230 230 230 / 0.035);
+  transform: none;
+}
+
+html[data-giclee-button-style='nocturne']
+  .variant-option__button-label:not(.variant-option__button-label--has-swatch):has(
+    [data-option-available='false']
+  )::before,
+html[data-giclee-button-style='nocturne']
+  .variant-option__button-label:not(.variant-option__button-label--has-swatch):has(
+    [data-option-available='false']
+  )::after {
+  border-color: var(--giclee-button-nocturne-steel);
+}
+
+html[data-giclee-button-style='nocturne']
+  .variant-option__button-label:not(.variant-option__button-label--has-swatch):has(
+    [data-option-available='false']
+  )
+  svg
+  line {
+  stroke: var(--giclee-button-nocturne-steel);
+}
+
+/* Kontrolki ikonowe: tylko treść i narzędzia, bez ikon nawigacji nagłówka. */
+html[data-giclee-button-style='nocturne']
+  :is(.product-media-container__zoom-button, .pm-zoom-rail__btn) {
+  inline-size: 44px;
+  block-size: 44px;
+  min-inline-size: 44px;
+  min-block-size: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--giclee-button-nocturne-steel);
+  border-radius: 50%;
+  color: var(--giclee-button-nocturne-white);
+  background:
+    radial-gradient(circle at 50% 38%, rgb(230 230 230 / 0.12), transparent 58%),
+    var(--giclee-button-nocturne-black);
+  box-shadow:
+    inset 0 0 0 1px rgb(11 13 16 / 0.7),
+    0 0 12px rgb(230 230 230 / 0.1);
+  transition:
+    border-color 240ms ease,
+    box-shadow 280ms ease,
+    transform 180ms ease;
+}
+
+html[data-giclee-button-style='nocturne']
+  :is(.product-media-container__zoom-button, .pm-zoom-rail__btn):hover {
+  border-color: var(--giclee-button-nocturne-white);
+  box-shadow:
+    inset 0 0 0 1px rgb(11 13 16 / 0.6),
+    0 0 8px rgb(230 230 230 / 0.32),
+    0 0 20px rgb(230 230 230 / 0.16);
+  transform: translateY(-1px);
+}
+
+html[data-giclee-button-style='nocturne']
+  :is(.pm-toolbar-btn, .pm-hint__export-btn) {
+  min-block-size: 44px;
+  border: 1px solid var(--giclee-button-nocturne-steel);
+  border-radius: 2px;
+  color: var(--giclee-button-nocturne-white);
+  background: rgb(11 13 16 / 0.88);
+  box-shadow: inset 0 1px 0 rgb(230 230 230 / 0.08);
+}
+
+html[data-giclee-button-style='nocturne']
+  :is(.pm-toolbar-btn, .pm-hint__export-btn):hover {
+  border-color: var(--giclee-button-nocturne-white);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.16),
+    0 0 18px rgb(230 230 230 / 0.18);
+}
+
+html[data-giclee-button-style='nocturne']
+  :is(shopify-accelerated-checkout, shopify-accelerated-checkout-cart) {
+  --shopify-accelerated-checkout-button-border-radius: 2px;
+  --shopify-accelerated-checkout-button-block-size: 44px;
+}
+
+@media (max-width: 749px) {
+  html[data-giclee-button-style='nocturne']
+    :is(
+      .button:not(
+        .button-unstyled,
+        .button--unstyled,
+        .close-button,
+        .menu-drawer__back-button,
+        .header-actions__action,
+        .localization-selector,
+        [class*='predictive-search__']
+      ),
+      .button-secondary:not(.button-unstyled, .button--unstyled),
+      button.shopify-payment-button__button--unbranded,
+      .giclee-artist-showcase__cta,
+      .giclee-random-artwork__cta--primary,
+      .pm-cta,
+      .pm-upload-btn,
+      .giclee-site-notice__btn,
+      .back-btn,
+      .blik-checkout-button
+    ) {
+    min-block-size: 44px;
+    padding-inline: 20px;
+    letter-spacing: 0.11em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-giclee-button-style='nocturne']
+    :is(
+      .button:not(
+        .button-unstyled,
+        .button--unstyled,
+        .close-button,
+        .menu-drawer__back-button,
+        .header-actions__action,
+        .localization-selector,
+        [class*='predictive-search__']
+      ),
+      .button-secondary,
+      button.shopify-payment-button__button--unbranded,
+      .giclee-artist-showcase__cta,
+      .giclee-random-artwork__cta,
+      .pm-cta,
+      .pm-upload-btn,
+      .giclee-site-notice__btn,
+      .back-btn,
+      .blik-checkout-button,
+      .product-media-container__zoom-button,
+      .pm-zoom-rail__btn,
+      .pm-toolbar-btn,
+      .pm-hint__export-btn,
+      .variant-option__button-label:not(.variant-option__button-label--has-swatch)
+    ) {
+    transition-duration: 0.01ms;
+  }
+}

@@ -545,13 +545,39 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
                 widget = ttk.Entry(editor_inner, textvariable=var, width=64)
                 widget.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(0, 6))
                 var.trace_add("write", lambda *_a, v=var, fid=fld.field_id: _set_zone_value(zid, fid, v.get()))
+        elif fld.kind == "choice":
+            value_to_label = dict(fld.choices)
+            label_to_value = {label: value for value, label in fld.choices}
+            current_value = str(_zone_value(zid, fld.field_id) or "")
+            labels = tuple(label for _value, label in fld.choices)
+            var = tk.StringVar(value=value_to_label.get(current_value, current_value))
+            ttk.Combobox(
+                editor_inner,
+                textvariable=var,
+                values=labels,
+                state="readonly",
+                width=32,
+            ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(0, 6))
+            var.trace_add(
+                "write",
+                lambda *_a, v=var, fid=fld.field_id, mapping=label_to_value: _set_zone_value(
+                    zid, fid, mapping.get(v.get(), v.get())
+                ),
+            )
         elif fld.kind == "bool":
             var = tk.BooleanVar(value=bool(_zone_value(zid, fld.field_id)))
             ttk.Checkbutton(editor_inner, variable=var).grid(row=row, column=0, columnspan=2, sticky="w", pady=(0, 6))
             var.trace_add("write", lambda *_a, v=var, fid=fld.field_id: _set_zone_value(zid, fid, v.get()))
         elif fld.kind == "int":
             var = tk.StringVar(value=str(_zone_value(zid, fld.field_id) or 0))
-            ttk.Spinbox(editor_inner, textvariable=var, from_=0, to=9999, width=10).grid(
+            ttk.Spinbox(
+                editor_inner,
+                textvariable=var,
+                from_=fld.min_value if fld.min_value is not None else 0,
+                to=fld.max_value if fld.max_value is not None else 9999,
+                increment=fld.step if fld.step is not None else 1,
+                width=10,
+            ).grid(
                 row=row, column=0, columnspan=2, sticky="w", pady=(0, 6)
             )
             var.trace_add("write", lambda *_a, v=var, fid=fld.field_id: _set_zone_value(zid, fid, v.get()))

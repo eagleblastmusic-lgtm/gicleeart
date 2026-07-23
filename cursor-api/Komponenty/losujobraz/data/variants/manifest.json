@@ -1,5 +1,5 @@
 {
-  "active": "lo4",
+  "active": "lo5",
   "variants": [
     {
       "id": "lo1",
@@ -16,6 +16,10 @@
     {
       "id": "lo4",
       "label": "V4 — finał muzealny"
+    },
+    {
+      "id": "lo5",
+      "label": "V5 — V4 + dym kursora"
     }
   ]
 }

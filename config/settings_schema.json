@@ -1530,6 +1530,27 @@
     "settings": [
       {
         "type": "header",
+        "content": "System przycisków Giclée Art"
+      },
+      {
+        "type": "select",
+        "id": "giclee_button_style",
+        "label": "Globalny styl przycisków",
+        "options": [
+          {
+            "value": "basic",
+            "label": "Podstawowy — obecny wygląd"
+          },
+          {
+            "value": "nocturne",
+            "label": "Nocturne — nocna galeria"
+          }
+        ],
+        "default": "basic",
+        "info": "Zmienia CTA, przyciski zakupu, koszyka, formularzy, tekstowe warianty produktu i wybrane kontrolki ikonowe. Nie zmienia nawigacji ani próbek kolorów typu swatch."
+      },
+      {
+        "type": "header",
         "content": "t:options.button_primary"
       },
       {

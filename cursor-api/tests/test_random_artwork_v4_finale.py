@@ -21,6 +21,7 @@ COMPONENT = ROOT / "cursor-api" / "Komponenty" / "losujobraz"
 MANIFEST = COMPONENT / "data" / "variants" / "manifest.json"
 V3 = COMPONENT / "data" / "variants" / "lo3" / "page.losuj-produkt.json"
 V4 = COMPONENT / "data" / "variants" / "lo4" / "page.losuj-produkt.json"
+V5 = COMPONENT / "data" / "variants" / "lo5" / "page.losuj-produkt.json"
 
 
 def _json(path: Path) -> dict:
@@ -34,19 +35,22 @@ def test_v4_isolated_variant_inherits_v3_data_without_mutating_v3() -> None:
     manifest = _json(MANIFEST)
     v3 = _json(V3)
     v4 = _json(V4)
+    v5 = _json(V5)
     live = _json(TEMPLATE)
 
-    assert manifest["active"] == "lo4"
-    assert manifest["variants"][-1] == {"id": "lo4", "label": "V4 — finał muzealny"}
+    assert manifest["active"] == "lo5"
+    assert manifest["variants"][-2] == {"id": "lo4", "label": "V4 — finał muzealny"}
     assert v3["sections"]["random_artwork"]["settings"]["design_variant"] == "v3"
     assert v4["sections"]["random_artwork"]["settings"]["design_variant"] == "v4"
+    assert v5["sections"]["random_artwork"]["settings"]["design_variant"] == "v4"
+    assert v5["sections"]["random_artwork"]["settings"]["cursor_smoke_enabled"] is True
 
     v3_settings = dict(v3["sections"]["random_artwork"]["settings"])
     v4_settings = dict(v4["sections"]["random_artwork"]["settings"])
     v3_settings.pop("design_variant")
     v4_settings.pop("design_variant")
     assert v4_settings == v3_settings
-    assert live == v4
+    assert live == v5
 
 
 def test_v4_loads_only_its_finale_assets_and_webgl_module() -> None:

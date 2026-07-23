@@ -46,6 +46,24 @@
   assign living_dust_speed = section.settings.living_dust_speed | default: 75
   assign living_dust_fps = section.settings.living_dust_fps | default: 24
   assign living_dust_dpr_cap = section.settings.living_dust_dpr_cap | default: 125
+  assign cursor_smoke_enabled = section.settings.cursor_smoke_enabled
+  if section.settings.cursor_smoke_enabled == nil
+    assign cursor_smoke_enabled = false
+  endif
+  assign cursor_smoke_preset = section.settings.cursor_smoke_preset | default: 'elegant'
+  assign cursor_smoke_quality = section.settings.cursor_smoke_quality | default: 'standard'
+  assign cursor_smoke_intensity = section.settings.cursor_smoke_intensity | default: 100
+  assign cursor_smoke_opacity = section.settings.cursor_smoke_opacity | default: 100
+  assign cursor_smoke_size = section.settings.cursor_smoke_size | default: 100
+  assign cursor_smoke_force = section.settings.cursor_smoke_force | default: 100
+  assign cursor_smoke_persistence = section.settings.cursor_smoke_persistence | default: 100
+  assign cursor_smoke_swirl = section.settings.cursor_smoke_swirl | default: 100
+  assign cursor_smoke_bloom = section.settings.cursor_smoke_bloom | default: 100
+  assign cursor_smoke_auto_enabled = section.settings.cursor_smoke_auto_enabled
+  if section.settings.cursor_smoke_auto_enabled == nil
+    assign cursor_smoke_auto_enabled = true
+  endif
+  assign cursor_smoke_auto_frequency = section.settings.cursor_smoke_auto_frequency | default: 100
   assign custom_bg = 'none'
   if section.settings.background_video != blank
     assign custom_bg = 'video'
@@ -93,6 +111,16 @@
     defer
   ></script>
 {%- endif -%}
+{%- if cursor_smoke_enabled -%}
+  <link
+    rel="stylesheet"
+    href="{{ 'giclee-random-artwork-fluid-v2.css' | asset_url }}?v=grw-v5-elegant-fluid-20260723"
+  >
+  <script
+    type="module"
+    src="{{ 'giclee-random-artwork-fluid-v2.js' | asset_url }}?v=grw-v5-elegant-fluid-20260723"
+  ></script>
+{%- endif -%}
 
 <giclee-random-artwork
   class="giclee-random-artwork color-{{ section.settings.color_scheme }}{% if custom_bg != 'none' %} grw--custom-bg grw--custom-bg-{{ custom_bg }}{% endif %}"
@@ -121,6 +149,19 @@
   data-living-dust-speed="{{ living_dust_speed }}"
   data-living-dust-fps="{{ living_dust_fps }}"
   data-living-dust-dpr-cap="{{ living_dust_dpr_cap }}"
+  data-cursor-smoke-enabled="{% if cursor_smoke_enabled %}true{% else %}false{% endif %}"
+  data-cursor-smoke-preset="{{ cursor_smoke_preset }}"
+  data-cursor-smoke-quality="{{ cursor_smoke_quality }}"
+  data-cursor-smoke-intensity="{{ cursor_smoke_intensity }}"
+  data-cursor-smoke-opacity="{{ cursor_smoke_opacity }}"
+  data-cursor-smoke-size="{{ cursor_smoke_size }}"
+  data-cursor-smoke-force="{{ cursor_smoke_force }}"
+  data-cursor-smoke-persistence="{{ cursor_smoke_persistence }}"
+  data-cursor-smoke-swirl="{{ cursor_smoke_swirl }}"
+  data-cursor-smoke-bloom="{{ cursor_smoke_bloom }}"
+  data-cursor-smoke-auto-enabled="{% if cursor_smoke_auto_enabled %}true{% else %}false{% endif %}"
+  data-cursor-smoke-auto-frequency="{{ cursor_smoke_auto_frequency }}"
+  data-fluid-shaders-url="{{ 'giclee-random-artwork-fluid-v2-shaders.js' | asset_url }}"
   data-webgl-url="{{ webgl_asset | asset_url }}"
   data-three-url="{{ 'three.module.js' | asset_url }}"
   data-phase-1="{{ section.settings.loading_text | escape }}"
@@ -295,7 +336,7 @@
       "default": "v1",
       "info": "V1 to baza. V2 dodaje edytowalna atmosfere. V3 dodaje Living Museum Light. V4 zachowuje V3 i przebudowuje ceremonialny final ekspozycji."
     },
-    { "type": "paragraph", "content": "Parametry V2 oraz Living Museum Light dla V3/V4 sa dostepne w Giclee App przez Edytuj atmosfere." },
+    { "type": "paragraph", "content": "Parametry V2 oraz Living Museum Light dla V3/V4/V5 sa dostepne w Giclee App przez Edytuj atmosfere." },
     { "type": "range", "id": "atmosphere_intensity", "label": "V2 — glow: intensywnosc", "min": 0, "max": 70, "step": 5, "unit": "%", "default": 35 },
     { "type": "range", "id": "atmosphere_glow_size", "label": "V2 — glow: rozmiar", "min": 60, "max": 160, "step": 5, "unit": "%", "default": 100 },
     { "type": "range", "id": "atmosphere_glow_response", "label": "V2 — glow: responsywnosc", "min": 10, "max": 100, "step": 5, "unit": "%", "default": 50 },
@@ -304,7 +345,7 @@
     { "type": "range", "id": "atmosphere_dust", "label": "V2 — pyl: widocznosc", "min": 0, "max": 60, "step": 5, "unit": "%", "default": 25 },
     { "type": "range", "id": "atmosphere_dust_amount", "label": "V2 — pyl: ilosc", "min": 0, "max": 100, "step": 5, "unit": "%", "default": 50 },
     { "type": "range", "id": "atmosphere_dust_speed", "label": "V2 — pyl: szybkosc", "min": 0, "max": 200, "step": 10, "unit": "%", "default": 100 },
-    { "type": "header", "content": "V3/V4 — Living Museum Light" },
+    { "type": "header", "content": "V3/V4/V5 — Living Museum Light" },
     { "type": "paragraph", "content": "Domyslne parametry pylu odpowiadaja zaakceptowanej wersji: 120 drobinek, 115% widocznosci, 125% rozmiaru, 75% szybkosci, 24 FPS i DPR 1.25." },
     { "type": "checkbox", "id": "living_light_enabled", "label": "Wlacz reflektor kursora", "default": true },
     { "type": "checkbox", "id": "living_dust_enabled", "label": "Wlacz pyl ambientowy", "default": true },
@@ -315,6 +356,41 @@
     { "type": "range", "id": "living_dust_speed", "label": "Pyl — szybkosc", "min": 0, "max": 200, "step": 5, "unit": "%", "default": 75 },
     { "type": "range", "id": "living_dust_fps", "label": "Pyl — limit FPS", "min": 12, "max": 30, "step": 1, "default": 24 },
     { "type": "range", "id": "living_dust_dpr_cap", "label": "Pyl — limit jakosci DPR", "min": 75, "max": 150, "step": 5, "unit": "%", "default": 125 },
+    { "type": "header", "content": "V5 — dym kursora" },
+    { "type": "checkbox", "id": "cursor_smoke_enabled", "label": "Wlacz dym kursora (Elegant V2)", "default": false, "info": "Pelna symulacja fluid WebGL przeniesiona z Pedzel Alchemy, wariant 2. W GicleeApp domyslnie wlaczona tylko w V5." },
+    {
+      "type": "select",
+      "id": "cursor_smoke_preset",
+      "label": "Preset dymu",
+      "options": [
+        { "value": "elegant", "label": "Elegant V2 — oryginalny" },
+        { "value": "gallery_mist", "label": "Gallery Mist — miekka mgla" },
+        { "value": "silk", "label": "Silk — dluzsze jedwabne smugi" },
+        { "value": "whisper", "label": "Whisper — prawie niewidoczny" }
+      ],
+      "default": "elegant",
+      "info": "Preset ustala palete i bazowy charakter symulacji. Parametry procentowe modyfikuja wybrany preset."
+    },
+    {
+      "type": "select",
+      "id": "cursor_smoke_quality",
+      "label": "Jakosc symulacji",
+      "options": [
+        { "value": "low", "label": "Niska — 512 px" },
+        { "value": "standard", "label": "Standard — 1024 px" },
+        { "value": "high", "label": "Wysoka — 1536 px" }
+      ],
+      "default": "standard"
+    },
+    { "type": "range", "id": "cursor_smoke_intensity", "label": "Nasycenie koloru", "min": 25, "max": 200, "step": 5, "unit": "%", "default": 100 },
+    { "type": "range", "id": "cursor_smoke_opacity", "label": "Krycie calej warstwy", "min": 20, "max": 150, "step": 5, "unit": "%", "default": 100 },
+    { "type": "range", "id": "cursor_smoke_size", "label": "Rozmiar smugi", "min": 50, "max": 200, "step": 5, "unit": "%", "default": 100 },
+    { "type": "range", "id": "cursor_smoke_force", "label": "Sila ruchu", "min": 25, "max": 200, "step": 5, "unit": "%", "default": 100 },
+    { "type": "range", "id": "cursor_smoke_persistence", "label": "Trwalosc smugi", "min": 50, "max": 200, "step": 5, "unit": "%", "default": 100 },
+    { "type": "range", "id": "cursor_smoke_swirl", "label": "Wirowanie", "min": 0, "max": 200, "step": 5, "unit": "%", "default": 100 },
+    { "type": "range", "id": "cursor_smoke_bloom", "label": "Poswiata i promienie", "min": 0, "max": 200, "step": 5, "unit": "%", "default": 100 },
+    { "type": "checkbox", "id": "cursor_smoke_auto_enabled", "label": "Automatyczne smugi w tle", "default": true },
+    { "type": "range", "id": "cursor_smoke_auto_frequency", "label": "Czestotliwosc automatycznych smug", "min": 25, "max": 200, "step": 5, "unit": "%", "default": 100 },
     { "type": "header", "content": "Wyglad" },
     { "type": "checkbox", "id": "enable_webgl", "label": "Wlacz efekt WebGL (Three.js)", "default": true, "info": "Wylaczenie zostawia elegancki wariant CSS." },
     { "type": "color_scheme", "id": "color_scheme", "label": "Schemat kolorow", "default": "scheme-1" }

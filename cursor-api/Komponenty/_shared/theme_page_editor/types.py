@@ -16,6 +16,7 @@ FieldKind = Literal[
     "body",
     "text",
     "link",
+    "choice",
     "bool",
     "int",
     "float",
@@ -34,6 +35,10 @@ class TemplateField:
     theme_asset: str | None = None
     hint: str = ""
     block_paths: tuple[PathKey, ...] = field(default_factory=tuple)
+    choices: tuple[tuple[str, str], ...] = field(default_factory=tuple)
+    min_value: float | None = None
+    max_value: float | None = None
+    step: float | None = None
 
 
 @dataclass(frozen=True)

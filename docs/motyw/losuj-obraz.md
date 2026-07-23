@@ -10,6 +10,7 @@ Strona „Losuj Obraz” losuje realny produkt Shopify, uruchamia opcjonalną sc
 | **V2 — atmosfera muzealna** | Subtelny glow kursora, mgiełka i oszczędny pył z osobnych assetów V2. |
 | **V3 — Living Museum Light** | Eliptyczny reflektor galerii, zoptymalizowany pył sprite/canvas, choreografia stanów i światło ekspozycyjne wyniku. |
 | **V4 — finał muzealny** | Zachowuje scenę i atmosferę V3, ale dodaje ceremonialny handoff zwycięzcy, większą ekspozycję, transformację portalu w halo, lżejszą oprawę, kuratorską typografię i hierarchię akcji. |
+| **V5 — V4 + dym kursora** | Niezależny wariant GicleeApp oparty na V4. Dodaje opcjonalny efekt Elegant Fluid WebGL przeniesiony z wariantu 2 projektu Pedzel Alchemy. |
 
 Assety V2, V3 i V4 są ładowane wyłącznie dla aktywnego wariantu. V4 korzysta z tych samych danych i parametrów Living Museum Light co V3, ale ma osobny moduł WebGL oraz osobne assety finału.
 
@@ -27,6 +28,9 @@ Assety V2, V3 i V4 są ładowane wyłącznie dla aktywnego wariantu. V4 korzysta
 | `assets/giclee-random-artwork-webgl-v4.js` | Izolowana scena V4 z dodatkowym finałem 800 ms |
 | `assets/giclee-random-artwork-v4.css` | Oprawa, portal, typografia, akcje i etapy wyniku V4 |
 | `assets/giclee-random-artwork-v4.js` | Sekwencja `frame → identity → actions`, reset i cleanup V4 |
+| `assets/giclee-random-artwork-fluid-v2.js` | Kontroler i symulacja Elegant Fluid dla V5 |
+| `assets/giclee-random-artwork-fluid-v2-shaders.js` | Shadery fluid, bloom i sunrays dla V5 |
+| `assets/giclee-random-artwork-fluid-v2.css` | Izolowana warstwa canvasa dymu kursora |
 
 ## Kontrakt danych dzieła
 
@@ -99,9 +103,11 @@ Living Museum Light:
 
 V4 nie dodaje kolejnej ciągłej pętli. Sekwencja HTML wyniku używa dwóch kontrolowanych timeoutów, które są czyszczone przy resecie i odłączeniu komponentu. Osobny moduł WebGL V4 nadal używa jednej pętli RAF.
 
+V5 uruchamia dodatkową pętlę fluid wyłącznie przy `cursor_smoke_enabled: true`. Canvas jest ograniczony do sceny Losuj Obraz, pauzuje poza viewportem i po ukryciu karty, obniża rozdzielczość dye na urządzeniach mobilnych oraz nie uruchamia się przy `prefers-reduced-motion: reduce`.
+
 ## Ustawienia Theme Editor i GicleeApp
 
-V3 i V4 współdzielą:
+V3, V4 i V5 współdzielą:
 
 - `living_light_enabled`;
 - `living_dust_enabled`;
@@ -112,6 +118,21 @@ V3 i V4 współdzielą:
 - `living_dust_speed`;
 - `living_dust_fps`;
 - `living_dust_dpr_cap`.
+
+V5 dodaje:
+
+- `cursor_smoke_enabled` — przełącznik pod przyciskiem „Włącz/wyłącz dym V5…”;
+- przycisk „Edytuj dym V5…” — osobny panel opisanych parametrów;
+- `cursor_smoke_preset` — `Elegant V2` (oryginał), `Gallery Mist`, `Silk` lub `Whisper`;
+- `cursor_smoke_quality` — rozdzielczość dye 512, 1024 lub 1536 px (na mobile maksymalnie 512 px);
+- `cursor_smoke_intensity`, `cursor_smoke_opacity`, `cursor_smoke_size`, `cursor_smoke_force`,
+  `cursor_smoke_persistence`, `cursor_smoke_swirl` i `cursor_smoke_bloom` — procentowe
+  modyfikatory wartości wybranego presetu, gdzie 100% oznacza bazę presetu;
+- `cursor_smoke_auto_enabled` i `cursor_smoke_auto_frequency` — włączenie oraz tempo
+  subtelnych smug generowanych bez ruchu kursora.
+
+Presety nie nadpisują suwaków. Najpierw wybierana jest baza presetu, a następnie stosowane są
+modyfikatory, dzięki czemu własne ustawienia można swobodnie łączyć z każdym charakterem dymu.
 
 ## Regresje chronione
 
