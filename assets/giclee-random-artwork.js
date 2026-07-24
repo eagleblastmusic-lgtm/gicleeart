@@ -23,6 +23,7 @@
   const SAMPLE_MOBILE = 8;
   const SCENE_SAFETY_MS = 9000;
   const RESULT_TEARDOWN_MS = 700;
+  const BG_VIDEO_FADE_MS = 700;
   const ARTIST_SEPARATOR_RE = /\s[-–—]\s/;
   const YEAR_TOKEN_RE = /(?:\b(?:ok\.?|około|circa|ca\.?)\s*)?(?:1\d{3}|20[0-2]\d)(?:\s*[\-–—]\s*(?:1\d{3}|20[0-2]\d))?/iu;
   const ARTIST_PARTICLES = new Set([
@@ -236,6 +237,7 @@
       }
 
       this.setState(STATE.IDLE);
+      this.initBackgroundVideoHandoff();
       if (!this.livingMuseumLight) this.initCustomBgParallax();
     }
 
@@ -243,11 +245,109 @@
       this.drawButton?.removeEventListener('click', this._onDrawClick);
       this.replayButton?.removeEventListener('click', this._onDrawClick);
       this.retryButton?.removeEventListener('click', this._onDrawClick);
+      this.cleanupBackgroundVideoHandoff({ release: true });
       this.cleanupCustomBgParallax();
       this.livingMuseumLight?.destroy?.();
       this.livingMuseumLight = null;
       window.clearTimeout(this.resultTeardownTimer);
       this.teardownScene();
+    }
+
+    releaseBackgroundVideo(video) {
+      if (!video) return;
+      const host =
+        video.closest('video-background-component') ||
+        video.closest('.video-background') ||
+        video;
+      try {
+        video.pause();
+        video.removeAttribute('src');
+        video.querySelectorAll('source').forEach((source) => {
+          source.removeAttribute('src');
+          source.removeAttribute('data-video-source');
+        });
+        // Pusty load() zamyka dekoder i zwalnia bufory GPU/CPU.
+        video.load();
+      } catch (_) {
+        /* ignore */
+      }
+      try {
+        host.remove();
+      } catch (_) {
+        /* ignore */
+      }
+    }
+
+    initBackgroundVideoHandoff() {
+      this.cleanupBackgroundVideoHandoff({ release: true });
+      this._bgVideoActive = false;
+
+      const bg = this.querySelector('[data-grw-custom-bg][data-grw-bg-handoff="video-once"]');
+      if (!bg) return;
+
+      const video = bg.querySelector('video');
+      if (!video) {
+        bg.classList.add('is-bg-image');
+        bg.classList.add('is-bg-video-disposed');
+        return;
+      }
+
+      const finishHandoff = () => {
+        this.releaseBackgroundVideo(video);
+        bg.classList.add('is-bg-video-disposed');
+        this._bgVideoActive = false;
+        this.cleanupBackgroundVideoHandoff();
+      };
+
+      const revealImage = () => {
+        if (bg.classList.contains('is-bg-image')) return;
+        bg.classList.add('is-bg-image');
+        try {
+          if (!video.paused) video.pause();
+        } catch (_) {
+          /* ignore */
+        }
+
+        // Po fade-out zdejmij warstwę video z DOM — samo opacity:0 zostawia dekoder.
+        window.clearTimeout(this._bgVideoDisposeTimer);
+        const delay = prefersReducedMotion() ? 0 : BG_VIDEO_FADE_MS;
+        this._bgVideoDisposeTimer = window.setTimeout(finishHandoff, delay);
+      };
+
+      if (prefersReducedMotion()) {
+        revealImage();
+        return;
+      }
+
+      this._bgVideoActive = true;
+      this._bgVideo = video;
+      this._onBgVideoEnded = revealImage;
+      this._onBgVideoError = revealImage;
+      video.addEventListener('ended', this._onBgVideoEnded);
+      video.addEventListener('error', this._onBgVideoError);
+
+      // Już domknięty / brak duration (np. cache) — od razu grafika
+      if (video.ended || (video.readyState >= 2 && Number.isFinite(video.duration) && video.duration > 0 && video.currentTime >= video.duration - 0.05)) {
+        revealImage();
+      }
+    }
+
+    cleanupBackgroundVideoHandoff({ release = false } = {}) {
+      window.clearTimeout(this._bgVideoDisposeTimer);
+      this._bgVideoDisposeTimer = 0;
+      if (this._bgVideo && this._onBgVideoEnded) {
+        this._bgVideo.removeEventListener('ended', this._onBgVideoEnded);
+      }
+      if (this._bgVideo && this._onBgVideoError) {
+        this._bgVideo.removeEventListener('error', this._onBgVideoError);
+      }
+      if (release && this._bgVideo) {
+        this.releaseBackgroundVideo(this._bgVideo);
+        this._bgVideoActive = false;
+      }
+      this._bgVideo = null;
+      this._onBgVideoEnded = null;
+      this._onBgVideoError = null;
     }
 
     initCustomBgParallax() {

@@ -13,16 +13,16 @@ from typing import Literal
 
 from giclee_app.app_paths import atomic_write_bytes, backup_path
 
-ButtonStyle = Literal["basic", "nocturne"]
+ButtonStyle = Literal["basic", "nocturne", "frosted", "light-in-motion"]
 
 BUTTON_STYLE_KEY = "giclee_button_style"
 DEFAULT_BUTTON_STYLE: ButtonStyle = "basic"
-BUTTON_STYLES = frozenset({"basic", "nocturne"})
+BUTTON_STYLES = frozenset({"basic", "nocturne", "frosted", "light-in-motion"})
 THEME_APPLY_CONFIRMATION = "ZASTOSUJ STYL PRZYCISKÓW"
 
 _THEME_SETTINGS_PATH_OVERRIDE: Path | None = None
 _SETTING_PATTERN = re.compile(
-    rf'(?m)^(?P<indent>[ \t]*)"{BUTTON_STYLE_KEY}"[ \t]*:[ \t]*"(?P<value>[^"]*)"(?P<comma>,?)[ \t]*$'
+    rf'(?m)^(?P<indent>[ \t]*)"{BUTTON_STYLE_KEY}"[ \t]*:[ \t]*"(?P<value>[^"]*)"(?P<comma>,?)[ \t]*(?=\r?$)'
 )
 _PRIMARY_SETTING_PATTERN = re.compile(
     r'(?m)^(?P<indent>[ \t]*)"primary_button_border_width"[ \t]*:'

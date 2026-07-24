@@ -62,3 +62,44 @@ def test_video_gate_uses_lightweight_curtain_runtime_and_no_idle_reset_loop() ->
     assert "else collectVideos().forEach(pauseAndReset);" not in gate
     assert "gateSyncCount:" in gate
     assert "mediaResetCount:" in gate
+
+
+def test_sound_consent_only_during_hero_hold_window() -> None:
+    gate = GATE.read_text(encoding="utf-8")
+
+    assert "function inHeroHoldWindow(runtime)" in gate
+    assert "return heroFullyAppeared() && inHeroHoldWindow(runtime);" in gate
+    assert "status.localScroll < status.holdTravel" in gate
+    assert "setPromptVisible(false);" in gate
+
+
+def test_sound_consent_waits_for_full_hero_then_fades_with_audio() -> None:
+    gate = GATE.read_text(encoding="utf-8")
+    consent_css = (ROOT / "assets" / "giclee-home-hero-sound-consent.css").read_text(
+        encoding="utf-8"
+    )
+
+    assert "var promptSticky" not in gate
+    assert "var promptUnlocked = false;" in gate
+    assert "function heroFullyAppeared()" in gate
+    assert "function syncPrompt(runtime)" in gate
+    assert "setPromptGain(gain);" in gate
+    assert "sceneAudioGain(runtime)" in gate
+    assert "resolveChoice(false, 'auto-muted');" not in gate
+    assert "(hero || document.body).appendChild(prompt);" in gate
+    assert "position: absolute;" in consent_css
+    assert "--giclee-hero-sound-prompt-gain" in consent_css
+    assert "var(--giclee-hero-sound-prompt-gain, 1)" in consent_css
+
+
+def test_sound_consent_excluded_from_splash_body_fade() -> None:
+    """Splash opacity:1 !important must not unmask the body-mounted consent bar."""
+    theme = (ROOT / "layout" / "theme.liquid").read_text(encoding="utf-8")
+    consent_css = (ROOT / "assets" / "giclee-home-hero-sound-consent.css").read_text(
+        encoding="utf-8"
+    )
+
+    assert ":not(.giclee-hero-sound-consent)" in theme
+    assert "splash-reveal.splash-reveal-active body > :not(#page-transition):not(#splash-screen):not(.giclee-hero-sound-consent)" in theme
+    assert "opacity: 0 !important;" in consent_css
+    assert "html[data-giclee-hero-sound-prompt='visible'] .giclee-hero-sound-consent" in consent_css

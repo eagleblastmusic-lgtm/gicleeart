@@ -92,6 +92,8 @@ window.GICLEE_HOME_STACK = true;
     assert first.count("GICLEE_PREHERO_CONFIG_BEGIN") == 1
     assert first.count("GICLEE_PREHERO_ASSETS_BEGIN") == 1
     assert "window.GICLEE_PREHERO_CONFIG" in first
+    assert "window.GICLEE_PREHERO_PORTAL_VIDEO_URL" in first
+    assert "giclee-home-prehero-portal.mp4" in first
     assert '"heroHoldVh": 100' in first
     assert '"introHoldVh": 100' in first
     assert "'prehero.mp4' | file_url" in first

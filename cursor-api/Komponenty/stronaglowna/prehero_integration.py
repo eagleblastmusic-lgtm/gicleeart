@@ -14,6 +14,7 @@ from typing import Any, Callable
 
 PREHERO_ZONE_ID = "prehero_scroll"
 PREHERO_VIDEO_ASSET = "giclee-home-prehero-scrub.mp4"
+PREHERO_PORTAL_VIDEO_ASSET = "giclee-home-prehero-portal.mp4"
 PREHERO_CODE_ASSETS = (
     "giclee-home-prehero-scrub.css",
     "giclee-home-prehero-scrub.js",
@@ -302,6 +303,10 @@ def _video_liquid(config: dict[str, Any]) -> str:
     return "{{ 'giclee-home-prehero-scrub.mp4' | asset_url | json }}"
 
 
+def _portal_video_liquid() -> str:
+    return "{{ '" + PREHERO_PORTAL_VIDEO_ASSET + "' | asset_url | json }}"
+
+
 def inject_prehero_into_snippet(text: str, config: dict[str, Any] | None = None) -> str:
     clean = _remove_marked_block(text, _SCRIPT_BEGIN, _SCRIPT_END)
     clean = _remove_marked_block(clean, _ASSETS_BEGIN, _ASSETS_END)
@@ -323,6 +328,7 @@ def inject_prehero_into_snippet(text: str, config: dict[str, Any] | None = None)
             "window.GICLEE_HOME_SCROLL_CONFIG = Object.assign({}, window.GICLEE_HOME_SCROLL_CONFIG || {}, { enabled: false });",
             "window.GICLEE_PREHERO_CONFIG = " + json.dumps(public_cfg, ensure_ascii=False) + ";",
             "window.GICLEE_PREHERO_SCRUB_VIDEO_URL = " + _video_liquid(cfg) + ";",
+            "window.GICLEE_PREHERO_PORTAL_VIDEO_URL = " + _portal_video_liquid() + ";",
             "(function () {",
             "  function disableHomeSectionScroll() {",
             "    var api = window.GICLEE_HOME_SECTION_SCROLL;",

@@ -9,6 +9,7 @@ from pathlib import Path
 from tkinter import filedialog, messagebox, scrolledtext, ttk
 
 from Komponenty._shared.theme_dev_gui import open_theme_dev_preview
+from Komponenty._shared.tk_scroll import bind_mousewheel_to_canvas
 from Komponenty._shared.toast import show_toast
 from Komponenty._shared.window_geometry import position_toplevel_screen_center
 
@@ -57,13 +58,50 @@ class IntegracjaGptApp:
         self._build_ui()
         self._load_cfg_into_form()
 
+    def _build_scrollable_root(self) -> ttk.Frame:
+        host = ttk.Frame(self.root)
+        host.pack(fill="both", expand=True)
+
+        canvas = tk.Canvas(
+            host,
+            highlightthickness=0,
+            borderwidth=0,
+            background=self.root.cget("background"),
+        )
+        scrollbar = ttk.Scrollbar(host, orient="vertical", command=canvas.yview)
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        content = ttk.Frame(canvas)
+        content_window = canvas.create_window((0, 0), window=content, anchor="nw")
+
+        def update_scrollregion(_event=None) -> None:
+            bounds = canvas.bbox("all")
+            if bounds is not None:
+                canvas.configure(scrollregion=bounds)
+
+        def fit_content_width(event: tk.Event) -> None:
+            canvas.itemconfigure(content_window, width=event.width)
+            update_scrollregion()
+
+        content.bind("<Configure>", update_scrollregion)
+        canvas.bind("<Configure>", fit_content_width)
+        scrollbar.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
+        bind_mousewheel_to_canvas(canvas, content)
+
+        self._page_canvas = canvas
+        self._page_content = content
+        return content
+
     def _build_ui(self) -> None:
-        header = ttk.Frame(self.root, padding=(12, 10, 12, 0))
+        page = self._build_scrollable_root()
+
+        header = ttk.Frame(page, padding=(12, 10, 12, 0))
         header.pack(fill="x")
         ttk.Label(header, text=APP_TITLE, font=("Segoe UI", 16, "bold")).pack(side="left")
 
         hint = ttk.Label(
-            self.root,
+            page,
             text=(
                 "Lustro motywu na osobne repo GitHub dla Custom GPT. "
                 "Cursor wykonuje kod lokalnie; po sesji: nagraj podgląd → push → wklej wiadomość review do ChatGPT."
@@ -74,7 +112,7 @@ class IntegracjaGptApp:
         )
         hint.pack(fill="x")
 
-        cfg_frame = ttk.LabelFrame(self.root, text="Konfiguracja repo GPT", padding=10)
+        cfg_frame = ttk.LabelFrame(page, text="Konfiguracja repo GPT", padding=10)
         cfg_frame.pack(fill="x", padx=12, pady=(0, 8))
 
         row1 = ttk.Frame(cfg_frame)
@@ -125,7 +163,7 @@ class IntegracjaGptApp:
             foreground="#666",
         ).pack(side="left")
 
-        session_frame = ttk.LabelFrame(self.root, text="Sesja review (Faza A)", padding=10)
+        session_frame = ttk.LabelFrame(page, text="Sesja review (Faza A)", padding=10)
         session_frame.pack(fill="x", padx=12, pady=(0, 8))
 
         goal_row = ttk.Frame(session_frame)
@@ -153,7 +191,7 @@ class IntegracjaGptApp:
         row3.pack(fill="x")
         ttk.Button(row3, text="Zapisz ustawienia", command=self._save_settings).pack(side="right")
 
-        actions = ttk.LabelFrame(self.root, text="Akcje", padding=10)
+        actions = ttk.LabelFrame(page, text="Akcje", padding=10)
         actions.pack(fill="x", padx=12, pady=(0, 8))
 
         btn_row1 = ttk.Frame(actions)
@@ -256,7 +294,7 @@ class IntegracjaGptApp:
         self.zip_status_var = tk.StringVar(value="ZIP wiedzy: nie załadowany")
         ttk.Label(btn_row3, textvariable=self.zip_status_var, foreground="#666").pack(side="left", padx=(8, 0))
 
-        repos_frame = ttk.LabelFrame(self.root, text="Repozytoria GitHub GicleeArt", padding=10)
+        repos_frame = ttk.LabelFrame(page, text="Repozytoria GitHub GicleeArt", padding=10)
         repos_frame.pack(fill="x", padx=12, pady=(0, 8))
         ttk.Label(
             repos_frame,
@@ -335,9 +373,9 @@ class IntegracjaGptApp:
         ).pack(side="left", padx=(10, 0))
 
         self.status_var = tk.StringVar(value="Gotowy.")
-        ttk.Label(self.root, textvariable=self.status_var, padding=(12, 0, 12, 4)).pack(fill="x")
+        ttk.Label(page, textvariable=self.status_var, padding=(12, 0, 12, 4)).pack(fill="x")
 
-        log_frame = ttk.LabelFrame(self.root, text="Log", padding=8)
+        log_frame = ttk.LabelFrame(page, text="Log", padding=8)
         log_frame.pack(fill="both", expand=True, padx=12, pady=(0, 12))
         self.log = scrolledtext.ScrolledText(log_frame, height=18, wrap="word", font=("Consolas", 9))
         self.log.pack(fill="both", expand=True)

@@ -6,8 +6,9 @@ window.GICLEE_HOME_STACK = true;
 /* GICLEE_PREHERO_CONFIG_BEGIN */
 window.GICLEE_HOME_SECTION_SCROLL_DISABLED = true;
 window.GICLEE_HOME_SCROLL_CONFIG = Object.assign({}, window.GICLEE_HOME_SCROLL_CONFIG || {}, { enabled: false });
-window.GICLEE_PREHERO_CONFIG = {"enabled": true, "scrollHeightVh": 600, "revealOverlapVh": 200, "heroRiseVh": 100, "copyEnabled": true, "copyLines": ["Fotografia i obraz zaczynają żyć w pełni", "dopiero wtedy, gdy opuszczają ekran", "i stają się częścią świata fizycznego."], "horizontalCurtainEnabled": true, "heroHoldVh": 100, "heroCurtainVh": 100, "introHoldVh": 100, "soundConsentEnabled": true, "soundConsentQuestion": "Doświadczyć tej sceny z dźwiękiem?", "soundConsentToggleLabel": "Dźwięk", "soundConsentStartLabel": "Rozpocznij", "soundConsentAudioUrl": "", "soundConsentVolume": 28, "soundConsentAutoMutedFraction": 0.35, "smoothScrollMode": "native-v2"};
+window.GICLEE_PREHERO_CONFIG = {"enabled": true, "scrollHeightVh": 600, "revealOverlapVh": 200, "heroRiseVh": 100, "copyEnabled": true, "copyLines": ["Obraz i fotografia, to coś więcej", "niż element graficzny. To zapis chwili,", "który wymaga właściwej oprawy"], "horizontalCurtainEnabled": true, "heroHoldVh": 100, "heroCurtainVh": 100, "introHoldVh": 100, "soundConsentEnabled": true, "soundConsentQuestion": "Doświadczyć tej sceny z dźwiękiem?", "soundConsentToggleLabel": "Dźwięk", "soundConsentStartLabel": "Rozpocznij", "soundConsentAudioUrl": "", "soundConsentVolume": 28, "soundConsentAutoMutedFraction": 0.35, "smoothScrollMode": "native-v2"};
 window.GICLEE_PREHERO_SCRUB_VIDEO_URL = {{ 'giclee-home-prehero-scrub.mp4' | asset_url | json }};
+window.GICLEE_PREHERO_PORTAL_VIDEO_URL = {{ 'giclee-home-prehero-portal.mp4' | asset_url | json }};
 (function () {
   function disableHomeSectionScroll() {
     var api = window.GICLEE_HOME_SECTION_SCROLL;
@@ -27,6 +28,7 @@ window.GICLEE_PREHERO_SCRUB_VIDEO_URL = {{ 'giclee-home-prehero-scrub.mp4' | ass
 {{ 'giclee-home-prehero-scrub.css' | asset_url | stylesheet_tag }}
 {{ 'giclee-home-prehero-chrome.css' | asset_url | stylesheet_tag }}
 {{ 'giclee-home-prehero-reveal.css' | asset_url | stylesheet_tag }}
+{{ 'giclee-home-hero-stripe-reveal.css' | asset_url | stylesheet_tag }}
 {{ 'giclee-home-hero-horizontal-curtain.css' | asset_url | stylesheet_tag }}
 {{ 'giclee-home-hero-horizontal-curtain-live-intro.css' | asset_url | stylesheet_tag }}
 {{ 'giclee-home-hero-horizontal-curtain-center.css' | asset_url | stylesheet_tag }}
@@ -41,6 +43,7 @@ window.GICLEE_PREHERO_SCRUB_VIDEO_URL = {{ 'giclee-home-prehero-scrub.mp4' | ass
 <script src="{{ 'giclee-home-prehero-scrub.js' | asset_url }}" defer></script>
 <script src="{{ 'giclee-home-prehero-chrome.js' | asset_url }}" defer></script>
 <script src="{{ 'giclee-home-prehero-reveal.js' | asset_url }}" defer></script>
+<script src="{{ 'giclee-home-hero-stripe-reveal.js' | asset_url }}" defer></script>
 <script src="{{ 'giclee-home-hero-video-gate.js' | asset_url }}" defer></script>
 <script src="{{ 'giclee-home-hero-horizontal-curtain.js' | asset_url }}" defer></script>
 <script src="{{ 'giclee-home-intro-curtain-effects.js' | asset_url }}" defer></script>

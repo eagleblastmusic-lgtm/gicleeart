@@ -25,7 +25,7 @@
         "pool_limit": 50,
         "fetch_full_pool": true,
         "background_image": "shopify://shop_images/Printmaker_carrying_framed_artwork_2K_202607071636.jpg",
-        "background_video": "",
+        "background_video": "shopify://files/videos/Man_walks_through_transformation_202607240240.mp4",
         "background_parallax": true,
         "design_variant": "v4",
         "atmosphere_intensity": 35,

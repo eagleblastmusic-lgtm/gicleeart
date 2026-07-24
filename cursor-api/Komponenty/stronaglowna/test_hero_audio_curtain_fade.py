@@ -53,3 +53,13 @@ def test_audio_gain_tracking_is_bound_to_playback_lifecycle() -> None:
     assert "stopVolumeTracking();" in source
     assert "effectiveAmbientVolume" in source
     assert "audioGain" in source
+
+
+def test_sound_prompt_opacity_uses_same_scene_audio_gain() -> None:
+    source = _source()
+
+    assert "function setPromptGain(gain)" in source
+    assert "--giclee-hero-sound-prompt-gain" in source
+    assert "function syncPrompt(runtime)" in source
+    assert "var gain = sceneAudioGain(runtime);" in source
+    assert "promptUnlocked" in source

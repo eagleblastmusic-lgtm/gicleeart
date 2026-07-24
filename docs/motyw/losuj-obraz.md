@@ -89,6 +89,16 @@ Dodatkowy finał V4:
 - główna akcja jest ciemnym prostokątnym przyciskiem z subtelną strzałką;
 - „Wylosuj ponownie” jest lekką akcją tekstową bez kapsuły i bez konkurencji z głównym CTA.
 
+## Tło: film → obraz
+
+Gdy w ustawieniach sekcji są jednocześnie **Film tła** i **Obraz tła**:
+
+1. obraz jest od razu pod spodem w warstwie parallax (preload);
+2. film odtwarza się raz (bez pętli), wyciszony, `playsinline`, z tymi samymi efektami tła (parallax, przyciemnienie);
+3. po `ended` (albo błędzie / reduced motion) film zanika, a po fade-out JS zwalnia dekoder (`pause` → clear `src` → `load()` → usunięcie z DOM), żeby nie zostawał w GPU.
+
+Sam film bez obrazu nadal działa w pętli. Sam obraz — jak dotychczas.
+
 ## Wydajność
 
 Living Museum Light:

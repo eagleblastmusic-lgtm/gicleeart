@@ -65,8 +65,12 @@
   endif
   assign cursor_smoke_auto_frequency = section.settings.cursor_smoke_auto_frequency | default: 100
   assign custom_bg = 'none'
+  assign bg_video_once = false
   if section.settings.background_video != blank
     assign custom_bg = 'video'
+    if section.settings.background_image != blank
+      assign bg_video_once = true
+    endif
   elsif section.settings.background_image != blank
     assign custom_bg = 'image'
   endif
@@ -74,7 +78,7 @@
 
 <link
   rel="stylesheet"
-  href="{{ 'giclee-random-artwork.css' | asset_url }}?v=grw-v4-ceremonial-finale-20260722"
+  href="{{ 'giclee-random-artwork.css' | asset_url }}?v=grw-bg-video-effects-20260724"
 >
 {%- if enable_atmosphere -%}
   <link
@@ -102,7 +106,7 @@
   >
 {%- endif -%}
 <script
-  src="{{ 'giclee-random-artwork.js' | asset_url }}?v=grw-v4-ceremonial-finale-20260722"
+  src="{{ 'giclee-random-artwork.js' | asset_url }}?v=grw-bg-video-effects-20260724"
   defer
 ></script>
 {%- if enable_v4_finale -%}
@@ -177,20 +181,39 @@
     {%- comment -%} Wlasne tlo uzytkownika (obraz lub film) — pod warstwami dekoracyjnymi {%- endcomment -%}
     {%- if custom_bg != 'none' -%}
       <div
-        class="giclee-random-artwork__custom-bg{% if section.settings.background_parallax %} grw--custom-bg-parallax{% endif %}"
+        class="giclee-random-artwork__custom-bg{% if section.settings.background_parallax %} grw--custom-bg-parallax{% endif %}{% if bg_video_once %} grw--bg-video-once{% endif %}"
         data-grw-custom-bg
+        {% if bg_video_once %}data-grw-bg-handoff="video-once"{% endif %}
         aria-hidden="true"
       >
         <div class="giclee-random-artwork__custom-bg-layers">
-          {%- render 'background-media',
-            background_media: custom_bg,
-            background_image: section.settings.background_image,
-            background_image_position: 'cover',
-            background_image_object_y: section.settings.background_image_object_y,
-            background_video: section.settings.background_video,
-            background_video_position: 'cover',
-            section: section
-          -%}
+          {%- if bg_video_once -%}
+            {%- comment -%} Obraz pod filmem — preload; film w tej samej warstwie co parallax/efekty. {%- endcomment -%}
+            {%- render 'background-media',
+              background_media: 'image',
+              background_image: section.settings.background_image,
+              background_image_position: 'cover',
+              background_image_object_y: section.settings.background_image_object_y,
+              section: section
+            -%}
+            {%- render 'background-media',
+              background_media: 'video',
+              background_video: section.settings.background_video,
+              background_video_position: 'cover',
+              video_loop: false,
+              section: section
+            -%}
+          {%- else -%}
+            {%- render 'background-media',
+              background_media: custom_bg,
+              background_image: section.settings.background_image,
+              background_image_position: 'cover',
+              background_image_object_y: section.settings.background_image_object_y,
+              background_video: section.settings.background_video,
+              background_video_position: 'cover',
+              section: section
+            -%}
+          {%- endif -%}
         </div>
       </div>
     {%- endif -%}
@@ -318,9 +341,9 @@
     { "type": "range", "id": "pool_limit", "label": "Startowa pula z Liquid", "min": 6, "max": 50, "step": 1, "default": 50, "info": "Shopify zwraca maks. 50 produktow w Liquid. Pelna pula doczytywana jest po stronie klienta." },
     { "type": "checkbox", "id": "fetch_full_pool", "label": "Doczytaj pelna pule (AJAX)", "default": true, "info": "Pobiera wszystkie opublikowane produkty z /collections/all/products.json." },
     { "type": "header", "content": "Wlasne tlo" },
-    { "type": "paragraph", "content": "Film ma pierwszenstwo przed obrazem. Puste pola = domyslna scena (aurora + WebGL)." },
-    { "type": "image_picker", "id": "background_image", "label": "Obraz tla" },
-    { "type": "video", "id": "background_video", "label": "Film / animacja tla" },
+    { "type": "paragraph", "content": "Gdy ustawisz film i obraz: film odtwarza sie raz, potem zostaje grafika. Sam film = petla. Same puste = aurora + WebGL." },
+    { "type": "image_picker", "id": "background_image", "label": "Obraz tla", "info": "Po jednokrotnym odtworzeniu filmu (jesli film tez jest ustawiony)." },
+    { "type": "video", "id": "background_video", "label": "Film / animacja tla", "info": "Z obrazem tla: odtworzenie jednokrotne, potem grafika. Bez obrazu: petla." },
     { "type": "checkbox", "id": "background_parallax", "label": "Parallax tla (mysz)", "default": false, "info": "Subtelny ruch obrazu lub filmu w tle przy ruszaniu kursorem." },
     { "type": "header", "content": "Wariant designu" },
     {

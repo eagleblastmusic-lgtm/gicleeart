@@ -49,6 +49,9 @@
   var toggle = null;
   var toggleState = null;
   var promptVisible = false;
+  /* Unlocked after the full Hero entry; then fades with sceneAudioGain on scroll. */
+  var promptUnlocked = false;
+  var appliedPromptGain = '';
   var gateSyncCount = 0;
   var layoutReadCount = 0;
   var mediaResetCount = 0;
@@ -287,12 +290,38 @@
 
   function heroIsSettled() {
     if (!scrubRoot || !hero) return false;
+    if (scrubRoot.getAttribute('data-hero-rise-progress') !== null) {
+      var riseProgress = Number(scrubRoot.getAttribute('data-hero-rise-progress'));
+      if (Number.isFinite(riseProgress) && riseProgress < 0.999) return false;
+    }
     if (scrubRoot.getAttribute('data-hero-rise-complete') !== 'true') return false;
     return estimatedHeroTop() <= CENTER_TOLERANCE_PX;
   }
 
+  function stripeRevealBusy() {
+    if (typeof window.GICLEE_HERO_STRIPE_REVEAL_STATUS !== 'function') return false;
+    try {
+      var status = window.GICLEE_HERO_STRIPE_REVEAL_STATUS();
+      return !!(status && status.masking);
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function heroFullyAppeared() {
+    return heroIsSettled() && !stripeRevealBusy();
+  }
+
+  function inHeroHoldWindow(runtime) {
+    var status = runtime || curtainRuntime();
+    if (!status || !status.active || !(status.holdTravel > 0)) return false;
+    if (curtainComplete(status)) return false;
+    /* Sound prompt belongs only to the quiet Hero hold — never during pre-Hero. */
+    return status.localScroll >= -0.5 && status.localScroll < status.holdTravel;
+  }
+
   function heroIsPlayable(runtime) {
-    return heroIsSettled() && !curtainComplete(runtime);
+    return heroFullyAppeared() && inHeroHoldWindow(runtime);
   }
 
   function shouldKeepSilentPlaybackForReverseScroll(runtime) {
@@ -318,18 +347,55 @@
     }
   }
 
+  function setPromptGain(gain) {
+    var next = clamp01(gain);
+    var key = next.toFixed(3);
+    if (key === appliedPromptGain) return;
+    appliedPromptGain = key;
+    root.style.setProperty('--giclee-hero-sound-prompt-gain', key);
+  }
+
   function setPromptVisible(visible) {
     var nextVisible = !!visible && SOUND_CONSENT_ENABLED;
     var nextState = nextVisible ? 'visible' : 'hidden';
     if (
       promptVisible === nextVisible &&
       root.getAttribute('data-giclee-hero-sound-prompt') === nextState
-    ) return;
+    ) {
+      return;
+    }
     promptVisible = nextVisible;
     root.setAttribute('data-giclee-hero-sound-prompt', nextState);
+    if (!promptVisible) {
+      setPromptGain(0);
+    }
     if (!prompt) return;
     prompt.setAttribute('aria-hidden', promptVisible ? 'false' : 'true');
     if ('inert' in prompt) prompt.inert = !promptVisible;
+  }
+
+  function syncPrompt(runtime) {
+    if (!SOUND_CONSENT_ENABLED || choiceResolved) {
+      setPromptVisible(false);
+      return;
+    }
+
+    if (!promptUnlocked) {
+      if (heroIsPlayable(runtime)) promptUnlocked = true;
+      else {
+        setPromptVisible(false);
+        return;
+      }
+    }
+
+    var gain = sceneAudioGain(runtime);
+    if (curtainComplete(runtime) || gain <= 0.02) {
+      setPromptVisible(false);
+      return;
+    }
+
+    setPromptVisible(true);
+    setPromptGain(gain);
   }
 
   function createPrompt() {
@@ -371,10 +437,13 @@
     inner.appendChild(label);
     inner.appendChild(startButton);
     prompt.appendChild(inner);
-    document.body.appendChild(prompt);
+    /* Mount in Hero so reverse-scroll carries the bar down with the section. */
+    (hero || document.body).appendChild(prompt);
     toggle.addEventListener('change', updateToggleCopy);
     startButton.addEventListener('click', function () {
-      if (!heroIsPlayable(curtainRuntime()) || choiceResolved) return;
+      if (choiceResolved) return;
+      var runtime = curtainRuntime();
+      if (!heroIsPlayable(runtime) && sceneAudioGain(runtime) <= 0.35) return;
       resolveChoice(!!toggle.checked, 'user');
     });
     updateToggleCopy();
@@ -440,8 +509,18 @@
     var runtime = curtainRuntime();
     var playable = heroIsPlayable(runtime);
 
+    if (!choiceResolved) {
+      if (!SOUND_CONSENT_ENABLED) {
+        if (playable) resolveChoice(false, 'disabled');
+        return;
+      }
+      syncPrompt(runtime);
+      if (!playable && playbackAllowed) stopPlayback();
+      return;
+    }
+
+    setPromptVisible(false);
     if (!playable) {
-      setPromptVisible(false);
       if (shouldKeepSilentPlaybackForReverseScroll(runtime)) {
         applyPlaybackVolume(runtime);
         return;
@@ -449,19 +528,6 @@
       if (playbackAllowed) stopPlayback();
       return;
     }
-
-    if (!choiceResolved) {
-      if (!SOUND_CONSENT_ENABLED) {
-        resolveChoice(false, 'disabled');
-      } else if (decisionWindowExpired(runtime)) {
-        resolveChoice(false, 'auto-muted');
-      } else {
-        setPromptVisible(true);
-      }
-      return;
-    }
-
-    setPromptVisible(false);
     if (!playbackAllowed) startPlayback(soundEnabled, false);
     else if (soundEnabled) applyPlaybackVolume(runtime);
   }
@@ -482,6 +548,7 @@
     measureHeroDocumentTop();
     createAmbientAudio();
     createPrompt();
+    setPromptVisible(false);
     collectVideos();
     stopPlayback();
 
@@ -531,6 +598,8 @@
         soundEnabled: soundEnabled,
         soundConsentEnabled: SOUND_CONSENT_ENABLED,
         promptVisible: promptVisible,
+        promptUnlocked: promptUnlocked,
+        promptGain: Number(appliedPromptGain) || 0,
         ambientConfigured: !!SOUND_AUDIO_URL,
         ambientActive: !!(ambientAudio && !ambientAudio.paused),
         ambientVolume: SOUND_VOLUME,

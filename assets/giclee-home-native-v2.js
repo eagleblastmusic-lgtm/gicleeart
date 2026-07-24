@@ -7,12 +7,12 @@
   var mode = String(config.smoothScrollMode || 'native').trim().toLowerCase();
 
   /* Tuned to the longer, visibly eased wheel response used by cinematic portals. */
-  var WHEEL_GAIN = 1.35;
+  var WHEEL_GAIN = 1.05;
   var LINE_HEIGHT_PX = 40;
   var PAGE_DELTA_RATIO = 0.9;
   var MAX_WHEEL_DELTA_PX = 420;
   var MAX_TARGET_LEAD_PX = 1800;
-  var FOLLOW_TAU_MS = 230;
+  var FOLLOW_TAU_MS = 300;
   var STOP_EPSILON_PX = 0.25;
   var MAX_FRAME_DELTA_MS = 48;
 

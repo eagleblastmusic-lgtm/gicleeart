@@ -40,3 +40,15 @@ def test_working_repo_button_keeps_snapshot_workflow() -> None:
     assert "command=self._start_gicleeart_gpt_push" in source
     assert "dry_run_gicleeart_gpt_push" in source
     assert "commit_and_push_gicleeart_gpt" in source
+
+
+def test_component_page_has_vertical_scroll_and_mousewheel_support() -> None:
+    source = GUI_PATH.read_text(encoding="utf-8")
+
+    assert "from Komponenty._shared.tk_scroll import bind_mousewheel_to_canvas" in source
+    assert "def _build_scrollable_root" in source
+    assert 'orient="vertical", command=canvas.yview' in source
+    assert "canvas.configure(yscrollcommand=scrollbar.set)" in source
+    assert 'canvas.create_window((0, 0), window=content, anchor="nw")' in source
+    assert "bind_mousewheel_to_canvas(canvas, content)" in source
+    assert "page = self._build_scrollable_root()" in source

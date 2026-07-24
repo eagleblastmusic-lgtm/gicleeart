@@ -7,10 +7,7 @@
 .giclee-prehero-reveal {
   --giclee-prehero-reveal-inset: 50%;
   --giclee-prehero-reveal-progress: 0;
-  --giclee-prehero-reveal-spine-opacity: 0;
   --giclee-prehero-copy-opacity: 0;
-  --giclee-prehero-copy-y: 24px;
-  --giclee-prehero-copy-blur: 9px;
   position: absolute;
   inset: 0;
   z-index: 3;
@@ -28,6 +25,7 @@
 }
 
 .giclee-prehero-reveal__visual {
+  --giclee-prehero-portal-video-opacity: 0;
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -41,10 +39,27 @@
   backface-visibility: hidden;
 }
 
+/* Scroll-scrubbed gallery clip — fades in behind copy only after the portal is fully open. */
+.giclee-prehero-reveal__portal-video {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  opacity: var(--giclee-prehero-portal-video-opacity, 0);
+  pointer-events: none;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: opacity;
+}
+
 .giclee-prehero-reveal__visual::after {
   content: '';
   position: absolute;
   inset: 0;
+  z-index: 2;
   pointer-events: none;
   background:
     linear-gradient(180deg, rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.22)),
@@ -53,6 +68,7 @@
 
 /* Editorial statement revealed by the same horizontal portal mask. */
 .giclee-prehero-reveal__copy {
+  --giclee-prehero-copy-y: 8vh;
   position: absolute;
   inset: 0;
   z-index: 2;
@@ -63,10 +79,11 @@
   color: #fff;
   text-align: center;
   pointer-events: none;
-  transform: translate3d(0, var(--giclee-prehero-copy-y, 24px), 0);
-  filter: blur(var(--giclee-prehero-copy-blur, 9px));
+  perspective: 1100px;
+  perspective-origin: 50% 46%;
+  transform: translate3d(0, var(--giclee-prehero-copy-y, 8vh), 0);
   backface-visibility: hidden;
-  will-change: transform, filter;
+  will-change: transform;
 }
 
 .giclee-prehero-reveal__copy::before {
@@ -101,42 +118,34 @@
   text-shadow:
     0 1px 2px rgb(0 0 0 / 0.5),
     0 12px 40px rgb(0 0 0 / 0.5);
+  transform-style: preserve-3d;
 }
 
 .giclee-prehero-reveal__copy-line {
-  --giclee-prehero-copy-line-opacity: 0;
-  --giclee-prehero-copy-line-y: 18px;
   display: block;
-  opacity: var(--giclee-prehero-copy-line-opacity, 0);
-  transform: translate3d(0, var(--giclee-prehero-copy-line-y, 18px), 0);
-  backface-visibility: hidden;
-  will-change: opacity, transform;
+  transform-style: preserve-3d;
 }
 
 .giclee-prehero-reveal__copy-line + .giclee-prehero-reveal__copy-line {
   margin-top: 0.09em;
 }
 
-/* A subtle centre seam makes the zero-width portal readable before it starts opening. */
-.giclee-prehero-reveal__spine {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  z-index: 4;
-  width: 1px;
-  pointer-events: none;
-  opacity: var(--giclee-prehero-reveal-spine-opacity, 0);
-  background: rgb(255 255 255 / 0.72);
-  box-shadow: 0 0 12px rgb(255 255 255 / 0.24);
-  transform: translate3d(-0.5px, 0, 0);
-  transition: none;
-  will-change: opacity;
+.giclee-prehero-reveal__copy-word {
+  --giclee-prehero-copy-word-opacity: 0.18;
+  --giclee-prehero-copy-word-z: 0px;
+  --giclee-prehero-copy-word-scale: 1;
+  display: inline-block;
+  opacity: var(--giclee-prehero-copy-word-opacity, 0.18);
+  transform-origin: 50% 50%;
+  transform: translate3d(0, 0, var(--giclee-prehero-copy-word-z, 0px))
+    scale(var(--giclee-prehero-copy-word-scale, 1));
+  backface-visibility: hidden;
+  will-change: opacity, transform;
 }
 
-.giclee-prehero-scrub[data-reveal-active='true']
-  .giclee-prehero-reveal__spine {
-  opacity: var(--giclee-prehero-reveal-spine-opacity, 0.72);
+/* Centre seam removed — keep rule only to hide any leftover DOM from older assets. */
+.giclee-prehero-reveal__spine {
+  display: none !important;
 }
 
 /*
@@ -239,10 +248,20 @@ html:has(#giclee-prehero-video-scrub[data-hero-rise-complete='false'])
     will-change: auto;
   }
 
-  .giclee-prehero-reveal__copy,
-  .giclee-prehero-reveal__copy-line {
-    filter: none;
+  .giclee-prehero-reveal__copy {
+    --giclee-prehero-copy-y: 0vh;
+    perspective: none;
     transform: none;
+    will-change: auto;
+  }
+
+  .giclee-prehero-reveal__copy-word {
+    --giclee-prehero-copy-word-opacity: 1;
+    --giclee-prehero-copy-word-z: 0px;
+    --giclee-prehero-copy-word-scale: 1;
+    opacity: 1;
+    transform: none;
+    will-change: auto;
     will-change: auto;
   }
 
@@ -252,7 +271,4 @@ html:has(#giclee-prehero-video-scrub[data-hero-rise-complete='false'])
     margin-top: 0 !important;
   }
 
-  .giclee-prehero-reveal__spine {
-    display: none;
-  }
 }

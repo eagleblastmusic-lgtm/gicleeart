@@ -18,6 +18,38 @@ def test_build_page_texts_respects_counts() -> None:
     assert ai.build_page_texts(["A", "B", "C", "D"], [2, 1]) == ["A\n\nB", "C"]
 
 
+def test_paragraph_counts_from_config_fallback_one_each() -> None:
+    assert ai.paragraph_counts_from_config({"pages": [{"paragraphs": 2}, {"paragraphs": 1}]}, 3) == [
+        2,
+        1,
+    ]
+    assert ai.paragraph_counts_from_config(None, 4) == [1, 1, 1, 1]
+
+
+def test_story_pages_images_complete_allows_empty_first_page() -> None:
+    from Komponenty.stronaproduktu.service import story_pages_images_complete
+
+    assert story_pages_images_complete(
+        {
+            "pages": [
+                {"paragraphs": 1, "image": ""},
+                {"paragraphs": 1, "image": "https://cdn/a.jpg"},
+                {"paragraphs": 1, "image": "https://cdn/b.jpg"},
+            ]
+        }
+    )
+    assert not story_pages_images_complete(
+        {
+            "pages": [
+                {"paragraphs": 1, "image": ""},
+                {"paragraphs": 1, "image": "https://cdn/a.jpg"},
+                {"paragraphs": 1, "image": ""},
+            ]
+        }
+    )
+    assert story_pages_images_complete({"pages": [{"paragraphs": 1, "image": ""}]})
+
+
 def test_parse_crop_plan_accepts_fenced_json_and_normalized_boxes() -> None:
     raw = """```json
     {"pages":[{"page_index":1,"candidates":[{"box_2d":[100,200,700,800],"confidence":0.8,"matched_subject":"postać"}]}]}
@@ -28,6 +60,29 @@ def test_parse_crop_plan_accepts_fenced_json_and_normalized_boxes() -> None:
     assert candidate.box.ymin == pytest.approx(0.1)
     assert candidate.box.xmax == pytest.approx(0.8)
     assert candidate.box.ymax == pytest.approx(0.7)
+
+
+def test_parse_crop_plan_repairs_trailing_comma() -> None:
+    raw = """
+    {
+      "pages": [
+        {
+          "page_index": 1,
+          "candidates": [
+            {
+              "box_2d": [100, 200, 700, 800],
+              "confidence": 0.8,
+              "matched_subject": "postac",
+              "reason": "detal po lewej",
+            },
+          ],
+        },
+      ]
+    }
+    """
+    plan = ai.parse_crop_plan(raw, page_count=3)
+    assert 1 in plan
+    assert plan[1][0].matched_subject == "postac"
 
 
 def test_fit_box_to_aspect_stays_inside_image_and_hits_ratio() -> None:

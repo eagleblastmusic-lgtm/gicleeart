@@ -20,13 +20,14 @@ from .service import (
     load_product_story,
     save_effects_config,
     save_story_config,
+    story_pages_images_complete,
     upload_effects_image,
     upload_story_image,
 )
 
 APP_TITLE = "Strona produktu — mini strony opisu (PDP v3)"
 _IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff", ".bmp"}
-_DEFAULT_PARAGRAPHS_PER_PAGE = 2
+_DEFAULT_PARAGRAPHS_PER_PAGE = 1
 _DETAILS_IID = "details"
 
 
@@ -62,7 +63,7 @@ def _is_image_path(path: Path) -> bool:
 
 
 def _default_pages(paragraph_count: int) -> list[dict[str, Any]]:
-    """Domyślny podział: po 2 akapity na stronę (pokrywa wszystkie akapity)."""
+    """Domyślny podział: 1 akapit na stronę (pokrywa wszystkie akapity)."""
     pages: list[dict[str, Any]] = []
     remaining = max(0, paragraph_count)
     while remaining > 0:
@@ -132,7 +133,10 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
     widths = {"artist": 200, "painting_title": 340, "handle": 170, "story_status": 90}
     sort_state: dict[str, bool] = {}
 
-    tree = ttk.Treeview(table_frame, columns=cols, show="headings", height=9, selectmode="browse")
+    tree = ttk.Treeview(
+        table_frame, columns=cols, show="headings", height=9, selectmode="extended"
+    )
+    tree.tag_configure("images_complete", background="#e8f5e9", foreground="#1b5e20")
 
     def _update_sort_headings(*, active: str | None = None, reverse: bool = False) -> None:
         for c in cols:
@@ -198,6 +202,7 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
         row_by_iid.clear()
         visible = _filtered_rows()
         for r in visible:
+            tags = ("images_complete",) if r.get("story_images_complete") else ()
             iid = tree.insert(
                 "",
                 "end",
@@ -207,6 +212,7 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
                     r.get("handle") or "",
                     r.get("story_status") or "—",
                 ),
+                tags=tags,
             )
             row_by_iid[iid] = r
         count_var.set(f"{len(visible)} / {len(state['rows'])} produktów")
@@ -565,16 +571,43 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
 
         threading.Thread(target=work, daemon=True).start()
 
-    def _mark_selected_row(*, has_story: bool, page_count: int) -> None:
+    def _primary_selected_iid() -> str | None:
         sel = tree.selection()
         if not sel:
+            return None
+        focus = tree.focus()
+        return focus if focus in sel else sel[-1]
+
+    def _mark_selected_row(*, has_story: bool, page_count: int) -> None:
+        iid = _primary_selected_iid()
+        if not iid:
             return
-        row = row_by_iid.get(sel[0])
+        row = row_by_iid.get(iid)
         if not row:
             return
         row["has_story"] = has_story
-        row["story_status"] = f"{page_count} str." if has_story else "—"
+        if has_story:
+            cfg = {
+                "pages": list(state.get("pages") or []),
+                "details_image": str(state.get("details_image") or "").strip(),
+            }
+            complete = story_pages_images_complete(cfg)
+            row["story_config"] = cfg
+            row["story_images_complete"] = complete
+            row["story_status"] = f"{page_count} str. ✓" if complete else f"{page_count} str."
+        else:
+            row["story_config"] = None
+            row["story_images_complete"] = False
+            row["story_status"] = "—"
+        selected_handle = str(row.get("handle") or "")
         _refresh_tree()
+        # Przywróć zaznaczenie po przebudowie listy.
+        for new_iid, new_row in row_by_iid.items():
+            if str(new_row.get("handle") or "") == selected_handle:
+                tree.selection_set(new_iid)
+                tree.focus(new_iid)
+                tree.see(new_iid)
+                break
 
     def _open_url(kind: str) -> None:
         detail = state.get("detail") or {}
@@ -867,6 +900,27 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
             state["pages"] = [dict(p) for p in config["pages"]]
             state["details_image"] = str(config.get("details_image") or "")
             _set_dirty(False)
+            # Synchronizuj zielone oznaczenie wiersza po zapisie AI / przeładowaniu.
+            iid = _primary_selected_iid()
+            row = row_by_iid.get(iid) if iid else None
+            if row is not None:
+                complete = story_pages_images_complete(config)
+                row["story_config"] = config
+                row["has_story"] = True
+                row["story_images_complete"] = complete
+                n = len(config["pages"])
+                row["story_status"] = f"{n} str. ✓" if complete else f"{n} str."
+                tags = ("images_complete",) if complete else ()
+                tree.item(
+                    iid,
+                    values=(
+                        row.get("artist") or "",
+                        row.get("painting_title") or "",
+                        row.get("handle") or "",
+                        row["story_status"],
+                    ),
+                    tags=tags,
+                )
         else:
             # Propozycja domyślna — jeszcze NIE zapisana w Shopify.
             state["pages"] = _default_pages(len(detail.get("paragraphs") or []))
@@ -875,10 +929,10 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
         _refresh_pages(keep_selection=False)
 
     def _reload_selected() -> None:
-        sel = tree.selection()
-        if not sel:
+        iid = _primary_selected_iid()
+        if not iid:
             return
-        row = row_by_iid.get(sel[0])
+        row = row_by_iid.get(iid)
         if not row:
             return
         pid = int(row.get("product_id") or 0)

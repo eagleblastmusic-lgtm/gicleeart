@@ -40,6 +40,7 @@ def inject_prehero_into_snippet(
             "window.GICLEE_HOME_SCROLL_CONFIG = Object.assign({}, window.GICLEE_HOME_SCROLL_CONFIG || {}, { enabled: false });",
             "window.GICLEE_PREHERO_CONFIG = " + json.dumps(public_cfg, ensure_ascii=False) + ";",
             "window.GICLEE_PREHERO_SCRUB_VIDEO_URL = " + _base._video_liquid(cfg) + ";",
+            "window.GICLEE_PREHERO_PORTAL_VIDEO_URL = " + _base._portal_video_liquid() + ";",
             "(function () {",
             "  function disableHomeSectionScroll() {",
             "    var api = window.GICLEE_HOME_SECTION_SCROLL;",

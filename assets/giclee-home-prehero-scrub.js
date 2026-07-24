@@ -16,6 +16,7 @@
   var SCROLL_HEIGHT_VH = configNumber('scrollHeightVh', 600, 300, 2000);
   var REVEAL_OVERLAP_VH = configNumber('revealOverlapVh', 200, 100, 1000);
   var HERO_RISE_VH = configNumber('heroRiseVh', 100, 100, 500);
+  var COPY_HOLD_VH = configNumber('copyHoldVh', 200, 0, 800);
   var SEEK_FPS = configNumber('scrubSeekFps', 60, 12, 60);
   var SEEK_INTERVAL_MS = 1000 / SEEK_FPS;
   var LENIS_MAX_SEEK_FPS = 12;
@@ -134,8 +135,13 @@
     root.setAttribute('data-frame-sequence-ready', 'false');
     root.setAttribute('data-scrub-progress', '0');
     root.setAttribute('data-prehero-phase', 'scrub');
+    root.setAttribute('data-hero-rise-progress', '0');
+    root.setAttribute('data-hero-rise-complete', 'false');
     root.setAttribute('data-render-mode', 'mp4-seek');
-    root.style.setProperty('--giclee-prehero-scroll-height', SCROLL_HEIGHT_VH + 'vh');
+    root.style.setProperty(
+      '--giclee-prehero-scroll-height',
+      SCROLL_HEIGHT_VH + COPY_HOLD_VH + 'vh'
+    );
     root.style.setProperty('--giclee-prehero-reveal-overlap', REVEAL_OVERLAP_VH + 'vh');
     root.style.setProperty('--giclee-prehero-hero-rise-height', HERO_RISE_VH + 'vh');
     document.documentElement.style.setProperty(
@@ -187,6 +193,8 @@
     var renderedMp4Frames = new Set();
     var totalTravel = 0;
     var preHeroTravel = 0;
+    var scrubEnd = 0;
+    var copyHoldTravel = 0;
     var heroRiseStart = 0;
     var heroRiseTravel = 0;
     var heroRiseProgress = 0;
@@ -245,7 +253,7 @@
     function updateProgressFromScroll() {
       if (reducedMotion || (!useFrameSequence && !duration)) return;
       var localScroll = clamp(scrollY() - rootStartY, 0, totalTravel);
-      progress = clamp(localScroll / Math.max(1, preHeroTravel), 0, 1);
+      progress = clamp(localScroll / Math.max(1, scrubEnd), 0, 1);
       heroRiseProgress = clamp(
         (localScroll - heroRiseStart) / Math.max(1, heroRiseTravel),
         0,
@@ -269,13 +277,18 @@
       rootStartY = scrollY() + rect.top;
       totalTravel = Math.max(1, root.offsetHeight - viewport);
       heroRiseTravel = Math.min(totalTravel, viewport * (HERO_RISE_VH / 100));
+      copyHoldTravel = Math.min(
+        Math.max(0, totalTravel - heroRiseTravel),
+        viewport * (COPY_HOLD_VH / 100)
+      );
       preHeroTravel = Math.max(1, totalTravel - heroRiseTravel);
       heroRiseStart = preHeroTravel;
+      scrubEnd = Math.max(1, heroRiseStart - copyHoldTravel);
       revealOverlapTravel = Math.min(
-        preHeroTravel,
+        scrubEnd,
         viewport * (REVEAL_OVERLAP_VH / 100)
       );
-      revealStart = Math.max(0, preHeroTravel - revealOverlapTravel);
+      revealStart = Math.max(0, scrubEnd - revealOverlapTravel);
       if (frameController) frameController.resize();
       updateProgressFromScroll();
     }
@@ -399,6 +412,8 @@
         frameSequence: frameStatus,
         totalTravel: totalTravel,
         preHeroTravel: preHeroTravel,
+        scrubEnd: scrubEnd,
+        copyHoldTravel: copyHoldTravel,
         revealStart: revealStart,
         revealOverlapTravel: revealOverlapTravel,
         heroRiseStart: heroRiseStart,
@@ -410,6 +425,7 @@
           scrollHeightVh: SCROLL_HEIGHT_VH,
           revealOverlapVh: REVEAL_OVERLAP_VH,
           heroRiseVh: HERO_RISE_VH,
+          copyHoldVh: COPY_HOLD_VH,
           scrubSeekFps: SEEK_FPS,
         },
       };

@@ -177,11 +177,47 @@
   object-position: center;
 }
 
-/* Przyciemnienie dla czytelnosci tekstu na wlasnym tle */
+/* Film raz → obraz: grafika pod spodem (preload), video na wierzchu w tej samej warstwie efektów */
+.giclee-random-artwork__custom-bg.grw--bg-video-once .background-image-container {
+  z-index: 0;
+}
+
+.giclee-random-artwork__custom-bg.grw--bg-video-once video-background-component,
+.giclee-random-artwork__custom-bg.grw--bg-video-once .video-background {
+  z-index: 1;
+  opacity: 1;
+  transition: opacity 0.7s var(--grw-ease, ease);
+}
+
+/* Własny obraz jest pod filmem — poster Shopify to zbędna warstwa pod spodem. */
+.giclee-random-artwork__custom-bg.grw--bg-video-once video-background-component > img {
+  display: none;
+}
+
+.giclee-random-artwork__custom-bg.grw--bg-video-once.is-bg-image video-background-component,
+.giclee-random-artwork__custom-bg.grw--bg-video-once.is-bg-image .video-background {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.giclee-random-artwork__custom-bg.grw--bg-video-once.is-bg-video-disposed video-background-component,
+.giclee-random-artwork__custom-bg.grw--bg-video-once.is-bg-video-disposed .video-background {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giclee-random-artwork__custom-bg.grw--bg-video-once video-background-component,
+  .giclee-random-artwork__custom-bg.grw--bg-video-once .video-background {
+    display: none;
+  }
+}
+
+/* Przyciemnienie dla czytelnosci tekstu — zawsze nad mediami tła */
 .giclee-random-artwork__custom-bg::after {
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 2;
   background: linear-gradient(180deg, rgba(8, 8, 12, 0.5), rgba(8, 8, 12, 0.62));
 }
 

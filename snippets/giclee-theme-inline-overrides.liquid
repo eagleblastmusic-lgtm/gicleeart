@@ -1227,51 +1227,6 @@
       visibility: hidden;
       transition: opacity 1.4s ease, visibility 0s linear 1.4s;
     }
-    .splash-content {
-      text-align: center;
-      animation: splashFadeIn 1.1s ease forwards;
-    }
-    .splash-title {
-      color: #fff;
-      font-size: clamp(2.2rem, 6vw, 5.5rem);
-      font-family: 'Bodoni Moda', Georgia, serif;
-      font-weight: 400;
-      font-style: normal;
-      font-variation-settings: 'opsz' 96;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      transform: scaleX(1.15);
-      display: inline-block;
-      margin: 0 0 0.45rem;
-      -webkit-font-smoothing: antialiased;
-      -webkit-text-stroke: 0.3px rgba(255,255,255,0.5);
-    }
-    .splash-line {
-      width: 220px;
-      height: 1px;
-      background: linear-gradient(to right, transparent, #c9a84c, transparent);
-      margin: 0.4rem auto 0.55rem;
-      transform: scaleX(0);
-      transform-origin: center;
-      will-change: transform;
-      animation: splashLine 0.9s ease forwards;
-      animation-delay: 0.9s;
-    }
-    @keyframes splashLine {
-      from { transform: scaleX(0); }
-      to   { transform: scaleX(1); }
-    }
-    .splash-sub {
-      color: #bbb;
-      font-size: clamp(0.75rem, 2vw, 1.1rem);
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      font-weight: 300;
-      letter-spacing: 0.35em;
-      text-transform: uppercase;
-      margin: 0;
-    }
-    @keyframes splashFadeIn {
-      from { opacity: 0; transform: translateY(12px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
+    /* Splash typography + fade-in live in layout/theme.liquid <head> critical CSS
+       so the welcome screen never flashes the body font before Bodoni/Cormorant. */
   </style>

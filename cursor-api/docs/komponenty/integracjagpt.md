@@ -30,6 +30,8 @@ GUI pokazuje dwa główne, jednoznacznie opisane cele:
 
 Obie akcje wykonują dry-run, kontrolę brancha i remote, audyt sekretów/runtime, podgląd plików oraz osobne potwierdzenie przed commitem i pushem. Remote musi wskazywać dokładnie właściwe repozytorium. Jeżeli working tree repo głównego jest czysty, ale istnieją lokalne commity `ahead`, przycisk potrafi wykonać push bez tworzenia pustego commita.
 
+Cała zawartość okna jest umieszczona w pionowo przewijanym obszarze z paskiem po prawej i obsługą kółka myszy/touchpada. Pole **Log** zachowuje własne, niezależne przewijanie, gdy wskaźnik znajduje się nad jego treścią.
+
 ## Push do repo roboczego GPT (motyw Shopify)
 
 Drugi workflow w GUI **Integracja z GPT** — karta **Repo robocze GPT**.

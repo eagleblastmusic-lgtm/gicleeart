@@ -19,6 +19,7 @@
 }
 
 .giclee-prehero-scrub__stage {
+  --giclee-prehero-media-blur: 0px;
   position: sticky;
   top: 0;
   width: 100%;
@@ -36,6 +37,7 @@
   inset: 0;
   width: 100%;
   height: 100%;
+  filter: blur(var(--giclee-prehero-media-blur, 0px));
 }
 
 .giclee-prehero-scrub__video,
@@ -46,7 +48,7 @@
   background: #000;
   transform: translateZ(0);
   backface-visibility: hidden;
-  will-change: opacity;
+  will-change: opacity, filter;
   transition: opacity 220ms ease;
 }
 
@@ -91,6 +93,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .giclee-prehero-scrub__video,
+  .giclee-prehero-scrub__canvas,
+  .giclee-prehero-scrub__poster {
+    filter: none;
+  }
+
   .giclee-prehero-scrub {
     height: 100svh;
     min-height: 100svh;

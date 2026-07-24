@@ -155,6 +155,15 @@ def extract_product_image_url(product: dict[str, Any]) -> str:
     return ""
 
 
+def paragraph_counts_from_config(config: dict[str, Any] | None, paragraph_count: int) -> list[int]:
+    """Liczniki akapitów ze zapisanej konfiguracji; fallback: 1 na akapit."""
+    pages = list((config or {}).get("pages") or [])
+    if pages:
+        return [max(1, int(p.get("paragraphs") or 1)) for p in pages]
+    n = max(0, int(paragraph_count))
+    return [1] * n if n else []
+
+
 def resolve_product_story_context(handle: str) -> ProductStoryContext:
     """Pobiera produkt, akapity, konfigurację stron i główny obraz."""
 
@@ -232,9 +241,12 @@ def _parse_box(raw: Any) -> NormalizedBox | None:
 def parse_crop_plan(raw: str, *, page_count: int) -> dict[int, list[CropCandidate]]:
     """Parsuje odpowiedź Gemini; pomija wadliwe wpisy bez wywracania sesji."""
 
+    from Komponenty.dodajobraz.prompt_builder import _loads_json_object_blob
+
+    blob = _strip_json_wrapper(raw)
     try:
-        payload = json.loads(_strip_json_wrapper(raw))
-    except json.JSONDecodeError as exc:
+        payload = _loads_json_object_blob(blob)
+    except ValueError as exc:
         raise SmartCropError(f"Gemini nie zwrócił poprawnego JSON: {exc}") from exc
     pages = payload.get("pages") if isinstance(payload, dict) else None
     if not isinstance(pages, list):
@@ -411,6 +423,8 @@ Zasady:
 6. box_2d ma format [ymin, xmin, ymax, xmax], współrzędne całkowite 0–1000.
 7. confidence ma być liczbą 0–1.
 8. Zwróć WYŁĄCZNIE poprawny JSON, bez markdownu i komentarzy.
+9. W polach tekstowych (matched_subject, reason) nie używaj cudzysłowów ani apostrofów —
+   pisz prosto (np. postac z lewej zamiast "postać").
 
 Wymagany format:
 {{
@@ -529,16 +543,38 @@ def generate_crop_session(
     ranked: dict[int, list[CropCandidate]] = {}
     if len(texts) > 1:
         prompt = build_gemini_prompt(title=context.title, page_texts=texts)
-        raw, model_used = generate_from_image_bytes(
-            image_bytes=analysis_bytes,
-            mime_type=analysis_mime,
-            prompt=prompt,
-            model=(model or DEFAULT_MODEL),
-            on_status=on_status,
-            should_abort=should_abort,
-        )
-        plan = parse_crop_plan(raw, page_count=len(texts))
-        ranked = rank_page_candidates(plan, page_count=len(texts), source_size=source_size)
+        chosen_model = model or DEFAULT_MODEL
+        last_parse_error: Exception | None = None
+        for attempt in range(2):
+            if should_abort and should_abort():
+                raise SmartCropError("Przerwano.")
+            call_prompt = prompt
+            if attempt > 0:
+                status("Ponawiam: poprzednia odpowiedź Gemini miała zły JSON...")
+                call_prompt = (
+                    prompt
+                    + "\n\nPOPRAWKA: poprzednia odpowiedź nie była poprawnym JSON. "
+                    "Zwróć wyłącznie jeden obiekt JSON w wymaganym formacie, "
+                    "bez markdownu, bez cudzysłowów wewnątrz stringów."
+                )
+            raw, model_used = generate_from_image_bytes(
+                image_bytes=analysis_bytes,
+                mime_type=analysis_mime,
+                prompt=call_prompt,
+                model=chosen_model,
+                on_status=on_status,
+                should_abort=should_abort,
+                response_mime_type="application/json",
+            )
+            try:
+                plan = parse_crop_plan(raw, page_count=len(texts))
+                ranked = rank_page_candidates(plan, page_count=len(texts), source_size=source_size)
+                last_parse_error = None
+                break
+            except SmartCropError as exc:
+                last_parse_error = exc
+        if last_parse_error is not None:
+            raise last_parse_error
 
     temp_dir = Path(tempfile.mkdtemp(prefix=f"giclee-story-crops-{context.product_id}-"))
     full_preview_path = temp_dir / f"{_slug(context.handle)}-story-full-preview.jpg"

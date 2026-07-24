@@ -101,8 +101,8 @@ def test_native_v2_smooths_real_mouse_wheel_and_uses_cached_active_pair_stack() 
     snippet = CRITICAL_SNIPPET.read_text(encoding="utf-8")
 
     assert "mode !== 'native-v2'" in source
-    assert "WHEEL_GAIN = 1.35" in source
-    assert "FOLLOW_TAU_MS = 230" in source
+    assert "WHEEL_GAIN = 1.05" in source
+    assert "FOLLOW_TAU_MS = 300" in source
     assert "MAX_TARGET_LEAD_PX = 1800" in source
     assert "window.addEventListener('wheel', onWheel, { passive: false })" in source
     assert "event.preventDefault();" in source

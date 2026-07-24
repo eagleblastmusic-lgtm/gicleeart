@@ -47,7 +47,7 @@ Selektor GicleeApp przechowuje tryb osobno dla każdego wariantu:
 - pozostawia natywne przewijanie w modalach, drawerach, formularzach i zagnieżdżonych kontenerach;
 - zachowuje natywne zachowanie klawiatury, paska przewijania oraz urządzeń touch/coarse;
 - kumuluje kolejne impulsy do maksymalnego wyprzedzenia `1800 px`;
-- używa profilu `wheel-cinematic-nous-v3-fast-stack`: gain `1.35`, stała wygładzania `230 ms` i około `0,7–1 s` wyhamowania;
+- używa profilu `wheel-cinematic-nous-v3-fast-stack`: gain `1.05`, stała wygładzania `300 ms` i około `0,9–1,2 s` wyhamowania;
 - własne zdarzenia `scroll` generowane przez easing nie przerywają aktywnej animacji;
 - zastępuje legacy stack lekkim rendererem `native-v2-fast-active-pair`;
 - przechowuje pozycje par sekcji w cache i aktualizuje tylko aktywne przejście;
@@ -101,11 +101,12 @@ Oba tryby natywne zachowują `assets/giclee-home-prehero-scrub.mp4`. Zwykły v2 
 
 1. Natywne menu wyjeżdża do góry, a dolny czarny pas w dół.
 2. Materiał pre-Hero jest sterowany pozycją scrolla.
-3. W końcowej części filmu portal otwiera się symetrycznie od środka i pokazuje skonfigurowany tekst.
-4. Po zakończeniu portalu od dołu wjeżdża oryginalny Hero Shopify z filmem-kolażem.
-5. Hero pozostaje wycentrowany przez skonfigurowany pusty odcinek scrolla.
-6. Pozioma szczelina dzieli ten sam działający film na część górną i dolną; otwarcie rozszerza się ku krawędziom.
-7. Pod kurtyną jest wizualna kopia prawdziwej sekcji `Giclée Art — intro`; po pełnym otwarciu następuje bezszwowy hand-off do oryginalnej sekcji Shopify.
+3. W końcowej części filmu portal (kurtyna) otwiera się symetrycznie od środka; materiał pre-Hero blurowuje się razem ze scrollem otwarcia, a tekst wjeżdża z lekkim fade-inem i trafia na środek dokładnie gdy czarne boki domykają otwarcie.
+4. Dopiero po pełnym otwarciu portalu (copy hold) za napisami fade-inem wchodzi scrollowana animacja galerii (`assets/giclee-home-prehero-portal.mp4` / `GICLEE_PREHERO_PORTAL_VIDEO_URL`); w 5. sekundzie filmu zaczyna się wolny fade-out (~2,2 s). Słowa rozjaśniają się kolejno; gdy fala opacity dobiegnie końca, te same słowa synchronicznie (słowo po słowie) oddalają się w perspektywie (do ~12%), a potem wolno gasną do 0. Hero jeszcze nie wjeżdża.
+5. Dopiero potem wjeżdża oryginalny Hero Shopify: żywy kolaż/video jest odsłaniany maską z trzech pionowych pasów rosnących od dołu do góry. Pasy i cała ramka Hero (cinema + video) dzielą jeden `smoothedProgress`; bezwładność idzie przez sticky `top` (`--giclee-hero-rise-lag-y`), żeby letterbox nie uciekał przed kadrem. Po domknięciu maska i offset znikają.
+6. Hero pozostaje wycentrowany przez skonfigurowany pusty odcinek scrolla.
+7. Pozioma szczelina dzieli ten sam działający film na część górną i dolną; otwarcie rozszerza się ku krawędziom.
+8. Pod kurtyną jest wizualna kopia prawdziwej sekcji `Giclée Art — intro`; po pełnym otwarciu następuje bezszwowy hand-off do oryginalnej sekcji Shopify.
 
 ## Eksport
 

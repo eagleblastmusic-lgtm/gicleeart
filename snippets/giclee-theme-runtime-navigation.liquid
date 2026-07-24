@@ -478,8 +478,36 @@
       compensateScrollbar();
       pauseSlideshow();
 
-      // Splash animation finishes at 1800ms (line: 0.9s delay + 0.9s = 1.8s)
-      // Small hold then fade
-      setTimeout(hideSplash, 2200);
+      var splashHoldStarted = false;
+      function startSplashHold() {
+        if (splashHoldStarted) return;
+        splashHoldStarted = true;
+        // Splash animation finishes at 1800ms (line: 0.9s delay + 0.9s = 1.8s)
+        // Small hold then fade — counted from fonts-ready so Bodoni/Cormorant never flash.
+        setTimeout(hideSplash, 2200);
+      }
+
+      if (splash && splash.classList.contains('splash-fonts-ready')) {
+        startSplashHold();
+      } else if (splash) {
+        var fontsReadyObserver = null;
+        var fontsReadyFallback = setTimeout(function () {
+          if (fontsReadyObserver) fontsReadyObserver.disconnect();
+          splash.classList.add('splash-fonts-ready');
+          startSplashHold();
+        }, 1400);
+        fontsReadyObserver = new MutationObserver(function () {
+          if (!splash.classList.contains('splash-fonts-ready')) return;
+          clearTimeout(fontsReadyFallback);
+          fontsReadyObserver.disconnect();
+          startSplashHold();
+        });
+        fontsReadyObserver.observe(splash, {
+          attributes: true,
+          attributeFilter: ['class'],
+        });
+      } else {
+        startSplashHold();
+      }
     })();
   </script>

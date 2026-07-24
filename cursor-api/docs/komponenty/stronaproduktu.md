@@ -5,11 +5,13 @@
 | Plik | Rola |
 |------|------|
 | `gui.py` | Bazowy edytor stron (lista produktów, liczba akapitów, ręczny upload grafik, ustawienia efektów) |
-| `gui_ai.py` | Nakładka GUI z akcją «AI — dobierz kadry…», podglądem wariantów i zatwierdzaniem |
+| `gui_ai.py` | Nakładka GUI z akcją «AI — dobierz kadry…», dialogiem «Gemini API…» (wklejenie klucza), podglądem wariantów i zatwierdzaniem |
 | `ai_crops.py` | Gemini: interpretacja obrazu i tekstu; lokalne kadrowanie przez Pillow; walidacja, upload i zapis |
 | `service.py` | Metafieldy `custom.story_pages` (produkt) i `custom.pdp_v3_effects` (sklep), Shopify Files, parsowanie akapitów z `body_html` |
 
 Tryb: `inline` (w launcherze — «← Powrót»). Sekcja: **Administracja strony** (kafelek «Strona produktu»).
+
+Na liście produktów **zielony wiersz** (+ `✓` w kolumnie Strony) oznacza, że wszystkie mini-strony mają wgrane grafiki (strona 1 może zostać pusta — wtedy motyw bierze featured image).
 
 ## Metafield `custom.story_pages` (JSON)
 
@@ -54,16 +56,18 @@ Przycisk **AI — dobierz kadry…** analizuje jednocześnie główny obraz prod
 
 ### Podgląd i zapis
 
-1. Kliknij **AI — dobierz kadry…**.
-2. Poczekaj na analizę Gemini i lokalne przygotowanie cropów.
+1. Zaznacz produkt (Ctrl/Shift — wiele, max 20) i kliknij **AI — dobierz kadry…**.
+2. Przy wielu produktach Gemini leci w tle (przerwa ~8 s); **gotowe produkty można od razu dopasowywać**, reszta dalej się generuje.
 3. Zaznacz strony, dla których mają zostać zapisane grafiki.
 4. Użyj **Następny wariant**, aby przełączać propozycje; ostatnim wariantem jest zawsze pełny obraz.
-5. Kliknij **Zatwierdź i zapisz do Shopify**.
+5. **Zatwierdź i zapisz do Shopify** (w sesji zbiorczej: **Pomiń produkt** przechodzi dalej).
 6. Dopiero wtedy wybrane cropy są wysyłane do Shopify Files, a `custom.story_pages` zostaje zaktualizowany.
 
 ### Konfiguracja
 
-W `cursor-api/.env`:
+W widoku **Strona produktu** użyj przycisku **Gemini API…** (obok **AI — dobierz kadry…**) — jest pole do wklejenia klucza. Zapis trafia do `cursor-api/.env` jako `GEMINI_API_KEY`. Bez klucza okno AI samo otworzy ten dialog.
+
+Możesz też ustawić klucz ręcznie:
 
 ```env
 GEMINI_API_KEY=...

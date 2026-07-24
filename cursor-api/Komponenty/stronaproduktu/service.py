@@ -104,6 +104,16 @@ def normalize_story_config(raw: Any) -> dict[str, Any]:
     return out
 
 
+def story_pages_images_complete(config: dict[str, Any] | None) -> bool:
+    """True gdy wszystkie mini-strony mają grafikę (strona 1 może być pusta = featured)."""
+    pages = list((config or {}).get("pages") or [])
+    if not pages:
+        return False
+    if len(pages) == 1:
+        return True
+    return all(str(page.get("image") or "").strip() for page in pages[1:])
+
+
 def fetch_story_map(
     shop: str,
     token: str,
@@ -196,7 +206,13 @@ def load_catalog_with_story_status(
         cfg = story_map.get(pid)
         row["story_config"] = cfg
         row["has_story"] = cfg is not None
-        row["story_status"] = f"{len(cfg['pages'])} str." if cfg else "—"
+        complete = story_pages_images_complete(cfg)
+        row["story_images_complete"] = complete
+        if cfg:
+            n = len(cfg["pages"])
+            row["story_status"] = f"{n} str. ✓" if complete else f"{n} str."
+        else:
+            row["story_status"] = "—"
     return rows
 
 

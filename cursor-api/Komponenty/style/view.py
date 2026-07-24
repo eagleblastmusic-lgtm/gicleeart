@@ -26,6 +26,16 @@ _STYLE_DESCRIPTIONS = {
         "Nocna galeria: grafitowe szkło, cienka chłodna ramka, tekst uppercase, "
         "precyzyjne odstępy i subtelny biały glow na hover oraz focus.",
     ),
+    "frosted": (
+        "Frosted",
+        "Glassmorphism: półprzezroczyste chłodne szkło, miękki blur, zaokrąglony "
+        "kontur i subtelny niebiesko-fioletowy glow.",
+    ),
+    "light-in-motion": (
+        "Light in Motion",
+        "Elegancka interakcja światła: głęboka czerń, cienki złoty kontur, świetlny "
+        "punkt i kinetyczne linie reagujące na hover, active oraz focus.",
+    ),
 }
 
 _CHANGED_BUTTONS = (
@@ -40,8 +50,15 @@ _CHANGED_BUTTONS = (
 
 def _draw_button_preview(canvas: tk.Canvas, style: str) -> None:
     canvas.delete("all")
-    width = max(canvas.winfo_width(), 430)
-    canvas.configure(background="#F3F3F1" if style == "basic" else "#0B0D10")
+    width = max(canvas.winfo_width(), 280)
+    canvas.configure(
+        background={
+            "basic": "#F3F3F1",
+            "nocturne": "#0B0D10",
+            "frosted": "#10202D",
+            "light-in-motion": "#070A0C",
+        }[style]
+    )
     x1, y1, x2, y2 = 28, 28, width - 28, 82
 
     if style == "basic":
@@ -60,6 +77,90 @@ def _draw_button_preview(canvas: tk.Canvas, style: str) -> None:
             anchor="w",
             fill="#555555",
             font=("Segoe UI", 9),
+        )
+        return
+
+    if style == "light-in-motion":
+        for offset, color in ((-12, "#5D4328"), (-5, "#9C7040"), (4, "#6E4E2D")):
+            canvas.create_line(
+                4,
+                55 + offset,
+                15,
+                55 + offset,
+                21,
+                55 + (offset // 2),
+                x1,
+                55,
+                fill=color,
+                width=1,
+                smooth=True,
+            )
+        for spread, color in ((8, "#241B12"), (4, "#51381F")):
+            canvas.create_rectangle(
+                x1 - spread,
+                y1 - spread,
+                x2 + spread,
+                y2 + spread,
+                outline=color,
+                width=1,
+            )
+        canvas.create_rectangle(x1, y1, x2, y2, fill="#090C0E", outline="#D3A866", width=1)
+        canvas.create_oval(x1 - 4, 51, x1 + 4, 59, fill="#F4D39A", outline="#E5B970")
+        canvas.create_text(
+            (x1 + x2) / 2 - 8,
+            55,
+            text="ODKRYJ KOLEKCJĘ",
+            fill="#F1E5D2",
+            font=("Montserrat", 9, "bold"),
+        )
+        canvas.create_text(x2 - 24, 55, text="→", fill="#E6BE7B", font=("Segoe UI", 17))
+        palette = ("#F1E5D2", "#E6C38D", "#D3A866", "#9C7040", "#070A0C")
+        for index, color in enumerate(palette):
+            cx = 37 + index * 24
+            canvas.create_oval(cx - 7, 103, cx + 7, 117, fill=color, outline="#8E693B")
+        canvas.create_text(
+            164,
+            110,
+            text="kinetic light lines • refined gold glow",
+            anchor="w",
+            fill="#BCA688",
+            font=("Segoe UI", 8),
+        )
+        return
+
+    if style == "frosted":
+        for spread, color in ((8, "#152B3A"), (5, "#254052"), (2, "#4E687A")):
+            canvas.create_rectangle(
+                x1 - spread,
+                y1 - spread,
+                x2 + spread,
+                y2 + spread,
+                outline=color,
+                width=1,
+            )
+        canvas.create_rectangle(x1, y1, x2, y2, fill="#344B5B", outline="#B9E8FA", width=1)
+        canvas.create_line(x1 + 2, y1 + 2, x2 - 2, y1 + 2, fill="#E8F8FF", width=1)
+        canvas.create_line(x1 + 2, y2 - 1, x1 + 58, y2 - 1, fill="#7FE4F2", width=1)
+        canvas.create_line(x2 - 58, y2 - 1, x2 - 2, y2 - 1, fill="#E6A9F3", width=1)
+        canvas.create_text(
+            (x1 + x2) / 2 - 8,
+            55,
+            text="ODKRYJ KOLEKCJĘ",
+            fill="#F2F8FC",
+            font=("Montserrat", 9, "bold"),
+        )
+        canvas.create_text(x2 - 24, 55, text="→", fill="#F2F8FC", font=("Segoe UI", 17))
+        palette = ("#EAF8FF", "#B9E8FA", "#7FCFE8", "#9BB8E8", "#D5A8EE")
+        for index, color in enumerate(palette):
+            cx = 37 + index * 24
+            canvas.create_oval(cx - 7, 103, cx + 7, 117, fill=color, outline="#D9F5FF")
+        canvas.create_text(
+            164,
+            110,
+            text="frosted glass • blur • soft glow",
+            anchor="w",
+            fill="#BFD2DF",
+            font=("Segoe UI", 8),
         )
         return
 
@@ -117,7 +218,7 @@ def _build_style_card(
         card,
         text=description,
         foreground="#5F6368",
-        wraplength=390,
+        wraplength=270,
         justify="left",
     ).pack(anchor="w", pady=(7, 8))
     preview = tk.Canvas(card, height=130, highlightthickness=1, highlightbackground="#B8B8B8")
@@ -150,7 +251,9 @@ def _build_przyciski_tab(tab: ttk.Frame) -> None:
         tab,
         text=(
             "Wybór działa globalnie w witrynie. „Podstawowy” zachowuje obecny wygląd, "
-            "a „Nocturne” nakłada spójny system inspirowany nocną galerią z referencji."
+            "„Nocturne” tworzy nocną galerię, a „Frosted” nakłada półprzezroczysty "
+            "system glassmorphism z miękkim glow. „Light in Motion” dodaje złoty kontur, "
+            "świetlny punkt i kinetyczną reakcję na interakcję."
         ),
         foreground="#5F6368",
         wraplength=900,
@@ -181,14 +284,28 @@ def _build_przyciski_tab(tab: ttk.Frame) -> None:
         variable=selected,
         on_select=_refresh_selection,
     )
-    basic_card.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
+    basic_card.grid(row=0, column=0, sticky="nsew", padx=(0, 5), pady=(0, 5))
     nocturne_card = _build_style_card(
         cards,
         style_id="nocturne",
         variable=selected,
         on_select=_refresh_selection,
     )
-    nocturne_card.grid(row=0, column=1, sticky="nsew", padx=(6, 0))
+    nocturne_card.grid(row=0, column=1, sticky="nsew", padx=(5, 0), pady=(0, 5))
+    frosted_card = _build_style_card(
+        cards,
+        style_id="frosted",
+        variable=selected,
+        on_select=_refresh_selection,
+    )
+    frosted_card.grid(row=1, column=0, sticky="nsew", padx=(0, 5), pady=(5, 0))
+    light_in_motion_card = _build_style_card(
+        cards,
+        style_id="light-in-motion",
+        variable=selected,
+        on_select=_refresh_selection,
+    )
+    light_in_motion_card.grid(row=1, column=1, sticky="nsew", padx=(5, 0), pady=(5, 0))
 
     selected_box = ttk.LabelFrame(tab, text="Wybrany styl", padding=10)
     selected_box.pack(fill="x", pady=(12, 8))

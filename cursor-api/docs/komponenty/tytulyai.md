@@ -1,6 +1,6 @@
 # Komponent: tytulyai
 
-**Cel:** Batch generowania tytułów obrazów oraz **roboczych opisów** przez **Gemini API** (domyślnie `gemini-3.5-flash`). Tytuły → prompty do Cursora; opisy → podgląd w oknie (bez zapisu do Shopify).
+**Cel:** Batch generowania tytułów obrazów oraz **roboczych opisów** przez **Gemini API** (domyślnie `gemini-3.6-flash`). Tytuły → prompty do Cursora; opisy → podgląd w oknie (bez zapisu do Shopify).
 
 | Plik | Rola |
 |------|------|
@@ -34,7 +34,7 @@ Okno ma dwie zakładki: **Tytuły** (dotychczasowa funkcja) i **Opisy** (robocze
 2. **Generuj tytuły (Gemini API)** — miniatura z Shopify → Gemini → prompt Cursora. Kolumna **Tytuł** (✓) = zapisany roboczy prompt.
 3. Zaznacz produkt z ✓ — podgląd promptu na dole (wielokrotny wybór = wiele promptów).
 4. **Kopiuj wyniki** / **Zapisz do pliku**.
-5. **Przerwa** domyślnie **8 s**; przy HTTP 429/503 **ponawia do skutku** (503: min. 30 s, max 120 s; tylko **gemini-3.5-flash**).
+5. **Przerwa** domyślnie **8 s**; przy HTTP 429/503 **ponawia do skutku** (503: min. 30 s, max 120 s; model Flash, domyślnie **gemini-3.6-flash**).
 
 **Robocze tytuły** — zapis lokalny w `Komponenty/tytulyai/data/title_drafts.json` (po ID produktu). Nie znikają po zamknięciu okna.
 

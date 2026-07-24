@@ -1,0 +1,66 @@
+/*
+ * Hero-rise stripe reveal — live collage is revealed by 3 vertical mask
+ * windows that grow upward from the bottom (stripe-reveal lep stagger + lag).
+ *
+ * Cinema bars + video share one lerp: sticky `top` on the Hero section moves
+ * the whole frame (letterbox + media + footer) instead of translating only the
+ * inner slideshow against a fixed black shell.
+ */
+
+.shopify-section.giclee-prehero-hero-rise {
+  --giclee-hero-rise-lag-y: 0px;
+}
+
+.shopify-section.giclee-prehero-hero-rise.is-hero-rise-lagging {
+  top: var(--giclee-hero-rise-lag-y, 0px) !important;
+}
+
+.giclee-video-collage.is-hero-stripe-masked,
+[data-giclee-video-collage].is-hero-stripe-masked {
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  --giclee-hero-stripe-h0: 0%;
+  --giclee-hero-stripe-h1: 0%;
+  --giclee-hero-stripe-h2: 0%;
+  -webkit-mask-image:
+    linear-gradient(#000, #000),
+    linear-gradient(#000, #000),
+    linear-gradient(#000, #000);
+  mask-image:
+    linear-gradient(#000, #000),
+    linear-gradient(#000, #000),
+    linear-gradient(#000, #000);
+  -webkit-mask-size:
+    calc(100% / 3 + 2px) var(--giclee-hero-stripe-h0, 0%),
+    calc(100% / 3 + 2px) var(--giclee-hero-stripe-h1, 0%),
+    calc(100% / 3 + 2px) var(--giclee-hero-stripe-h2, 0%);
+  mask-size:
+    calc(100% / 3 + 2px) var(--giclee-hero-stripe-h0, 0%),
+    calc(100% / 3 + 2px) var(--giclee-hero-stripe-h1, 0%),
+    calc(100% / 3 + 2px) var(--giclee-hero-stripe-h2, 0%);
+  -webkit-mask-position: 0% 100%, 50% 100%, 100% 100%;
+  mask-position: 0% 100%, 50% 100%, 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-composite: source-over;
+  mask-composite: add;
+  -webkit-mask-origin: border-box;
+  mask-origin: border-box;
+  -webkit-mask-clip: border-box;
+  mask-clip: border-box;
+  will-change: mask-size, -webkit-mask-size;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giclee-video-collage.is-hero-stripe-masked,
+  [data-giclee-video-collage].is-hero-stripe-masked {
+    -webkit-mask-image: none;
+    mask-image: none;
+    will-change: auto;
+  }
+
+  .shopify-section.giclee-prehero-hero-rise.is-hero-rise-lagging {
+    top: 0 !important;
+  }
+}

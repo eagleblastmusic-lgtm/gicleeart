@@ -333,6 +333,32 @@ console.log(JSON.stringify({ eventCount: events.length }));
     assert json.loads(result.stdout)["eventCount"] > 5
 
 
+def test_background_video_once_keeps_effects_and_disposes_decoder() -> None:
+    """Film raz→obraz: efekty w trakcie, pełne zwolnienie dekodera po ended."""
+    main_js = MAIN_JS.read_text(encoding="utf-8")
+    section = SECTION.read_text(encoding="utf-8")
+    css = BASE_CSS.read_text(encoding="utf-8")
+
+    for fragment in (
+        "releaseBackgroundVideo",
+        "BG_VIDEO_FADE_MS",
+        "video.load()",
+        "removeAttribute('data-video-source')",
+        "is-bg-video-disposed",
+    ):
+        assert fragment in main_js
+
+    # Film i obraz w tej samej warstwie parallax/efektów.
+    layers_open = section.index('class="giclee-random-artwork__custom-bg-layers"')
+    layers_close = section.index("</div>", layers_open)
+    video_once_render = section.index("video_loop: false")
+    assert layers_open < video_once_render < layers_close
+
+    assert "is-bg-video-disposed" in css
+    assert "video-background-component > img" in css
+    assert "z-index: 2" in css.split("custom-bg::after", 1)[1].split("}", 1)[0]
+
+
 @pytest.mark.skipif(shutil.which("node") is None, reason="Node.js is required")
 @pytest.mark.parametrize("path", [MAIN_JS, LIVING_JS])
 def test_random_artwork_javascript_syntax(path: Path) -> None:

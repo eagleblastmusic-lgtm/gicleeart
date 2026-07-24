@@ -27,8 +27,12 @@
     {%- endif -%}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=Cormorant+Garamond:wght@300&display=swap" rel="stylesheet">
-    {%- if settings.giclee_button_style == 'nocturne' -%}
+    {%- comment -%}
+      display=block: splash text stays invisible until Bodoni/Cormorant load,
+      avoiding a brief flash of the body/fallback font on the welcome screen.
+    {%- endcomment -%}
+    <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=Cormorant+Garamond:wght@300&display=block" rel="stylesheet">
+    {%- if settings.giclee_button_style == 'nocturne' or settings.giclee_button_style == 'frosted' or settings.giclee_button_style == 'light-in-motion' -%}
       <link
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500&display=swap"
         rel="stylesheet"
@@ -108,7 +112,8 @@
         visibility: visible !important;
         pointer-events: auto !important;
       }
-      html.splash-pending body > :not(#page-transition):not(#splash-screen),
+      /* Sound consent is body-mounted and stays hidden until Hero hold — exclude from splash fade. */
+      html.splash-pending body > :not(#page-transition):not(#splash-screen):not(.giclee-hero-sound-consent),
       html.splash-pending #header-group,
       html.splash-pending #MainContent,
       html.splash-pending body > footer {
@@ -116,13 +121,13 @@
         visibility: hidden !important;
         pointer-events: none !important;
       }
-      html.splash-reveal body > :not(#page-transition):not(#splash-screen) {
+      html.splash-reveal body > :not(#page-transition):not(#splash-screen):not(.giclee-hero-sound-consent) {
         opacity: 0 !important;
         visibility: visible !important;
         pointer-events: none !important;
         transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
       }
-      html.splash-reveal.splash-reveal-active body > :not(#page-transition):not(#splash-screen) {
+      html.splash-reveal.splash-reveal-active body > :not(#page-transition):not(#splash-screen):not(.giclee-hero-sound-consent) {
         opacity: 1 !important;
         pointer-events: auto !important;
       }
@@ -143,16 +148,105 @@
       html[data-giclee-skip-splash="1"] #splash-screen {
         display: none !important;
       }
+      /* Splash typography must live in <head> so the first paint is never body/Inter. */
+      #splash-screen .splash-content {
+        text-align: center;
+        opacity: 0;
+      }
+      #splash-screen.splash-fonts-ready .splash-content {
+        animation: gicleeSplashFadeIn 1.1s ease forwards;
+      }
+      #splash-screen .splash-title {
+        color: #fff;
+        font-size: clamp(2.2rem, 6vw, 5.5rem);
+        font-family: 'Bodoni Moda', Georgia, serif;
+        font-weight: 400;
+        font-style: normal;
+        font-variation-settings: 'opsz' 96;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        transform: scaleX(1.15);
+        display: inline-block;
+        margin: 0 0 0.45rem;
+        -webkit-font-smoothing: antialiased;
+        -webkit-text-stroke: 0.3px rgba(255, 255, 255, 0.5);
+      }
+      #splash-screen .splash-line {
+        width: 220px;
+        height: 1px;
+        background: linear-gradient(to right, transparent, #c9a84c, transparent);
+        margin: 0.4rem auto 0.55rem;
+        transform: scaleX(0);
+        transform-origin: center;
+        will-change: transform;
+      }
+      #splash-screen.splash-fonts-ready .splash-line {
+        animation: gicleeSplashLine 0.9s ease forwards;
+        animation-delay: 0.9s;
+      }
+      #splash-screen .splash-sub {
+        color: #bbb;
+        font-size: clamp(0.75rem, 2vw, 1.1rem);
+        font-family: 'Cormorant Garamond', Georgia, serif;
+        font-weight: 300;
+        letter-spacing: 0.35em;
+        text-transform: uppercase;
+        margin: 0;
+      }
+      @keyframes gicleeSplashFadeIn {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes gicleeSplashLine {
+        from { transform: scaleX(0); }
+        to { transform: scaleX(1); }
+      }
     </style>
+    <script>
+      (function () {
+        if (!document.documentElement.classList.contains('splash-pending')) return;
+        var marked = false;
+        function markSplashFontsReady() {
+          if (marked) return;
+          marked = true;
+          var splash = document.getElementById('splash-screen');
+          if (splash) splash.classList.add('splash-fonts-ready');
+          else {
+            document.addEventListener(
+              'DOMContentLoaded',
+              function () {
+                var el = document.getElementById('splash-screen');
+                if (el) el.classList.add('splash-fonts-ready');
+              },
+              { once: true }
+            );
+          }
+        }
+        var fallback = setTimeout(markSplashFontsReady, 1200);
+        if (document.fonts && document.fonts.load) {
+          Promise.all([
+            document.fonts.load("400 5.5rem 'Bodoni Moda'"),
+            document.fonts.load("300 1.1rem 'Cormorant Garamond'"),
+          ]).then(
+            function () {
+              clearTimeout(fallback);
+              markSplashFontsReady();
+            },
+            function () {
+              clearTimeout(fallback);
+              markSplashFontsReady();
+            }
+          );
+        }
+      })();
+    </script>
     {%- endif -%}
 
-    {%- if settings.favicon != blank -%}
-      <link
-        rel="icon"
-        type="image/png"
-        href="{{ settings.favicon | image_url: width: 32, height: 32 }}"
-      >
-    {%- endif -%}
+    <link rel="icon" type="image/png" href="{{ 'favicon-96x96.png' | asset_url }}" sizes="96x96">
+    <link rel="icon" type="image/svg+xml" href="{{ 'favicon.svg' | asset_url }}">
+    <link rel="shortcut icon" href="{{ 'favicon.ico' | asset_url }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ 'apple-touch-icon.png' | asset_url }}">
+    <link rel="manifest" href="{{ 'site.webmanifest' | asset_url }}">
 
     {% comment %} This a way to wait for main content to load when navigating to a new page so that the view transitions can work consistently {% endcomment %}
     {% if settings.transition_to_main_product or settings.page_transition_enabled %}

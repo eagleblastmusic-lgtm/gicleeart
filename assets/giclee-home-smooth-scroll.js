@@ -526,8 +526,8 @@
     style.textContent = [
       'html.giclee-lenis-performance.giclee-home-stack .shopify-section[data-giclee-home-stack] { --home-stack-slip-y: 0px !important; }',
       'html.giclee-lenis-performance.giclee-home-stack #header-component.giclee-header-scroll-fade { transition: none !important; }',
-      'html.giclee-lenis-performance .giclee-prehero-reveal__copy { filter: none !important; will-change: transform !important; }',
-      'html.giclee-lenis-performance .giclee-prehero-reveal__copy-line { will-change: transform, opacity; }',
+      'html.giclee-lenis-performance .giclee-prehero-reveal__copy { will-change: transform !important; }',
+      'html.giclee-lenis-performance .giclee-prehero-reveal__copy-word { will-change: opacity; }',
       'html.giclee-lenis-performance .giclee-home-studio-reveal__heading, html.giclee-lenis-performance .giclee-home-studio-reveal__paragraph { filter: none !important; transition-property: opacity, transform !important; }',
       'html.giclee-lenis-performance .giclee-home-studio-reveal__bg .background-image-container, html.giclee-lenis-performance .giclee-home-studio-reveal__bg .background-image-container img, html.giclee-lenis-performance .giclee-home-studio-reveal__bg video-background-component video { filter: none !important; transition-property: opacity, transform !important; }',
       'html.giclee-lenis-performance .giclee-home-studio-reveal__card { transition-property: opacity, transform !important; }',

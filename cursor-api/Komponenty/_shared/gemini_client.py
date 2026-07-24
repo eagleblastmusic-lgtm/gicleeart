@@ -16,9 +16,9 @@ from Komponenty.limity.env_config import load_dotenv_once
 
 API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 
-DEFAULT_MODEL = "gemini-3.5-flash"
+DEFAULT_MODEL = "gemini-3.6-flash"
 
-# Free tier gemini-3.5-flash: ~20 RPM — bezpieczna przerwa miedzy obrazami w batchu.
+# Free tier Flash: ~20 RPM — bezpieczna przerwa miedzy obrazami w batchu.
 DEFAULT_BATCH_DELAY_S = 8.0
 DEFAULT_API_TIMEOUT_S = 180.0
 MAX_RETRY_SLEEP_S = 120.0
@@ -297,14 +297,18 @@ def _post_generate(
     api_key: str,
     parts: list[dict[str, Any]],
     timeout: float = 180.0,
+    response_mime_type: str | None = None,
 ) -> str:
     url = f"{API_BASE}/{model}:generateContent?key={api_key}"
+    generation_config: dict[str, Any] = {
+        "temperature": 0.4,
+        "maxOutputTokens": 4096,
+    }
+    if response_mime_type:
+        generation_config["responseMimeType"] = response_mime_type
     payload = {
         "contents": [{"parts": parts}],
-        "generationConfig": {
-            "temperature": 0.4,
-            "maxOutputTokens": 4096,
-        },
+        "generationConfig": generation_config,
     }
     req = Request(
         url,
@@ -356,6 +360,7 @@ def _generate_with_retries(
     timeout: float,
     on_status: StatusCallback = None,
     should_abort: ShouldAbort = None,
+    response_mime_type: str | None = None,
 ) -> tuple[str, str]:
     """Wywoluje Gemini; przy 429/503 ponawia do skutku (rosnace opoznienie)."""
     attempt = 0
@@ -369,6 +374,7 @@ def _generate_with_retries(
                 api_key=api_key,
                 parts=parts,
                 timeout=timeout,
+                response_mime_type=response_mime_type,
             )
             if attempt > 0 and on_status:
                 _notify_status(on_status, f"Gemini ({model}): polaczenie OK po {attempt + 1} probie.")
@@ -455,6 +461,7 @@ def generate_from_image_bytes(
     timeout: float = DEFAULT_API_TIMEOUT_S,
     on_status: StatusCallback = None,
     should_abort: ShouldAbort = None,
+    response_mime_type: str | None = None,
 ) -> tuple[str, str]:
     """Jak generate_from_image_file, ale z bajtow (np. pobrany URL)."""
     key = (api_key or gemini_api_key()).strip()
@@ -478,4 +485,5 @@ def generate_from_image_bytes(
         timeout=timeout,
         on_status=on_status,
         should_abort=should_abort,
+        response_mime_type=response_mime_type,
     )

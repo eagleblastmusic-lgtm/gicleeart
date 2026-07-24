@@ -7,6 +7,7 @@
   @param {object} [background_image] - The background image
   @param {string} [background_image_position] - The background image position
   @param {number} [background_image_object_y] - Vertical crop (0 top, 50 center, 100 bottom)
+  @param {boolean} [video_loop] - When false, the video plays once without looping (default: true)
   @param {string} [placeholder] - The placeholder
   @param {object} [block] - The block object
   @param {object} [section] - The section object
@@ -18,6 +19,10 @@
 {% if background_media == 'video' %}
   {% liquid
     assign video_classes = 'video-background video-background--' | append: background_video_position
+    assign allow_video_loop = true
+    if video_loop == false
+      assign allow_video_loop = false
+    endif
   %}
   {%- if background_video != blank -%}
     <video-background-component
@@ -38,7 +43,7 @@
         playsinline
         muted
         autoplay
-        loop
+        {% if allow_video_loop %}loop{% endif %}
         ref="videoElement"
       >
         {%- for sourceElement in background_video.sources -%}

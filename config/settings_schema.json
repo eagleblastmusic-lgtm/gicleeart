@@ -1544,6 +1544,14 @@
           {
             "value": "nocturne",
             "label": "Nocturne — nocna galeria"
+          },
+          {
+            "value": "frosted",
+            "label": "Frosted — szkło i miękki glow"
+          },
+          {
+            "value": "light-in-motion",
+            "label": "Light in Motion — złote światło w ruchu"
           }
         ],
         "default": "basic",
