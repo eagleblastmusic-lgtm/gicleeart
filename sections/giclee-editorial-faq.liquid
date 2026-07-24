@@ -1,0 +1,227 @@
+{{ 'giclee-editorial-faq.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'giclee-editorial-faq.js' | asset_url }}" defer="defer"></script>
+
+{%- liquid
+  assign section_width_class = 'page-width'
+  if section.settings.section_width == 'full-width'
+    assign section_width_class = 'giclee-editorial-faq__full-width'
+  endif
+-%}
+
+<giclee-editorial-faq
+  id="EditorialFaq-{{ section.id }}"
+  class="giclee-editorial-faq color-{{ section.settings.color_scheme }}"
+  data-section-id="{{ section.id }}"
+  data-open-first="{{ section.settings.open_first }}"
+  data-premium-motion="{{ section.settings.premium_motion }}"
+  style="--gef-padding-top: {{ section.settings.padding_top }}px; --gef-padding-bottom: {{ section.settings.padding_bottom }}px;"
+>
+  <div class="giclee-editorial-faq__shell {{ section_width_class }}">
+    {% if section.settings.eyebrow != blank or section.settings.heading != blank or section.settings.description != blank %}
+      <header class="giclee-editorial-faq__intro">
+        {% if section.settings.eyebrow != blank %}
+          <p class="giclee-editorial-faq__eyebrow">{{ section.settings.eyebrow | escape }}</p>
+        {% endif %}
+        {% if section.settings.heading != blank %}
+          <h2 class="giclee-editorial-faq__heading">{{ section.settings.heading | escape }}</h2>
+        {% endif %}
+        {% if section.settings.description != blank %}
+          <div class="giclee-editorial-faq__description rte">{{ section.settings.description }}</div>
+        {% endif %}
+      </header>
+    {% endif %}
+
+    <div class="giclee-editorial-faq__composition" data-faq-composition>
+      <div class="giclee-editorial-faq__index-wrap">
+        <span class="giclee-editorial-faq__rail" aria-hidden="true">
+          <span class="giclee-editorial-faq__marker" data-faq-marker></span>
+        </span>
+
+        <div class="giclee-editorial-faq__index" data-faq-index>
+          {% for block in section.blocks %}
+            {%- liquid
+              assign faq_anchor = block.settings.anchor | strip | handleize
+              if faq_anchor == blank
+                assign faq_anchor = block.settings.question | handleize
+              endif
+              if faq_anchor == blank
+                assign faq_anchor = 'pytanie-' | append: forloop.index
+              endif
+              assign faq_number = forloop.index | prepend: '0' | slice: -2, 2
+              assign trigger_id = 'EditorialFaqTrigger-' | append: section.id | append: '-' | append: forloop.index
+              assign answer_id = 'EditorialFaqAnswer-' | append: section.id | append: '-' | append: forloop.index
+            -%}
+            <details
+              class="giclee-editorial-faq__item"
+              data-faq-item
+              data-faq-anchor="{{ faq_anchor | escape }}"
+              data-faq-index="{{ forloop.index0 }}"
+              {% if section.settings.open_first and forloop.first %}open{% endif %}
+              {{ block.shopify_attributes }}
+            >
+              <summary
+                id="{{ trigger_id }}"
+                class="giclee-editorial-faq__trigger"
+                data-faq-trigger
+                aria-controls="{{ answer_id }}"
+              >
+                <span class="giclee-editorial-faq__number" aria-hidden="true">{{ faq_number }}</span>
+                <span class="giclee-editorial-faq__question" data-faq-question>{{ block.settings.question | escape }}</span>
+                <span class="giclee-editorial-faq__arrow" aria-hidden="true"><span></span></span>
+              </summary>
+
+              <span class="giclee-editorial-faq__answer-home" data-faq-answer-home hidden></span>
+              <div
+                id="{{ answer_id }}"
+                class="giclee-editorial-faq__inline-answer"
+                data-faq-answer
+                role="region"
+                aria-labelledby="{{ trigger_id }}"
+              >
+                <div class="giclee-editorial-faq__answer-rte rte">{{ block.settings.answer }}</div>
+              </div>
+            </details>
+          {% endfor %}
+        </div>
+      </div>
+
+      <aside
+        class="giclee-editorial-faq__panel"
+        data-faq-panel
+        aria-labelledby="EditorialFaqPanelTitle-{{ section.id }}"
+        aria-hidden="true"
+        hidden
+      >
+        <span class="giclee-editorial-faq__panel-line giclee-editorial-faq__panel-line--top" aria-hidden="true"></span>
+        <span class="giclee-editorial-faq__panel-line giclee-editorial-faq__panel-line--bottom" aria-hidden="true"></span>
+        <div class="giclee-editorial-faq__panel-inner" data-faq-panel-inner>
+          <p class="giclee-editorial-faq__panel-number" data-faq-panel-number aria-hidden="true"></p>
+          <h3
+            id="EditorialFaqPanelTitle-{{ section.id }}"
+            class="giclee-editorial-faq__panel-title"
+            data-faq-panel-title
+          ></h3>
+          <div class="giclee-editorial-faq__panel-body" data-faq-panel-body></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <span class="visually-hidden" aria-live="polite" data-faq-live></span>
+</giclee-editorial-faq>
+
+{% schema %}
+{
+  "name": "Editorial FAQ Archive",
+  "tag": "section",
+  "class": "section-wrapper",
+  "max_blocks": 30,
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Mała etykieta",
+      "default": "Archiwum informacji"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Nagłówek",
+      "default": "Często zadawane pytania"
+    },
+    {
+      "type": "richtext",
+      "id": "description",
+      "label": "Krótki opis"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Schemat kolorów",
+      "default": "scheme-1"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "Szerokość sekcji",
+      "options": [
+        { "value": "page-width", "label": "Szerokość strony" },
+        { "value": "full-width", "label": "Pełna szerokość" }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Odstęp u góry",
+      "min": 0,
+      "max": 160,
+      "step": 4,
+      "unit": "px",
+      "default": 72
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Odstęp u dołu",
+      "min": 0,
+      "max": 160,
+      "step": 4,
+      "unit": "px",
+      "default": 88
+    },
+    {
+      "type": "checkbox",
+      "id": "open_first",
+      "label": "Otwórz pierwsze pytanie domyślnie",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "premium_motion",
+      "label": "Włącz animację premium",
+      "default": true
+    }
+  ],
+  "blocks": [
+    {
+      "type": "faq_item",
+      "name": "Pytanie",
+      "settings": [
+        {
+          "type": "text",
+          "id": "question",
+          "label": "Pytanie",
+          "default": "Nowe pytanie"
+        },
+        {
+          "type": "richtext",
+          "id": "answer",
+          "label": "Odpowiedź",
+          "default": "<p>Treść odpowiedzi.</p>"
+        },
+        {
+          "type": "text",
+          "id": "anchor",
+          "label": "Identyfikator adresu URL (opcjonalnie)",
+          "info": "Pozostaw puste, aby utworzyć identyfikator z pytania."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Editorial FAQ Archive",
+      "category": "Tekst",
+      "blocks": [
+        { "type": "faq_item" },
+        { "type": "faq_item" },
+        { "type": "faq_item" }
+      ]
+    }
+  ]
+}
+{% endschema %}

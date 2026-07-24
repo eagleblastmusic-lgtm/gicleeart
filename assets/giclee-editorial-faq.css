@@ -1,0 +1,475 @@
+/* Editorial FAQ Archive — isolated premium FAQ section. */
+.giclee-editorial-faq {
+  --gef-ink: #15130f;
+  --gef-paper: #f2eee5;
+  --gef-paper-muted: rgba(242, 238, 229, 0.7);
+  --gef-champagne: #b5a078;
+  --gef-line: color-mix(in srgb, currentColor 18%, transparent);
+  --gef-panel: #12110f;
+  --gef-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --gef-switch-ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  display: block;
+  overflow: clip;
+  padding-block: var(--gef-padding-top, 72px) var(--gef-padding-bottom, 88px);
+  background: var(--color-background);
+  color: var(--color-foreground);
+}
+
+.giclee-editorial-faq__shell {
+  width: 100%;
+}
+
+.giclee-editorial-faq__full-width {
+  width: min(100%, 1600px);
+  margin-inline: auto;
+  padding-inline: clamp(20px, 4vw, 72px);
+}
+
+.giclee-editorial-faq__intro {
+  width: min(100%, 980px);
+  margin: 0 auto clamp(38px, 6vw, 76px);
+}
+
+.giclee-editorial-faq__eyebrow,
+.giclee-editorial-faq__panel-number {
+  margin: 0;
+  font-family: var(--font-body--family, sans-serif);
+  font-size: 0.72rem;
+  line-height: 1.2;
+  letter-spacing: 0.19em;
+  text-transform: uppercase;
+}
+
+.giclee-editorial-faq__eyebrow {
+  margin-block-end: 18px;
+  color: color-mix(in srgb, var(--color-foreground) 55%, transparent);
+}
+
+.giclee-editorial-faq__heading {
+  max-width: 15ch;
+  margin: 0;
+  font-family: var(--font-primary--family, Georgia, serif);
+  font-size: clamp(2.25rem, 5vw, 5rem);
+  font-style: var(--font-primary--style, normal);
+  font-weight: var(--font-primary--weight, 400);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.giclee-editorial-faq__description {
+  max-width: 58ch;
+  margin-block-start: 24px;
+  color: color-mix(in srgb, var(--color-foreground) 70%, transparent);
+  line-height: 1.7;
+}
+
+.giclee-editorial-faq__composition {
+  width: min(100%, 980px);
+  margin-inline: auto;
+}
+
+.giclee-editorial-faq__index-wrap {
+  position: relative;
+  min-width: 0;
+  padding-inline-start: clamp(16px, 2vw, 28px);
+}
+
+.giclee-editorial-faq__rail {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 1px;
+  background: var(--gef-line);
+  pointer-events: none;
+}
+
+.giclee-editorial-faq__marker {
+  position: absolute;
+  top: 0;
+  left: -1px;
+  width: 3px;
+  height: 42px;
+  background: var(--gef-champagne);
+  opacity: 0;
+  transform: translate3d(0, 0, 0) scaleY(0.3);
+  transform-origin: center;
+  transition: transform 520ms var(--gef-ease), opacity 260ms ease;
+}
+
+.giclee-editorial-faq__marker.is-visible {
+  opacity: 0.92;
+  transform: translate3d(0, var(--gef-marker-y, 0), 0) scaleY(1);
+}
+
+.giclee-editorial-faq__item {
+  margin: 0;
+  border-block-end: 1px solid var(--gef-line);
+  scroll-margin-top: calc(var(--header-height, 84px) + 28px);
+}
+
+.giclee-editorial-faq__item:first-child {
+  border-block-start: 1px solid var(--gef-line);
+}
+
+.giclee-editorial-faq__trigger {
+  display: grid;
+  grid-template-columns: minmax(38px, 0.16fr) minmax(0, 1fr) 42px;
+  align-items: center;
+  gap: clamp(12px, 2vw, 28px);
+  width: 100%;
+  min-height: 82px;
+  padding: 20px 0;
+  color: inherit;
+  cursor: pointer;
+  list-style: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.giclee-editorial-faq__trigger::-webkit-details-marker {
+  display: none;
+}
+
+.giclee-editorial-faq__number {
+  color: color-mix(in srgb, var(--color-foreground) 42%, transparent);
+  font-family: var(--font-body--family, sans-serif);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  transition: color 320ms ease;
+}
+
+.giclee-editorial-faq__question {
+  font-family: var(--font-body--family, sans-serif);
+  font-size: clamp(1rem, 1.4vw, 1.24rem);
+  line-height: 1.35;
+  letter-spacing: -0.012em;
+  text-wrap: pretty;
+  transition: transform 420ms var(--gef-ease), color 260ms ease;
+}
+
+.giclee-editorial-faq__arrow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  height: 24px;
+  color: color-mix(in srgb, var(--color-foreground) 48%, transparent);
+}
+
+.giclee-editorial-faq__arrow span {
+  position: relative;
+  display: block;
+  width: 22px;
+  height: 1px;
+  background: currentColor;
+  transform-origin: right center;
+  transition: width 420ms var(--gef-ease), transform 420ms var(--gef-ease), color 260ms ease;
+}
+
+.giclee-editorial-faq__arrow span::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-block-start: 1px solid currentColor;
+  border-inline-end: 1px solid currentColor;
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.giclee-editorial-faq__trigger:focus-visible {
+  outline: 1px solid var(--gef-champagne);
+  outline-offset: 5px;
+}
+
+.giclee-editorial-faq__inline-answer {
+  padding: 0 clamp(20px, 7vw, 92px) 34px clamp(50px, 9vw, 120px);
+}
+
+.giclee-editorial-faq__answer-rte {
+  max-width: 62ch;
+  color: color-mix(in srgb, var(--color-foreground) 72%, transparent);
+  font-size: clamp(0.98rem, 1.2vw, 1.08rem);
+  line-height: 1.82;
+}
+
+.giclee-editorial-faq__answer-rte > * + * {
+  margin-block-start: 1.05em;
+}
+
+.giclee-editorial-faq__panel {
+  position: relative;
+  min-width: 0;
+  color: var(--gef-paper);
+  background:
+    linear-gradient(120deg, rgba(255, 255, 255, 0.018), transparent 38%),
+    var(--gef-panel);
+}
+
+.giclee-editorial-faq__panel[hidden] {
+  display: none;
+}
+
+.giclee-editorial-faq__panel::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 1px;
+  background: linear-gradient(to bottom, var(--gef-champagne), rgba(181, 160, 120, 0.15) 72%, transparent);
+}
+
+.giclee-editorial-faq__panel-line {
+  position: absolute;
+  left: 0;
+  height: 1px;
+  background: rgba(181, 160, 120, 0.48);
+  pointer-events: none;
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.giclee-editorial-faq__panel-line--top {
+  top: 0;
+  width: 76%;
+}
+
+.giclee-editorial-faq__panel-line--bottom {
+  bottom: 0;
+  width: 42%;
+}
+
+.giclee-editorial-faq__panel-inner {
+  min-height: clamp(430px, 48vw, 610px);
+  padding: clamp(44px, 7vw, 96px) clamp(30px, 6vw, 88px) clamp(48px, 7vw, 90px);
+}
+
+.giclee-editorial-faq__panel-number {
+  margin-block-end: 26px;
+  color: var(--gef-champagne);
+}
+
+.giclee-editorial-faq__panel-title {
+  max-width: 18ch;
+  margin: 0 0 clamp(30px, 4vw, 52px);
+  font-family: var(--font-primary--family, Georgia, serif);
+  font-size: clamp(2rem, 4vw, 4.35rem);
+  font-style: var(--font-primary--style, normal);
+  font-weight: var(--font-primary--weight, 400);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.giclee-editorial-faq__panel-body {
+  max-width: 65ch;
+  color: var(--gef-paper-muted);
+  overflow: clip;
+  transition: height 420ms var(--gef-ease);
+}
+
+.giclee-editorial-faq__panel-body .giclee-editorial-faq__inline-answer {
+  padding: 0;
+}
+
+.giclee-editorial-faq__panel-body .giclee-editorial-faq__answer-rte {
+  color: inherit;
+}
+
+.giclee-editorial-faq__morph-clone {
+  position: fixed;
+  z-index: 2147483000;
+  margin: 0;
+  color: var(--gef-paper);
+  font-family: var(--font-primary--family, Georgia, serif);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  pointer-events: none;
+  transform-origin: left top;
+  will-change: transform, opacity;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .giclee-editorial-faq__item:not(.is-active) .giclee-editorial-faq__trigger:hover .giclee-editorial-faq__question {
+    transform: translate3d(7px, 0, 0);
+  }
+
+  .giclee-editorial-faq__item:not(.is-active) .giclee-editorial-faq__trigger:hover .giclee-editorial-faq__number,
+  .giclee-editorial-faq__item:not(.is-active) .giclee-editorial-faq__trigger:hover .giclee-editorial-faq__arrow {
+    color: var(--gef-champagne);
+  }
+
+  .giclee-editorial-faq__item:not(.is-active) .giclee-editorial-faq__trigger:hover .giclee-editorial-faq__arrow span {
+    width: 30px;
+  }
+}
+
+@media (min-width: 960px) {
+  .giclee-editorial-faq[data-enhanced='true'] .giclee-editorial-faq__composition {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0fr);
+    gap: 0;
+    width: min(100%, 980px);
+    transition:
+      width 820ms var(--gef-ease),
+      grid-template-columns 820ms var(--gef-ease),
+      gap 820ms var(--gef-ease);
+  }
+
+  .giclee-editorial-faq[data-enhanced='true'].is-open .giclee-editorial-faq__composition {
+    grid-template-columns: minmax(310px, 0.37fr) minmax(0, 0.63fr);
+    gap: clamp(44px, 6vw, 104px);
+    width: min(100%, 1460px);
+  }
+
+  .giclee-editorial-faq[data-enhanced='true'] .giclee-editorial-faq__index-wrap {
+    align-self: start;
+  }
+
+  .giclee-editorial-faq[data-enhanced='true'] .giclee-editorial-faq__item[open] > .giclee-editorial-faq__inline-answer {
+    display: none;
+  }
+
+  .giclee-editorial-faq[data-enhanced='true'] .giclee-editorial-faq__item.is-active .giclee-editorial-faq__number,
+  .giclee-editorial-faq[data-enhanced='true'] .giclee-editorial-faq__item.is-active .giclee-editorial-faq__arrow {
+    color: var(--gef-champagne);
+  }
+
+  .giclee-editorial-faq[data-enhanced='true'] .giclee-editorial-faq__item.is-active .giclee-editorial-faq__question {
+    color: color-mix(in srgb, var(--color-foreground) 92%, var(--gef-champagne));
+  }
+
+  .giclee-editorial-faq[data-enhanced='true'] .giclee-editorial-faq__panel:not([hidden]) {
+    display: block;
+  }
+
+  .giclee-editorial-faq[data-enhanced='true'].is-opening .giclee-editorial-faq__panel {
+    animation: gef-panel-reveal 860ms var(--gef-ease) both;
+  }
+
+  .giclee-editorial-faq[data-enhanced='true'].is-opening .giclee-editorial-faq__panel-line {
+    animation: gef-line-draw 700ms var(--gef-ease) 120ms both;
+  }
+
+  .giclee-editorial-faq[data-enhanced='true'].is-switching .giclee-editorial-faq__panel-inner {
+    animation: gef-content-switch 420ms var(--gef-switch-ease) both;
+  }
+}
+
+@media (max-width: 959px) {
+  .giclee-editorial-faq__intro {
+    margin-block-end: 40px;
+  }
+
+  .giclee-editorial-faq__panel {
+    display: none !important;
+  }
+
+  .giclee-editorial-faq__item {
+    position: relative;
+    transition: background-color 380ms var(--gef-ease), opacity 280ms ease;
+  }
+
+  .giclee-editorial-faq[data-enhanced='true'].has-active-item .giclee-editorial-faq__item:not(.is-active) {
+    opacity: 0.62;
+  }
+
+  .giclee-editorial-faq__item.is-active {
+    background: color-mix(in srgb, var(--color-foreground) 4%, transparent);
+  }
+
+  .giclee-editorial-faq__item.is-active::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 2px;
+    background: var(--gef-champagne);
+  }
+
+  .giclee-editorial-faq__item.is-active .giclee-editorial-faq__arrow span {
+    transform: rotate(90deg);
+  }
+
+  .giclee-editorial-faq__item.is-revealing .giclee-editorial-faq__inline-answer {
+    animation: gef-mobile-answer 520ms var(--gef-ease) both;
+  }
+}
+
+@media (max-width: 749px) {
+  .giclee-editorial-faq {
+    padding-block: max(48px, var(--gef-padding-top, 72px)) max(56px, var(--gef-padding-bottom, 88px));
+  }
+
+  .giclee-editorial-faq__heading {
+    font-size: clamp(2.25rem, 12vw, 3.8rem);
+  }
+
+  .giclee-editorial-faq__index-wrap {
+    padding-inline-start: 12px;
+  }
+
+  .giclee-editorial-faq__trigger {
+    grid-template-columns: 34px minmax(0, 1fr) 28px;
+    min-height: 74px;
+    gap: 10px;
+    padding-block: 18px;
+  }
+
+  .giclee-editorial-faq__question {
+    font-size: 1rem;
+  }
+
+  .giclee-editorial-faq__inline-answer {
+    padding: 2px 24px 30px 44px;
+  }
+
+  .giclee-editorial-faq__answer-rte {
+    font-size: 0.98rem;
+    line-height: 1.76;
+  }
+}
+
+@keyframes gef-panel-reveal {
+  0% {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+  }
+  38% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes gef-line-draw {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes gef-content-switch {
+  0% { opacity: 0.2; transform: translate3d(14px, 0, 0); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes gef-mobile-answer {
+  0% { opacity: 0; transform: translate3d(0, -8px, 0); clip-path: inset(0 0 100% 0); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0); clip-path: inset(0 0 0 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giclee-editorial-faq *,
+  .giclee-editorial-faq *::before,
+  .giclee-editorial-faq *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .giclee-editorial-faq__morph-clone {
+    display: none !important;
+  }
+}
