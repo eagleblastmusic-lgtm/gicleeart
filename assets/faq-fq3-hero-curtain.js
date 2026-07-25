@@ -100,21 +100,15 @@
     target.style.backgroundColor = styles.backgroundColor;
   }
 
-  /**
-   * @param {HTMLElement} heroSection
-   * @param {HTMLElement} faqSection
-   * @returns {HTMLElement | null}
-   */
-  function buildCurtain(heroSection, faqSection) {
-    var heroContainer = heroSection.querySelector('.hero__container');
+  /** @param {HTMLElement} faqSection @returns {HTMLElement | null} */
+  function buildCurtain(faqSection) {
     var faqSurface = faqSection.querySelector('.faq-section');
     var sourceBackground = faqSection.querySelector('.custom-section-background');
 
-    if (!(heroContainer instanceof HTMLElement)) return null;
     if (!(faqSurface instanceof HTMLElement)) return null;
     if (!(sourceBackground instanceof HTMLElement)) return null;
 
-    var existing = heroContainer.querySelector('.giclee-faq-hero-curtain');
+    var existing = document.querySelector('.giclee-faq-hero-curtain');
     if (existing instanceof HTMLElement) return existing;
 
     var curtain = document.createElement('div');
@@ -127,6 +121,15 @@
     clonedBackground.setAttribute('aria-hidden', 'true');
     curtain.appendChild(clonedBackground);
 
+    faqSurface
+      .querySelectorAll('.faq-artwork-decoration, .faq-disc')
+      .forEach(function (node) {
+        var clone = /** @type {HTMLElement} */ (node.cloneNode(true));
+        clone.removeAttribute('id');
+        clone.setAttribute('aria-hidden', 'true');
+        curtain.appendChild(clone);
+      });
+
     copyFaqVisualSettings(faqSurface, curtain);
 
     var sectionBackground = faqSection.querySelector('.section-background');
@@ -137,8 +140,7 @@
       }
     }
 
-    heroSection.classList.add('giclee-faq-curtain-hero');
-    heroContainer.appendChild(curtain);
+    document.body.appendChild(curtain);
     return curtain;
   }
 
@@ -149,19 +151,21 @@
     style.id = 'giclee-faq-fq3-curtain-styles';
     style.textContent = [
       'body.giclee-faq-fq3-curtain-active #header-group { position: relative; z-index: 1000; }',
-      '.giclee-faq-curtain-hero { position: relative; isolation: isolate; }',
-      '.giclee-faq-curtain-hero .hero__container { overflow: hidden; }',
       '.giclee-faq-hero-curtain {',
-      '  position: absolute !important;',
-      '  inset: 0 !important;',
-      '  z-index: 30 !important;',
+      '  position: fixed !important;',
+      '  top: var(--giclee-faq-curtain-top, 0px) !important;',
+      '  right: 0 !important;',
+      '  bottom: 0 !important;',
+      '  left: 0 !important;',
+      '  z-index: 900 !important;',
       '  display: block !important;',
       '  min-height: 0 !important;',
       '  overflow: hidden !important;',
       '  pointer-events: none !important;',
+      '  opacity: 1;',
       '  transform: scaleY(0.001);',
       '  transform-origin: 50% 100%;',
-      '  will-change: transform;',
+      '  will-change: transform, opacity;',
       '  backface-visibility: hidden;',
       '}',
       '.giclee-faq-hero-curtain__background {',
@@ -211,6 +215,11 @@
     document.head.appendChild(style);
   }
 
+  /** @param {HTMLElement} curtain */
+  function syncCurtainGeometry(curtain) {
+    curtain.style.setProperty('--giclee-faq-curtain-top', getHeaderHeight() + 'px');
+  }
+
   /** @param {any} tween @param {any} ScrollTriggerPlugin */
   function initialize(tween, ScrollTriggerPlugin) {
     var heroSection = findHeroSection();
@@ -219,22 +228,21 @@
 
     injectStyles();
 
-    var curtain = buildCurtain(heroSection, faqSection);
+    var curtain = buildCurtain(faqSection);
     if (!curtain) return;
 
+    syncCurtainGeometry(curtain);
     tween.registerPlugin(ScrollTriggerPlugin);
     document.body.classList.add('giclee-faq-fq3-curtain-active');
 
     tween.set(curtain, {
       scaleY: 0.001,
+      opacity: 1,
       transformOrigin: '50% 100%',
       force3D: true,
     });
 
-    tween.to(curtain, {
-      scaleY: 1,
-      ease: 'none',
-      force3D: true,
+    var timeline = tween.timeline({
       scrollTrigger: {
         id: 'giclee-faq-fq3-hero-curtain',
         trigger: heroSection,
@@ -246,19 +254,38 @@
           var height = hero instanceof HTMLElement
             ? hero.getBoundingClientRect().height
             : window.innerHeight * 0.3;
-          return '+=' + Math.max(480, Math.round(height * 1.65));
+          return '+=' + Math.max(360, Math.round(height * 2.2));
         },
-        scrub: 0.75,
-        pin: heroSection,
-        pinSpacing: false,
-        anticipatePin: 1,
+        scrub: 0.65,
         invalidateOnRefresh: true,
+        onRefresh: function () {
+          syncCurtainGeometry(curtain);
+        },
       },
+    });
+
+    timeline
+      .to(curtain, {
+        scaleY: 1,
+        opacity: 1,
+        ease: 'none',
+        force3D: true,
+        duration: 0.88,
+      })
+      .to(curtain, {
+        opacity: 0,
+        ease: 'none',
+        duration: 0.12,
+      });
+
+    window.addEventListener('resize', function () {
+      syncCurtainGeometry(curtain);
     });
 
     window.addEventListener(
       'load',
       function () {
+        syncCurtainGeometry(curtain);
         ScrollTriggerPlugin.refresh();
       },
       { once: true }
