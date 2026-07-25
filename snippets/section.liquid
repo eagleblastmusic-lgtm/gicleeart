@@ -134,6 +134,48 @@
     {%- endunless -%}
   </div>
 
+  {%- if giclee_faq_custom_bg -%}
+    <div class="faq-artwork-decoration faq-artwork-decoration--left" aria-hidden="true">
+      <svg viewBox="0 0 600 900" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id="faq-warm-stroke" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#6b3d17" stop-opacity="0" />
+            <stop offset="35%" stop-color="#a96027" stop-opacity="0.36" />
+            <stop offset="62%" stop-color="#efb46d" stop-opacity="0.88" />
+            <stop offset="100%" stop-color="#6b3d17" stop-opacity="0" />
+          </linearGradient>
+          <radialGradient id="faq-warm-fog">
+            <stop offset="0%" stop-color="#c87a34" stop-opacity="0.16" />
+            <stop offset="55%" stop-color="#744018" stop-opacity="0.05" />
+            <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+          </radialGradient>
+          <filter id="faq-warm-glow" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="7" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <filter id="faq-warm-blur">
+            <feGaussianBlur stdDeviation="45" />
+          </filter>
+        </defs>
+        <ellipse cx="-35" cy="450" rx="420" ry="355" fill="url(#faq-warm-fog)" filter="url(#faq-warm-blur)" />
+        <ellipse cx="-35" cy="450" rx="405" ry="350" fill="none" stroke="url(#faq-warm-stroke)" stroke-width="2" filter="url(#faq-warm-glow)" />
+        <ellipse cx="-40" cy="450" rx="320" ry="278" fill="none" stroke="url(#faq-warm-stroke)" stroke-width="1.4" opacity="0.7" />
+        <ellipse cx="-48" cy="450" rx="262" ry="228" fill="none" stroke="#e0a05f" stroke-width="1" opacity="0.18" />
+      </svg>
+    </div>
+
+    <div class="faq-disc faq-disc--right" aria-hidden="true">
+      <div class="faq-disc__surface"></div>
+      <div class="faq-disc__ring faq-disc__ring--outer"></div>
+      <div class="faq-disc__ring faq-disc__ring--middle"></div>
+      <div class="faq-disc__ring faq-disc__ring--inner"></div>
+      <div class="faq-disc__flare"></div>
+    </div>
+  {%- endif -%}
+
   <div
     class="border-style custom-section-content"
     style="{% render 'border-override', settings: section.settings %}"
@@ -157,7 +199,6 @@
       data-testid="section-content"
     >
       {{ children }}
-
     </div>
   </div>
 </div>

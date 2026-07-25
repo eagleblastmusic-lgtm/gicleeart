@@ -145,8 +145,16 @@
     body.template-page-faq .faq-section.faq-section--bg-image {
       position: relative;
       isolation: isolate;
+      overflow-x: clip;
+      overflow-y: visible;
+      background-color: #000;
     }
 
+    /*
+     * Tło tylko w granicach sekcji (inset:0) — bez nachodzenia na stopkę.
+     * Sam obraz ma stałą wysokość 100lvh i jest wycentrowany, żeby otwarcie
+     * akordeonu nie zmieniało kadru (zoom).
+     */
     body.template-page-faq .faq-section.faq-section--bg-image .custom-section-background {
       position: absolute;
       inset: 0;
@@ -174,15 +182,37 @@
      * --faq-bg-blur (px), --faq-bg-saturate (%), --faq-bg-brightness (%),
      * --faq-bg-dim-overlay (%), --faq-bg-scale (% zoom).
      */
+    /*
+     * Stała wysokość kadru (100lvh), pozycja przez top — bez translate w transform,
+     * żeby mouse-parallax (inline transform) nie psuł wycentrowania.
+     */
     body.template-page-faq .faq-section.faq-section--bg-image .background-image-container,
     body.template-page-faq .faq-section.faq-section--bg-image video-background-component {
       position: absolute;
-      inset: 0;
+      top: max(0px, calc(50% - 50lvh));
+      left: 0;
+      width: 100%;
+      height: 100lvh;
+      max-height: none;
       transform: scale(calc(1 + var(--faq-bg-scale, 0) * 0.01));
+      transform-origin: center center;
       filter:
         blur(calc(var(--faq-bg-blur, 0) * 1px))
         saturate(calc(var(--faq-bg-saturate, 100) * 0.01))
         brightness(calc(var(--faq-bg-brightness, 100) * 0.01));
+    }
+
+    /* Stopka zawsze nad tłem FAQ */
+    body.template-page-faq > footer {
+      position: relative;
+      z-index: 5;
+      background-color: #000;
+    }
+
+    /* Brak scroll-anchoring przy otwarciu — mniej skoków kadru / parallax */
+    body.template-page-faq .faq-section .accordion accordion-custom,
+    body.template-page-faq .faq-section .accordion accordion-custom details {
+      overflow-anchor: none;
     }
 
     body.template-page-faq .faq-section.faq-section--bg-image .giclee-section-bg-overlay {
@@ -990,6 +1020,348 @@
       .accordion accordion-custom details .details-content,
       .accordion accordion-custom details summary .svg-wrapper.icon-caret { transition: none !important; }
       .accordion accordion-custom details .details-content { transform: none; }
+    }
+
+    /* ===== FAQ — dekoracje tła (SVG łuki / elipsa / poświata; bez zmiany tła foto) ===== */
+    /*
+     * Stacking: hero + divider NAD okręgami, ale FAQ (grafika + gradient) zostaje
+     * w normalnym malowaniu sekcji — bez obniżania całej sekcji FAQ (to gubiło gradient).
+     * Okręgi mają z-index: 0 wewnątrz FAQ; hero/divider tworzą wyższy kontekst.
+     */
+    body.template-page-faq #MainContent > .shopify-section:has(.hero) {
+      position: relative;
+      z-index: 3;
+    }
+
+    body.template-page-faq #MainContent > .shopify-section[id$="__divider_YLiHg7"] {
+      position: relative;
+      z-index: 3;
+      background: transparent !important;
+    }
+
+    body.template-page-faq #MainContent > .shopify-section[id$="__divider_YLiHg7"] > .section-background {
+      background: transparent !important;
+    }
+
+    /* FAQ: visible — ::after poświaty musi wyjść pod ostatnią kartę */
+    body.template-page-faq #MainContent > .shopify-section:has(.faq-section) {
+      position: relative;
+      z-index: auto;
+      overflow-x: clip;
+      overflow-y: visible;
+    }
+
+    body.template-page-faq .faq-section {
+      position: relative;
+      overflow-x: clip;
+      overflow-y: visible;
+      isolation: isolate;
+    }
+
+    /* Dekoracje — pozycje jak przy utworzeniu; parallax GSAP (yPercent + scrub) */
+    body.template-page-faq .faq-artwork-decoration {
+      position: absolute;
+      top: 50%;
+      z-index: 0;
+      pointer-events: none;
+      transform: translateY(-50%);
+      will-change: transform;
+    }
+
+    body.template-page-faq .faq-artwork-decoration svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    body.template-page-faq .faq-artwork-decoration--left {
+      left: clamp(-290px, -14vw, -120px);
+      width: clamp(420px, 39vw, 720px);
+      height: min(92vh, 920px);
+      opacity: 0.74;
+      -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 58%, transparent 100%);
+      mask-image: linear-gradient(90deg, #000 0%, #000 58%, transparent 100%);
+    }
+
+    /* Prawa tarcza — CSS (bez SVG / feTurbulence / mask-image) */
+    body.template-page-faq .faq-disc--right {
+      position: absolute;
+      z-index: 0;
+      pointer-events: none;
+      top: 50%;
+      right: clamp(-170px, -7vw, -70px);
+      width: clamp(310px, 28vw, 520px);
+      aspect-ratio: 0.64;
+      transform: translateY(-50%);
+      opacity: 0.58;
+      overflow: visible;
+      will-change: transform;
+    }
+
+    body.template-page-faq .faq-disc__surface,
+    body.template-page-faq .faq-disc__ring {
+      position: absolute;
+      border-radius: 50%;
+    }
+
+    body.template-page-faq .faq-disc__surface {
+      inset: 5%;
+      background:
+        radial-gradient(
+          ellipse at 34% 48%,
+          rgba(225, 229, 230, 0.1) 0%,
+          rgba(131, 138, 142, 0.07) 27%,
+          rgba(50, 54, 57, 0.07) 52%,
+          rgba(5, 6, 7, 0) 74%
+        ),
+        repeating-linear-gradient(
+          82deg,
+          rgba(255, 255, 255, 0.012) 0,
+          rgba(255, 255, 255, 0.012) 1px,
+          transparent 1px,
+          transparent 4px
+        );
+      box-shadow:
+        inset 18px 0 45px rgba(255, 255, 255, 0.02),
+        inset -30px 0 60px rgba(0, 0, 0, 0.7);
+      opacity: 0.72;
+    }
+
+    body.template-page-faq .faq-disc__ring {
+      border-style: solid;
+      border-color: rgba(184, 191, 195, 0.14);
+      box-shadow:
+        0 0 16px rgba(205, 214, 218, 0.025),
+        inset 0 0 12px rgba(255, 255, 255, 0.018);
+    }
+
+    body.template-page-faq .faq-disc__ring--outer {
+      inset: 0;
+      border-width: 1px;
+      border-color: rgba(155, 163, 168, 0.14);
+    }
+
+    body.template-page-faq .faq-disc__ring--middle {
+      inset: 5%;
+      border-width: 1px;
+      border-color: rgba(213, 218, 220, 0.2);
+    }
+
+    body.template-page-faq .faq-disc__ring--inner {
+      inset: 10%;
+      border-width: 1px;
+      border-color: rgba(233, 235, 236, 0.09);
+    }
+
+    body.template-page-faq .faq-disc__flare {
+      position: absolute;
+      left: 4.5%;
+      top: 49%;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 244, 226, 0.55);
+      box-shadow:
+        0 0 6px rgba(255, 235, 208, 0.4),
+        0 0 18px rgba(215, 186, 153, 0.16),
+        0 0 40px rgba(215, 186, 153, 0.07);
+    }
+
+    body.template-page-faq .faq-section .custom-section-content,
+    body.template-page-faq .faq-section .section-content-wrapper {
+      position: relative;
+      z-index: 2;
+      overflow: visible;
+    }
+
+    /* Więcej czarnej przestrzeni pomiędzy FAQ a stopką — jak w referencji */
+    body.template-page-faq .faq-section .section-content-wrapper {
+      padding-block-end: clamp(124px, 13vh, 152px) !important;
+    }
+
+    /*
+     * Poświata — ::before halo, ::after płytki łuk w dół pod ostatnią kartą.
+     */
+    body.template-page-faq .faq-section .accordion {
+      position: relative;
+      overflow: visible !important;
+      isolation: isolate;
+    }
+
+    body.template-page-faq .faq-section .accordion > * {
+      position: relative;
+      z-index: 2;
+    }
+
+    body.template-page-faq .faq-section .accordion::before,
+    body.template-page-faq .faq-section .accordion::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Szerokie, miękkie halo schodzące w dół */
+    body.template-page-faq .faq-section .accordion::before {
+      top: calc(100% + 2px);
+      width: min(980px, 118%);
+      height: 112px;
+      transform: translateX(-50%);
+      opacity: 0.94;
+      background:
+        radial-gradient(
+          ellipse 52% 18% at 50% 9%,
+          rgba(255, 240, 214, 0.27) 0%,
+          rgba(231, 176, 107, 0.18) 20%,
+          rgba(177, 103, 42, 0.09) 43%,
+          rgba(91, 44, 14, 0.032) 66%,
+          transparent 84%
+        ),
+        radial-gradient(
+          ellipse 78% 54% at 50% 17%,
+          rgba(191, 111, 42, 0.085) 0%,
+          rgba(103, 51, 16, 0.034) 50%,
+          transparent 80%
+        );
+      filter: blur(11px);
+    }
+
+    /* Jasny rdzeń — bardzo płaska elipsa, wygięta w dół */
+    body.template-page-faq .faq-section .accordion::after {
+      top: calc(100% - 2px);
+      width: min(760px, 84%);
+      height: 22px;
+      transform: translateX(-50%);
+      border: 0;
+      border-bottom: 1px solid rgba(255, 239, 211, 0.78);
+      border-radius: 50%;
+      opacity: 0.92;
+      background: radial-gradient(
+        ellipse 58% 95% at 50% 100%,
+        rgba(255, 232, 197, 0.16) 0%,
+        rgba(217, 147, 76, 0.08) 42%,
+        transparent 74%
+      );
+      -webkit-mask-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(0, 0, 0, 0.12) 12%,
+        rgba(0, 0, 0, 0.55) 31%,
+        #000 50%,
+        rgba(0, 0, 0, 0.55) 69%,
+        rgba(0, 0, 0, 0.12) 88%,
+        transparent 100%
+      );
+      mask-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(0, 0, 0, 0.12) 12%,
+        rgba(0, 0, 0, 0.55) 31%,
+        #000 50%,
+        rgba(0, 0, 0, 0.55) 69%,
+        rgba(0, 0, 0, 0.12) 88%,
+        transparent 100%
+      );
+      filter:
+        drop-shadow(0 0 5px rgba(255, 229, 188, 0.19))
+        drop-shadow(0 7px 18px rgba(199, 120, 48, 0.11))
+        drop-shadow(0 18px 32px rgba(132, 67, 20, 0.06));
+    }
+
+    @media (max-width: 1100px) {
+      body.template-page-faq .faq-artwork-decoration--left {
+        left: -300px;
+        opacity: 0.52;
+      }
+
+      body.template-page-faq .faq-disc--right {
+        right: -145px;
+        width: clamp(280px, 38vw, 430px);
+        opacity: 0.42;
+      }
+
+      body.template-page-faq .faq-section .section-content-wrapper {
+        padding-block-end: 112px !important;
+      }
+
+      body.template-page-faq .faq-section .accordion::before {
+        width: 108%;
+        height: 94px;
+      }
+
+      body.template-page-faq .faq-section .accordion::after {
+        width: 80%;
+        height: 19px;
+      }
+    }
+
+    @media (max-width: 749px) {
+      body.template-page-faq .faq-artwork-decoration--left {
+        left: -315px;
+        width: 480px;
+        opacity: 0.26;
+      }
+
+      body.template-page-faq .faq-disc--right {
+        right: -105px;
+        width: 225px;
+        opacity: 0.34;
+      }
+
+      body.template-page-faq .faq-disc__surface {
+        inset: 8%;
+      }
+
+      body.template-page-faq .faq-disc__ring--middle {
+        inset: 7%;
+      }
+
+      body.template-page-faq .faq-disc__ring--inner {
+        inset: 14%;
+      }
+
+      body.template-page-faq .faq-disc__flare {
+        left: 6%;
+        width: 3px;
+        height: 3px;
+      }
+
+      body.template-page-faq .faq-section .section-content-wrapper {
+        padding-block-end: 88px !important;
+      }
+
+      body.template-page-faq .faq-section .accordion::before {
+        top: calc(100% + 1px);
+        width: 104%;
+        height: 72px;
+        opacity: 0.72;
+        filter: blur(8px);
+      }
+
+      body.template-page-faq .faq-section .accordion::after {
+        top: calc(100% - 1px);
+        width: 76%;
+        height: 16px;
+        opacity: 0.72;
+      }
+    }
+
+    @media (max-width: 420px) {
+      body.template-page-faq .faq-disc--right {
+        right: -92px;
+        width: 190px;
+        opacity: 0.28;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      body.template-page-faq .faq-artwork-decoration,
+      body.template-page-faq .faq-disc--right {
+        transform: translateY(-50%);
+        will-change: auto;
+      }
     }
     {% endif %}
 

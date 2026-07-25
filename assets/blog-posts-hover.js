@@ -1,4 +1,4 @@
-/* Blog — GSAP hover wpisów (bez filter — unika szarego błysku). */
+/* Blog — GSAP hover wpisów (bez filter i bez overlay — unika szarego błysku). */
 (() => {
   const initializeBlogPostHover = () => {
     if (typeof gsap === 'undefined') {
@@ -37,25 +37,13 @@
         post.querySelector('.blog-post__link, .blog-post-card__content-text a') ||
         post.querySelector('[data-testid="blog-post-link"]');
 
-      let imageWrapper = null;
-      let overlay = null;
-
       if (image && image.parentElement) {
-        imageWrapper = image.parentElement;
+        const imageWrapper = image.parentElement;
         imageWrapper.classList.add('blog-post__gsap-image-wrapper');
 
-        var imageRadius = window.getComputedStyle(image).borderRadius;
+        const imageRadius = window.getComputedStyle(image).borderRadius;
         if (imageRadius && imageRadius !== '0px') {
           imageWrapper.style.borderRadius = imageRadius;
-        }
-
-        overlay = imageWrapper.querySelector('.blog-post__gsap-overlay');
-
-        if (!overlay) {
-          overlay = document.createElement('span');
-          overlay.className = 'blog-post__gsap-overlay';
-          overlay.setAttribute('aria-hidden', 'true');
-          imageWrapper.appendChild(overlay);
         }
       }
 
@@ -72,12 +60,6 @@
           y: 0,
           scale: 1,
           force3D: true,
-        });
-      }
-
-      if (overlay) {
-        gsap.set(overlay, {
-          opacity: 0,
         });
       }
 
@@ -117,17 +99,6 @@
             scale: 1.05,
             duration: 0.85,
             ease: 'power2.out',
-          },
-          0
-        );
-      }
-
-      if (overlay) {
-        timeline.to(
-          overlay,
-          {
-            opacity: 1,
-            duration: 0.45,
           },
           0
         );
