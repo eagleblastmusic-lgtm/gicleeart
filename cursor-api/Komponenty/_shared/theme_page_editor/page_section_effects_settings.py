@@ -50,6 +50,8 @@ def zone_has_text_effects(zone: TemplateZone) -> bool:
 
 
 def zone_has_image_effects(zone: TemplateZone) -> bool:
+    if (zone.image_effect_selector or "").strip():
+        return True
     if zone.settings_only:
         return False
     return any(fld.kind == "shopify_image" for fld in zone.fields)
@@ -224,7 +226,8 @@ def _image_effect_selector_for_section(config: PageEditorConfig, section_key: st
         if zone.section_key != section_key:
             continue
         selector = (zone.image_effect_selector or "").strip()
-        return selector or None
+        if selector:
+            return selector
     return None
 
 

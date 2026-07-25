@@ -1,4 +1,4 @@
-/* FAQ — GSAP: wejście akordeonu + Style 2/3 Galaxy hover. */
+/* FAQ — GSAP: wejście hero (title + media) + tła pod hero + akordeonu + Style 2/3 Galaxy hover. */
 (function () {
   if (window.__GICLEE_FAQ_ACCORDION_ENTRANCE__) return;
   window.__GICLEE_FAQ_ACCORDION_ENTRANCE__ = true;
@@ -10,10 +10,42 @@
     return window.gsap || (typeof gsap !== 'undefined' ? gsap : undefined);
   }
 
+  function getUnderHeroBgNodes() {
+    return document.querySelectorAll('.faq-section .custom-section-background');
+  }
+
+  function getHeroMediaNodes() {
+    return document.querySelectorAll('.hero .hero__media-grid');
+  }
+
+  function clearEntranceInline(/** @type {HTMLElement} */ el) {
+    el.style.opacity = '';
+    el.style.willChange = '';
+  }
+
+  function revealEntranceFallback() {
+    getHeroTitleNodes().forEach(function (node) {
+      clearEntranceInline(/** @type {HTMLElement} */ (node));
+    });
+    getHeroMediaNodes().forEach(function (node) {
+      clearEntranceInline(/** @type {HTMLElement} */ (node));
+    });
+    getUnderHeroBgNodes().forEach(function (node) {
+      /** @type {HTMLElement} */
+      var el = /** @type {HTMLElement} */ (node);
+      clearEntranceInline(el);
+      var section = el.closest('.faq-section');
+      if (section instanceof HTMLElement) {
+        section.style.removeProperty('background');
+      }
+    });
+  }
+
   /**
    * @param {(api: GsapStatic) => void} callback
+   * @param {() => void} [onTimeout]
    */
-  function whenGsapReady(callback) {
+  function whenGsapReady(callback, onTimeout) {
     var existing = getGsap();
     if (existing) {
       callback(existing);
@@ -29,8 +61,258 @@
         callback(api);
         return;
       }
-      if (attempts >= 40) window.clearInterval(timer);
+      if (attempts >= 40) {
+        window.clearInterval(timer);
+        if (typeof onTimeout === 'function') onTimeout();
+      }
     }, 50);
+  }
+
+  function getHeroTitleNodes() {
+    return document.querySelectorAll(
+      '.hero__content-wrapper :is(h1, h2, h3, h4, h5, h6)'
+    );
+  }
+
+  /**
+   * @param {HTMLElement} el
+   * @param {Element} trigger
+   * @param {GsapStatic} tween
+   * @param {() => void} [onStart]
+   * @param {() => void} [onComplete]
+   */
+  function playFadeInWhenVisible(el, trigger, tween, onStart, onComplete) {
+    var play = function () {
+      if (typeof onStart === 'function') onStart();
+      tween.fromTo(
+        el,
+        { opacity: 0 },
+        {
+          opacity: 1,
+          duration: 1.1,
+          delay: 0.2,
+          ease: 'power3.out',
+          overwrite: 'auto',
+          onComplete: function () {
+            clearEntranceInline(el);
+            if (typeof onComplete === 'function') onComplete();
+          },
+        }
+      );
+    };
+
+    if (typeof IntersectionObserver === 'undefined') {
+      play();
+      return;
+    }
+
+    var observer = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          observer.disconnect();
+          play();
+        });
+      },
+      { threshold: 0 }
+    );
+    observer.observe(trigger);
+  }
+
+  /** Natychmiastowe ukrycie — bez FOUC zanim GSAP będzie gotowy (bez wpływu na layout). */
+  function prepareFadeEntrances() {
+    if (reduceMotion) return;
+
+    getHeroTitleNodes().forEach(function (node) {
+      /** @type {HTMLElement} */
+      var el = /** @type {HTMLElement} */ (node);
+      if (el.dataset.faqHeroTitlePrepared) return;
+      el.dataset.faqHeroTitlePrepared = '1';
+      el.style.opacity = '0';
+      el.style.willChange = 'opacity';
+    });
+
+    getHeroMediaNodes().forEach(function (node) {
+      /** @type {HTMLElement} */
+      var el = /** @type {HTMLElement} */ (node);
+      if (el.dataset.faqHeroMediaPrepared) return;
+      el.dataset.faqHeroMediaPrepared = '1';
+      el.style.opacity = '0';
+      el.style.willChange = 'opacity';
+    });
+
+    getUnderHeroBgNodes().forEach(function (node) {
+      /** @type {HTMLElement} */
+      var el = /** @type {HTMLElement} */ (node);
+      if (el.dataset.faqUnderHeroBgPrepared) return;
+      el.dataset.faqUnderHeroBgPrepared = '1';
+      el.style.opacity = '0';
+      el.style.willChange = 'opacity';
+
+      /* Gradient maluje też na .faq-section — wyłączamy, żeby fade dotyczył warstwy tła. */
+      var section = el.closest('.faq-section');
+      if (
+        section instanceof HTMLElement &&
+        (section.classList.contains('faq-section--gradient-v1') ||
+          section.classList.contains('faq-section--gradient-v2'))
+      ) {
+        section.style.setProperty('background', 'transparent', 'important');
+      }
+    });
+  }
+
+  /**
+   * Fade-in elementu (bez IntersectionObserver) — do sekwencji.
+   * @param {HTMLElement} el
+   * @param {GsapStatic} tween
+   * @param {{ delay?: number, onComplete?: () => void }} [opts]
+   */
+  function playFadeIn(el, tween, opts) {
+    var options = opts || {};
+    tween.fromTo(
+      el,
+      { opacity: 0 },
+      {
+        opacity: 1,
+        duration: 1.1,
+        delay: typeof options.delay === 'number' ? options.delay : 0,
+        ease: 'power3.out',
+        overwrite: 'auto',
+        onComplete: function () {
+          clearEntranceInline(el);
+          if (typeof options.onComplete === 'function') options.onComplete();
+        },
+      }
+    );
+  }
+
+  /**
+   * Wejście hero FAQ: tło (media), nagłówek od połowy fade-in tła.
+   * @param {GsapStatic} tween
+   */
+  function runHeroEntrance(/** @type {GsapStatic} */ tween) {
+    var fadeDuration = 1.1;
+    var mediaDelay = 0.2;
+
+    var mediaNodes = Array.prototype.slice.call(getHeroMediaNodes());
+    var titleNodes = Array.prototype.slice.call(getHeroTitleNodes());
+
+    mediaNodes = mediaNodes.filter(function (node) {
+      /** @type {HTMLElement} */
+      var el = /** @type {HTMLElement} */ (node);
+      if (el.dataset.faqHeroMediaEntranceBound) return false;
+      el.dataset.faqHeroMediaEntranceBound = '1';
+      return true;
+    });
+
+    titleNodes = titleNodes.filter(function (node) {
+      /** @type {HTMLElement} */
+      var el = /** @type {HTMLElement} */ (node);
+      if (el.dataset.faqHeroTitleEntranceBound) return false;
+      el.dataset.faqHeroTitleEntranceBound = '1';
+      return true;
+    });
+
+    if (!mediaNodes.length && !titleNodes.length) return;
+
+    var trigger =
+      (mediaNodes[0] && mediaNodes[0].closest('.hero')) ||
+      (titleNodes[0] && titleNodes[0].closest('.hero')) ||
+      mediaNodes[0] ||
+      titleNodes[0];
+
+    var play = function () {
+      if (!mediaNodes.length) {
+        titleNodes.forEach(function (node) {
+          playFadeIn(/** @type {HTMLElement} */ (node), tween, { delay: mediaDelay });
+        });
+        return;
+      }
+
+      var tl = tween.timeline({ delay: mediaDelay });
+
+      mediaNodes.forEach(function (node) {
+        /** @type {HTMLElement} */
+        var media = /** @type {HTMLElement} */ (node);
+        tl.fromTo(
+          media,
+          { opacity: 0 },
+          {
+            opacity: 1,
+            duration: fadeDuration,
+            ease: 'power3.out',
+            overwrite: 'auto',
+            onComplete: function () {
+              clearEntranceInline(media);
+            },
+          },
+          0
+        );
+      });
+
+      /* Nagłówek startuje w połowie pojawiania się tła hero. */
+      titleNodes.forEach(function (node) {
+        /** @type {HTMLElement} */
+        var title = /** @type {HTMLElement} */ (node);
+        tl.fromTo(
+          title,
+          { opacity: 0 },
+          {
+            opacity: 1,
+            duration: fadeDuration,
+            ease: 'power3.out',
+            overwrite: 'auto',
+            onComplete: function () {
+              clearEntranceInline(title);
+            },
+          },
+          fadeDuration * 0.5
+        );
+      });
+    };
+
+    if (typeof IntersectionObserver === 'undefined') {
+      play();
+      return;
+    }
+
+    var observer = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          observer.disconnect();
+          play();
+        });
+      },
+      { threshold: 0 }
+    );
+    observer.observe(trigger);
+  }
+
+  /**
+   * Wejście tła pod hero FAQ — sam fade-in (grafika / gradient).
+   * @param {GsapStatic} tween
+   */
+  function runUnderHeroBgEntrance(/** @type {GsapStatic} */ tween) {
+    getUnderHeroBgNodes().forEach(function (node) {
+      /** @type {HTMLElement} */
+      var bg = /** @type {HTMLElement} */ (node);
+      if (bg.dataset.faqUnderHeroBgEntranceBound) return;
+      bg.dataset.faqUnderHeroBgEntranceBound = '1';
+
+      var section = bg.closest('.faq-section') || bg;
+      playFadeInWhenVisible(
+        bg,
+        section,
+        tween,
+        undefined,
+        function () {
+          if (section instanceof HTMLElement) {
+            section.style.removeProperty('background');
+          }
+        }
+      );
+    });
   }
 
   function runAccordionEntrance(/** @type {GsapStatic} */ tween) {
@@ -39,16 +321,138 @@
 
     items.forEach(function (el) {
       el.classList.add('list-item');
+      var accordion = el.closest('.accordion');
+      if (accordion) accordion.classList.add('faq-accordion-entering');
     });
 
-    /* delay: synchronizacja z kurtyną page-transition (~0.8s po starcie open) */
-    tween.from('.accordion .list-item', {
-      duration: 0.8,
-      y: 30,
-      opacity: 0,
-      stagger: 0.1,
-      ease: 'power3.out',
-      delay: 0.8,
+    var clearEntering = function () {
+      document.querySelectorAll('.accordion.faq-accordion-entering').forEach(function (node) {
+        node.classList.remove('faq-accordion-entering');
+      });
+    };
+
+    /*
+      Płynna fala góra→dół — sam fade (bez blur).
+      delay: synchronizacja z kurtyną page-transition (~0.8s).
+    */
+    tween.fromTo(
+      items,
+      { opacity: 0 },
+      {
+        opacity: 1,
+        duration: 0.8,
+        stagger: {
+          each: 0.07,
+          from: 'start',
+          ease: 'sine.inOut',
+        },
+        ease: 'sine.out',
+        delay: 0.8,
+        clearProps: 'opacity',
+        overwrite: 'auto',
+        onComplete: clearEntering,
+      }
+    );
+  }
+
+  /**
+   * Hover na karcie: pozostałe się blurowują.
+   * Po zejściu: powrót falą od aktywnej karty na zewnątrz (stagger).
+   * @param {GsapStatic} tween
+   */
+  function initAccordionFocusBlur(/** @type {GsapStatic} */ tween) {
+    if (reduceMotion || coarsePointer) return;
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+
+    document.querySelectorAll('.accordion').forEach(function (accordionNode) {
+      if (!(accordionNode instanceof HTMLElement)) return;
+      var accordion = accordionNode;
+      if (accordion.dataset.faqFocusBlurBound) return;
+      accordion.dataset.faqFocusBlurBound = '1';
+
+      var cards = Array.prototype.slice.call(
+        accordion.querySelectorAll('accordion-custom')
+      );
+      if (cards.length < 2) return;
+
+      var activeIndex = -1;
+      var leaveTl = null;
+
+      var focusCard = function (index) {
+        if (accordion.classList.contains('faq-accordion-entering')) return;
+        if (leaveTl) {
+          leaveTl.kill();
+          leaveTl = null;
+        }
+        activeIndex = index;
+
+        cards.forEach(function (card, i) {
+          if (i === index) {
+            tween.to(card, {
+              filter: 'blur(0px)',
+              opacity: 1,
+              duration: 0.35,
+              ease: 'power2.out',
+              overwrite: 'auto',
+            });
+            card.style.zIndex = '2';
+            card.style.position = 'relative';
+          } else {
+            tween.to(card, {
+              filter: 'blur(3.5px)',
+              opacity: 0.42,
+              duration: 0.35,
+              ease: 'power2.out',
+              overwrite: 'auto',
+            });
+            card.style.zIndex = '';
+          }
+        });
+      };
+
+      var releaseAll = function () {
+        if (activeIndex < 0) return;
+        var from = activeIndex;
+        activeIndex = -1;
+
+        var ordered = cards
+          .map(function (card, i) {
+            return { card: card, i: i, dist: Math.abs(i - from) };
+          })
+          .sort(function (a, b) {
+            return a.dist - b.dist || a.i - b.i;
+          });
+
+        leaveTl = tween.timeline({
+          onComplete: function () {
+            ordered.forEach(function (item) {
+              tween.set(item.card, { clearProps: 'filter,opacity,zIndex,position' });
+            });
+            leaveTl = null;
+          },
+        });
+
+        ordered.forEach(function (item, rank) {
+          leaveTl.to(
+            item.card,
+            {
+              filter: 'blur(0px)',
+              opacity: 1,
+              duration: 0.65,
+              ease: 'power2.out',
+              overwrite: 'auto',
+            },
+            rank * 0.07
+          );
+        });
+      };
+
+      cards.forEach(function (card, index) {
+        card.addEventListener('mouseenter', function () {
+          focusCard(index);
+        });
+      });
+      accordion.addEventListener('mouseleave', releaseAll);
     });
   }
 
@@ -228,9 +632,16 @@
     initStyle2GalaxyHover();
     initStyle3GalaxyFull();
     if (reduceMotion) return;
-    whenGsapReady(/** @param {GsapStatic} tween */ function (tween) {
-      runAccordionEntrance(tween);
-    });
+    prepareFadeEntrances();
+    whenGsapReady(
+      /** @param {GsapStatic} tween */ function (tween) {
+        runHeroEntrance(tween);
+        runUnderHeroBgEntrance(tween);
+        runAccordionEntrance(tween);
+        initAccordionFocusBlur(tween);
+      },
+      revealEntranceFallback
+    );
   }
 
   if (document.readyState === 'loading') {

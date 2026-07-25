@@ -72,6 +72,10 @@ PAGE_ZONES: tuple[TemplateZone, ...] = (
         section_key="section_9YgpHf",
         # Ta sama sekcja co accordion — nie przełączamy widoczności osobno.
         settings_only=True,
+        image_effect_selector=(
+            ".custom-section-background .background-image-container, "
+            ".custom-section-background video-background-component"
+        ),
         fields=(
             TemplateField(
                 "under_hero_bg_mode",
