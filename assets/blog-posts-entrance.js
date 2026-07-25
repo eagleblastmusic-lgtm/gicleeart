@@ -5,15 +5,6 @@
 
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  var currentScript = /** @type {HTMLScriptElement | null} */ (document.currentScript);
-  var sb3CurtainUrl =
-    currentScript && currentScript.src
-      ? currentScript.src.replace(
-          /blog-posts-entrance\.js(?:\?.*)?$/,
-          'blog-sb3-hero-curtain.js'
-        )
-      : '';
-
   function getGsap() {
     return window.gsap || (typeof gsap !== 'undefined' ? gsap : undefined);
   }
@@ -77,22 +68,8 @@
     });
   }
 
-  function loadSb3HeroCurtain() {
-    var config = window.GICLEE_PAGE_SECTION_EFFECTS;
-    if (!config || config.page !== 'blog' || config.variant !== 'sb3') return;
-    if (!sb3CurtainUrl) return;
-    if (document.querySelector('script[data-giclee-blog-sb3-curtain="true"]')) return;
-
-    var script = document.createElement('script');
-    script.src = sb3CurtainUrl;
-    script.defer = true;
-    script.dataset.gicleeBlogSb3Curtain = 'true';
-    document.head.appendChild(script);
-  }
-
   function run() {
     whenReady(runCardsEntrance);
-    loadSb3HeroCurtain();
   }
 
   if (document.readyState === 'loading') {
