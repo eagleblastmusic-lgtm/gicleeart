@@ -250,7 +250,7 @@
         },
         scrub: 0.75,
         pin: heroSection,
-        pinSpacing: true,
+        pinSpacing: false,
         anticipatePin: 1,
         invalidateOnRefresh: true,
       },
