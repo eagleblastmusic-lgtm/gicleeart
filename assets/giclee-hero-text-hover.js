@@ -91,6 +91,28 @@
     });
   }
 
+  function ensureFaqFq3HeroLayer() {
+    var runtime = /** @type {any} */ (window);
+    var config = runtime.GICLEE_PAGE_SECTION_EFFECTS;
+
+    if (!config || config.page !== 'faq' || config.variant !== 'fq3') return;
+    if (document.getElementById('giclee-faq-fq3-hero-layer-fix')) return;
+
+    var style = document.createElement('style');
+    style.id = 'giclee-faq-fq3-hero-layer-fix';
+    style.textContent = [
+      'body.giclee-faq-fq3-curtain-active #MainContent .giclee-faq-curtain-hero {',
+      '  position: relative !important;',
+      '  z-index: 40 !important;',
+      '}',
+      'body.giclee-faq-fq3-curtain-active #MainContent .pin-spacer:has(> .giclee-faq-curtain-hero) {',
+      '  position: relative !important;',
+      '  z-index: 40 !important;',
+      '}',
+    ].join('\n');
+    document.head.appendChild(style);
+  }
+
   function loadFaqFq3HeroCurtain() {
     var runtime = /** @type {any} */ (window);
     var config = runtime.GICLEE_PAGE_SECTION_EFFECTS;
@@ -111,6 +133,7 @@
     whenGsapReady(/** @param {GsapStatic} tween */ function (tween) {
       runHeroTextHover(tween);
     });
+    ensureFaqFq3HeroLayer();
     loadFaqFq3HeroCurtain();
   }
 
