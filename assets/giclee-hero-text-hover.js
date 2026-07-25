@@ -3,6 +3,15 @@
   if (window.__GICLEE_HERO_TEXT_HOVER__) return;
   window.__GICLEE_HERO_TEXT_HOVER__ = true;
 
+  var currentScript = /** @type {HTMLScriptElement | null} */ (document.currentScript);
+  var faqFq3CurtainUrl =
+    currentScript && currentScript.src
+      ? currentScript.src.replace(
+          /giclee-hero-text-hover\.js(?:\?.*)?$/,
+          'faq-fq3-hero-curtain.js'
+        )
+      : '';
+
   var HERO_TEXT_SHADOW =
     '0 1px 2px rgba(0, 0, 0, 0.55), 0 4px 18px rgba(0, 0, 0, 0.45), 0 0 28px rgba(0, 0, 0, 0.35)';
 
@@ -82,11 +91,27 @@
     });
   }
 
+  function loadFaqFq3HeroCurtain() {
+    var runtime = /** @type {any} */ (window);
+    var config = runtime.GICLEE_PAGE_SECTION_EFFECTS;
+
+    if (!config || config.page !== 'faq' || config.variant !== 'fq3') return;
+    if (!faqFq3CurtainUrl) return;
+    if (document.querySelector('script[data-giclee-faq-fq3-curtain="true"]')) return;
+
+    var script = document.createElement('script');
+    script.src = faqFq3CurtainUrl;
+    script.defer = true;
+    script.dataset.gicleeFaqFq3Curtain = 'true';
+    document.head.appendChild(script);
+  }
+
   function run() {
     applyHeroTextShadows();
     whenGsapReady(/** @param {GsapStatic} tween */ function (tween) {
       runHeroTextHover(tween);
     });
+    loadFaqFq3HeroCurtain();
   }
 
   if (document.readyState === 'loading') {
