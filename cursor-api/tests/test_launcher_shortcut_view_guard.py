@@ -83,6 +83,11 @@ def test_poll_reschedules_when_view_mapping_raises_tcl_error(
     )
     monkeypatch.setattr(
         options,
+        "windows_primary_button_down",
+        lambda _user32: False,
+    )
+    monkeypatch.setattr(
+        options,
         "windows_shortcut_modifiers_down",
         lambda _user32: (_ for _ in ()).throw(
             AssertionError("modifiers must not be sampled for inactive view")

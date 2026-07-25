@@ -565,20 +565,30 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             label_to_value = {label: value for value, label in fld.choices}
             current_value = str(_zone_value(zid, fld.field_id) or "")
             labels = tuple(label for _value, label in fld.choices)
-            var = tk.StringVar(value=value_to_label.get(current_value, current_value))
+            display = value_to_label.get(current_value, "")
+            if not display and labels:
+                display = ""
+            var = tk.StringVar(value=display)
             ttk.Combobox(
                 editor_inner,
                 textvariable=var,
                 values=labels,
                 state="readonly",
-                width=32,
+                width=48,
             ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(0, 10))
-            var.trace_add(
-                "write",
-                lambda *_a, v=var, fid=fld.field_id, mapping=label_to_value: _set_zone_value(
-                    zid, fid, mapping.get(v.get(), v.get())
-                ),
-            )
+
+            def _on_choice_write(
+                *_a: Any,
+                v: tk.StringVar = var,
+                fid: str = fld.field_id,
+                mapping: dict[str, str] = label_to_value,
+                field_id: str = fld.field_id,
+            ) -> None:
+                _set_zone_value(zid, fid, mapping.get(v.get(), v.get()))
+                if field_id == "under_hero_bg_mode":
+                    host.after_idle(_render_zone_editor)
+
+            var.trace_add("write", _on_choice_write)
             return row + 1
         elif fld.kind == "bool":
             var = tk.BooleanVar(value=bool(_zone_value(zid, fld.field_id)))
@@ -586,18 +596,65 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             var.trace_add("write", lambda *_a, v=var, fid=fld.field_id: _set_zone_value(zid, fid, v.get()))
             return row + 1
         elif fld.kind == "int":
-            var = tk.StringVar(value=str(_zone_value(zid, fld.field_id) or 0))
-            ttk.Spinbox(
-                editor_inner,
-                textvariable=var,
-                from_=fld.min_value if fld.min_value is not None else 0,
-                to=fld.max_value if fld.max_value is not None else 9999,
-                increment=fld.step if fld.step is not None else 1,
-                width=10,
-            ).grid(
-                row=row, column=0, columnspan=2, sticky="w", pady=(0, 10)
-            )
-            var.trace_add("write", lambda *_a, v=var, fid=fld.field_id: _set_zone_value(zid, fid, v.get()))
+            lo = int(fld.min_value) if fld.min_value is not None else 0
+            hi = int(fld.max_value) if fld.max_value is not None else 9999
+            try:
+                initial = int(_zone_value(zid, fld.field_id) or lo)
+            except (TypeError, ValueError):
+                initial = lo
+            initial = max(lo, min(hi, initial))
+            # Suwak gdy pole ma jawny zakres (np. 0–100%); inaczej Spinbox.
+            if fld.min_value is not None and fld.max_value is not None:
+                row_fr = ttk.Frame(editor_inner)
+                row_fr.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(0, 10))
+                editor_inner.columnconfigure(0, weight=1)
+                int_var = tk.IntVar(value=initial)
+                unit = fld.unit if fld.unit is not None else ("%" if hi == 100 else "")
+                label_var = tk.StringVar(value=f"{initial}{unit}")
+                scale = ttk.Scale(
+                    row_fr,
+                    from_=lo,
+                    to=hi,
+                    orient="horizontal",
+                    variable=int_var,
+                )
+                scale.pack(side="left", fill="x", expand=True, padx=(0, 10))
+                ttk.Label(row_fr, textvariable=label_var, width=6).pack(side="left")
+
+                def _on_int_scale(
+                    *_a: object,
+                    v: tk.IntVar = int_var,
+                    lv: tk.StringVar = label_var,
+                    fid: str = fld.field_id,
+                    _lo: int = lo,
+                    _hi: int = hi,
+                    _unit: str = unit,
+                ) -> None:
+                    try:
+                        n = int(round(float(v.get())))
+                    except (TypeError, ValueError):
+                        n = _lo
+                    n = max(_lo, min(_hi, n))
+                    if int(round(float(v.get()))) != n:
+                        v.set(n)
+                    lv.set(f"{n}{_unit}")
+                    _set_zone_value(zid, fid, n)
+
+                int_var.trace_add("write", _on_int_scale)
+                _set_zone_value(zid, fld.field_id, initial)
+            else:
+                var = tk.StringVar(value=str(initial))
+                ttk.Spinbox(
+                    editor_inner,
+                    textvariable=var,
+                    from_=lo,
+                    to=hi,
+                    increment=fld.step if fld.step is not None else 1,
+                    width=10,
+                ).grid(
+                    row=row, column=0, columnspan=2, sticky="w", pady=(0, 10)
+                )
+                var.trace_add("write", lambda *_a, v=var, fid=fld.field_id: _set_zone_value(zid, fid, v.get()))
             return row + 1
         elif fld.kind == "float":
             var = tk.StringVar(value=str(_zone_value(zid, fld.field_id) or 0))
@@ -816,12 +873,17 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             row=1, column=0, columnspan=2, sticky="w", pady=(0, 8)
         )
         row = 2
-        bg_fld = next((f for f in zone.fields if f.kind == "section_background"), None)
-        if bg_fld is not None:
+        under_hero_mode = ""
+        if zone.zone_id == "under_hero_bg":
+            under_hero_mode = str(
+                state["zone_values"].get(zid, {}).get("under_hero_bg_mode") or ""
+            ).strip().lower()
+
+        def _render_section_bg_button(bg_field: Any, at_row: int) -> int:
             bg_status_var = tk.StringVar()
 
             def _bg_status_text() -> str:
-                raw = state["zone_values"].get(zid, {}).get(bg_fld.field_id, "")
+                raw = state["zone_values"].get(zid, {}).get(bg_field.field_id, "")
                 bg_val = _parse_section_background(raw)
                 ref = bg_val.get("ref", "")
                 if not ref:
@@ -842,28 +904,37 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
                 open_section_background_dialog(
                     host,
                     zone_label=zone.label,
-                    bg_field_id=bg_fld.field_id,
+                    bg_field_id=bg_field.field_id,
                     page_label=config.intro_title,
-                    initial_value=state["zone_values"].get(zid, {}).get(bg_fld.field_id),
+                    initial_value=state["zone_values"].get(zid, {}).get(bg_field.field_id),
                     get_widget=_get_widget,
                     set_widget=_set_widget,
                     get_zone_bg=lambda: _parse_section_background(
-                        state["zone_values"].get(zid, {}).get(bg_fld.field_id)
+                        state["zone_values"].get(zid, {}).get(bg_field.field_id)
                     ),
-                    set_zone_bg=lambda val: _set_zone_value(zid, bg_fld.field_id, val),
+                    set_zone_bg=lambda val: _set_zone_value(zid, bg_field.field_id, val),
                     mark_dirty=_mark_dirty,
                     app_title=config.app_title,
                     status_var=status_var,
                 )
                 bg_status_var.set(_bg_status_text())
 
+            ttk.Label(editor_inner, text=bg_field.label).grid(
+                row=at_row, column=0, columnspan=2, sticky="w", pady=(4, 2)
+            )
+            at_row += 1
             ttk.Button(editor_inner, text="Tło…", command=_open_bg).grid(
-                row=row, column=0, sticky="w", pady=(0, 4)
+                row=at_row, column=0, sticky="w", pady=(0, 4)
             )
             ttk.Label(editor_inner, textvariable=bg_status_var, foreground="#666").grid(
-                row=row, column=1, sticky="w", pady=(0, 4)
+                row=at_row, column=1, sticky="w", pady=(0, 4)
             )
-            row += 1
+            return at_row + 1
+
+        bg_fld = next((f for f in zone.fields if f.kind == "section_background"), None)
+        # FAQ «Tło pod hero»: przycisk grafiki po wyborze typu (w pętli pól).
+        if bg_fld is not None and zone.zone_id != "under_hero_bg":
+            row = _render_section_bg_button(bg_fld, row)
         has_text_fx = zone_has_text_effects(zone)
         has_image_fx = zone_has_image_effects(zone)
         if has_text_fx or has_image_fx:
@@ -903,6 +974,14 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             row += 1
         for fld in zone.fields:
             if fld.kind == "section_background":
+                if zone.zone_id == "under_hero_bg" and under_hero_mode == "image":
+                    row = _render_section_bg_button(fld, row)
+                continue
+            if (
+                zone.zone_id == "under_hero_bg"
+                and fld.field_id == "under_hero_gradient"
+                and under_hero_mode != "gradient"
+            ):
                 continue
             # FAQ / powtarzalne bloki: wizualny separator przed każdym „Pytanie N”
             q_match = re.fullmatch(r"q(\d+)_heading", fld.field_id)

@@ -15,6 +15,33 @@ Tryb: `inline` (sekcja **Administracja strony**). Uruchomienie: `python -m Kompo
 
 **Warianty:** domyślnie jedna wersja (`fq1`); **Dodaj nową…** kopiuje bieżącą.
 
+## Tło pod hero
+
+Strefa **Tło pod hero** ustawia tło całej sekcji z pytaniami (`section_9YgpHf`, bezpośrednio pod hero):
+
+- **Typ tła:** `Grafika` albo `Gradient`
+- **Grafika** → przycisk **Tło…** (upload, kadrowanie, przyciemnienie) → `background_media` / `background_image` / `video`
+- **Gradient** → **Wersja 1** lub **Wersja 2** (gotowe CSS w motywie); czyści media tła sekcji
+- Suwaki efektu tła (niezależne):
+  - **Rozmycie tła** `giclee_faq_bg_blur_px` (0–20 px)
+  - **Saturacja tła** `giclee_faq_bg_saturate_pct` (0–100%)
+  - **Jasność tła** `giclee_faq_bg_brightness_pct` (0–100%)
+  - **Nakładka przyciemniająca** `giclee_faq_bg_dim_overlay_pct` (0–100%)
+  - **Powiększenie kadru** `giclee_faq_bg_scale_pct` (0–12%)
+- tryb / efekt zapisywany w `giclee_faq_bg_*` (ukryte ustawienia sekcji)
+
+## Styl kart akordeonu
+
+W strefie **Pytania i odpowiedzi** → **Styl kart** (`giclee_faq_accordion_style`):
+
+| Wartość | Opis |
+|---------|------|
+| `style1` | Szkło + złota linia hover |
+| `style2` | Uproszczony Galaxy — CSS radial na krawędzi/fill |
+| `style3` | Galaxy shell/plate + świecący pierścień na krawędzi (bez orbów / Lottie / gwiazdy) |
+
+Style 3 ładuje `faq-accordion-galaxy.css`.
+
 ## Tła obrazów w accordionie
 
 Dla każdego pytania w strefie **Pytania i odpowiedzi** można ustawić:

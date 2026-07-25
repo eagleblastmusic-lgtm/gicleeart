@@ -150,6 +150,72 @@
     border: none;
     padding: 0;
   }
+
+  /**
+   * GSAP blog post hover — tylko właściwości potrzebne do animacji
+   */
+  .blog-post {
+    position: relative;
+    transform: translate3d(0, 0, 0);
+    transform-origin: center center;
+    will-change: transform;
+  }
+
+  .blog-post__gsap-image-wrapper {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .blog-post__gsap-image-wrapper img {
+    display: block;
+    transform: translate3d(0, 0, 0) scale(1);
+    transform-origin: center center;
+    will-change: transform;
+  }
+
+  .blog-post__gsap-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: block;
+    pointer-events: none;
+    opacity: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0.06) 55%,
+      rgba(0, 0, 0, 0.18) 100%
+    );
+    will-change: opacity;
+  }
+
+  .blog-post h1,
+  .blog-post h2,
+  .blog-post h3,
+  .blog-post h4,
+  .blog-post h5,
+  .blog-post h6,
+  .blog-post time,
+  .blog-post p,
+  .blog-post a,
+  .blog-post__title,
+  .blog-post__date,
+  .blog-post__excerpt,
+  .blog-post__link,
+  .blog-post .text-block,
+  .blog-post .blog-post-details,
+  .blog-post .blog-post-card__content-text {
+    will-change: transform;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .blog-post,
+    .blog-post img,
+    .blog-post__gsap-overlay {
+      will-change: auto;
+    }
+  }
 {% endstylesheet %}
 
 {% schema %}

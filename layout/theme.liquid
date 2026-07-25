@@ -154,7 +154,7 @@
         opacity: 0;
       }
       #splash-screen.splash-fonts-ready .splash-content {
-        animation: gicleeSplashFadeIn 1.1s ease forwards;
+        opacity: 1;
       }
       #splash-screen .splash-title {
         color: #fff;
@@ -168,8 +168,12 @@
         transform: scaleX(1.15);
         display: inline-block;
         margin: 0 0 0.45rem;
+        opacity: 0;
         -webkit-font-smoothing: antialiased;
         -webkit-text-stroke: 0.3px rgba(255, 255, 255, 0.5);
+      }
+      #splash-screen.splash-fonts-ready .splash-title {
+        animation: gicleeSplashFadeIn 2.2s ease forwards;
       }
       #splash-screen .splash-line {
         width: 220px;
@@ -192,10 +196,27 @@
         letter-spacing: 0.35em;
         text-transform: uppercase;
         margin: 0;
+        transform-origin: 50% 50%;
+      }
+      #splash-screen .splash-sub:not(.is-letter-fade-prepared) {
+        opacity: 0;
+      }
+      #splash-screen .splash-sub-word {
+        display: inline-block;
+        white-space: nowrap;
+      }
+      #splash-screen .splash-sub-char {
+        display: inline-block;
+        will-change: opacity, transform;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #splash-screen .splash-sub:not(.is-letter-fade-prepared) {
+          opacity: 1;
+        }
       }
       @keyframes gicleeSplashFadeIn {
-        from { opacity: 0; transform: translateY(12px); }
-        to { opacity: 1; transform: translateY(0); }
+        from { opacity: 0; transform: scaleX(1.15); }
+        to { opacity: 1; transform: scaleX(1.15); }
       }
       @keyframes gicleeSplashLine {
         from { transform: scaleX(0); }
@@ -205,18 +226,146 @@
     <script>
       (function () {
         if (!document.documentElement.classList.contains('splash-pending')) return;
+
+        var LETTER_FADE_MS = 2200;
+        var LETTER_MIN_MS = 600;
+        var LETTER_EASE = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        var LETTER_START_AFTER_MS = 700;
+
+        function cleanText(value) {
+          return String(value || '').replace(/\s+/g, ' ').trim();
+        }
+
+        function createLetterVisual(source) {
+          var visual = document.createElement('span');
+          visual.setAttribute('aria-hidden', 'true');
+          var chars = [];
+          source.split(/(\s+)/).forEach(function (token) {
+            if (!token) return;
+            if (/^\s+$/.test(token)) {
+              visual.appendChild(document.createTextNode(token));
+              return;
+            }
+            var word = document.createElement('span');
+            word.className = 'splash-sub-word';
+            Array.from(token).forEach(function (glyph) {
+              var char = document.createElement('span');
+              char.className = 'splash-sub-char';
+              char.textContent = glyph;
+              char.style.opacity = '0';
+              chars.push(char);
+              word.appendChild(char);
+            });
+            visual.appendChild(word);
+          });
+          return { visual: visual, chars: chars };
+        }
+
+        function initSplashSubLetterFade(splash) {
+          var sub = splash && splash.querySelector('.splash-sub');
+          if (!sub || sub.dataset.letterFadeInit === '1') return;
+          sub.dataset.letterFadeInit = '1';
+
+          var source = cleanText(sub.textContent);
+          if (!source) return;
+          sub.setAttribute('aria-label', source);
+
+          var reduce =
+            window.matchMedia &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          if (reduce || typeof sub.animate !== 'function') {
+            sub.classList.add('is-letter-fade-prepared');
+            return;
+          }
+
+          sub.textContent = '';
+          var built = createLetterVisual(source);
+          sub.appendChild(built.visual);
+          sub.classList.add('is-letter-fade-prepared');
+          sub.style.transform = 'scale(1.2)';
+
+          var chars = built.chars;
+          if (!chars.length) return;
+
+          var totalSec = LETTER_FADE_MS / 1000;
+          var minSec = LETTER_MIN_MS / 1000;
+          var mid = Math.max((chars.length - 1) / 2, 0.5);
+          var maxOffsetPx = 28;
+
+          function play() {
+            var animations = [];
+            chars.forEach(function (char, index) {
+              var randomDuration = minSec + Math.random() * (totalSec - minSec);
+              var randomDelay = Math.random() * (totalSec - randomDuration);
+              var offsetX = ((index - mid) / mid) * maxOffsetPx;
+              char.style.opacity = '0';
+              char.style.transform = 'translateX(' + offsetX.toFixed(2) + 'px)';
+              animations.push(
+                char.animate(
+                  [
+                    { opacity: 0, transform: 'translateX(' + offsetX.toFixed(2) + 'px)' },
+                    { opacity: 1, transform: 'translateX(0px)' },
+                  ],
+                  {
+                    duration: randomDuration * 1000,
+                    delay: randomDelay * 1000,
+                    easing: LETTER_EASE,
+                    fill: 'forwards',
+                  }
+                )
+              );
+            });
+            animations.push(
+              sub.animate(
+                [{ transform: 'scale(1.2)' }, { transform: 'scale(1)' }],
+                {
+                  duration: LETTER_FADE_MS,
+                  easing: LETTER_EASE,
+                  fill: 'forwards',
+                }
+              )
+            );
+            Promise.all(
+              animations.map(function (animation) {
+                return animation.finished.catch(function () {});
+              })
+            ).then(function () {
+              animations.forEach(function (animation) {
+                try {
+                  animation.commitStyles();
+                  animation.cancel();
+                } catch (_) {}
+              });
+              chars.forEach(function (char) {
+                char.style.opacity = '1';
+                char.style.transform = '';
+              });
+              sub.style.transform = '';
+            });
+          }
+
+          window.setTimeout(play, LETTER_START_AFTER_MS);
+        }
+
+        window.gicleeInitSplashSubLetterFade = initSplashSubLetterFade;
+
         var marked = false;
         function markSplashFontsReady() {
           if (marked) return;
           marked = true;
           var splash = document.getElementById('splash-screen');
-          if (splash) splash.classList.add('splash-fonts-ready');
-          else {
+          if (splash) {
+            splash.classList.add('splash-fonts-ready');
+            initSplashSubLetterFade(splash);
+          } else {
             document.addEventListener(
               'DOMContentLoaded',
               function () {
                 var el = document.getElementById('splash-screen');
-                if (el) el.classList.add('splash-fonts-ready');
+                if (el) {
+                  el.classList.add('splash-fonts-ready');
+                  initSplashSubLetterFade(el);
+                }
               },
               { once: true }
             );

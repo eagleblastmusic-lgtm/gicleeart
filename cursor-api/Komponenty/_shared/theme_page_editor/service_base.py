@@ -279,9 +279,14 @@ def write_field(template: dict[str, Any], field: TemplateField, value: Any) -> N
         path_set(template, field.path, bool(value))
     elif field.kind == "int":
         try:
-            path_set(template, field.path, int(value))
+            n = int(round(float(value)))
         except (TypeError, ValueError):
-            path_set(template, field.path, 0)
+            n = 0
+        if field.min_value is not None:
+            n = max(int(field.min_value), n)
+        if field.max_value is not None:
+            n = min(int(field.max_value), n)
+        path_set(template, field.path, n)
     elif field.kind == "float":
         try:
             path_set(template, field.path, float(str(value).replace(",", ".")))
@@ -349,6 +354,37 @@ def _write_image_object_y(
         path_set(template, oy_path, normalize_object_y(values[oy_key]))
 
 
+def _sync_faq_under_hero_bg(template: dict[str, Any], values: dict[str, Any]) -> None:
+    """Przy gradiencie czyści media tła; przy grafice zostawia section_background."""
+    mode = str(values.get("under_hero_bg_mode") or "").strip().lower()
+    gradient = str(values.get("under_hero_gradient") or "v1").strip().lower()
+    if gradient not in ("v1", "v2"):
+        gradient = "v1"
+
+    settings = ("sections", "section_9YgpHf", "settings")
+    if mode == "gradient":
+        path_set(template, (*settings, "giclee_faq_bg_mode"), "gradient")
+        path_set(template, (*settings, "giclee_faq_bg_gradient"), gradient)
+        from Komponenty.stronaglowna.registry import HomeField
+        from Komponenty.stronaglowna.service import _write_section_background
+
+        _write_section_background(
+            template,
+            HomeField(
+                "under_hero_background",
+                "Tło sekcji",
+                "section_background",
+                (*settings, "background_image"),
+            ),
+            {"media": "none", "ref": "", "overlay_pct": 0},
+        )
+    elif mode == "image":
+        path_set(template, (*settings, "giclee_faq_bg_mode"), "image")
+        path_set(template, (*settings, "giclee_faq_bg_gradient"), gradient)
+    else:
+        path_set(template, (*settings, "giclee_faq_bg_mode"), "none")
+
+
 def apply_zone_values(template: dict[str, Any], zone: TemplateZone, values: dict[str, Any]) -> None:
     set_zone_enabled(template, zone, bool(values.get("_enabled", True)))
     _apply_text_fields(template, zone, values)
@@ -357,8 +393,14 @@ def apply_zone_values(template: dict[str, Any], zone: TemplateZone, values: dict
             continue
         if fld.kind in ("heading", "body", "theme_asset"):
             continue
+        # Gradient czyści media — pomiń zapis grafiki, zrobi to sync.
+        if zone.zone_id == "under_hero_bg" and fld.kind == "section_background":
+            if str(values.get("under_hero_bg_mode") or "").strip().lower() == "gradient":
+                continue
         write_field(template, fld, values[fld.field_id])
         _write_image_object_y(template, fld, values)
+    if zone.zone_id == "under_hero_bg":
+        _sync_faq_under_hero_bg(template, values)
 
 
 def apply_all_zone_values(

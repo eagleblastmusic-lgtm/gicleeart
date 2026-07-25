@@ -25,6 +25,7 @@ from .launcher_windows_shortcuts import (
     sample_windows_shortcut_keys,
     shortcut_virtual_key,
     windows_launcher_is_foreground,
+    windows_primary_button_down,
     windows_shortcut_modifiers_down,
 )
 from .launcher_shortcuts import (
@@ -38,6 +39,9 @@ from .styled_category_launcher import StyledCategoryGicleeApp
 
 
 _WINDOWS_SHORTCUT_POLL_MS = 35
+# Podczas trzymania LMB (przeciąganie okna / DnD) rzadziej budzimy pętlę Tk,
+# żeby HWND nadążał za kursorem.
+_WINDOWS_SHORTCUT_POLL_DRAG_MS = 250
 
 
 class OptionsCategoryGicleeApp(StyledCategoryGicleeApp):
@@ -234,16 +238,34 @@ class OptionsCategoryGicleeApp(StyledCategoryGicleeApp):
 
         sample = sample_windows_shortcut_keys(user32, self._shortcut_map)
         current_down = set(sample.current_down)
+        pointer_down = windows_primary_button_down(user32)
 
-        active = self._windows_launcher_is_foreground() and self._launcher_shortcuts_active()
-        modifiers_down = windows_shortcut_modifiers_down(user32) if active else False
+        if pointer_down:
+            # LMB wciśnięty: nie aktywuj skrótów i nie wołaj kosztownych
+            # sprawdzeń fokusu/dialogów — tylko utrzymuj stan klawiszy.
+            decision = resolve_shortcut_poll(
+                current_down,
+                self._windows_shortcut_down,
+                active=False,
+                modifiers_down=False,
+            )
+            poll_ms = _WINDOWS_SHORTCUT_POLL_DRAG_MS
+        else:
+            active = (
+                self._windows_launcher_is_foreground()
+                and self._launcher_shortcuts_active()
+            )
+            modifiers_down = (
+                windows_shortcut_modifiers_down(user32) if active else False
+            )
+            decision = resolve_shortcut_poll(
+                current_down,
+                self._windows_shortcut_down,
+                active=active,
+                modifiers_down=modifiers_down,
+            )
+            poll_ms = _WINDOWS_SHORTCUT_POLL_MS
 
-        decision = resolve_shortcut_poll(
-            current_down,
-            self._windows_shortcut_down,
-            active=active,
-            modifiers_down=modifiers_down,
-        )
         # Zapamiętujemy stan także poza aktywnym oknem. Dzięki temu przytrzymany
         # klawisz nie uruchomi komponentu dopiero po powrocie do launchera.
         self._windows_shortcut_down = set(decision.next_down)
@@ -252,7 +274,7 @@ class OptionsCategoryGicleeApp(StyledCategoryGicleeApp):
                 break
         try:
             self._windows_shortcut_poll_id = self.root.after(
-                _WINDOWS_SHORTCUT_POLL_MS,
+                poll_ms,
                 self._poll_windows_shortcuts,
             )
         except tk.TclError:

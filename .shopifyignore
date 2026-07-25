@@ -13,6 +13,7 @@ _patch*
 _restore*
 _section_api.json
 *.html
+*.fullwork
 pm_live.js
 _dup_result.txt
 

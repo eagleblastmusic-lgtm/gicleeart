@@ -88,7 +88,7 @@
         "corner_radius": "square",
         "width_percent": 100,
         "alignment_horizontal": "center",
-        "padding-block-start": 16,
+        "padding-block-start": 0,
         "padding-block-end": 16
       }
     },
@@ -473,6 +473,14 @@
         "background_media": "none",
         "video_position": "cover",
         "background_image_position": "cover",
+        "giclee_faq_bg_mode": "none",
+        "giclee_faq_bg_gradient": "v1",
+        "giclee_faq_bg_blur_px": 0,
+        "giclee_faq_bg_saturate_pct": 100,
+        "giclee_faq_bg_brightness_pct": 100,
+        "giclee_faq_bg_dim_overlay_pct": 0,
+        "giclee_faq_bg_scale_pct": 0,
+        "giclee_faq_accordion_style": "style1",
         "border": "none",
         "border_width": 1,
         "border_opacity": 100,

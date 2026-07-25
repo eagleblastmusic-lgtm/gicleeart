@@ -4269,7 +4269,7 @@ product-recommendations:has([data-has-recommendations='false']) {
 
 .accordion summary .icon,
 .accordion summary svg {
-  color: #c6a96b;
+  color: #c8cdd4;
   fill:rgb(0, 0, 0);
 }
 

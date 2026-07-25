@@ -12,6 +12,7 @@ from .launcher_shortcut_keys import normalize_shortcut_key, shortcut_virtual_key
 
 
 _GA_ROOT = 2
+_VK_LBUTTON = 0x01
 _VK_CONTROL = 0x11
 _VK_MENU = 0x12
 
@@ -85,3 +86,15 @@ def windows_shortcut_modifiers_down(user32: Any) -> bool:
     except (AttributeError, OSError, TypeError, ValueError):
         return False
     return ctrl_down or alt_down
+
+
+def windows_primary_button_down(user32: Any) -> bool:
+    """True gdy wciśnięty jest lewy przycisk myszy (VK_LBUTTON).
+
+    Używane do odciążenia pętli Tk podczas przeciągania okna / gestów LMB.
+    """
+
+    try:
+        return bool(int(user32.GetAsyncKeyState(_VK_LBUTTON)) & 0x8000)
+    except (AttributeError, OSError, TypeError, ValueError):
+        return False

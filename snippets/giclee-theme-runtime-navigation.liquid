@@ -482,9 +482,12 @@
       function startSplashHold() {
         if (splashHoldStarted) return;
         splashHoldStarted = true;
-        // Splash animation finishes at 1800ms (line: 0.9s delay + 0.9s = 1.8s)
-        // Small hold then fade — counted from fonts-ready so Bodoni/Cormorant never flash.
-        setTimeout(hideSplash, 2200);
+        if (splash && typeof window.gicleeInitSplashSubLetterFade === 'function') {
+          window.gicleeInitSplashSubLetterFade(splash);
+        }
+        // Title fade + line (ends ~1.8s) + subtitle letter-fade (starts 0.7s, 2.2s).
+        // Hold until letter-fade settles, then fade — from fonts-ready.
+        setTimeout(hideSplash, 3400);
       }
 
       if (splash && splash.classList.contains('splash-fonts-ready')) {

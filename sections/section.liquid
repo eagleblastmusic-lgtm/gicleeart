@@ -313,6 +313,120 @@
     },
     {
       "type": "select",
+      "id": "giclee_faq_bg_mode",
+      "label": "FAQ — typ tła (GicleeApp)",
+      "options": [
+        {
+          "value": "none",
+          "label": "Brak"
+        },
+        {
+          "value": "image",
+          "label": "Grafika"
+        },
+        {
+          "value": "gradient",
+          "label": "Gradient"
+        }
+      ],
+      "default": "none",
+      "visible_if": "{{ false }}"
+    },
+    {
+      "type": "select",
+      "id": "giclee_faq_bg_gradient",
+      "label": "FAQ — wersja gradientu (GicleeApp)",
+      "options": [
+        {
+          "value": "v1",
+          "label": "Wersja 1"
+        },
+        {
+          "value": "v2",
+          "label": "Wersja 2"
+        }
+      ],
+      "default": "v1",
+      "visible_if": "{{ false }}"
+    },
+    {
+      "type": "range",
+      "id": "giclee_faq_bg_blur_px",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "FAQ — rozmycie tła (GicleeApp)",
+      "default": 0,
+      "visible_if": "{{ false }}"
+    },
+    {
+      "type": "range",
+      "id": "giclee_faq_bg_saturate_pct",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "label": "FAQ — saturacja tła (GicleeApp)",
+      "default": 100,
+      "visible_if": "{{ false }}"
+    },
+    {
+      "type": "range",
+      "id": "giclee_faq_bg_brightness_pct",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "label": "FAQ — jasność tła (GicleeApp)",
+      "default": 100,
+      "visible_if": "{{ false }}"
+    },
+    {
+      "type": "range",
+      "id": "giclee_faq_bg_dim_overlay_pct",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "label": "FAQ — nakładka przyciemniająca (GicleeApp)",
+      "default": 0,
+      "visible_if": "{{ false }}"
+    },
+    {
+      "type": "range",
+      "id": "giclee_faq_bg_scale_pct",
+      "min": 0,
+      "max": 12,
+      "step": 1,
+      "unit": "%",
+      "label": "FAQ — powiększenie kadru tła (GicleeApp)",
+      "default": 0,
+      "visible_if": "{{ false }}"
+    },
+    {
+      "type": "select",
+      "id": "giclee_faq_accordion_style",
+      "label": "FAQ — styl kart (GicleeApp)",
+      "options": [
+        {
+          "value": "style1",
+          "label": "Styl 1"
+        },
+        {
+          "value": "style2",
+          "label": "Styl 2"
+        },
+        {
+          "value": "style3",
+          "label": "Styl 3"
+        }
+      ],
+      "default": "style1",
+      "visible_if": "{{ false }}"
+    },
+    {
+      "type": "select",
       "id": "border",
       "label": "t:settings.borders",
       "options": [

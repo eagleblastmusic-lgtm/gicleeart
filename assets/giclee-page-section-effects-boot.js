@@ -53,7 +53,9 @@
     if (textCfg.desktopEnabled === false) return;
     if (prefersReduced) return;
 
-    var content = section.querySelector('.media-with-content__content');
+    var content = section.querySelector(
+      '.media-with-content__content, .hero__content-wrapper'
+    );
     if (!content) return;
 
     markSection(section, 'text');

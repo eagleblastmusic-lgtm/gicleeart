@@ -39,6 +39,7 @@ class TemplateField:
     min_value: float | None = None
     max_value: float | None = None
     step: float | None = None
+    unit: str | None = None
 
 
 @dataclass(frozen=True)

@@ -132,6 +132,195 @@
        jedynie na tej stronie — inne akordeony (np. produkt) bez zmian.
        ===================================================================== */
 
+    /* Tło pod hero — grafika / gradient (GicleeApp → Tło pod hero) */
+    body.template-page-faq .shopify-section:has(.faq-section) > .section-background--faq-custom {
+      background: #000 !important;
+    }
+
+    body.template-page-faq .shopify-section:has(.faq-section) > .section-background--faq-gradient {
+      background: transparent !important;
+    }
+
+    /* Grafika: absolutny bleed — bez tego kontener ma wysokość 0 (img jest absolute). */
+    body.template-page-faq .faq-section.faq-section--bg-image .custom-section-background {
+      position: absolute;
+      inset: 0;
+      grid-column: 1 / -1;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+      background-color: #000;
+    }
+
+    body.template-page-faq .faq-section.faq-section--bg-image .custom-section-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    /*
+     * Hierarchia tła pod hero — osobne parametry z GicleeApp:
+     * --faq-bg-blur (px), --faq-bg-saturate (%), --faq-bg-brightness (%),
+     * --faq-bg-dim-overlay (%), --faq-bg-scale (% zoom).
+     */
+    body.template-page-faq .faq-section.faq-section--bg-image .background-image-container,
+    body.template-page-faq .faq-section.faq-section--bg-image video-background-component {
+      position: absolute;
+      inset: 0;
+      transform: scale(calc(1 + var(--faq-bg-scale, 0) * 0.01));
+      filter:
+        blur(calc(var(--faq-bg-blur, 0) * 1px))
+        saturate(calc(var(--faq-bg-saturate, 100) * 0.01))
+        brightness(calc(var(--faq-bg-brightness, 100) * 0.01));
+    }
+
+    body.template-page-faq .faq-section.faq-section--bg-image .giclee-section-bg-overlay {
+      position: absolute;
+    }
+
+    body.template-page-faq .faq-section.faq-section--bg-image .giclee-section-bg-overlay::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: #000;
+      opacity: calc(var(--faq-bg-dim-overlay, 0) * 0.01);
+    }
+
+    /* Zanikanie tła pod hero — góra i dół (jak BIO wide_bottom / home menu-wide) */
+    body.template-page-faq .faq-section.faq-section--bg-image {
+      --faq-bg-fade-height: clamp(80px, 16vh, 150px);
+    }
+
+    body.template-page-faq .faq-section.faq-section--bg-image .custom-section-background::before,
+    body.template-page-faq .faq-section.faq-section--bg-image .custom-section-background::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      z-index: 4;
+      height: var(--faq-bg-fade-height);
+      pointer-events: none;
+    }
+
+    body.template-page-faq .faq-section.faq-section--bg-image .custom-section-background::before {
+      top: 0;
+      background: linear-gradient(
+        180deg,
+        #000 0%,
+        #000 12%,
+        rgba(0, 0, 0, 0.94) 30%,
+        rgba(0, 0, 0, 0.72) 52%,
+        rgba(0, 0, 0, 0.28) 78%,
+        transparent 100%
+      );
+    }
+
+    body.template-page-faq .faq-section.faq-section--bg-image .custom-section-background::after {
+      bottom: 0;
+      background: linear-gradient(
+        0deg,
+        #000 0%,
+        #000 12%,
+        rgba(0, 0, 0, 0.94) 30%,
+        rgba(0, 0, 0, 0.72) 52%,
+        rgba(0, 0, 0, 0.28) 78%,
+        transparent 100%
+      );
+    }
+
+    body.template-page-faq .faq-section.faq-section--gradient-v1,
+    body.template-page-faq .faq-section.faq-section--gradient-v1 .custom-section-background {
+      background:
+        radial-gradient(
+          ellipse 70% 38% at 50% 0%,
+          rgba(140, 108, 76, 0.20) 0%,
+          rgba(69, 52, 39, 0.10) 38%,
+          transparent 72%
+        ),
+        linear-gradient(
+          180deg,
+          #17130f 0%,
+          #0b0907 22%,
+          #030303 52%,
+          #000 100%
+        ) !important;
+    }
+
+    body.template-page-faq .faq-section.faq-section--gradient-v2,
+    body.template-page-faq .faq-section.faq-section--gradient-v2 .custom-section-background {
+      background:
+        radial-gradient(
+          ellipse 65% 42% at 50% 0%,
+          rgba(150, 112, 78, 0.22) 0%,
+          rgba(70, 51, 37, 0.09) 42%,
+          transparent 72%
+        ),
+        radial-gradient(
+          ellipse at center,
+          transparent 35%,
+          rgba(0, 0, 0, 0.55) 100%
+        ),
+        linear-gradient(
+          180deg,
+          #16120f 0%,
+          #090807 25%,
+          #000 65%
+        ) !important;
+    }
+
+    body.template-page-faq .faq-section.faq-section--gradient-v1,
+    body.template-page-faq .faq-section.faq-section--gradient-v2 {
+      position: relative;
+      --faq-bg-fade-height: clamp(80px, 16vh, 150px);
+    }
+
+    body.template-page-faq .faq-section.faq-section--gradient-v1::before,
+    body.template-page-faq .faq-section.faq-section--gradient-v1::after,
+    body.template-page-faq .faq-section.faq-section--gradient-v2::before,
+    body.template-page-faq .faq-section.faq-section--gradient-v2::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      z-index: 0;
+      height: var(--faq-bg-fade-height);
+      pointer-events: none;
+    }
+
+    body.template-page-faq .faq-section.faq-section--gradient-v1::before,
+    body.template-page-faq .faq-section.faq-section--gradient-v2::before {
+      top: 0;
+      background: linear-gradient(
+        180deg,
+        #000 0%,
+        #000 12%,
+        rgba(0, 0, 0, 0.94) 30%,
+        rgba(0, 0, 0, 0.72) 52%,
+        rgba(0, 0, 0, 0.28) 78%,
+        transparent 100%
+      );
+    }
+
+    body.template-page-faq .faq-section.faq-section--gradient-v1::after,
+    body.template-page-faq .faq-section.faq-section--gradient-v2::after {
+      bottom: 0;
+      background: linear-gradient(
+        0deg,
+        #000 0%,
+        #000 12%,
+        rgba(0, 0, 0, 0.94) 30%,
+        rgba(0, 0, 0, 0.72) 52%,
+        rgba(0, 0, 0, 0.28) 78%,
+        transparent 100%
+      );
+    }
+
+    body.template-page-faq .faq-section.faq-section--gradient-v1 > .custom-section-content,
+    body.template-page-faq .faq-section.faq-section--gradient-v2 > .custom-section-content {
+      position: relative;
+      z-index: 1;
+    }
+
     /* Separatory (divider) — mniej jaskrawe na czarnym tle */
     #MainContent .divider .divider__line {
       opacity: 0.8;
@@ -189,10 +378,11 @@
         linear-gradient(
           90deg,
           rgb(5, 5, 5) 0%,
-          rgba(5, 5, 5, 0.97) 24%,
-          rgba(5, 5, 5, 0.78) 46%,
-          rgba(5, 5, 5, 0.38) 66%,
-          rgba(5, 5, 5, 0.12) 84%,
+          rgba(5, 5, 5, 0.98) 32%,
+          rgba(5, 5, 5, 0.92) 48%,
+          rgba(5, 5, 5, 0.72) 60%,
+          rgba(5, 5, 5, 0.38) 74%,
+          rgba(5, 5, 5, 0.12) 88%,
           rgba(5, 5, 5, 0.02) 100%
         ),
         var(--details-art-image) !important;
@@ -210,15 +400,18 @@
       background: linear-gradient(
         90deg,
         rgb(5, 5, 5) 0%,
-        rgba(5, 5, 5, 0.97) 24%,
-        rgba(5, 5, 5, 0.78) 46%,
-        rgba(5, 5, 5, 0.38) 66%,
-        rgba(5, 5, 5, 0.12) 84%,
+        rgba(5, 5, 5, 0.98) 32%,
+        rgba(5, 5, 5, 0.92) 48%,
+        rgba(5, 5, 5, 0.72) 60%,
+        rgba(5, 5, 5, 0.38) 74%,
+        rgba(5, 5, 5, 0.12) 88%,
         rgba(5, 5, 5, 0.02) 100%
       );
     }
     .accordion accordion-custom details.details--art .details__heading-label {
-      text-shadow: 0 1px 12px rgba(0, 0, 0, 0.65);
+      text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.9),
+        0 2px 14px rgba(0, 0, 0, 0.75);
     }
 
     /* Subtelna złota linia u góry karty */
@@ -315,8 +508,8 @@
       border-radius: 50%;
       border: 1px solid rgba(255, 255, 255, 0.14);
       background: rgba(255, 255, 255, 0.03);
-      color: #c6a96b;
-      transition: background 0.3s ease, border-color 0.3s ease;
+      color: #c8cdd4;
+      transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
     }
     /* Przy tle-obrazie: nieprzezroczyste tło, żeby grafika nie wchodziła w przycisk */
     .accordion accordion-custom details.details--art summary.details__header .svg-wrapper.icon-caret {
@@ -328,26 +521,29 @@
     .accordion accordion-custom details summary.details__header .svg-wrapper.icon-caret svg {
       width: 14px;
       height: 14px;
+      color: inherit;
       fill: none !important;
       stroke: currentColor;
       transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
     @media (hover: hover) {
       .accordion accordion-custom details:hover summary .svg-wrapper.icon-caret {
-        border-color: rgba(198, 169, 107, 0.5);
-        background: rgba(198, 169, 107, 0.08);
+        border-color: rgba(255, 255, 255, 0.28);
+        background: rgba(200, 205, 212, 0.08);
+        color: #e8ecf0;
       }
       .accordion accordion-custom details.details--art:hover summary .svg-wrapper.icon-caret {
-        background: #14110c;
+        background: #121216;
         background-image: none;
       }
     }
     .accordion accordion-custom details[open] summary .svg-wrapper.icon-caret {
-      border-color: rgba(198, 169, 107, 0.6);
-      background: rgba(198, 169, 107, 0.12);
+      border-color: rgba(255, 255, 255, 0.28);
+      background: rgba(200, 205, 212, 0.12);
+      color: #e8ecf0;
     }
     .accordion accordion-custom details.details--art[open] summary .svg-wrapper.icon-caret {
-      background: #16130e;
+      background: #121216;
       background-image: none;
     }
 
@@ -414,6 +610,335 @@
       box-shadow: inset 0 -1px 0 0 #050505;
       pointer-events: none;
       z-index: 2;
+    }
+
+    /* =====================================================================
+       FAQ Style 2 — świecący hover jak Galaxy Button («Losuj obraz»)
+       Klasa: .faq-accordion-style2 (GicleeApp → Pytania i odpowiedzi → Styl)
+       ===================================================================== */
+    .faq-accordion-style2 .accordion accordion-custom details {
+      --faq-gx: 50%;
+      --faq-gy: 50%;
+      /* Krawędź jak .giclee-galaxy-btn__shell (2px · rgba(255,255,255,0.15)) */
+      border: 2px solid rgba(255, 255, 255, 0.15) !important;
+      box-shadow:
+        0 1px 1px rgba(0, 0, 0, 0.2),
+        0 12px 32px -22px rgba(0, 0, 0, 0.7) !important;
+      transition:
+        border-color 0.45s ease,
+        box-shadow 0.45s ease,
+        transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+        background 0.45s ease;
+    }
+
+    .faq-accordion-style2 .accordion accordion-custom details:not(.details--art) {
+      background: rgba(0, 0, 0, 0.81) !important;
+      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(20px);
+    }
+
+    .faq-accordion-style2 .accordion accordion-custom details.details--art:not(.details--art-shared) {
+      background: #050505 !important;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+
+    /* Grafika na karcie pytania (shared) — zachowana; shell Galaxy zamiast czarnej ramki */
+    .faq-accordion-style2 .accordion accordion-custom details.details--art-shared {
+      border: 2px solid rgba(255, 255, 255, 0.15) !important;
+      background-color: #050505 !important;
+      background-image:
+        linear-gradient(
+          90deg,
+          rgb(5, 5, 5) 0%,
+          rgba(5, 5, 5, 0.98) 32%,
+          rgba(5, 5, 5, 0.92) 48%,
+          rgba(5, 5, 5, 0.72) 60%,
+          rgba(5, 5, 5, 0.38) 74%,
+          rgba(5, 5, 5, 0.12) 88%,
+          rgba(5, 5, 5, 0.02) 100%
+        ),
+        var(--details-art-image) !important;
+      background-size: auto, cover !important;
+      background-position: 0 0, var(--details-art-position, 72% 50%) !important;
+      background-repeat: no-repeat !important;
+      background-clip: padding-box !important;
+      box-shadow:
+        0 12px 32px -22px rgba(0, 0, 0, 0.7) !important;
+    }
+
+    /*
+      Pointer-follow jak Galaxy Button:
+      — ::before: bardzo stonowany fill pod kursorem
+      — ::after: świecący pierścień na krawędzi (maska = tylko 2px shell)
+    */
+    .faq-accordion-style2 .accordion accordion-custom details::before {
+      inset: 0;
+      height: auto;
+      background: radial-gradient(
+        circle 120px at var(--faq-gx, 50%) var(--faq-gy, 50%),
+        rgba(200, 205, 212, 0.14) 0%,
+        rgba(200, 205, 212, 0.04) 40%,
+        transparent 72%
+      );
+      opacity: 0;
+      filter: blur(2px);
+      z-index: 2;
+      mix-blend-mode: screen;
+      transition: opacity 0.45s ease;
+    }
+
+    .faq-accordion-style2 .accordion accordion-custom details::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      height: auto;
+      border-radius: inherit;
+      padding: 2px;
+      background: radial-gradient(
+        circle 130px at var(--faq-gx, 50%) var(--faq-gy, 50%),
+        rgba(200, 205, 212, 0.95) 0%,
+        rgba(200, 205, 212, 0.55) 28%,
+        rgba(200, 205, 212, 0.12) 55%,
+        transparent 72%
+      );
+      -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 5;
+      transition: opacity 0.45s ease;
+    }
+
+    .faq-accordion-style2 .accordion accordion-custom details summary.details__header,
+    .faq-accordion-style2 .accordion accordion-custom details .details-content,
+    .faq-accordion-style2 .accordion accordion-custom details::details-content {
+      position: relative;
+      z-index: 3;
+    }
+
+    /* Okrągły caret — zawsze bez grafiki (nieprzeźroczysta płyta) */
+    .faq-accordion-style2 .accordion accordion-custom details summary.details__header .svg-wrapper.icon-caret,
+    .faq-accordion-style2 .accordion accordion-custom details.details--art summary.details__header .svg-wrapper.icon-caret {
+      color: #c8cdd4;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(12, 12, 14, 0.98) !important;
+      background-image: none !important;
+      isolation: isolate;
+      z-index: 4;
+    }
+
+    @media (hover: hover) {
+      .faq-accordion-style2 .accordion accordion-custom details:hover {
+        border-color: rgba(255, 255, 255, 0.22) !important;
+        transform: scale(1.015);
+        box-shadow:
+          0 0 34px -4px rgba(200, 205, 212, 0.48),
+          0 0 64px -8px rgba(200, 205, 212, 0.26),
+          0 18px 40px -22px rgba(0, 0, 0, 0.78) !important;
+      }
+
+      .faq-accordion-style2 .accordion accordion-custom details:not(.details--art):hover {
+        background: rgba(0, 0, 0, 0.86) !important;
+      }
+
+      .faq-accordion-style2 .accordion accordion-custom details.details--art-shared:hover {
+        border-color: rgba(255, 255, 255, 0.22) !important;
+        /* nie kasować background-image z grafiką */
+        box-shadow:
+          0 0 34px -4px rgba(200, 205, 212, 0.42),
+          0 0 64px -8px rgba(200, 205, 212, 0.22),
+          0 18px 40px -22px rgba(0, 0, 0, 0.78) !important;
+      }
+
+      .faq-accordion-style2 .accordion accordion-custom details.details--art:not(.details--art-shared):hover {
+        background: #050505 !important;
+      }
+
+      .faq-accordion-style2 .accordion accordion-custom details:hover::before {
+        opacity: 0.55;
+      }
+
+      .faq-accordion-style2 .accordion accordion-custom details:hover::after {
+        opacity: 1;
+      }
+
+      .faq-accordion-style2 .accordion accordion-custom details:hover summary .svg-wrapper.icon-caret,
+      .faq-accordion-style2 .accordion accordion-custom details.details--art:hover summary .svg-wrapper.icon-caret {
+        border-color: rgba(255, 255, 255, 0.28);
+        background: rgba(18, 18, 22, 0.98) !important;
+        background-image: none !important;
+        color: #e8ecf0;
+      }
+    }
+
+    .faq-accordion-style2 .accordion accordion-custom details:not(.details--art-shared)[open] {
+      border-color: rgba(255, 255, 255, 0.22) !important;
+      background: rgba(0, 0, 0, 0.86) !important;
+      box-shadow:
+        0 0 28px -8px rgba(200, 205, 212, 0.16),
+        0 20px 46px -22px rgba(0, 0, 0, 0.82) !important;
+    }
+
+    .faq-accordion-style2 .accordion accordion-custom details.details--art-shared[open] {
+      border-color: rgba(255, 255, 255, 0.22) !important;
+      box-shadow:
+        0 0 28px -8px rgba(200, 205, 212, 0.14),
+        0 20px 46px -22px rgba(0, 0, 0, 0.82) !important;
+    }
+
+    .faq-accordion-style2 .accordion accordion-custom details.details--art:not(.details--art-shared)[open] {
+      background: #050505 !important;
+    }
+
+    .faq-accordion-style2 .accordion accordion-custom details[open]::before {
+      opacity: 0.22;
+    }
+
+    .faq-accordion-style2 .accordion accordion-custom details[open]::after {
+      opacity: 0.5;
+    }
+
+    .faq-accordion-style2 .accordion accordion-custom details[open] summary .svg-wrapper.icon-caret,
+    .faq-accordion-style2 .accordion accordion-custom details.details--art[open] summary .svg-wrapper.icon-caret {
+      border-color: rgba(255, 255, 255, 0.28);
+      background: rgba(18, 18, 22, 0.98) !important;
+      background-image: none !important;
+      color: #e8ecf0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .faq-accordion-style2 .accordion accordion-custom details {
+        transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+        transform: none !important;
+      }
+      .faq-accordion-style2 .accordion accordion-custom details::before,
+      .faq-accordion-style2 .accordion accordion-custom details::after {
+        display: none;
+      }
+    }
+
+    /* =====================================================================
+       FAQ Style 3 — Galaxy («Losuj obraz»): shell / plate (bez orbów / Lottie)
+       Klasa: .faq-accordion-style3 · chrome: assets/faq-accordion-galaxy.css
+       ===================================================================== */
+    .faq-accordion-style3 .accordion,
+    .faq-accordion-style3 .accordion accordion-custom {
+      overflow: visible;
+    }
+
+    .faq-accordion-style3 .accordion accordion-custom .faq-galaxy-card {
+      transition:
+        transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow 0.35s ease;
+    }
+
+    .faq-accordion-style3 .accordion accordion-custom details {
+      border: none !important;
+      background: transparent !important;
+      background-image: none !important;
+      box-shadow: none !important;
+      overflow: visible !important;
+      transform: none !important;
+    }
+
+    .faq-accordion-style3 .accordion accordion-custom details.details--art,
+    .faq-accordion-style3 .accordion accordion-custom details.details--art-shared {
+      background: transparent !important;
+      background-image: none !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+
+    /* Style 1 gold line / Style 2 radial — wyłączone (glow idzie z warstw Galaxy) */
+    .faq-accordion-style3 .accordion accordion-custom details::before,
+    .faq-accordion-style3 .accordion accordion-custom details::after {
+      content: none !important;
+      display: none !important;
+    }
+
+    .faq-accordion-style3 .accordion accordion-custom details summary.details__header,
+    .faq-accordion-style3 .accordion accordion-custom details .details-content,
+    .faq-accordion-style3 .accordion accordion-custom details::details-content {
+      position: relative;
+      z-index: 3;
+    }
+
+    /* Gradient etykiety jak .giclee-galaxy-btn__label */
+    .faq-accordion-style3 .accordion accordion-custom details summary.details__header .details__heading-label {
+      -webkit-text-fill-color: transparent;
+      background-image: linear-gradient(0deg, #a5a5a5, #fff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      text-shadow: none !important;
+    }
+
+    /* Style 3 + grafika: drop-shadow (text-shadow nie działa przy background-clip:text) */
+    .faq-accordion-style3 .accordion accordion-custom details.details--art summary.details__header .details__heading-label {
+      filter:
+        drop-shadow(0 1px 1px rgba(0, 0, 0, 0.95))
+        drop-shadow(0 2px 10px rgba(0, 0, 0, 0.8));
+    }
+
+    .faq-accordion-style3 .accordion accordion-custom details summary.details__header .svg-wrapper.icon-caret,
+    .faq-accordion-style3 .accordion accordion-custom details.details--art summary.details__header .svg-wrapper.icon-caret {
+      color: #c8cdd4;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(12, 12, 14, 0.98) !important;
+      background-image: none !important;
+      isolation: isolate;
+      z-index: 4;
+    }
+
+    @media (hover: hover) {
+      .faq-accordion-style3 .accordion accordion-custom details:hover,
+      .faq-accordion-style3 .accordion accordion-custom details.details--art-shared:hover,
+      .faq-accordion-style3 .accordion accordion-custom details:not(.details--art-shared):hover {
+        border: none !important;
+        background: transparent !important;
+        background-image: none !important;
+        box-shadow: none !important;
+        transform: none !important;
+      }
+
+      .faq-accordion-style3 .accordion accordion-custom details:hover summary .svg-wrapper.icon-caret,
+      .faq-accordion-style3 .accordion accordion-custom details.details--art:hover summary .svg-wrapper.icon-caret {
+        border-color: rgba(255, 255, 255, 0.28);
+        background: rgba(18, 18, 22, 0.98) !important;
+        background-image: none !important;
+        color: #e8ecf0;
+      }
+
+      .faq-accordion-style3 .faq-galaxy-card:not(.faq-galaxy-card--art):hover .faq-galaxy-card__plate {
+        background-color: rgba(0, 0, 0, 0.86);
+      }
+    }
+
+    .faq-accordion-style3 .accordion accordion-custom details:not(.details--art-shared)[open],
+    .faq-accordion-style3 .accordion accordion-custom details.details--art-shared[open],
+    .faq-accordion-style3 .accordion accordion-custom details.details--art:not(.details--art-shared)[open] {
+      border: none !important;
+      background: transparent !important;
+      background-image: none !important;
+      box-shadow: none !important;
+    }
+
+    .faq-accordion-style3 .accordion accordion-custom details[open] summary .svg-wrapper.icon-caret,
+    .faq-accordion-style3 .accordion accordion-custom details.details--art[open] summary .svg-wrapper.icon-caret {
+      border-color: rgba(255, 255, 255, 0.28);
+      background: rgba(18, 18, 22, 0.98) !important;
+      background-image: none !important;
+      color: #e8ecf0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .faq-accordion-style3 .accordion accordion-custom .faq-galaxy-card {
+        transform: none !important;
+        transition: none !important;
+      }
     }
 
     /* Responsywność */

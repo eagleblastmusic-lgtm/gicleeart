@@ -16,6 +16,7 @@ from giclee_app.launcher_windows_shortcuts import (
     sample_windows_shortcut_keys,
     shortcut_virtual_key,
     windows_launcher_is_foreground,
+    windows_primary_button_down,
     windows_shortcut_modifiers_down,
 )
 
@@ -173,6 +174,18 @@ def test_modifiers_detect_ctrl_or_alt_and_fail_closed() -> None:
     assert windows_shortcut_modifiers_down(user32) is False
 
 
+def test_primary_button_detects_lbutton_and_fail_closed() -> None:
+    user32 = _fake_user32()
+    user32.GetAsyncKeyState.callback = lambda vk: 0x8000 if vk == 0x01 else 0
+    assert windows_primary_button_down(user32) is True
+
+    user32.GetAsyncKeyState.callback = lambda _vk: 0
+    assert windows_primary_button_down(user32) is False
+
+    user32.GetAsyncKeyState.callback = lambda _vk: (_ for _ in ()).throw(OSError("x"))
+    assert windows_primary_button_down(user32) is False
+
+
 def test_platform_module_has_no_tk_launcher_studio_or_component_imports() -> None:
     path = (
         Path(__file__).resolve().parents[1]
@@ -211,6 +224,7 @@ def test_options_class_delegates_direct_winapi_calls_to_adapter() -> None:
     assert "GetAncestor" not in source
     assert "ctypes" not in source
     assert "sample_windows_shortcut_keys(" in poll
+    assert "windows_primary_button_down(" in poll
     assert "windows_shortcut_modifiers_down(" in poll
     assert "resolve_shortcut_poll(" in poll
     assert "self.root.after(" in poll
@@ -251,6 +265,11 @@ def test_options_poll_keeps_timer_and_controller_orchestration(
     )
     monkeypatch.setattr(
         options,
+        "windows_primary_button_down",
+        lambda _user32: False,
+    )
+    monkeypatch.setattr(
+        options,
         "windows_shortcut_modifiers_down",
         lambda _user32: False,
     )
@@ -260,6 +279,50 @@ def test_options_poll_keeps_timer_and_controller_orchestration(
     assert app._windows_shortcut_down == {"i"}
     assert triggered == ["i"]
     assert app.root.after_calls == [(35, app._poll_windows_shortcuts)]
+    assert app._windows_shortcut_poll_id == "poll-id"
+
+
+def test_options_poll_backs_off_while_primary_button_is_down(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    app = options.OptionsCategoryGicleeApp.__new__(options.OptionsCategoryGicleeApp)
+    app._windows_user32 = object()
+    app._shortcut_map = {"i": "integracjagpt"}
+    app._windows_shortcut_down = set()
+    app._windows_shortcut_poll_id = None
+    app.root = _RootRecorder()
+    app._windows_launcher_is_foreground = lambda: (_ for _ in ()).throw(
+        AssertionError("foreground must be skipped during pointer drag")
+    )
+    app._launcher_shortcuts_active = lambda: (_ for _ in ()).throw(
+        AssertionError("shortcut activity must be skipped during pointer drag")
+    )
+    triggered: list[str] = []
+    app._trigger_shortcut = lambda key: triggered.append(key) or True
+
+    monkeypatch.setattr(
+        options,
+        "sample_windows_shortcut_keys",
+        lambda _user32, _keys: WindowsShortcutSample(frozenset({"i"})),
+    )
+    monkeypatch.setattr(
+        options,
+        "windows_primary_button_down",
+        lambda _user32: True,
+    )
+    monkeypatch.setattr(
+        options,
+        "windows_shortcut_modifiers_down",
+        lambda _user32: (_ for _ in ()).throw(
+            AssertionError("modifiers must not be sampled during pointer drag")
+        ),
+    )
+
+    app._poll_windows_shortcuts()
+
+    assert app._windows_shortcut_down == {"i"}
+    assert triggered == []
+    assert app.root.after_calls == [(250, app._poll_windows_shortcuts)]
     assert app._windows_shortcut_poll_id == "poll-id"
 
 

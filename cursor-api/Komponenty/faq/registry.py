@@ -64,14 +64,127 @@ PAGE_ZONES: tuple[TemplateZone, ...] = (
         ),
     ),
     TemplateZone(
+        zone_id="under_hero_bg",
+        label="Tło pod hero",
+        description=(
+            "Tło sekcji z pytaniami (pod hero): wybierz grafikę/film albo gotowy gradient (v1/v2)."
+        ),
+        section_key="section_9YgpHf",
+        # Ta sama sekcja co accordion — nie przełączamy widoczności osobno.
+        settings_only=True,
+        fields=(
+            TemplateField(
+                "under_hero_bg_mode",
+                "Typ tła",
+                "choice",
+                _s("section_9YgpHf", "settings", "giclee_faq_bg_mode"),
+                hint="Grafika — wgraj plik. Gradient — gotowa kompozycja v1 lub v2.",
+                choices=(
+                    ("image", "Grafika"),
+                    ("gradient", "Gradient"),
+                ),
+            ),
+            TemplateField(
+                "under_hero_gradient",
+                "Wersja gradientu",
+                "choice",
+                _s("section_9YgpHf", "settings", "giclee_faq_bg_gradient"),
+                hint="Widoczne przy typie «Gradient».",
+                choices=(
+                    ("v1", "Wersja 1 — ciepły radial + ciemny linear"),
+                    ("v2", "Wersja 2 — radial + winieta + linear"),
+                ),
+            ),
+            TemplateField(
+                "under_hero_background",
+                "Tło sekcji",
+                "section_background",
+                _s("section_9YgpHf", "settings", "background_image"),
+                hint="Widoczne przy typie «Grafika». Grafika lub film (Shopify Files).",
+            ),
+            TemplateField(
+                "under_hero_blur",
+                "Rozmycie tła",
+                "int",
+                _s("section_9YgpHf", "settings", "giclee_faq_bg_blur_px"),
+                hint="Rozmycie grafiki tła sekcji (px).",
+                min_value=0,
+                max_value=20,
+                step=1,
+                unit="px",
+            ),
+            TemplateField(
+                "under_hero_saturate",
+                "Saturacja tła",
+                "int",
+                _s("section_9YgpHf", "settings", "giclee_faq_bg_saturate_pct"),
+                hint="100% = pełne kolory, niżej = bardziej szare.",
+                min_value=0,
+                max_value=100,
+                step=1,
+                unit="%",
+            ),
+            TemplateField(
+                "under_hero_brightness",
+                "Jasność tła",
+                "int",
+                _s("section_9YgpHf", "settings", "giclee_faq_bg_brightness_pct"),
+                hint="100% = bez ściemnienia filtrem, niżej = ciemniejsza grafika.",
+                min_value=0,
+                max_value=100,
+                step=1,
+                unit="%",
+            ),
+            TemplateField(
+                "under_hero_dim_overlay",
+                "Nakładka przyciemniająca",
+                "int",
+                _s("section_9YgpHf", "settings", "giclee_faq_bg_dim_overlay_pct"),
+                hint="Dodatkowa czarna warstwa nad grafiką (niezależna od «Przyciemnienie» w oknie Tło…).",
+                min_value=0,
+                max_value=100,
+                step=1,
+                unit="%",
+            ),
+            TemplateField(
+                "under_hero_scale",
+                "Powiększenie kadru",
+                "int",
+                _s("section_9YgpHf", "settings", "giclee_faq_bg_scale_pct"),
+                hint="Lekki zoom grafiki (unika prześwitów przy rozmycin).",
+                min_value=0,
+                max_value=12,
+                step=1,
+                unit="%",
+            ),
+        ),
+    ),
+    TemplateZone(
         zone_id="faq_accordion",
         label="Pytania i odpowiedzi",
         description="Accordion z najczęstszymi pytaniami — opcjonalne tła obrazów z gradientem.",
         section_key="section_9YgpHf",
-        fields=tuple(
-            field
-            for index, (row_key, text_key) in enumerate(_FAQ_ROWS)
-            for field in _faq_row_fields(index, row_key, text_key)
+        fields=(
+            TemplateField(
+                "accordion_style",
+                "Styl kart",
+                "choice",
+                _s("section_9YgpHf", "settings", "giclee_faq_accordion_style"),
+                hint=(
+                    "Styl 1 — szkło/złoto. Styl 2 — uproszczony hover Galaxy. "
+                    "Styl 3 — Galaxy shell + świecąca krawędź (bez orbów)."
+                ),
+                choices=(
+                    ("style1", "Styl 1 — szkło i złoto"),
+                    ("style2", "Styl 2 — świecący hover (Galaxy)"),
+                    ("style3", "Styl 3 — Galaxy shell + krawędź («Losuj obraz»)"),
+                ),
+            ),
+            *(
+                field
+                for index, (row_key, text_key) in enumerate(_FAQ_ROWS)
+                for field in _faq_row_fields(index, row_key, text_key)
+            ),
         ),
     ),
 )

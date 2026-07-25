@@ -15,6 +15,10 @@ PAGE_ZONES: tuple[TemplateZone, ...] = (
             TemplateField("hero_intro", "Wprowadzenie", "body", _s("hero_BMCrdL", "blocks", "text_PDh9dG", "settings", "text")),
             TemplateField("hero_image", "Tło — grafika", "shopify_image", _s("hero_BMCrdL", "settings", "image_1")),
         ),
+        image_effect_selector=(
+            ".hero__media-wrapper--desktop, "
+            "[data-testid=\"hero-picture-1\"]"
+        ),
     ),
     TemplateZone(
         zone_id="main",

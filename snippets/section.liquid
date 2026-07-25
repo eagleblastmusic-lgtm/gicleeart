@@ -5,9 +5,78 @@
   @param {string} children - The children of the section
 {%- enddoc -%}
 
-<div class="section-background color-{{ section.settings.color_scheme }}"></div>
+{%- liquid
+  assign giclee_faq_bg_mode = section.settings.giclee_faq_bg_mode | default: 'none'
+  assign giclee_faq_bg_gradient = section.settings.giclee_faq_bg_gradient | default: 'v1'
+  if giclee_faq_bg_gradient != 'v2'
+    assign giclee_faq_bg_gradient = 'v1'
+  endif
+  assign giclee_faq_gradient_active = false
+  if giclee_faq_bg_mode == 'gradient'
+    assign giclee_faq_gradient_active = true
+  endif
+  assign giclee_faq_image_active = false
+  if giclee_faq_bg_mode == 'image' and section.settings.background_media != 'none'
+    assign giclee_faq_image_active = true
+  endif
+  assign giclee_faq_custom_bg = false
+  if giclee_faq_gradient_active or giclee_faq_image_active
+    assign giclee_faq_custom_bg = true
+  endif
+  assign giclee_faq_accordion_style = ''
+  assign giclee_faq_bg_blur = 0
+  assign giclee_faq_bg_saturate = 100
+  assign giclee_faq_bg_brightness = 100
+  assign giclee_faq_bg_dim_overlay = 0
+  assign giclee_faq_bg_scale = 0
+  if template.suffix == 'faq'
+    assign giclee_faq_accordion_style = section.settings.giclee_faq_accordion_style | default: 'style1'
+    unless giclee_faq_accordion_style == 'style2' or giclee_faq_accordion_style == 'style3'
+      assign giclee_faq_accordion_style = 'style1'
+    endunless
+    assign giclee_faq_bg_blur = section.settings.giclee_faq_bg_blur_px | default: 0 | plus: 0
+    assign giclee_faq_bg_saturate = section.settings.giclee_faq_bg_saturate_pct | default: 100 | plus: 0
+    assign giclee_faq_bg_brightness = section.settings.giclee_faq_bg_brightness_pct | default: 100 | plus: 0
+    assign giclee_faq_bg_dim_overlay = section.settings.giclee_faq_bg_dim_overlay_pct | default: 0 | plus: 0
+    assign giclee_faq_bg_scale = section.settings.giclee_faq_bg_scale_pct | default: 0 | plus: 0
+    if giclee_faq_bg_blur < 0
+      assign giclee_faq_bg_blur = 0
+    elsif giclee_faq_bg_blur > 20
+      assign giclee_faq_bg_blur = 20
+    endif
+    if giclee_faq_bg_saturate < 0
+      assign giclee_faq_bg_saturate = 0
+    elsif giclee_faq_bg_saturate > 100
+      assign giclee_faq_bg_saturate = 100
+    endif
+    if giclee_faq_bg_brightness < 0
+      assign giclee_faq_bg_brightness = 0
+    elsif giclee_faq_bg_brightness > 100
+      assign giclee_faq_bg_brightness = 100
+    endif
+    if giclee_faq_bg_dim_overlay < 0
+      assign giclee_faq_bg_dim_overlay = 0
+    elsif giclee_faq_bg_dim_overlay > 100
+      assign giclee_faq_bg_dim_overlay = 100
+    endif
+    if giclee_faq_bg_scale < 0
+      assign giclee_faq_bg_scale = 0
+    elsif giclee_faq_bg_scale > 12
+      assign giclee_faq_bg_scale = 12
+    endif
+  endif
+-%}
+<div class="section-background color-{{ section.settings.color_scheme }}{% if giclee_faq_custom_bg %} section-background--faq-custom{% endif %}{% if giclee_faq_gradient_active %} section-background--faq-gradient{% endif %}"></div>
 <div
-  class="section section--{{ section.settings.section_width }} color-{{ section.settings.color_scheme }}"
+  class="
+    section
+    section--{{ section.settings.section_width }}
+    color-{{ section.settings.color_scheme }}
+    {% if giclee_faq_custom_bg %}faq-section{% endif %}
+    {% if giclee_faq_image_active %}faq-section--bg-image{% endif %}
+    {% if giclee_faq_gradient_active %}faq-section--gradient-{{ giclee_faq_bg_gradient }}{% endif %}
+    {% if giclee_faq_accordion_style != blank %}faq-accordion-{{ giclee_faq_accordion_style }}{% endif %}
+  "
   data-testid="ui-test-section"
 
   {% if request.visual_preview_mode %}
@@ -26,24 +95,33 @@
     {% if section.settings.section_height != '' %}
      --section-preview-height: 600px;
      {% endif %}
+    {% if giclee_faq_custom_bg %}
+      --faq-bg-blur: {{ giclee_faq_bg_blur }};
+      --faq-bg-saturate: {{ giclee_faq_bg_saturate }};
+      --faq-bg-brightness: {{ giclee_faq_bg_brightness }};
+      --faq-bg-dim-overlay: {{ giclee_faq_bg_dim_overlay }};
+      --faq-bg-scale: {{ giclee_faq_bg_scale }};
+    {% endif %}
   "
 >
   <div class="custom-section-background">
-    {% render 'background-media',
-      background_media: section.settings.background_media,
-      background_video: section.settings.video,
-      background_video_position: section.settings.video_position,
-      background_image: section.settings.background_image,
-      background_image_position: section.settings.background_image_position,
-      background_image_object_y: section.settings.background_image_object_y
-    %}
-    {%- if section.settings.background_media != 'none' and section.settings.background_overlay_pct > 0 -%}
-      <div
-        class="giclee-section-bg-overlay"
-        style="opacity: {{ section.settings.background_overlay_pct | times: 0.01 }};"
-        aria-hidden="true"
-      ></div>
-    {%- endif -%}
+    {%- unless giclee_faq_gradient_active -%}
+      {% render 'background-media',
+        background_media: section.settings.background_media,
+        background_video: section.settings.video,
+        background_video_position: section.settings.video_position,
+        background_image: section.settings.background_image,
+        background_image_position: section.settings.background_image_position,
+        background_image_object_y: section.settings.background_image_object_y
+      %}
+      {%- if section.settings.background_media != 'none' and section.settings.background_overlay_pct > 0 -%}
+        <div
+          class="giclee-section-bg-overlay"
+          style="opacity: {{ section.settings.background_overlay_pct | times: 0.01 }};"
+          aria-hidden="true"
+        ></div>
+      {%- endif -%}
+    {%- endunless -%}
   </div>
 
   <div
