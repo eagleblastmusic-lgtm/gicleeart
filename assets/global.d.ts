@@ -58,9 +58,11 @@ declare global {
 
   interface Window {
     Shopify: Shopify;
-    /** FAQ accordion entrance + heading hover (assets/faq-accordion-entrance.js) */
+    /** FAQ accordion entrance (assets/faq-accordion-entrance.js) */
     __GICLEE_FAQ_ACCORDION_ENTRANCE__?: boolean;
-    /** GSAP from CDN (jsDelivr); present on FAQ page after script load. */
+    /** Hero text hover on FAQ / Blog (assets/giclee-hero-text-hover.js) */
+    __GICLEE_HERO_TEXT_HOVER__?: boolean;
+    /** GSAP from CDN (jsDelivr); present on FAQ / Blog after script load. */
     gsap?: GsapStatic;
   }
 

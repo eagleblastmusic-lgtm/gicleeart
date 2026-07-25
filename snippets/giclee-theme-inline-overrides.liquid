@@ -103,6 +103,27 @@
     body.is-navigating [data-view-transition-triggered] {
       view-transition-name: none !important;
     }
+    /* Hero text — cienie FAQ / Blog (klasy body z layout/theme.liquid) */
+    body.template-page-faq #MainContent .hero__content-wrapper :is(h1, h2, h3, h4, h5, h6),
+    body.template-page-faq #MainContent .hero__content-wrapper .text-block :is(h1, h2, h3, h4, h5, h6),
+    body.template-blog #MainContent .hero__content-wrapper :is(h1, h2, h3, h4, h5, h6, p),
+    body.template-blog #MainContent .hero__content-wrapper .text-block :is(h1, h2, h3, h4, h5, h6, p),
+    body.template-blog #MainContent .hero__content-wrapper :is(.rte, rte-formatter) {
+      text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.55),
+        0 4px 18px rgba(0, 0, 0, 0.45),
+        0 0 28px rgba(0, 0, 0, 0.35) !important;
+    }
+    /*
+      Hero wyłącza pointer-events na .hero__content-wrapper (tylko a/button…).
+      Bez auto tekst nie dostaje mouseenter — hover GSAP nie działa.
+    */
+    body.template-page-faq #MainContent .hero__content-wrapper .giclee-hero-text-hover,
+    body.template-blog #MainContent .hero__content-wrapper .giclee-hero-text-hover {
+      pointer-events: auto;
+      cursor: pointer;
+    }
+
     {% if template.suffix == 'faq' %}
     /* =====================================================================
        FAQ — PREMIUM ACCORDION (tylko UI/UX, treść bez zmian)
@@ -110,22 +131,6 @@
        Wyższa specyficzność + !important nadpisuje globalne .accordion z base.css
        jedynie na tej stronie — inne akordeony (np. produkt) bez zmian.
        ===================================================================== */
-
-    /* Nagłówek „Często zadawane pytania” na hero — czytelność na tle zdjęcia */
-    .hero__content-wrapper :is(h1, h2, h3, h4, h5, h6) {
-      text-shadow:
-        0 1px 2px rgba(0, 0, 0, 0.55),
-        0 4px 18px rgba(0, 0, 0, 0.45),
-        0 0 28px rgba(0, 0, 0, 0.35);
-    }
-    /*
-      Hero wyłącza pointer-events na .hero__content-wrapper (tylko a/button…).
-      Bez auto nagłówek nie dostaje mouseenter — hover GSAP nie działa.
-    */
-    .hero__content-wrapper .faq-hero-heading {
-      pointer-events: auto;
-      cursor: pointer;
-    }
 
     /* Separatory (divider) — mniej jaskrawe na czarnym tle */
     #MainContent .divider .divider__line {

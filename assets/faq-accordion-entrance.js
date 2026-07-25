@@ -1,4 +1,4 @@
-/* FAQ — GSAP: wejście akordeonu + hover nagłówka hero. */
+/* FAQ — GSAP: wejście akordeonu. */
 (function () {
   if (window.__GICLEE_FAQ_ACCORDION_ENTRANCE__) return;
   window.__GICLEE_FAQ_ACCORDION_ENTRANCE__ = true;
@@ -51,46 +51,9 @@
     });
   }
 
-  function runHeadingHover(/** @type {GsapStatic} */ tween) {
-    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-
-    var headingEl = document.querySelector(
-      '.hero__content-wrapper :is(h1, h2, h3, h4, h5, h6)'
-    );
-    if (!headingEl) return;
-
-    /** @type {HTMLElement} */
-    var heading = /** @type {HTMLElement} */ (headingEl);
-    /** @type {GsapStatic} */
-    var gsapApi = tween;
-
-    heading.classList.add('faq-hero-heading');
-    /* Hero content ma pointer-events: none — wymuś hit-target na samym napisie */
-    heading.style.pointerEvents = 'auto';
-    heading.style.cursor = 'pointer';
-    gsapApi.set(heading, { transformOrigin: '50% 50%', display: 'inline-block' });
-
-    heading.addEventListener('mouseenter', function () {
-      gsapApi.to(heading, {
-        duration: 0.3,
-        scale: 1.05,
-        ease: 'power2.out',
-      });
-    });
-
-    heading.addEventListener('mouseleave', function () {
-      gsapApi.to(heading, {
-        duration: 0.25,
-        scale: 1,
-        ease: 'power2.out',
-      });
-    });
-  }
-
   function run() {
     whenGsapReady(/** @param {GsapStatic} tween */ function (tween) {
       runAccordionEntrance(tween);
-      runHeadingHover(tween);
     });
   }
 
