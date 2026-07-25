@@ -625,16 +625,227 @@
     });
   }
 
+  /*
+   * Podczas scrollowania wysuwa tło FAQ ku górze, bez przesuwania akordeonu.
+   * Ujemny margin wrappera i równy padding sekcji wzajemnie się kompensują,
+   * więc zmienia się wyłącznie górna krawędź tła.
+   */
+  function initFaqBackgroundScrollExpansion() {
+    var wrapper = document.querySelector(
+      '#MainContent > .shopify-section:has(.faq-section)'
+    );
+    if (!(wrapper instanceof HTMLElement)) return;
+    if (wrapper.dataset.faqScrollBgExpansionBound) return;
+    wrapper.dataset.faqScrollBgExpansionBound = '1';
+
+    var section = wrapper.querySelector('.faq-section');
+    if (!(section instanceof HTMLElement)) return;
+    var heroWrapper = document.querySelector(
+      '#MainContent > .shopify-section:has(.hero)'
+    );
+
+    var scrollRange = Math.max(
+      1,
+      document.documentElement.scrollHeight - window.innerHeight
+    );
+    var maxHeroOffset = Math.min(36, scrollRange * 0.18);
+    var currentExtension = parseFloat(
+      window
+        .getComputedStyle(wrapper)
+        .getPropertyValue('--faq-scroll-bg-extension')
+    ) || 0;
+    var sectionDocumentTop =
+      wrapper.getBoundingClientRect().top + window.scrollY + currentExtension;
+    var header =
+      document.getElementById('header-component') ||
+      document.getElementById('header-group');
+    var headerHeight = header instanceof HTMLElement
+      ? header.getBoundingClientRect().height
+      : 0;
+    var maxExtension = Math.max(
+      0,
+      sectionDocumentTop - scrollRange - headerHeight + 1
+    );
+    var accordion = section.querySelector('.accordion');
+    var accordionItems = accordion instanceof HTMLElement
+      ? Array.prototype.slice.call(
+          accordion.querySelectorAll(':scope > accordion-custom')
+        )
+      : [];
+    var maxAccordionOffset = 0;
+    if (accordion instanceof HTMLElement) {
+      var sectionRect = section.getBoundingClientRect();
+      var accordionRect = accordion.getBoundingClientRect();
+      var closedCenterDelta =
+        (sectionRect.top + sectionRect.bottom) * 0.5 -
+        (accordionRect.top + accordionRect.bottom) * 0.5;
+      maxAccordionOffset = closedCenterDelta - maxExtension * 0.5;
+    }
+    var clampProgress = function (value) {
+      return Math.min(1, Math.max(0, value));
+    };
+    var easeProgress = function (progress) {
+      /* Smootherstep: zerowa prędkość i przyspieszenie na obu końcach. */
+      return (
+        progress * progress * progress *
+        (progress * (progress * 6 - 15) + 10)
+      );
+    };
+    var damp = function (current, target, deltaMs, duration) {
+      return target + (current - target) * Math.exp(-deltaMs / duration);
+    };
+
+    var targetProgress = clampProgress(window.scrollY / scrollRange);
+    var backgroundProgress = targetProgress;
+    var heroProgress = targetProgress;
+    var accordionProgress = targetProgress;
+    var itemProgresses = accordionItems.map(function () {
+      return targetProgress;
+    });
+    var rafId = 0;
+    var lastFrameTime = 0;
+
+    var paint = function () {
+      var easedBackground = easeProgress(backgroundProgress);
+      var easedHero = easeProgress(heroProgress);
+      var easedAccordion = easeProgress(accordionProgress);
+      wrapper.style.setProperty(
+        '--faq-scroll-bg-extension',
+        (maxExtension * easedBackground).toFixed(2) + 'px'
+      );
+      section.style.setProperty(
+        '--faq-accordion-scroll-y',
+        (maxAccordionOffset * easedAccordion).toFixed(2) + 'px'
+      );
+      if (heroWrapper instanceof HTMLElement) {
+        heroWrapper.style.setProperty(
+          '--faq-hero-scroll-y',
+          (maxHeroOffset * easedHero).toFixed(2) + 'px'
+        );
+        heroWrapper.style.setProperty(
+          '--faq-hero-scroll-opacity',
+          (1 - easedHero).toFixed(3)
+        );
+        heroWrapper.style.setProperty(
+          '--faq-hero-scroll-blur',
+          (easedHero * 24).toFixed(1) + 'px'
+        );
+      }
+
+      /*
+       * Każda karta ma własną bezwładność. Trail wzmacnia różnicę faz tylko
+       * podczas ruchu; po zatrzymaniu wszystkie korekty miękko wracają do 0.
+       */
+      var minimumItemOffset = Infinity;
+      var maximumItemOffset = -Infinity;
+      accordionItems.forEach(function (node, index) {
+        if (!(node instanceof HTMLElement)) return;
+        var itemProgress = itemProgresses[index];
+        var itemEased = easeProgress(itemProgress);
+        var phaseTrail =
+          (itemProgress - accordionProgress) * (70 + index * 9);
+        var easingCorrection =
+          maxAccordionOffset * (itemEased - easedAccordion);
+        var itemOffset = phaseTrail + easingCorrection;
+        minimumItemOffset = Math.min(minimumItemOffset, itemOffset);
+        maximumItemOffset = Math.max(maximumItemOffset, itemOffset);
+        node.style.setProperty(
+          '--faq-accordion-item-scroll-y',
+          itemOffset.toFixed(2) + 'px'
+        );
+      });
+
+      /*
+       * Jasność dekoracji wynika wyłącznie z różnicy położeń kart.
+       * Znak nie ma znaczenia: rozciąganie i ściskanie akordeonu daje energię.
+       */
+      var itemSpread =
+        Number.isFinite(minimumItemOffset) &&
+        Number.isFinite(maximumItemOffset)
+          ? maximumItemOffset - minimumItemOffset
+          : 0;
+      var distanceEnergy = Math.min(1, itemSpread / 8);
+      var easedDistanceEnergy =
+        distanceEnergy * distanceEnergy * (3 - 2 * distanceEnergy);
+      section.style.setProperty(
+        '--faq-accordion-distance-energy',
+        easedDistanceEnergy.toFixed(3)
+      );
+    };
+
+    var render = function (timestamp) {
+      rafId = 0;
+      var deltaMs = lastFrameTime
+        ? Math.min(48, Math.max(1, timestamp - lastFrameTime))
+        : 16;
+      lastFrameTime = timestamp;
+      targetProgress = clampProgress(window.scrollY / scrollRange);
+
+      backgroundProgress = damp(
+        backgroundProgress,
+        targetProgress,
+        deltaMs,
+        145
+      );
+      heroProgress = damp(heroProgress, targetProgress, deltaMs, 175);
+      accordionProgress = damp(
+        accordionProgress,
+        targetProgress,
+        deltaMs,
+        205
+      );
+      itemProgresses = itemProgresses.map(function (current, index) {
+        return damp(current, targetProgress, deltaMs, 245 + index * 52);
+      });
+
+      paint();
+
+      var stillMoving =
+        Math.abs(backgroundProgress - targetProgress) > 0.0001 ||
+        Math.abs(heroProgress - targetProgress) > 0.0001 ||
+        Math.abs(accordionProgress - targetProgress) > 0.0001 ||
+        itemProgresses.some(function (current) {
+          return Math.abs(current - targetProgress) > 0.0001;
+        });
+      if (stillMoving) rafId = window.requestAnimationFrame(render);
+    };
+
+    var requestRender = function () {
+      targetProgress = clampProgress(window.scrollY / scrollRange);
+      if (!rafId) {
+        lastFrameTime = 0;
+        rafId = window.requestAnimationFrame(render);
+      }
+    };
+
+    window.addEventListener('scroll', requestRender, { passive: true });
+    paint();
+  }
+
   /**
    * Subtelny parallax dekoracji — jak przy pierwszym wdrożeniu.
    * Lewa max +18px, prawa −14px, scrub 1.2; CSS top:50% + yPercent:-50.
    * @param {GsapStatic} tween
    */
   function initArtworkDecorationParallax(/** @type {GsapStatic} */ tween) {
-    if (reduceMotion) return;
-
     var sections = document.querySelectorAll('.faq-section');
     if (!sections.length) return;
+
+    /*
+     * Zamrożenie osi Y dekoracji przed otwarciem akordeonu.
+     * CSS top:50% przesuwał oba kształty, gdy sekcja rosła od długiej odpowiedzi.
+     */
+    sections.forEach(function (sectionNode) {
+      if (!(sectionNode instanceof HTMLElement)) return;
+      var section = sectionNode;
+      if (section.style.getPropertyValue('--faq-decoration-anchor-y')) return;
+      section.style.setProperty(
+        '--faq-decoration-anchor-y',
+        Math.round(section.getBoundingClientRect().height * 0.65) + 'px'
+      );
+    });
+
+    if (reduceMotion) return;
 
     var bind = function (/** @type {object} */ ScrollTriggerPlugin) {
       tween.registerPlugin(ScrollTriggerPlugin);
@@ -650,7 +861,7 @@
           tween.set(left, { yPercent: -50 });
           tween.to(left, {
             y: 18,
-            ease: 'none',
+            ease: 'power2.inOut',
             scrollTrigger: {
               trigger: section,
               start: 'top bottom',
@@ -664,7 +875,7 @@
           tween.set(right, { yPercent: -50 });
           tween.to(right, {
             y: -14,
-            ease: 'none',
+            ease: 'power3.inOut',
             scrollTrigger: {
               trigger: section,
               start: 'top bottom',
@@ -699,6 +910,7 @@
     initStyle2GalaxyHover();
     initStyle3GalaxyFull();
     if (reduceMotion) return;
+    initFaqBackgroundScrollExpansion();
     prepareFadeEntrances();
     whenGsapReady(
       /** @param {GsapStatic} tween */ function (tween) {

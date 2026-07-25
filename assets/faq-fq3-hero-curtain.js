@@ -262,6 +262,7 @@
 
     var curtain = buildCurtain(faqSection);
     if (!curtain) return;
+    if (!curtain) return;
 
     syncCurtainGeometry(curtain);
     tween.registerPlugin(ScrollTriggerPlugin);
@@ -272,6 +273,12 @@
       opacity: 1,
       transformOrigin: '50% 100%',
       force3D: true,
+    });
+
+    tween.set(heroSection, {
+      opacity: 1,
+      filter: 'blur(0px)',
+      willChange: 'opacity, filter',
     });
 
     var timeline = tween.timeline({
@@ -288,9 +295,11 @@
         invalidateOnRefresh: true,
         onLeave: function () {
           tween.set(curtain, { opacity: 0 });
+          tween.set(heroSection, { opacity: 0, filter: 'blur(16px)' });
         },
         onLeaveBack: function () {
           tween.set(curtain, { scaleY: 0.001, opacity: 1 });
+          tween.set(heroSection, { opacity: 1, filter: 'blur(0px)' });
         },
         onRefresh: function () {
           syncCurtainGeometry(curtain);
@@ -299,18 +308,36 @@
     });
 
     timeline
-      .to(curtain, {
-        scaleY: 1,
-        opacity: 1,
-        ease: 'none',
-        force3D: true,
-        duration: 0.88,
-      })
-      .to(curtain, {
-        opacity: 0,
-        ease: 'none',
-        duration: 0.12,
-      });
+      .to(
+        curtain,
+        {
+          scaleY: 1,
+          opacity: 1,
+          ease: 'none',
+          force3D: true,
+          duration: 0.88,
+        },
+        0
+      )
+      .to(
+        heroSection,
+        {
+          opacity: 0,
+          filter: 'blur(16px)',
+          ease: 'power1.out',
+          duration: 0.88,
+        },
+        0
+      )
+      .to(
+        curtain,
+        {
+          opacity: 0,
+          ease: 'none',
+          duration: 0.12,
+        },
+        0.88
+      );
 
     window.addEventListener('resize', function () {
       syncCurtainGeometry(curtain);
