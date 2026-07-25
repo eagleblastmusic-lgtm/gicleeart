@@ -36,24 +36,83 @@ declare global {
   }
 
   /** Minimal GSAP surface used by FAQ scripts (CDN global). */
-  type GsapTweenTarget = string | Element | Element[] | NodeListOf<Element>;
+  type GsapTweenTarget = string | Element | Element[] | NodeListOf<Element> | object;
+
+  interface GsapScrollTriggerVars {
+    trigger?: Element | string;
+    start?: string;
+    end?: string;
+    scrub?: boolean | number;
+    markers?: boolean;
+  }
 
   interface GsapTweenVars {
     duration?: number;
     delay?: number;
+    x?: number;
     y?: number;
+    yPercent?: number;
     opacity?: number;
     scale?: number;
-    stagger?: number;
+    stagger?: number | object;
     ease?: string;
     transformOrigin?: string;
     display?: string;
+    filter?: string;
+    clearProps?: string;
+    overwrite?: boolean | string;
+    scrollTrigger?: GsapScrollTriggerVars;
+    onComplete?: () => void;
+    onStart?: () => void;
+  }
+
+  interface GsapTimeline {
+    to(
+      targets: GsapTweenTarget,
+      vars: GsapTweenVars,
+      position?: string | number
+    ): GsapTimeline;
+    from(
+      targets: GsapTweenTarget,
+      vars: GsapTweenVars,
+      position?: string | number
+    ): GsapTimeline;
+    fromTo(
+      targets: GsapTweenTarget,
+      fromVars: GsapTweenVars,
+      toVars: GsapTweenVars,
+      position?: string | number
+    ): GsapTimeline;
+    set(
+      targets: GsapTweenTarget,
+      vars: GsapTweenVars,
+      position?: string | number
+    ): GsapTimeline;
+    kill(): void;
+  }
+
+  interface GsapTween {
+    kill(): void;
   }
 
   interface GsapStatic {
-    from(targets: GsapTweenTarget, vars: GsapTweenVars): unknown;
-    to(targets: GsapTweenTarget, vars: GsapTweenVars): unknown;
-    set(targets: GsapTweenTarget, vars: GsapTweenVars): unknown;
+    from(targets: GsapTweenTarget, vars: GsapTweenVars): GsapTween;
+    to(targets: GsapTweenTarget, vars: GsapTweenVars): GsapTween;
+    fromTo(
+      targets: GsapTweenTarget,
+      fromVars: GsapTweenVars,
+      toVars: GsapTweenVars
+    ): GsapTween;
+    set(targets: GsapTweenTarget, vars: GsapTweenVars): GsapTween;
+    timeline(vars?: GsapTweenVars): GsapTimeline;
+    delayedCall(delay: number, callback: () => void): GsapTween;
+    registerPlugin(...plugins: object[]): void;
+  }
+
+  /** ScrollTrigger plugin (CDN global / window.ScrollTrigger). */
+  interface ScrollTriggerStatic {
+    create?(vars: GsapScrollTriggerVars): unknown;
+    refresh?(safe?: boolean): void;
   }
 
   interface Window {
@@ -64,12 +123,16 @@ declare global {
     __GICLEE_HERO_TEXT_HOVER__?: boolean;
     /** GSAP from CDN (jsDelivr); present on FAQ / Blog after script load. */
     gsap?: GsapStatic;
+    /** GSAP ScrollTrigger from CDN. */
+    ScrollTrigger?: ScrollTriggerStatic;
   }
 
-  declare const Shopify: Shopify;
-  declare const Theme: Theme;
+  var Shopify: Shopify;
+  var Theme: Theme;
   /** GSAP CDN global (same as window.gsap). */
-  declare const gsap: GsapStatic | undefined;
+  var gsap: GsapStatic | undefined;
+  /** ScrollTrigger CDN global (same as window.ScrollTrigger). */
+  var ScrollTrigger: ScrollTriggerStatic | undefined;
 
   type LoadCallback = (error: Error | undefined) => void;
 

@@ -10,6 +10,13 @@
     return window.gsap || (typeof gsap !== 'undefined' ? gsap : undefined);
   }
 
+  function getScrollTrigger() {
+    return (
+      window.ScrollTrigger ||
+      (typeof ScrollTrigger !== 'undefined' ? ScrollTrigger : undefined)
+    );
+  }
+
   function getUnderHeroBgNodes() {
     return document.querySelectorAll('.faq-section .custom-section-background');
   }
@@ -357,8 +364,12 @@
       if (cards.length < 2) return;
 
       var activeIndex = -1;
+      /** @type {GsapTimeline | null} */
       var leaveTl = null;
 
+      /**
+       * @param {number} index
+       */
       var focusCard = function (index) {
         if (accordion.classList.contains('faq-accordion-entering')) return;
         if (leaveTl) {
@@ -404,7 +415,7 @@
             return a.dist - b.dist || a.i - b.i;
           });
 
-        leaveTl = tween.timeline({
+        var tl = tween.timeline({
           onComplete: function () {
             ordered.forEach(function (item) {
               tween.set(item.card, { clearProps: 'filter,opacity,zIndex,position' });
@@ -412,9 +423,10 @@
             leaveTl = null;
           },
         });
+        leaveTl = tl;
 
         ordered.forEach(function (item, rank) {
-          leaveTl.to(
+          tl.to(
             item.card,
             {
               filter: 'blur(0px)',
@@ -613,6 +625,76 @@
     });
   }
 
+  /**
+   * Subtelny parallax dekoracji — jak przy pierwszym wdrożeniu.
+   * Lewa max +18px, prawa −14px, scrub 1.2; CSS top:50% + yPercent:-50.
+   * @param {GsapStatic} tween
+   */
+  function initArtworkDecorationParallax(/** @type {GsapStatic} */ tween) {
+    if (reduceMotion) return;
+
+    var sections = document.querySelectorAll('.faq-section');
+    if (!sections.length) return;
+
+    var bind = function (/** @type {object} */ ScrollTriggerPlugin) {
+      tween.registerPlugin(ScrollTriggerPlugin);
+
+      sections.forEach(function (sectionNode) {
+        if (!(sectionNode instanceof HTMLElement)) return;
+        var section = sectionNode;
+        var left = section.querySelector('.faq-artwork-decoration--left');
+        var right = section.querySelector('.faq-disc--right');
+        if (!left && !right) return;
+
+        if (left instanceof HTMLElement) {
+          tween.set(left, { yPercent: -50 });
+          tween.to(left, {
+            y: 18,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: section,
+              start: 'top bottom',
+              end: 'bottom top',
+              scrub: 1.2,
+            },
+          });
+        }
+
+        if (right instanceof HTMLElement) {
+          tween.set(right, { yPercent: -50 });
+          tween.to(right, {
+            y: -14,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: section,
+              start: 'top bottom',
+              end: 'bottom top',
+              scrub: 1.2,
+            },
+          });
+        }
+      });
+    };
+
+    var existing = getScrollTrigger();
+    if (existing) {
+      bind(existing);
+      return;
+    }
+
+    var attempts = 0;
+    var timer = window.setInterval(function () {
+      attempts += 1;
+      var next = getScrollTrigger();
+      if (next) {
+        window.clearInterval(timer);
+        bind(next);
+        return;
+      }
+      if (attempts >= 40) window.clearInterval(timer);
+    }, 50);
+  }
+
   function run() {
     initStyle2GalaxyHover();
     initStyle3GalaxyFull();
@@ -629,6 +711,7 @@
         runHeroEntrance(tween, startAccordion);
         runUnderHeroBgEntrance(tween);
         initAccordionFocusBlur(tween);
+        initArtworkDecorationParallax(tween);
         /* Awaryjnie: jeśli hero nie wystartuje (IO), pokaż akordeon po chwili. */
         window.setTimeout(startAccordion, 4000);
       },
