@@ -1,13 +1,9 @@
 {
-  "active": "lo5",
+  "active": "lo6",
   "variants": [
     {
       "id": "lo1",
       "label": "V1 — podstawowa"
-    },
-    {
-      "id": "lo2",
-      "label": "V2 — atmosfera muzealna"
     },
     {
       "id": "lo3",
@@ -20,6 +16,10 @@
     {
       "id": "lo5",
       "label": "V5 — V4 + dym kursora"
+    },
+    {
+      "id": "lo6",
+      "label": "V6 — na bazie V5"
     }
   ]
 }

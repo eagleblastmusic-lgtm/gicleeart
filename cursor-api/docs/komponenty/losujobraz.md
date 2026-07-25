@@ -10,47 +10,82 @@ Lista **Wersja** jest selektorem pełnych wariantów strony:
 
 | Wariant | ID | Efekt |
 |---|---|---|
-| **V1 — podstawowa** | `lo1` / `v1` | Baza bez dodatkowej warstwy atmosfery. |
-| **V2 — atmosfera muzealna** | `lo2` / `v2` | Edytowalny glow, mgiełka i pył V2. |
+| **V1 — podstawowa** | `lo1` / `v1` | Baza bez Living Museum Light. |
 | **V3 — Living Museum Light** | `lo3` / `v3` | Reflektor galerii, zoptymalizowany pył i muzealna tabliczka artysta / tytuł / rok. |
-| **V4 — finał muzealny** | `lo4` / `v4` | Zachowuje V3 i dodaje ceremonialny handoff zwycięzcy, większy eksponat, portal zmieniający się w halo, lżejszą oprawę oraz kuratorską hierarchię typografii i akcji. |
+| **V4 — finał muzealny** | `lo4` / `v4` | Zachowuje V3 i dodaje ceremonialny handoff zwycięzcy, większy eksponat, portal → halo, lżejszą oprawę oraz kuratorską hierarchię typografii i akcji. |
+| **V5 — V4 + dym kursora** | `lo5` / `v4` + smoke | Niezależna kopia V4 z Elegant Fluid (dym kursora). Theme nadal używa `design_variant: "v4"`. |
+| **V6 — na bazie V5** | `lo6` / `v4` + smoke | Robocza kopia V5 (te same efekty i ustawienia startowe). |
 
-Aktywnym wariantem jest `lo4`. **Zapisz** utrwala bieżący wariant i aktywny szablon przez istniejący workflow kopii zapasowej i zapisu edytora stron.
+Aktywnym wariantem jest **`lo6`**. **Zapisz** utrwala bieżący wariant i aktywny szablon przez istniejący workflow kopii zapasowej i zapisu edytora stron.
+
+> Dawny wariant **V2 — atmosfera muzealna** (glow/mgła/pył V2) został usunięty z GicleeApp — nie jest używany przez aktywny stos V3–V6.
+
+### Stan domyślny V6 (bieżący, jak V5)
+
+| Efekt | Stan | Kiedy się pojawia |
+|---|---|---|
+| Parallax tła | **włączony** | od razu (tracking kursora) |
+| Film→obraz: przenikanie | lead **1400 ms** / hold **1400 ms** | końcówka filmu tła (gdy film + obraz) |
+| Living Light (reflektor) | **wyłączony** | — |
+| Living Dust (pył) | **włączony** | po zakończeniu animacji złotego okręgu intro |
+| Dym kursora (fluid) | **włączony** | po zakończeniu animacji złotego okręgu intro |
+| Odkrycie maski (hover BG2) | wyłączone | — |
+
+Sygnał runtime: `data-intro-circle-done="true"` (ustawiany po spinie okręgu, ~4,8 s od startu letter-fade nagłówka).
+
+## Choreografia intro (timing)
+
+1. **0 ms** — letter-fade nagłówka (+ scale 1.2 → 1, ~2,2 s).
+2. **~1 s** — letter-fade podtytułu.
+3. **~2 s** — start spinu złotego okręgu (`PORTAL_REVEAL_MS` = 2,8 s).
+4. **~4,8 s** — koniec spinu → `data-intro-circle-done` → start **pyłu** i **dymu**; potem kreska eyebrow.
+5. **~5,7 s** — fade-in przycisku «Losuj obraz».
+
+Po kliknięciu Losuj:
+
+1. Faza «Przeszukuję kolekcję…» — litery ~30% opacity, fala rozświetlenia do 100%; min. widoczność ~1,6 s.
+2. Start wirowania obrazów — napis i pierścień intro robią **fade-out** w miejscu; ringi WebGL pojawiają się w scenie 3D.
+3. Wynik V4 — ceremonialny handoff (frame → identity → actions).
 
 ## Edytuj atmosferę…
 
-Przycisk na pasku narzędzi otwiera strefę ustawień atmosfery bieżącego wariantu.
+Living Museum Light (V3–V6):
 
-V2 zachowuje szczegółowe parametry glow, mgiełki i pyłu. V3 i V4 współdzielą parametry Living Museum Light:
+- `living_light_enabled` — reflektor kursora (w V5/V6 domyślnie off);
+- `living_dust_enabled` — pył ambientowy (start po okręgu);
+- `living_light_intensity`, `living_dust_*` — strojenie.
 
-- `living_light_enabled` — włącz reflektor;
-- `living_dust_enabled` — włącz pył ambientowy;
-- `living_light_intensity` — intensywność światła;
-- `living_dust_particles` — liczba drobinek;
-- `living_dust_opacity` — widoczność;
-- `living_dust_size` — rozmiar;
-- `living_dust_speed` — szybkość;
-- `living_dust_fps` — limit FPS;
-- `living_dust_dpr_cap` — limit jakości canvasu.
+Parallax w V3–V6 działa niezależnie od reflektora.
 
-V1 i V2 zachowują wartości Living Museum Light w JSON, ale ich nie uruchamiają. Dzięki temu przełączanie wariantów nie kasuje strojenia.
+## Losuj obraz — tło i pula
 
-## Finał V4
+Poza obrazem/filmem i parallaxem:
 
-V4 korzysta z osobnego modułu WebGL końcówki bez przebudowy wspólnego modelu losowania. Zwycięzca stabilizuje się i rośnie, pozostałe karty odchodzą w głąb, a portal traci pierścienie i przechodzi w owalne światło ekspozycyjne. Po handoffie wynik ujawnia kolejno oprawę, artystę i tytuł, a następnie akcje.
+- `bg_video_crossfade_lead_ms` — start przenikania na żywym filmie (ms przed końcem);
+- `bg_video_crossfade_hold_ms` — dalsze przenikanie na zawieszonej ostatniej klatce;
+- suma = pełny czas fade (`--grw-bg-video-fade-ms`).
 
-„Zobacz obraz” jest głównym ciemnym przyciskiem galeryjnym. „Wylosuj ponownie” pozostaje lekką akcją drugorzędną. Reset czyści etapy i timery przed kolejnym losowaniem.
+## V5 — dym kursora
 
-## Własne tło
+Jedna sekcja **V5 — włącz/wyłącz dym** (toolbar: «Dym kursora V5…»):
 
-Strefa **Losuj obraz — interfejs** obsługuje obraz, film i `background_parallax`. W V1/V2 parallax pozostaje w głównym kontrolerze. W V3/V4 ten sam model pozycji wskaźnika steruje reflektorem, pyłem i parallaxem, dzięki czemu nie powstaje drugi globalny listener ani konkurująca pętla RAF.
+- `cursor_smoke_enabled` — włącznik;
+- preset, jakość, suwaki i auto-smugi — w tej samej strefie.
+
+Montaż canvasa dymu jest opóźniony do `data-intro-circle-done`.
+
+## Fine Art Oracle…
+
+- teksty intro, faz losowania, wyniku i błędu;
+- `galaxy_btn_variant` — glow przycisku (`v1` / `v2` — to wersja **przycisku**, nie designu strony);
+- `enable_webgl`, `draw_loading_ms`, `draw_phase_hold_ms`.
 
 ## Pliki danych
 
-- manifest: `Komponenty/losujobraz/data/variants/manifest.json`;
-- warianty: `lo1`, `lo2`, `lo3`, `lo4`;
+- manifest: `Komponenty/losujobraz/data/variants/manifest.json` (`active: lo6`);
+- warianty: `lo1`, `lo3`, `lo4`, `lo5`, `lo6`;
 - aktywny szablon: `templates/page.losuj-produkt.json`;
 - mapowanie pól: `Komponenty/losujobraz/registry.py`;
 - skrót panelu: `Komponenty/losujobraz/gui.py`.
 
-Kod motywu i pełny kontrakt V4 opisuje `docs/motyw/losuj-obraz.md`.
+Kod motywu: `docs/motyw/losuj-obraz.md`.

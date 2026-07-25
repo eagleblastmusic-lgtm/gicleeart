@@ -18,20 +18,28 @@ VARIANTS_ROOT = COMPONENT_ROOT / "data" / "variants"
 
 
 def _read_json(path: Path) -> dict:
-    return json.loads(path.read_text(encoding="utf-8"))
+    raw = path.read_text(encoding="utf-8")
+    if raw.lstrip().startswith("/*"):
+        raw = raw.split("*/", 1)[1]
+    return json.loads(raw)
 
 
-def test_v5_is_active_v4_copy_with_cursor_smoke_enabled() -> None:
+def test_v5_is_v4_copy_with_cursor_smoke_enabled() -> None:
     manifest = _read_json(VARIANTS_ROOT / "manifest.json")
     v5 = _read_json(VARIANTS_ROOT / "lo5" / "page.losuj-produkt.json")
+    v6 = _read_json(VARIANTS_ROOT / "lo6" / "page.losuj-produkt.json")
+    live = _read_json(REPO_ROOT / "templates" / "page.losuj-produkt.json")
     settings = v5["sections"]["random_artwork"]["settings"]
+    labels = {row["id"]: row["label"] for row in manifest["variants"]}
 
-    assert manifest["active"] == "lo5"
-    assert {row["id"]: row["label"] for row in manifest["variants"]}["lo5"] == (
-        "V5 — V4 + dym kursora"
-    )
+    assert manifest["active"] == "lo6"
+    assert labels["lo5"] == "V5 — V4 + dym kursora"
+    assert labels["lo6"] == "V6 — na bazie V5"
     assert settings["design_variant"] == "v4"
     assert settings["cursor_smoke_enabled"] is True
+    assert settings["living_light_enabled"] is False
+    assert settings["living_dust_enabled"] is True
+    assert settings["background_parallax"] is True
     assert settings["cursor_smoke_preset"] == "elegant"
     assert settings["cursor_smoke_quality"] == "standard"
     assert settings["cursor_smoke_auto_enabled"] is True
@@ -46,33 +54,43 @@ def test_v5_is_active_v4_copy_with_cursor_smoke_enabled() -> None:
         "cursor_smoke_auto_frequency",
     ):
         assert settings[field_id] == 100
+    assert v6 == v5
+    assert v6 == live
+
+
+def test_intro_circle_gates_dust_and_smoke_runtime() -> None:
+    main_js = (REPO_ROOT / "assets" / "giclee-random-artwork.js").read_text(encoding="utf-8")
+    living_js = (
+        REPO_ROOT / "assets" / "giclee-random-artwork-living-museum.js"
+    ).read_text(encoding="utf-8")
+    fluid_js = (REPO_ROOT / "assets" / "giclee-random-artwork-fluid-v2.js").read_text(
+        encoding="utf-8"
+    )
+
+    assert "markIntroCircleDone" in main_js
+    assert "dataset.introCircleDone = 'true'" in main_js
+    assert "scheduleDustAfterIntroCircle" in living_js
+    assert "whenIntroCircleDone" in fluid_js
+    assert "introCircleDone" in living_js
+    assert "parallaxEnabled" in living_js
 
 
 def test_older_variants_do_not_enable_cursor_smoke() -> None:
-    for variant_id in ("lo1", "lo2", "lo3", "lo4"):
+    for variant_id in ("lo1", "lo3", "lo4"):
         data = _read_json(VARIANTS_ROOT / variant_id / "page.losuj-produkt.json")
         settings = data["sections"]["random_artwork"]["settings"]
         assert settings.get("cursor_smoke_enabled", False) is False
 
 
-def test_gicleeapp_exposes_v5_cursor_smoke_toggle() -> None:
-    smoke_zone = next(zone for zone in PAGE_ZONES if zone.zone_id == "random_artwork_v5_smoke")
-    assert smoke_zone.label == "V5 — włącz/wyłącz dym"
-    assert len(smoke_zone.fields) == 1
-    field = smoke_zone.fields[0]
-    assert field.field_id == "cursor_smoke_enabled"
-    assert field.kind == "bool"
-
-
-def test_gicleeapp_exposes_described_smoke_presets_and_parameters() -> None:
-    zone = next(
-        zone
-        for zone in PAGE_ZONES
-        if zone.zone_id == "random_artwork_v5_smoke_parameters"
-    )
+def test_gicleeapp_exposes_v5_cursor_smoke_toggle_and_parameters() -> None:
+    zone = next(zone for zone in PAGE_ZONES if zone.zone_id == "random_artwork_v5_smoke")
     fields = {field.field_id: field for field in zone.fields}
 
-    assert zone.label == "V5 — edytuj dym kursora"
+    assert zone.label == "V5 — włącz/wyłącz dym"
+    assert "random_artwork_v5_smoke_parameters" not in {
+        z.zone_id for z in PAGE_ZONES
+    }
+    assert fields["cursor_smoke_enabled"].kind == "bool"
     assert all(field.hint for field in zone.fields)
     assert fields["cursor_smoke_preset"].kind == "choice"
     assert dict(fields["cursor_smoke_preset"].choices) == {
@@ -87,22 +105,17 @@ def test_gicleeapp_exposes_described_smoke_presets_and_parameters() -> None:
     assert fields["cursor_smoke_auto_enabled"].kind == "bool"
 
 
-def test_gicleeapp_places_smoke_toggle_and_editor_actions_together() -> None:
+def test_gicleeapp_places_smoke_editor_action() -> None:
     gui = (COMPONENT_ROOT / "gui.py").read_text(encoding="utf-8")
-    toggle = '("Włącz/wyłącz dym V5…", lambda: _open_v5_smoke_editor(host))'
-    editor = '("Edytuj dym V5…", lambda: _open_v5_smoke_parameters_editor(host))'
-
-    assert toggle in gui
-    assert editor in gui
-    assert gui.index(editor) > gui.index(toggle)
+    assert '("Dym kursora V5…", lambda: _open_v5_smoke_editor(host))' in gui
+    assert "Edytuj dym V5…" not in gui
+    assert "_open_v5_smoke_parameters_editor" not in gui
 
 
 def test_smoke_choice_values_round_trip_as_internal_ids() -> None:
-    template = _read_json(VARIANTS_ROOT / "lo5" / "page.losuj-produkt.json")
+    template = _read_json(VARIANTS_ROOT / "lo6" / "page.losuj-produkt.json")
     zone = next(
-        zone
-        for zone in PAGE_ZONES
-        if zone.zone_id == "random_artwork_v5_smoke_parameters"
+        zone for zone in PAGE_ZONES if zone.zone_id == "random_artwork_v5_smoke"
     )
     values = load_zone_values(template, zone)
     values.update(
@@ -151,3 +164,39 @@ def test_smoke_runtime_applies_presets_and_all_controls() -> None:
         "cursorSmokeAutoFrequency",
     ):
         assert setting in script
+
+
+def test_gicleeapp_exposes_galaxy_btn_variant_in_fine_art_oracle() -> None:
+    zone = next(zone for zone in PAGE_ZONES if zone.zone_id == "random_artwork_draw")
+    fields = {field.field_id: field for field in zone.fields}
+    field = fields["galaxy_btn_variant"]
+
+    assert field.kind == "choice"
+    assert dict(field.choices) == {
+        "v1": "V1 — srebrny (obecny)",
+        "v2": "V2 — subtelny",
+    }
+
+    for variant_id in ("lo1", "lo3", "lo4", "lo5", "lo6"):
+        data = _read_json(VARIANTS_ROOT / variant_id / "page.losuj-produkt.json")
+        assert data["sections"]["random_artwork"]["settings"]["galaxy_btn_variant"] == "v1"
+
+    template = _read_json(VARIANTS_ROOT / "lo6" / "page.losuj-produkt.json")
+    values = load_zone_values(template, zone)
+    values["galaxy_btn_variant"] = "v2"
+    apply_zone_values(template, zone, values)
+    assert template["sections"]["random_artwork"]["settings"]["galaxy_btn_variant"] == "v2"
+
+    section = (REPO_ROOT / "sections" / "giclee-random-artwork.liquid").read_text(
+        encoding="utf-8"
+    )
+    css = (REPO_ROOT / "assets" / "giclee-random-artwork-galaxy-btn.css").read_text(
+        encoding="utf-8"
+    )
+    assert "galaxy_btn_variant" in section
+    assert "giclee-galaxy-btn--{{ galaxy_btn_variant }}" in section
+    assert section.count('data-grw-galaxy-btn') >= 2
+    assert 'data-grw-view' in section and 'giclee-galaxy-btn' in section
+    assert ".giclee-galaxy-btn--v2 .giclee-galaxy-btn__circle" in css
+    assert "#b4bac2" in css
+    assert "#d2d6dc" in css

@@ -59,21 +59,20 @@ def build_object_y_controls(
     initial: Any,
     on_change: Callable[[int], None],
 ) -> tk.IntVar:
-    """Suwak + skróty Góra / Środek / Dół pod polem grafiki."""
-    row = ttk.Frame(parent)
-    row.pack(fill="x", pady=(4, 0))
+    """Suwak + skróty Góra / Środek / Dół pod polem grafiki (układ pionowy, bez overlap)."""
+    box = ttk.Frame(parent)
+    box.pack(fill="x", pady=(2, 0))
 
-    ttk.Label(row, text="Kadrowanie góra–dół:", width=18).pack(side="left", anchor="n")
-
-    controls = ttk.Frame(row)
-    controls.pack(side="left", fill="x", expand=True)
-
+    header = ttk.Frame(box)
+    header.pack(fill="x")
+    ttk.Label(header, text="Kadrowanie góra–dół", foreground="#555").pack(side="left")
     var = tk.IntVar(value=normalize_object_y(initial))
     label_var = tk.StringVar(value=_object_y_label(var.get()))
+    ttk.Label(header, textvariable=label_var, foreground="#333", width=8).pack(side="right")
 
-    scale_row = ttk.Frame(controls)
-    scale_row.pack(fill="x")
-    ttk.Label(scale_row, text="Góra", foreground="#777", font=("", 8)).pack(side="left")
+    scale_row = ttk.Frame(box)
+    scale_row.pack(fill="x", pady=(2, 0))
+    ttk.Label(scale_row, text="Góra", foreground="#888", font=("", 8)).pack(side="left")
     scale = ttk.Scale(
         scale_row,
         from_=OBJECT_Y_MIN,
@@ -81,11 +80,10 @@ def build_object_y_controls(
         orient="horizontal",
         variable=var,
     )
-    scale.pack(side="left", fill="x", expand=True, padx=6)
-    ttk.Label(scale_row, text="Dół", foreground="#777", font=("", 8)).pack(side="left")
-    ttk.Label(scale_row, textvariable=label_var, width=8).pack(side="left", padx=(4, 0))
+    scale.pack(side="left", fill="x", expand=True, padx=8)
+    ttk.Label(scale_row, text="Dół", foreground="#888", font=("", 8)).pack(side="left")
 
-    preset_row = ttk.Frame(controls)
+    preset_row = ttk.Frame(box)
     preset_row.pack(anchor="w", pady=(4, 0))
 
     def _apply_preset(value: int) -> None:

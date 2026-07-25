@@ -520,6 +520,8 @@ class ElegantFluidController {
     this.canvas.className = 'giclee-random-artwork__fluid-smoke';
     this.canvas.dataset.grwFluidSmoke = '';
     this.canvas.setAttribute('aria-hidden', 'true');
+    // Start invisible; fade in after the draw button has appeared.
+    this.canvas.style.opacity = '0';
     this.sceneElement.appendChild(this.canvas);
 
     this.renderer = new THREE.WebGLRenderer({
@@ -570,6 +572,12 @@ class ElegantFluidController {
 
     this.resize();
     this.onScroll();
+    // Double rAF so the opacity:0 paint lands before transitioning to target.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (!this.destroyed) this.onScroll();
+      });
+    });
     this.frame = requestAnimationFrame(this.tick);
   }
 
@@ -689,13 +697,42 @@ class ElegantFluidController {
   }
 }
 
-async function mount(root) {
+const pendingMounts = new WeakMap();
+
+function isIntroCircleDone(root) {
+  return (
+    root.dataset.introCircleDone === 'true' || root.dataset.cursorSmokeArmed === 'true'
+  );
+}
+
+/** Wait until intro circle spin finishes (`data-intro-circle-done` from main controller). */
+function whenIntroCircleDone(root, callback) {
+  if (isIntroCircleDone(root)) {
+    callback();
+    return () => {};
+  }
+
+  const observer = new MutationObserver(() => {
+    if (!isIntroCircleDone(root)) return;
+    observer.disconnect();
+    callback();
+  });
+  observer.observe(root, {
+    attributes: true,
+    attributeFilter: ['data-intro-circle-done', 'data-cursor-smoke-armed'],
+  });
+  return () => observer.disconnect();
+}
+
+async function mountNow(root) {
   if (
     controllers.has(root) ||
     root.dataset.cursorSmokeEnabled !== 'true' ||
     !root.querySelector('[data-grw-scene]') ||
     window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-  ) return;
+  ) {
+    return;
+  }
 
   const threeUrl = root.dataset.threeUrl;
   const shadersUrl = root.dataset.fluidShadersUrl;
@@ -704,6 +741,7 @@ async function mount(root) {
   try {
     const [THREE, shaders] = await Promise.all([import(threeUrl), import(shadersUrl)]);
     if (!root.isConnected || root.dataset.cursorSmokeEnabled !== 'true') return;
+    if (controllers.has(root)) return;
     const controller = new ElegantFluidController(root, THREE, shaders, readSettings(root));
     controllers.set(root, controller);
     root.dataset.cursorSmokeReady = 'true';
@@ -713,10 +751,38 @@ async function mount(root) {
   }
 }
 
+function mount(root) {
+  if (
+    controllers.has(root) ||
+    pendingMounts.has(root) ||
+    root.dataset.cursorSmokeEnabled !== 'true' ||
+    !root.querySelector('[data-grw-scene]') ||
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  ) {
+    return;
+  }
+
+  let cancelled = false;
+  let stopWaiting = () => {};
+  pendingMounts.set(root, () => {
+    cancelled = true;
+    stopWaiting();
+    pendingMounts.delete(root);
+  });
+
+  stopWaiting = whenIntroCircleDone(root, () => {
+    if (cancelled) return;
+    pendingMounts.delete(root);
+    void mountNow(root);
+  });
+}
+
 function unmount(root) {
+  pendingMounts.get(root)?.();
   const controller = controllers.get(root);
   controller?.destroy();
   controllers.delete(root);
+  delete root.dataset.cursorSmokeReady;
 }
 
 function boot(scope = document) {

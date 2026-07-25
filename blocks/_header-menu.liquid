@@ -93,9 +93,6 @@
         <li
           role="presentation"
           class="menu-list__list-item"
-          on:focus="/activate"
-          on:blur="/deactivate"
-          on:pointerenter="/activate"
           on:pointerleave="/deactivate"
         >
           <a
@@ -114,8 +111,13 @@
               aria-current="page"
             {% endif %}
             ref="menuitem"
+            on:focus="/activate"
+            on:blur="/deactivate"
           >
-            <span class="menu-list__link-title">{%- render 'giclee-i18n-menu-title', link: link -%}</span>
+            <span
+              class="menu-list__link-title"
+              on:pointerenter="/activate"
+            >{%- render 'giclee-i18n-menu-title', link: link -%}</span>
           </a>
           {%- if link.links != blank -%}
             <div class="menu-list__submenu{{ color_scheme_classes }}" ref="submenu[]">
@@ -152,13 +154,18 @@
         class="menu-list__list-item"
         role="presentation"
         slot="more"
-        on:focus="/activate"
-        on:blur="/deactivate"
-        on:pointerenter="/activate"
         on:pointerleave="/deactivate"
       >
-        <button role="listitem" class="menu-list__link button-unstyled">
-          <span class="menu-list__link-title">{{ 'actions.more' | t }}</span>
+        <button
+          role="listitem"
+          class="menu-list__link button-unstyled"
+          on:focus="/activate"
+          on:blur="/deactivate"
+        >
+          <span
+            class="menu-list__link-title"
+            on:pointerenter="/activate"
+          >{{ 'actions.more' | t }}</span>
         </button>
       </li>
     {% endcapture %}
@@ -300,6 +307,9 @@
     cursor: pointer;
     height: 100%;
     margin-block: 0;
+    position: relative;
+    /* Layout jak wcześniej (wyśrodkowany napis), interakcja tylko na tytule */
+    pointer-events: none;
 
     &::after {
       content: '';
@@ -309,10 +319,15 @@
       height: var(--box-height);
       left: 0;
       right: 0;
+      pointer-events: auto;
     }
 
     &[data-safety-box='true']::after {
       display: block;
+    }
+
+    &[data-safety-box='true'] {
+      pointer-events: auto;
     }
 
     &:hover,
@@ -327,6 +342,9 @@
 
   .menu-list__link-title {
     padding-inline: calc(var(--gap-xl) / 2);
+    pointer-events: auto;
+    width: fit-content;
+    max-width: 100%;
   }
   [slot='overflow'] .menu-list__link-title {
     padding-inline: 0;

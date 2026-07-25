@@ -10,13 +10,17 @@
 
 .mega-menu__flyout-item {
   position: relative;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .mega-menu__link--flyout-trigger {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 8px;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .mega-menu__flyout-arrow {
@@ -103,6 +107,8 @@ header-menu,
 .mega-menu__flyout-item {
   position: relative;
   overflow: visible !important;
+  width: fit-content;
+  max-width: 100%;
 }
 
 
@@ -119,20 +125,24 @@ header-menu,
 
 .mega-menu__flyout-list li {
   break-inside: avoid;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .mega-menu__link--child {
-  padding: 6px 8px;
+  padding: 6px 0;
   font-size: 0.85em;
   opacity: 0.8;
   transition: opacity 0.15s ease, color 0.15s ease, padding-left 0.15s ease;
-  display: block;
+  display: inline-block;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .mega-menu__link--child:hover {
   opacity: 1;
   color: #c9a84c;
-  padding-left: 12px;
+  padding-left: 6px;
 }
 
 .mega-menu__flyout-panel::-webkit-scrollbar { width: 4px; }
@@ -369,27 +379,27 @@ function initFlyout() {
     const panel = item.querySelector('.mega-menu__flyout-panel');
     if (!panel) return;
 
-    item.addEventListener('mouseenter', function() {
-      const rect = item.getBoundingClientRect();
-      panel.style.cssText = 'position: fixed !important; top: ' + rect.bottom + 'px !important; left: ' + rect.left + 'px !important;
-       z-index: 99999 !important; opacity: 1 !important; visibility: visible !important; min-width: 600px !important;
-       height: calc(100vh - ' + (rect.bottom + 20) + 'px) !important; overflow-y: auto !important; background: #0a0a0a !important; 
-       border: 1px solid rgba(201,168,76,0.2) !important; padding: 8px 16px !important;';
-    });
+    const trigger = item.querySelector('.mega-menu__link--flyout-trigger') || item.querySelector('a.mega-menu__link');
 
-    item.addEventListener('mouseleave', function(e) {
-      if (!panel.contains(e.relatedTarget)) {
-        panel.style.opacity = '0';
-        panel.style.visibility = 'hidden';
-      }
-    });
+    function openPanel() {
+      const rect = (trigger || item).getBoundingClientRect();
+      panel.style.cssText = 'position: fixed !important; top: ' + rect.bottom + 'px !important; left: ' + rect.left + 'px !important;' +
+       'z-index: 99999 !important; opacity: 1 !important; visibility: visible !important; min-width: 600px !important;' +
+       'height: calc(100vh - ' + (rect.bottom + 20) + 'px) !important; overflow-y: auto !important; background: #0a0a0a !important;' +
+       'border: 1px solid rgba(201,168,76,0.2) !important; padding: 8px 16px !important;';
+    }
 
-    panel.addEventListener('mouseleave', function(e) {
-      if (!item.contains(e.relatedTarget)) {
-        panel.style.opacity = '0';
-        panel.style.visibility = 'hidden';
-      }
-    });
+    function closePanel(e) {
+      if (panel.contains(e.relatedTarget) || item.contains(e.relatedTarget)) return;
+      panel.style.opacity = '0';
+      panel.style.visibility = 'hidden';
+    }
+
+    // Otwieraj po najechaniu na napis, nie na całe czarne pole wiersza.
+    (trigger || item).addEventListener('mouseenter', openPanel);
+    (trigger || item).addEventListener('mouseleave', closePanel);
+    panel.addEventListener('mouseleave', closePanel);
+    panel.addEventListener('mouseenter', openPanel);
   });
 }
 

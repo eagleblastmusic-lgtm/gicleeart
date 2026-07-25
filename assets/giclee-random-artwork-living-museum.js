@@ -33,6 +33,8 @@
       this.lightEnabled = root.dataset.livingLightEnabled !== 'false';
       this.dustEnabled = root.dataset.livingDustEnabled !== 'false';
       this.intensity = readNumber(root, 'livingLightIntensity', 45, 0, 100) / 100;
+      // Parallax can stay on when the spotlight is off (V4 owns both via this controller).
+      this.parallaxEnabled = Boolean(this.backgroundLayers);
 
       // Defaults match the console-tuned version accepted for V3.
       this.dustParticleLimit = Math.round(
@@ -50,7 +52,10 @@
       this.lowMemory = Boolean(
         globalThis.navigator?.deviceMemory && globalThis.navigator.deviceMemory < 4,
       );
-      this.allowTracking = this.lightEnabled && !this.reducedMotion && !this.coarsePointer;
+      this.allowTracking =
+        (this.lightEnabled || this.parallaxEnabled) &&
+        !this.reducedMotion &&
+        !this.coarsePointer;
       this.allowDust =
         this.dustEnabled && !this.reducedMotion && !this.coarsePointer && !this.lowMemory;
 
@@ -134,19 +139,7 @@
       }
 
       if (this.allowDust) {
-        const startDust = () => {
-          this.idleHandle = 0;
-          if (this.destroyed) return;
-          this.dustSprite = this.createDustSprite();
-          this.dustReady = Boolean(this.dustSprite);
-          this.resizeDust();
-          this.updateLoop();
-        };
-        if ('requestIdleCallback' in window) {
-          this.idleHandle = window.requestIdleCallback(startDust, { timeout: 450 });
-        } else {
-          this.idleHandle = window.setTimeout(startDust, 80);
-        }
+        this.scheduleDustAfterIntroCircle();
       }
 
       this.setState('idle');
@@ -155,6 +148,55 @@
         this.currentScale = this.targetScale;
         this.renderLight();
       }
+    }
+
+    isIntroCircleDone() {
+      return (
+        this.root.dataset.introCircleDone === 'true' ||
+        this.root.dataset.cursorSmokeArmed === 'true'
+      );
+    }
+
+    /** Dust starts only after the gold portal spin finishes. */
+    scheduleDustAfterIntroCircle() {
+      const startDust = () => {
+        this.idleHandle = 0;
+        this.introCircleObserver?.disconnect();
+        this.introCircleObserver = null;
+        if (this.destroyed || !this.allowDust) return;
+        this.dustSprite = this.createDustSprite();
+        this.dustReady = Boolean(this.dustSprite);
+        this.resizeDust();
+        // Canvas startuje z opacity:0 — po pierwszym frame fade-in do 0.9.
+        if (this.dustReady && this.dustCanvas) {
+          this.dustCanvas.classList.add('is-dust-fade-ready');
+        }
+        this.updateLoop();
+      };
+
+      if (this.isIntroCircleDone()) {
+        if ('requestIdleCallback' in window) {
+          this.idleHandle = window.requestIdleCallback(startDust, { timeout: 450 });
+        } else {
+          this.idleHandle = window.setTimeout(startDust, 80);
+        }
+        return;
+      }
+
+      this.introCircleObserver = new MutationObserver(() => {
+        if (!this.isIntroCircleDone()) return;
+        this.introCircleObserver?.disconnect();
+        this.introCircleObserver = null;
+        if ('requestIdleCallback' in window) {
+          this.idleHandle = window.requestIdleCallback(startDust, { timeout: 450 });
+        } else {
+          this.idleHandle = window.setTimeout(startDust, 80);
+        }
+      });
+      this.introCircleObserver.observe(this.root, {
+        attributes: true,
+        attributeFilter: ['data-intro-circle-done', 'data-cursor-smoke-armed'],
+      });
     }
 
     createDustSprite() {
@@ -430,7 +472,14 @@
     }
 
     renderParallax() {
-      if (!this.backgroundLayers || !this.sceneRect || this.state === 'drawing') return;
+      if (
+        !this.parallaxEnabled ||
+        !this.backgroundLayers ||
+        !this.sceneRect ||
+        this.state === 'drawing'
+      ) {
+        return;
+      }
       const nx = clamp((this.currentX / this.width) * 2 - 1, -1, 1);
       const ny = clamp((this.currentY / this.height) * 2 - 1, -1, 1);
       this.backgroundLayers.style.setProperty('--grw-cbg-px', `${(-nx * 18).toFixed(2)}px`);
@@ -515,6 +564,8 @@
       if (this.destroyed) return;
       this.destroyed = true;
       if (this.rafId) window.cancelAnimationFrame(this.rafId);
+      this.introCircleObserver?.disconnect();
+      this.introCircleObserver = null;
       if (this.idleHandle) {
         if ('cancelIdleCallback' in window) window.cancelIdleCallback(this.idleHandle);
         else window.clearTimeout(this.idleHandle);
@@ -530,6 +581,7 @@
       this.drawButton?.removeEventListener('pointerleave', this.onButtonLeave);
       if (this.dustContext) this.dustContext.clearRect(0, 0, this.width, this.height);
       if (this.dustCanvas) {
+        this.dustCanvas.classList.remove('is-dust-fade-ready');
         this.dustCanvas.width = 0;
         this.dustCanvas.height = 0;
       }

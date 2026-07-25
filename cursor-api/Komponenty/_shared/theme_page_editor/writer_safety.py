@@ -39,10 +39,10 @@ from .page_section_effects_settings import (
 )
 from .service_base import (
     INDEX_HEADER,
-    apply_zone_values,
     backup_write_dir_for,
+    component_deploy_relpaths,
     load_template_from_path,
-    load_zone_values,
+    merge_managed_zone_values,
     template_path_for_config,
 )
 
@@ -248,16 +248,6 @@ def safe_persist_editor_to_variant(
     )
 
 
-def _zone_exists_in_variant(variant: dict[str, Any], zone: Any) -> bool:
-    if bool(getattr(zone, "settings_only", False)):
-        return True
-    section_key = str(getattr(zone, "section_key", "") or "")
-    if not section_key:
-        return True
-    sections = variant.get("sections")
-    return isinstance(sections, dict) and isinstance(sections.get(section_key), dict)
-
-
 def merge_managed_zones(
     config: PageEditorConfig,
     current_theme: dict[str, Any],
@@ -265,16 +255,12 @@ def merge_managed_zones(
 ) -> dict[str, Any]:
     """Zacznij od świeżego motywu i zastosuj tylko pola z config.zones."""
 
-    merged = copy.deepcopy(current_theme)
-    for zone in config.zones:
-        if not _zone_exists_in_variant(variant, zone):
-            continue
-        values = load_zone_values(variant, zone)
-        apply_zone_values(merged, zone, values)
-    return merged
+    return merge_managed_zone_values(config, current_theme, variant)
 
 
 def _effects_output(config: PageEditorConfig, variant_id: str) -> PlannedOutput | None:
+    if not config.section_effects_asset_enabled:
+        return None
     if not any(
         zone_has_text_effects(zone) or zone_has_image_effects(zone)
         for zone in config.zones
@@ -674,6 +660,7 @@ def _open_deploy_only(context: _EditorContext) -> None:
                 code = gui_shell.deploy_theme(
                     environment=str(meta.get("environment", key)),
                     allow_live=bool(meta.get("allow_live")),
+                    only_paths=component_deploy_relpaths(context.config),
                     on_line=lambda line: context.host.after(
                         0,
                         lambda value=line: log_box.insert("end", value + "\n"),

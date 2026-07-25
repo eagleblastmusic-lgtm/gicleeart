@@ -179,6 +179,7 @@ def _config():
         preview_path="/",
         variant_id_prefix="sk",
         zones=PAGE_ZONES,
+        section_effects_asset_enabled=False,
     )
 
 

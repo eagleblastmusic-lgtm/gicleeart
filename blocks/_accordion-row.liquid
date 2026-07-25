@@ -1,23 +1,75 @@
 
 {% assign block_settings = block.settings %}
+{% assign heading_art = block_settings.heading_background_image %}
+{% assign answer_art = block_settings.answer_background_image %}
+{% comment %}
+  Samo tło pytania → jedna warstwa na całym wierszu (rozwinięcie odsłania kontynuację).
+  Osobne tło odpowiedzi → osobne kadry w pytaniu i odpowiedzi.
+{% endcomment %}
+{% assign shared_art = false %}
+{% if heading_art != blank and answer_art == blank %}
+  {% assign shared_art = true %}
+{% endif %}
+{% assign heading_art_oy = block_settings.heading_background_image_object_y | default: 50 | plus: 0 %}
+{% if heading_art_oy < 0 %}
+  {% assign heading_art_oy = 0 %}
+{% elsif heading_art_oy > 100 %}
+  {% assign heading_art_oy = 100 %}
+{% endif %}
+{% if block_settings.answer_background_image_object_y != blank %}
+  {% assign answer_art_oy = block_settings.answer_background_image_object_y | plus: 0 %}
+{% else %}
+  {% assign answer_art_oy = heading_art_oy %}
+{% endif %}
+{% if answer_art_oy < 0 %}
+  {% assign answer_art_oy = 0 %}
+{% elsif answer_art_oy > 100 %}
+  {% assign answer_art_oy = 100 %}
+{% endif %}
+{% capture heading_art_object_y_style %}object-position: 72% {{ heading_art_oy }}%;{% endcapture %}
+{% capture answer_art_object_y_style %}object-position: 72% {{ answer_art_oy }}%;{% endcapture %}
+{% if shared_art %}
+  {% assign shared_art_url = heading_art | image_url: width: 1600 %}
+{% endif %}
 
 {% capture accordion_row_children %}
   <details
-    class="details"
+    class="details{% if heading_art != blank or answer_art != blank %} details--art{% endif %}{% if shared_art %} details--art-shared{% endif %}"
     data-testid="accordion-details"
+    {% if shared_art %}
+      style="--details-art-image: url('{{ shared_art_url }}'); --details-art-position: 72% {{ heading_art_oy }}%;"
+    {% endif %}
     {% if block_settings.open_by_default %}
       open
     {% endif %}
     {{ block.shopify_attributes }}
   >
     <summary class="details__header">
+      {% if heading_art != blank and shared_art == false %}
+        <span class="details__art details__art--heading" aria-hidden="true">
+          {{
+            heading_art
+            | image_url: width: 1600
+            | image_tag:
+              class: 'details__art-image',
+              loading: 'lazy',
+              widths: '480, 800, 1200, 1600',
+              sizes: '(min-width: 750px) 720px, 100vw',
+              alt: '',
+              style: heading_art_object_y_style
+          }}
+          <span class="details__art-veil"></span>
+        </span>
+      {% endif %}
       {% render 'icon-or-image',
         icon: block_settings.icon,
         image_upload: block_settings.image_upload,
         width: block_settings.width,
         class_name: 'details__icon'
       %}
-      {%- render 'giclee-i18n-text', scope: 'blocks', id: block.id, field: 'heading', fallback: block_settings.heading -%}
+      <span class="details__heading-label">
+        {%- render 'giclee-i18n-text', scope: 'blocks', id: block.id, field: 'heading', fallback: block_settings.heading -%}
+      </span>
       <span class="svg-wrapper icon-caret icon-animated">
         {{- 'icon-caret.svg' | inline_asset_content -}}
       </span>
@@ -26,7 +78,23 @@
       </span>
     </summary>
 
-    <div class="details-content">
+    <div class="details-content{% if answer_art != blank and shared_art == false %} details-content--art{% endif %}">
+      {% if answer_art != blank and shared_art == false %}
+        <span class="details__art details__art--answer" aria-hidden="true">
+          {{
+            answer_art
+            | image_url: width: 1600
+            | image_tag:
+              class: 'details__art-image',
+              loading: 'lazy',
+              widths: '480, 800, 1200, 1600',
+              sizes: '(min-width: 750px) 720px, 100vw',
+              alt: '',
+              style: answer_art_object_y_style
+          }}
+          <span class="details__art-veil"></span>
+        </span>
+      {% endif %}
       {% content_for 'blocks' %}
     </div>
   </details>
@@ -41,6 +109,89 @@
   .details__icon {
     height: auto;
     margin-inline-end: var(--margin-xs);
+  }
+
+  .details__header {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .details__heading-label {
+    min-width: 0;
+  }
+
+  .details-content--art {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .details__art {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .details__header > :not(.details__art),
+  .details-content--art > :not(.details__art) {
+    position: relative;
+    z-index: 1;
+  }
+
+  /*
+    Jedna grafika jako tło całego <details> (nie jako dziecko poza summary):
+    zwinięte = widać górę; rozwinięte = kontynuacja w dół. Elementy poza <summary>
+    są chowane przez przeglądarkę, więc background na details jest jedyną pewną metodą.
+  */
+  .details--art-shared {
+    background-color: #050505;
+    background-image:
+      linear-gradient(
+        90deg,
+        rgb(5, 5, 5) 0%,
+        rgba(5, 5, 5, 0.97) 24%,
+        rgba(5, 5, 5, 0.78) 46%,
+        rgba(5, 5, 5, 0.38) 66%,
+        rgba(5, 5, 5, 0.12) 84%,
+        rgba(5, 5, 5, 0.02) 100%
+      ),
+      var(--details-art-image);
+    background-size: auto, cover;
+    background-position: 0 0, var(--details-art-position, 72% 50%);
+    background-repeat: no-repeat;
+  }
+
+  .details--art-shared > .details__header,
+  .details--art-shared > .details-content {
+    background: transparent;
+  }
+
+  .details__art-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 72% center;
+  }
+
+  /* Lewa strona niemal czarna (czytelność), obraz stopniowo odsłaniany w prawo */
+  .details__art-veil {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      rgb(0, 0, 0) 0%,
+      rgba(0, 0, 0, 0.96) 26%,
+      rgba(0, 0, 0, 0.72) 48%,
+      rgba(0, 0, 0, 0.32) 68%,
+      rgba(0, 0, 0, 0.08) 86%,
+      rgba(0, 0, 0, 0.02) 100%
+    );
+  }
+
+  .details--art:not(.details--art-shared) {
+    background-color: #050505;
   }
 {% endstylesheet %}
 
@@ -68,6 +219,40 @@
       "id": "open_by_default",
       "label": "t:settings.open_row_by_default",
       "default": false
+    },
+    {
+      "type": "header",
+      "content": "t:content.accordion_row_artwork"
+    },
+    {
+      "type": "image_picker",
+      "id": "heading_background_image",
+      "label": "t:settings.heading_background_image"
+    },
+    {
+      "type": "range",
+      "id": "heading_background_image_object_y",
+      "label": "t:settings.heading_background_image_object_y",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 50
+    },
+    {
+      "type": "image_picker",
+      "id": "answer_background_image",
+      "label": "t:settings.answer_background_image"
+    },
+    {
+      "type": "range",
+      "id": "answer_background_image_object_y",
+      "label": "t:settings.answer_background_image_object_y",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 50
     },
     {
       "type": "header",

@@ -110,31 +110,38 @@
        Wyższa specyficzność + !important nadpisuje globalne .accordion z base.css
        jedynie na tej stronie — inne akordeony (np. produkt) bez zmian.
        ===================================================================== */
+
+    /* Nagłówek „Często zadawane pytania” na hero — czytelność na tle zdjęcia */
+    .hero__content-wrapper :is(h1, h2, h3, h4, h5, h6) {
+      text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.55),
+        0 4px 18px rgba(0, 0, 0, 0.45),
+        0 0 28px rgba(0, 0, 0, 0.35);
+    }
+    /*
+      Hero wyłącza pointer-events na .hero__content-wrapper (tylko a/button…).
+      Bez auto nagłówek nie dostaje mouseenter — hover GSAP nie działa.
+    */
+    .hero__content-wrapper .faq-hero-heading {
+      pointer-events: auto;
+      cursor: pointer;
+    }
+
+    /* Separatory (divider) — mniej jaskrawe na czarnym tle */
+    #MainContent .divider .divider__line {
+      opacity: 0.8;
+    }
+
     accordion-custom {
       /* szybsze, płynne rozwijanie (komponent czyta tę zmienną) */
       --animation-speed-slow: 320ms;
       --animation-easing: cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Wejście kart (stagger zsynchronizowany z kurtyną przejścia) */
-    @keyframes faqItemIn {
-      from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
+    /* Wejście kart — GSAP (assets/faq-accordion-entrance.js); tu tylko layout */
     .accordion accordion-custom {
       display: block;
-      opacity: 0;
-      animation: faqItemIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
-    .accordion accordion-custom:nth-child(1)  { animation-delay: 0.80s; }
-    .accordion accordion-custom:nth-child(2)  { animation-delay: 0.95s; }
-    .accordion accordion-custom:nth-child(3)  { animation-delay: 1.10s; }
-    .accordion accordion-custom:nth-child(4)  { animation-delay: 1.25s; }
-    .accordion accordion-custom:nth-child(5)  { animation-delay: 1.40s; }
-    .accordion accordion-custom:nth-child(6)  { animation-delay: 1.55s; }
-    .accordion accordion-custom:nth-child(7)  { animation-delay: 1.70s; }
-    .accordion accordion-custom:nth-child(8)  { animation-delay: 1.85s; }
-    .accordion accordion-custom:nth-child(n+9){ animation-delay: 2.00s; }
 
     /* Odstęp między kartami (stała szerokość kontenera bez zmian) */
     .accordion accordion-custom + accordion-custom { margin-block-start: 14px; }
@@ -160,6 +167,55 @@
         transform 0.3s ease;
     }
 
+    /* Wiersze z grafiką — ciemne tło pod gradientem widoczności obrazu */
+    .accordion accordion-custom details.details--art {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+    .accordion accordion-custom details.details--art:not(.details--art-shared) {
+      background: #050505 !important;
+    }
+    /* Shared: nie używać shorthand `background` — kasuje obraz z CSS variables */
+    .accordion accordion-custom details.details--art-shared {
+      /* jasna półprzezroczysta ramka + cover = „prześwit” na dole przy niebie/światłach */
+      border-color: #121212 !important;
+      background-color: #050505 !important;
+      background-image:
+        linear-gradient(
+          90deg,
+          rgb(5, 5, 5) 0%,
+          rgba(5, 5, 5, 0.97) 24%,
+          rgba(5, 5, 5, 0.78) 46%,
+          rgba(5, 5, 5, 0.38) 66%,
+          rgba(5, 5, 5, 0.12) 84%,
+          rgba(5, 5, 5, 0.02) 100%
+        ),
+        var(--details-art-image) !important;
+      background-size: auto, cover !important;
+      background-position: 0 0, var(--details-art-position, 72% 50%) !important;
+      background-repeat: no-repeat !important;
+      background-clip: padding-box !important;
+      /* domyka AA na zaokrągleniach względem czarnej strony */
+      box-shadow:
+        0 0 0 1px #000,
+        inset 0 0 0 1px rgba(0, 0, 0, 0.65),
+        0 10px 30px -20px rgba(0, 0, 0, 0.65) !important;
+    }
+    .accordion accordion-custom details.details--art .details__art-veil {
+      background: linear-gradient(
+        90deg,
+        rgb(5, 5, 5) 0%,
+        rgba(5, 5, 5, 0.97) 24%,
+        rgba(5, 5, 5, 0.78) 46%,
+        rgba(5, 5, 5, 0.38) 66%,
+        rgba(5, 5, 5, 0.12) 84%,
+        rgba(5, 5, 5, 0.02) 100%
+      );
+    }
+    .accordion accordion-custom details.details--art .details__heading-label {
+      text-shadow: 0 1px 12px rgba(0, 0, 0, 0.65);
+    }
+
     /* Subtelna złota linia u góry karty */
     .accordion accordion-custom details::before {
       content: "";
@@ -175,7 +231,7 @@
 
     /* Hover — delikatne podświetlenie + lekkie uniesienie */
     @media (hover: hover) {
-      .accordion accordion-custom details:hover {
+      .accordion accordion-custom details:not(.details--art-shared):hover {
         border-color: rgba(198, 169, 107, 0.45) !important;
         background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)) !important;
         box-shadow:
@@ -183,11 +239,22 @@
           0 18px 40px -22px rgba(0, 0, 0, 0.75) !important;
         transform: translateY(-1px);
       }
+      .accordion accordion-custom details.details--art-shared:hover {
+        border-color: rgba(198, 169, 107, 0.45) !important;
+        box-shadow:
+          0 0 0 1px #000,
+          inset 0 0 0 1px rgba(0, 0, 0, 0.55),
+          0 18px 40px -22px rgba(0, 0, 0, 0.75) !important;
+        transform: translateY(-1px);
+      }
+      .accordion accordion-custom details.details--art:not(.details--art-shared):hover {
+        background: #050505 !important;
+      }
       .accordion accordion-custom details:hover::before { opacity: 0.7; }
     }
 
     /* Otwarta (aktywna) — złota ramka + glow */
-    .accordion accordion-custom details[open] {
+    .accordion accordion-custom details:not(.details--art-shared)[open] {
       border-color: rgba(198, 169, 107, 0.6) !important;
       background: linear-gradient(180deg, rgba(198, 169, 107, 0.06), rgba(198, 169, 107, 0.015)) !important;
       box-shadow:
@@ -195,6 +262,18 @@
         0 20px 46px -22px rgba(0, 0, 0, 0.8),
         0 0 0 1px rgba(198, 169, 107, 0.12),
         0 0 30px -6px rgba(198, 169, 107, 0.18) !important;
+    }
+    .accordion accordion-custom details.details--art-shared[open] {
+      border-color: rgba(198, 169, 107, 0.6) !important;
+      box-shadow:
+        0 0 0 1px #000,
+        inset 0 0 0 1px rgba(0, 0, 0, 0.55),
+        0 20px 46px -22px rgba(0, 0, 0, 0.8),
+        0 0 0 1px rgba(198, 169, 107, 0.12),
+        0 0 30px -6px rgba(198, 169, 107, 0.18) !important;
+    }
+    .accordion accordion-custom details.details--art:not(.details--art-shared)[open] {
+      background: #050505 !important;
     }
     .accordion accordion-custom details[open]::before { opacity: 1; }
 
@@ -204,7 +283,7 @@
       gap: 18px;
       padding: 22px 24px !important;
       min-height: 64px;
-      color: #fff;
+      color: rgba(255, 255, 255, 0.86);
       font-weight: 600;
       letter-spacing: 0.005em;
       border-radius: 16px;
@@ -234,6 +313,13 @@
       color: #c6a96b;
       transition: background 0.3s ease, border-color 0.3s ease;
     }
+    /* Przy tle-obrazie: nieprzezroczyste tło, żeby grafika nie wchodziła w przycisk */
+    .accordion accordion-custom details.details--art summary.details__header .svg-wrapper.icon-caret {
+      background: #0a0a0a;
+      background-image: none;
+      isolation: isolate;
+      z-index: 3;
+    }
     .accordion accordion-custom details summary.details__header .svg-wrapper.icon-caret svg {
       width: 14px;
       height: 14px;
@@ -246,38 +332,83 @@
         border-color: rgba(198, 169, 107, 0.5);
         background: rgba(198, 169, 107, 0.08);
       }
+      .accordion accordion-custom details.details--art:hover summary .svg-wrapper.icon-caret {
+        background: #14110c;
+        background-image: none;
+      }
     }
     .accordion accordion-custom details[open] summary .svg-wrapper.icon-caret {
       border-color: rgba(198, 169, 107, 0.6);
       background: rgba(198, 169, 107, 0.12);
     }
+    .accordion accordion-custom details.details--art[open] summary .svg-wrapper.icon-caret {
+      background: #16130e;
+      background-image: none;
+    }
 
     /* Odpowiedź — spokojniejsza, czytelna; płynne height + opacity + slide */
-    .accordion accordion-custom details .details-content {
-      padding: 0 24px !important;
+    .accordion accordion-custom details .details-content,
+    .accordion accordion-custom details::details-content {
       color: rgba(255, 255, 255, 0.62);
       line-height: 1.75;
+      /* stan zwinięty = cel animacji zamykania (bez visibility/content-visibility — ucinały exit) */
+      block-size: 0;
+      min-block-size: 0;
+      opacity: 0;
+      padding-block: 0 !important;
+      padding-inline: 24px !important;
+      overflow-y: clip;
       transform: translateY(-4px);
-    }
-    .accordion accordion-custom details .details-content :is(p, li) {
-      color: rgba(255, 255, 255, 0.62);
-    }
-    .accordion accordion-custom details[open] .details-content {
-      padding: 2px 24px 24px 24px !important;
-      transform: translateY(0);
-    }
-
-    /* Płynne rozwijanie/zwijanie — nadpisuje wbudowane transition:none (poza focus) */
-    .accordion accordion-custom details .details-content,
-    .accordion accordion-custom details::details-content,
-    .accordion accordion-custom details:not(:focus-within) .details-content,
-    .accordion accordion-custom details:not(:focus-within)::details-content {
+      interpolate-size: allow-keywords;
       transition:
+        display 0.32s allow-discrete,
         content-visibility 0.32s allow-discrete,
         block-size 0.32s cubic-bezier(0.4, 0, 0.2, 1),
         padding-block 0.32s cubic-bezier(0.4, 0, 0.2, 1),
         opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
         transform 0.32s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    .accordion accordion-custom details .details-content :is(p, li) {
+      color: rgba(255, 255, 255, 0.62);
+    }
+    .accordion accordion-custom details[open] .details-content,
+    .accordion accordion-custom details[open]::details-content {
+      block-size: auto;
+      opacity: 1;
+      padding-block: 2px 24px !important;
+      transform: translateY(0);
+      overflow-y: clip;
+
+      @starting-style {
+        block-size: 0;
+        opacity: 0;
+        padding-block: 0;
+        transform: translateY(-4px);
+      }
+    }
+    /* nadpisz transition:none z accordion-custom (poza focus) — bez tego zamykanie jest skokowe */
+    .accordion accordion-custom details:not(:focus-within) .details-content,
+    .accordion accordion-custom details:not(:focus-within)::details-content {
+      transition:
+        display 0.32s allow-discrete,
+        content-visibility 0.32s allow-discrete,
+        block-size 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+        padding-block 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.32s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    .accordion accordion-custom details.details--art-shared summary.details__header {
+      border-radius: 0;
+    }
+    /* dodatkowa domykająca krawędź — gasi jasny AA fringe na dole */
+    .accordion accordion-custom details.details--art-shared::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      box-shadow: inset 0 -1px 0 0 #050505;
+      pointer-events: none;
+      z-index: 2;
     }
 
     /* Responsywność */
@@ -292,19 +423,30 @@
         width: 30px;
         height: 30px;
       }
-      .accordion accordion-custom details .details-content { padding: 0 18px !important; }
-      .accordion accordion-custom details[open] .details-content { padding: 2px 18px 20px 18px !important; }
+      .accordion accordion-custom details .details-content,
+      .accordion accordion-custom details::details-content {
+        padding-inline: 18px !important;
+      }
+      .accordion accordion-custom details[open] .details-content,
+      .accordion accordion-custom details[open]::details-content {
+        padding-block: 2px 20px !important;
+      }
     }
     @media (min-width: 1200px) {
       .accordion accordion-custom + accordion-custom { margin-block-start: 16px; }
       .accordion accordion-custom details summary.details__header { padding: 24px 28px !important; }
-      .accordion accordion-custom details .details-content { padding: 0 28px !important; }
-      .accordion accordion-custom details[open] .details-content { padding: 4px 28px 28px 28px !important; }
+      .accordion accordion-custom details .details-content,
+      .accordion accordion-custom details::details-content {
+        padding-inline: 28px !important;
+      }
+      .accordion accordion-custom details[open] .details-content,
+      .accordion accordion-custom details[open]::details-content {
+        padding-block: 4px 28px !important;
+      }
     }
 
     /* Mniej ruchu = mniej animacji */
     @media (prefers-reduced-motion: reduce) {
-      .accordion accordion-custom { animation: none; opacity: 1; }
       .accordion accordion-custom details,
       .accordion accordion-custom details .details-content,
       .accordion accordion-custom details summary .svg-wrapper.icon-caret { transition: none !important; }

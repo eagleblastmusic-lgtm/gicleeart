@@ -23,6 +23,7 @@ class PageEditorConfig:
     variant_label_default: str = "Wersja 1"
     extra_toolbar: tuple[tuple[str, Callable[[], None]], ...] = field(default_factory=tuple)
     preview_query: str = "giclee_skip_splash=1&giclee_skip_notice=1"
+    section_effects_asset_enabled: bool = True
 
     @property
     def template_basename(self) -> str:

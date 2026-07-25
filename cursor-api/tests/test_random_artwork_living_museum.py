@@ -167,7 +167,7 @@ def test_existing_webgl_and_draw_regressions_remain_intact() -> None:
     assert "this.setState(STATE.DRAWING);" in main
     assert "createOracleScene" in main
     assert "DUST_COUNT" in webgl
-    assert "this.sceneController.destroy()" in main
+    assert "this.sceneController.destroy({ instant: true })" in main
     assert "grw--webgl" in main
 
 
@@ -247,10 +247,11 @@ const vm = require("vm");
 const assert = require("assert");
 const events = [];
 const style = () => ({ setProperty: () => {} });
-const node = (name, rect = { left: 0, top: 0, width: 1200, height: 760 }) => ({
-  name, style: style(), offsetWidth: name === "spotlight" ? 760 : rect.width,
-  offsetHeight: name === "spotlight" ? 420 : rect.height,
-  addEventListener: (type) => events.push(["add", name, type]),
+    const node = (name, rect = { left: 0, top: 0, width: 1200, height: 760 }) => ({
+      name, style: style(), offsetWidth: name === "spotlight" ? 760 : rect.width,
+      offsetHeight: name === "spotlight" ? 420 : rect.height,
+      classList: { add: () => {}, remove: () => {} },
+      addEventListener: (type) => events.push(["add", name, type]),
   removeEventListener: (type) => events.push(["remove", name, type]),
   getBoundingClientRect: () => rect,
 });
@@ -276,17 +277,19 @@ const selectors = new Map([
   ["[data-grw-result-link]", result],
 ]);
 const root = {
-  dataset: {
-    livingLightEnabled: "true", livingDustEnabled: "true", livingLightIntensity: "45",
-    livingDustParticles: "120", livingDustOpacity: "115", livingDustSize: "125",
-    livingDustSpeed: "75", livingDustFps: "24", livingDustDprCap: "125",
-  },
+      dataset: {
+        livingLightEnabled: "true", livingDustEnabled: "true", livingLightIntensity: "45",
+        livingDustParticles: "120", livingDustOpacity: "115", livingDustSize: "125",
+        livingDustSpeed: "75", livingDustFps: "24", livingDustDprCap: "125",
+        introCircleDone: "true",
+      },
   querySelector: (selector) => selectors.get(selector) || null,
   removeAttribute: () => {},
 };
 let raf = 0; let resizeDisconnected = false; let intersectionDisconnected = false;
-class ResizeObserver { observe() {} disconnect() { resizeDisconnected = true; } }
-class IntersectionObserver { observe() {} disconnect() { intersectionDisconnected = true; } }
+    class ResizeObserver { observe() {} disconnect() { resizeDisconnected = true; } }
+    class IntersectionObserver { observe() {} disconnect() { intersectionDisconnected = true; } }
+    class MutationObserver { observe() {} disconnect() {} }
 Object.defineProperty(globalThis, "navigator", { value: { deviceMemory: 8 }, configurable: true });
 global.performance = { now: () => 0 };
 global.document = {
@@ -294,7 +297,8 @@ global.document = {
   removeEventListener: (type) => events.push(["remove", "document", type]),
   createElement: () => ({ width: 0, height: 0, getContext: () => spriteContext }),
 };
-global.ResizeObserver = ResizeObserver; global.IntersectionObserver = IntersectionObserver;
+    global.ResizeObserver = ResizeObserver; global.IntersectionObserver = IntersectionObserver;
+    global.MutationObserver = MutationObserver;
 global.window = {
   ResizeObserver, IntersectionObserver, matchMedia: () => ({ matches: false }), devicePixelRatio: 1,
   requestAnimationFrame: () => ++raf, cancelAnimationFrame: (id) => events.push(["cancelRaf", id]),
@@ -334,19 +338,47 @@ console.log(JSON.stringify({ eventCount: events.length }));
 
 
 def test_background_video_once_keeps_effects_and_disposes_decoder() -> None:
-    """Film raz→obraz: efekty w trakcie, pełne zwolnienie dekodera po ended."""
+    """Film raz→obraz: edytowalny lead/hold + zwolnienie dekodera po fade."""
     main_js = MAIN_JS.read_text(encoding="utf-8")
     section = SECTION.read_text(encoding="utf-8")
     css = BASE_CSS.read_text(encoding="utf-8")
+    registry = (
+        Path(__file__).resolve().parents[1]
+        / "Komponenty"
+        / "losujobraz"
+        / "registry.py"
+    ).read_text(encoding="utf-8")
 
     for fragment in (
         "releaseBackgroundVideo",
-        "BG_VIDEO_FADE_MS",
+        "BG_VIDEO_CROSSFADE_LEAD_MS_DEFAULT",
+        "BG_VIDEO_CROSSFADE_HOLD_MS_DEFAULT",
+        "bgVideoCrossfadeLeadMs",
+        "bgVideoCrossfadeHoldMs",
+        "beginCrossfade",
+        "timeupdate",
         "video.load()",
         "removeAttribute('data-video-source')",
         "is-bg-video-disposed",
+        "holdLastFrame",
     ):
         assert fragment in main_js
+
+    handoff_js = main_js.split("initBackgroundVideoHandoff", 1)[1].split(
+        "cleanupBackgroundVideoHandoff", 1
+    )[0]
+    assert "playbackRate" not in handoff_js
+    assert "BG_VIDEO_SLOWDOWN" not in main_js
+
+    for key in ("bg_video_crossfade_lead_ms", "bg_video_crossfade_hold_ms"):
+        assert f'"{key}"' in registry
+        assert f'data-{key.replace("_", "-")}=' in section or f'data-{key.replace("_", "-")}"' in section
+        assert f'"id": "{key}"' in section
+
+    assert 'data-bg-video-crossfade-lead-ms="' in section
+    assert 'data-bg-video-crossfade-hold-ms="' in section
+    assert "--grw-bg-video-fade-ms" in section
+    assert "--grw-bg-video-fade-ms" in css
 
     # Film i obraz w tej samej warstwie parallax/efektów.
     layers_open = section.index('class="giclee-random-artwork__custom-bg-layers"')

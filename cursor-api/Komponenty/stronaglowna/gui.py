@@ -79,9 +79,11 @@ from .service import (
     fetch_shopify_file_bytes,
     fetch_thumbnail_bytes,
     index_template_path,
+    homepage_deploy_relpaths,
     load_index_template,
     load_theme_settings,
     load_zone_values,
+    merge_managed_theme_settings,
     mobile_hero_path,
     normalize_overlay_pct,
     save_index_template,
@@ -1704,9 +1706,13 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
             return
 
         try:
+            theme_settings = merge_managed_theme_settings(
+                load_theme_settings(),
+                pending_settings,
+            )
             save_index_template(pending_template)
-            save_theme_settings(pending_settings)
-            persist_editor_to_variant(state["variant_id"], pending_template, pending_settings)
+            save_theme_settings(theme_settings)
+            persist_editor_to_variant(state["variant_id"], pending_template, theme_settings)
             mobile_name = mobile_hero_path().name if mobile_hero_path().is_file() else None
             write_home_assets(
                 pending_template,
@@ -1722,11 +1728,11 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
             return
 
         state["template"] = pending_template
-        state["settings"] = pending_settings
+        state["settings"] = theme_settings
         state["dirty"] = False
         from .service import list_zones
 
-        state["zone_rows"] = list_zones(pending_template, settings=pending_settings)
+        state["zone_rows"] = list_zones(pending_template, settings=theme_settings)
         _refresh_zone_list()
         backup_note = backups[0].name if backups else "—"
         vlabel = variant_label(state["variant_id"])
@@ -1848,8 +1854,13 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
 
         meta = chosen["meta"]
         try:
+            theme_settings = merge_managed_theme_settings(
+                load_theme_settings(),
+                pending_settings,
+            )
             save_index_template(pending_template)
-            save_theme_settings(pending_settings)
+            save_theme_settings(theme_settings)
+            persist_editor_to_variant(state["variant_id"], pending_template, theme_settings)
             mobile_name = mobile_hero_path().name if mobile_hero_path().is_file() else None
             write_home_assets(
                 pending_template,
@@ -1861,7 +1872,7 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
                 section_bg_effects_config=load_section_bg_effects_config(state["variant_id"]),
             )
             state["template"] = pending_template
-            state["settings"] = pending_settings
+            state["settings"] = theme_settings
             state["dirty"] = False
         except Exception as exc:
             messagebox.showerror(APP_TITLE, f"Zapis przed deployem nie powiódł się:\n{exc}", parent=host)
@@ -1898,6 +1909,7 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
                 code = deploy_theme(
                     environment=env,
                     allow_live=allow_live,
+                    only_paths=homepage_deploy_relpaths(),
                     on_line=lambda ln: host.after(0, lambda l=ln: append(l)),
                 )
                 msg = "Motyw wdrożony pomyślnie." if code == 0 else f"Deploy zakończony kodem {code}."

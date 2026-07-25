@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import io
 import json
+import re
 import threading
 import tkinter as tk
 import webbrowser
@@ -39,9 +40,12 @@ from .service_base import (
     apply_all_zone_values,
     apply_zone_values,
     backup_before_save,
+    component_deploy_relpaths,
     deploy_theme,
     fetch_thumbnail_bytes,
+    load_template,
     load_zone_values,
+    merge_managed_zone_values,
     normalize_video_ref,
     preview_url,
     save_template,
@@ -311,15 +315,18 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             messagebox.showerror(config.app_title, f"Kopia zapasowa nie powiodła się:\n{exc}", parent=host)
             return
         try:
-            save_template(config, pending)
+            current_template = load_template(config)
+            merged_template = merge_managed_zone_values(config, current_template, pending)
+            save_template(config, merged_template)
             varmod.persist_editor_to_variant(config, state["variant_id"], pending)
         except Exception as exc:
             messagebox.showerror(config.app_title, str(exc), parent=host)
             return
-        try:
-            write_page_section_effects_asset(config, state["variant_id"])
-        except OSError:
-            pass
+        if config.section_effects_asset_enabled:
+            try:
+                write_page_section_effects_asset(config, state["variant_id"])
+            except OSError:
+                pass
         state["template"] = pending
         state["baseline_template"] = copy.deepcopy(pending)
         state["dirty"] = False
@@ -376,7 +383,9 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             return
         try:
             backup_before_save(config)
-            save_template(config, pending)
+            current_template = load_template(config)
+            merged_template = merge_managed_zone_values(config, current_template, pending)
+            save_template(config, merged_template)
             varmod.persist_editor_to_variant(config, state["variant_id"], pending)
             state["template"] = pending
             state["baseline_template"] = copy.deepcopy(pending)
@@ -409,10 +418,12 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
 
             def worker() -> None:
                 try:
-                    write_page_section_effects_asset(config, state["variant_id"])
+                    if config.section_effects_asset_enabled:
+                        write_page_section_effects_asset(config, state["variant_id"])
                     code = deploy_theme(
                         environment=str(meta.get("environment", key)),
                         allow_live=bool(meta.get("allow_live")),
+                        only_paths=component_deploy_relpaths(config),
                         on_line=lambda line: host.after(0, lambda l=line: log_box.insert("end", l + "\n")),
                     )
                     host.after(0, lambda: status_var.set(f"Deploy zakończony (kod {code})."))
@@ -440,6 +451,7 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             return
         try:
             new_id = varmod.create_variant_copy(config, state["variant_id"], label.strip())
+            varmod.set_active_variant(config, new_id)
             _rebuild_variant_combo(new_id)
             _load_variant(new_id)
             status_var.set(f"Utworzono wariant: {label}")
@@ -515,19 +527,21 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             lbl.configure(text="brak lokalnego\npodglądu")
         return lbl
 
-    def _build_field_widget(zone: TemplateZone, fld: TemplateField, row: int) -> None:
+    def _build_field_widget(zone: TemplateZone, fld: TemplateField, row: int) -> int:
+        """Buduje widget pola. Zwraca indeks następnego wolnego wiersza gridu."""
         zid = zone.zone_id
         ttk.Label(
             editor_inner,
             text=fld.label,
             font=("", 9, "bold"),
-            wraplength=480,
-        ).grid(row=row, column=0, sticky="nw", pady=(8, 2), padx=(0, 8))
-        if fld.hint:
-            ttk.Label(editor_inner, text=fld.hint, foreground="#777", wraplength=480).grid(
-                row=row, column=1, sticky="w", pady=(8, 2)
-            )
+            wraplength=520,
+        ).grid(row=row, column=0, columnspan=2, sticky="nw", pady=(10, 2))
         row += 1
+        if fld.hint:
+            ttk.Label(editor_inner, text=fld.hint, foreground="#777", wraplength=520).grid(
+                row=row, column=0, columnspan=2, sticky="nw", pady=(0, 4)
+            )
+            row += 1
 
         if fld.kind in ("heading", "body", "text", "link"):
             var = tk.StringVar(value=str(_zone_value(zid, fld.field_id) or ""))
@@ -535,7 +549,7 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             if fld.kind in ("body", "text"):
                 widget = scrolledtext.ScrolledText(editor_inner, height=4, width=60, wrap="word")
                 widget.insert("1.0", var.get())
-                widget.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(0, 6))
+                widget.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(0, 10))
 
                 def _on_text(e: Any = None, w=widget, fid=fld.field_id) -> None:
                     _set_zone_value(zid, fid, w.get("1.0", "end-1c"))
@@ -543,8 +557,9 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
                 widget.bind("<KeyRelease>", _on_text)
             else:
                 widget = ttk.Entry(editor_inner, textvariable=var, width=64)
-                widget.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(0, 6))
+                widget.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(0, 10))
                 var.trace_add("write", lambda *_a, v=var, fid=fld.field_id: _set_zone_value(zid, fid, v.get()))
+            return row + 1
         elif fld.kind == "choice":
             value_to_label = dict(fld.choices)
             label_to_value = {label: value for value, label in fld.choices}
@@ -557,17 +572,19 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
                 values=labels,
                 state="readonly",
                 width=32,
-            ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(0, 6))
+            ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(0, 10))
             var.trace_add(
                 "write",
                 lambda *_a, v=var, fid=fld.field_id, mapping=label_to_value: _set_zone_value(
                     zid, fid, mapping.get(v.get(), v.get())
                 ),
             )
+            return row + 1
         elif fld.kind == "bool":
             var = tk.BooleanVar(value=bool(_zone_value(zid, fld.field_id)))
-            ttk.Checkbutton(editor_inner, variable=var).grid(row=row, column=0, columnspan=2, sticky="w", pady=(0, 6))
+            ttk.Checkbutton(editor_inner, variable=var).grid(row=row, column=0, columnspan=2, sticky="w", pady=(0, 10))
             var.trace_add("write", lambda *_a, v=var, fid=fld.field_id: _set_zone_value(zid, fid, v.get()))
+            return row + 1
         elif fld.kind == "int":
             var = tk.StringVar(value=str(_zone_value(zid, fld.field_id) or 0))
             ttk.Spinbox(
@@ -578,20 +595,23 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
                 increment=fld.step if fld.step is not None else 1,
                 width=10,
             ).grid(
-                row=row, column=0, columnspan=2, sticky="w", pady=(0, 6)
+                row=row, column=0, columnspan=2, sticky="w", pady=(0, 10)
             )
             var.trace_add("write", lambda *_a, v=var, fid=fld.field_id: _set_zone_value(zid, fid, v.get()))
+            return row + 1
         elif fld.kind == "float":
             var = tk.StringVar(value=str(_zone_value(zid, fld.field_id) or 0))
             ttk.Entry(editor_inner, textvariable=var, width=12).grid(
-                row=row, column=0, columnspan=2, sticky="w", pady=(0, 6)
+                row=row, column=0, columnspan=2, sticky="w", pady=(0, 10)
             )
             var.trace_add("write", lambda *_a, v=var, fid=fld.field_id: _set_zone_value(zid, fid, v.get()))
+            return row + 1
         elif fld.kind in ("shopify_image", "shopify_video"):
             is_video = fld.kind == "shopify_video"
             suffixes = _VIDEO_SUFFIXES if is_video else _IMAGE_SUFFIXES
             frame = ttk.Frame(editor_inner)
-            frame.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(0, 6))
+            frame.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(0, 4))
+            row += 1
             ref = str(_zone_value(zid, fld.field_id) or "")
             if ref:
                 add_recent_image(ref)
@@ -752,21 +772,28 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             for target in (frame, thumb, entry):
                 register_drop_target(target, on_drop=_on_media_drop)
 
-            if not is_video:
+            # Kadrowanie tylko gdy jest grafika — nie zajmuje miejsca przy "(brak)"
+            if not is_video and ref.strip():
                 crop_host = ttk.Frame(editor_inner)
-                crop_host.grid(row=row + 1, column=0, columnspan=2, sticky="ew", pady=(0, 6))
+                crop_host.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(0, 10))
                 oy_key = object_y_field_id(fid)
                 build_object_y_controls(
                     crop_host,
                     initial=_zone_value(zid, oy_key),
                     on_change=lambda value, key=oy_key: _set_zone_value(zid, key, value),
                 )
+                row += 1
+            else:
+                # odstęp pod rzędem przycisków, gdy brak suwaka
+                frame.grid_configure(pady=(0, 10))
+            return row
         else:
             var = tk.StringVar(value=str(_zone_value(zid, fld.field_id) or ""))
             ttk.Entry(editor_inner, textvariable=var, width=64).grid(
-                row=row, column=0, columnspan=2, sticky="ew", pady=(0, 6)
+                row=row, column=0, columnspan=2, sticky="ew", pady=(0, 10)
             )
             var.trace_add("write", lambda *_a, v=var, fid=fld.field_id: _set_zone_value(zid, fid, v.get()))
+            return row + 1
 
     def _render_zone_editor() -> None:
         for child in editor_inner.winfo_children():
@@ -877,8 +904,21 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
         for fld in zone.fields:
             if fld.kind == "section_background":
                 continue
-            _build_field_widget(zone, fld, row)
-            row += 2
+            # FAQ / powtarzalne bloki: wizualny separator przed każdym „Pytanie N”
+            q_match = re.fullmatch(r"q(\d+)_heading", fld.field_id)
+            if q_match:
+                sep = ttk.Frame(editor_inner)
+                sep.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(16, 6))
+                ttk.Separator(sep, orient="horizontal").pack(fill="x", side="left", expand=True, padx=(0, 8))
+                ttk.Label(
+                    sep,
+                    text=f"Wiersz {q_match.group(1)}",
+                    foreground="#444",
+                    font=("", 9, "bold"),
+                ).pack(side="left")
+                ttk.Separator(sep, orient="horizontal").pack(fill="x", side="left", expand=True, padx=(8, 0))
+                row += 1
+            row = _build_field_widget(zone, fld, row)
 
     def _on_zone_select(_event: tk.Event | None = None) -> None:
         sel = zone_list.curselection()

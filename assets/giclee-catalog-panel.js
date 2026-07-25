@@ -435,15 +435,31 @@ function initGalleryCatalog() {
   const existingPanel = document.getElementById('giclee-catalog-panel');
   if (existingPanel) existingPanel.remove();
 
-  katalogItem.removeAttribute('on:pointerenter');
-  katalogItem.removeAttribute('on:pointerleave');
-  katalogItem.removeAttribute('on:focus');
-  katalogItem.removeAttribute('on:blur');
-
-  new MutationObserver(function() {
+  const katalogNativeLink = katalogItem.querySelector('a.menu-list__link');
+  const katalogNativeTitle = katalogItem.querySelector('.menu-list__link-title');
+  function stripKatalogNativeHoverHandlers() {
     katalogItem.removeAttribute('on:pointerenter');
     katalogItem.removeAttribute('on:pointerleave');
-  }).observe(katalogItem, { attributes: true, attributeFilter: ['on:pointerenter', 'on:pointerleave'] });
+    katalogItem.removeAttribute('on:focus');
+    katalogItem.removeAttribute('on:blur');
+    if (katalogNativeLink) {
+      katalogNativeLink.removeAttribute('on:pointerenter');
+      katalogNativeLink.removeAttribute('on:pointerleave');
+      katalogNativeLink.removeAttribute('on:focus');
+      katalogNativeLink.removeAttribute('on:blur');
+    }
+    if (katalogNativeTitle) {
+      katalogNativeTitle.removeAttribute('on:pointerenter');
+      katalogNativeTitle.removeAttribute('on:pointerleave');
+    }
+  }
+  stripKatalogNativeHoverHandlers();
+
+  new MutationObserver(stripKatalogNativeHoverHandlers).observe(katalogItem, {
+    attributes: true,
+    attributeFilter: ['on:pointerenter', 'on:pointerleave', 'on:focus', 'on:blur'],
+    subtree: true
+  });
 
   var nativeSub = katalogItem.querySelector('.menu-list__submenu');
   if (nativeSub) {
@@ -742,7 +758,9 @@ function initGalleryCatalog() {
     });
   }
 
-  katalogItem.addEventListener('mouseenter', showPanel);
+  // Otwieraj po najechaniu na napis „Katalog”, nie na całe czarne pole pozycji menu.
+  const katalogHoverTarget = katalogItem.querySelector('.menu-list__link-title') || katalogLink || katalogItem;
+  katalogHoverTarget.addEventListener('mouseenter', showPanel);
   katalogItem.addEventListener('mouseleave', hidePanel);
   panel.addEventListener('mouseenter', function() {
     clearTimeout(hideTimer);

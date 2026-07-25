@@ -1,0 +1,251 @@
+/*
+ * Galaxy Glow button for Losuj Obraz — port of Button 23 (Webflow demo).
+ * Shared by «Losuj obraz» and «Zobacz obraz».
+ */
+
+.giclee-galaxy-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: clamp(0.78rem, 1.2vw, 0.88rem);
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  overflow: visible;
+  isolation: isolate;
+  will-change: transform;
+  box-shadow: none;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+}
+
+.giclee-random-artwork__draw.giclee-galaxy-btn {
+  margin-top: clamp(10px, 2vw, 20px);
+}
+
+.giclee-galaxy-btn:hover {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: #fff;
+  transform: none;
+}
+
+.giclee-galaxy-btn:focus-visible {
+  outline: 2px solid rgba(200, 205, 212, 0.9);
+  outline-offset: 6px;
+}
+
+.giclee-galaxy-btn[disabled] {
+  cursor: progress;
+  opacity: 0.55;
+  transform: none;
+}
+
+.giclee-random-artwork__draw.giclee-galaxy-btn[data-grw-draw-reveal]:not(.is-draw-reveal-ready) {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.giclee-random-artwork__draw.giclee-galaxy-btn[data-grw-draw-reveal].is-draw-reveal-ready {
+  opacity: 1;
+  transition: opacity 1s var(--grw-ease, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+/* Reset rectangular CTA chrome when the primary action uses Galaxy. */
+.giclee-random-artwork__cta.giclee-galaxy-btn::after {
+  content: none !important;
+  display: none !important;
+}
+
+/*
+ * Result CTA is also covered by the legacy V4/global button selectors.
+ * Keep Galaxy as the only visible chrome regardless of the selected global style.
+ */
+html[data-giclee-button-style]
+  .giclee-random-artwork[data-design-variant]
+  .giclee-random-artwork__cta.giclee-galaxy-btn {
+  min-block-size: 0;
+  min-inline-size: 0;
+  width: auto;
+  height: auto;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: #fff;
+  background: transparent;
+  box-shadow: none;
+  font: inherit;
+  font-size: clamp(0.78rem, 1.2vw, 0.88rem);
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+html[data-giclee-button-style]
+  .giclee-random-artwork[data-design-variant]
+  .giclee-random-artwork__cta.giclee-galaxy-btn:is(:hover, :active) {
+  border-color: transparent;
+  color: #fff;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+html[data-giclee-button-style]
+  .giclee-random-artwork[data-design-variant]
+  .giclee-random-artwork__cta.giclee-galaxy-btn:focus-visible {
+  outline: 2px solid rgba(200, 205, 212, 0.9);
+  outline-offset: 6px;
+  box-shadow: none;
+}
+
+html[data-giclee-button-style]
+  .giclee-random-artwork[data-design-variant]
+  .giclee-random-artwork__cta.giclee-galaxy-btn::before,
+html[data-giclee-button-style]
+  .giclee-random-artwork[data-design-variant]
+  .giclee-random-artwork__cta.giclee-galaxy-btn::after {
+  content: none !important;
+  display: none !important;
+}
+
+.giclee-galaxy-btn__shell {
+  z-index: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: 99999px;
+  background-color: rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+}
+
+.giclee-galaxy-btn__plate {
+  z-index: 3;
+  position: relative;
+  display: block;
+  border-radius: 99999px;
+  padding: clamp(0.7rem, 1.4vw, 0.95rem) clamp(1.55rem, 3.4vw, 2.4rem);
+  color: #fff;
+  background-color: rgba(0, 0, 0, 0.81);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  line-height: 1;
+  transition: background-color 0.6s ease;
+}
+
+.giclee-galaxy-btn__label {
+  display: block;
+  -webkit-text-fill-color: transparent;
+  background-image: linear-gradient(0deg, #a5a5a5, #fff);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.giclee-galaxy-btn__glow {
+  z-index: -1;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.giclee-galaxy-btn__glow--inside {
+  z-index: 1;
+  inset: 0;
+}
+
+.giclee-galaxy-btn__glow-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 78px;
+  height: 78px;
+}
+
+.giclee-galaxy-btn__glow-inner--lg {
+  width: 150px;
+  height: 150px;
+}
+
+.giclee-galaxy-btn__lottie {
+  position: absolute;
+  width: 150%;
+  height: 150%;
+  inset: auto;
+}
+
+.giclee-galaxy-btn__lottie--horizontal {
+  transform: rotate(90deg);
+}
+
+.giclee-galaxy-btn__circle {
+  position: absolute;
+  inset: 0;
+  border-radius: 99999px;
+  background-color: #c8cdd4;
+  opacity: 0.72;
+  filter: blur(20px);
+}
+
+.giclee-galaxy-btn__circle--soft {
+  opacity: 0.34;
+  background-color: transparent;
+  background-image: radial-gradient(circle, #000, #e8ecf0);
+}
+
+.giclee-galaxy-btn--v2 .giclee-galaxy-btn__circle {
+  background-color: #b4bac2;
+}
+
+.giclee-galaxy-btn--v2 .giclee-galaxy-btn__circle--soft {
+  background-image: radial-gradient(circle, #000, #d2d6dc);
+}
+
+.giclee-galaxy-btn__star {
+  display: block;
+  max-width: 115%;
+  width: 115%;
+  height: auto;
+  opacity: 0.37;
+  filter: blur(5px);
+  pointer-events: none;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .giclee-galaxy-btn__glow {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giclee-galaxy-btn__glow {
+    display: none;
+  }
+
+  .giclee-galaxy-btn {
+    will-change: auto;
+    transform: none;
+  }
+}

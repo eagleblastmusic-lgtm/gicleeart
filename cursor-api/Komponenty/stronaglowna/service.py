@@ -12,8 +12,9 @@ import subprocess
 import sys
 import copy
 import time
+from collections.abc import Iterable
 from datetime import UTC, datetime
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Callable
 from urllib.error import HTTPError, URLError
 from urllib.parse import unquote, urlparse
@@ -64,6 +65,16 @@ SITE_NOTICE_KEYS = {
     "sn_message": "site_notice_message",
     "sn_button": "site_notice_button",
 }
+
+HOME_DEPLOY_RELPATHS = (
+    "templates/index.json",
+    "config/settings_data.json",
+    MOBILE_HERO_REL,
+    "assets/giclee-home-mobile.js",
+    "assets/giclee-home-sections.js",
+    "assets/giclee-hero-video-collage.js",
+    "snippets/giclee-home-stack-critical.liquid",
+)
 
 _THUMB_CACHE: dict[str, str | None] = {}
 
@@ -634,6 +645,31 @@ def _settings_current(data: dict[str, Any]) -> dict[str, Any]:
         current = {}
         data["current"] = current
     return current
+
+
+def merge_managed_theme_settings(
+    current_settings: dict[str, Any],
+    editor_settings: dict[str, Any],
+) -> dict[str, Any]:
+    """Nałóż tylko ustawienia globalne zarządzane przez Stronę główną."""
+
+    merged = copy.deepcopy(current_settings)
+    target = _settings_current(merged)
+    source = editor_settings.get("current")
+    source = source if isinstance(source, dict) else {}
+    for key in SITE_NOTICE_KEYS.values():
+        if key in source:
+            target[key] = copy.deepcopy(source[key])
+        else:
+            target.pop(key, None)
+    return merged
+
+
+def homepage_deploy_relpaths() -> tuple[str, ...]:
+    """Zwróć istniejące pliki będące własnością edytora Strony głównej."""
+
+    root = theme_root()
+    return tuple(rel for rel in HOME_DEPLOY_RELPATHS if (root / rel).is_file())
 
 
 def backup_file(path: Path, *, label: str, logger: Logger | None = None) -> Path:
@@ -1743,14 +1779,46 @@ def validate_template_paths(template: dict[str, Any], *, logger: Logger | None =
     return missing
 
 
+def _validated_deploy_relpaths(
+    root: Path,
+    only_paths: Iterable[str | Path],
+) -> tuple[str, ...]:
+    root_resolved = root.resolve()
+    normalized: list[str] = []
+    for value in only_paths:
+        raw = str(value).strip().replace("\\", "/")
+        posix = PurePosixPath(raw)
+        if (
+            not raw
+            or raw.startswith("/")
+            or re.match(r"^[A-Za-z]:", raw)
+            or any(part in ("", ".", "..") for part in posix.parts)
+        ):
+            raise ValueError(f"Nieprawidłowa ścieżka deploy: {value}")
+        candidate = root_resolved.joinpath(*posix.parts).resolve()
+        try:
+            candidate.relative_to(root_resolved)
+        except ValueError as exc:
+            raise ValueError(f"Ścieżka deploy wychodzi poza motyw: {value}") from exc
+        if not candidate.is_file():
+            raise FileNotFoundError(f"Brak pliku do wdrożenia: {raw}")
+        rel = candidate.relative_to(root_resolved).as_posix()
+        if rel not in normalized:
+            normalized.append(rel)
+    if not normalized:
+        raise ValueError("Lista plików deploy nie może być pusta.")
+    return tuple(normalized)
+
+
 def deploy_theme(
     *,
     environment: str = "development",
     allow_live: bool = False,
+    only_paths: Iterable[str | Path] | None = None,
     on_line: Callable[[str], None] | None = None,
     logger: Logger | None = None,
 ) -> int:
-    """Uruchamia `shopify theme push --environment <env>` z katalogu motywu."""
+    """Uruchamia push motywu, opcjonalnie ograniczony do jawnych plików."""
     root = theme_root()
     toml = root / "shopify.theme.toml"
     if not toml.is_file():
@@ -1759,6 +1827,9 @@ def deploy_theme(
     cli_args = ["theme", "push", "--environment", environment, "--json"]
     if allow_live:
         cli_args.append("--allow-live")
+    if only_paths is not None:
+        for rel in _validated_deploy_relpaths(root, only_paths):
+            cli_args.extend(("--only", rel))
 
     _log(logger, f"[strona główna] Deploy: shopify {' '.join(cli_args)} (cwd={root})")
     proc = shopify_cli_popen(cli_args, cwd=root)

@@ -8,20 +8,10 @@ from Komponenty._shared.theme_page_editor.types import TemplateField, TemplateZo
 PAGE_ZONES: tuple[TemplateZone, ...] = (
     TemplateZone(
         zone_id="random_artwork",
-        label="Losuj obraz — interfejs",
-        description="Teksty sekcji giclee-random-artwork (Fine Art Oracle).",
+        label="Losuj obraz — tło i pula",
+        description="Własne tło (obraz/film) oraz źródłowa pula produktów do losowania.",
         section_key="random_artwork",
         fields=(
-            TemplateField("eyebrow", "Nadtytuł", "text", _s("random_artwork", "settings", "eyebrow")),
-            TemplateField("heading", "Nagłówek", "text", _s("random_artwork", "settings", "heading")),
-            TemplateField("subtitle", "Podtytuł", "text", _s("random_artwork", "settings", "subtitle")),
-            TemplateField("button_label", "Przycisk losowania", "text", _s("random_artwork", "settings", "button_label")),
-            TemplateField("loading_text", "Tekst ładowania", "text", _s("random_artwork", "settings", "loading_text")),
-            TemplateField("result_heading", "Nagłówek wyniku", "text", _s("random_artwork", "settings", "result_heading")),
-            TemplateField("view_label", "Przycisk «Zobacz»", "text", _s("random_artwork", "settings", "view_label")),
-            TemplateField("replay_label", "Przycisk «Losuj ponownie»", "text", _s("random_artwork", "settings", "replay_label")),
-            TemplateField("error_text", "Komunikat błędu", "text", _s("random_artwork", "settings", "error_text")),
-            TemplateField("retry_label", "Przycisk ponowienia", "text", _s("random_artwork", "settings", "retry_label")),
             TemplateField("pool_limit", "Limit puli produktów", "int", _s("random_artwork", "settings", "pool_limit")),
             TemplateField("fetch_full_pool", "Pobierz pełną pulę kolekcji", "bool", _s("random_artwork", "settings", "fetch_full_pool")),
             TemplateField(
@@ -43,7 +33,173 @@ PAGE_ZONES: tuple[TemplateZone, ...] = (
                 "Parallax tła (mysz)",
                 "bool",
                 _s("random_artwork", "settings", "background_parallax"),
-                hint="Subtelny ruch obrazu lub filmu przy ruszaniu kursorem.",
+                hint=(
+                    "Subtelny ruch obrazu/filmu za kursorem. W V3–V5 działa niezależnie "
+                    "od reflektora Living Light (może zostać włączony przy wyłączonym świetle)."
+                ),
+            ),
+            TemplateField(
+                "bg_video_crossfade_lead_ms",
+                "Przenikanie na żywym filmie (ms)",
+                "int",
+                _s("random_artwork", "settings", "bg_video_crossfade_lead_ms"),
+                hint=(
+                    "Gdy film + obraz: ile ms przed końcem filmu zaczyna się przenikanie "
+                    "do grafiki (na wciąż odtwarzanym video). 0–4000, domyślnie 1400."
+                ),
+                min_value=0,
+                max_value=4000,
+                step=50,
+            ),
+            TemplateField(
+                "bg_video_crossfade_hold_ms",
+                "Przenikanie na ostatniej klatce (ms)",
+                "int",
+                _s("random_artwork", "settings", "bg_video_crossfade_hold_ms"),
+                hint=(
+                    "Po ended film zatrzymuje się na ostatniej klatce; tyle ms trwa "
+                    "dalsze przenikanie zanim dekoder zostanie zwolniony. 0–4000, domyślnie 1400. "
+                    "Suma z «żywym filmem» = pełny czas fade."
+                ),
+                min_value=0,
+                max_value=4000,
+                step=50,
+            ),
+        ),
+    ),
+    TemplateZone(
+        zone_id="random_artwork_draw",
+        label="Fine Art Oracle…",
+        description=(
+            "Teksty i tempo animacji losowania — scena z nagłówkiem «Niech sztuka wybierze Ciebie», "
+            "fazy ładowania, wynik oraz przełącznik WebGL."
+        ),
+        section_key="random_artwork",
+        settings_only=True,
+        fields=(
+            TemplateField("eyebrow", "Nadtytuł", "text", _s("random_artwork", "settings", "eyebrow")),
+            TemplateField("heading", "Nagłówek", "text", _s("random_artwork", "settings", "heading")),
+            TemplateField("subtitle", "Podtytuł", "text", _s("random_artwork", "settings", "subtitle")),
+            TemplateField("button_label", "Przycisk losowania", "text", _s("random_artwork", "settings", "button_label")),
+            TemplateField(
+                "galaxy_btn_variant",
+                "Wersja przycisku",
+                "choice",
+                _s("random_artwork", "settings", "galaxy_btn_variant"),
+                hint="V1 — srebrny glow (#c8cdd4 / #e8ecf0). V2 — subtelniejszy (#b4bac2 / #d2d6dc).",
+                choices=(
+                    ("v1", "V1 — srebrny (obecny)"),
+                    ("v2", "V2 — subtelny"),
+                ),
+            ),
+            TemplateField(
+                "loading_text",
+                "Faza 1 — ładowanie",
+                "text",
+                _s("random_artwork", "settings", "loading_text"),
+                hint=(
+                    "Np. «Przeszukuję kolekcję…». Litery mają bazową opacity ~30% i "
+                    "kolejno rozświetlają się falą; po przejściu do wirowania tekst robi fade-out."
+                ),
+            ),
+            TemplateField(
+                "phase_text_2",
+                "Faza 2",
+                "text",
+                _s("random_artwork", "settings", "phase_text_2"),
+                hint="Opcjonalny tekst w trakcie wirowania (WebGL onPhase). Puste = pomijane.",
+            ),
+            TemplateField(
+                "phase_text_3",
+                "Faza 3",
+                "text",
+                _s("random_artwork", "settings", "phase_text_3"),
+                hint="Opcjonalny tekst przy spowolnieniu wyboru. Puste = pomijane.",
+            ),
+            TemplateField("result_heading", "Nagłówek wyniku", "text", _s("random_artwork", "settings", "result_heading")),
+            TemplateField("view_label", "Przycisk «Zobacz»", "text", _s("random_artwork", "settings", "view_label")),
+            TemplateField("replay_label", "Przycisk «Losuj ponownie»", "text", _s("random_artwork", "settings", "replay_label")),
+            TemplateField("error_text", "Komunikat błędu", "text", _s("random_artwork", "settings", "error_text")),
+            TemplateField("retry_label", "Przycisk ponowienia", "text", _s("random_artwork", "settings", "retry_label")),
+            TemplateField(
+                "enable_webgl",
+                "Włącz efekt WebGL (Three.js)",
+                "bool",
+                _s("random_artwork", "settings", "enable_webgl"),
+                hint="Wyłączenie zostawia elegancki wariant CSS bez sceny 3D.",
+            ),
+            TemplateField(
+                "draw_loading_ms",
+                "Minimalny czas ładowania (ms)",
+                "int",
+                _s("random_artwork", "settings", "draw_loading_ms"),
+                hint=(
+                    "300–3000. Domyślnie 700. Runtime trzyma fazę min. ~1600 ms, "
+                    "żeby fala rozświetlenia liter zdążyła się pokazać; potem pierścień intro "
+                    "i napis robią fade-out przed wirowaniem obrazów."
+                ),
+                min_value=300,
+                max_value=3000,
+                step=50,
+            ),
+            TemplateField(
+                "draw_phase_hold_ms",
+                "Czas trwania fazy tekstu (ms)",
+                "int",
+                _s("random_artwork", "settings", "draw_phase_hold_ms"),
+                hint=(
+                    "400–3000. Domyślnie 1100. Dotyczy faz 2/3 (fallback CSS). "
+                    "Faza 1 («Przeszukuję…») ma własną animację liter i znika przy starcie spinu."
+                ),
+                min_value=400,
+                max_value=3000,
+                step=50,
+            ),
+        ),
+    ),
+    TemplateZone(
+        zone_id="random_artwork_mask",
+        label="Edytowanie Odkrycia maski",
+        description=(
+            "Spotlight reveal drugiego obrazu tła po filmie: włącznik, obraz ujawniony "
+            "oraz parametry reflektora pod kursorem."
+        ),
+        section_key="random_artwork",
+        settings_only=True,
+        fields=(
+            TemplateField(
+                "background_hover_reveal_enabled",
+                "Włącz ujawnianie przy najechaniu",
+                "bool",
+                _s("random_artwork", "settings", "background_hover_reveal_enabled"),
+                hint="Po filmie (gdy widać grafikę tła) spotlight odsłania drugi obraz. Wyłącz, aby zostawić samo tło.",
+            ),
+            TemplateField(
+                "background_hover_image",
+                "Obraz ujawniony (hover)",
+                "shopify_image",
+                _s("random_artwork", "settings", "background_hover_image"),
+                hint="Drugi obraz tła — widoczny w reflektorze pod kursorem. Możesz wgrać inny plik w każdej chwili.",
+            ),
+            TemplateField(
+                "background_hover_spotlight_radius",
+                "Promień odkrycia (px)",
+                "int",
+                _s("random_artwork", "settings", "background_hover_spotlight_radius"),
+                hint="120–600. Domyślnie 340. Większa wartość = większy obszar ujawnienia.",
+                min_value=120,
+                max_value=600,
+                step=10,
+            ),
+            TemplateField(
+                "background_hover_spotlight_ease",
+                "Płynność podążania",
+                "int",
+                _s("random_artwork", "settings", "background_hover_spotlight_ease"),
+                hint="5–50. Domyślnie 10 (= 0.10). Niższa = wolniejszy, bardziej „oleisty” ruch reflektora.",
+                min_value=5,
+                max_value=50,
+                step=1,
             ),
         ),
     ),
@@ -51,79 +207,78 @@ PAGE_ZONES: tuple[TemplateZone, ...] = (
         zone_id="random_artwork_atmosphere",
         label="Edytuj atmosferę…",
         description=(
-            "V1 zachowuje wartości bez ładowania warstwy. V2 używa parametrów glow, "
-            "mgiełki i pyłu. V3–V5 używają reflektora i zoptymalizowanego pyłu Living Museum Light."
+            "Living Museum Light dla V3–V5: reflektor kursora i pył ambientowy. "
+            "W aktywnym V5 reflektor jest domyślnie wyłączony, a pył startuje po spinie okręgu intro. "
+            "V1 nie ładuje tej warstwy (wartości w JSON są zachowane przy przełączaniu wersji)."
         ),
         section_key="random_artwork",
         settings_only=True,
         fields=(
-            TemplateField("atmosphere_intensity", "V2 — glow: intensywność (%)", "int", _s("random_artwork", "settings", "atmosphere_intensity"), hint="0–70. Domyślnie 35."),
-            TemplateField("atmosphere_glow_size", "V2 — glow: rozmiar (%)", "int", _s("random_artwork", "settings", "atmosphere_glow_size"), hint="60–160. Domyślnie 100."),
-            TemplateField("atmosphere_glow_response", "V2 — glow: responsywność (%)", "int", _s("random_artwork", "settings", "atmosphere_glow_response"), hint="10–100. Domyślnie 50."),
-            TemplateField("atmosphere_haze", "V2 — mgiełka: intensywność (%)", "int", _s("random_artwork", "settings", "atmosphere_haze"), hint="0–100. Domyślnie 100."),
-            TemplateField("atmosphere_haze_speed", "V2 — mgiełka: szybkość (%)", "int", _s("random_artwork", "settings", "atmosphere_haze_speed"), hint="0–200. 0 zatrzymuje ruch."),
-            TemplateField("atmosphere_dust", "V2 — pył: widoczność (%)", "int", _s("random_artwork", "settings", "atmosphere_dust"), hint="0–60. Domyślnie 25."),
-            TemplateField("atmosphere_dust_amount", "V2 — pył: ilość (%)", "int", _s("random_artwork", "settings", "atmosphere_dust_amount"), hint="0–100. Domyślnie 50."),
-            TemplateField("atmosphere_dust_speed", "V2 — pył: szybkość (%)", "int", _s("random_artwork", "settings", "atmosphere_dust_speed"), hint="0–200. 0 zatrzymuje ruch."),
             TemplateField(
                 "living_light_enabled",
-                "V3 — włącz reflektor kursora",
+                "Włącz reflektor kursora",
                 "bool",
                 _s("random_artwork", "settings", "living_light_enabled"),
-                hint="Wyłącza reflektor bez zmiany portalu ani WebGL.",
+                hint=(
+                    "Eliptyczne podświetlenie pod kursorem. W V5 domyślnie wyłączone. "
+                    "Parallax tła działa niezależnie od tego przełącznika."
+                ),
             ),
             TemplateField(
                 "living_dust_enabled",
-                "V3 — włącz pył ambientowy",
+                "Włącz pył ambientowy",
                 "bool",
                 _s("random_artwork", "settings", "living_dust_enabled"),
-                hint="Pył 2D wygasa podczas właściwej animacji WebGL.",
+                hint=(
+                    "Pył 2D startuje dopiero po zakończeniu animacji złotego okręgu intro "
+                    "(~4,8 s od startu letter-fade). Wygasa podczas sceny WebGL (drawing)."
+                ),
             ),
             TemplateField(
                 "living_light_intensity",
-                "V3 — intensywność światła (%)",
+                "Intensywność światła (%)",
                 "int",
                 _s("random_artwork", "settings", "living_light_intensity"),
                 hint="0–100. Domyślnie 45.",
             ),
             TemplateField(
                 "living_dust_particles",
-                "V3 — pył: liczba drobinek",
+                "Pył: liczba drobinek",
                 "int",
                 _s("random_artwork", "settings", "living_dust_particles"),
                 hint="20–240. Domyślnie 120.",
             ),
             TemplateField(
                 "living_dust_opacity",
-                "V3 — pył: widoczność (%)",
+                "Pył: widoczność (%)",
                 "int",
                 _s("random_artwork", "settings", "living_dust_opacity"),
                 hint="0–200. Domyślnie 115.",
             ),
             TemplateField(
                 "living_dust_size",
-                "V3 — pył: rozmiar (%)",
+                "Pył: rozmiar (%)",
                 "int",
                 _s("random_artwork", "settings", "living_dust_size"),
                 hint="50–200. Domyślnie 125.",
             ),
             TemplateField(
                 "living_dust_speed",
-                "V3 — pył: szybkość (%)",
+                "Pył: szybkość (%)",
                 "int",
                 _s("random_artwork", "settings", "living_dust_speed"),
                 hint="0–200. Domyślnie 75.",
             ),
             TemplateField(
                 "living_dust_fps",
-                "V3 — pył: limit FPS",
+                "Pył: limit FPS",
                 "int",
                 _s("random_artwork", "settings", "living_dust_fps"),
                 hint="12–30. Domyślnie 24.",
             ),
             TemplateField(
                 "living_dust_dpr_cap",
-                "V3 — pył: limit jakości DPR (%)",
+                "Pył: limit jakości DPR (%)",
                 "int",
                 _s("random_artwork", "settings", "living_dust_dpr_cap"),
                 hint="75–150. Domyślnie 125 = DPR 1.25.",
@@ -134,8 +289,9 @@ PAGE_ZONES: tuple[TemplateZone, ...] = (
         zone_id="random_artwork_v5_smoke",
         label="V5 — włącz/wyłącz dym",
         description=(
-            "Efekt Elegant Fluid WebGL przeniesiony z Pedzel Alchemy, wariant 2. "
-            "Ustawienie jest domyślnie włączone tylko w wariancie V5."
+            "Efekt Elegant Fluid WebGL (Pedzel Alchemy). Domyślnie włączony w V5; "
+            "startuje po animacji złotego okręgu intro. Preset i suwaki (100% = baza presetu) "
+            "są w tej samej sekcji."
         ),
         section_key="random_artwork",
         settings_only=True,
@@ -145,20 +301,11 @@ PAGE_ZONES: tuple[TemplateZone, ...] = (
                 "Włącz efekt dymu kursora",
                 "bool",
                 _s("random_artwork", "settings", "cursor_smoke_enabled"),
-                hint="Włącza stonowany fluid w kolorach teal, lila, champagne i ash.",
+                hint=(
+                    "Stonowany fluid (teal / lila / champagne / ash). "
+                    "Montaż i fade-in po spinie okręgu intro — nie w trakcie letter-fade ani wirowania pierścienia."
+                ),
             ),
-        ),
-    ),
-    TemplateZone(
-        zone_id="random_artwork_v5_smoke_parameters",
-        label="V5 — edytuj dym kursora",
-        description=(
-            "Preset ustala bazowy charakter symulacji. Suwaki procentowe modyfikują preset, "
-            "więc 100% zachowuje jego wartości wzorcowe."
-        ),
-        section_key="random_artwork",
-        settings_only=True,
-        fields=(
             TemplateField(
                 "cursor_smoke_preset",
                 "Preset dymu",

@@ -49,6 +49,16 @@
       if (this.artist) this.artist.hidden = !this.artist.textContent?.trim();
       if (this.year) this.year.hidden = !this.year.textContent?.trim();
 
+      // WebGL finale keeps the frozen card; only captions/actions are staged in DOM.
+      if (
+        this.root.classList?.contains?.('grw--webgl-finale') ||
+        this.root.classList?.contains?.('grw--seamless-handoff')
+      ) {
+        this.root.dataset.resultCeremony = 'complete';
+        this.root.dataset.resultStage = 'actions';
+        return;
+      }
+
       this.root.dataset.resultCeremony = 'active';
       this.root.dataset.resultStage = 'frame';
 

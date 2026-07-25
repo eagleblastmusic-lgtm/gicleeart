@@ -4,6 +4,50 @@ from __future__ import annotations
 
 from Komponenty._shared.theme_page_editor.types import TemplateField, TemplateZone, _s
 
+_ACCORDION = ("sections", "section_9YgpHf", "blocks", "accordion_3BVjAx", "blocks")
+
+_FAQ_ROWS: tuple[tuple[str, str], ...] = (
+    ("accordion_row_mUQFCU", "text_Q8RMTC"),
+    ("accordion_row_gq7xgd", "text_dbKFYM"),
+    ("accordion_row_fxrNFP", "text_KT9gtp"),
+    ("accordion_row_VwgmXW", "text_kCYhHF"),
+    ("accordion_row_7nCpLH", "text_BnRprG"),
+)
+
+
+def _faq_row_fields(index: int, row_key: str, text_key: str) -> tuple[TemplateField, ...]:
+    n = index + 1
+    row_settings = (*_ACCORDION, row_key, "settings")
+    return (
+        TemplateField(
+            f"q{n}_heading",
+            f"Pytanie {n}",
+            "text",
+            (*row_settings, "heading"),
+        ),
+        TemplateField(
+            f"q{n}_image",
+            f"Pytanie {n} — tło",
+            "shopify_image",
+            (*row_settings, "heading_background_image"),
+            hint="Opcjonalnie. Puste pole odpowiedzi = ta sama grafika ciągnie się na cały wiersz.",
+        ),
+        TemplateField(
+            f"q{n}_answer",
+            f"Odpowiedź {n}",
+            "body",
+            (*_ACCORDION, row_key, "blocks", text_key, "settings", "text"),
+        ),
+        TemplateField(
+            f"q{n}_answer_image",
+            f"Odpowiedź {n} — tło",
+            "shopify_image",
+            (*row_settings, "answer_background_image"),
+            hint="Opcjonalnie osobny obraz. Zostaw puste, żeby kontynuować tło pytania.",
+        ),
+    )
+
+
 PAGE_ZONES: tuple[TemplateZone, ...] = (
     TemplateZone(
         zone_id="hero",
@@ -22,19 +66,12 @@ PAGE_ZONES: tuple[TemplateZone, ...] = (
     TemplateZone(
         zone_id="faq_accordion",
         label="Pytania i odpowiedzi",
-        description="Accordion z najczęstszymi pytaniami.",
+        description="Accordion z najczęstszymi pytaniami — opcjonalne tła obrazów z gradientem.",
         section_key="section_9YgpHf",
-        fields=(
-            TemplateField("q1_heading", "Pytanie 1", "text", _s("section_9YgpHf", "blocks", "accordion_3BVjAx", "blocks", "accordion_row_mUQFCU", "settings", "heading")),
-            TemplateField("q1_answer", "Odpowiedź 1", "body", _s("section_9YgpHf", "blocks", "accordion_3BVjAx", "blocks", "accordion_row_mUQFCU", "blocks", "text_Q8RMTC", "settings", "text")),
-            TemplateField("q2_heading", "Pytanie 2", "text", _s("section_9YgpHf", "blocks", "accordion_3BVjAx", "blocks", "accordion_row_gq7xgd", "settings", "heading")),
-            TemplateField("q2_answer", "Odpowiedź 2", "body", _s("section_9YgpHf", "blocks", "accordion_3BVjAx", "blocks", "accordion_row_gq7xgd", "blocks", "text_dbKFYM", "settings", "text")),
-            TemplateField("q3_heading", "Pytanie 3", "text", _s("section_9YgpHf", "blocks", "accordion_3BVjAx", "blocks", "accordion_row_fxrNFP", "settings", "heading")),
-            TemplateField("q3_answer", "Odpowiedź 3", "body", _s("section_9YgpHf", "blocks", "accordion_3BVjAx", "blocks", "accordion_row_fxrNFP", "blocks", "text_KT9gtp", "settings", "text")),
-            TemplateField("q4_heading", "Pytanie 4", "text", _s("section_9YgpHf", "blocks", "accordion_3BVjAx", "blocks", "accordion_row_VwgmXW", "settings", "heading")),
-            TemplateField("q4_answer", "Odpowiedź 4", "body", _s("section_9YgpHf", "blocks", "accordion_3BVjAx", "blocks", "accordion_row_VwgmXW", "blocks", "text_kCYhHF", "settings", "text")),
-            TemplateField("q5_heading", "Pytanie 5", "text", _s("section_9YgpHf", "blocks", "accordion_3BVjAx", "blocks", "accordion_row_7nCpLH", "settings", "heading")),
-            TemplateField("q5_answer", "Odpowiedź 5", "body", _s("section_9YgpHf", "blocks", "accordion_3BVjAx", "blocks", "accordion_row_7nCpLH", "blocks", "text_BnRprG", "settings", "text")),
+        fields=tuple(
+            field
+            for index, (row_key, text_key) in enumerate(_FAQ_ROWS)
+            for field in _faq_row_fields(index, row_key, text_key)
         ),
     ),
 )

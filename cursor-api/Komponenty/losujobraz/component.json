@@ -1,6 +1,6 @@
 {
   "name": "Losuj Obraz",
-  "description": "Wygląd strony Losuj Obraz — etykiety sekcji WebGL (templates/page.losuj-produkt.json).",
+  "description": "Wygląd strony Losuj Obraz (V6 aktywne: kopia V5; pył/dym po spinie okręgu).",
   "icon": "🎲",
   "color": "#5d4037",
   "order": 46,

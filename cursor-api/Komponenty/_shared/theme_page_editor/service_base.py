@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 from datetime import UTC, datetime
 from pathlib import Path
@@ -371,6 +372,36 @@ def apply_all_zone_values(
             apply_zone_values(template, zone, vals)
 
 
+def merge_managed_zone_values(
+    config: PageEditorConfig,
+    current_template: dict[str, Any],
+    editor_template: dict[str, Any],
+) -> dict[str, Any]:
+    """Nałóż pola komponentu na świeży plik, zachowując pozostałą zawartość."""
+
+    merged = copy.deepcopy(current_template)
+    editor_sections = editor_template.get("sections")
+    for zone in config.zones:
+        if not zone.settings_only:
+            if not isinstance(editor_sections, dict):
+                continue
+            if not isinstance(editor_sections.get(zone.section_key), dict):
+                continue
+        apply_zone_values(merged, zone, load_zone_values(editor_template, zone))
+    return merged
+
+
+def component_deploy_relpaths(config: PageEditorConfig) -> tuple[str, ...]:
+    """Jawna lista plików motywu należących do jednego edytora strony."""
+
+    paths = [config.template_rel.replace("\\", "/")]
+    if config.section_effects_asset_enabled:
+        from .page_section_effects_settings import effects_asset_basename
+
+        paths.append(f"assets/{effects_asset_basename(config)}")
+    return tuple(dict.fromkeys(paths))
+
+
 def validate_template_paths(
     template: dict[str, Any], zones: tuple[TemplateZone, ...], *, logger: Logger | None = None
 ) -> list[str]:
@@ -426,11 +457,13 @@ __all__ = [
     "backup_write_dir_for",
     "backups_dir_for",
     "component_data_dir",
+    "component_deploy_relpaths",
     "deploy_theme",
     "fetch_thumbnail_bytes",
     "load_template",
     "load_template_from_path",
     "load_zone_values",
+    "merge_managed_zone_values",
     "normalize_video_ref",
     "preview_url",
     "save_template",

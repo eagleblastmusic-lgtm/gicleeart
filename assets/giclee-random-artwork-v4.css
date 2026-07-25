@@ -17,6 +17,15 @@
   z-index: 3;
 }
 
+/* Keep V4 drawing cards above content chrome during breakout. */
+.giclee-random-artwork[data-design-variant="v4"].grw--webgl[data-state="drawing"] .giclee-random-artwork__canvas {
+  z-index: 6;
+}
+
+.giclee-random-artwork[data-design-variant="v4"].grw--webgl[data-state="result"] .giclee-random-artwork__content {
+  z-index: 5;
+}
+
 /* Result remains one scene: the WebGL winner crossfades into this exhibit. */
 .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result {
   width: min(760px, 100%);
@@ -30,16 +39,14 @@
 
 .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__frame {
   max-width: var(--grw-v4-frame-max);
-  padding: clamp(5px, 0.7vw, 8px);
-  border: 1px solid rgba(238, 232, 220, 0.18);
+  /* Thin black rim — matches WebGL lottery cards. */
+  padding: clamp(3px, 0.45vw, 5px);
+  border: 1px solid #0c0b0a;
   border-radius: 1px;
-  background: var(--grw-v4-surface);
+  background: #0c0b0a;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.05) inset,
-    0 34px 78px -42px rgba(0, 0, 0, 0.92),
-    0 0 56px -34px rgba(219, 190, 120, 0.3);
+  box-shadow: 0 28px 70px -40px rgba(0, 0, 0, 0.9);
   transform-origin: 50% 48%;
   transition:
     opacity 0.72s var(--grw-ease),
@@ -49,34 +56,33 @@
 }
 
 .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__frame-glow {
-  inset: -18%;
-  background: radial-gradient(ellipse at 50% 48%, rgba(226, 203, 145, 0.15), transparent 66%);
-  opacity: 0.42;
-  filter: blur(18px);
+  display: none;
 }
 
 .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__frame:hover {
-  transform: translateY(-2px);
-  border-color: rgba(230, 205, 134, 0.34);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.07) inset,
-    0 38px 86px -44px rgba(0, 0, 0, 0.94),
-    0 0 62px -34px rgba(219, 190, 120, 0.36);
-}
-
-.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__frame:hover .giclee-random-artwork__frame-glow {
-  opacity: 0.54;
+  transform: translateY(-2px) scale(1.03);
+  border-color: #0c0b0a;
+  box-shadow: 0 32px 78px -40px rgba(0, 0, 0, 0.94);
 }
 
 .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__frame-mat {
-  padding: clamp(5px, 0.75vw, 9px);
-  background: rgba(225, 219, 207, 0.9);
+  /* Whiter, wider passepartout — matches WebGL lottery cards. */
+  padding: clamp(18px, 3.4vw, 34px);
+  background: #f4f2ec;
   box-shadow: none;
   overflow: hidden;
 }
 
+/* During hold, mute frame motion so the WebGL→DOM swap stays invisible. */
+.giclee-random-artwork[data-design-variant="v4"].grw--seamless-handoff .giclee-random-artwork__frame,
+.giclee-random-artwork[data-design-variant="v4"].grw--seamless-handoff .giclee-random-artwork__frame:hover {
+  transform: none !important;
+  transition: none !important;
+  box-shadow: 0 28px 70px -40px rgba(0, 0, 0, 0.9);
+}
+
 .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-image {
-  max-height: min(62vh, 650px);
+  max-height: min(52vh, 560px);
   background: #0b0907;
 }
 
@@ -98,6 +104,11 @@
   letter-spacing: 0.26em;
   text-transform: uppercase;
   color: var(--grw-v4-champagne);
+  cursor: default;
+  transition:
+    opacity 0.75s ease,
+    color 0.4s var(--grw-ease),
+    text-shadow 0.4s var(--grw-ease);
 }
 
 .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-artist[hidden],
@@ -113,6 +124,42 @@
   line-height: 1.22;
   letter-spacing: 0.006em;
   color: var(--grw-v4-warm-white);
+  display: inline-block;
+  transform-origin: 50% 50%;
+  cursor: default;
+  transition:
+    transform 0.4s var(--grw-ease),
+    opacity 0.4s var(--grw-ease);
+}
+
+.giclee-random-artwork[data-design-variant="v4"]
+  .giclee-random-artwork__result-title.is-title-gradient-done {
+  opacity: 0.9;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .giclee-random-artwork[data-design-variant="v4"]
+    .giclee-random-artwork__result-artist.is-artist-fade-ready:hover {
+    color: #f0d789;
+    text-shadow: 0 0 18px rgba(230, 205, 134, 0.28);
+  }
+
+  .giclee-random-artwork[data-design-variant="v4"]
+    .giclee-random-artwork__result-title.is-title-gradient-done:hover {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-title {
+    transition: opacity 0.4s var(--grw-ease);
+  }
+
+  .giclee-random-artwork[data-design-variant="v4"]
+    .giclee-random-artwork__result-title.is-title-gradient-done:hover {
+    transform: none;
+  }
 }
 
 .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-year {
@@ -168,6 +215,37 @@
   color: #f0dca6;
 }
 
+/* Primary CTA uses Galaxy Glow (same shell as «Losuj obraz»). */
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__cta--primary.giclee-galaxy-btn {
+  min-width: 0;
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #fff;
+  box-shadow: none;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__cta--primary.giclee-galaxy-btn::after {
+  content: none;
+  margin: 0;
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__cta--primary.giclee-galaxy-btn:hover {
+  transform: none;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__cta--primary.giclee-galaxy-btn:hover::after {
+  transform: none;
+}
+
 .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__cta--ghost {
   min-height: 36px;
   padding: 0.42rem 0.65rem;
@@ -205,10 +283,8 @@
   outline-offset: 5px;
 }
 
-/* Ceremonial reveal: frame, identity, then actions. */
+/* Ceremonial reveal: frame → actions. Artist/title animate via intro-matched fades. */
 .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__frame,
-.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-artist,
-.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-title,
 .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__actions {
   opacity: 0;
 }
@@ -217,14 +293,22 @@
   transform: translateY(10px) scale(0.88);
 }
 
-.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-artist {
-  transform: translateY(7px);
-  transition: opacity 0.48s var(--grw-ease), transform 0.58s var(--grw-ease);
+.giclee-random-artwork[data-design-variant="v4"].grw--handoff-prepare[data-state="drawing"] .giclee-random-artwork__frame {
+  opacity: 0;
+  transform: none;
+  transition: none;
 }
 
-.giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-title {
-  transform: translateY(9px);
-  transition: opacity 0.58s var(--grw-ease), transform 0.68s var(--grw-ease);
+/* WebGL finale: actions snap in; artist/title keep their own fades. */
+.giclee-random-artwork[data-design-variant="v4"].grw--webgl-finale[data-state="result"] .giclee-random-artwork__actions {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+.giclee-random-artwork[data-design-variant="v4"].grw--webgl-finale[data-state="result"] .giclee-random-artwork__frame {
+  opacity: 0 !important;
+  transform: none !important;
 }
 
 .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__actions {
@@ -237,19 +321,6 @@
 .giclee-random-artwork[data-design-variant="v4"][data-result-stage="actions"] .giclee-random-artwork__frame {
   opacity: 1;
   transform: none;
-}
-
-.giclee-random-artwork[data-design-variant="v4"][data-result-stage="identity"] .giclee-random-artwork__result-artist,
-.giclee-random-artwork[data-design-variant="v4"][data-result-stage="actions"] .giclee-random-artwork__result-artist {
-  opacity: 1;
-  transform: none;
-}
-
-.giclee-random-artwork[data-design-variant="v4"][data-result-stage="identity"] .giclee-random-artwork__result-title,
-.giclee-random-artwork[data-design-variant="v4"][data-result-stage="actions"] .giclee-random-artwork__result-title {
-  opacity: 1;
-  transform: none;
-  transition-delay: 0.11s;
 }
 
 .giclee-random-artwork[data-design-variant="v4"][data-result-stage="actions"] .giclee-random-artwork__actions {
@@ -288,7 +359,8 @@
 
 @media (min-width: 750px) {
   body:has(.giclee-random-artwork) .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-image {
-    max-height: min(62vh, calc(100svh - 292px));
+    /* Header + footer + plaque + galaxy CTA + gaps — keep result inside 100svh. */
+    max-height: min(52vh, calc(100svh - 360px));
   }
 }
 
@@ -306,10 +378,10 @@
   }
 
   .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-image {
-    max-height: 51svh;
+    max-height: 42svh;
   }
 
-  .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__cta--primary {
+  .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__cta--primary:not(.giclee-galaxy-btn) {
     width: min(280px, 84vw);
   }
 
@@ -320,8 +392,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__frame,
-  .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-artist,
-  .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-title,
   .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__actions,
   .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__portal {
     transition-duration: 0.18s;
@@ -329,8 +399,6 @@
   }
 
   .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__frame,
-  .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-artist,
-  .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__result-title,
   .giclee-random-artwork[data-design-variant="v4"] .giclee-random-artwork__actions {
     transform: none;
   }

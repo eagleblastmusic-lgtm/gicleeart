@@ -48,10 +48,17 @@
  * Tylko desktop — na wąskich ekranach zostaje naturalny układ, żeby
  * nie przycinać dużego nagłówka. */
 @media (min-width: 750px) {
+  html:has(.giclee-random-artwork),
+  body:has(.giclee-random-artwork) {
+    height: 100svh;
+    max-height: 100svh;
+    overflow: hidden;
+  }
+
   body:has(.giclee-random-artwork) {
     display: flex;
     flex-direction: column;
-    min-height: 100svh;
+    min-height: 0;
   }
 
   body:has(.giclee-random-artwork) #MainContent {
@@ -59,6 +66,7 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
 
   body:has(.giclee-random-artwork) #MainContent > .shopify-section {
@@ -66,6 +74,7 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
 
   body:has(.giclee-random-artwork) .giclee-random-artwork {
@@ -73,12 +82,14 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
 
   body:has(.giclee-random-artwork) .giclee-random-artwork__scene {
     flex: 1 1 auto;
     min-height: 0;
     height: auto;
+    overflow: hidden;
   }
 
   /* Treść wypełnia wysokość sceny; panele (intro/faza/wynik/błąd)
@@ -89,7 +100,7 @@
     min-height: 0;
     grid-template-rows: minmax(0, 1fr);
     align-items: stretch;
-    padding-block: clamp(16px, 3vh, 40px);
+    padding-block: clamp(12px, 2.2vh, 28px);
     overflow: hidden;
   }
 
@@ -98,20 +109,33 @@
   body:has(.giclee-random-artwork) .giclee-random-artwork__error {
     justify-content: center;
     min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+  }
+
+  /* Tylko widoczny wynik — inaczej [hidden] + display:flex przechwytuje hover intro. */
+  body:has(.giclee-random-artwork) .giclee-random-artwork__result:not([hidden]) {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
   }
 
   /* Wynik: obraz skaluje się do miejsca, które zostaje po tytule i CTA. */
   body:has(.giclee-random-artwork) .giclee-random-artwork__frame {
     display: flex;
     flex-direction: column;
-    flex: 0 1 auto;
+    flex: 1 1 auto;
     min-height: 0;
+    max-height: 100%;
   }
 
   body:has(.giclee-random-artwork) .giclee-random-artwork__frame-mat {
     flex: 1 1 auto;
     min-height: 0;
     overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   body:has(.giclee-random-artwork) .giclee-random-artwork__result-image {
@@ -121,6 +145,12 @@
     max-height: 100%;
     min-height: 0;
     margin-inline: auto;
+    object-fit: contain;
+  }
+
+  body:has(.giclee-random-artwork) .giclee-random-artwork__plaque,
+  body:has(.giclee-random-artwork) .giclee-random-artwork__actions {
+    flex: 0 0 auto;
   }
 }
 
@@ -186,7 +216,9 @@
 .giclee-random-artwork__custom-bg.grw--bg-video-once .video-background {
   z-index: 1;
   opacity: 1;
-  transition: opacity 0.7s var(--grw-ease, ease);
+  /* Przenikanie do obrazu pod spodem — --grw-bg-video-fade-ms z hosta (lead+hold). */
+  transition: opacity var(--grw-bg-video-fade-ms, 2.8s) var(--grw-ease-soft, ease-in-out);
+  will-change: opacity;
 }
 
 /* Własny obraz jest pod filmem — poster Shopify to zbędna warstwa pod spodem. */
@@ -205,9 +237,50 @@
   display: none;
 }
 
+/* Spotlight reveal: BG2 nad bazą, widoczny tylko przez maskę radialną kursora */
+.giclee-random-artwork__bg-hover-reveal {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(#0000, #0000);
+  mask-image: linear-gradient(#0000, #0000);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  will-change: mask-image, -webkit-mask-image;
+}
+
+.giclee-random-artwork__bg-hover-reveal .background-image-container {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.giclee-random-artwork__custom-bg.grw--bg-video-once:not(.is-bg-image) .giclee-random-artwork__bg-hover-reveal {
+  opacity: 0;
+}
+
+.giclee-random-artwork__custom-bg.is-bg-hover-ready .giclee-random-artwork__bg-hover-reveal {
+  opacity: 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .giclee-random-artwork__custom-bg.grw--bg-video-once video-background-component,
   .giclee-random-artwork__custom-bg.grw--bg-video-once .video-background {
+    display: none;
+  }
+
+  .giclee-random-artwork__bg-hover-reveal {
+    display: none;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .giclee-random-artwork__bg-hover-reveal {
     display: none;
   }
 }
@@ -244,8 +317,111 @@
   opacity: 1;
 }
 
-.giclee-random-artwork.grw--webgl .giclee-random-artwork__portal[data-grw-portal] {
-  opacity: 0;
+/*
+ * Lottery / finale WebGL layer:
+ * - stacks above header/footer (may overlap them)
+ * - clipped to the viewport box (never past screen edges)
+ */
+body:has(.giclee-random-artwork.grw--webgl) {
+  overflow: hidden !important;
+}
+
+body:has(.giclee-random-artwork.grw--webgl) #MainContent,
+body:has(.giclee-random-artwork.grw--webgl) #MainContent > .shopify-section {
+  position: relative;
+  z-index: calc(var(--layer-header-menu, 12) + 2);
+  overflow: visible;
+}
+
+.giclee-random-artwork.grw--webgl {
+  overflow: visible;
+  z-index: calc(var(--layer-header-menu, 12) + 2);
+}
+
+.giclee-random-artwork.grw--webgl .giclee-random-artwork__scene {
+  overflow: visible;
+}
+
+.giclee-random-artwork.grw--webgl .giclee-random-artwork__canvas {
+  /* Full viewport: large scene, hard-clipped at top of header / bottom of footer. */
+  position: fixed;
+  inset: 0;
+  width: auto;
+  height: auto;
+  overflow: hidden;
+  contain: paint;
+  clip-path: inset(0);
+  z-index: calc(var(--layer-header-menu, 12) + 2);
+  pointer-events: none;
+}
+
+body:has(.giclee-random-artwork.grw--webgl) #header-group,
+body:has(.giclee-random-artwork.grw--webgl) .header-section,
+body:has(.giclee-random-artwork.grw--webgl) footer {
+  z-index: var(--layer-sticky, 8);
+}
+
+/* Laid out for measurement / spacer, not painted over the draw scene. */
+.giclee-random-artwork.grw--handoff-prepare[data-state="drawing"] .giclee-random-artwork__result {
+  opacity: 0 !important;
+  transform: none !important;
+  pointer-events: none !important;
+  transition: none !important;
+}
+
+/*
+ * WebGL finale: frozen lottery card IS the artwork.
+ * HTML only paints captions + CTA under an invisible spacer frame.
+ */
+.giclee-random-artwork.grw--webgl-finale[data-state="result"] .giclee-random-artwork__result {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  pointer-events: auto;
+  transition: none;
+}
+
+.giclee-random-artwork.grw--webgl-finale[data-state="result"] .giclee-random-artwork__canvas {
+  opacity: 1 !important;
+  visibility: visible !important;
+  z-index: calc(var(--layer-header-menu, 12) + 2);
+  pointer-events: none !important;
+}
+
+.giclee-random-artwork.grw--webgl-finale[data-state="result"] .giclee-random-artwork__content {
+  position: relative;
+  z-index: calc(var(--layer-header-menu, 12) + 3);
+}
+
+.giclee-random-artwork.grw--webgl-finale[data-state="result"] .giclee-random-artwork__frame,
+.giclee-random-artwork.grw--webgl-finale[data-state="result"] .giclee-random-artwork__frame-mat,
+.giclee-random-artwork.grw--webgl-finale[data-state="result"] .giclee-random-artwork__frame-glow,
+.giclee-random-artwork.grw--webgl-finale[data-state="result"] .giclee-random-artwork__result-image {
+  opacity: 0 !important;
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Invisible hit-target over the frozen WebGL card (hover scale = winner mesh in JS). */
+.giclee-random-artwork.grw--webgl-finale[data-state="result"] .giclee-random-artwork__frame {
+  pointer-events: auto;
+}
+
+.giclee-random-artwork.grw--webgl-finale[data-state="result"] .giclee-random-artwork__plaque,
+.giclee-random-artwork.grw--webgl-finale[data-state="result"] .giclee-random-artwork__actions {
+  position: relative;
+  z-index: 2;
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+.giclee-random-artwork.grw--webgl .giclee-random-artwork__portal[data-grw-portal],
+.giclee-random-artwork.grw--webgl .giclee-random-artwork__portal[data-grw-portal-reveal].is-portal-reveal-ready,
+.giclee-random-artwork__portal.is-portal-faded,
+.giclee-random-artwork__portal.is-portal-faded.is-portal-reveal-ready {
+  animation: none !important;
 }
 
 .giclee-random-artwork__bg span {
@@ -310,6 +486,52 @@
   will-change: opacity, scale;
 }
 
+/* Złoty okrąg — pojawia się razem ze startem podtytułu.
+   Spin (transform) i skala (scale) osobno: szybki start wirowań → płynne spowolnienie. */
+.giclee-random-artwork__portal[data-grw-portal-reveal] {
+  transform-style: preserve-3d;
+}
+
+.giclee-random-artwork__portal[data-grw-portal-reveal]:not(.is-portal-reveal-ready) {
+  opacity: 0 !important;
+  translate: none;
+  scale: 0.82;
+  transform: perspective(1100px) translate(-50%, -50%) rotateY(-1620deg) rotateX(36deg);
+}
+
+.giclee-random-artwork__portal[data-grw-portal-reveal].is-portal-reveal-ready {
+  translate: none;
+  top: 50%;
+  left: 50%;
+  animation:
+    grw-portal-spin 2.8s cubic-bezier(0.02, 0.78, 0.08, 1) forwards,
+    grw-portal-pop 2.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* 4.5 obrotu Y — gęste wirowanie na starcie, potem mocne spowolnienie */
+@keyframes grw-portal-spin {
+  0% {
+    opacity: 0;
+    transform: perspective(1100px) translate(-50%, -50%) rotateY(-1620deg) rotateX(36deg);
+  }
+  100% {
+    opacity: 0.42;
+    transform: perspective(1100px) translate(-50%, -50%) rotateY(0deg) rotateX(0deg);
+  }
+}
+
+@keyframes grw-portal-pop {
+  0% {
+    scale: 0.82;
+  }
+  62% {
+    scale: 1.12;
+  }
+  100% {
+    scale: 1;
+  }
+}
+
 .giclee-random-artwork__portal span {
   position: absolute;
   inset: 0;
@@ -365,10 +587,11 @@
   width: 100%;
 }
 
-/* [hidden] musi realnie chowac panele mimo display:flex (inaczej przechwytuja klikniecia) */
+/* [hidden] musi realnie chowac panele mimo display:flex (inaczej przechwytuja hover/klik intro) */
 .giclee-random-artwork__result[hidden],
 .giclee-random-artwork__error[hidden] {
-  display: none;
+  display: none !important;
+  pointer-events: none !important;
 }
 
 /* ── Intro / hero ── */
@@ -385,12 +608,82 @@
     filter 0.7s var(--grw-ease);
 }
 
+.giclee-random-artwork__eyebrow-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
 .giclee-random-artwork__eyebrow {
   font-family: var(--font-accent--family, var(--font-body--family));
   font-size: clamp(0.7rem, 1.4vw, 0.84rem);
   letter-spacing: 0.36em;
   text-transform: uppercase;
   color: var(--grw-gold);
+  transform: scale(1);
+  transform-origin: center;
+  transition:
+    color 0.5s var(--grw-ease-soft),
+    text-shadow 0.5s var(--grw-ease-soft),
+    transform 0.5s var(--grw-ease-soft);
+}
+
+/* Fade-in po letter-fade nagłówka — tylko opacity, bez ruchu z dołu */
+.giclee-random-artwork__eyebrow[data-grw-eyebrow-fade] {
+  opacity: 0;
+  transition:
+    opacity 0.75s ease,
+    color 0.5s var(--grw-ease-soft),
+    text-shadow 0.5s var(--grw-ease-soft),
+    transform 0.5s var(--grw-ease-soft);
+}
+
+.giclee-random-artwork__eyebrow[data-grw-eyebrow-fade].is-eyebrow-fade-ready {
+  opacity: 1;
+}
+
+/* Jak splash-line na ekranie startowym strony głównej */
+.giclee-random-artwork__eyebrow-line {
+  width: 220px;
+  max-width: 55vw;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--grw-gold, #c9a84c), transparent);
+  transform: scaleX(0);
+  transform-origin: center;
+  will-change: transform;
+  transition: filter 0.5s var(--grw-ease-soft), opacity 0.5s var(--grw-ease-soft);
+}
+
+/* Subtelny hover etykiety «Fine Art Oracle» — tylko desktop, po fade-in */
+@media (hover: hover) and (pointer: fine) {
+  .giclee-random-artwork__eyebrow-wrap:hover
+    .giclee-random-artwork__eyebrow[data-grw-eyebrow-fade].is-eyebrow-fade-ready,
+  .giclee-random-artwork__eyebrow-wrap:hover
+    .giclee-random-artwork__eyebrow:not([data-grw-eyebrow-fade]) {
+    color: #d4b86a;
+    text-shadow: 0 0 14px rgba(201, 168, 76, 0.18);
+    transform: scale(1.04);
+  }
+
+  .giclee-random-artwork__eyebrow-wrap:hover
+    .giclee-random-artwork__eyebrow-line.is-line-reveal-ready {
+    filter: brightness(1.22);
+  }
+}
+
+.giclee-random-artwork__eyebrow-line.is-line-reveal-ready {
+  /* Start zaraz po wirowaniu kółka — bez dodatkowego delay jak na splashu */
+  animation: grw-eyebrow-line 0.9s ease forwards;
+}
+
+@keyframes grw-eyebrow-line {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
 
 .giclee-random-artwork__heading {
@@ -403,6 +696,22 @@
   letter-spacing: -0.01em;
   color: var(--grw-ivory);
   text-wrap: balance;
+  transform-origin: 50% 50%;
+}
+
+/* Letter-fade (Potter-style): litery + lekki scale bloku */
+.giclee-random-artwork__heading[data-grw-letter-fade]:not(.is-letter-fade-prepared) {
+  opacity: 0;
+}
+
+.giclee-random-artwork__heading-word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.giclee-random-artwork__heading-char {
+  display: inline-block;
+  will-change: opacity, transform;
 }
 
 .giclee-random-artwork__subtitle {
@@ -412,64 +721,49 @@
   line-height: 1.62;
   color: var(--grw-muted);
   text-wrap: pretty;
+  transition: color 0.6s var(--grw-ease-soft);
 }
 
-/* ── Przycisk losowania ── */
-
-.giclee-random-artwork__draw {
-  -webkit-appearance: none;
-  appearance: none;
-  position: relative;
-  margin-top: clamp(10px, 2vw, 20px);
-  padding: 1.05rem 2.8rem;
-  border: 1px solid var(--grw-gold-soft);
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(201, 168, 76, 0.18), rgba(201, 168, 76, 0.04));
-  color: var(--grw-ink);
-  font: inherit;
-  font-size: clamp(0.96rem, 1.6vw, 1.06rem);
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  overflow: hidden;
-  isolation: isolate;
-  transition:
-    transform 0.45s var(--grw-ease),
-    box-shadow 0.45s var(--grw-ease),
-    border-color 0.45s var(--grw-ease);
-}
-
-.giclee-random-artwork__draw-glow {
-  position: absolute;
-  inset: -40%;
-  z-index: -1;
-  background: radial-gradient(circle at 50% 50%, rgba(230, 205, 134, 0.5), transparent 60%);
+.giclee-random-artwork__subtitle[data-grw-subtitle-fade]:not(.is-letter-fade-prepared) {
   opacity: 0;
-  transition: opacity 0.5s var(--grw-ease);
 }
 
-.giclee-random-artwork__draw:hover {
-  transform: translateY(-2px);
-  border-color: var(--grw-gold);
-  box-shadow:
-    0 0 0 1px var(--grw-gold-soft),
-    0 22px 60px -26px rgba(201, 168, 76, 0.7);
+/* Lekkie podbicie opacity koloru po najechaniu (po letter-fade) */
+@media (hover: hover) and (pointer: fine) {
+  .giclee-random-artwork__subtitle.is-letter-fade-prepared:hover,
+  .giclee-random-artwork__subtitle:not([data-grw-subtitle-fade]):hover {
+    color: rgba(244, 240, 232, 0.78);
+  }
 }
 
-.giclee-random-artwork__draw:hover .giclee-random-artwork__draw-glow {
-  opacity: 0.55;
+.giclee-random-artwork__subtitle-word {
+  display: inline-block;
+  white-space: nowrap;
 }
 
-.giclee-random-artwork__draw:focus-visible {
-  outline: 2px solid var(--grw-gold);
-  outline-offset: 4px;
+.giclee-random-artwork__subtitle-char {
+  display: inline-block;
+  will-change: opacity;
 }
 
-.giclee-random-artwork__draw[disabled] {
-  cursor: progress;
-  opacity: 0.5;
-  transform: none;
-  box-shadow: none;
+/* Proximity lift na nagłówku — litery w promieniu kursora */
+.giclee-random-artwork__heading.is-letter-wave-ready {
+  outline: none;
 }
+
+.giclee-random-artwork__heading.is-letter-wave-ready:focus-visible {
+  outline: 1px solid rgba(201, 168, 76, 0.4);
+  outline-offset: 0.35em;
+}
+
+.giclee-random-artwork__heading.is-letter-wave-ready .giclee-random-artwork__heading-char {
+  display: inline-block;
+  will-change: transform;
+  backface-visibility: hidden;
+  transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── Przycisk losowania: styl Galaxy Glow w giclee-random-artwork-galaxy-btn.css ── */
 
 /* ── Faza losowania ── */
 
@@ -486,6 +780,11 @@
     transform 0.6s var(--grw-ease);
 }
 
+/* Loading: show phase quickly so the letter sweep is not lost in the fade-in. */
+.giclee-random-artwork[data-state="loading"] .giclee-random-artwork__phase:not(.is-hidden) {
+  transition-duration: 0.18s;
+}
+
 .giclee-random-artwork__phase-text {
   font-family: var(--font-accent--family, var(--font-body--family));
   font-size: clamp(0.85rem, 1.6vw, 1rem);
@@ -498,6 +797,53 @@
 
 .giclee-random-artwork__phase-text.is-swapping {
   opacity: 0;
+}
+
+/* Loading copy: staggered letter illuminate (CSS keyframes — no JS RAF) */
+.giclee-random-artwork__phase-text.is-letter-sweep {
+  transition: none;
+  text-shadow: none;
+}
+
+.giclee-random-artwork__phase-visual {
+  display: inline;
+}
+
+.giclee-random-artwork__phase-word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.giclee-random-artwork__phase-char {
+  display: inline-block;
+  opacity: 0.3;
+  color: rgba(245, 240, 230, 0.42);
+  text-shadow: none;
+  will-change: opacity, color, text-shadow, transform;
+  animation-name: grw-phase-illuminate;
+  animation-duration: var(--grw-phase-pulse, 1100ms);
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-delay: calc(var(--grw-char-i, 0) * var(--grw-phase-stagger, 55ms));
+}
+
+@keyframes grw-phase-illuminate {
+  0%,
+  100% {
+    opacity: 0.3;
+    color: rgba(245, 240, 230, 0.42);
+    text-shadow: none;
+    transform: translateY(0);
+  }
+  45%,
+  55% {
+    opacity: 1;
+    color: #fff6df;
+    text-shadow:
+      0 0 10px rgba(255, 236, 180, 0.95),
+      0 0 24px rgba(201, 168, 76, 0.65);
+    transform: translateY(-1px);
+  }
 }
 
 /* ── Karta wyniku (eksponat) ── */
@@ -593,6 +939,16 @@
   border-top: 1px solid var(--grw-gold-faint);
 }
 
+/* Wynik — artysta: fade-in (jak «Fine Art Oracle») */
+.giclee-random-artwork__result-artist[data-grw-result-artist-fade] {
+  opacity: 0;
+  transition: opacity 0.75s ease;
+}
+
+.giclee-random-artwork__result-artist[data-grw-result-artist-fade].is-artist-fade-ready {
+  opacity: 1;
+}
+
 .giclee-random-artwork__result-title {
   margin: 0;
   font-family: var(--font-heading--family, Georgia, serif);
@@ -602,6 +958,72 @@
   letter-spacing: 0.005em;
   color: var(--grw-ivory);
   text-wrap: balance;
+}
+
+/* Wynik — tytuł: maska L→P; przy 2 liniach kolejno linia 1, potem 2 */
+.giclee-random-artwork__result-title[data-grw-result-title-fade]:not(.is-title-gradient-ready) {
+  opacity: 0;
+}
+
+.giclee-random-artwork__result-title[data-grw-result-title-fade].is-title-gradient-ready {
+  opacity: 1;
+}
+
+.giclee-random-artwork__result-title-word {
+  display: inline;
+}
+
+.giclee-random-artwork__result-title-glue {
+  white-space: nowrap;
+}
+
+.giclee-random-artwork__result-title-line {
+  display: block;
+  text-wrap: pretty;
+}
+
+.giclee-random-artwork__result-title.is-title-gradient-ready .giclee-random-artwork__result-title-line,
+.giclee-random-artwork__result-title.is-title-host-reveal {
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    #000 0%,
+    #000 42%,
+    transparent 58%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    #000 0%,
+    #000 42%,
+    transparent 58%,
+    transparent 100%
+  );
+  -webkit-mask-size: 280% 100%;
+  mask-size: 280% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: 100% 50%;
+  mask-position: 100% 50%;
+}
+
+.giclee-random-artwork__result-title-line.is-title-line-reveal,
+.giclee-random-artwork__result-title.is-title-host-reveal {
+  animation: grw-result-title-gradient var(--grw-title-line-ms, var(--grw-title-gradient-ms, 1500ms))
+    linear forwards;
+}
+
+.giclee-random-artwork__result-title[data-grw-result-title-fade].is-title-gradient-done,
+.giclee-random-artwork__result-title.is-title-gradient-done .giclee-random-artwork__result-title-line {
+  animation: none;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+@keyframes grw-result-title-gradient {
+  to {
+    -webkit-mask-position: 0% 50%;
+    mask-position: 0% 50%;
+  }
 }
 
 /* ── CTA ── */
@@ -718,19 +1140,32 @@
   transform: none;
 }
 
+/* Fade-out w miejscu — bez translateY, dłużej niż szybkie fade-in. */
+.giclee-random-artwork[data-state="loading"] .giclee-random-artwork__phase.is-hidden,
+.giclee-random-artwork[data-state="drawing"] .giclee-random-artwork__phase.is-hidden {
+  opacity: 0;
+  transform: none;
+  transition: opacity 0.7s var(--grw-ease);
+}
+
 .giclee-random-artwork[data-state="loading"] .giclee-random-artwork__portal {
   opacity: 0.8;
   scale: 1.04;
 }
 
-.giclee-random-artwork[data-state="drawing"] .giclee-random-artwork__portal {
-  opacity: 1;
-  scale: 1.1;
-  filter: drop-shadow(0 0 40px rgba(201, 168, 76, 0.35));
-}
-
-.giclee-random-artwork[data-state="drawing"] .giclee-random-artwork__portal-halo {
-  animation-duration: 2.6s;
+/*
+ * Po przeszukaniu kolekcji pierścień intro wygasa w miejscu (opacity + scale z JS).
+ * Transform zamraża JS — inaczej po `animation: none` ginie translate(-50%,-50%).
+ */
+.giclee-random-artwork[data-state="drawing"] .giclee-random-artwork__portal,
+.giclee-random-artwork[data-state="drawing"] .giclee-random-artwork__portal[data-grw-portal-reveal].is-portal-reveal-ready,
+.giclee-random-artwork__portal.is-portal-faded,
+.giclee-random-artwork__portal.is-portal-faded.is-portal-reveal-ready {
+  animation: none !important;
+  filter: none;
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    scale 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Result — portal cofa sie, karta wjezdza */
@@ -828,6 +1263,71 @@
 /* ───────────────────────── Reduced motion ───────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
+  .giclee-random-artwork__heading[data-grw-letter-fade]:not(.is-letter-fade-prepared),
+  .giclee-random-artwork__heading-char,
+  .giclee-random-artwork__subtitle {
+    transition: none !important;
+  }
+
+  .giclee-random-artwork__subtitle[data-grw-subtitle-fade]:not(.is-letter-fade-prepared),
+  .giclee-random-artwork__subtitle-char,
+  .giclee-random-artwork__eyebrow[data-grw-eyebrow-fade],
+  .giclee-random-artwork__result-artist[data-grw-result-artist-fade],
+  .giclee-random-artwork__result-title[data-grw-result-title-fade]:not(.is-title-gradient-ready) {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .giclee-random-artwork__result-title[data-grw-result-title-fade],
+  .giclee-random-artwork__result-title-line {
+    animation: none !important;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+  }
+
+  .giclee-random-artwork__eyebrow[data-grw-eyebrow-fade],
+  .giclee-random-artwork__eyebrow,
+  .giclee-random-artwork__result-artist[data-grw-result-artist-fade] {
+    transition: none !important;
+    text-shadow: none !important;
+  }
+
+  .giclee-random-artwork__eyebrow-line {
+    transition: none !important;
+    filter: none !important;
+  }
+
+  .giclee-random-artwork__heading.is-letter-wave-ready .giclee-random-artwork__heading-char {
+    will-change: auto;
+  }
+
+  .giclee-random-artwork__draw[data-grw-draw-reveal]:not(.is-draw-reveal-ready) {
+    opacity: 1 !important;
+    pointer-events: auto;
+  }
+
+  .giclee-random-artwork__portal[data-grw-portal-reveal]:not(.is-portal-reveal-ready),
+  .giclee-random-artwork__portal[data-grw-portal-reveal].is-portal-reveal-ready {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: translate(-50%, -50%) !important;
+    translate: none !important;
+    scale: 1 !important;
+    pointer-events: auto;
+  }
+
+  .giclee-random-artwork__portal[data-grw-portal-reveal]:not(.is-portal-reveal-ready) {
+    translate: -50% -50% !important;
+    transform: none !important;
+  }
+
+  .giclee-random-artwork__eyebrow-line,
+  .giclee-random-artwork__eyebrow-line.is-line-reveal-ready {
+    animation: none !important;
+    animation-delay: 0s !important;
+    transform: scaleX(1) !important;
+  }
+
   .giclee-random-artwork__bg-aurora,
   .giclee-random-artwork__bg-beams,
   .giclee-random-artwork__portal-halo,
@@ -845,6 +1345,15 @@
   .giclee-random-artwork__cta,
   .giclee-random-artwork__draw {
     transition-duration: 0.2s;
+  }
+
+  .giclee-random-artwork__phase-char {
+    animation: none !important;
+    opacity: 0.85 !important;
+    color: var(--grw-ivory) !important;
+    will-change: auto;
+    text-shadow: none !important;
+    transform: none !important;
   }
 
   .giclee-random-artwork__result {

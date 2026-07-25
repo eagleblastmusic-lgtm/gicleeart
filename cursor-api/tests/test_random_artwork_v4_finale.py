@@ -22,6 +22,7 @@ MANIFEST = COMPONENT / "data" / "variants" / "manifest.json"
 V3 = COMPONENT / "data" / "variants" / "lo3" / "page.losuj-produkt.json"
 V4 = COMPONENT / "data" / "variants" / "lo4" / "page.losuj-produkt.json"
 V5 = COMPONENT / "data" / "variants" / "lo5" / "page.losuj-produkt.json"
+V6 = COMPONENT / "data" / "variants" / "lo6" / "page.losuj-produkt.json"
 
 
 def _json(path: Path) -> dict:
@@ -36,10 +37,12 @@ def test_v4_isolated_variant_inherits_v3_data_without_mutating_v3() -> None:
     v3 = _json(V3)
     v4 = _json(V4)
     v5 = _json(V5)
+    v6 = _json(V6)
     live = _json(TEMPLATE)
 
-    assert manifest["active"] == "lo5"
-    assert manifest["variants"][-2] == {"id": "lo4", "label": "V4 — finał muzealny"}
+    assert manifest["active"] == "lo6"
+    assert manifest["variants"][-1] == {"id": "lo6", "label": "V6 — na bazie V5"}
+    assert manifest["variants"][-3] == {"id": "lo4", "label": "V4 — finał muzealny"}
     assert v3["sections"]["random_artwork"]["settings"]["design_variant"] == "v3"
     assert v4["sections"]["random_artwork"]["settings"]["design_variant"] == "v4"
     assert v5["sections"]["random_artwork"]["settings"]["design_variant"] == "v4"
@@ -50,7 +53,8 @@ def test_v4_isolated_variant_inherits_v3_data_without_mutating_v3() -> None:
     v3_settings.pop("design_variant")
     v4_settings.pop("design_variant")
     assert v4_settings == v3_settings
-    assert live == v5
+    assert v6 == v5
+    assert live == v6
 
 
 def test_v4_loads_only_its_finale_assets_and_webgl_module() -> None:
@@ -61,6 +65,8 @@ def test_v4_loads_only_its_finale_assets_and_webgl_module() -> None:
     assert "assign enable_living_museum = true" in section
     assert "assign webgl_asset = 'giclee-random-artwork-webgl-v4.js'" in section
     assert "giclee-random-artwork-v4.css" in section
+    assert "grw-v4-galaxy-reset-20260725" in section
+    assert "grw-galaxy-shell-reset-20260725" in section
     assert "giclee-random-artwork-v4.js" in section
     assert 'data-result-stage="hidden"' in section
     assert 'data-webgl-url="{{ webgl_asset | asset_url }}"' in section
@@ -72,15 +78,20 @@ def test_v4_result_is_larger_lighter_and_does_not_create_page_overflow() -> None
     base_css = BASE_CSS.read_text(encoding="utf-8")
 
     assert "--grw-v4-frame-max: min(540px, 88vw);" in css
-    assert "padding: clamp(5px, 0.7vw, 8px);" in css
+    assert "padding: clamp(3px, 0.45vw, 5px);" in css
+    assert "background: #f4f2ec;" in css
     assert "backdrop-filter: none;" in css
-    assert "max-height: min(62vh, 650px);" in css
-    assert "max-height: min(62vh, calc(100svh - 292px));" in css
+    assert "max-height: min(52vh, 560px);" in css
+    assert "max-height: min(52vh, calc(100svh - 360px));" in css
     assert "--grw-v4-frame-max: min(92vw, 520px);" in css
     assert ".giclee-random-artwork__canvas" in css
     assert "z-index: 3;" in css
     assert "body:has(.giclee-random-artwork)" in base_css
     assert "overflow: hidden;" in base_css
+    assert "grw--webgl-finale" in base_css
+    assert "position: fixed;" in base_css
+    assert "clip-path: inset(0);" in base_css
+    assert "inset: 0;" in base_css
 
 
 def test_v4_portal_becomes_exhibition_halo_and_resets_by_state() -> None:
@@ -110,6 +121,30 @@ def test_v4_typography_actions_and_staged_hierarchy_are_contractual() -> None:
     assert "background: rgba(12, 11, 10, 0.62);" in css
     assert "border-radius: 3px;" in css
     assert ".giclee-random-artwork__cta--primary::after" in css
+    assert ".giclee-random-artwork__cta--primary.giclee-galaxy-btn" in css
+    galaxy_reset = css.split(
+        ".giclee-random-artwork__cta--primary.giclee-galaxy-btn {",
+        1,
+    )[1].split("}", 1)[0]
+    for declaration in (
+        "min-width: 0;",
+        "height: auto;",
+        "padding: 0;",
+        "border: 0;",
+        "background: transparent;",
+        "box-shadow: none;",
+    ):
+        assert declaration in galaxy_reset
+    galaxy_css = (
+        ROOT / "assets" / "giclee-random-artwork-galaxy-btn.css"
+    ).read_text(encoding="utf-8")
+    protected_selector = (
+        ".giclee-random-artwork__cta.giclee-galaxy-btn"
+    )
+    assert "html[data-giclee-button-style]" in galaxy_css
+    assert protected_selector in galaxy_css
+    assert f"{protected_selector}::before" in galaxy_css
+    assert "flex: 0 0 auto;" in galaxy_css
     assert ".giclee-random-artwork__cta--ghost" in css
     assert "border: 0;" in css
     assert ":focus-visible" in css
@@ -119,13 +154,29 @@ def test_v4_webgl_extends_finale_and_keeps_non_winners_during_handoff() -> None:
     source = V4_WEBGL.read_text(encoding="utf-8")
     base = BASE_WEBGL.read_text(encoding="utf-8")
 
-    assert "const FINALE_EXTRA_MS = 800;" in source
+    assert "const FINALE_EXTRA_MS = 1100;" in source
+    assert "const GROW_PORTION = 0.4;" in source
     assert "BASE_TOTAL_MS + (reducedMotion ? 0 : FINALE_EXTRA_MS)" in source
     assert "ringMat.opacity" in source and "1 - reveal * 0.96" in source
+    assert "const afterglow = 1 - settleT;" in source
+    assert "introEase * afterglow" in source
+    assert "glowMat.opacity = 0;" in source
     assert "glow.scale.set(6 + reveal * 2.4, 6 - reveal * 2.6, 1);" in source
     assert "orbitZ - retreat * 3.6" in source
-    assert "1 - retreat * 0.96" in source
-    assert "reveal * 0.82" in source
+    assert "(1 - retreat) * afterglow" in source
+    assert "afterglow * (1 - reveal) * 0.34" in source
+    assert "entry.pivot.visible = false" in source
+    assert "growT * 0.82" in source
+    assert "resolveHandoffPose" in source
+    assert "getHandoffTarget" in source
+    assert "onHandoffPrepare" in source
+    assert "freeze" in source
+    assert "setExhibitHover" in source
+    assert "EXHIBIT_HOVER_SCALE" in source
+    assert "applyFlatFacing" in source
+    assert "getWorldDirection" in source
+    assert ".slerp(_flatQuat, settleT)" in source
+    assert "multiply(_flipY)" not in source
     assert source.count("requestAnimationFrame(render)") == 2
     assert "const FINALE_EXTRA_MS" not in base
 
@@ -138,9 +189,23 @@ def test_existing_draw_selection_and_fallback_contract_remains_intact() -> None:
     assert "await this.runDrawingSequence(winner);" in main
     assert "const module = await import(this.webglUrl);" in main
     assert "if (prefersReducedMotion())" in main
+    assert "prepareHandoffTarget" in main
+    assert "getHandoffTargetRect" in main
+    assert "grw--webgl-finale" in main
+    assert "this.sceneController.freeze" in main
+    assert "bindFinaleExhibitHover" in main
     assert "this.resultLink.href = winner.url" in main
     assert "this.viewCta.href = winner.url" in main
     assert "this.teardownScene();" in main
+    assert "playResultIdentityMotion" in main
+    assert "initResultTitleGradientReveal" in main
+    assert "revealResultArtistFade" in main
+    assert "data-grw-result-artist-fade" in SECTION.read_text(encoding="utf-8")
+    assert "data-grw-result-title-fade" in SECTION.read_text(encoding="utf-8")
+    assert "is-artist-fade-ready" in BASE_CSS.read_text(encoding="utf-8")
+    assert "grw-result-title-gradient" in BASE_CSS.read_text(encoding="utf-8")
+    assert "is-title-gradient-ready" in BASE_CSS.read_text(encoding="utf-8")
+    assert "result-artist" not in V4_CSS.read_text(encoding="utf-8").split("grw--webgl-finale")[1].split(".giclee-random-artwork__frame")[0]
 
 
 @pytest.mark.skipif(shutil.which("node") is None, reason="Node.js is required")
@@ -222,12 +287,13 @@ console.log(JSON.stringify({ stage: root.dataset.resultStage || null }));
 
 @pytest.mark.skipif(shutil.which("node") is None, reason="Node.js is required")
 @pytest.mark.parametrize("path", [V4_JS, V4_WEBGL])
-def test_v4_javascript_syntax(path: Path) -> None:
+def test_v4_javascript_syntax(path: Path, tmp_path: Path) -> None:
     node = shutil.which("node") or "node"
     if path == V4_WEBGL:
+        module_path = tmp_path / f"{path.stem}.mjs"
+        module_path.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
         subprocess.run(
-            [node, "--input-type=module", "--check"],
-            input=path.read_text(encoding="utf-8"),
+            [node, "--check", str(module_path)],
             check=True,
             capture_output=True,
             text=True,

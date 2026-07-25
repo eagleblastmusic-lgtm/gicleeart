@@ -1390,6 +1390,13 @@ def update_custom_collection(
     return (out or {}).get("custom_collection") or {}
 
 
+# Shopify Files: limit staged upload dla obrazow ~20 MB; zostawiamy bufor na multipart.
+_STAGED_IMAGE_MAX_BYTES = 18 * 1024 * 1024
+_STAGED_MULTIPART_HEADROOM = 65_536
+_STAGED_IMAGE_MAX_EDGE = 4096
+_STAGED_IMAGE_QUALITIES = (90, 85, 80, 74, 68, 60)
+
+
 def _http_post_multipart(url: str, body: bytes, content_type: str) -> None:
     """POST multipart na zewnetrzny URL (staged upload target - GCS/S3), bez tokenu Shopify."""
     req = urllib.request.Request(
@@ -1400,7 +1407,80 @@ def _http_post_multipart(url: str, body: bytes, content_type: str) -> None:
             resp.read()
     except urllib.error.HTTPError as e:
         detail = e.read().decode("utf-8", errors="replace")
+        if "EntityTooLarge" in detail or "exceeds upper bound" in detail:
+            mb = len(body) / (1024 * 1024)
+            raise ShopifyError(
+                "Plik jest za duży dla uploadu do Shopify Files "
+                f"(wysłano ~{mb:.1f} MB, limit ok. 20 MB).\n\n"
+                "Wgraj mniejszy JPG/WebP albo zmniejsz obraz "
+                "(np. dłuższy bok do ~4000 px) i spróbuj ponownie."
+            ) from e
         raise ShopifyError(f"HTTP {e.code} POST (staged upload)\n{detail}") from e
+
+
+def _prepare_image_for_staged_upload(local_path: Path) -> tuple[bytes, str, str]:
+    """Bytes + nazwa + mime; kompresuje duże pliki, żeby zmieścić się w limicie Shopify."""
+    import io
+
+    raw = local_path.read_bytes()
+    mime = mimetypes.guess_type(local_path.name)[0] or "image/jpeg"
+    filename = local_path.name
+    if not mime.startswith("image/"):
+        return raw, filename, mime
+    if len(raw) <= _STAGED_IMAGE_MAX_BYTES and mime in {
+        "image/jpeg",
+        "image/jpg",
+        "image/webp",
+        "image/gif",
+    }:
+        return raw, filename, mime
+
+    try:
+        from PIL import Image, ImageOps
+    except ImportError:
+        if len(raw) > _STAGED_IMAGE_MAX_BYTES:
+            raise ShopifyError(
+                f"Plik ma {len(raw) / (1024 * 1024):.1f} MB — przekracza limit Shopify (~20 MB). "
+                "Zainstaluj Pillow albo wgraj mniejszy obraz."
+            )
+        return raw, filename, mime
+
+    with Image.open(local_path) as im:
+        im = ImageOps.exif_transpose(im)
+        if im.mode not in ("RGB", "L"):
+            im = im.convert("RGB")
+        elif im.mode == "L":
+            im = im.convert("RGB")
+        base_w, base_h = im.size
+        longest = max(base_w, base_h)
+        edges: list[int] = []
+        cur = min(longest, _STAGED_IMAGE_MAX_EDGE)
+        while cur >= 1280:
+            edges.append(cur)
+            cur = int(cur * 0.85)
+        if not edges:
+            edges = [min(longest, 1280)]
+
+        best: bytes | None = None
+        for edge in edges:
+            scale = edge / longest
+            w = max(1, int(base_w * scale))
+            h = max(1, int(base_h * scale))
+            resized = im.resize((w, h), Image.Resampling.LANCZOS)
+            for quality in _STAGED_IMAGE_QUALITIES:
+                buf = io.BytesIO()
+                resized.save(buf, format="JPEG", quality=quality, optimize=True, progressive=True)
+                data = buf.getvalue()
+                best = data if best is None or len(data) < len(best) else best
+                if len(data) <= _STAGED_IMAGE_MAX_BYTES:
+                    return data, local_path.with_suffix(".jpg").name, "image/jpeg"
+
+    if best is not None and len(best) <= _STAGED_IMAGE_MAX_BYTES:
+        return best, local_path.with_suffix(".jpg").name, "image/jpeg"
+    raise ShopifyError(
+        f"Nie udało się zmniejszyć obrazu poniżej limitu Shopify (~20 MB). "
+        f"Oryginał: {len(raw) / (1024 * 1024):.1f} MB."
+    )
 
 
 def _poll_file_node_url(shop: str, token: str, file_id: str) -> str | None:
@@ -1597,10 +1677,16 @@ def upload_file_to_shopify_files(
     if not local_path.is_file():
         raise ShopifyError(f"Plik nie istnieje: {local_path}")
     shop, token = load_session()
-    raw = local_path.read_bytes()
+    guessed_mime = mimetypes.guess_type(local_path.name)[0] or ""
+    if guessed_mime.startswith("image/") and not preserve_original_bytes:
+        raw, filename, mime = _prepare_image_for_staged_upload(local_path)
+    else:
+        raw = local_path.read_bytes()
+        filename = local_path.name
+        mime = guessed_mime or "application/octet-stream"
     size = len(raw)
-    mime = mimetypes.guess_type(local_path.name)[0] or "image/jpeg"
-    filename = local_path.name
+    # Policy GCS/S3 limituje content-length; multipart ma narzut poza samym plikiem.
+    staged_file_size = str(size + _STAGED_MULTIPART_HEADROOM)
 
     staged = """
     mutation stagedUploadsCreate($input: [StagedUploadInput!]!) {
@@ -1621,7 +1707,7 @@ def upload_file_to_shopify_files(
                     "filename": filename,
                     "mimeType": mime,
                     "httpMethod": "POST",
-                    "fileSize": str(size),
+                    "fileSize": staged_file_size,
                 }
             ]
         },

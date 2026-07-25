@@ -19,6 +19,7 @@ from .service import (
     _strip_json_header,
     load_index_template,
     load_theme_settings,
+    merge_managed_theme_settings,
     mobile_hero_path,
     save_index_template,
     save_theme_settings,
@@ -434,7 +435,8 @@ def apply_variant_to_theme(variant_id: str) -> None:
     """Zapisuje wariant do plików motywu (podgląd / theme dev)."""
     template, settings = load_variant_data(variant_id)
     save_index_template(copy.deepcopy(template))
-    save_theme_settings(copy.deepcopy(settings))
+    current_settings = load_theme_settings()
+    save_theme_settings(merge_managed_theme_settings(current_settings, settings))
     mobile_src = variant_file_path(variant_id, "mobile_hero.webp")
     if mobile_src.is_file():
         shutil.copy2(mobile_src, mobile_hero_path())

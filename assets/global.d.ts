@@ -35,12 +35,39 @@ declare global {
     };
   }
 
+  /** Minimal GSAP surface used by FAQ scripts (CDN global). */
+  type GsapTweenTarget = string | Element | Element[] | NodeListOf<Element>;
+
+  interface GsapTweenVars {
+    duration?: number;
+    delay?: number;
+    y?: number;
+    opacity?: number;
+    scale?: number;
+    stagger?: number;
+    ease?: string;
+    transformOrigin?: string;
+    display?: string;
+  }
+
+  interface GsapStatic {
+    from(targets: GsapTweenTarget, vars: GsapTweenVars): unknown;
+    to(targets: GsapTweenTarget, vars: GsapTweenVars): unknown;
+    set(targets: GsapTweenTarget, vars: GsapTweenVars): unknown;
+  }
+
   interface Window {
     Shopify: Shopify;
+    /** FAQ accordion entrance + heading hover (assets/faq-accordion-entrance.js) */
+    __GICLEE_FAQ_ACCORDION_ENTRANCE__?: boolean;
+    /** GSAP from CDN (jsDelivr); present on FAQ page after script load. */
+    gsap?: GsapStatic;
   }
 
   declare const Shopify: Shopify;
   declare const Theme: Theme;
+  /** GSAP CDN global (same as window.gsap). */
+  declare const gsap: GsapStatic | undefined;
 
   type LoadCallback = (error: Error | undefined) => void;
 

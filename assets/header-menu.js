@@ -392,12 +392,21 @@ if (!customElements.get('header-menu')) {
 function findMenuItem(element) {
   if (!(element instanceof Element)) return null;
 
-  if (element?.matches('[slot="more"')) {
+  if (element.matches('[slot="more"]')) {
     // Select the first overflowing menu item when hovering over the "More" item
     return findMenuItem(element.parentElement?.querySelector('[slot="overflow"]'));
   }
 
-  return element?.querySelector('[ref="menuitem"]');
+  // Hover/focus may land on the link itself, its title, or the wrapping <li>.
+  if (element.matches('[ref="menuitem"]')) {
+    return /** @type {HTMLElement} */ (element);
+  }
+
+  const selfOrAncestor = element.closest('[ref="menuitem"]');
+  if (selfOrAncestor instanceof HTMLElement) return selfOrAncestor;
+
+  const nested = element.querySelector('[ref="menuitem"]');
+  return nested instanceof HTMLElement ? nested : null;
 }
 
 /**

@@ -13,22 +13,12 @@ TEMPLATE_PATH = ROOT / "templates" / "page.losuj-produkt.json"
 COMPONENT_DIR = ROOT / "cursor-api" / "Komponenty" / "losujobraz"
 MANIFEST_PATH = COMPONENT_DIR / "data" / "variants" / "manifest.json"
 V1_PATH = COMPONENT_DIR / "data" / "variants" / "lo1" / "page.losuj-produkt.json"
-V2_PATH = COMPONENT_DIR / "data" / "variants" / "lo2" / "page.losuj-produkt.json"
 V3_PATH = COMPONENT_DIR / "data" / "variants" / "lo3" / "page.losuj-produkt.json"
 V4_PATH = COMPONENT_DIR / "data" / "variants" / "lo4" / "page.losuj-produkt.json"
+V5_PATH = COMPONENT_DIR / "data" / "variants" / "lo5" / "page.losuj-produkt.json"
+V6_PATH = COMPONENT_DIR / "data" / "variants" / "lo6" / "page.losuj-produkt.json"
 GUI_PATH = COMPONENT_DIR / "gui.py"
 REGISTRY_PATH = COMPONENT_DIR / "registry.py"
-
-ATMOSPHERE_DEFAULTS = {
-    "atmosphere_intensity": 35,
-    "atmosphere_glow_size": 100,
-    "atmosphere_glow_response": 50,
-    "atmosphere_haze": 100,
-    "atmosphere_haze_speed": 100,
-    "atmosphere_dust": 25,
-    "atmosphere_dust_amount": 50,
-    "atmosphere_dust_speed": 100,
-}
 
 LIVING_MUSEUM_DEFAULTS = {
     "living_light_enabled": True,
@@ -117,21 +107,12 @@ def test_random_artwork_design_variant_and_schema() -> None:
     assert design["default"] == "v1"
     assert design["options"] == [
         {"value": "v1", "label": "V1 — podstawowa"},
-        {"value": "v2", "label": "V2 — atmosfera muzealna"},
         {"value": "v3", "label": "V3 — Living Museum Light"},
         {"value": "v4", "label": "V4 — finał muzealny"},
     ]
     assert "enable_atmosphere" not in settings
 
     expected_ranges = {
-        "atmosphere_intensity": (0, 70, 35),
-        "atmosphere_glow_size": (60, 160, 100),
-        "atmosphere_glow_response": (10, 100, 50),
-        "atmosphere_haze": (0, 100, 100),
-        "atmosphere_haze_speed": (0, 200, 100),
-        "atmosphere_dust": (0, 60, 25),
-        "atmosphere_dust_amount": (0, 100, 50),
-        "atmosphere_dust_speed": (0, 200, 100),
         "living_light_intensity": (0, 100, 45),
     }
     for setting_id, (minimum, maximum, default) in expected_ranges.items():
@@ -145,53 +126,64 @@ def test_random_artwork_design_variant_and_schema() -> None:
     assert settings["living_dust_enabled"]["default"] is True
 
 
-def test_giclee_app_exposes_v1_v2_v3_v4_and_atmosphere_editor() -> None:
+def test_giclee_app_exposes_v1_v3_v4_v5_v6_and_atmosphere_editor() -> None:
     manifest = _json_file(MANIFEST_PATH)
-    assert manifest["active"] == "lo4"
+    assert manifest["active"] == "lo6"
     assert manifest["variants"] == [
         {"id": "lo1", "label": "V1 — podstawowa"},
-        {"id": "lo2", "label": "V2 — atmosfera muzealna"},
         {"id": "lo3", "label": "V3 — Living Museum Light"},
         {"id": "lo4", "label": "V4 — finał muzealny"},
+        {"id": "lo5", "label": "V5 — V4 + dym kursora"},
+        {"id": "lo6", "label": "V6 — na bazie V5"},
     ]
 
     v1 = _json_file(V1_PATH)
-    v2 = _json_file(V2_PATH)
     v3 = _json_file(V3_PATH)
     v4 = _json_file(V4_PATH)
+    v5 = _json_file(V5_PATH)
+    v6 = _json_file(V6_PATH)
     live = _json_file(TEMPLATE_PATH)
     settings_by_mode = {
         "v1": v1["sections"]["random_artwork"]["settings"],
-        "v2": v2["sections"]["random_artwork"]["settings"],
         "v3": v3["sections"]["random_artwork"]["settings"],
         "v4": v4["sections"]["random_artwork"]["settings"],
     }
 
     for mode, settings in settings_by_mode.items():
         assert settings["design_variant"] == mode
-        for key, value in ATMOSPHERE_DEFAULTS.items():
-            assert settings[key] == value
         for key, value in LIVING_MUSEUM_DEFAULTS.items():
             assert settings[key] == value
 
-    normalized = []
-    for settings in settings_by_mode.values():
-        clone = dict(settings)
-        clone.pop("design_variant")
-        normalized.append(clone)
-    assert all(item == normalized[0] for item in normalized[1:])
-    assert v4 == live
+    # Living Museum strojenie wspólne dla lo1/lo3/lo4 (V1 trzyma wartości bez ładowania warstwy).
+    shared_keys = tuple(LIVING_MUSEUM_DEFAULTS)
+    baseline = {key: settings_by_mode["v1"][key] for key in shared_keys}
+    for mode, settings in settings_by_mode.items():
+        for key, value in baseline.items():
+            assert settings[key] == value, f"{mode}.{key}"
+
+    # Active V6 is a V5 snapshot: V4 design_variant, light off, smoke on.
+    assert v5["sections"]["random_artwork"]["settings"]["design_variant"] == "v4"
+    assert v5["sections"]["random_artwork"]["settings"]["living_light_enabled"] is False
+    assert v5["sections"]["random_artwork"]["settings"]["living_dust_enabled"] is True
+    assert v5["sections"]["random_artwork"]["settings"]["cursor_smoke_enabled"] is True
+    assert v5["sections"]["random_artwork"]["settings"]["background_parallax"] is True
+    assert v6 == v5
+    assert v6 == live
 
     gui = GUI_PATH.read_text(encoding="utf-8")
     registry = REGISTRY_PATH.read_text(encoding="utf-8")
     assert "V3 — Living Museum Light" in gui
     assert "V4 — finał muzealny" in gui
+    assert "V5 — V4 z dymem kursora" in gui
+    assert "V6 — na bazie V5" in gui
+    assert "V2 — atmosfera muzealna" not in gui
     assert 'variant_label_default="V1 — podstawowa"' in gui
-    assert 'extra_toolbar=(("Edytuj atmosferę…"' in gui
+    assert '("Edytuj atmosferę…"' in gui
     assert '_ATMOSPHERE_ZONE_ID = "random_artwork_atmosphere"' in gui
     assert 'zone_id="random_artwork_atmosphere"' in registry
     assert 'label="Edytuj atmosferę…"' in registry
-    for key in (*ATMOSPHERE_DEFAULTS, *LIVING_MUSEUM_DEFAULTS):
+    assert '"atmosphere_intensity"' not in registry
+    for key in LIVING_MUSEUM_DEFAULTS:
         assert f'"{key}"' in registry
 
 

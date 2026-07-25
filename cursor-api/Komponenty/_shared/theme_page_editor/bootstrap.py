@@ -27,6 +27,7 @@ def build_editor_config(
     zones: tuple[TemplateZone, ...],
     variant_label_default: str = "Wersja 1",
     extra_toolbar: tuple[tuple[str, object], ...] = (),
+    section_effects_asset_enabled: bool = True,
 ) -> PageEditorConfig:
     return PageEditorConfig(
         component_id=component_id,
@@ -40,6 +41,7 @@ def build_editor_config(
         zones=zones,
         variant_label_default=variant_label_default,
         extra_toolbar=extra_toolbar,
+        section_effects_asset_enabled=section_effects_asset_enabled,
     )
 
 

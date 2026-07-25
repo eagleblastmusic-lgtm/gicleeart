@@ -211,16 +211,33 @@ export async function createOracleScene(options) {
     }
     const cardH = Math.min(1.85, Math.max(0.85, cardW / aspect));
 
+    // Museum exhibit card: thin dark rim + warm-white passepartout (matches HTML result).
+    const matte = isMobile ? 0.14 : 0.17;
+    const rim = isMobile ? 0.034 : 0.042;
+    const artW = cardW;
+    const artH = cardH;
+    const matteW = artW + matte * 2;
+    const matteH = artH + matte * 2;
+    const rimW = matteW + rim * 2;
+    const rimH = matteH + rim * 2;
+
     const pivot = new THREE.Group();
 
-    const frameGeo = track(new THREE.PlaneGeometry(cardW + 0.09, cardH + 0.09));
-    const frameMat = track(
-      new THREE.MeshBasicMaterial({ color: 0x16120b, transparent: true, opacity: 0 })
+    const rimGeo = track(new THREE.PlaneGeometry(rimW, rimH));
+    const rimMat = track(
+      new THREE.MeshBasicMaterial({ color: 0x0c0b0a, transparent: true, opacity: 0 })
     );
-    const frame = new THREE.Mesh(frameGeo, frameMat);
-    pivot.add(frame);
+    pivot.add(new THREE.Mesh(rimGeo, rimMat));
 
-    const artGeo = track(new THREE.PlaneGeometry(cardW, cardH));
+    const matteGeo = track(new THREE.PlaneGeometry(matteW, matteH));
+    const matteMat = track(
+      new THREE.MeshBasicMaterial({ color: 0xf4f2ec, transparent: true, opacity: 0 })
+    );
+    const matteMesh = new THREE.Mesh(matteGeo, matteMat);
+    matteMesh.position.z = 0.006;
+    pivot.add(matteMesh);
+
+    const artGeo = track(new THREE.PlaneGeometry(artW, artH));
     const artMat = track(
       new THREE.MeshBasicMaterial({
         color: texture ? 0xffffff : 0x2a2418,
@@ -237,7 +254,7 @@ export async function createOracleScene(options) {
 
     return {
       pivot,
-      mats: [frameMat, artMat],
+      mats: [rimMat, matteMat, artMat],
       baseAngle: (i / count) * TAU,
       yBase: (Math.random() - 0.5) * 1.1,
       bobPhase: Math.random() * TAU,
@@ -342,8 +359,9 @@ export async function createOracleScene(options) {
 
       pivot.scale.setScalar(scale);
       pivot.lookAt(camera.position);
-      mats[0].opacity = opacity * 0.9;
-      mats[1].opacity = opacity;
+      mats[0].opacity = opacity; // dark rim
+      mats[1].opacity = opacity; // passepartout
+      mats[2].opacity = opacity; // artwork
     }
 
     renderer.render(scene, camera);

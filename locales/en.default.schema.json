@@ -38,6 +38,7 @@
     "arrows": "Arrows",
     "background": "Background",
     "background_image": "Background image",
+    "accordion_row_artwork": "Row artwork",
     "background_video": "Background video",
     "block_link": "Block link",
     "block_size": "Block size",
@@ -913,6 +914,10 @@
     "image_gap": "Image gap",
     // Image picker setting to upload custom image as icon
     "image_icon": "Image icon",
+    "heading_background_image": "Question background image",
+    "heading_background_image_object_y": "Question image crop (top–bottom)",
+    "answer_background_image": "Answer background image",
+    "answer_background_image_object_y": "Answer image crop (top–bottom)",
     "image_opacity": "Image opacity",
     "image_position": "Image position",
     "image_ratio": "Image ratio",

@@ -12,9 +12,10 @@ from .registry import PAGE_ZONES
 
 APP_TITLE = "Losuj Obraz — wygląd strony"
 _COMPONENT_ID = "losujobraz"
+_DRAW_ZONE_ID = "random_artwork_draw"
+_MASK_ZONE_ID = "random_artwork_mask"
 _ATMOSPHERE_ZONE_ID = "random_artwork_atmosphere"
 _V5_SMOKE_ZONE_ID = "random_artwork_v5_smoke"
-_V5_SMOKE_PARAMETERS_ZONE_ID = "random_artwork_v5_smoke_parameters"
 
 
 def _walk_widgets(widget: tk.Misc):
@@ -61,20 +62,20 @@ def _open_zone_editor(host: tk.Misc, zone_id: str, missing_message: str) -> None
     )
 
 
+def _open_draw_editor(host: tk.Misc) -> None:
+    _open_zone_editor(host, _DRAW_ZONE_ID, "Brak strefy Fine Art Oracle.")
+
+
+def _open_mask_editor(host: tk.Misc) -> None:
+    _open_zone_editor(host, _MASK_ZONE_ID, "Brak strefy «Edytowanie Odkrycia maski».")
+
+
 def _open_atmosphere_editor(host: tk.Misc) -> None:
     _open_zone_editor(host, _ATMOSPHERE_ZONE_ID, "Brak strefy edycji atmosfery.")
 
 
 def _open_v5_smoke_editor(host: tk.Misc) -> None:
-    _open_zone_editor(host, _V5_SMOKE_ZONE_ID, "Brak ustawienia dymu kursora V5.")
-
-
-def _open_v5_smoke_parameters_editor(host: tk.Misc) -> None:
-    _open_zone_editor(
-        host,
-        _V5_SMOKE_PARAMETERS_ZONE_ID,
-        "Brak panelu parametrów dymu kursora V5.",
-    )
+    _open_zone_editor(host, _V5_SMOKE_ZONE_ID, "Brak sekcji dymu kursora V5.")
 
 
 def _config(host: tk.Misc):
@@ -84,15 +85,14 @@ def _config(host: tk.Misc):
         app_title=APP_TITLE,
         intro_title="Strona Losuj Obraz (/pages/losuj-produkt)",
         intro_body=(
-            "Lista «Wersja» wybiera design: V1 — podstawowa, V2 — atmosfera muzealna, "
-            "V3 — Living Museum Light, V4 — finał muzealny oraz V5 — V4 z dymem kursora. "
-            "V4 zachowuje scenę i "
-            "atmosferę V3, ale dodaje płynniejsze wyłonienie zwycięskiego obrazu, lżejszą "
-            "oprawę, muzealną typografię i hierarchię akcji. V5 rozpoczyna jako niezależna "
-            "kopia V4 i dodaje efekt Elegant Fluid z Pedzel Alchemy. Przycisk «Edytuj atmosferę…» "
-            "otwiera ustawienia V2 oraz Living Museum Light dla V3/V4/V5. Edytujesz też treści "
-            "sekcji w templates/page.losuj-produkt.json. Przed zapisem tworzona jest kopia "
-            "zapasowa. Wdróż motyw, aby opublikować na sklepie."
+            "Aktywny wariant: V6 (na bazie V5). Lista «Wersja»: "
+            "V1 — podstawowa, V3 — Living Museum Light, V4 — finał muzealny, "
+            "V5 — V4 z dymem kursora, V6 — na bazie V5. "
+            "W V6 domyślnie jak V5: reflektor wyłączony, pył i dym włączone, parallax włączony. "
+            "Pył i dym startują dopiero po zakończeniu animacji złotego okręgu intro. "
+            "«Fine Art Oracle…» — teksty i tempo losowania. «Edytuj atmosferę…» — reflektor/pył. "
+            "«Dym kursora V5…» — włącznik, preset i parametry fluid. "
+            "Przed zapisem tworzona jest kopia zapasowa. Wdróż motyw, aby opublikować."
         ),
         template_rel="templates/page.losuj-produkt.json",
         preview_path="/pages/losuj-produkt",
@@ -100,9 +100,10 @@ def _config(host: tk.Misc):
         zones=PAGE_ZONES,
         variant_label_default="V1 — podstawowa",
         extra_toolbar=(
+            ("Fine Art Oracle…", lambda: _open_draw_editor(host)),
+            ("Edytowanie Odkrycia maski", lambda: _open_mask_editor(host)),
             ("Edytuj atmosferę…", lambda: _open_atmosphere_editor(host)),
-            ("Włącz/wyłącz dym V5…", lambda: _open_v5_smoke_editor(host)),
-            ("Edytuj dym V5…", lambda: _open_v5_smoke_parameters_editor(host)),
+            ("Dym kursora V5…", lambda: _open_v5_smoke_editor(host)),
         ),
     )
 

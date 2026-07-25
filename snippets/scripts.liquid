@@ -42,6 +42,8 @@
 ></script>
 
 {% if request.page_type == 'page' and template.suffix == 'faq' %}
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js" defer></script>
+  <script src="{{ 'faq-accordion-entrance.js' | asset_url }}" defer></script>
   <script src="{{ 'faq-section-effects.js' | asset_url }}" defer></script>
   {{ 'giclee-page-section-effects.css' | asset_url | stylesheet_tag }}
   <script src="{{ 'giclee-page-section-effects-boot.js' | asset_url }}" defer></script>

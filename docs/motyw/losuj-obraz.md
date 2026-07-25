@@ -93,9 +93,9 @@ Dodatkowy finał V4:
 
 Gdy w ustawieniach sekcji są jednocześnie **Film tła** i **Obraz tła**:
 
-1. obraz jest od razu pod spodem w warstwie parallax (preload);
-2. film odtwarza się raz (bez pętli), wyciszony, `playsinline`, z tymi samymi efektami tła (parallax, przyciemnienie);
-3. po `ended` (albo błędzie / reduced motion) film zanika, a po fade-out JS zwalnia dekoder (`pause` → clear `src` → `load()` → usunięcie z DOM), żeby nie zostawał w GPU.
+1. obraz jest od razu pod spodem (preload);
+2. film odtwarza się raz (bez pętli), wyciszony, `playsinline`;
+3. po `ended` (albo błędzie / reduced motion) film zanika i zostaje grafika.
 
 Sam film bez obrazu nadal działa w pętli. Sam obraz — jak dotychczas.
 

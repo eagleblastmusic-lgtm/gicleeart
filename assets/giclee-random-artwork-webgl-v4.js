@@ -13,7 +13,9 @@ const smoothstep = (edge0, edge1, x) => {
   return t * t * (3 - 2 * t);
 };
 const TAU = Math.PI * 2;
-const FINALE_EXTRA_MS = 800;
+const FINALE_EXTRA_MS = 1100;
+/** First portion of the reveal window grows the winner; the rest settles into the DOM frame. */
+const GROW_PORTION = 0.4;
 
 function radialSprite(THREE, stops) {
   const size = 128;
@@ -37,6 +39,37 @@ function radialSprite(THREE, stops) {
   return texture;
 }
 
+/** Map a screen-space DOM rect onto the card plane in front of the camera. */
+function resolveHandoffPose(THREE, camera, mount, rect, outerW, outerH, planePoint) {
+  if (!rect?.width || !rect?.height || !mount || !outerW || !outerH) return null;
+  const canvasRect = mount.getBoundingClientRect();
+  if (!canvasRect.width || !canvasRect.height) return null;
+
+  const cx = rect.left + rect.width * 0.5;
+  const cy = rect.top + rect.height * 0.5;
+  const ndcX = ((cx - canvasRect.left) / canvasRect.width) * 2 - 1;
+  const ndcY = -(((cy - canvasRect.top) / canvasRect.height) * 2 - 1);
+
+  const camPos = camera.position.clone();
+  const planeNormal = camPos.clone().sub(planePoint).normalize();
+  const aim = new THREE.Vector3(ndcX, ndcY, 0.5).unproject(camera);
+  const dir = aim.sub(camPos).normalize();
+  const denom = planeNormal.dot(dir);
+  if (Math.abs(denom) < 1e-5) return null;
+  const t = planeNormal.dot(planePoint.clone().sub(camera.position)) / denom;
+  const position = camera.position.clone().add(dir.multiplyScalar(t));
+
+  const dist = camera.position.distanceTo(position);
+  const worldH = 2 * Math.tan((camera.fov * Math.PI) / 360) * dist;
+  const worldW = worldH * camera.aspect;
+  const targetH = (rect.height / canvasRect.height) * worldH;
+  const targetW = (rect.width / canvasRect.width) * worldW;
+  const scale = Math.min(targetW / outerW, targetH / outerH);
+  if (!(scale > 0.05) || !Number.isFinite(scale)) return null;
+
+  return { position, scale };
+}
+
 export async function createOracleScene(options) {
   const {
     mount,
@@ -46,6 +79,8 @@ export async function createOracleScene(options) {
     reducedMotion = false,
     isMobile = false,
     onPhase,
+    onHandoffPrepare,
+    getHandoffTarget,
     onComplete,
   } = options;
 
@@ -214,15 +249,33 @@ export async function createOracleScene(options) {
     }
     const cardH = Math.min(1.85, Math.max(0.85, cardW / aspect));
 
-    const pivot = new THREE.Group();
-    const frameGeo = track(new THREE.PlaneGeometry(cardW + 0.09, cardH + 0.09));
-    const frameMat = track(
-      new THREE.MeshBasicMaterial({ color: 0x16120b, transparent: true, opacity: 0 }),
-    );
-    const frame = new THREE.Mesh(frameGeo, frameMat);
-    pivot.add(frame);
+    // Museum exhibit card: thin dark rim + warm-white passepartout.
+    const matte = isMobile ? 0.14 : 0.17;
+    const rim = isMobile ? 0.034 : 0.042;
+    const artW = cardW;
+    const artH = cardH;
+    const matteW = artW + matte * 2;
+    const matteH = artH + matte * 2;
+    const rimW = matteW + rim * 2;
+    const rimH = matteH + rim * 2;
 
-    const artGeo = track(new THREE.PlaneGeometry(cardW, cardH));
+    const pivot = new THREE.Group();
+
+    const rimGeo = track(new THREE.PlaneGeometry(rimW, rimH));
+    const rimMat = track(
+      new THREE.MeshBasicMaterial({ color: 0x0c0b0a, transparent: true, opacity: 0 }),
+    );
+    pivot.add(new THREE.Mesh(rimGeo, rimMat));
+
+    const matteGeo = track(new THREE.PlaneGeometry(matteW, matteH));
+    const matteMat = track(
+      new THREE.MeshBasicMaterial({ color: 0xf4f2ec, transparent: true, opacity: 0 }),
+    );
+    const matteMesh = new THREE.Mesh(matteGeo, matteMat);
+    matteMesh.position.z = 0.006;
+    pivot.add(matteMesh);
+
+    const artGeo = track(new THREE.PlaneGeometry(artW, artH));
     const artMat = track(
       new THREE.MeshBasicMaterial({
         color: texture ? 0xffffff : 0x2a2418,
@@ -238,7 +291,9 @@ export async function createOracleScene(options) {
 
     return {
       pivot,
-      mats: [frameMat, artMat],
+      mats: [rimMat, matteMat, artMat],
+      outerW: rimW,
+      outerH: rimH,
       baseAngle: (index / count) * TAU,
       yBase: (Math.random() - 0.5) * 1.1,
       bobPhase: Math.random() * TAU,
@@ -250,7 +305,20 @@ export async function createOracleScene(options) {
   let landing = (-winnerBase) % TAU;
   if (landing < 0) landing += TAU;
   const spinTotal = TURNS * TAU + landing;
-  const winnerTarget = new THREE.Vector3(0, 0.1, 2.18);
+  // Slightly raised: room for captions under the frozen finale card.
+  const winnerTarget = new THREE.Vector3(0, 0.22, 2.2);
+  const winnerEntry = cardEntries[winnerIndex];
+  // Screen-parallel pose: same basis as the camera (plane +Z faces the lens).
+  // Do NOT yaw-flip — that turns the card's back to the camera (FrontSide cull).
+  const _camDir = new THREE.Vector3();
+  const _flatTarget = new THREE.Vector3();
+  const _lookQuat = new THREE.Quaternion();
+  const _flatQuat = new THREE.Quaternion();
+  const applyFlatFacing = (object) => {
+    camera.getWorldDirection(_camDir);
+    _flatTarget.copy(object.position).sub(_camDir);
+    object.lookAt(_flatTarget);
+  };
 
   // ── Animation loop ──
   let rafId = 0;
@@ -258,7 +326,9 @@ export async function createOracleScene(options) {
   let destroyed = false;
   let contextLost = false;
   let completed = false;
-  const phaseFired = { orbit: false, slow: false };
+  const phaseFired = { orbit: false, slow: false, handoff: false };
+  let peakPose = null;
+  let handoffPose = null;
 
   const finish = () => {
     if (completed) return;
@@ -284,36 +354,52 @@ export async function createOracleScene(options) {
     const introEase = easeOutCubic(clamp01(p / T_INTRO));
     const spin = easeOutCubic(clamp01(p / T_SLOW)) * spinTotal;
     const select = smoothstep(T_SLOW, T_SELECT, p);
-    const reveal = p > T_SELECT
-      ? easeInOutCubic(clamp01((p - T_SELECT) / (1 - T_SELECT)))
+    const revealLocal = p > T_SELECT
+      ? clamp01((p - T_SELECT) / Math.max(1e-6, 1 - T_SELECT))
       : 0;
+    const growT = easeOutCubic(clamp01(revealLocal / GROW_PORTION));
+    const settleT = easeInOutCubic(
+      clamp01((revealLocal - GROW_PORTION) / Math.max(1e-6, 1 - GROW_PORTION)),
+    );
+    const reveal = easeInOutCubic(revealLocal);
     const retreat = easeInOutSine(reveal);
 
-    const settle = easeInOutSine(p);
+    const camSettle = easeInOutSine(p);
     camera.position.z = 8.6 - easeInOutCubic(p) * 3.05;
-    camera.position.x = Math.sin(time * 0.26) * 0.22 * (1 - settle);
-    camera.position.y = 0.18 + Math.sin(time * 0.4) * 0.07 * (1 - settle * 0.7);
-    camera.lookAt(0, 0, 0);
+    camera.position.x = Math.sin(time * 0.26) * 0.22 * (1 - camSettle);
+    camera.position.y = 0.18 + Math.sin(time * 0.4) * 0.07 * (1 - camSettle * 0.7);
+    camera.lookAt(0, 0.08, 0);
 
-    // Portal changes from mechanism into a wide, quiet exhibition halo.
+    // Portal / afterglow: fully fade out during the final settle (no pixelated halo left).
     const flare = select * (1 - reveal * 0.72);
-    glowMat.opacity = introEase * (
+    const afterglow = 1 - settleT;
+    glowMat.opacity = introEase * afterglow * (
       0.32 +
       0.11 * Math.sin(time * 1.1) +
-      0.5 * flare +
-      0.18 * reveal
+      0.5 * flare
     );
-    ringMat.opacity = introEase * (0.4 + 0.35 * flare) * (1 - reveal * 0.96);
-    ringInnerMat.opacity = introEase * (0.32 + 0.4 * flare) * (1 - reveal * 0.98);
+    ringMat.opacity = introEase * afterglow * (0.4 + 0.35 * flare) * (1 - reveal * 0.96);
+    ringInnerMat.opacity = introEase * afterglow * (0.32 + 0.4 * flare) * (1 - reveal * 0.98);
     glow.scale.set(6 + reveal * 2.4, 6 - reveal * 2.6, 1);
-    portal.scale.setScalar(1 + flare * 0.1 + Math.sin(time * 0.7) * 0.006);
+    portal.scale.setScalar(1 + flare * 0.1 * afterglow + Math.sin(time * 0.7) * 0.006 * afterglow);
     ring.rotation.z = time * 0.16;
     ringInner.rotation.z = -time * 0.22;
 
     if (dust) {
-      dust.material.opacity = introEase * (0.34 - reveal * 0.27);
+      // Dust sparks must hit zero with settle — additive points read as white pixels.
+      dust.material.opacity = introEase * afterglow * (1 - reveal) * 0.34;
       dust.rotation.y = time * 0.03;
       dust.rotation.x = Math.sin(time * 0.1) * 0.04;
+      if (afterglow <= 0.001) dust.visible = false;
+    }
+
+    if (settleT > 0 && !phaseFired.handoff) {
+      phaseFired.handoff = true;
+      try {
+        onHandoffPrepare?.();
+      } catch (_) {
+        /* host prep is best-effort */
+      }
     }
 
     for (const entry of cardEntries) {
@@ -329,27 +415,81 @@ export async function createOracleScene(options) {
       let scale;
 
       if (entry.isWinner) {
-        pivot.position.set(
-          THREE.MathUtils.lerp(orbitX, winnerTarget.x, reveal),
-          THREE.MathUtils.lerp(orbitY, winnerTarget.y, reveal),
-          THREE.MathUtils.lerp(orbitZ, winnerTarget.z, reveal),
-        );
-        const ceremonialLift = Math.sin(reveal * Math.PI) * 0.035;
-        scale = baseScale * (1 + select * 0.045) + reveal * 0.82 + ceremonialLift;
+        const growPosX = THREE.MathUtils.lerp(orbitX, winnerTarget.x, growT);
+        const growPosY = THREE.MathUtils.lerp(orbitY, winnerTarget.y, growT);
+        const growPosZ = THREE.MathUtils.lerp(orbitZ, winnerTarget.z, growT);
+        const ceremonialLift = Math.sin(growT * Math.PI) * 0.035;
+        const growScale = baseScale * (1 + select * 0.045) + growT * 0.82 + ceremonialLift;
+
+        if (settleT <= 0) {
+          pivot.position.set(growPosX, growPosY, growPosZ);
+          scale = growScale;
+        } else {
+          if (!peakPose) {
+            peakPose = {
+              x: growPosX,
+              y: growPosY,
+              z: growPosZ,
+              scale: growScale,
+            };
+          }
+
+          let target = handoffPose;
+          try {
+            const rect = typeof getHandoffTarget === 'function' ? getHandoffTarget() : null;
+            const resolved = resolveHandoffPose(
+              THREE,
+              camera,
+              mount,
+              rect,
+              winnerEntry?.outerW,
+              winnerEntry?.outerH,
+              winnerTarget,
+            );
+            if (resolved) {
+              handoffPose = resolved;
+              target = resolved;
+            }
+          } catch (_) {
+            /* keep last good pose */
+          }
+
+          if (!target) {
+            target = {
+              position: winnerTarget.clone(),
+              scale: Math.max(0.72, peakPose.scale * 0.52),
+            };
+          }
+
+          pivot.position.set(
+            THREE.MathUtils.lerp(peakPose.x, target.position.x, settleT),
+            THREE.MathUtils.lerp(peakPose.y, target.position.y, settleT),
+            THREE.MathUtils.lerp(peakPose.z, target.position.z, settleT),
+          );
+          scale = THREE.MathUtils.lerp(peakPose.scale, target.scale, settleT);
+        }
         opacity = introEase;
       } else {
         const outwardX = orbitX * (1 + retreat * 0.16);
         const outwardY = orbitY + Math.sign(entry.yBase || 1) * retreat * 0.2;
         pivot.position.set(outwardX, outwardY, orbitZ - retreat * 3.6);
         scale = baseScale * (1 - select * 0.05) * (1 - retreat * 0.42);
-        // Keep a faint trace until the handoff; no brutal cut.
-        opacity = introEase * (1 - select * 0.3) * (1 - retreat * 0.96);
+        // Fade non-winners + dust traces fully out by end of settle (no leftover pixels).
+        opacity = introEase * (1 - select * 0.3) * (1 - retreat) * afterglow;
       }
 
       pivot.scale.setScalar(scale);
       pivot.lookAt(camera.position);
-      mats[0].opacity = opacity * 0.82;
-      mats[1].opacity = opacity;
+      if (entry.isWinner && settleT > 0) {
+        // Animate out of billboard skew into a straight-on (screen-parallel) pose.
+        _lookQuat.copy(pivot.quaternion);
+        applyFlatFacing(pivot);
+        _flatQuat.copy(pivot.quaternion);
+        pivot.quaternion.copy(_lookQuat).slerp(_flatQuat, settleT);
+      }
+      mats[0].opacity = opacity; // dark rim
+      mats[1].opacity = opacity; // passepartout
+      mats[2].opacity = opacity; // artwork
     }
 
     renderer.render(scene, camera);
@@ -372,6 +512,8 @@ export async function createOracleScene(options) {
     camera.aspect = nextWidth / nextHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(nextWidth, nextHeight, false);
+    // Finale keeps the last WebGL frame as the exhibit — redraw after layout changes.
+    if (completed) renderer.render(scene, camera);
   };
   window.addEventListener('resize', onResize);
 
@@ -389,17 +531,51 @@ export async function createOracleScene(options) {
   };
   renderer.domElement.addEventListener('webglcontextlost', onContextLost, false);
 
-  const destroy = () => {
+  let exhibitBaseScale = 1;
+  let exhibitHoverMul = 1;
+  let exhibitHoverTarget = 1;
+  let exhibitHoverRaf = 0;
+  const EXHIBIT_HOVER_SCALE = 1.03;
+
+  const renderExhibitHover = () => {
+    exhibitHoverRaf = 0;
+    if (destroyed || !completed || !winnerEntry?.pivot) return;
+    exhibitHoverMul += (exhibitHoverTarget - exhibitHoverMul) * 0.22;
+    if (Math.abs(exhibitHoverTarget - exhibitHoverMul) < 0.001) {
+      exhibitHoverMul = exhibitHoverTarget;
+    }
+    winnerEntry.pivot.scale.setScalar(exhibitBaseScale * exhibitHoverMul);
+    renderer.render(scene, camera);
+    if (exhibitHoverMul !== exhibitHoverTarget) {
+      exhibitHoverRaf = requestAnimationFrame(renderExhibitHover);
+    }
+  };
+
+  /** Soft scale of the frozen winner card only (within the black rim). */
+  const setExhibitHover = (active) => {
+    if (destroyed || !completed || !winnerEntry?.pivot) return;
+    if (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+    if (typeof matchMedia === 'function' && matchMedia('(hover: none), (pointer: coarse)').matches) {
+      return;
+    }
+    exhibitHoverTarget = active ? EXHIBIT_HOVER_SCALE : 1;
+    if (!exhibitHoverRaf) exhibitHoverRaf = requestAnimationFrame(renderExhibitHover);
+  };
+
+  const destroy = (options = {}) => {
     if (destroyed) return;
     destroyed = true;
     cancelAnimationFrame(rafId);
+    cancelAnimationFrame(exhibitHoverRaf);
+    exhibitHoverRaf = 0;
     window.removeEventListener('resize', onResize);
     resizeObserver?.disconnect();
     renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
 
     const canvas = renderer.domElement;
-    canvas.style.transition = 'opacity 0.72s cubic-bezier(0.22, 1, 0.36, 1)';
-    canvas.style.opacity = '0';
+    const instant = options.instant !== false;
 
     const disposeAll = () => {
       for (const object of disposables) object.dispose?.();
@@ -413,9 +589,47 @@ export async function createOracleScene(options) {
       canvas.parentNode?.removeChild(canvas);
     };
 
-    if (contextLost) disposeAll();
-    else window.setTimeout(disposeAll, 740);
+    if (contextLost || instant) {
+      canvas.style.opacity = '0';
+      canvas.style.visibility = 'hidden';
+      disposeAll();
+      return;
+    }
+
+    canvas.style.transition = 'opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1)';
+    canvas.style.opacity = '0';
+    window.setTimeout(disposeAll, 360);
   };
 
-  return { destroy };
+  const freeze = () => {
+    if (destroyed) return;
+    completed = true;
+    cancelAnimationFrame(rafId);
+    cancelAnimationFrame(exhibitHoverRaf);
+    exhibitHoverRaf = 0;
+    exhibitHoverMul = 1;
+    exhibitHoverTarget = 1;
+    if (winnerEntry?.pivot) {
+      applyFlatFacing(winnerEntry.pivot);
+      exhibitBaseScale = winnerEntry.pivot.scale.x || 1;
+    }
+    // Ensure no residual portal/dust/non-winner pixels remain on the frozen frame.
+    glowMat.opacity = 0;
+    ringMat.opacity = 0;
+    ringInnerMat.opacity = 0;
+    if (dust) dust.material.opacity = 0;
+    glow.visible = false;
+    ring.visible = false;
+    ringInner.visible = false;
+    portal.visible = false;
+    if (dust) dust.visible = false;
+    for (const entry of cardEntries) {
+      if (entry.isWinner) continue;
+      entry.pivot.visible = false;
+      for (const mat of entry.mats) mat.opacity = 0;
+    }
+    renderer.render(scene, camera);
+  };
+
+  return { destroy, freeze, setExhibitHover };
 }

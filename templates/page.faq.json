@@ -236,7 +236,11 @@
                 "heading": "Jaki jest czas realizacji zamówienia?",
                 "open_by_default": false,
                 "icon": "none",
-                "width": 20
+                "width": 20,
+                "heading_background_image": "shopify://shop_images/Pieter_Bruegel_starszy_-_The_Blind_Leading_the_Blind.jpg",
+                "heading_background_image_object_y": 50,
+                "answer_background_image": "",
+                "answer_background_image_object_y": 50
               },
               "blocks": {
                 "text_Q8RMTC": {
@@ -276,7 +280,11 @@
                 "heading": "Jaki jest czas wysyłki?",
                 "open_by_default": false,
                 "icon": "none",
-                "width": 20
+                "width": 20,
+                "heading_background_image": "shopify://shop_images/Jozef_Chelmonski_-_Before_the_Rain.jpg",
+                "heading_background_image_object_y": 61,
+                "answer_background_image": "",
+                "answer_background_image_object_y": 50
               },
               "blocks": {
                 "text_dbKFYM": {
@@ -316,7 +324,11 @@
                 "heading": "Czy jest możliwość kontaktu telefonicznego?",
                 "open_by_default": false,
                 "icon": "none",
-                "width": 20
+                "width": 20,
+                "heading_background_image": "shopify://shop_images/Jean-Baptiste-Camille_Corot_-_A_Pensive_Girl.jpg",
+                "heading_background_image_object_y": 28,
+                "answer_background_image": "",
+                "answer_background_image_object_y": 50
               },
               "blocks": {
                 "text_KT9gtp": {
@@ -356,7 +368,11 @@
                 "heading": "Gdzie są produkowane wasze produkty?",
                 "open_by_default": false,
                 "icon": "none",
-                "width": 20
+                "width": 20,
+                "heading_background_image": "shopify://shop_images/Hans_Dahl_-_Peasant_Girl_with_a_Rake.jpg",
+                "heading_background_image_object_y": 37,
+                "answer_background_image": "",
+                "answer_background_image_object_y": 50
               },
               "blocks": {
                 "text_kCYhHF": {
@@ -397,7 +413,11 @@
                 "heading": "Ile kosztuje wysyłka?",
                 "open_by_default": false,
                 "icon": "none",
-                "width": 20
+                "width": 20,
+                "heading_background_image": "shopify://shop_images/Charles_Francois_Daubigny_-_Spring_Landscape.jpg",
+                "heading_background_image_object_y": 70,
+                "answer_background_image": "",
+                "answer_background_image_object_y": 50
               },
               "blocks": {
                 "text_BnRprG": {
