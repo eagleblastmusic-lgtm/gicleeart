@@ -145,8 +145,7 @@
     body.template-page-faq .faq-section.faq-section--bg-image {
       position: relative;
       isolation: isolate;
-      overflow-x: clip;
-      overflow-y: visible;
+      overflow: clip;
       background-color: #000;
     }
 
@@ -202,11 +201,15 @@
         brightness(calc(var(--faq-bg-brightness, 100) * 0.01));
     }
 
-    /* Stopka zawsze nad tłem FAQ */
-    body.template-page-faq > footer {
-      position: relative;
-      z-index: 5;
-      background-color: #000;
+    /* Stopka zawsze nad tłem FAQ oraz nad giclee-faq-hero-curtain (z-index: 900) */
+    body.template-page-faq > footer,
+    body.template-page-faq footer,
+    body.template-page-faq .footer-group {
+      position: relative !important;
+      z-index: 1001 !important;
+      background-color: #000 !important;
+      border-top: none !important;
+      box-shadow: none !important;
     }
 
     /* Brak scroll-anchoring przy otwarciu — mniej skoków kadru / parallax */
@@ -1043,18 +1046,16 @@
       background: transparent !important;
     }
 
-    /* FAQ: visible — ::after poświaty musi wyjść pod ostatnią kartę */
+    /* FAQ: clip — zapobiega wyciekaniu ozdób (złotych łuków i tarcz) pod sekcję w stronę stopki */
     body.template-page-faq #MainContent > .shopify-section:has(.faq-section) {
       position: relative;
       z-index: auto;
-      overflow-x: clip;
-      overflow-y: visible;
+      overflow: clip;
     }
 
     body.template-page-faq .faq-section {
       position: relative;
-      overflow-x: clip;
-      overflow-y: visible;
+      overflow: clip;
       isolation: isolate;
     }
 

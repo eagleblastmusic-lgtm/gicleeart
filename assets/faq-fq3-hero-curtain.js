@@ -67,9 +67,12 @@
   function getHeaderHeight() {
     var headerGroup = document.getElementById('header-group');
     var header = document.getElementById('header-component');
-    var element = headerGroup || header;
+    var candidates = [headerGroup, header];
 
-    if (element) {
+    for (var index = 0; index < candidates.length; index += 1) {
+      var element = candidates[index];
+      if (!element) continue;
+
       var rect = element.getBoundingClientRect();
       if (rect.height > 0) return Math.round(rect.height);
     }
@@ -79,6 +82,30 @@
       .getPropertyValue('--header-group-height');
     var parsed = parseFloat(cssValue);
     return isFinite(parsed) ? Math.max(0, Math.round(parsed)) : 0;
+  }
+
+  /** @param {HTMLElement} heroSection */
+  function getCurtainScrollDistance(heroSection) {
+    var hero = heroSection.querySelector('.hero');
+    var heroHeight = hero instanceof HTMLElement
+      ? hero.getBoundingClientRect().height
+      : window.innerHeight * 0.3;
+    var desiredDistance = Math.max(360, Math.round(heroHeight * 2.2));
+    var startScroll =
+      heroSection.getBoundingClientRect().top +
+      window.scrollY -
+      getHeaderHeight();
+    var footer = document.querySelector('body > footer') || document.querySelector('footer');
+    var documentEnd = Math.max(
+      0,
+      document.documentElement.scrollHeight - window.innerHeight
+    );
+    var footerEntry = footer instanceof HTMLElement
+      ? footer.getBoundingClientRect().top + window.scrollY - window.innerHeight
+      : documentEnd;
+    var availableDistance = Math.min(documentEnd, footerEntry) - startScroll;
+
+    return Math.max(1, Math.min(desiredDistance, Math.round(availableDistance)));
   }
 
   /** @param {HTMLElement} source @param {HTMLElement} target */
@@ -151,6 +178,10 @@
     style.id = 'giclee-faq-fq3-curtain-styles';
     style.textContent = [
       'body.giclee-faq-fq3-curtain-active #header-group { position: relative; z-index: 1000; }',
+      'body.giclee-faq-fq3-curtain-active #MainContent .giclee-faq-curtain-content-layer {',
+      '  position: relative !important;',
+      '  z-index: 901 !important;',
+      '}',
       '.giclee-faq-hero-curtain {',
       '  position: fixed !important;',
       '  top: var(--giclee-faq-curtain-top, 0px) !important;',
@@ -227,6 +258,7 @@
     if (!heroSection || !faqSection) return;
 
     injectStyles();
+    faqSection.classList.add('giclee-faq-curtain-content-layer');
 
     var curtain = buildCurtain(faqSection);
     if (!curtain) return;
@@ -250,14 +282,16 @@
           return 'top top+=' + getHeaderHeight();
         },
         end: function () {
-          var hero = heroSection.querySelector('.hero');
-          var height = hero instanceof HTMLElement
-            ? hero.getBoundingClientRect().height
-            : window.innerHeight * 0.3;
-          return '+=' + Math.max(360, Math.round(height * 2.2));
+          return '+=' + getCurtainScrollDistance(heroSection);
         },
         scrub: 0.65,
         invalidateOnRefresh: true,
+        onLeave: function () {
+          tween.set(curtain, { opacity: 0 });
+        },
+        onLeaveBack: function () {
+          tween.set(curtain, { scaleY: 0.001, opacity: 1 });
+        },
         onRefresh: function () {
           syncCurtainGeometry(curtain);
         },

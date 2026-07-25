@@ -1,5 +1,5 @@
 {
-  "active": "fq1",
+  "active": "fq3",
   "variants": [
     {
       "id": "fq1",
@@ -8,6 +8,10 @@
     {
       "id": "fq2",
       "label": "Wersja 2"
+    },
+    {
+      "id": "fq3",
+      "label": "Wersja 3"
     }
   ]
 }
