@@ -5,6 +5,15 @@
 
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
+  var currentScript = document.currentScript;
+  var sb3CurtainUrl =
+    currentScript && currentScript.src
+      ? currentScript.src.replace(
+          /blog-posts-entrance\.js(?:\?.*)?$/,
+          'blog-sb3-hero-curtain.js'
+        )
+      : '';
+
   function getGsap() {
     return window.gsap || (typeof gsap !== 'undefined' ? gsap : undefined);
   }
@@ -68,8 +77,23 @@
     });
   }
 
+  function loadSb3HeroCurtain() {
+    var config = window.GICLEE_PAGE_SECTION_EFFECTS;
+    if (!config || config.page !== 'blog' || config.variant !== 'sb3') return;
+    if (!sb3CurtainUrl || window.__GICLEE_BLOG_SB3_CURTAIN_LOADER__) return;
+
+    window.__GICLEE_BLOG_SB3_CURTAIN_LOADER__ = true;
+
+    var script = document.createElement('script');
+    script.src = sb3CurtainUrl;
+    script.defer = true;
+    script.dataset.gicleeBlogSb3Curtain = 'true';
+    document.head.appendChild(script);
+  }
+
   function run() {
     whenReady(runCardsEntrance);
+    loadSb3HeroCurtain();
   }
 
   if (document.readyState === 'loading') {
