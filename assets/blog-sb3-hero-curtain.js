@@ -1,3 +1,4 @@
+// @ts-nocheck
 /* Blog / Wersja 3 (sb3) — tło sekcji wpisów rozwija się od dołu i zakrywa hero. */
 (function () {
   if (window.__GICLEE_BLOG_SB3_HERO_CURTAIN__) return;
@@ -135,8 +136,8 @@
     var style = document.createElement('style');
     style.id = 'giclee-blog-sb3-curtain-styles';
     style.textContent = [
-      'body.giclee-blog-sb3-curtain-active #header-group { position: relative; z-index: 1000; }',
-      '.giclee-blog-curtain-hero { position: relative; isolation: isolate; }',
+      'body.giclee-blog-sb3-curtain-active #header-component { z-index: 1000; }',
+      '.giclee-blog-curtain-hero { position: relative; z-index: 1; isolation: isolate; }',
       '.giclee-blog-curtain-hero .hero__container { overflow: hidden; }',
       '.giclee-blog-hero-curtain {',
       '  position: absolute;',
