@@ -1,0 +1,157 @@
+/*
+ * FAQ Style 3 — Galaxy shell / plate + świecący pierścień na krawędzi (bez orbów / Lottie).
+ * Wrapper .faq-galaxy-card otacza <details> — inaczej zamknięty details chowa warstwy.
+ */
+
+.faq-accordion-style3 .accordion,
+.faq-accordion-style3 .accordion accordion-custom {
+  overflow: visible;
+}
+
+.faq-galaxy-card {
+  --faq-gx: 50%;
+  --faq-gy: 50%;
+  position: relative;
+  display: block;
+  border-radius: 16px;
+  isolation: isolate;
+  transform-origin: center center;
+  /* Idle: lekki cień — bez ciężkiej winiety, żeby krawędź była czytelna */
+  box-shadow: 0 6px 22px -14px rgba(0, 0, 0, 0.55);
+  transition: box-shadow 0.35s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.faq-galaxy-card__shell {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  /* Idle: cienka ~1px jasnoszara obwódka */
+  padding: 1px;
+  border-radius: inherit;
+  background-color: rgba(200, 205, 212, 0.55);
+  overflow: hidden;
+  pointer-events: none;
+  transition: background-color 0.35s ease;
+}
+
+.faq-galaxy-card__plate {
+  position: absolute;
+  inset: 1px;
+  z-index: 1;
+  display: block;
+  border-radius: 15px;
+  background-color: rgba(0, 0, 0, 0.81);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  pointer-events: none;
+  transition: background-color 0.6s ease;
+}
+
+.faq-galaxy-card--art .faq-galaxy-card__plate,
+.faq-galaxy-card--art-shared .faq-galaxy-card__plate {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background-color: #050505;
+}
+
+.faq-galaxy-card--art-shared .faq-galaxy-card__plate {
+  background-image:
+    linear-gradient(
+      90deg,
+      rgb(5, 5, 5) 0%,
+      rgba(5, 5, 5, 0.98) calc(var(--faq-art-gradient-reach, 100) * 0.42%),
+      rgba(5, 5, 5, 0.94) calc(var(--faq-art-gradient-reach, 100) * 0.58%),
+      rgba(5, 5, 5, 0.78) calc(var(--faq-art-gradient-reach, 100) * 0.72%),
+      rgba(5, 5, 5, 0.42) calc(var(--faq-art-gradient-reach, 100) * 0.84%),
+      rgba(5, 5, 5, 0.14) calc(var(--faq-art-gradient-reach, 100) * 0.93%),
+      rgba(5, 5, 5, 0.02) calc(var(--faq-art-gradient-reach, 100) * 1%),
+      transparent calc(var(--faq-art-gradient-reach, 100) * 1%)
+    ),
+    var(--details-art-image);
+  /*
+    cover na szerokiej/niskiej karcie przycina tylko góra–dół — X nie działa.
+    200% szerokości + ox −50…150% = większy zapas w lewo/prawo.
+  */
+  background-size: auto, 200% auto;
+  background-position: 0 0, var(--details-art-ox, 72%) var(--details-art-oy, 50%);
+  background-repeat: no-repeat;
+}
+
+/* Świecący pierścień tylko na krawędzi (maska 2px) — bez plamy w środku */
+.faq-galaxy-card__edge {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  background: radial-gradient(
+    circle 140px at var(--faq-gx, 50%) var(--faq-gy, 50%),
+    rgba(232, 236, 240, 0.95) 0%,
+    rgba(200, 205, 212, 0.55) 28%,
+    rgba(200, 205, 212, 0.12) 55%,
+    transparent 72%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+@media (hover: hover) {
+  .faq-galaxy-card:hover {
+    transform: scale(1.015);
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.5),
+      0 14px 34px -10px rgba(0, 0, 0, 0.85),
+      0 28px 56px -18px rgba(0, 0, 0, 0.7);
+  }
+
+  .faq-galaxy-card:hover .faq-galaxy-card__edge {
+    opacity: 1;
+  }
+
+  .faq-galaxy-card:not(.faq-galaxy-card--art):hover .faq-galaxy-card__plate {
+    background-color: rgba(0, 0, 0, 0.86);
+  }
+
+  .faq-galaxy-card:hover .faq-galaxy-card__shell {
+    background-color: rgba(232, 236, 240, 0.55);
+  }
+}
+
+.faq-galaxy-card:has(details[open]) {
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.48),
+    0 14px 36px -10px rgba(0, 0, 0, 0.82),
+    0 26px 52px -18px rgba(0, 0, 0, 0.66);
+}
+
+.faq-galaxy-card:has(details[open]) .faq-galaxy-card__edge {
+  opacity: 0.45;
+}
+
+.faq-galaxy-card:has(details[open]):hover .faq-galaxy-card__edge {
+  opacity: 1;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .faq-galaxy-card__edge {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .faq-galaxy-card,
+  .faq-galaxy-card:hover {
+    transform: none;
+  }
+
+  .faq-galaxy-card__edge {
+    display: none;
+  }
+}

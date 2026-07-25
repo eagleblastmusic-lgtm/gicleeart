@@ -1,0 +1,25 @@
+{
+  "hero_BMCrdL": {
+    "image": {
+      "enabled": true,
+      "desktopEnabled": true,
+      "gradientPreset": "none",
+      "gradientOverlayOpacity": 100,
+      "radialCenterX": 35,
+      "radialCenterY": 50,
+      "radialRadiusX": 55,
+      "radialRadiusY": 85,
+      "radialFeather": 50,
+      "radialExposure": 50,
+      "parallaxEnabled": true,
+      "parallaxMaxX": 16,
+      "parallaxMaxY": 10,
+      "parallaxEase": 0.075,
+      "parallaxOverscan": 106,
+      "imageHoverEnabled": true,
+      "imageHoverDurationMs": 850,
+      "parallaxReturnEase": 0.035,
+      "imageHoverScale": 1.025
+    }
+  }
+}
