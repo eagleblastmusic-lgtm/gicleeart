@@ -238,9 +238,11 @@
                 "icon": "none",
                 "width": 20,
                 "heading_background_image": "shopify://shop_images/Pieter_Bruegel_starszy_-_The_Blind_Leading_the_Blind.jpg",
-                "heading_background_image_object_y": 50,
+                "heading_background_image_object_y": 39,
                 "answer_background_image": "",
-                "answer_background_image_object_y": 50
+                "answer_background_image_object_y": 50,
+                "heading_background_image_object_x": 6,
+                "answer_background_image_object_x": 72
               },
               "blocks": {
                 "text_Q8RMTC": {
@@ -282,9 +284,11 @@
                 "icon": "none",
                 "width": 20,
                 "heading_background_image": "shopify://shop_images/Jozef_Chelmonski_-_Before_the_Rain.jpg",
-                "heading_background_image_object_y": 61,
+                "heading_background_image_object_y": 69,
                 "answer_background_image": "",
-                "answer_background_image_object_y": 50
+                "answer_background_image_object_y": 50,
+                "heading_background_image_object_x": 72,
+                "answer_background_image_object_x": 72
               },
               "blocks": {
                 "text_dbKFYM": {
@@ -326,9 +330,11 @@
                 "icon": "none",
                 "width": 20,
                 "heading_background_image": "shopify://shop_images/Jean-Baptiste-Camille_Corot_-_A_Pensive_Girl.jpg",
-                "heading_background_image_object_y": 28,
+                "heading_background_image_object_y": 22,
                 "answer_background_image": "",
-                "answer_background_image_object_y": 50
+                "answer_background_image_object_y": 50,
+                "heading_background_image_object_x": 22,
+                "answer_background_image_object_x": 72
               },
               "blocks": {
                 "text_KT9gtp": {
@@ -369,10 +375,12 @@
                 "open_by_default": false,
                 "icon": "none",
                 "width": 20,
-                "heading_background_image": "shopify://shop_images/Hans_Dahl_-_Peasant_Girl_with_a_Rake.jpg",
-                "heading_background_image_object_y": 37,
+                "heading_background_image": "shopify://shop_images/Leonardo_Da_Vinci_-_Mona_Lisa.jpg",
+                "heading_background_image_object_y": 22,
                 "answer_background_image": "",
-                "answer_background_image_object_y": 50
+                "answer_background_image_object_y": 50,
+                "heading_background_image_object_x": 8,
+                "answer_background_image_object_x": 72
               },
               "blocks": {
                 "text_kCYhHF": {
@@ -415,9 +423,11 @@
                 "icon": "none",
                 "width": 20,
                 "heading_background_image": "shopify://shop_images/Charles_Francois_Daubigny_-_Spring_Landscape.jpg",
-                "heading_background_image_object_y": 70,
+                "heading_background_image_object_y": 71,
                 "answer_background_image": "",
-                "answer_background_image_object_y": 50
+                "answer_background_image_object_y": 50,
+                "heading_background_image_object_x": 38,
+                "answer_background_image_object_x": 72
               },
               "blocks": {
                 "text_BnRprG": {
@@ -490,6 +500,7 @@
         "giclee_faq_bg_dim_overlay_pct": 0,
         "giclee_faq_bg_scale_pct": 4,
         "giclee_faq_accordion_style": "style3",
+        "giclee_faq_art_gradient_reach_pct": 100,
         "border": "none",
         "border_width": 1,
         "border_opacity": 100,

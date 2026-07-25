@@ -32,6 +32,7 @@ from Komponenty.stronaglowna.text_html import (
 )
 
 from .config import PageEditorConfig
+from .image_object_x import normalize_object_x, object_x_field_id, object_x_path
 from .image_object_y import normalize_object_y, object_y_field_id, object_y_path
 from .types import TemplateField, TemplateZone, set_zone_enabled, zone_enabled
 
@@ -332,6 +333,9 @@ def load_zone_values(template: dict[str, Any], zone: TemplateZone) -> dict[str, 
             oy_path = object_y_path(fld.path)
             if oy_path:
                 out[object_y_field_id(fld.field_id)] = normalize_object_y(path_get(template, oy_path))
+            ox_path = object_x_path(fld.path)
+            if ox_path:
+                out[object_x_field_id(fld.field_id)] = normalize_object_x(path_get(template, ox_path))
         elif fld.kind == "section_background":
             from Komponenty.stronaglowna.service import _parse_section_background
 
@@ -352,6 +356,19 @@ def _write_image_object_y(
     oy_path = object_y_path(field.path)
     if oy_path:
         path_set(template, oy_path, normalize_object_y(values[oy_key]))
+
+
+def _write_image_object_x(
+    template: dict[str, Any], field: TemplateField, values: dict[str, Any]
+) -> None:
+    if field.kind != "shopify_image" or not field.path:
+        return
+    ox_key = object_x_field_id(field.field_id)
+    if ox_key not in values:
+        return
+    ox_path = object_x_path(field.path)
+    if ox_path:
+        path_set(template, ox_path, normalize_object_x(values[ox_key]))
 
 
 def _sync_faq_under_hero_bg(template: dict[str, Any], values: dict[str, Any]) -> None:
@@ -399,6 +416,7 @@ def apply_zone_values(template: dict[str, Any], zone: TemplateZone, values: dict
                 continue
         write_field(template, fld, values[fld.field_id])
         _write_image_object_y(template, fld, values)
+        _write_image_object_x(template, fld, values)
     if zone.zone_id == "under_hero_bg":
         _sync_faq_under_hero_bg(template, values)
 

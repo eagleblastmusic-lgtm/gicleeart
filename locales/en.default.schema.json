@@ -915,8 +915,10 @@
     // Image picker setting to upload custom image as icon
     "image_icon": "Image icon",
     "heading_background_image": "Question background image",
+    "heading_background_image_object_x": "Question image crop (left–right)",
     "heading_background_image_object_y": "Question image crop (top–bottom)",
     "answer_background_image": "Answer background image",
+    "answer_background_image_object_x": "Answer image crop (left–right)",
     "answer_background_image_object_y": "Answer image crop (top–bottom)",
     "image_opacity": "Image opacity",
     "image_position": "Image position",

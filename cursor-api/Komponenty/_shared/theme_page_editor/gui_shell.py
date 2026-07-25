@@ -19,6 +19,7 @@ from Komponenty._shared.toast import show_toast
 from Komponenty._shared.window_geometry import position_toplevel_screen_center
 from PIL import Image, ImageTk
 
+from .image_object_x import build_object_x_controls, object_x_field_id, object_x_path
 from .image_object_y import build_object_y_controls, object_y_field_id
 
 from .config import PageEditorConfig
@@ -833,6 +834,13 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             if not is_video and ref.strip():
                 crop_host = ttk.Frame(editor_inner)
                 crop_host.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(0, 10))
+                if object_x_path(fld.path):
+                    ox_key = object_x_field_id(fid)
+                    build_object_x_controls(
+                        crop_host,
+                        initial=_zone_value(zid, ox_key),
+                        on_change=lambda value, key=ox_key: _set_zone_value(zid, key, value),
+                    )
                 oy_key = object_y_field_id(fid)
                 build_object_y_controls(
                     crop_host,

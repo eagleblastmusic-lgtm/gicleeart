@@ -16,6 +16,12 @@
 {% elsif heading_art_oy > 100 %}
   {% assign heading_art_oy = 100 %}
 {% endif %}
+{% assign heading_art_ox = block_settings.heading_background_image_object_x | default: 72 | plus: 0 %}
+{% if heading_art_ox < -50 %}
+  {% assign heading_art_ox = -50 %}
+{% elsif heading_art_ox > 150 %}
+  {% assign heading_art_ox = 150 %}
+{% endif %}
 {% if block_settings.answer_background_image_object_y != blank %}
   {% assign answer_art_oy = block_settings.answer_background_image_object_y | plus: 0 %}
 {% else %}
@@ -26,8 +32,18 @@
 {% elsif answer_art_oy > 100 %}
   {% assign answer_art_oy = 100 %}
 {% endif %}
-{% capture heading_art_object_y_style %}object-position: 72% {{ heading_art_oy }}%;{% endcapture %}
-{% capture answer_art_object_y_style %}object-position: 72% {{ answer_art_oy }}%;{% endcapture %}
+{% if block_settings.answer_background_image_object_x != blank %}
+  {% assign answer_art_ox = block_settings.answer_background_image_object_x | plus: 0 %}
+{% else %}
+  {% assign answer_art_ox = heading_art_ox %}
+{% endif %}
+{% if answer_art_ox < -50 %}
+  {% assign answer_art_ox = -50 %}
+{% elsif answer_art_ox > 150 %}
+  {% assign answer_art_ox = 150 %}
+{% endif %}
+{% capture heading_art_object_position_style %}--details-art-ox: {{ heading_art_ox }}%; --details-art-oy: {{ heading_art_oy }}%; object-position: {{ heading_art_ox }}% {{ heading_art_oy }}%;{% endcapture %}
+{% capture answer_art_object_position_style %}--details-art-ox: {{ answer_art_ox }}%; --details-art-oy: {{ answer_art_oy }}%; object-position: {{ answer_art_ox }}% {{ answer_art_oy }}%;{% endcapture %}
 {% if shared_art %}
   {% assign shared_art_url = heading_art | image_url: width: 1600 %}
 {% endif %}
@@ -37,7 +53,7 @@
     class="details{% if heading_art != blank or answer_art != blank %} details--art{% endif %}{% if shared_art %} details--art-shared{% endif %}"
     data-testid="accordion-details"
     {% if shared_art %}
-      style="--details-art-image: url('{{ shared_art_url }}'); --details-art-position: 72% {{ heading_art_oy }}%;"
+      style="--details-art-image: url('{{ shared_art_url }}'); --details-art-ox: {{ heading_art_ox }}%; --details-art-oy: {{ heading_art_oy }}%; --details-art-position: {{ heading_art_ox }}% {{ heading_art_oy }}%;"
     {% endif %}
     {% if block_settings.open_by_default %}
       open
@@ -56,7 +72,7 @@
               widths: '480, 800, 1200, 1600',
               sizes: '(min-width: 750px) 720px, 100vw',
               alt: '',
-              style: heading_art_object_y_style
+              style: heading_art_object_position_style
           }}
           <span class="details__art-veil"></span>
         </span>
@@ -90,7 +106,7 @@
               widths: '480, 800, 1200, 1600',
               sizes: '(min-width: 750px) 720px, 100vw',
               alt: '',
-              style: answer_art_object_y_style
+              style: answer_art_object_position_style
           }}
           <span class="details__art-veil"></span>
         </span>
@@ -150,15 +166,21 @@
       linear-gradient(
         90deg,
         rgb(5, 5, 5) 0%,
-        rgba(5, 5, 5, 0.97) 24%,
-        rgba(5, 5, 5, 0.78) 46%,
-        rgba(5, 5, 5, 0.38) 66%,
-        rgba(5, 5, 5, 0.12) 84%,
-        rgba(5, 5, 5, 0.02) 100%
+        rgba(5, 5, 5, 0.98) calc(var(--faq-art-gradient-reach, 100) * 0.42%),
+        rgba(5, 5, 5, 0.94) calc(var(--faq-art-gradient-reach, 100) * 0.58%),
+        rgba(5, 5, 5, 0.78) calc(var(--faq-art-gradient-reach, 100) * 0.72%),
+        rgba(5, 5, 5, 0.42) calc(var(--faq-art-gradient-reach, 100) * 0.84%),
+        rgba(5, 5, 5, 0.14) calc(var(--faq-art-gradient-reach, 100) * 0.93%),
+        rgba(5, 5, 5, 0.02) calc(var(--faq-art-gradient-reach, 100) * 1%),
+        transparent calc(var(--faq-art-gradient-reach, 100) * 1%)
       ),
       var(--details-art-image);
-    background-size: auto, cover;
-    background-position: 0 0, var(--details-art-position, 72% 50%);
+    /*
+      cover na szerokiej/niskiej karcie przycina tylko góra–dół — X nie działa.
+      200% szerokości + ox −50…150% = większy zapas w lewo/prawo.
+    */
+    background-size: auto, 200% auto;
+    background-position: 0 0, var(--details-art-ox, 72%) var(--details-art-oy, 50%);
     background-repeat: no-repeat;
   }
 
@@ -172,7 +194,10 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: 72% center;
+    object-position: center;
+    /* Zoom > cover → transform-origin steruje kadrem X/Y */
+    transform: scale(2);
+    transform-origin: var(--details-art-ox, 72%) var(--details-art-oy, 50%);
   }
 
   /* Lewa strona niemal czarna (czytelność), obraz stopniowo odsłaniany w prawo */
@@ -182,11 +207,13 @@
     background: linear-gradient(
       90deg,
       rgb(0, 0, 0) 0%,
-      rgba(0, 0, 0, 0.96) 26%,
-      rgba(0, 0, 0, 0.72) 48%,
-      rgba(0, 0, 0, 0.32) 68%,
-      rgba(0, 0, 0, 0.08) 86%,
-      rgba(0, 0, 0, 0.02) 100%
+      rgba(0, 0, 0, 0.98) calc(var(--faq-art-gradient-reach, 100) * 0.42%),
+      rgba(0, 0, 0, 0.94) calc(var(--faq-art-gradient-reach, 100) * 0.58%),
+      rgba(0, 0, 0, 0.78) calc(var(--faq-art-gradient-reach, 100) * 0.72%),
+      rgba(0, 0, 0, 0.42) calc(var(--faq-art-gradient-reach, 100) * 0.84%),
+      rgba(0, 0, 0, 0.14) calc(var(--faq-art-gradient-reach, 100) * 0.93%),
+      rgba(0, 0, 0, 0.02) calc(var(--faq-art-gradient-reach, 100) * 1%),
+      transparent calc(var(--faq-art-gradient-reach, 100) * 1%)
     );
   }
 
@@ -231,6 +258,16 @@
     },
     {
       "type": "range",
+      "id": "heading_background_image_object_x",
+      "label": "t:settings.heading_background_image_object_x",
+      "min": -50,
+      "max": 150,
+      "step": 2,
+      "unit": "%",
+      "default": 72
+    },
+    {
+      "type": "range",
       "id": "heading_background_image_object_y",
       "label": "t:settings.heading_background_image_object_y",
       "min": 0,
@@ -243,6 +280,16 @@
       "type": "image_picker",
       "id": "answer_background_image",
       "label": "t:settings.answer_background_image"
+    },
+    {
+      "type": "range",
+      "id": "answer_background_image_object_x",
+      "label": "t:settings.answer_background_image_object_x",
+      "min": -50,
+      "max": 150,
+      "step": 2,
+      "unit": "%",
+      "default": 72
     },
     {
       "type": "range",

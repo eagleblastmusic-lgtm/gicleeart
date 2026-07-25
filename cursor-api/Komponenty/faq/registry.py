@@ -184,6 +184,20 @@ PAGE_ZONES: tuple[TemplateZone, ...] = (
                     ("style3", "Styl 3 — Galaxy shell + krawędź («Losuj obraz»)"),
                 ),
             ),
+            TemplateField(
+                "art_gradient_reach",
+                "Zasięg gradientu tła",
+                "int",
+                _s("section_9YgpHf", "settings", "giclee_faq_art_gradient_reach_pct"),
+                hint=(
+                    "Jak daleko w prawo sięga ciemny gradient nad grafiką karty. "
+                    "100% = pełna szerokość, do 200% = jeszcze dalej (ciemniej)."
+                ),
+                min_value=0,
+                max_value=200,
+                step=2,
+                unit="%",
+            ),
             *(
                 field
                 for index, (row_key, text_key) in enumerate(_FAQ_ROWS)

@@ -481,6 +481,7 @@
         "giclee_faq_bg_dim_overlay_pct": 0,
         "giclee_faq_bg_scale_pct": 0,
         "giclee_faq_accordion_style": "style1",
+        "giclee_faq_art_gradient_reach_pct": 100,
         "border": "none",
         "border_width": 1,
         "border_opacity": 100,

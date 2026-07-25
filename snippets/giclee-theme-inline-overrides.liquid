@@ -391,16 +391,18 @@
         linear-gradient(
           90deg,
           rgb(5, 5, 5) 0%,
-          rgba(5, 5, 5, 0.98) 32%,
-          rgba(5, 5, 5, 0.92) 48%,
-          rgba(5, 5, 5, 0.72) 60%,
-          rgba(5, 5, 5, 0.38) 74%,
-          rgba(5, 5, 5, 0.12) 88%,
-          rgba(5, 5, 5, 0.02) 100%
+          rgba(5, 5, 5, 0.98) calc(var(--faq-art-gradient-reach, 100) * 0.42%),
+          rgba(5, 5, 5, 0.94) calc(var(--faq-art-gradient-reach, 100) * 0.58%),
+          rgba(5, 5, 5, 0.78) calc(var(--faq-art-gradient-reach, 100) * 0.72%),
+          rgba(5, 5, 5, 0.42) calc(var(--faq-art-gradient-reach, 100) * 0.84%),
+          rgba(5, 5, 5, 0.14) calc(var(--faq-art-gradient-reach, 100) * 0.93%),
+          rgba(5, 5, 5, 0.02) calc(var(--faq-art-gradient-reach, 100) * 1%),
+          transparent calc(var(--faq-art-gradient-reach, 100) * 1%)
         ),
         var(--details-art-image) !important;
-      background-size: auto, cover !important;
-      background-position: 0 0, var(--details-art-position, 72% 50%) !important;
+      /* cover na niskiej karcie nie daje panu X — szerszy kadr (−50…150%) */
+      background-size: auto, 200% auto !important;
+      background-position: 0 0, var(--details-art-ox, 72%) var(--details-art-oy, 50%) !important;
       background-repeat: no-repeat !important;
       background-clip: padding-box !important;
       box-shadow:
@@ -410,12 +412,13 @@
       background: linear-gradient(
         90deg,
         rgb(5, 5, 5) 0%,
-        rgba(5, 5, 5, 0.98) 32%,
-        rgba(5, 5, 5, 0.92) 48%,
-        rgba(5, 5, 5, 0.72) 60%,
-        rgba(5, 5, 5, 0.38) 74%,
-        rgba(5, 5, 5, 0.12) 88%,
-        rgba(5, 5, 5, 0.02) 100%
+        rgba(5, 5, 5, 0.98) calc(var(--faq-art-gradient-reach, 100) * 0.42%),
+        rgba(5, 5, 5, 0.94) calc(var(--faq-art-gradient-reach, 100) * 0.58%),
+        rgba(5, 5, 5, 0.78) calc(var(--faq-art-gradient-reach, 100) * 0.72%),
+        rgba(5, 5, 5, 0.42) calc(var(--faq-art-gradient-reach, 100) * 0.84%),
+        rgba(5, 5, 5, 0.14) calc(var(--faq-art-gradient-reach, 100) * 0.93%),
+        rgba(5, 5, 5, 0.02) calc(var(--faq-art-gradient-reach, 100) * 1%),
+        transparent calc(var(--faq-art-gradient-reach, 100) * 1%)
       );
     }
     .accordion accordion-custom details.details--art .details__heading-label {
@@ -656,16 +659,17 @@
         linear-gradient(
           90deg,
           rgb(5, 5, 5) 0%,
-          rgba(5, 5, 5, 0.98) 32%,
-          rgba(5, 5, 5, 0.92) 48%,
-          rgba(5, 5, 5, 0.72) 60%,
-          rgba(5, 5, 5, 0.38) 74%,
-          rgba(5, 5, 5, 0.12) 88%,
-          rgba(5, 5, 5, 0.02) 100%
+          rgba(5, 5, 5, 0.98) calc(var(--faq-art-gradient-reach, 100) * 0.42%),
+          rgba(5, 5, 5, 0.94) calc(var(--faq-art-gradient-reach, 100) * 0.58%),
+          rgba(5, 5, 5, 0.78) calc(var(--faq-art-gradient-reach, 100) * 0.72%),
+          rgba(5, 5, 5, 0.42) calc(var(--faq-art-gradient-reach, 100) * 0.84%),
+          rgba(5, 5, 5, 0.14) calc(var(--faq-art-gradient-reach, 100) * 0.93%),
+          rgba(5, 5, 5, 0.02) calc(var(--faq-art-gradient-reach, 100) * 1%),
+          transparent calc(var(--faq-art-gradient-reach, 100) * 1%)
         ),
         var(--details-art-image) !important;
-      background-size: auto, cover !important;
-      background-position: 0 0, var(--details-art-position, 72% 50%) !important;
+      background-size: auto, 200% auto !important;
+      background-position: 0 0, var(--details-art-ox, 72%) var(--details-art-oy, 50%) !important;
       background-repeat: no-repeat !important;
       background-clip: padding-box !important;
       box-shadow:

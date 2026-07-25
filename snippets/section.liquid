@@ -29,6 +29,7 @@
   assign giclee_faq_bg_brightness = 100
   assign giclee_faq_bg_dim_overlay = 0
   assign giclee_faq_bg_scale = 0
+  assign giclee_faq_art_gradient_reach = 100
   if template.suffix == 'faq'
     assign giclee_faq_accordion_style = section.settings.giclee_faq_accordion_style | default: 'style1'
     unless giclee_faq_accordion_style == 'style2' or giclee_faq_accordion_style == 'style3'
@@ -39,6 +40,7 @@
     assign giclee_faq_bg_brightness = section.settings.giclee_faq_bg_brightness_pct | default: 100 | plus: 0
     assign giclee_faq_bg_dim_overlay = section.settings.giclee_faq_bg_dim_overlay_pct | default: 0 | plus: 0
     assign giclee_faq_bg_scale = section.settings.giclee_faq_bg_scale_pct | default: 0 | plus: 0
+    assign giclee_faq_art_gradient_reach = section.settings.giclee_faq_art_gradient_reach_pct | default: 100 | plus: 0
     if giclee_faq_bg_blur < 0
       assign giclee_faq_bg_blur = 0
     elsif giclee_faq_bg_blur > 20
@@ -63,6 +65,11 @@
       assign giclee_faq_bg_scale = 0
     elsif giclee_faq_bg_scale > 12
       assign giclee_faq_bg_scale = 12
+    endif
+    if giclee_faq_art_gradient_reach < 0
+      assign giclee_faq_art_gradient_reach = 0
+    elsif giclee_faq_art_gradient_reach > 200
+      assign giclee_faq_art_gradient_reach = 200
     endif
   endif
 -%}
@@ -101,6 +108,9 @@
       --faq-bg-brightness: {{ giclee_faq_bg_brightness }};
       --faq-bg-dim-overlay: {{ giclee_faq_bg_dim_overlay }};
       --faq-bg-scale: {{ giclee_faq_bg_scale }};
+    {% endif %}
+    {% if giclee_faq_accordion_style != blank %}
+      --faq-art-gradient-reach: {{ giclee_faq_art_gradient_reach }};
     {% endif %}
   "
 >

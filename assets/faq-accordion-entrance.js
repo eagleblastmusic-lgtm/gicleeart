@@ -18,6 +18,10 @@
     return document.querySelectorAll('.hero .hero__media-grid');
   }
 
+  function getAccordionItemNodes() {
+    return document.querySelectorAll('.accordion accordion-custom');
+  }
+
   function clearEntranceInline(/** @type {HTMLElement} */ el) {
     el.style.opacity = '';
     el.style.willChange = '';
@@ -38,6 +42,12 @@
       if (section instanceof HTMLElement) {
         section.style.removeProperty('background');
       }
+    });
+    getAccordionItemNodes().forEach(function (node) {
+      clearEntranceInline(/** @type {HTMLElement} */ (node));
+    });
+    document.querySelectorAll('.accordion.faq-accordion-entering').forEach(function (node) {
+      node.classList.remove('faq-accordion-entering');
     });
   }
 
@@ -132,14 +142,7 @@
       el.style.willChange = 'opacity';
     });
 
-    getHeroMediaNodes().forEach(function (node) {
-      /** @type {HTMLElement} */
-      var el = /** @type {HTMLElement} */ (node);
-      if (el.dataset.faqHeroMediaPrepared) return;
-      el.dataset.faqHeroMediaPrepared = '1';
-      el.style.opacity = '0';
-      el.style.willChange = 'opacity';
-    });
+    /* Grafika hero FAQ — bez fade-in, widoczna od razu. */
 
     getUnderHeroBgNodes().forEach(function (node) {
       /** @type {HTMLElement} */
@@ -158,6 +161,18 @@
       ) {
         section.style.setProperty('background', 'transparent', 'important');
       }
+    });
+
+    /* Akordeon czeka na koniec nagłówka — ukryty od razu, bez FOUC. */
+    getAccordionItemNodes().forEach(function (node) {
+      /** @type {HTMLElement} */
+      var el = /** @type {HTMLElement} */ (node);
+      if (el.dataset.faqAccordionPrepared) return;
+      el.dataset.faqAccordionPrepared = '1';
+      el.style.opacity = '0';
+      el.style.willChange = 'opacity';
+      var accordion = el.closest('.accordion');
+      if (accordion) accordion.classList.add('faq-accordion-entering');
     });
   }
 
@@ -187,25 +202,32 @@
   }
 
   /**
-   * Wejście hero FAQ: tło (media), nagłówek od połowy fade-in tła.
+   * Wejście hero FAQ: grafika od razu (bez fade), potem fade nagłówka.
+   * W połowie animacji nagłówka wywołuje onTitleMidpoint (start akordeonu).
    * @param {GsapStatic} tween
+   * @param {() => void} [onTitleMidpoint]
    */
-  function runHeroEntrance(/** @type {GsapStatic} */ tween) {
+  function runHeroEntrance(/** @type {GsapStatic} */ tween, onTitleMidpoint) {
     var fadeDuration = 1.1;
-    var mediaDelay = 0.2;
+    var titleDelay = 0.2;
+    var titleMidFired = false;
 
-    var mediaNodes = Array.prototype.slice.call(getHeroMediaNodes());
-    var titleNodes = Array.prototype.slice.call(getHeroTitleNodes());
+    var notifyTitleMidpoint = function () {
+      if (titleMidFired) return;
+      titleMidFired = true;
+      if (typeof onTitleMidpoint === 'function') onTitleMidpoint();
+    };
 
-    mediaNodes = mediaNodes.filter(function (node) {
+    /* Media — bez animacji; wyczyść ewentualne inline z poprzednich wersji. */
+    Array.prototype.slice.call(getHeroMediaNodes()).forEach(function (node) {
       /** @type {HTMLElement} */
       var el = /** @type {HTMLElement} */ (node);
-      if (el.dataset.faqHeroMediaEntranceBound) return false;
+      if (el.dataset.faqHeroMediaEntranceBound) return;
       el.dataset.faqHeroMediaEntranceBound = '1';
-      return true;
+      clearEntranceInline(el);
     });
 
-    titleNodes = titleNodes.filter(function (node) {
+    var titleNodes = Array.prototype.slice.call(getHeroTitleNodes()).filter(function (node) {
       /** @type {HTMLElement} */
       var el = /** @type {HTMLElement} */ (node);
       if (el.dataset.faqHeroTitleEntranceBound) return false;
@@ -213,62 +235,21 @@
       return true;
     });
 
-    if (!mediaNodes.length && !titleNodes.length) return;
+    if (!titleNodes.length) {
+      notifyTitleMidpoint();
+      return;
+    }
 
     var trigger =
-      (mediaNodes[0] && mediaNodes[0].closest('.hero')) ||
       (titleNodes[0] && titleNodes[0].closest('.hero')) ||
-      mediaNodes[0] ||
       titleNodes[0];
 
     var play = function () {
-      if (!mediaNodes.length) {
-        titleNodes.forEach(function (node) {
-          playFadeIn(/** @type {HTMLElement} */ (node), tween, { delay: mediaDelay });
-        });
-        return;
-      }
-
-      var tl = tween.timeline({ delay: mediaDelay });
-
-      mediaNodes.forEach(function (node) {
-        /** @type {HTMLElement} */
-        var media = /** @type {HTMLElement} */ (node);
-        tl.fromTo(
-          media,
-          { opacity: 0 },
-          {
-            opacity: 1,
-            duration: fadeDuration,
-            ease: 'power3.out',
-            overwrite: 'auto',
-            onComplete: function () {
-              clearEntranceInline(media);
-            },
-          },
-          0
-        );
-      });
-
-      /* Nagłówek startuje w połowie pojawiania się tła hero. */
       titleNodes.forEach(function (node) {
-        /** @type {HTMLElement} */
-        var title = /** @type {HTMLElement} */ (node);
-        tl.fromTo(
-          title,
-          { opacity: 0 },
-          {
-            opacity: 1,
-            duration: fadeDuration,
-            ease: 'power3.out',
-            overwrite: 'auto',
-            onComplete: function () {
-              clearEntranceInline(title);
-            },
-          },
-          fadeDuration * 0.5
-        );
+        playFadeIn(/** @type {HTMLElement} */ (node), tween, { delay: titleDelay });
       });
+      /* Akordeon — w połowie animacji nagłówka. */
+      tween.delayedCall(titleDelay + fadeDuration * 0.5, notifyTitleMidpoint);
     };
 
     if (typeof IntersectionObserver === 'undefined') {
@@ -316,7 +297,7 @@
   }
 
   function runAccordionEntrance(/** @type {GsapStatic} */ tween) {
-    var items = document.querySelectorAll('.accordion accordion-custom');
+    var items = getAccordionItemNodes();
     if (!items.length) return;
 
     items.forEach(function (el) {
@@ -326,15 +307,15 @@
     });
 
     var clearEntering = function () {
+      items.forEach(function (node) {
+        clearEntranceInline(/** @type {HTMLElement} */ (node));
+      });
       document.querySelectorAll('.accordion.faq-accordion-entering').forEach(function (node) {
         node.classList.remove('faq-accordion-entering');
       });
     };
 
-    /*
-      Płynna fala góra→dół — sam fade (bez blur).
-      delay: synchronizacja z kurtyną page-transition (~0.8s).
-    */
+    /* Fala góra→dół — start w połowie animacji nagłówka hero. */
     tween.fromTo(
       items,
       { opacity: 0 },
@@ -347,7 +328,7 @@
           ease: 'sine.inOut',
         },
         ease: 'sine.out',
-        delay: 0.8,
+        delay: 0.08,
         clearProps: 'opacity',
         overwrite: 'auto',
         onComplete: clearEntering,
@@ -554,8 +535,12 @@
 
     var cs = window.getComputedStyle(card);
     var artImage = cs.getPropertyValue('--details-art-image').trim();
+    var artOx = cs.getPropertyValue('--details-art-ox').trim();
+    var artOy = cs.getPropertyValue('--details-art-oy').trim();
     var artPos = cs.getPropertyValue('--details-art-position').trim();
     if (artImage) wrap.style.setProperty('--details-art-image', artImage);
+    if (artOx) wrap.style.setProperty('--details-art-ox', artOx);
+    if (artOy) wrap.style.setProperty('--details-art-oy', artOy);
     if (artPos) wrap.style.setProperty('--details-art-position', artPos);
 
     var shell = el('span', 'faq-galaxy-card__shell', { 'aria-hidden': 'true' });
@@ -635,10 +620,17 @@
     prepareFadeEntrances();
     whenGsapReady(
       /** @param {GsapStatic} tween */ function (tween) {
-        runHeroEntrance(tween);
+        var accordionStarted = false;
+        var startAccordion = function () {
+          if (accordionStarted) return;
+          accordionStarted = true;
+          runAccordionEntrance(tween);
+        };
+        runHeroEntrance(tween, startAccordion);
         runUnderHeroBgEntrance(tween);
-        runAccordionEntrance(tween);
         initAccordionFocusBlur(tween);
+        /* Awaryjnie: jeśli hero nie wystartuje (IO), pokaż akordeon po chwili. */
+        window.setTimeout(startAccordion, 4000);
       },
       revealEntranceFallback
     );

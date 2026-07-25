@@ -48,12 +48,15 @@ Dla każdego pytania w strefie **Pytania i odpowiedzi** można ustawić:
 
 - **Pytanie N — tło** → `heading_background_image`
 - **Odpowiedź N — tło** → `answer_background_image` (opcjonalnie)
+- pod grafiką: **Kadrowanie lewo–prawo** (`*_object_x`, −50…150%, domyślnie 72%) oraz **góra–dół** (`*_object_y`)
 
 **Tryb jednej całości (domyślny):** gdy ustawisz tylko tło pytania, jedna warstwa grafiki pokrywa cały wiersz. Zwinięty widać górny fragment; po rozwinięciu odsłania się kontynuacja w dół — bez szwu między pytaniem a odpowiedzią.
 
 **Tryb dwóch obrazów:** gdy podasz osobne tło odpowiedzi, pytanie i odpowiedź mają niezależne kadry.
 
 Na froncie obraz leży pod tekstem z maską gradientu L→P (lewa strona ciemna dla czytelności, prawa odsłania grafikę).
+
+Suwak **Zasięg gradientu tła** (`giclee_faq_art_gradient_reach_pct`, 0–200%, krok 2) w strefie **Pytania i odpowiedzi** steruje, jak daleko w prawo sięga ciemna maska (`--faq-art-gradient-reach`). 100% = pełna szerokość karty (domyślnie); do 200% = jeszcze dalej / ciemniej.
 
 ## Efekty grafiki Hero FAQ
 

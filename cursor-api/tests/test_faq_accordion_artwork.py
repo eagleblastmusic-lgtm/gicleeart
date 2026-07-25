@@ -44,6 +44,25 @@ def test_faq_accordion_exposes_card_style_choice() -> None:
     )
     assert zone.fields[0].field_id == "accordion_style"
 
+    reach = next(fld for fld in zone.fields if fld.field_id == "art_gradient_reach")
+    assert reach.kind == "int"
+    assert reach.min_value == 0
+    assert reach.max_value == 200
+    assert reach.step == 2
+    assert reach.unit == "%"
+    assert reach.path == (
+        "sections",
+        "section_9YgpHf",
+        "settings",
+        "giclee_faq_art_gradient_reach_pct",
+    )
+    assert zone.fields[1].field_id == "art_gradient_reach"
+    # Shopify range: max 101 steps → (200-0)/2+1 = 101
+    schema = (ROOT / "sections" / "section.liquid").read_text(encoding="utf-8")
+    reach_block = schema.split('"id": "giclee_faq_art_gradient_reach_pct"', 1)[1][:220]
+    assert '"max": 200' in reach_block
+    assert '"step": 2' in reach_block
+
 
 def test_faq_exposes_under_hero_section_background() -> None:
     zone = next(z for z in PAGE_ZONES if z.zone_id == "under_hero_bg")
@@ -137,10 +156,25 @@ def test_accordion_row_renders_art_gradient_layers() -> None:
     assert "details--art-shared" in source
     assert "--details-art-image" in source
     assert "linear-gradient" in source
-    # Shared mode must honor kadrowanie (object_y), not a hardcoded top anchor.
-    assert "--details-art-position: 72% {{ heading_art_oy }}%" in source
+    assert "--faq-art-gradient-reach" in source
+    # Shared mode: kadrowanie X+Y z ustawień (domyślnie X=72 jak dawniej).
+    assert "--details-art-ox: {{ heading_art_ox }}%" in source
+    assert "--details-art-oy: {{ heading_art_oy }}%" in source
+    assert (
+        "--details-art-position: {{ heading_art_ox }}% {{ heading_art_oy }}%"
+        in source
+    )
+    assert "heading_background_image_object_x" in source
     assert "heading_background_image_object_y" in source
+    assert "answer_background_image_object_x" in source
+    assert "200% auto" in source
+    assert '"min": -50' in source
+    assert '"max": 150' in source
     assert "72% 0%" not in source
+
+    galaxy_css = (ROOT / "assets" / "faq-accordion-galaxy.css").read_text(encoding="utf-8")
+    assert "--details-art-ox" in galaxy_css
+    assert "200% auto" in galaxy_css
 
 
 def test_faq_under_hero_liquid_marks_image_and_gradient_modes() -> None:
@@ -151,6 +185,8 @@ def test_faq_under_hero_liquid_marks_image_and_gradient_modes() -> None:
     assert "--faq-bg-brightness" in section_snippet
     assert "--faq-bg-dim-overlay" in section_snippet
     assert "--faq-bg-scale" in section_snippet
+    assert "giclee_faq_art_gradient_reach_pct" in section_snippet
+    assert "--faq-art-gradient-reach" in section_snippet
     assert "giclee_faq_image_active" in section_snippet
     assert "faq-section--bg-image" in section_snippet
     assert "faq-section--gradient-" in section_snippet
@@ -167,6 +203,7 @@ def test_faq_under_hero_liquid_marks_image_and_gradient_modes() -> None:
     assert "giclee_faq_bg_brightness_pct" in schema
     assert "giclee_faq_bg_dim_overlay_pct" in schema
     assert "giclee_faq_bg_scale_pct" in schema
+    assert "giclee_faq_art_gradient_reach_pct" in schema
     assert "giclee_faq_bg_extra_dim_pct" not in schema
 
     overrides = (ROOT / "snippets" / "giclee-theme-inline-overrides.liquid").read_text(
@@ -181,6 +218,7 @@ def test_faq_under_hero_liquid_marks_image_and_gradient_modes() -> None:
     assert "--faq-gx" in overrides
     assert "--faq-bg-blur" in overrides
     assert "--faq-bg-dim-overlay" in overrides
+    assert "--faq-art-gradient-reach" in overrides
     assert "rgba(200, 205, 212" in overrides
     assert "mix-blend-mode: screen" in overrides
     assert "2px solid rgba(255, 255, 255, 0.15)" in overrides
@@ -189,6 +227,7 @@ def test_faq_under_hero_liquid_marks_image_and_gradient_modes() -> None:
     assert "faq-galaxy-card__plate" in overrides
     style2_block = overrides.split("faq-accordion-style2", 1)[1].split("FAQ Style 3", 1)[0]
     assert "--details-art-image" in style2_block
+    assert "--faq-art-gradient-reach" in style2_block
     assert "svg-wrapper.icon-caret" in style2_block
     assert "background-image: none !important" in style2_block
     assert "details::after" in style2_block
@@ -218,6 +257,7 @@ def test_faq_under_hero_liquid_marks_image_and_gradient_modes() -> None:
     assert "mask-composite: exclude" in galaxy_css
     assert "faq-galaxy-card__circle" not in galaxy_css
     assert ".faq-galaxy-card {" in galaxy_css
+    assert "--faq-art-gradient-reach" in galaxy_css
 
     scripts = (ROOT / "snippets" / "scripts.liquid").read_text(encoding="utf-8")
     assert "faq-accordion-galaxy.css" in scripts
@@ -225,4 +265,5 @@ def test_faq_under_hero_liquid_marks_image_and_gradient_modes() -> None:
 
     schema = (ROOT / "sections" / "section.liquid").read_text(encoding="utf-8")
     assert '"id": "giclee_faq_accordion_style"' in schema
+    assert '"id": "giclee_faq_art_gradient_reach_pct"' in schema
     assert '"value": "style3"' in schema
