@@ -12,10 +12,33 @@ const smoothstep = (edge0, edge1, x) => {
   const t = clamp01((x - edge0) / (edge1 - edge0));
   return t * t * (3 - 2 * t);
 };
+
+const smootherstep = (edge0, edge1, x) => {
+  const span = edge1 - edge0;
+
+  if (Math.abs(span) < 1e-6) {
+    return x >= edge1 ? 1 : 0;
+  }
+
+  const t = clamp01((x - edge0) / span);
+  return t * t * t * (t * (t * 6 - 15) + 10);
+};
 const TAU = Math.PI * 2;
 const FINALE_EXTRA_MS = 1100;
 /** First portion of the reveal window grows the winner; the rest settles into the DOM frame. */
 const GROW_PORTION = 0.4;
+
+/** Number of non-winning cards sharing the synchronized fade. */
+const FRONT_FADE_COUNT = 3;
+
+/** Existing non-winner retreat distance in the Z axis. */
+const FRONT_RETREAT_Z = 3.6;
+
+/** Number of samples used to detect side-card contact. */
+const FRONT_CONTACT_SAMPLES = 320;
+
+/** Fade duration measured in the local reveal progress range 0–1. */
+const FRONT_FADE_WINDOW = 0.26;
 
 function radialSprite(THREE, stops) {
   const size = 128;
@@ -308,6 +331,161 @@ export async function createOracleScene(options) {
   // Slightly raised: room for captions under the frozen finale card.
   const winnerTarget = new THREE.Vector3(0, 0.22, 2.2);
   const winnerEntry = cardEntries[winnerIndex];
+
+  /**
+   * Resolve the final orbit position of every non-winning card.
+   * Higher Z means closer to the camera.
+   */
+  const winnerFinalAngle =
+    (winnerEntry?.baseAngle ?? 0) + spinTotal;
+
+  const winnerOrbitZAtSelection =
+    Math.cos(winnerFinalAngle) * radius;
+
+  const frontFadeCandidates = cardEntries
+    .filter((entry) => !entry.isWinner)
+    .map((entry) => {
+      const finalAngle = entry.baseAngle + spinTotal;
+
+      return {
+        entry,
+        x: Math.sin(finalAngle) * radius,
+        z: Math.cos(finalAngle) * radius,
+      };
+    })
+    .sort((first, second) => second.z - first.z)
+    .slice(
+      0,
+      Math.min(
+        FRONT_FADE_COUNT,
+        Math.max(0, cardEntries.length - 1),
+      ),
+    )
+    .sort((first, second) => first.x - second.x);
+
+  /** Fast membership check inside the render loop. */
+  const frontFadeEntries = new Set(
+    frontFadeCandidates.map(({ entry }) => entry),
+  );
+
+  /**
+   * After sorting by X:
+   * - first item is the left side card,
+   * - last item is the right side card.
+   *
+   * The middle card shares opacity but does not control timing.
+   */
+  const frontFadeSidePoses =
+    frontFadeCandidates.length > 1
+      ? [
+          frontFadeCandidates[0],
+          frontFadeCandidates[
+            frontFadeCandidates.length - 1
+          ],
+        ]
+      : frontFadeCandidates;
+
+  /** Winner Z position during the local reveal stage. */
+  const winnerZAtReveal = (localT) =>
+    THREE.MathUtils.lerp(
+      winnerOrbitZAtSelection,
+      winnerTarget.z,
+      easeOutCubic(
+        clamp01(localT / GROW_PORTION),
+      ),
+    );
+
+  /** Non-winning side-card Z position during retreat. */
+  const sideZAtReveal = (pose, localT) => {
+    const revealEased = easeInOutCubic(
+      clamp01(localT),
+    );
+
+    const retreatAtTime = easeInOutSine(
+      revealEased,
+    );
+
+    return (
+      pose.z -
+      retreatAtTime * FRONT_RETREAT_Z
+    );
+  };
+
+  /**
+   * Detect the moment when a side card crosses the winner plane.
+   *
+   * signedGap > 0: side card is in front of the winner;
+   * signedGap = 0: contact;
+   * signedGap < 0: side card has passed behind the winner.
+   */
+  const findSideContactT = (pose) => {
+    let previousT = 0;
+    let previousGap =
+      sideZAtReveal(pose, 0) -
+      winnerZAtReveal(0);
+
+    let wasInFront = previousGap > 0;
+
+    for (
+      let step = 1;
+      step <= FRONT_CONTACT_SAMPLES;
+      step += 1
+    ) {
+      const localT =
+        step / FRONT_CONTACT_SAMPLES;
+
+      const signedGap =
+        sideZAtReveal(pose, localT) -
+        winnerZAtReveal(localT);
+
+      if (signedGap > 0) {
+        wasInFront = true;
+      }
+
+      if (
+        wasInFront &&
+        previousGap > 0 &&
+        signedGap <= 0
+      ) {
+        const denominator =
+          previousGap - signedGap;
+
+        const crossingMix =
+          denominator > 1e-6
+            ? previousGap / denominator
+            : 1;
+
+        return THREE.MathUtils.lerp(
+          previousT,
+          localT,
+          crossingMix,
+        );
+      }
+
+      previousT = localT;
+      previousGap = signedGap;
+    }
+
+    return null;
+  };
+
+  /**
+   * The earlier contact of the left or right card controls
+   * the synchronized opacity of all three front cards.
+   */
+  const detectedSideContacts = frontFadeSidePoses
+    .map(findSideContactT)
+    .filter((value) => Number.isFinite(value))
+    .sort((first, second) => first - second);
+
+  const frontFadeEnd = clamp01(
+    detectedSideContacts[0] ?? 0.56,
+  );
+
+  const frontFadeStart = Math.max(
+    0,
+    frontFadeEnd - FRONT_FADE_WINDOW,
+  );
   // Screen-parallel pose: same basis as the camera (plane +Z faces the lens).
   // Do NOT yaw-flip — that turns the card's back to the camera (FrontSide cull).
   const _camDir = new THREE.Vector3();
@@ -363,6 +541,19 @@ export async function createOracleScene(options) {
     );
     const reveal = easeInOutCubic(revealLocal);
     const retreat = easeInOutSine(reveal);
+
+    /**
+     * One synchronized fade for all three front cards.
+     * It reaches exactly zero at the first side-card contact.
+     */
+    const frontGroupFade = smootherstep(
+      frontFadeStart,
+      frontFadeEnd,
+      revealLocal,
+    );
+
+    const frontGroupOpacity =
+      introEase * (1 - frontGroupFade);
 
     const camSettle = easeInOutSine(p);
     camera.position.z = 8.6 - easeInOutCubic(p) * 3.05;
@@ -470,12 +661,43 @@ export async function createOracleScene(options) {
         }
         opacity = introEase;
       } else {
-        const outwardX = orbitX * (1 + retreat * 0.16);
-        const outwardY = orbitY + Math.sign(entry.yBase || 1) * retreat * 0.2;
-        pivot.position.set(outwardX, outwardY, orbitZ - retreat * 3.6);
-        scale = baseScale * (1 - select * 0.05) * (1 - retreat * 0.42);
-        // Fade non-winners + dust traces fully out by end of settle (no leftover pixels).
-        opacity = introEase * (1 - select * 0.3) * (1 - retreat) * afterglow;
+        const outwardX =
+          orbitX * (1 + retreat * 0.16);
+
+        const outwardY =
+          orbitY +
+          Math.sign(entry.yBase || 1) *
+            retreat *
+            0.2;
+
+        pivot.position.set(
+          outwardX,
+          outwardY,
+          orbitZ -
+            retreat * FRONT_RETREAT_Z,
+        );
+
+        scale =
+          baseScale *
+          (1 - select * 0.05) *
+          (1 - retreat * 0.42);
+
+        if (frontFadeEntries.has(entry)) {
+          /**
+           * Three nearest front cards:
+           * - identical opacity,
+           * - no abrupt select * 0.3 drop,
+           * - fully invisible at first side contact.
+           */
+          opacity = frontGroupOpacity;
+        } else {
+          /** Preserve the existing fade for all other cards. */
+          opacity =
+            introEase *
+            (1 - select * 0.3) *
+            (1 - retreat) *
+            afterglow;
+        }
       }
 
       pivot.scale.setScalar(scale);
