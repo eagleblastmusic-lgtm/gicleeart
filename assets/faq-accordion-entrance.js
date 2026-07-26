@@ -396,8 +396,8 @@
             tween.to(card, {
               filter: 'blur(0px)',
               opacity: 1,
-              duration: 0.35,
-              ease: 'power2.out',
+              duration: 0.45,
+              ease: 'sine.out',
               overwrite: 'auto',
             });
             card.style.zIndex = '2';
@@ -406,8 +406,8 @@
             tween.to(card, {
               filter: 'blur(3.5px)',
               opacity: 0.42,
-              duration: 0.35,
-              ease: 'power2.out',
+              duration: 0.45,
+              ease: 'sine.out',
               overwrite: 'auto',
             });
             card.style.zIndex = '';
@@ -420,36 +420,38 @@
         var from = activeIndex;
         activeIndex = -1;
 
-        var ordered = cards
-          .map(function (card, i) {
-            return { card: card, i: i, dist: Math.abs(i - from) };
-          })
-          .sort(function (a, b) {
-            return a.dist - b.dist || a.i - b.i;
-          });
+        if (leaveTl) {
+          leaveTl.kill();
+          leaveTl = null;
+        }
 
         var tl = tween.timeline({
+          defaults: {
+            ease: 'sine.out',
+            overwrite: 'auto',
+          },
           onComplete: function () {
-            ordered.forEach(function (item) {
-              tween.set(item.card, { clearProps: 'filter,opacity,zIndex,position' });
+            cards.forEach(function (card) {
+              tween.set(card, {
+                filter: 'blur(0px)',
+                opacity: 1,
+                clearProps: 'zIndex,position',
+              });
             });
             leaveTl = null;
           },
         });
         leaveTl = tl;
 
-        ordered.forEach(function (item, rank) {
-          tl.to(
-            item.card,
-            {
-              filter: 'blur(0px)',
-              opacity: 1,
-              duration: 0.65,
-              ease: 'power2.out',
-              overwrite: 'auto',
-            },
-            rank * 0.07
-          );
+        /* Jedna fala od aktywnej karty — dłużej, miękko, bez skoku clearProps na filtrze */
+        tl.to(cards, {
+          filter: 'blur(0px)',
+          opacity: 1,
+          duration: 0.95,
+          stagger: {
+            each: 0.055,
+            from: Math.max(0, from),
+          },
         });
       };
 
@@ -656,6 +658,7 @@
           '--faq-accordion-tail-y',
           offset.toFixed(2) + 'px'
         );
+        accordion.dispatchEvent(new CustomEvent('faq:tail-move'));
 
         if (Number.isFinite(previousOffset) &&
             Math.abs(offset - previousOffset) < 0.04) {
@@ -681,6 +684,144 @@
         details.addEventListener('toggle', startTracking);
       });
     });
+  }
+
+  /*
+   * Dekoracje leżą pod warstwą treści i nie przechwytują wskaźnika.
+   * Hit-test wykonywany na dokumencie pozwala rozświetlać same pierścienie
+   * oraz dolną kreskę bez blokowania akordeonów.
+   */
+  function initFaqDecorationHoverGlow() {
+    var section = document.querySelector('.faq-section');
+    if (!(section instanceof HTMLElement)) return;
+    if (section.dataset.faqDecorationHoverBound) return;
+    section.dataset.faqDecorationHoverBound = '1';
+
+    var left = section.querySelector('.faq-artwork-decoration--left');
+    var right = section.querySelector('.faq-disc--right');
+    var accordion = section.querySelector('.accordion');
+    if (!(left instanceof HTMLElement) &&
+        !(right instanceof HTMLElement) &&
+        !(accordion instanceof HTMLElement)) return;
+
+    var pointerX = -10000;
+    var pointerY = -10000;
+    var rafId = 0;
+
+    /**
+     * @param {HTMLElement} element
+     * @param {boolean} active
+     */
+    var setHovered = function (element, active) {
+      element.classList.toggle('is-faq-decoration-hovered', active);
+    };
+
+    /**
+     * @param {DOMRect} rect
+     * @param {number} x
+     * @param {number} y
+     */
+    var hitsLeftRings = function (rect, x, y) {
+      if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+        return false;
+      }
+
+      var scale = Math.max(rect.width / 600, rect.height / 900);
+      var offsetX = (rect.width - 600 * scale) / 2;
+      var offsetY = (rect.height - 900 * scale) / 2;
+      var svgX = (x - rect.left - offsetX) / scale;
+      var svgY = (y - rect.top - offsetY) / scale;
+      var rings = [
+        [-35, 450, 405, 350],
+        [-40, 450, 320, 278],
+        [-48, 450, 262, 228],
+      ];
+
+      return rings.some(function (ring) {
+        var dx = (svgX - ring[0]) / ring[2];
+        var dy = (svgY - ring[1]) / ring[3];
+        return Math.abs(Math.sqrt(dx * dx + dy * dy) - 1) <= 0.055;
+      });
+    };
+
+    /**
+     * @param {DOMRect} rect
+     * @param {number} x
+     * @param {number} y
+     */
+    var hitsRightRings = function (rect, x, y) {
+      if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+        return false;
+      }
+
+      var centerX = rect.left + rect.width / 2;
+      var centerY = rect.top + rect.height / 2;
+      return [0, 0.05, 0.1].some(function (inset) {
+        var rx = rect.width * (0.5 - inset);
+        var ry = rect.height * (0.5 - inset);
+        var dx = (x - centerX) / rx;
+        var dy = (y - centerY) / ry;
+        return Math.abs(Math.sqrt(dx * dx + dy * dy) - 1) <= 0.035;
+      });
+    };
+
+    /**
+     * @param {HTMLElement} element
+     * @param {number} x
+     * @param {number} y
+     */
+    var hitsAccordionTail = function (element, x, y) {
+      var rect = element.getBoundingClientRect();
+      var tailOffset =
+        Number.parseFloat(
+          getComputedStyle(element).getPropertyValue('--faq-accordion-tail-y')
+        ) || 0;
+      var width = Math.min(760, rect.width * 0.84);
+      var top = rect.bottom - 5 + tailOffset;
+      return (
+        x >= rect.left + (rect.width - width) / 2 &&
+        x <= rect.right - (rect.width - width) / 2 &&
+        y >= top &&
+        y <= top + 32
+      );
+    };
+
+    var renderHover = function () {
+      rafId = 0;
+      if (left instanceof HTMLElement) {
+        setHovered(left, hitsLeftRings(left.getBoundingClientRect(), pointerX, pointerY));
+      }
+      if (right instanceof HTMLElement) {
+        setHovered(right, hitsRightRings(right.getBoundingClientRect(), pointerX, pointerY));
+      }
+      if (accordion instanceof HTMLElement) {
+        setHovered(accordion, hitsAccordionTail(accordion, pointerX, pointerY));
+      }
+    };
+
+    var scheduleHover = function () {
+      if (!rafId) rafId = window.requestAnimationFrame(renderHover);
+    };
+
+    document.addEventListener(
+      'pointermove',
+      function (event) {
+        pointerX = event.clientX;
+        pointerY = event.clientY;
+        scheduleHover();
+      },
+      { passive: true }
+    );
+    document.addEventListener('pointerleave', function () {
+      pointerX = -10000;
+      pointerY = -10000;
+      scheduleHover();
+    });
+    window.addEventListener('scroll', scheduleHover, { passive: true });
+    window.addEventListener('resize', scheduleHover, { passive: true });
+    if (accordion instanceof HTMLElement) {
+      accordion.addEventListener('faq:tail-move', scheduleHover);
+    }
   }
 
   /**
@@ -1171,6 +1312,7 @@
     initFaqSingleWheelPageSnap();
     initFaqSingleOpenLock();
     initFaqAccordionTailTracking();
+    initFaqDecorationHoverGlow();
     if (reduceMotion) return;
     initFaqBackgroundScrollExpansion();
     prepareFadeEntrances();
