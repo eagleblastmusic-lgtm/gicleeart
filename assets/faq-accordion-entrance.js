@@ -1,4 +1,4 @@
-/* FAQ — GSAP: wejście hero (title + media) + tła pod hero + akordeonu + Style 2/3 Galaxy hover. */
+/* FAQ — GSAP: wejście hero (title) + akordeonu + Style 2/3 Galaxy hover. Tło pod hero bez fade-in. */
 (function () {
   if (window.__GICLEE_FAQ_ACCORDION_ENTRANCE__) return;
   window.__GICLEE_FAQ_ACCORDION_ENTRANCE__ = true;
@@ -91,51 +91,6 @@
     );
   }
 
-  /**
-   * @param {HTMLElement} el
-   * @param {Element} trigger
-   * @param {GsapStatic} tween
-   * @param {() => void} [onStart]
-   * @param {() => void} [onComplete]
-   */
-  function playFadeInWhenVisible(el, trigger, tween, onStart, onComplete) {
-    var play = function () {
-      if (typeof onStart === 'function') onStart();
-      tween.fromTo(
-        el,
-        { opacity: 0 },
-        {
-          opacity: 1,
-          duration: 1.1,
-          delay: 0.2,
-          ease: 'power3.out',
-          overwrite: 'auto',
-          onComplete: function () {
-            clearEntranceInline(el);
-            if (typeof onComplete === 'function') onComplete();
-          },
-        }
-      );
-    };
-
-    if (typeof IntersectionObserver === 'undefined') {
-      play();
-      return;
-    }
-
-    var observer = new IntersectionObserver(
-      function (entries) {
-        entries.forEach(function (entry) {
-          if (!entry.isIntersecting) return;
-          observer.disconnect();
-          play();
-        });
-      },
-      { threshold: 0 }
-    );
-    observer.observe(trigger);
-  }
-
   /** Natychmiastowe ukrycie — bez FOUC zanim GSAP będzie gotowy (bez wpływu na layout). */
   function prepareFadeEntrances() {
     if (reduceMotion) return;
@@ -149,28 +104,9 @@
       el.style.willChange = 'opacity';
     });
 
-    /* Grafika hero FAQ — bez fade-in, widoczna od razu. */
+    /* Grafika hero + tło pod hero FAQ — bez fade-in, widoczne od razu. */
 
-    getUnderHeroBgNodes().forEach(function (node) {
-      /** @type {HTMLElement} */
-      var el = /** @type {HTMLElement} */ (node);
-      if (el.dataset.faqUnderHeroBgPrepared) return;
-      el.dataset.faqUnderHeroBgPrepared = '1';
-      el.style.opacity = '0';
-      el.style.willChange = 'opacity';
-
-      /* Gradient maluje też na .faq-section — wyłączamy, żeby fade dotyczył warstwy tła. */
-      var section = el.closest('.faq-section');
-      if (
-        section instanceof HTMLElement &&
-        (section.classList.contains('faq-section--gradient-v1') ||
-          section.classList.contains('faq-section--gradient-v2'))
-      ) {
-        section.style.setProperty('background', 'transparent', 'important');
-      }
-    });
-
-    /* Akordeon czeka na koniec nagłówka — ukryty od razu, bez FOUC. */
+    /* Akordeon czeka na otwarcie kurtyny — ukryty od razu, bez FOUC. */
     getAccordionItemNodes().forEach(function (node) {
       /** @type {HTMLElement} */
       var el = /** @type {HTMLElement} */ (node);
@@ -184,7 +120,6 @@
   }
 
   /**
-   * Fade-in elementu (bez IntersectionObserver) — do sekwencji.
    * @param {HTMLElement} el
    * @param {GsapStatic} tween
    * @param {{ delay?: number, onComplete?: () => void }} [opts]
@@ -210,20 +145,10 @@
 
   /**
    * Wejście hero FAQ: grafika od razu (bez fade), potem fade nagłówka.
-   * W połowie animacji nagłówka wywołuje onTitleMidpoint (start akordeonu).
    * @param {GsapStatic} tween
-   * @param {() => void} [onTitleMidpoint]
    */
-  function runHeroEntrance(/** @type {GsapStatic} */ tween, onTitleMidpoint) {
-    var fadeDuration = 1.1;
+  function runHeroEntrance(/** @type {GsapStatic} */ tween) {
     var titleDelay = 0.2;
-    var titleMidFired = false;
-
-    var notifyTitleMidpoint = function () {
-      if (titleMidFired) return;
-      titleMidFired = true;
-      if (typeof onTitleMidpoint === 'function') onTitleMidpoint();
-    };
 
     /* Media — bez animacji; wyczyść ewentualne inline z poprzednich wersji. */
     Array.prototype.slice.call(getHeroMediaNodes()).forEach(function (node) {
@@ -242,10 +167,7 @@
       return true;
     });
 
-    if (!titleNodes.length) {
-      notifyTitleMidpoint();
-      return;
-    }
+    if (!titleNodes.length) return;
 
     var trigger =
       (titleNodes[0] && titleNodes[0].closest('.hero')) ||
@@ -255,8 +177,6 @@
       titleNodes.forEach(function (node) {
         playFadeIn(/** @type {HTMLElement} */ (node), tween, { delay: titleDelay });
       });
-      /* Akordeon — w połowie animacji nagłówka. */
-      tween.delayedCall(titleDelay + fadeDuration * 0.5, notifyTitleMidpoint);
     };
 
     if (typeof IntersectionObserver === 'undefined') {
@@ -278,29 +198,33 @@
   }
 
   /**
-   * Wejście tła pod hero FAQ — sam fade-in (grafika / gradient).
-   * @param {GsapStatic} tween
+   * Start akordeonu wraz z otwieraniem kurtyny (#page-transition.opening).
+   * Jeśli kurtyna już się otwiera / otworzyła (skrypt FAQ doładował się później) — od razu.
+   * @param {() => void} callback
    */
-  function runUnderHeroBgEntrance(/** @type {GsapStatic} */ tween) {
-    getUnderHeroBgNodes().forEach(function (node) {
-      /** @type {HTMLElement} */
-      var bg = /** @type {HTMLElement} */ (node);
-      if (bg.dataset.faqUnderHeroBgEntranceBound) return;
-      bg.dataset.faqUnderHeroBgEntranceBound = '1';
+  function whenCurtainOpening(callback) {
+    var done = false;
+    var run = function () {
+      if (done) return;
+      done = true;
+      window.removeEventListener('giclee:curtain-opening', run);
+      callback();
+    };
 
-      var section = bg.closest('.faq-section') || bg;
-      playFadeInWhenVisible(
-        bg,
-        section,
-        tween,
-        undefined,
-        function () {
-          if (section instanceof HTMLElement) {
-            section.style.removeProperty('background');
-          }
-        }
-      );
-    });
+    var overlay = document.getElementById('page-transition');
+    if (
+      !overlay ||
+      overlay.hidden ||
+      overlay.classList.contains('opening') ||
+      (!overlay.classList.contains('pt-init') &&
+        !overlay.classList.contains('closing') &&
+        !overlay.classList.contains('active'))
+    ) {
+      run();
+      return;
+    }
+
+    window.addEventListener('giclee:curtain-opening', run);
   }
 
   function runAccordionEntrance(/** @type {GsapStatic} */ tween) {
@@ -504,6 +428,139 @@
    * Otwarcie dowolnego pytania płynnie przenosi widok na koniec strony.
    * Zamknięcie nie ingeruje w pozycję scrolla.
    */
+  var faqPageScrollRaf = 0;
+  var restoreFaqScrollBehavior = null;
+  var faqScrollEnergyCycle = 0;
+  var faqScrollEnergyTimer = 0;
+
+  function startFaqScrollEnergyAnimation() {
+    if (window.location.search.indexOf('faq-perf-no-energy=1') !== -1) return;
+    var section = document.querySelector('.faq-section');
+    if (!(section instanceof HTMLElement)) return;
+    faqScrollEnergyCycle = faqScrollEnergyCycle ? 0 : 1;
+    var nextClass = faqScrollEnergyCycle
+      ? 'faq-scroll-energy-a'
+      : 'faq-scroll-energy-b';
+    section.classList.remove(
+      'faq-scroll-energy-a',
+      'faq-scroll-energy-b'
+    );
+    section.classList.add(nextClass);
+    window.clearTimeout(faqScrollEnergyTimer);
+    faqScrollEnergyTimer = window.setTimeout(function () {
+      section.classList.remove(nextClass);
+    }, 1180);
+  }
+
+  /**
+   * Przewijanie kontrolowane przez rAF zapewnia stały, mierzalny czas ruchu.
+   * Natywne behavior:smooth kończyło krótki zakres FAQ już po około 230 ms.
+   * @param {number} targetY
+   * @param {() => void} [onComplete]
+   */
+  function animateFaqPageScroll(targetY, onComplete) {
+    if (faqPageScrollRaf) {
+      window.cancelAnimationFrame(faqPageScrollRaf);
+      faqPageScrollRaf = 0;
+    }
+    if (restoreFaqScrollBehavior) restoreFaqScrollBehavior();
+
+    var startY = window.scrollY;
+    var distance = targetY - startY;
+    if (reduceMotion || Math.abs(distance) <= 1) {
+      window.scrollTo(0, targetY);
+      if (onComplete) onComplete();
+      return;
+    }
+    startFaqScrollEnergyAnimation();
+
+    var root = document.documentElement;
+    var previousBehavior = root.style.getPropertyValue('scroll-behavior');
+    var previousPriority = root.style.getPropertyPriority('scroll-behavior');
+    var restored = false;
+    restoreFaqScrollBehavior = function () {
+      if (restored) return;
+      restored = true;
+      if (previousBehavior) {
+        root.style.setProperty(
+          'scroll-behavior',
+          previousBehavior,
+          previousPriority
+        );
+      } else {
+        root.style.removeProperty('scroll-behavior');
+      }
+      restoreFaqScrollBehavior = null;
+    };
+    root.style.setProperty('scroll-behavior', 'auto', 'important');
+
+    var startTime = 0;
+    var duration = 760;
+    var frameTimes = [];
+    var measureFrames =
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname === 'localhost' ||
+      window.location.search.indexOf('faq-perf=1') !== -1;
+    var frame = function (timestamp) {
+      if (!startTime) startTime = timestamp;
+      if (measureFrames) frameTimes.push(timestamp);
+      var progress = Math.min(1, (timestamp - startTime) / duration);
+      var eased =
+        progress * progress * progress *
+        (progress * (progress * 6 - 15) + 10);
+
+      window.scrollTo(0, startY + distance * eased);
+      if (progress < 1) {
+        faqPageScrollRaf = window.requestAnimationFrame(frame);
+        return;
+      }
+
+      faqPageScrollRaf = 0;
+      window.scrollTo(0, targetY);
+      if (restoreFaqScrollBehavior) restoreFaqScrollBehavior();
+      if (frameTimes.length > 1) {
+        var deltas = frameTimes.slice(1).map(function (time, index) {
+          return time - frameTimes[index];
+        });
+        var average =
+          deltas.reduce(function (sum, delta) {
+            return sum + delta;
+          }, 0) / deltas.length;
+        var sorted = deltas.slice().sort(function (a, b) {
+          return a - b;
+        });
+        console.info(
+          '[FAQ page-scroll performance] ' +
+          JSON.stringify({
+            fps: Number((1000 / average).toFixed(1)),
+            frames: frameTimes.length,
+            durationMs: Number(
+              (frameTimes[frameTimes.length - 1] - frameTimes[0]).toFixed(1)
+            ),
+            averageFrameMs: Number(average.toFixed(2)),
+            medianFrameMs: Number(
+              sorted[Math.floor(sorted.length * 0.5)].toFixed(2)
+            ),
+            p95FrameMs: Number(
+              sorted[
+                Math.min(
+                  sorted.length - 1,
+                  Math.floor(sorted.length * 0.95)
+                )
+              ].toFixed(2)
+            ),
+            framesOver20Ms: deltas.filter(function (delta) {
+              return delta > 20;
+            }).length,
+          })
+        );
+      }
+      if (onComplete) onComplete();
+    };
+
+    faqPageScrollRaf = window.requestAnimationFrame(frame);
+  }
+
   function initFaqScrollToBottomOnOpen() {
     document
       .querySelectorAll('.faq-section .accordion details')
@@ -516,14 +573,12 @@
         details.addEventListener('toggle', function () {
           if (!details.open) return;
           window.requestAnimationFrame(function () {
-            window.scrollTo({
-              top: Math.max(
+            animateFaqPageScroll(
+              Math.max(
                 0,
                 document.documentElement.scrollHeight - window.innerHeight
-              ),
-              left: 0,
-              behavior: reduceMotion ? 'auto' : 'smooth',
-            });
+              )
+            );
           });
         });
       });
@@ -553,16 +608,17 @@
         if (wheelScrollActive) return;
         wheelScrollActive = true;
 
-        window.scrollTo({
-          top: targetY,
-          left: 0,
-          behavior: reduceMotion ? 'auto' : 'smooth',
+        animateFaqPageScroll(targetY, function () {
+          window.clearTimeout(releaseTimer);
+          releaseTimer = window.setTimeout(function () {
+            wheelScrollActive = false;
+          }, 90);
         });
 
         window.clearTimeout(releaseTimer);
         releaseTimer = window.setTimeout(function () {
           wheelScrollActive = false;
-        }, reduceMotion ? 80 : 700);
+        }, reduceMotion ? 80 : 950);
       },
       { passive: false, capture: true }
     );
@@ -628,6 +684,30 @@
    * Kontener akordeonu ma zamrożoną wysokość, więc pozycję przepełnionej
    * karty trzeba śledzić osobno podczas animacji details.
    */
+  function ensureFaqAccordionTail(accordion) {
+    var existing = accordion.querySelector(':scope > .faq-accordion-tail');
+    if (existing instanceof HTMLElement) return existing;
+    var tail = document.createElement('span');
+    tail.className = 'faq-accordion-tail';
+    tail.setAttribute('aria-hidden', 'true');
+    tail.faqScrollY = 0;
+    tail.faqOpenY = 0;
+    accordion.appendChild(tail);
+    return tail;
+  }
+
+  function setFaqAccordionTailOffset(tail, component, value) {
+    if (component === 'scroll') {
+      tail.faqScrollY = value;
+    } else {
+      tail.faqOpenY = value;
+    }
+    var scrollY = tail.faqScrollY || 0;
+    var openY = tail.faqOpenY || 0;
+    tail.style.transform =
+      'translate3d(0, ' + (scrollY + openY).toFixed(2) + 'px, 0)';
+  }
+
   function initFaqAccordionTailTracking() {
     document.querySelectorAll('.faq-section .accordion').forEach(function (node) {
       if (!(node instanceof HTMLElement)) return;
@@ -639,6 +719,7 @@
       if (!cards.length) return;
       var lastCard = cards[cards.length - 1];
       if (!(lastCard instanceof HTMLElement)) return;
+      var tail = ensureFaqAccordionTail(accordion);
 
       var baselineBottom =
         lastCard.getBoundingClientRect().bottom -
@@ -653,11 +734,9 @@
         var offset =
           lastCard.getBoundingClientRect().bottom -
           accordion.getBoundingClientRect().top -
-          baselineBottom;
-        accordion.style.setProperty(
-          '--faq-accordion-tail-y',
-          offset.toFixed(2) + 'px'
-        );
+          baselineBottom -
+          (tail.faqScrollY || 0);
+        setFaqAccordionTailOffset(tail, 'open', offset);
         accordion.dispatchEvent(new CustomEvent('faq:tail-move'));
 
         if (Number.isFinite(previousOffset) &&
@@ -707,6 +786,8 @@
     var pointerX = -10000;
     var pointerY = -10000;
     var rafId = 0;
+    var scrollHoverTimer = 0;
+    var tailHoverTimer = 0;
 
     /**
      * @param {HTMLElement} element
@@ -771,13 +852,11 @@
      * @param {number} y
      */
     var hitsAccordionTail = function (element, x, y) {
-      var rect = element.getBoundingClientRect();
-      var tailOffset =
-        Number.parseFloat(
-          getComputedStyle(element).getPropertyValue('--faq-accordion-tail-y')
-        ) || 0;
+      var tail = element.querySelector(':scope > .faq-accordion-tail');
+      if (!(tail instanceof HTMLElement)) return false;
+      var rect = tail.getBoundingClientRect();
       var width = Math.min(760, rect.width * 0.84);
-      var top = rect.bottom - 5 + tailOffset;
+      var top = rect.top - 5;
       return (
         x >= rect.left + (rect.width - width) / 2 &&
         x <= rect.right - (rect.width - width) / 2 &&
@@ -817,11 +896,76 @@
       pointerY = -10000;
       scheduleHover();
     });
-    window.addEventListener('scroll', scheduleHover, { passive: true });
+    window.addEventListener(
+      'scroll',
+      function () {
+        window.clearTimeout(scrollHoverTimer);
+        scrollHoverTimer = window.setTimeout(scheduleHover, 120);
+      },
+      { passive: true }
+    );
     window.addEventListener('resize', scheduleHover, { passive: true });
     if (accordion instanceof HTMLElement) {
-      accordion.addEventListener('faq:tail-move', scheduleHover);
+      accordion.addEventListener('faq:tail-move', function () {
+        window.clearTimeout(tailHoverTimer);
+        tailHoverTimer = window.setTimeout(scheduleHover, 60);
+      });
     }
+  }
+
+  /*
+   * Lokalny pomiar częstotliwości rAF bez animowania elementów. Pozwala
+   * odróżnić koszt efektów FAQ od limitu odświeżania samego podglądu.
+   */
+  function initFaqIdlePerformanceProbe() {
+    var enabled =
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname === 'localhost' ||
+      window.location.search.indexOf('faq-perf=1') !== -1;
+    if (!enabled || document.documentElement.dataset.faqIdleProbeBound) return;
+    document.documentElement.dataset.faqIdleProbeBound = '1';
+
+    window.setTimeout(function () {
+      var frames = [];
+      var frame = function (timestamp) {
+        frames.push(timestamp);
+        if (frames.length < 2 || timestamp - frames[0] < 1200) {
+          window.requestAnimationFrame(frame);
+          return;
+        }
+
+        var deltas = frames.slice(1).map(function (time, index) {
+          return time - frames[index];
+        });
+        var sorted = deltas.slice().sort(function (a, b) {
+          return a - b;
+        });
+        var average =
+          deltas.reduce(function (sum, delta) {
+            return sum + delta;
+          }, 0) / deltas.length;
+        var p95 =
+          sorted[
+            Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95))
+          ];
+        console.info(
+          '[FAQ idle performance] ' +
+          JSON.stringify({
+            fps: Number((1000 / average).toFixed(1)),
+            frames: frames.length,
+            averageFrameMs: Number(average.toFixed(2)),
+            medianFrameMs: Number(
+              sorted[Math.floor(sorted.length * 0.5)].toFixed(2)
+            ),
+            p95FrameMs: Number(p95.toFixed(2)),
+            framesOver20Ms: deltas.filter(function (delta) {
+              return delta > 20;
+            }).length,
+          })
+        );
+      };
+      window.requestAnimationFrame(frame);
+    }, 1800);
   }
 
   /**
@@ -1024,24 +1168,25 @@
       document.documentElement.scrollHeight - window.innerHeight
     );
     var maxHeroOffset = Math.min(36, scrollRange * 0.18);
-    var currentExtension = parseFloat(
-      window
-        .getComputedStyle(wrapper)
-        .getPropertyValue('--faq-scroll-bg-extension')
-    ) || 0;
     var sectionDocumentTop =
-      wrapper.getBoundingClientRect().top + window.scrollY + currentExtension;
-    var header =
-      document.getElementById('header-component') ||
-      document.getElementById('header-group');
-    var headerHeight = header instanceof HTMLElement
-      ? header.getBoundingClientRect().height
+      wrapper.getBoundingClientRect().top + window.scrollY;
+    var stickyHeader = document.querySelector(
+      'header.header-section, #header-component'
+    );
+    var stickyHeaderHeight = stickyHeader instanceof HTMLElement
+      ? stickyHeader.getBoundingClientRect().height
       : 0;
-    var maxExtension = Math.max(
+    var maxBackgroundExtension = Math.max(
       0,
-      sectionDocumentTop - scrollRange - headerHeight + 1
+      sectionDocumentTop -
+        scrollRange -
+        stickyHeaderHeight +
+        1
     );
     var accordion = section.querySelector('.accordion');
+    var accordionTail = accordion instanceof HTMLElement
+      ? ensureFaqAccordionTail(accordion)
+      : null;
     var accordionItems = accordion instanceof HTMLElement
       ? Array.prototype.slice.call(
           accordion.querySelectorAll(':scope > accordion-custom')
@@ -1095,7 +1240,6 @@
     };
 
     var targetProgress = clampProgress(window.scrollY / scrollRange);
-    var backgroundProgress = targetProgress;
     var heroProgress = targetProgress;
     var accordionProgress = targetProgress;
     var itemProgresses = accordionItems.map(function () {
@@ -1103,40 +1247,114 @@
     });
     var rafId = 0;
     var lastFrameTime = 0;
+    var performanceProbe = null;
+    var performanceProbeRafId = 0;
+    var performanceProbeEnabled =
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname === 'localhost' ||
+      window.location.search.indexOf('faq-perf=1') !== -1;
+    var performanceDisableHero =
+      window.location.search.indexOf('faq-perf-no-hero=1') !== -1;
+    var performanceDisableAccordion =
+      window.location.search.indexOf('faq-perf-no-accordion=1') !== -1;
+    var performanceDisableItems =
+      window.location.search.indexOf('faq-perf-no-items=1') !== -1;
+    var performanceDisableBackground =
+      window.location.search.indexOf('faq-perf-no-background=1') !== -1;
+
+    var reportPerformanceProbe = function (endTime) {
+      if (!performanceProbe || performanceProbe.frames.length < 2) {
+        performanceProbe = null;
+        return;
+      }
+
+      var frameDeltas = performanceProbe.frames.slice(1).map(function (time, index) {
+        return time - performanceProbe.frames[index];
+      });
+      var sortedDeltas = frameDeltas.slice().sort(function (a, b) {
+        return a - b;
+      });
+      var percentile = function (ratio) {
+        return sortedDeltas[
+          Math.min(
+            sortedDeltas.length - 1,
+            Math.floor(sortedDeltas.length * ratio)
+          )
+        ];
+      };
+      var averageDelta =
+        frameDeltas.reduce(function (sum, delta) {
+          return sum + delta;
+        }, 0) / frameDeltas.length;
+      var report = {
+        fps: Number((1000 / averageDelta).toFixed(1)),
+        frames: performanceProbe.frames.length,
+        averageFrameMs: Number(averageDelta.toFixed(2)),
+        medianFrameMs: Number(percentile(0.5).toFixed(2)),
+        p95FrameMs: Number(percentile(0.95).toFixed(2)),
+        maximumFrameMs: Number(
+          Math.max.apply(Math, frameDeltas).toFixed(2)
+        ),
+        framesOver20Ms: frameDeltas.filter(function (delta) {
+          return delta > 20;
+        }).length,
+        framesOver33Ms: frameDeltas.filter(function (delta) {
+          return delta > 33.4;
+        }).length,
+        scrollInputMs: Number(
+          (performanceProbe.lastScrollTime - performanceProbe.startTime).toFixed(1)
+        ),
+        visualSettleMs: Number(
+          (endTime - performanceProbe.lastScrollTime).toFixed(1)
+        ),
+        totalMotionMs: Number(
+          (endTime - performanceProbe.startTime).toFixed(1)
+        ),
+      };
+
+      console.info('[FAQ performance] ' + JSON.stringify(report));
+      performanceProbe = null;
+    };
+
+    var samplePerformanceFrame = function (timestamp) {
+      if (!performanceProbe) {
+        performanceProbeRafId = 0;
+        return;
+      }
+      performanceProbe.frames.push(timestamp);
+      performanceProbeRafId =
+        window.requestAnimationFrame(samplePerformanceFrame);
+    };
 
     var paint = function () {
-      var easedBackground = easeProgress(backgroundProgress);
       var easedHero = easeProgress(heroProgress);
       var easedAccordion = easeProgress(accordionProgress);
-      wrapper.style.setProperty(
-        '--faq-scroll-bg-extension',
-        (maxExtension * easedBackground).toFixed(2) + 'px'
-      );
-      section.style.setProperty(
-        '--faq-accordion-scroll-y',
-        (maxAccordionOffset * easedAccordion).toFixed(2) + 'px'
-      );
-      if (heroWrapper instanceof HTMLElement) {
-        heroWrapper.style.setProperty(
-          '--faq-hero-scroll-y',
-          (maxHeroOffset * easedHero).toFixed(2) + 'px'
-        );
-        heroWrapper.style.setProperty(
-          '--faq-hero-scroll-opacity',
-          (1 - easedHero).toFixed(3)
-        );
-        heroWrapper.style.setProperty(
-          '--faq-hero-scroll-blur',
-          (easedHero * 24).toFixed(1) + 'px'
-        );
+      var backgroundExtension = performanceDisableBackground
+        ? 0
+        : maxBackgroundExtension * easedHero;
+      var accordionBaseOffset = performanceDisableAccordion
+        ? 0
+        : maxAccordionOffset * easedAccordion;
+      wrapper.style.marginBlockStart =
+        (-backgroundExtension).toFixed(2) + 'px';
+      section.style.paddingBlockStart =
+        backgroundExtension.toFixed(2) + 'px';
+      if (
+        heroWrapper instanceof HTMLElement &&
+        !performanceDisableHero
+      ) {
+        heroWrapper.style.transform =
+          'translate3d(0, ' +
+          (maxHeroOffset * easedHero).toFixed(2) +
+          'px, 0)';
+        heroWrapper.style.opacity = (1 - easedHero).toFixed(3);
       }
 
       /*
        * Każda karta ma własną bezwładność. Trail wzmacnia różnicę faz tylko
        * podczas ruchu; po zatrzymaniu wszystkie korekty miękko wracają do 0.
        */
-      var minimumItemOffset = Infinity;
-      var maximumItemOffset = -Infinity;
+      var lastItemScrollOffset = accordionBaseOffset;
       accordionItems.forEach(function (node, index) {
         if (!(node instanceof HTMLElement)) return;
         var itemProgress = itemProgresses[index];
@@ -1145,31 +1363,24 @@
           (itemProgress - accordionProgress) * (70 + index * 9);
         var easingCorrection =
           maxAccordionOffset * (itemEased - easedAccordion);
-        var itemOffset = phaseTrail + easingCorrection;
-        minimumItemOffset = Math.min(minimumItemOffset, itemOffset);
-        maximumItemOffset = Math.max(maximumItemOffset, itemOffset);
-        node.style.setProperty(
-          '--faq-accordion-item-scroll-y',
-          itemOffset.toFixed(2) + 'px'
-        );
+        var itemOffset =
+          accordionBaseOffset + phaseTrail + easingCorrection;
+        if (index === accordionItems.length - 1) {
+          lastItemScrollOffset = itemOffset;
+        }
+        if (!performanceDisableItems) {
+          node.style.transform =
+            'translate3d(0, ' + itemOffset.toFixed(2) + 'px, 0)';
+        }
       });
+      if (accordionTail instanceof HTMLElement) {
+        setFaqAccordionTailOffset(
+          accordionTail,
+          'scroll',
+          lastItemScrollOffset
+        );
+      }
 
-      /*
-       * Jasność dekoracji wynika wyłącznie z różnicy położeń kart.
-       * Znak nie ma znaczenia: rozciąganie i ściskanie akordeonu daje energię.
-       */
-      var itemSpread =
-        Number.isFinite(minimumItemOffset) &&
-        Number.isFinite(maximumItemOffset)
-          ? maximumItemOffset - minimumItemOffset
-          : 0;
-      var distanceEnergy = Math.min(1, itemSpread / 8);
-      var easedDistanceEnergy =
-        distanceEnergy * distanceEnergy * (3 - 2 * distanceEnergy);
-      section.style.setProperty(
-        '--faq-accordion-distance-energy',
-        easedDistanceEnergy.toFixed(3)
-      );
     };
 
     var render = function (timestamp) {
@@ -1180,37 +1391,65 @@
       lastFrameTime = timestamp;
       targetProgress = clampProgress(window.scrollY / scrollRange);
 
-      backgroundProgress = damp(
-        backgroundProgress,
-        targetProgress,
-        deltaMs,
-        145
-      );
-      heroProgress = damp(heroProgress, targetProgress, deltaMs, 175);
+      heroProgress = damp(heroProgress, targetProgress, deltaMs, 85);
       accordionProgress = damp(
         accordionProgress,
         targetProgress,
         deltaMs,
-        205
+        105
       );
-      itemProgresses = itemProgresses.map(function (current, index) {
-        return damp(current, targetProgress, deltaMs, 245 + index * 52);
-      });
+      for (var itemIndex = 0; itemIndex < itemProgresses.length; itemIndex += 1) {
+        itemProgresses[itemIndex] = damp(
+          itemProgresses[itemIndex],
+          targetProgress,
+          deltaMs,
+          130 + itemIndex * 20
+        );
+      }
 
       paint();
 
       var stillMoving =
-        Math.abs(backgroundProgress - targetProgress) > 0.0001 ||
-        Math.abs(heroProgress - targetProgress) > 0.0001 ||
-        Math.abs(accordionProgress - targetProgress) > 0.0001 ||
+        Math.abs(heroProgress - targetProgress) > 0.012 ||
+        Math.abs(accordionProgress - targetProgress) > 0.012 ||
         itemProgresses.some(function (current) {
-          return Math.abs(current - targetProgress) > 0.0001;
+          return Math.abs(current - targetProgress) > 0.012;
         });
-      if (stillMoving) rafId = window.requestAnimationFrame(render);
+      if (stillMoving) {
+        rafId = window.requestAnimationFrame(render);
+      } else {
+        heroProgress = targetProgress;
+        accordionProgress = targetProgress;
+        for (
+          var settledIndex = 0;
+          settledIndex < itemProgresses.length;
+          settledIndex += 1
+        ) {
+          itemProgresses[settledIndex] = targetProgress;
+        }
+        paint();
+        if (performanceProbe) reportPerformanceProbe(timestamp);
+      }
     };
 
     var requestRender = function () {
       targetProgress = clampProgress(window.scrollY / scrollRange);
+      if (performanceProbeEnabled) {
+        var probeTime = window.performance.now();
+        if (!performanceProbe) {
+          performanceProbe = {
+            startTime: probeTime,
+            lastScrollTime: probeTime,
+            frames: [],
+          };
+          if (!performanceProbeRafId) {
+            performanceProbeRafId =
+              window.requestAnimationFrame(samplePerformanceFrame);
+          }
+        } else {
+          performanceProbe.lastScrollTime = probeTime;
+        }
+      }
       if (!rafId) {
         lastFrameTime = 0;
         rafId = window.requestAnimationFrame(render);
@@ -1313,8 +1552,13 @@
     initFaqSingleOpenLock();
     initFaqAccordionTailTracking();
     initFaqDecorationHoverGlow();
+    initFaqIdlePerformanceProbe();
     if (reduceMotion) return;
-    initFaqBackgroundScrollExpansion();
+    if (
+      window.location.search.indexOf('faq-perf-scroll-only=1') === -1
+    ) {
+      initFaqBackgroundScrollExpansion();
+    }
     prepareFadeEntrances();
     whenGsapReady(
       /** @param {GsapStatic} tween */ function (tween) {
@@ -1324,11 +1568,16 @@
           accordionStarted = true;
           runAccordionEntrance(tween);
         };
-        runHeroEntrance(tween, startAccordion);
-        runUnderHeroBgEntrance(tween);
+        runHeroEntrance(tween);
+        whenCurtainOpening(startAccordion);
         initAccordionFocusBlur(tween);
-        initArtworkDecorationParallax(tween);
-        /* Awaryjnie: jeśli hero nie wystartuje (IO), pokaż akordeon po chwili. */
+        if (
+          window.location.search.indexOf('faq-perf-lite=1') === -1 &&
+          window.location.search.indexOf('faq-perf-no-parallax=1') === -1
+        ) {
+          initArtworkDecorationParallax(tween);
+        }
+        /* Awaryjnie: jeśli kurtyna / event nie dojdzie, pokaż akordeon po chwili. */
         window.setTimeout(startAccordion, 4000);
       },
       revealEntranceFallback

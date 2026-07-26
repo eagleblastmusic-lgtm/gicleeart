@@ -323,6 +323,7 @@
           document.documentElement.classList.remove('curtain-pending');
           overlay.classList.remove('pt-init', 'closing');
           overlay.classList.add('active', 'opening');
+          window.dispatchEvent(new CustomEvent('giclee:curtain-opening'));
           setTimeout(finishOpening, PT_OPEN_MS);
         });
       }

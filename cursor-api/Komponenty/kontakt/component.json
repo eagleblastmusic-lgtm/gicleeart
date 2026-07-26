@@ -1,6 +1,6 @@
 {
   "name": "Kontakt",
-  "description": "Wygląd strony Kontakt — hero, formularz (templates/page.contact.json).",
+  "description": "Wygląd strony Kontakt — hero, tło pod hero, formularz (templates/page.contact.json).",
   "icon": "✉️",
   "color": "#6a1b9a",
   "order": 43,

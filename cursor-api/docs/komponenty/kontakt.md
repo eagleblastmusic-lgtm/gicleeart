@@ -14,6 +14,12 @@ Tryb: `inline` (sekcja **Administracja strony**). Uruchomienie: `python -m Kompo
 
 **Warianty:** domyślnie jedna wersja (`ko1`); **Dodaj nową…** kopiuje bieżącą.
 
+## Strefy
+
+1. **Hero — Kontakt** — nagłówek + grafika hero
+2. **Tło pod hero** — jak w FAQ: typ (grafika / gradient), wersja gradientu, plik tła, rozmycie, saturacja, jasność, nakładka przyciemniająca, powiększenie kadru → `giclee_contact_bg_*` + `background_*` w sekcji `form`
+3. **Formularz kontaktowy** — etykieta przycisku
+
 **Pole grafiki (`shopify_image`, wspólne dla wszystkich edytorów stron):**
 - **Wgraj…** — wybór pliku (JPG/PNG/WebP) → upload do Shopify Files.
 - **Drag & drop** — upuszczenie pliku na miniaturę/wiersz pola wgrywa grafikę (wymaga `tkinterdnd2`; bez niego degraduje bez błędu).
@@ -22,4 +28,4 @@ Tryb: `inline` (sekcja **Administracja strony**). Uruchomienie: `python -m Kompo
 
 Implementacja: `_shared/theme_page_editor/image_object_y.py`, `gui_shell.py` (strony menu), `stronaglowna/gui.py` (strona główna + tło sekcji).
 
-→ [`README.md`](README.md) · wzorzec: [`stronaglowna.md`](stronaglowna.md)
+→ [`README.md`](README.md) · wzorzec: [`faq.md`](faq.md) (Tło pod hero) · [`stronaglowna.md`](stronaglowna.md)

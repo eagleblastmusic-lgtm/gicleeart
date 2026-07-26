@@ -6,23 +6,12 @@
 {%- enddoc -%}
 
 {%- liquid
-  assign giclee_faq_bg_mode = section.settings.giclee_faq_bg_mode | default: 'none'
-  assign giclee_faq_bg_gradient = section.settings.giclee_faq_bg_gradient | default: 'v1'
-  if giclee_faq_bg_gradient != 'v2'
-    assign giclee_faq_bg_gradient = 'v1'
-  endif
+  assign giclee_under_hero_active = false
+  assign giclee_faq_bg_mode = 'none'
+  assign giclee_faq_bg_gradient = 'v1'
   assign giclee_faq_gradient_active = false
-  if giclee_faq_bg_mode == 'gradient'
-    assign giclee_faq_gradient_active = true
-  endif
   assign giclee_faq_image_active = false
-  if giclee_faq_bg_mode == 'image' and section.settings.background_media != 'none'
-    assign giclee_faq_image_active = true
-  endif
   assign giclee_faq_custom_bg = false
-  if giclee_faq_gradient_active or giclee_faq_image_active
-    assign giclee_faq_custom_bg = true
-  endif
   assign giclee_faq_accordion_style = ''
   assign giclee_faq_bg_blur = 0
   assign giclee_faq_bg_saturate = 100
@@ -30,17 +19,45 @@
   assign giclee_faq_bg_dim_overlay = 0
   assign giclee_faq_bg_scale = 0
   assign giclee_faq_art_gradient_reach = 100
+
   if template.suffix == 'faq'
-    assign giclee_faq_accordion_style = section.settings.giclee_faq_accordion_style | default: 'style1'
-    unless giclee_faq_accordion_style == 'style2' or giclee_faq_accordion_style == 'style3'
-      assign giclee_faq_accordion_style = 'style1'
-    endunless
+    assign giclee_under_hero_active = true
+    assign giclee_faq_bg_mode = section.settings.giclee_faq_bg_mode | default: 'none'
+    assign giclee_faq_bg_gradient = section.settings.giclee_faq_bg_gradient | default: 'v1'
     assign giclee_faq_bg_blur = section.settings.giclee_faq_bg_blur_px | default: 0 | plus: 0
     assign giclee_faq_bg_saturate = section.settings.giclee_faq_bg_saturate_pct | default: 100 | plus: 0
     assign giclee_faq_bg_brightness = section.settings.giclee_faq_bg_brightness_pct | default: 100 | plus: 0
     assign giclee_faq_bg_dim_overlay = section.settings.giclee_faq_bg_dim_overlay_pct | default: 0 | plus: 0
     assign giclee_faq_bg_scale = section.settings.giclee_faq_bg_scale_pct | default: 0 | plus: 0
     assign giclee_faq_art_gradient_reach = section.settings.giclee_faq_art_gradient_reach_pct | default: 100 | plus: 0
+    assign giclee_faq_accordion_style = section.settings.giclee_faq_accordion_style | default: 'style1'
+    unless giclee_faq_accordion_style == 'style2' or giclee_faq_accordion_style == 'style3'
+      assign giclee_faq_accordion_style = 'style1'
+    endunless
+  elsif template.suffix == 'contact'
+    assign giclee_under_hero_active = true
+    assign giclee_faq_bg_mode = section.settings.giclee_contact_bg_mode | default: 'none'
+    assign giclee_faq_bg_gradient = section.settings.giclee_contact_bg_gradient | default: 'v1'
+    assign giclee_faq_bg_blur = section.settings.giclee_contact_bg_blur_px | default: 0 | plus: 0
+    assign giclee_faq_bg_saturate = section.settings.giclee_contact_bg_saturate_pct | default: 100 | plus: 0
+    assign giclee_faq_bg_brightness = section.settings.giclee_contact_bg_brightness_pct | default: 100 | plus: 0
+    assign giclee_faq_bg_dim_overlay = section.settings.giclee_contact_bg_dim_overlay_pct | default: 0 | plus: 0
+    assign giclee_faq_bg_scale = section.settings.giclee_contact_bg_scale_pct | default: 0 | plus: 0
+  endif
+
+  if giclee_under_hero_active
+    if giclee_faq_bg_gradient != 'v2'
+      assign giclee_faq_bg_gradient = 'v1'
+    endif
+    if giclee_faq_bg_mode == 'gradient'
+      assign giclee_faq_gradient_active = true
+    endif
+    if giclee_faq_bg_mode == 'image' and section.settings.background_media != 'none'
+      assign giclee_faq_image_active = true
+    endif
+    if giclee_faq_gradient_active or giclee_faq_image_active
+      assign giclee_faq_custom_bg = true
+    endif
     if giclee_faq_bg_blur < 0
       assign giclee_faq_bg_blur = 0
     elsif giclee_faq_bg_blur > 20
@@ -134,7 +151,7 @@
     {%- endunless -%}
   </div>
 
-  {%- if giclee_faq_custom_bg -%}
+  {%- if giclee_faq_custom_bg and template.suffix == 'faq' -%}
     <div class="faq-artwork-decoration faq-artwork-decoration--left" aria-hidden="true">
       <svg viewBox="0 0 600 900" preserveAspectRatio="xMidYMid slice">
         <defs>

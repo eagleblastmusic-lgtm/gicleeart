@@ -21,7 +21,7 @@ def _config():
         component_id=_COMPONENT_ID,
         app_title=APP_TITLE,
         intro_title="Strona Kontakt",
-        intro_body="Edytujesz hero i formularz kontaktowy w templates/page.contact.json.",
+        intro_body="Edytujesz hero, tło pod hero i formularz kontaktowy w templates/page.contact.json.",
         template_rel="templates/page.contact.json",
         preview_path="/pages/contact",
         variant_id_prefix="ko",

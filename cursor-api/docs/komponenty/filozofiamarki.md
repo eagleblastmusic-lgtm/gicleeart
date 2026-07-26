@@ -12,6 +12,6 @@ Tryb: `inline` (sekcja **Administracja strony**). Uruchomienie: `python -m Kompo
 
 **Szablon:** `templates/page.filozofia-marki.json` · **Podgląd:** `/pages/filozofia-marki`
 
-**Warianty:** domyślnie jedna wersja (`fm1`); **Dodaj nową…** kopiuje bieżącą.
+**Warianty:** `fm1` (Wersja 1), `fm2` (Wersja 2); **Dodaj nową…** kopiuje bieżącą.
 
 → [`README.md`](README.md) · wzorzec: [`stronaglowna.md`](stronaglowna.md)

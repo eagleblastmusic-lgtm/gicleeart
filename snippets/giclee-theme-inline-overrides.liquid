@@ -124,25 +124,46 @@
       cursor: pointer;
     }
 
-    {% if template.suffix == 'faq' %}
+    /* Blog hero — letter-fade podtytułu (jak splash „Witamy w świecie sztuki”) */
+    body.template-blog #MainContent .hero__content-wrapper .blog-hero-sub-word {
+      display: inline-block;
+      white-space: nowrap;
+    }
+    body.template-blog #MainContent .hero__content-wrapper .blog-hero-sub-char {
+      display: inline-block;
+      will-change: opacity, transform;
+    }
+    body.template-blog
+      #MainContent
+      .hero__content-wrapper
+      p.blog-hero-letter-fade:not(.is-letter-fade-prepared) {
+      opacity: 0;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      body.template-blog
+        #MainContent
+        .hero__content-wrapper
+        p.blog-hero-letter-fade:not(.is-letter-fade-prepared) {
+        opacity: 1;
+      }
+    }
+
+    {% if template.suffix == 'faq' or template.suffix == 'contact' %}
     /* =====================================================================
-       FAQ — PREMIUM ACCORDION (tylko UI/UX, treść bez zmian)
-       Zakres: wyłącznie strona FAQ (template.suffix == 'faq').
-       Wyższa specyficzność + !important nadpisuje globalne .accordion z base.css
-       jedynie na tej stronie — inne akordeony (np. produkt) bez zmian.
+       FAQ / Kontakt — tło pod hero (GicleeApp) + FAQ accordion (tylko FAQ)
        ===================================================================== */
 
     /* Tło pod hero — grafika / gradient (GicleeApp → Tło pod hero) */
-    body.template-page-faq .shopify-section:has(.faq-section) > .section-background--faq-custom {
+    body:is(.template-page-faq, .template-page-contact) .shopify-section:has(.faq-section) > .section-background--faq-custom {
       background: #000 !important;
     }
 
-    body.template-page-faq .shopify-section:has(.faq-section) > .section-background--faq-gradient {
+    body:is(.template-page-faq, .template-page-contact) .shopify-section:has(.faq-section) > .section-background--faq-gradient {
       background: transparent !important;
     }
 
     /* Grafika: absolutny bleed — bez tego kontener ma wysokość 0 (img jest absolute). */
-    body.template-page-faq .faq-section.faq-section--bg-image {
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--bg-image {
       position: relative;
       isolation: isolate;
       overflow: clip;
@@ -154,7 +175,7 @@
      * Sam obraz ma stałą wysokość 100lvh i jest wycentrowany, żeby otwarcie
      * akordeonu nie zmieniało kadru (zoom).
      */
-    body.template-page-faq .faq-section.faq-section--bg-image .custom-section-background {
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--bg-image .custom-section-background {
       position: absolute;
       inset: 0;
       grid-column: 1 / -1;
@@ -165,12 +186,12 @@
     }
 
     /* Tło i jego potomkowie nigdy nie przechwytują kliknięć ani nie malują nad treścią. */
-    body.template-page-faq .faq-section.faq-section--bg-image .custom-section-background,
-    body.template-page-faq .faq-section.faq-section--bg-image .custom-section-background * {
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--bg-image .custom-section-background,
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--bg-image .custom-section-background * {
       pointer-events: none !important;
     }
 
-    body.template-page-faq .faq-section.faq-section--bg-image .custom-section-content {
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--bg-image .custom-section-content {
       position: relative;
       z-index: 2;
       isolation: isolate;
@@ -185,8 +206,8 @@
      * Stały kadr 100lvh jest zakotwiczony u góry sekcji. Otwarcie odpowiedzi
      * wydłuża wyłącznie czarne tło sekcji w dół — bez przesuwania i skalowania obrazu.
      */
-    body.template-page-faq .faq-section.faq-section--bg-image .background-image-container,
-    body.template-page-faq .faq-section.faq-section--bg-image video-background-component {
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--bg-image .background-image-container,
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--bg-image video-background-component {
       position: absolute;
       top: 0;
       left: 0;
@@ -218,11 +239,11 @@
       overflow-anchor: none;
     }
 
-    body.template-page-faq .faq-section.faq-section--bg-image .giclee-section-bg-overlay {
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--bg-image .giclee-section-bg-overlay {
       position: absolute;
     }
 
-    body.template-page-faq .faq-section.faq-section--bg-image .giclee-section-bg-overlay::after {
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--bg-image .giclee-section-bg-overlay::after {
       content: "";
       position: absolute;
       inset: 0;
@@ -232,23 +253,22 @@
     }
 
     /* Zanikanie tła pod hero — góra i dół (jak BIO wide_bottom / home menu-wide) */
-    body.template-page-faq .faq-section.faq-section--bg-image {
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--bg-image {
       --faq-bg-fade-height: clamp(80px, 16vh, 150px);
     }
 
-    body.template-page-faq .faq-section.faq-section--bg-image .custom-section-background::before,
-    body.template-page-faq .faq-section.faq-section--bg-image .custom-section-background::after {
+    /*
+     * Górny fade na poziomie sekcji (nad dekoracjami SVG z-index:0, pod treścią z-index:2),
+     * żeby okręgi chowały się pod czarnym gradientem u góry — nie wystawały spod zaniku tła.
+     */
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--bg-image::before {
       content: "";
       position: absolute;
-      left: 0;
-      right: 0;
-      z-index: 4;
+      inset-inline: 0;
+      top: 0;
+      z-index: 1;
       height: var(--faq-bg-fade-height);
       pointer-events: none;
-    }
-
-    body.template-page-faq .faq-section.faq-section--bg-image .custom-section-background::before {
-      top: 0;
       background: linear-gradient(
         180deg,
         #000 0%,
@@ -260,8 +280,16 @@
       );
     }
 
-    body.template-page-faq .faq-section.faq-section--bg-image .custom-section-background::after {
+    /* Dolny fade obrazu — zostaje w warstwie tła (kurtyna sekcji jest osobno na ::after) */
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--bg-image .custom-section-background::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
       bottom: 0;
+      z-index: 4;
+      height: var(--faq-bg-fade-height);
+      pointer-events: none;
       background: linear-gradient(
         0deg,
         #000 0%,
@@ -273,8 +301,8 @@
       );
     }
 
-    body.template-page-faq .faq-section.faq-section--gradient-v1,
-    body.template-page-faq .faq-section.faq-section--gradient-v1 .custom-section-background {
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--gradient-v1,
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--gradient-v1 .custom-section-background {
       background:
         radial-gradient(
           ellipse 70% 38% at 50% 0%,
@@ -291,8 +319,8 @@
         ) !important;
     }
 
-    body.template-page-faq .faq-section.faq-section--gradient-v2,
-    body.template-page-faq .faq-section.faq-section--gradient-v2 .custom-section-background {
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--gradient-v2,
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--gradient-v2 .custom-section-background {
       background:
         radial-gradient(
           ellipse 65% 42% at 50% 0%,
@@ -313,28 +341,29 @@
         ) !important;
     }
 
-    body.template-page-faq .faq-section.faq-section--gradient-v1,
-    body.template-page-faq .faq-section.faq-section--gradient-v2 {
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--gradient-v1,
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--gradient-v2 {
       position: relative;
       --faq-bg-fade-height: clamp(80px, 16vh, 150px);
     }
 
-    body.template-page-faq .faq-section.faq-section--gradient-v1::before,
-    body.template-page-faq .faq-section.faq-section--gradient-v1::after,
-    body.template-page-faq .faq-section.faq-section--gradient-v2::before,
-    body.template-page-faq .faq-section.faq-section--gradient-v2::after {
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--gradient-v1::before,
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--gradient-v1::after,
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--gradient-v2::before,
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--gradient-v2::after {
       content: "";
       position: absolute;
       left: 0;
       right: 0;
-      z-index: 0;
       height: var(--faq-bg-fade-height);
       pointer-events: none;
     }
 
-    body.template-page-faq .faq-section.faq-section--gradient-v1::before,
-    body.template-page-faq .faq-section.faq-section--gradient-v2::before {
+    /* Górny fade nad okręgami SVG (dekoracje z-index:0), pod treścią */
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--gradient-v1::before,
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--gradient-v2::before {
       top: 0;
+      z-index: 1;
       background: linear-gradient(
         180deg,
         #000 0%,
@@ -346,9 +375,10 @@
       );
     }
 
-    body.template-page-faq .faq-section.faq-section--gradient-v1::after,
-    body.template-page-faq .faq-section.faq-section--gradient-v2::after {
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--gradient-v1::after,
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--gradient-v2::after {
       bottom: 0;
+      z-index: 0;
       background: linear-gradient(
         0deg,
         #000 0%,
@@ -360,8 +390,8 @@
       );
     }
 
-    body.template-page-faq .faq-section.faq-section--gradient-v1 > .custom-section-content,
-    body.template-page-faq .faq-section.faq-section--gradient-v2 > .custom-section-content {
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--gradient-v1 > .custom-section-content,
+    body:is(.template-page-faq, .template-page-contact) .faq-section.faq-section--gradient-v2 > .custom-section-content {
       position: relative;
       z-index: 1;
     }
@@ -1130,17 +1160,16 @@
 
     /* ===== FAQ — dekoracje tła (SVG łuki / elipsa / poświata; bez zmiany tła foto) ===== */
     /*
-     * Stacking: hero + divider NAD okręgami, ale FAQ (grafika + gradient) zostaje
-     * w normalnym malowaniu sekcji — bez obniżania całej sekcji FAQ (to gubiło gradient).
-     * Okręgi mają z-index: 0 wewnątrz FAQ; hero/divider tworzą wyższy kontekst.
+     * Stacking: hero + divider NAD okręgami; w FAQ:
+     * dekoracje 0 → górny fade tła 1 → cutout/accordion 1 → treść 2 → dolna kurtyna 4.
+     * Górny fade (sekcja::before) przykrywa okręgi SVG u krawędzi sekcji.
      */
     body.template-page-faq #MainContent > .shopify-section:has(.hero) {
       position: relative;
       z-index: 3;
       transform: translate3d(0, var(--faq-hero-scroll-y, 0px), 0);
       opacity: var(--faq-hero-scroll-opacity, 1);
-      filter: blur(var(--faq-hero-scroll-blur, 0px));
-      will-change: transform, opacity, filter;
+      will-change: transform, opacity;
     }
 
     body.template-page-faq #MainContent > .shopify-section[id$="__divider_YLiHg7"] {
@@ -1155,18 +1184,16 @@
 
     /* FAQ: clip — zapobiega wyciekaniu ozdób (złotych łuków i tarcz) pod sekcję w stronę stopki */
     body.template-page-faq #MainContent > .shopify-section:has(.faq-section) {
-      --faq-scroll-bg-extension: 0px;
       position: relative;
       z-index: 4;
       overflow: clip;
-      margin-block-start: calc(-1 * var(--faq-scroll-bg-extension));
     }
 
     body.template-page-faq .faq-section {
       position: relative;
+      z-index: 1;
       overflow: clip;
       isolation: isolate;
-      padding-block-start: var(--faq-scroll-bg-extension);
     }
 
     /*
@@ -1209,18 +1236,20 @@
 
     body.template-page-faq .faq-artwork-decoration--left {
       --faq-decoration-hover-energy: 0;
+      --faq-scroll-energy-base: 0.55;
+      --faq-scroll-energy-peak: 1;
       left: clamp(-290px, -14vw, -120px);
       width: clamp(420px, 39vw, 720px);
       height: min(92vh, 920px);
-      opacity: 0.74;
+      opacity: 0.55;
       filter: brightness(
         calc(
-          1 +
-          var(--faq-accordion-distance-energy, 0) * 0.9 +
-          var(--faq-decoration-hover-energy) * 0.72
+          1.35 +
+          var(--faq-decoration-hover-energy) * 0.95
         )
       );
       transition: filter 760ms cubic-bezier(0.4, 0, 0.2, 1);
+      will-change: transform, opacity, filter;
       -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 58%, transparent 100%);
       mask-image: linear-gradient(90deg, #000 0%, #000 58%, transparent 100%);
     }
@@ -1284,7 +1313,8 @@
       border-style: solid;
       border-width: 1px;
       box-shadow: none;
-      transition: border-color 760ms cubic-bezier(0.4, 0, 0.2, 1);
+      will-change: opacity, filter;
+      transition: filter 760ms cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     body.template-page-faq
@@ -1294,38 +1324,35 @@
     }
 
     body.template-page-faq .faq-disc__ring--outer {
+      --faq-scroll-energy-base: 0.28;
+      --faq-scroll-energy-peak: 0.48;
       inset: 0;
-      border-color: rgb(
-        224 235 240 /
-        calc(
-          0.28 +
-          var(--faq-accordion-distance-energy, 0) * 0.2 +
-          var(--faq-decoration-hover-energy) * 0.25
-        )
+      border-color: rgb(224 235 240);
+      opacity: 0.28;
+      filter: brightness(
+        calc(1 + var(--faq-decoration-hover-energy) * 0.35)
       );
     }
 
     body.template-page-faq .faq-disc__ring--middle {
+      --faq-scroll-energy-base: 0.46;
+      --faq-scroll-energy-peak: 1;
       inset: 5%;
-      border-color: rgb(
-        241 247 250 /
-        calc(
-          0.46 +
-          var(--faq-accordion-distance-energy, 0) * 0.54 +
-          var(--faq-decoration-hover-energy) * 0.42
-        )
+      border-color: rgb(241 247 250);
+      opacity: 0.46;
+      filter: brightness(
+        calc(1 + var(--faq-decoration-hover-energy) * 0.55)
       );
     }
 
     body.template-page-faq .faq-disc__ring--inner {
+      --faq-scroll-energy-base: 0.34;
+      --faq-scroll-energy-peak: 0.72;
       inset: 10%;
-      border-color: rgb(
-        252 253 254 /
-        calc(
-          0.34 +
-          var(--faq-accordion-distance-energy, 0) * 0.38 +
-          var(--faq-decoration-hover-energy) * 0.35
-        )
+      border-color: rgb(252 253 254);
+      opacity: 0.34;
+      filter: brightness(
+        calc(1 + var(--faq-decoration-hover-energy) * 0.45)
       );
     }
 
@@ -1368,8 +1395,6 @@
       max-block-size: var(--faq-accordion-flow-height, none);
       overflow: visible !important;
       isolation: isolate;
-      transform: translate3d(0, var(--faq-accordion-scroll-y, 0px), 0);
-      will-change: transform;
     }
 
     body.template-page-faq .faq-section .accordion.is-faq-decoration-hovered {
@@ -1386,67 +1411,87 @@
       will-change: transform;
     }
 
-    body.template-page-faq .faq-section .accordion::before,
-    body.template-page-faq .faq-section .accordion::after {
+    body.template-page-faq
+      .faq-section
+      .accordion
+      > .faq-accordion-tail {
+      position: absolute;
+      left: 0;
+      top: 100%;
+      width: 100%;
+      height: 132px;
+      z-index: 1;
+      pointer-events: none;
+      transform: translate3d(0, 0, 0);
+      will-change: transform;
+    }
+
+    body.template-page-faq
+      .faq-section
+      .faq-accordion-tail::before,
+    body.template-page-faq
+      .faq-section
+      .faq-accordion-tail::after {
       content: "";
       position: absolute;
       left: 50%;
       z-index: 1;
       pointer-events: none;
+      transform: translateX(-50%);
+      will-change: opacity;
     }
 
     /* Szerokie, miękkie halo schodzące w dół */
-    body.template-page-faq .faq-section .accordion::before {
-      top: calc(100% + 2px);
+    body.template-page-faq .faq-section .faq-accordion-tail::before {
+      --faq-scroll-energy-base: 0.55;
+      --faq-scroll-energy-peak: 1;
+      top: 2px;
       width: min(980px, 118%);
       height: 112px;
-      transform:
-        translateX(-50%)
-        translateY(var(--faq-accordion-tail-y, 0px));
-      opacity: 0.94;
+      opacity: 0.55;
       background:
         radial-gradient(
           ellipse 52% 18% at 50% 9%,
-          rgba(255, 240, 214, 0.27) 0%,
-          rgba(231, 176, 107, 0.18) 20%,
-          rgba(177, 103, 42, 0.09) 43%,
-          rgba(91, 44, 14, 0.032) 66%,
+          rgba(255, 240, 214, 0.46) 0%,
+          rgba(231, 176, 107, 0.31) 20%,
+          rgba(177, 103, 42, 0.15) 43%,
+          rgba(91, 44, 14, 0.055) 66%,
           transparent 84%
         ),
         radial-gradient(
           ellipse 78% 54% at 50% 17%,
-          rgba(191, 111, 42, 0.085) 0%,
-          rgba(103, 51, 16, 0.034) 50%,
+          rgba(191, 111, 42, 0.145) 0%,
+          rgba(103, 51, 16, 0.058) 50%,
           transparent 80%
         );
       filter:
         brightness(
           calc(
             1 +
-            var(--faq-accordion-distance-energy, 0) * 1.1 +
             var(--faq-decoration-hover-energy) * 0.95
           )
         )
         blur(11px);
-      transition: filter 760ms cubic-bezier(0.4, 0, 0.2, 1);
+      transition:
+        filter 760ms cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 280ms linear;
     }
 
     /* Jasny rdzeń — bardzo płaska elipsa, wygięta w dół */
-    body.template-page-faq .faq-section .accordion::after {
-      top: calc(100% - 2px);
+    body.template-page-faq .faq-section .faq-accordion-tail::after {
+      --faq-scroll-energy-base: 0.72;
+      --faq-scroll-energy-peak: 1;
+      top: -2px;
       width: min(760px, 84%);
       height: 22px;
-      transform:
-        translateX(-50%)
-        translateY(var(--faq-accordion-tail-y, 0px));
       border: 0;
-      border-bottom: 1px solid rgba(255, 239, 211, 0.78);
+      border-bottom: 1px solid rgb(255 239 211);
       border-radius: 50%;
-      opacity: 0.92;
+      opacity: 0.72;
       background: radial-gradient(
         ellipse 58% 95% at 50% 100%,
-        rgba(255, 232, 197, 0.16) 0%,
-        rgba(217, 147, 76, 0.08) 42%,
+        rgba(255, 232, 197, 0.205) 0%,
+        rgba(217, 147, 76, 0.111) 42%,
         transparent 74%
       );
       -webkit-mask-image: linear-gradient(
@@ -1473,23 +1518,78 @@
         brightness(
           calc(
             1 +
-            var(--faq-accordion-distance-energy, 0) * 1.45 +
             var(--faq-decoration-hover-energy) * 1.15
           )
         )
-        drop-shadow(0 0 5px rgba(255, 229, 188, 0.19))
-        drop-shadow(0 7px 18px rgba(199, 120, 48, 0.11))
-        drop-shadow(0 18px 32px rgba(132, 67, 20, 0.06));
-      transition: filter 760ms cubic-bezier(0.4, 0, 0.2, 1);
+        drop-shadow(0 0 5px rgba(255, 229, 188, 0.24))
+        drop-shadow(0 7px 18px rgba(199, 120, 48, 0.14))
+        drop-shadow(0 18px 32px rgba(132, 67, 20, 0.077));
+      transition:
+        filter 760ms cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 280ms linear;
     }
 
     body.template-page-faq
       .faq-section
-      .accordion.is-faq-decoration-hovered::before,
+      .accordion.is-faq-decoration-hovered
+      > .faq-accordion-tail::before,
     body.template-page-faq
       .faq-section
-      .accordion.is-faq-decoration-hovered::after {
+      .accordion.is-faq-decoration-hovered
+      > .faq-accordion-tail::after {
       transition-duration: 920ms;
+    }
+
+    @keyframes faq-scroll-energy-a {
+      0%,
+      100% {
+        opacity: var(--faq-scroll-energy-base);
+      }
+
+      48% {
+        opacity: var(--faq-scroll-energy-peak);
+      }
+    }
+
+    @keyframes faq-scroll-energy-b {
+      0%,
+      100% {
+        opacity: var(--faq-scroll-energy-base);
+      }
+
+      48% {
+        opacity: var(--faq-scroll-energy-peak);
+      }
+    }
+
+    body.template-page-faq
+      .faq-section.faq-scroll-energy-a
+      .faq-artwork-decoration--left,
+    body.template-page-faq
+      .faq-section.faq-scroll-energy-a
+      .faq-disc__ring,
+    body.template-page-faq
+      .faq-section.faq-scroll-energy-a
+      .faq-accordion-tail::before,
+    body.template-page-faq
+      .faq-section.faq-scroll-energy-a
+      .faq-accordion-tail::after {
+      animation: faq-scroll-energy-a 1180ms cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+
+    body.template-page-faq
+      .faq-section.faq-scroll-energy-b
+      .faq-artwork-decoration--left,
+    body.template-page-faq
+      .faq-section.faq-scroll-energy-b
+      .faq-disc__ring,
+    body.template-page-faq
+      .faq-section.faq-scroll-energy-b
+      .faq-accordion-tail::before,
+    body.template-page-faq
+      .faq-section.faq-scroll-energy-b
+      .faq-accordion-tail::after {
+      animation: faq-scroll-energy-b 1180ms cubic-bezier(0.4, 0, 0.2, 1) both;
     }
 
     @media (max-width: 1100px) {
@@ -1508,12 +1608,12 @@
         padding-block-end: 112px !important;
       }
 
-      body.template-page-faq .faq-section .accordion::before {
+      body.template-page-faq .faq-section .faq-accordion-tail::before {
         width: 108%;
         height: 94px;
       }
 
-      body.template-page-faq .faq-section .accordion::after {
+      body.template-page-faq .faq-section .faq-accordion-tail::after {
         width: 80%;
         height: 19px;
       }
@@ -1554,16 +1654,16 @@
         padding-block-end: 88px !important;
       }
 
-      body.template-page-faq .faq-section .accordion::before {
-        top: calc(100% + 1px);
+      body.template-page-faq .faq-section .faq-accordion-tail::before {
+        top: 1px;
         width: 104%;
         height: 72px;
         opacity: 0.72;
         filter: blur(8px);
       }
 
-      body.template-page-faq .faq-section .accordion::after {
-        top: calc(100% - 1px);
+      body.template-page-faq .faq-section .faq-accordion-tail::after {
+        top: -1px;
         width: 76%;
         height: 16px;
         opacity: 0.72;
@@ -1619,6 +1719,13 @@
     {% endif %}
 
     {% if template.suffix == 'contact' %}
+    /* ===== CONTACT PAGE — sticky footer; tło pod hero z GicleeApp (faq-section) ===== */
+    body.template-page-contact #MainContent > .shopify-section:has(.contact-form) > .section {
+      position: relative;
+      z-index: 1;
+      background: transparent !important;
+    }
+
     /* ===== CONTACT PAGE — sticky footer, bez scrolla strony (desktop) ===== */
     @media (min-width: 750px) {
       html:has(main .contact-form) {
@@ -1655,7 +1762,13 @@
       }
 
       body:has(main .contact-form) #MainContent > .shopify-section:has([data-testid^="divider-"]) .section {
-        padding-block: 8px !important;
+        padding-block-start: 8px !important;
+        padding-block-end: 8px !important;
+      }
+
+      /* Górny separator nad hero — bez górnego paddingu */
+      body.template-page-contact #MainContent > .shopify-section:first-child:has([data-testid^="divider-"]) .section {
+        padding-block-start: 0 !important;
       }
 
       body:has(main .contact-form) #MainContent > .shopify-section:has(.contact-form) {

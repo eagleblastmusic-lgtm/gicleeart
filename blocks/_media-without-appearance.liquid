@@ -25,6 +25,10 @@
         {
           "value": "video",
           "label": "t:options.video"
+        },
+        {
+          "value": "scroll_video",
+          "label": "Wideo sterowane przewijaniem"
         }
       ],
       "default": "image"
@@ -46,6 +50,35 @@
       "id": "video",
       "label": "t:settings.video",
       "visible_if": "{{ block.settings.media_type == 'video' }}"
+    },
+    {
+      "type": "text",
+      "id": "scroll_video_asset",
+      "label": "Nazwa pliku wideo w zasobach motywu",
+      "info": "Plik MP4 z katalogu assets, np. giclee-philosophy-scroll.mp4",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "range",
+      "id": "scroll_video_duration",
+      "label": "Długość animacji",
+      "min": 1,
+      "max": 6,
+      "step": 1,
+      "unit": "s",
+      "default": 6,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "range",
+      "id": "scroll_video_viewport",
+      "label": "Wysokość obszaru animacji",
+      "min": 100,
+      "max": 600,
+      "step": 50,
+      "unit": "vh",
+      "default": 400,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
     },
     {
       "type": "checkbox",
@@ -93,7 +126,7 @@
         }
       ],
       "default": "cover",
-      "visible_if": "{{ block.settings.media_type == 'video' }}"
+      "visible_if": "{{ block.settings.media_type == 'video' or block.settings.media_type == 'scroll_video' }}"
     }
   ],
   "presets": [

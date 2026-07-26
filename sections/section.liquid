@@ -406,6 +406,99 @@
     },
     {
       "type": "select",
+      "id": "giclee_contact_bg_mode",
+      "label": "Kontakt — typ tła (GicleeApp)",
+      "options": [
+        {
+          "value": "none",
+          "label": "Brak"
+        },
+        {
+          "value": "image",
+          "label": "Grafika"
+        },
+        {
+          "value": "gradient",
+          "label": "Gradient"
+        }
+      ],
+      "default": "none",
+      "visible_if": "{{ false }}"
+    },
+    {
+      "type": "select",
+      "id": "giclee_contact_bg_gradient",
+      "label": "Kontakt — wersja gradientu (GicleeApp)",
+      "options": [
+        {
+          "value": "v1",
+          "label": "Wersja 1"
+        },
+        {
+          "value": "v2",
+          "label": "Wersja 2"
+        }
+      ],
+      "default": "v1",
+      "visible_if": "{{ false }}"
+    },
+    {
+      "type": "range",
+      "id": "giclee_contact_bg_blur_px",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Kontakt — rozmycie tła (GicleeApp)",
+      "default": 0,
+      "visible_if": "{{ false }}"
+    },
+    {
+      "type": "range",
+      "id": "giclee_contact_bg_saturate_pct",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "label": "Kontakt — saturacja tła (GicleeApp)",
+      "default": 100,
+      "visible_if": "{{ false }}"
+    },
+    {
+      "type": "range",
+      "id": "giclee_contact_bg_brightness_pct",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "label": "Kontakt — jasność tła (GicleeApp)",
+      "default": 100,
+      "visible_if": "{{ false }}"
+    },
+    {
+      "type": "range",
+      "id": "giclee_contact_bg_dim_overlay_pct",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "label": "Kontakt — nakładka przyciemniająca (GicleeApp)",
+      "default": 0,
+      "visible_if": "{{ false }}"
+    },
+    {
+      "type": "range",
+      "id": "giclee_contact_bg_scale_pct",
+      "min": 0,
+      "max": 12,
+      "step": 1,
+      "unit": "%",
+      "label": "Kontakt — powiększenie kadru tła (GicleeApp)",
+      "default": 0,
+      "visible_if": "{{ false }}"
+    },
+    {
+      "type": "select",
       "id": "giclee_faq_accordion_style",
       "label": "FAQ — styl kart (GicleeApp)",
       "options": [
