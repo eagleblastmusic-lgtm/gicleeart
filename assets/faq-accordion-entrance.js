@@ -498,6 +498,191 @@
     });
   }
 
+  /*
+   * Otwarcie dowolnego pytania płynnie przenosi widok na koniec strony.
+   * Zamknięcie nie ingeruje w pozycję scrolla.
+   */
+  function initFaqScrollToBottomOnOpen() {
+    document
+      .querySelectorAll('.faq-section .accordion details')
+      .forEach(function (detailsNode) {
+        if (!(detailsNode instanceof HTMLDetailsElement)) return;
+        var details = detailsNode;
+        if (details.dataset.faqScrollToBottomBound) return;
+        details.dataset.faqScrollToBottomBound = '1';
+
+        details.addEventListener('toggle', function () {
+          if (!details.open) return;
+          window.requestAnimationFrame(function () {
+            window.scrollTo({
+              top: Math.max(
+                0,
+                document.documentElement.scrollHeight - window.innerHeight
+              ),
+              left: 0,
+              behavior: reduceMotion ? 'auto' : 'smooth',
+            });
+          });
+        });
+      });
+  }
+
+  /*
+   * Jeden impuls kółka przewija krótką stronę FAQ do odpowiedniej krawędzi:
+   * w dół do końca, a w górę do początku. Blokada zapobiega ponownemu
+   * uruchamianiu przez kolejne impulsy tej samej bezwładności myszy lub touchpada.
+   */
+  function initFaqSingleWheelPageSnap() {
+    var wheelScrollActive = false;
+    var releaseTimer = 0;
+
+    window.addEventListener(
+      'wheel',
+      function (event) {
+        if (event.deltaY === 0) return;
+        var pageBottom = Math.max(
+          0,
+          document.documentElement.scrollHeight - window.innerHeight
+        );
+        var targetY = event.deltaY > 0 ? pageBottom : 0;
+        if (Math.abs(window.scrollY - targetY) <= 1) return;
+
+        event.preventDefault();
+        if (wheelScrollActive) return;
+        wheelScrollActive = true;
+
+        window.scrollTo({
+          top: targetY,
+          left: 0,
+          behavior: reduceMotion ? 'auto' : 'smooth',
+        });
+
+        window.clearTimeout(releaseTimer);
+        releaseTimer = window.setTimeout(function () {
+          wheelScrollActive = false;
+        }, reduceMotion ? 80 : 700);
+      },
+      { passive: false, capture: true }
+    );
+  }
+
+  /*
+   * Gdy jedno pytanie jest otwarte, pozostałe są całkowicie nieinteraktywne.
+   * Najpierw trzeba zamknąć aktywną kartę; dopiero wtedy można otworzyć inną.
+   */
+  function initFaqSingleOpenLock() {
+    document.querySelectorAll('.faq-section .accordion').forEach(function (node) {
+      if (!(node instanceof HTMLElement)) return;
+      var accordion = node;
+      if (accordion.dataset.faqSingleOpenLockBound) return;
+      accordion.dataset.faqSingleOpenLockBound = '1';
+
+      var cards = Array.prototype.slice.call(
+        accordion.querySelectorAll(':scope > accordion-custom')
+      );
+      if (!cards.length) return;
+
+      var applyLock = function () {
+        var openCard = null;
+        cards.some(function (card) {
+          var details = card.querySelector('details');
+          if (details instanceof HTMLDetailsElement && details.open) {
+            openCard = card;
+            return true;
+          }
+          return false;
+        });
+
+        cards.forEach(function (card) {
+          if (!(card instanceof HTMLElement)) return;
+          var locked = openCard instanceof HTMLElement && card !== openCard;
+          card.toggleAttribute('inert', locked);
+          card.dataset.faqLocked = locked ? '1' : '0';
+
+          var summary = card.querySelector('summary');
+          if (!(summary instanceof HTMLElement)) return;
+          if (locked) {
+            summary.setAttribute('aria-disabled', 'true');
+            summary.setAttribute('tabindex', '-1');
+          } else {
+            summary.removeAttribute('aria-disabled');
+            summary.removeAttribute('tabindex');
+          }
+        });
+      };
+
+      cards.forEach(function (card) {
+        var details = card.querySelector('details');
+        if (!(details instanceof HTMLDetailsElement)) return;
+        details.addEventListener('toggle', applyLock);
+      });
+
+      applyLock();
+    });
+  }
+
+  /*
+   * Dolna świetlista kreska jest wizualnie przywiązana do ostatniej karty.
+   * Kontener akordeonu ma zamrożoną wysokość, więc pozycję przepełnionej
+   * karty trzeba śledzić osobno podczas animacji details.
+   */
+  function initFaqAccordionTailTracking() {
+    document.querySelectorAll('.faq-section .accordion').forEach(function (node) {
+      if (!(node instanceof HTMLElement)) return;
+      var accordion = node;
+      if (accordion.dataset.faqTailTrackingBound) return;
+      accordion.dataset.faqTailTrackingBound = '1';
+
+      var cards = accordion.querySelectorAll(':scope > accordion-custom');
+      if (!cards.length) return;
+      var lastCard = cards[cards.length - 1];
+      if (!(lastCard instanceof HTMLElement)) return;
+
+      var baselineBottom =
+        lastCard.getBoundingClientRect().bottom -
+        accordion.getBoundingClientRect().top;
+      var rafId = 0;
+      var stableFrames = 0;
+      var previousOffset = NaN;
+      var stopAfter = 0;
+
+      var track = function (timestamp) {
+        rafId = 0;
+        var offset =
+          lastCard.getBoundingClientRect().bottom -
+          accordion.getBoundingClientRect().top -
+          baselineBottom;
+        accordion.style.setProperty(
+          '--faq-accordion-tail-y',
+          offset.toFixed(2) + 'px'
+        );
+
+        if (Number.isFinite(previousOffset) &&
+            Math.abs(offset - previousOffset) < 0.04) {
+          stableFrames += 1;
+        } else {
+          stableFrames = 0;
+        }
+        previousOffset = offset;
+
+        if (stableFrames < 8 && timestamp < stopAfter) {
+          rafId = window.requestAnimationFrame(track);
+        }
+      };
+
+      var startTracking = function () {
+        stableFrames = 0;
+        previousOffset = NaN;
+        stopAfter = window.performance.now() + (reduceMotion ? 100 : 2400);
+        if (!rafId) rafId = window.requestAnimationFrame(track);
+      };
+
+      accordion.querySelectorAll('details').forEach(function (details) {
+        details.addEventListener('toggle', startTracking);
+      });
+    });
+  }
+
   /**
    * Style 2: uproszczony świecący hover — radial CSS podąża za kursorem.
    */
@@ -982,6 +1167,10 @@
   function run() {
     initStyle2GalaxyHover();
     initStyle3GalaxyFull();
+    initFaqScrollToBottomOnOpen();
+    initFaqSingleWheelPageSnap();
+    initFaqSingleOpenLock();
+    initFaqAccordionTailTracking();
     if (reduceMotion) return;
     initFaqBackgroundScrollExpansion();
     prepareFadeEntrances();

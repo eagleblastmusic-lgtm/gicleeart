@@ -382,6 +382,11 @@
       display: block;
     }
 
+    body.template-page-faq .accordion accordion-custom[data-faq-locked="1"] {
+      pointer-events: none;
+      user-select: none;
+    }
+
     /* Odstęp między kartami (stała szerokość kontenera bez zmian) */
     .accordion accordion-custom + accordion-custom { margin-block-start: 14px; }
 
@@ -639,45 +644,101 @@
       }
     }
 
-    /* Wycinek Bruegla — zakotwiczony w prawym dolnym rogu viewportu; fade-in przy 1. akordeonie */
-    body.template-page-faq .faq-accordion-cutout {
-      position: fixed !important;
-      inset: auto 0 0 auto;
-      left: auto !important;
-      right: 0 !important;
-      bottom: 0 !important;
-      top: auto !important;
-      z-index: 40;
+    /*
+     * Wycinki FAQ (1–5) — prawy dolny róg sekcji (nad stopką).
+     * Stack: dekoracje 0 → cutout 1 → treść 2 → dolny gradient/kurtyna 4.
+     */
+    body.template-page-faq .faq-section > .faq-accordion-cutout {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: auto;
+      top: auto;
+      z-index: 1;
       width: min(22rem, 42vw);
       height: auto;
       max-height: 42vh;
       margin: 0;
       object-fit: contain;
       object-position: right bottom;
-      pointer-events: none;
+      pointer-events: auto;
+      cursor: default;
       user-select: none;
       -webkit-user-drag: none;
       opacity: 0;
       visibility: hidden;
-      transform: none !important;
+      transform: scale(1);
+      transform-origin: right bottom;
       transition:
         opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
-        visibility 0.55s;
-      will-change: opacity;
+        visibility 0.55s,
+        transform 0.32s ease;
+      will-change: opacity, transform;
     }
-    body.template-page-faq .faq-accordion-cutout.is-visible {
+    body.template-page-faq .faq-section > .faq-accordion-cutout--1 {
+      width: min(28rem, 54vw);
+      max-height: 52vh;
+    }
+    body.template-page-faq .faq-section > .faq-accordion-cutout--2 {
+      width: min(32rem, 62vw);
+      max-height: 44vh;
+    }
+    body.template-page-faq .faq-section > .faq-accordion-cutout--3 {
+      width: min(20rem, 42vw);
+      max-height: 62vh;
+    }
+    body.template-page-faq .faq-section > .faq-accordion-cutout--4 {
+      width: min(18rem, 38vw);
+      max-height: 58vh;
+    }
+    body.template-page-faq .faq-section > .faq-accordion-cutout--5 {
+      width: min(30rem, 58vw);
+      max-height: 42vh;
+    }
+    body.template-page-faq .faq-section > .faq-accordion-cutout.is-visible {
       opacity: 1;
       visibility: visible;
     }
+    body.template-page-faq .faq-section > .faq-accordion-cutout.is-visible:hover {
+      transform: scale(1.02);
+    }
     @media screen and (max-width: 749px) {
-      body.template-page-faq .faq-accordion-cutout {
+      body.template-page-faq .faq-section > .faq-accordion-cutout {
         width: min(14rem, 58vw);
         max-height: 28vh;
       }
+      body.template-page-faq .faq-section > .faq-accordion-cutout--1 {
+        width: min(17rem, 72vw);
+        max-height: 36vh;
+      }
+      body.template-page-faq .faq-section > .faq-accordion-cutout--2 {
+        width: min(19rem, 82vw);
+        max-height: 30vh;
+      }
+      body.template-page-faq .faq-section > .faq-accordion-cutout--3 {
+        width: min(14rem, 52vw);
+        max-height: 46vh;
+      }
+      body.template-page-faq .faq-section > .faq-accordion-cutout--4 {
+        width: min(12rem, 48vw);
+        max-height: 42vh;
+      }
+      body.template-page-faq .faq-section > .faq-accordion-cutout--5 {
+        width: min(18rem, 78vw);
+        max-height: 28vh;
+      }
+    }
+    @media (hover: none), (pointer: coarse) {
+      body.template-page-faq .faq-section > .faq-accordion-cutout.is-visible:hover {
+        transform: scale(1);
+      }
     }
     @media (prefers-reduced-motion: reduce) {
-      body.template-page-faq .faq-accordion-cutout {
+      body.template-page-faq .faq-section > .faq-accordion-cutout {
         transition: opacity 0.2s ease, visibility 0.2s;
+      }
+      body.template-page-faq .faq-section > .faq-accordion-cutout.is-visible:hover {
+        transform: scale(1);
       }
     }
     /* nadpisz transition:none z accordion-custom (poza focus) — bez tego zamykanie jest skokowe */
@@ -1299,7 +1360,9 @@
       top: calc(100% + 2px);
       width: min(980px, 118%);
       height: 112px;
-      transform: translateX(-50%);
+      transform:
+        translateX(-50%)
+        translateY(var(--faq-accordion-tail-y, 0px));
       opacity: 0.94;
       background:
         radial-gradient(
@@ -1326,7 +1389,9 @@
       top: calc(100% - 2px);
       width: min(760px, 84%);
       height: 22px;
-      transform: translateX(-50%);
+      transform:
+        translateX(-50%)
+        translateY(var(--faq-accordion-tail-y, 0px));
       border: 0;
       border-bottom: 1px solid rgba(255, 239, 211, 0.78);
       border-radius: 50%;

@@ -17,27 +17,61 @@
   {% render 'giclee-site-notice' %}
   {% if template.suffix == 'faq' %}
   <script>
-    /* FAQ a11y + wycinek 1. akordeonu (fade-in, prawy dolny róg viewportu) */
+    /* FAQ a11y + wycinki akordeonów (fade-in, prawy dół sekcji FAQ pod gradientem) */
     (function () {
-      var FIRST_CUTOUT_SRC = {{ 'faq-accordion-first-cutout.png' | asset_url | json }};
+      var CUTOUTS = [
+        {
+          index: 0,
+          src: {{ 'faq-accordion-first-cutout.png' | asset_url | json }},
+          className: 'faq-accordion-cutout faq-accordion-cutout--1'
+        },
+        {
+          index: 1,
+          src: {{ 'faq-accordion-second-cutout.png' | asset_url | json }},
+          className: 'faq-accordion-cutout faq-accordion-cutout--2'
+        },
+        {
+          index: 2,
+          src: {{ 'faq-accordion-third-cutout.png' | asset_url | json }},
+          className: 'faq-accordion-cutout faq-accordion-cutout--3'
+        },
+        {
+          index: 3,
+          src: {{ 'faq-accordion-fourth-cutout.png' | asset_url | json }},
+          className: 'faq-accordion-cutout faq-accordion-cutout--4'
+        },
+        {
+          index: 4,
+          src: {{ 'faq-accordion-fifth-cutout.png' | asset_url | json }},
+          className: 'faq-accordion-cutout faq-accordion-cutout--5'
+        }
+      ];
 
-      function ensureFirstAccordionCutout() {
-        var existing = document.querySelector('.faq-accordion-cutout');
+      function findFaqSection() {
+        return document.querySelector('.faq-section');
+      }
+
+      function ensureAccordionCutout(config) {
+        var selector = '.faq-accordion-cutout--' + (config.index + 1);
+        var existing = document.querySelector(selector);
         if (existing) return existing;
 
+        var faqSection = findFaqSection();
+        if (!faqSection) return null;
+
         var img = document.createElement('img');
-        img.className = 'faq-accordion-cutout';
-        img.src = FIRST_CUTOUT_SRC;
+        img.className = config.className;
+        img.src = config.src;
         img.alt = '';
         img.setAttribute('aria-hidden', 'true');
         img.decoding = 'async';
         img.loading = 'eager';
-        document.body.appendChild(img);
+        faqSection.appendChild(img);
         return img;
       }
 
-      function syncFirstAccordionCutout(details) {
-        var cutout = ensureFirstAccordionCutout();
+      function syncAccordionCutout(details, config) {
+        var cutout = ensureAccordionCutout(config);
         if (!cutout) return;
         if (details.open) {
           cutout.classList.add('is-visible');
@@ -46,16 +80,19 @@
         }
       }
 
-      function bindFirstAccordionCutout() {
-        var first = document.querySelector('.accordion accordion-custom');
-        if (!first) return;
-        var details = first.querySelector('details');
-        if (!details) return;
+      function bindAccordionCutouts() {
+        var items = document.querySelectorAll('.accordion accordion-custom');
+        CUTOUTS.forEach(function (config) {
+          var item = items[config.index];
+          if (!item) return;
+          var details = item.querySelector('details');
+          if (!details) return;
 
-        ensureFirstAccordionCutout();
-        syncFirstAccordionCutout(details);
-        details.addEventListener('toggle', function () {
-          syncFirstAccordionCutout(details);
+          ensureAccordionCutout(config);
+          syncAccordionCutout(details, config);
+          details.addEventListener('toggle', function () {
+            syncAccordionCutout(details, config);
+          });
         });
       }
 
@@ -78,7 +115,7 @@
             summary.setAttribute('aria-expanded', details.open ? 'true' : 'false');
           });
         });
-        bindFirstAccordionCutout();
+        bindAccordionCutouts();
       }
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', enhanceFaqA11y);
