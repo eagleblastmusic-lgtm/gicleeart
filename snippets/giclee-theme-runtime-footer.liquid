@@ -17,8 +17,48 @@
   {% render 'giclee-site-notice' %}
   {% if template.suffix == 'faq' %}
   <script>
-    /* FAQ a11y — progresywne ulepszenie tylko na stronie FAQ (treść bez zmian) */
+    /* FAQ a11y + wycinek 1. akordeonu (fade-in, prawy dolny róg viewportu) */
     (function () {
+      var FIRST_CUTOUT_SRC = {{ 'faq-accordion-first-cutout.png' | asset_url | json }};
+
+      function ensureFirstAccordionCutout() {
+        var existing = document.querySelector('.faq-accordion-cutout');
+        if (existing) return existing;
+
+        var img = document.createElement('img');
+        img.className = 'faq-accordion-cutout';
+        img.src = FIRST_CUTOUT_SRC;
+        img.alt = '';
+        img.setAttribute('aria-hidden', 'true');
+        img.decoding = 'async';
+        img.loading = 'eager';
+        document.body.appendChild(img);
+        return img;
+      }
+
+      function syncFirstAccordionCutout(details) {
+        var cutout = ensureFirstAccordionCutout();
+        if (!cutout) return;
+        if (details.open) {
+          cutout.classList.add('is-visible');
+        } else {
+          cutout.classList.remove('is-visible');
+        }
+      }
+
+      function bindFirstAccordionCutout() {
+        var first = document.querySelector('.accordion accordion-custom');
+        if (!first) return;
+        var details = first.querySelector('details');
+        if (!details) return;
+
+        ensureFirstAccordionCutout();
+        syncFirstAccordionCutout(details);
+        details.addEventListener('toggle', function () {
+          syncFirstAccordionCutout(details);
+        });
+      }
+
       function enhanceFaqA11y() {
         var items = document.querySelectorAll('.accordion accordion-custom');
         items.forEach(function (item, i) {
@@ -38,6 +78,7 @@
             summary.setAttribute('aria-expanded', details.open ? 'true' : 'false');
           });
         });
+        bindFirstAccordionCutout();
       }
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', enhanceFaqA11y);

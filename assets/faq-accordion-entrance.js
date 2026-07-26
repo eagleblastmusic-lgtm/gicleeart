@@ -364,8 +364,21 @@
       if (cards.length < 2) return;
 
       var activeIndex = -1;
+      var hoveredIndex = -1;
+      var persistentIndex = -1;
       /** @type {GsapTimeline | null} */
       var leaveTl = null;
+
+      var findOpenIndex = function () {
+        var found = -1;
+        cards.forEach(function (card, index) {
+          var details = card.querySelector('details');
+          if (details instanceof HTMLDetailsElement && details.open) {
+            found = index;
+          }
+        });
+        return found;
+      };
 
       /**
        * @param {number} index
@@ -442,10 +455,46 @@
 
       cards.forEach(function (card, index) {
         card.addEventListener('mouseenter', function () {
+          hoveredIndex = index;
           focusCard(index);
         });
+
+        var details = card.querySelector('details');
+        if (!(details instanceof HTMLDetailsElement)) return;
+        if (details.open) persistentIndex = index;
+
+        details.addEventListener('toggle', function () {
+          if (details.open) {
+            persistentIndex = index;
+            focusCard(index);
+            return;
+          }
+
+          if (persistentIndex === index) {
+            persistentIndex = findOpenIndex();
+          }
+          if (hoveredIndex >= 0) {
+            focusCard(hoveredIndex);
+          } else if (persistentIndex >= 0) {
+            focusCard(persistentIndex);
+          } else {
+            releaseAll();
+          }
+        });
       });
-      accordion.addEventListener('mouseleave', releaseAll);
+      accordion.addEventListener('mouseleave', function () {
+        hoveredIndex = -1;
+        persistentIndex = findOpenIndex();
+        if (persistentIndex >= 0) {
+          focusCard(persistentIndex);
+        } else {
+          releaseAll();
+        }
+      });
+
+      if (persistentIndex >= 0) {
+        focusCard(persistentIndex);
+      }
     });
   }
 
@@ -674,12 +723,36 @@
       : [];
     var maxAccordionOffset = 0;
     if (accordion instanceof HTMLElement) {
-      var sectionRect = section.getBoundingClientRect();
       var accordionRect = accordion.getBoundingClientRect();
-      var closedCenterDelta =
-        (sectionRect.top + sectionRect.bottom) * 0.5 -
-        (accordionRect.top + accordionRect.bottom) * 0.5;
-      maxAccordionOffset = closedCenterDelta - maxExtension * 0.5;
+      /*
+       * Zamknięta wysokość pozostaje wysokością przepływu dokumentu.
+       * Otwarta odpowiedź przesuwa następne karty wewnątrz tego kadru,
+       * ale nie wydłuża sekcji ani nie tworzy nowego zakresu scrollowania.
+       */
+      accordion.style.setProperty(
+        '--faq-accordion-flow-height',
+        accordionRect.height.toFixed(2) + 'px'
+      );
+      accordion.style.setProperty(
+        'block-size',
+        accordionRect.height.toFixed(2) + 'px',
+        'important'
+      );
+      accordion.style.setProperty(
+        'max-block-size',
+        accordionRect.height.toFixed(2) + 'px',
+        'important'
+      );
+      accordion.style.setProperty('min-block-size', '0', 'important');
+      var accordionDocumentCenter =
+        (accordionRect.top + accordionRect.bottom) * 0.5 + window.scrollY;
+      /*
+       * Pozycja końcowa odnosi się do 50% viewportu, nie do środka sekcji,
+       * której górna krawędź i wysokość zmieniają się podczas scrollowania.
+       */
+      maxAccordionOffset =
+        window.innerHeight * 0.5 -
+        (accordionDocumentCenter - scrollRange);
     }
     var clampProgress = function (value) {
       return Math.min(1, Math.max(0, value));

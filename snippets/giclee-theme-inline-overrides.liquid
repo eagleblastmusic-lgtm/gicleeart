@@ -638,6 +638,48 @@
         transform: translateY(-4px);
       }
     }
+
+    /* Wycinek Bruegla — zakotwiczony w prawym dolnym rogu viewportu; fade-in przy 1. akordeonie */
+    body.template-page-faq .faq-accordion-cutout {
+      position: fixed !important;
+      inset: auto 0 0 auto;
+      left: auto !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      top: auto !important;
+      z-index: 40;
+      width: min(22rem, 42vw);
+      height: auto;
+      max-height: 42vh;
+      margin: 0;
+      object-fit: contain;
+      object-position: right bottom;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-drag: none;
+      opacity: 0;
+      visibility: hidden;
+      transform: none !important;
+      transition:
+        opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+        visibility 0.55s;
+      will-change: opacity;
+    }
+    body.template-page-faq .faq-accordion-cutout.is-visible {
+      opacity: 1;
+      visibility: visible;
+    }
+    @media screen and (max-width: 749px) {
+      body.template-page-faq .faq-accordion-cutout {
+        width: min(14rem, 58vw);
+        max-height: 28vh;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      body.template-page-faq .faq-accordion-cutout {
+        transition: opacity 0.2s ease, visibility 0.2s;
+      }
+    }
     /* nadpisz transition:none z accordion-custom (poza focus) — bez tego zamykanie jest skokowe */
     .accordion accordion-custom details:not(:focus-within) .details-content,
     .accordion accordion-custom details:not(:focus-within)::details-content {
@@ -1066,6 +1108,28 @@
       padding-block-start: var(--faq-scroll-bg-extension);
     }
 
+    /*
+     * Dolna kurtyna pozostaje nad kartami wychodzącymi z zamrożonego kadru.
+     * Stopka ma własny z-index:1001, więc również zawsze przykrywa akordeony.
+     */
+    body.template-page-faq .faq-section.faq-section--bg-image::after {
+      content: "";
+      position: absolute;
+      z-index: 4;
+      inset-inline: 0;
+      bottom: 0;
+      height: clamp(120px, 18vh, 170px);
+      pointer-events: none;
+      background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(0, 0, 0, 0.08) 24%,
+        rgba(0, 0, 0, 0.58) 56%,
+        rgba(0, 0, 0, 0.94) 82%,
+        #000 100%
+      );
+    }
+
     /* Dekoracje — pozycje z obniżeniem o 160px; parallax GSAP (yPercent + scrub) */
     body.template-page-faq .faq-artwork-decoration {
       position: absolute;
@@ -1106,10 +1170,8 @@
       transform: translateY(-50%);
       opacity: 0.75;
       overflow: visible;
-      filter: brightness(
-        calc(1 + var(--faq-accordion-distance-energy, 0) * 1.15)
-      );
-      will-change: transform, filter;
+      filter: none;
+      will-change: transform;
     }
 
     body.template-page-faq .faq-disc__surface,
@@ -1143,28 +1205,32 @@
 
     body.template-page-faq .faq-disc__ring {
       border-style: solid;
-      border-color: rgba(220, 228, 232, 0.65);
-      box-shadow:
-        0 0 16px rgba(220, 228, 232, 0.15),
-        inset 0 0 12px rgba(255, 255, 255, 0.1);
+      border-width: 1px;
+      box-shadow: none;
     }
 
     body.template-page-faq .faq-disc__ring--outer {
       inset: 0;
-      border-width: 1px;
-      border-color: rgba(215, 225, 230, 0.6);
+      border-color: rgb(
+        224 235 240 /
+        calc(0.28 + var(--faq-accordion-distance-energy, 0) * 0.2)
+      );
     }
 
     body.template-page-faq .faq-disc__ring--middle {
       inset: 5%;
-      border-width: 1px;
-      border-color: rgba(235, 240, 245, 0.7);
+      border-color: rgb(
+        241 247 250 /
+        calc(0.46 + var(--faq-accordion-distance-energy, 0) * 0.54)
+      );
     }
 
     body.template-page-faq .faq-disc__ring--inner {
       inset: 10%;
-      border-width: 1px;
-      border-color: rgba(245, 248, 250, 0.45);
+      border-color: rgb(
+        252 253 254 /
+        calc(0.34 + var(--faq-accordion-distance-energy, 0) * 0.38)
+      );
     }
 
     body.template-page-faq .faq-disc__flare {
@@ -1199,6 +1265,10 @@
      */
     body.template-page-faq .faq-section .accordion {
       position: relative;
+      z-index: 1;
+      block-size: var(--faq-accordion-flow-height, auto);
+      min-block-size: 0;
+      max-block-size: var(--faq-accordion-flow-height, none);
       overflow: visible !important;
       isolation: isolate;
       transform: translate3d(0, var(--faq-accordion-scroll-y, 0px), 0);
