@@ -506,8 +506,62 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
     def _zone_value(zone_id: str, field_id: str) -> Any:
         return state["zone_values"].setdefault(zone_id, {}).get(field_id)
 
+    def _preset_values_equal(left: Any, right: Any) -> bool:
+        if isinstance(right, (int, float)) and not isinstance(right, bool):
+            try:
+                return abs(float(left) - float(right)) <= 1e-9
+            except (TypeError, ValueError):
+                return False
+        return left == right
+
+    def _matching_preset(zone: TemplateZone, values: dict[str, Any]) -> str | None:
+        for preset_id, assignments in zone.preset_values:
+            if all(
+                _preset_values_equal(values.get(field_id), expected)
+                for field_id, expected in assignments
+            ):
+                return preset_id
+        return None
+
+    def _queue_zone_render() -> None:
+        if state.get("preset_render_pending"):
+            return
+        state["preset_render_pending"] = True
+
+        def _render() -> None:
+            state["preset_render_pending"] = False
+            _render_zone_editor()
+
+        host.after_idle(_render)
+
     def _set_zone_value(zone_id: str, field_id: str, value: Any) -> None:
-        state["zone_values"].setdefault(zone_id, {})[field_id] = value
+        values = state["zone_values"].setdefault(zone_id, {})
+        zone = zone_by_id(config.zones, zone_id)
+        previous = values.get(field_id)
+        is_preset_field = bool(zone and field_id == zone.preset_field_id)
+        if _preset_values_equal(previous, value) and not is_preset_field:
+            return
+        values[field_id] = value
+
+        if zone and zone.preset_field_id and zone.preset_values:
+            if field_id == zone.preset_field_id:
+                assignments = dict(zone.preset_values).get(str(value))
+                if assignments:
+                    for target_id, target_value in assignments:
+                        values[target_id] = target_value
+                    _queue_zone_render()
+            else:
+                controlled = {
+                    target_id
+                    for _preset_id, assignments in zone.preset_values
+                    for target_id, _target_value in assignments
+                }
+                if field_id in controlled:
+                    matched = _matching_preset(zone, values)
+                    next_preset = matched or zone.custom_preset_value
+                    if values.get(zone.preset_field_id) != next_preset:
+                        values[zone.preset_field_id] = next_preset
+                        _queue_zone_render()
         _mark_dirty()
 
     def _render_thumb(parent: tk.Widget, ref: str) -> ttk.Label:
@@ -629,15 +683,15 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
                     fid: str = fld.field_id,
                     _lo: int = lo,
                     _hi: int = hi,
+                    _step: int = max(1, int(fld.step or 1)),
                     _unit: str = unit,
                 ) -> None:
                     try:
-                        n = int(round(float(v.get())))
+                        raw = float(v.get())
                     except (TypeError, ValueError):
-                        n = _lo
+                        raw = float(_lo)
+                    n = int(round((raw - _lo) / _step) * _step + _lo)
                     n = max(_lo, min(_hi, n))
-                    if int(round(float(v.get()))) != n:
-                        v.set(n)
                     lv.set(f"{n}{_unit}")
                     _set_zone_value(zid, fid, n)
 
@@ -658,11 +712,63 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
                 var.trace_add("write", lambda *_a, v=var, fid=fld.field_id: _set_zone_value(zid, fid, v.get()))
             return row + 1
         elif fld.kind == "float":
-            var = tk.StringVar(value=str(_zone_value(zid, fld.field_id) or 0))
-            ttk.Entry(editor_inner, textvariable=var, width=12).grid(
-                row=row, column=0, columnspan=2, sticky="w", pady=(0, 10)
-            )
-            var.trace_add("write", lambda *_a, v=var, fid=fld.field_id: _set_zone_value(zid, fid, v.get()))
+            lo = float(fld.min_value) if fld.min_value is not None else 0.0
+            hi = float(fld.max_value) if fld.max_value is not None else 9999.0
+            try:
+                initial = float(_zone_value(zid, fld.field_id))
+            except (TypeError, ValueError):
+                initial = lo
+            initial = max(lo, min(hi, initial))
+            if fld.min_value is not None and fld.max_value is not None:
+                row_fr = ttk.Frame(editor_inner)
+                row_fr.grid(
+                    row=row, column=0, columnspan=2, sticky="ew", pady=(0, 10)
+                )
+                step = float(fld.step or 0.01)
+                unit = fld.unit or ""
+                float_var = tk.DoubleVar(value=initial)
+                label_var = tk.StringVar(value=f"{initial:g}{unit}")
+                ttk.Scale(
+                    row_fr,
+                    from_=lo,
+                    to=hi,
+                    orient="horizontal",
+                    variable=float_var,
+                ).pack(side="left", fill="x", expand=True, padx=(0, 10))
+                ttk.Label(row_fr, textvariable=label_var, width=9).pack(side="left")
+
+                def _on_float_scale(
+                    *_a: object,
+                    v: tk.DoubleVar = float_var,
+                    lv: tk.StringVar = label_var,
+                    fid: str = fld.field_id,
+                    _lo: float = lo,
+                    _hi: float = hi,
+                    _step: float = step,
+                    _unit: str = unit,
+                ) -> None:
+                    try:
+                        raw = float(v.get())
+                    except (TypeError, ValueError):
+                        raw = _lo
+                    value = round((raw - _lo) / _step) * _step + _lo
+                    value = max(_lo, min(_hi, value))
+                    value = round(value, 6)
+                    lv.set(f"{value:g}{_unit}")
+                    _set_zone_value(zid, fid, value)
+
+                float_var.trace_add("write", _on_float_scale)
+            else:
+                var = tk.StringVar(value=str(initial))
+                ttk.Entry(editor_inner, textvariable=var, width=12).grid(
+                    row=row, column=0, columnspan=2, sticky="w", pady=(0, 10)
+                )
+                var.trace_add(
+                    "write",
+                    lambda *_a, v=var, fid=fld.field_id: _set_zone_value(
+                        zid, fid, v.get()
+                    ),
+                )
             return row + 1
         elif fld.kind in ("shopify_image", "shopify_video"):
             is_video = fld.kind == "shopify_video"
@@ -881,6 +987,17 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             row=1, column=0, columnspan=2, sticky="w", pady=(0, 8)
         )
         row = 2
+        if zone.preset_field_id and zone.recommended_preset_value:
+            ttk.Button(
+                editor_inner,
+                text="Przywróć zalecane ustawienia",
+                command=lambda z=zone: _set_zone_value(
+                    z.zone_id,
+                    str(z.preset_field_id),
+                    str(z.recommended_preset_value),
+                ),
+            ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(0, 8))
+            row += 1
         under_hero_mode = ""
         if zone.zone_id == "under_hero_bg":
             under_hero_mode = str(

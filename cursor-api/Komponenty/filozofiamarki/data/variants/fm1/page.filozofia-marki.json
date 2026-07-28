@@ -95,7 +95,7 @@
         "corner_radius": "square",
         "width_percent": 100,
         "alignment_horizontal": "center",
-        "padding-block-start": 16,
+        "padding-block-start": 0,
         "padding-block-end": 16
       }
     },
@@ -125,6 +125,41 @@
             "link": "",
             "video_loop": true,
             "video_autoplay": false,
+            "scroll_video_asset": "giclee-philosophy-frames",
+            "scroll_video_engine": "video",
+            "scroll_video_quality": "720p",
+            "scroll_intro_title": "FILOZOFIA|MARKI",
+            "scroll_intro_subtitle": "<p>Giclée Art opiera się na idei, że dzieło sztuki nie kończy się na pliku cyfrowym.</p>",
+            "scroll_outro_text": "<p>Kończy się dopiero wtedy, gdy otrzymuje swoją ostateczną formę — spójną, archiwalną i gotową do ekspozycji.</p>",
+            "scroll_motion_preset": "luxury",
+            "scroll_motion_speed": 0.95,
+            "scroll_motion_easing": "smootherstep",
+            "scroll_motion_bezier": "0.25,0.10,0.25,1.00",
+            "scroll_motion_smoothing_ms": 240,
+            "scroll_motion_lag_ms": 20,
+            "scroll_motion_inertia": 16,
+            "scroll_motion_damping": 92,
+            "scroll_motion_max_catchup": 1.8,
+            "scroll_motion_stop_behavior": "reach",
+            "scroll_motion_snap_points": 5,
+            "scroll_motion_direction": "normal",
+            "scroll_motion_material_start": 0,
+            "scroll_motion_material_end": 100,
+            "scroll_motion_interpolation": "damp",
+            "scroll_motion_tail_pacing": true,
+            "scroll_motion_tail_window_frames": 12,
+            "scroll_motion_frame_rounding": "round",
+            "scroll_motion_mp4_dead_zone_ms": 8,
+            "scroll_motion_webp_dead_zone_frames": 1,
+            "scroll_motion_preload_radius": 18,
+            "scroll_motion_cache_frames": 0,
+            "scroll_preserve_alpha": true,
+            "scroll_background_mode": "auto",
+            "scroll_background_value": "#000000",
+            "scroll_alpha_diagnostics": false,
+            "scroll_force_transparent": false,
+            "scroll_video_duration": 4,
+            "scroll_video_viewport": 400,
             "image_position": "contain",
             "video_position": "cover"
           },
@@ -486,6 +521,82 @@
         "padding-block-start": 16,
         "padding-block-end": 16
       }
+    },
+    "media_with_content_Wrota": {
+      "type": "media-with-content",
+      "blocks": {
+        "media": {
+          "type": "_media-without-appearance",
+          "static": true,
+          "settings": {
+            "media_type": "scroll_video",
+            "image": "shopify://shop_images/aristoteles_202409779.jpg",
+            "link": "",
+            "video_loop": true,
+            "video_autoplay": false,
+            "scroll_video_asset": "giclee-philosophy-wrota",
+            "scroll_video_engine": "video",
+            "scroll_video_quality": "1080p",
+            "scroll_intro_title": "",
+            "scroll_intro_subtitle": "",
+            "scroll_outro_text": "",
+            "scroll_motion_preset": "custom",
+            "scroll_motion_speed": 1.0,
+            "scroll_motion_easing": "linear",
+            "scroll_motion_bezier": "0.25,0.10,0.25,1.00",
+            "scroll_motion_smoothing_ms": 1000,
+            "scroll_motion_lag_ms": 230,
+            "scroll_motion_inertia": 0,
+            "scroll_motion_damping": 100,
+            "scroll_motion_max_catchup": 0.0,
+            "scroll_motion_stop_behavior": "reach",
+            "scroll_motion_snap_points": 5,
+            "scroll_motion_direction": "normal",
+            "scroll_motion_material_start": 0,
+            "scroll_motion_material_end": 100,
+            "scroll_motion_interpolation": "none",
+            "scroll_motion_tail_pacing": false,
+            "scroll_motion_tail_window_frames": 2,
+            "scroll_motion_frame_rounding": "floor",
+            "scroll_motion_mp4_dead_zone_ms": 0,
+            "scroll_motion_webp_dead_zone_frames": 1,
+            "scroll_motion_preload_radius": 18,
+            "scroll_motion_cache_frames": 0,
+            "scroll_preserve_alpha": true,
+            "scroll_background_mode": "auto",
+            "scroll_background_value": "#000000",
+            "scroll_alpha_diagnostics": false,
+            "scroll_force_transparent": false,
+            "scroll_video_duration": 6,
+            "scroll_video_viewport": 650,
+            "image_position": "cover",
+            "video_position": "cover"
+          },
+          "blocks": {}
+        },
+        "content": {
+          "type": "_content-without-appearance",
+          "static": true,
+          "settings": {
+            "horizontal_alignment_flex_direction_column": "center",
+            "vertical_alignment_flex_direction_column": "center",
+            "gap": 24
+          },
+          "blocks": {},
+          "block_order": []
+        }
+      },
+      "name": "Portal Wrota",
+      "settings": {
+        "media_position": "right",
+        "media_width": "medium",
+        "media_height": "100svh",
+        "section_width": "full-width",
+        "extend_media": true,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 0,
+        "padding-block-end": 0
+      }
     }
   },
   "order": [
@@ -498,6 +609,7 @@
     "divider_9G9jCt",
     "section_tAj94h",
     "divider_7zYbrk",
-    "divider_H4ahef"
+    "divider_H4ahef",
+    "media_with_content_Wrota"
   ]
 }

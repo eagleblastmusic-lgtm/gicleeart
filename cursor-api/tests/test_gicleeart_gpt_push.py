@@ -290,6 +290,8 @@ def test_explicit_git_add_not_all(gicleeart_env, monkeypatch) -> None:
     assert all("--" in c for c in add_calls)
     assert not any(c == ["add", "-A"] for c in add_calls)
     assert not any(c == ["add", "."] for c in add_calls)
+    # Jedna paczka (batch), nie osobny add per plik
+    assert any("sections/a.liquid" in c and "sections/b.liquid" in c for c in add_calls)
 
 
 def test_no_git_add_all_in_module_source() -> None:
@@ -397,3 +399,21 @@ def test_dry_run_report_includes_deletions_and_stale(gicleeart_env, monkeypatch)
     )
     lines = report.format_report()
     assert any("stale" in ln.lower() or "Usunięte" in ln for ln in lines)
+
+
+def test_parse_porcelain_strips_quotes_with_spaces() -> None:
+    from Komponenty.integracjagpt import gicleeart_gpt_push as gap
+
+    new, modified, deleted = gap._parse_porcelain(
+        [
+            '?? "assets/Filozof 60fps najlepsza jakosc.webm"',
+            ' M "snippets/media with spaces.liquid"',
+            "D  assets/old.webp",
+        ]
+    )
+    assert new == ["assets/Filozof 60fps najlepsza jakosc.webm"]
+    assert modified == ["snippets/media with spaces.liquid"]
+    assert deleted == ["assets/old.webp"]
+    assert gap._norm_rel('"assets/Filozof 60fps najlepsza jakosc.webm"') == (
+        "assets/Filozof 60fps najlepsza jakosc.webm"
+    )

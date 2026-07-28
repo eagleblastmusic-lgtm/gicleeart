@@ -224,6 +224,7 @@ def test_is_runtime_path_unit() -> None:
     assert _is_runtime_path("cursor-api/Komponenty/stronaglowna/data/backups/index.json")
     assert _is_runtime_path("Pliki startowe dla GPT/readme.md")
     assert _is_runtime_path("orders_sync_state.json")
+    assert _is_runtime_path("assets/giclee-philosophy-wrota-scroll-1080.mp4")
     assert not _is_runtime_path("sections/hero.liquid")
 
 
@@ -448,7 +449,12 @@ def test_deletions_not_staged_without_include_deletions(pushe_env, monkeypatch) 
         commit_message="msg",
     )
     svc.commit_and_push_github(report, include_deletions=False, on_line=None)
-    staged = [c[2] for c in calls if len(c) >= 3 and c[0] == "add" and c[1] == "--"]
+    staged = [
+        path
+        for c in calls
+        if len(c) >= 3 and c[0] == "add" and c[1] == "--"
+        for path in c[2:]
+    ]
     assert "sections/old.liquid" not in staged
 
 
@@ -482,5 +488,11 @@ def test_deletions_staged_when_include_deletions(pushe_env, monkeypatch) -> None
         commit_message="msg",
     )
     svc.commit_and_push_github(report, include_deletions=True, on_line=None)
-    staged = [c[2] for c in calls if len(c) >= 3 and c[0] == "add" and c[1] == "--"]
+    staged = [
+        path
+        for c in calls
+        if len(c) >= 3 and c[0] == "add" and c[1] == "--"
+        for path in c[2:]
+    ]
     assert "sections/old.liquid" in staged
+    assert "sections/hero.liquid" in staged

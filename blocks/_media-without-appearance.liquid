@@ -54,8 +54,356 @@
     {
       "type": "text",
       "id": "scroll_video_asset",
-      "label": "Nazwa pliku wideo w zasobach motywu",
-      "info": "Plik MP4 z katalogu assets, np. giclee-philosophy-scroll.mp4",
+      "label": "Identyfikator sekwencji klatek",
+      "info": "Filozofia: giclee-philosophy-frames · Portal Wrota: giclee-philosophy-wrota",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "select",
+      "id": "scroll_video_engine",
+      "label": "Sposób odtwarzania",
+      "options": [
+        {
+          "value": "video",
+          "label": "Film — natywny odtwarzacz"
+        },
+        {
+          "value": "frames",
+          "label": "Klatki — sekwencja WebP"
+        }
+      ],
+      "default": "video",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "select",
+      "id": "scroll_video_quality",
+      "label": "Jakość wyświetlania",
+      "options": [
+        {
+          "value": "720p",
+          "label": "720p — najwyższa płynność"
+        },
+        {
+          "value": "1080p",
+          "label": "1080p — Full HD"
+        }
+      ],
+      "default": "720p",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "text",
+      "id": "scroll_intro_title",
+      "label": "Nagłówek początkowy",
+      "info": "Znak | rozpoczyna nową linię.",
+      "default": "FILOZOFIA|MARKI",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "richtext",
+      "id": "scroll_intro_subtitle",
+      "label": "Podtytuł początkowy",
+      "default": "<p>Giclée Art opiera się na idei, że dzieło sztuki nie kończy się na pliku cyfrowym.</p>",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "richtext",
+      "id": "scroll_outro_text",
+      "label": "Tekst końcowy",
+      "default": "<p>Kończy się dopiero wtedy, gdy otrzymuje swoją ostateczną formę — spójną, archiwalną i gotową do ekspozycji.</p>",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "select",
+      "id": "scroll_motion_preset",
+      "label": "Charakter odtwarzania",
+      "options": [
+        { "value": "direct", "label": "Bezpośredni 1:1" },
+        { "value": "product", "label": "Precyzyjny produktowy" },
+        { "value": "smooth", "label": "Płynny" },
+        { "value": "cinematic", "label": "Filmowy" },
+        { "value": "soft-inertia", "label": "Miękka bezwładność" },
+        { "value": "dynamic", "label": "Dynamiczny" },
+        { "value": "heavy-camera", "label": "Ciężka kamera" },
+        { "value": "luxury", "label": "Delikatny luksusowy" },
+        { "value": "custom", "label": "Własne ustawienia" }
+      ],
+      "default": "direct",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "number",
+      "id": "scroll_motion_speed",
+      "label": "Tempo",
+      "default": 1,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "select",
+      "id": "scroll_motion_easing",
+      "label": "Easing",
+      "options": [
+        { "value": "linear", "label": "Linear" },
+        { "value": "ease-in", "label": "Ease In" },
+        { "value": "ease-out", "label": "Ease Out" },
+        { "value": "ease-in-out", "label": "Ease In-Out" },
+        { "value": "sine-in-out", "label": "Sine In-Out" },
+        { "value": "quad-in-out", "label": "Quad In-Out" },
+        { "value": "cubic-in-out", "label": "Cubic In-Out" },
+        { "value": "quart-in-out", "label": "Quart In-Out" },
+        { "value": "expo-in-out", "label": "Expo In-Out" },
+        { "value": "smoothstep", "label": "Smoothstep" },
+        { "value": "smootherstep", "label": "Smootherstep" },
+        { "value": "custom-bezier", "label": "Custom Cubic Bézier" }
+      ],
+      "default": "linear",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "text",
+      "id": "scroll_motion_bezier",
+      "label": "Custom Cubic Bézier: x1,y1,x2,y2",
+      "default": "0.25,0.10,0.25,1.00",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "range",
+      "id": "scroll_motion_smoothing_ms",
+      "label": "Wygładzanie",
+      "min": 0,
+      "max": 1000,
+      "step": 10,
+      "unit": "ms",
+      "default": 0,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "range",
+      "id": "scroll_motion_lag_ms",
+      "label": "Lag",
+      "min": 0,
+      "max": 500,
+      "step": 5,
+      "unit": "ms",
+      "default": 0,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "range",
+      "id": "scroll_motion_inertia",
+      "label": "Bezwładność",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 0,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "range",
+      "id": "scroll_motion_damping",
+      "label": "Tłumienie",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 100,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "range",
+      "id": "scroll_motion_max_catchup",
+      "label": "Maksymalna prędkość nadrabiania",
+      "min": 0,
+      "max": 8,
+      "step": 0.1,
+      "default": 0,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "select",
+      "id": "scroll_motion_stop_behavior",
+      "label": "Po zatrzymaniu scrolla",
+      "options": [
+        { "value": "immediate", "label": "Zatrzymaj natychmiast" },
+        { "value": "reach", "label": "Płynnie dojdź do celu" },
+        { "value": "nearest-frame", "label": "Dokończ do najbliższej klatki" },
+        { "value": "decelerate", "label": "Delikatnie wyhamuj" },
+        { "value": "snap", "label": "Snap do najbliższego punktu" }
+      ],
+      "default": "immediate",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "range",
+      "id": "scroll_motion_snap_points",
+      "label": "Liczba punktów snap",
+      "min": 2,
+      "max": 20,
+      "step": 1,
+      "default": 5,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "select",
+      "id": "scroll_motion_direction",
+      "label": "Kierunek",
+      "options": [
+        { "value": "normal", "label": "Normalny" },
+        { "value": "reverse", "label": "Odwrócony" }
+      ],
+      "default": "normal",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "range",
+      "id": "scroll_motion_material_start",
+      "label": "Początek materiału",
+      "min": 0,
+      "max": 99,
+      "step": 1,
+      "unit": "%",
+      "default": 0,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "range",
+      "id": "scroll_motion_material_end",
+      "label": "Koniec materiału",
+      "min": 1,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 100,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "select",
+      "id": "scroll_motion_interpolation",
+      "label": "Interpolacja postępu",
+      "options": [
+        { "value": "none", "label": "Brak — natychmiast" },
+        { "value": "linear", "label": "Linear" },
+        { "value": "exponential", "label": "Exponential smoothing" },
+        { "value": "damp", "label": "Damp" },
+        { "value": "spring", "label": "Spring" },
+        { "value": "velocity", "label": "Velocity-based" }
+      ],
+      "default": "none",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "scroll_motion_tail_pacing",
+      "label": "Płynne domknięcie hamowania",
+      "default": false,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "range",
+      "id": "scroll_motion_tail_window_frames",
+      "label": "Zakres płynnego domknięcia",
+      "min": 2,
+      "max": 30,
+      "step": 1,
+      "unit": "kl.",
+      "default": 12,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "select",
+      "id": "scroll_motion_frame_rounding",
+      "label": "Wybór klatki WebP",
+      "options": [
+        { "value": "floor", "label": "Floor" },
+        { "value": "round", "label": "Round" },
+        { "value": "ceil", "label": "Ceil" }
+      ],
+      "default": "round",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "range",
+      "id": "scroll_motion_mp4_dead_zone_ms",
+      "label": "Martwa strefa MP4",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "ms",
+      "default": 4,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "range",
+      "id": "scroll_motion_webp_dead_zone_frames",
+      "label": "Martwa strefa WebP",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "default": 1,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "range",
+      "id": "scroll_motion_preload_radius",
+      "label": "Promień preloadu WebP",
+      "min": 2,
+      "max": 60,
+      "step": 1,
+      "default": 12,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "range",
+      "id": "scroll_motion_cache_frames",
+      "label": "Limit cache bitmap (0 = auto)",
+      "min": 0,
+      "max": 120,
+      "step": 2,
+      "default": 0,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "scroll_preserve_alpha",
+      "label": "Zachowaj kanał alfa",
+      "default": true,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "select",
+      "id": "scroll_background_mode",
+      "label": "Tryb tła",
+      "options": [
+        { "value": "auto", "label": "Auto" },
+        { "value": "transparent", "label": "Przezroczyste" },
+        { "value": "color", "label": "Kolor" },
+        { "value": "gradient", "label": "Gradient" },
+        { "value": "image", "label": "Obraz strony" }
+      ],
+      "default": "auto",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "text",
+      "id": "scroll_background_value",
+      "label": "Kolor / gradient / obraz fallbacku",
+      "default": "#000000",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "scroll_alpha_diagnostics",
+      "label": "Diagnostyka krawędzi alfa",
+      "default": false,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "scroll_force_transparent",
+      "label": "Wymuś wariant przezroczysty",
+      "default": false,
       "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
     },
     {
@@ -74,7 +422,7 @@
       "id": "scroll_video_viewport",
       "label": "Wysokość obszaru animacji",
       "min": 100,
-      "max": 600,
+      "max": 800,
       "step": 50,
       "unit": "vh",
       "default": 400,

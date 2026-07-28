@@ -22,6 +22,56 @@
   if block_settings.media_type == 'scroll_video'
     assign show_scroll_video = true
   endif
+
+  assign scroll_video_quality = block_settings.scroll_video_quality | default: '720p'
+  assign scroll_video_engine = block_settings.scroll_video_engine | default: 'video'
+  assign scroll_video_asset = block_settings.scroll_video_asset | default: 'giclee-philosophy-frames'
+  assign scroll_is_wrota = false
+  if scroll_video_asset == 'giclee-philosophy-wrota'
+    assign scroll_is_wrota = true
+  endif
+  assign scroll_frame_count = 210
+  if scroll_is_wrota
+    assign scroll_frame_count = 778
+  endif
+  if scroll_video_quality == '1080p'
+    if scroll_is_wrota
+      assign scroll_frame_first = 'giclee-philosophy-wrota-1080-frame-000.webp'
+      assign scroll_frame_manifest = 'giclee-philosophy-wrota-1080-manifest.json'
+      assign scroll_native_video = 'giclee-philosophy-wrota-scroll-1080.mp4'
+      assign scroll_native_poster = 'giclee-philosophy-wrota-video-1080-poster.webp'
+      assign scroll_native_manifest = 'giclee-philosophy-wrota-video-1080-manifest.json'
+    else
+      assign scroll_frame_first = 'giclee-philosophy-1080-frame-000.webp'
+      assign scroll_frame_manifest = 'giclee-philosophy-1080-manifest.json'
+      assign scroll_native_video = 'giclee-philosophy-scroll-1080.mp4'
+      assign scroll_native_poster = 'giclee-philosophy-video-1080-poster.webp'
+      assign scroll_native_manifest = 'giclee-philosophy-video-1080-manifest.json'
+    endif
+    assign scroll_frame_width = 1920
+    assign scroll_frame_height = 1080
+  else
+    assign scroll_video_quality = '720p'
+    if scroll_is_wrota
+      assign scroll_frame_first = 'giclee-philosophy-wrota-720-frame-000.webp'
+      assign scroll_frame_manifest = 'giclee-philosophy-wrota-720-manifest.json'
+      assign scroll_native_video = 'giclee-philosophy-wrota-scroll-720.mp4'
+      assign scroll_native_poster = 'giclee-philosophy-wrota-video-720-poster.webp'
+      assign scroll_native_manifest = 'giclee-philosophy-wrota-video-720-manifest.json'
+    else
+      assign scroll_frame_first = 'giclee-philosophy-v3-frame-000.webp'
+      assign scroll_frame_manifest = 'giclee-philosophy-v3-manifest.json'
+      assign scroll_native_video = 'giclee-philosophy-scroll-720.mp4'
+      assign scroll_native_poster = 'giclee-philosophy-video-720-poster.webp'
+      assign scroll_native_manifest = 'giclee-philosophy-video-720-manifest.json'
+    endif
+    assign scroll_frame_width = 1280
+    assign scroll_frame_height = 720
+  endif
+  assign scroll_poster = scroll_frame_first
+  if scroll_video_engine == 'video'
+    assign scroll_poster = scroll_native_poster
+  endif
 %}
 
 <div
@@ -30,10 +80,44 @@
     spacing-style
     {% if block_settings.inherit_color_scheme == false %} color-{{ block_settings.color_scheme }}{% endif %}
     {% if show_scroll_video %} media-block--scroll-scrub{% endif %}
+    {% if scroll_is_wrota %} media-block--portal-wrota{% endif %}
     {% if show_image and block_settings.image_position == 'contain' or show_video and block_settings.video_position == 'contain' or show_scroll_video and block_settings.video_position == 'contain' %}
       media-block--contain
     {% endif %}
   "
+  {% if show_scroll_video %}
+    data-scroll-motion-root
+    data-scroll-video-asset="{{ scroll_video_asset | escape }}"
+    {% if scroll_is_wrota %}data-fm-portal-root{% endif %}
+    data-motion-presets-url="{{ 'giclee-scroll-motion-presets.json' | asset_url }}"
+    data-motion-preset="{{ block_settings.scroll_motion_preset | default: 'direct' }}"
+    data-motion-speed="{{ block_settings.scroll_motion_speed | default: 1 }}"
+    data-motion-easing="{{ block_settings.scroll_motion_easing | default: 'linear' }}"
+    data-motion-bezier="{{ block_settings.scroll_motion_bezier | default: '0.25,0.10,0.25,1.00' | escape }}"
+    data-motion-smoothing-ms="{{ block_settings.scroll_motion_smoothing_ms | default: 0 }}"
+    data-motion-lag-ms="{{ block_settings.scroll_motion_lag_ms | default: 0 }}"
+    data-motion-inertia="{{ block_settings.scroll_motion_inertia | default: 0 }}"
+    data-motion-damping="{{ block_settings.scroll_motion_damping | default: 100 }}"
+    data-motion-max-catchup="{{ block_settings.scroll_motion_max_catchup | default: 0 }}"
+    data-motion-stop-behavior="{{ block_settings.scroll_motion_stop_behavior | default: 'immediate' }}"
+    data-motion-snap-points="{{ block_settings.scroll_motion_snap_points | default: 5 }}"
+    data-motion-direction="{{ block_settings.scroll_motion_direction | default: 'normal' }}"
+    data-motion-material-start="{{ block_settings.scroll_motion_material_start | default: 0 }}"
+    data-motion-material-end="{{ block_settings.scroll_motion_material_end | default: 100 }}"
+    data-motion-interpolation="{{ block_settings.scroll_motion_interpolation | default: 'none' }}"
+    data-motion-frame-rounding="{{ block_settings.scroll_motion_frame_rounding | default: 'round' }}"
+    data-motion-mp4-dead-zone-ms="{{ block_settings.scroll_motion_mp4_dead_zone_ms | default: 4 }}"
+    data-motion-webp-dead-zone-frames="{{ block_settings.scroll_motion_webp_dead_zone_frames | default: 1 }}"
+    data-motion-preload-radius="{{ block_settings.scroll_motion_preload_radius | default: 12 }}"
+    data-motion-cache-frames="{{ block_settings.scroll_motion_cache_frames | default: 0 }}"
+    data-motion-tail-pacing="{{ block_settings.scroll_motion_tail_pacing | default: false }}"
+    data-motion-tail-window-frames="{{ block_settings.scroll_motion_tail_window_frames | default: 12 }}"
+    data-preserve-alpha="{{ block_settings.scroll_preserve_alpha | default: true, allow_false: true }}"
+    data-background-mode="{{ block_settings.scroll_background_mode | default: 'auto' }}"
+    data-background-value="{{ block_settings.scroll_background_value | default: '#000000' | escape }}"
+    data-alpha-diagnostics="{{ block_settings.scroll_alpha_diagnostics | default: false, allow_false: true }}"
+    data-force-transparent="{{ block_settings.scroll_force_transparent | default: false, allow_false: true }}"
+  {% endif %}
   style="
     {% render 'border-override', settings: block_settings %}
     {% render 'spacing-style', settings: block_settings %}
@@ -77,17 +161,99 @@
     %}
   {%- elsif show_scroll_video -%}
     {% if block_settings.scroll_video_asset != blank %}
-      <video
-        class="media-block__media media-block__media--scroll border-style"
-        data-scroll-scrub-media
-        data-scroll-scrub-duration="{{ block_settings.scroll_video_duration | default: 6 }}"
-        data-scroll-scrub-src="{{ block_settings.scroll_video_asset | asset_url }}"
-        preload="none"
-        muted
-        playsinline
-        aria-hidden="true"
-        tabindex="-1"
-      ></video>
+      <link
+        rel="preload"
+        as="image"
+        href="{{ scroll_poster | asset_url }}"
+        fetchpriority="high"
+      >
+      <div class="media-block__scroll-stage{% if scroll_is_wrota %} giclee-fm-wrota-portal{% endif %}"{% if scroll_is_wrota %} data-fm-portal style="--giclee-fm-portal-inset: 50%;"{% endif %}>
+        <img
+          class="media-block__scroll-poster"
+          src="{{ scroll_poster | asset_url }}"
+          width="{{ scroll_frame_width }}"
+          height="{{ scroll_frame_height }}"
+          alt=""
+          decoding="async"
+          fetchpriority="high"
+          aria-hidden="true"
+        >
+        {% if scroll_video_engine == 'video' %}
+          <video
+            class="media-block__media media-block__media--scroll border-style"
+            data-scroll-native-video
+            data-frame-quality="{{ scroll_video_quality }}"
+            data-frame-count="{{ scroll_frame_count }}"
+            data-frame-fps="60"
+            data-video-manifest="{{ scroll_native_manifest | asset_url }}"
+            data-source-has-alpha="false"
+            data-alpha-mode="none"
+            data-source-codec="h264"
+            width="{{ scroll_frame_width }}"
+            height="{{ scroll_frame_height }}"
+            muted
+            playsinline
+            preload="none"
+            poster="{{ scroll_poster | asset_url }}"
+            aria-hidden="true"
+            tabindex="-1"
+          >
+            <source
+              src="{{ scroll_native_video | asset_url }}"
+              type="video/mp4"
+            >
+          </video>
+        {% else %}
+          <canvas
+            class="media-block__media media-block__media--scroll border-style"
+            data-scroll-frame-canvas
+            data-frame-quality="{{ scroll_video_quality }}"
+            data-frame-count="{{ scroll_frame_count }}"
+            data-frame-width="{{ scroll_frame_width }}"
+            data-frame-height="{{ scroll_frame_height }}"
+            data-frame-fps="60"
+            data-frame-manifest="{{ scroll_frame_manifest | asset_url }}"
+            data-source-has-alpha="true"
+            data-alpha-mode="straight"
+            data-source-codec="webp"
+            width="{{ scroll_frame_width }}"
+            height="{{ scroll_frame_height }}"
+            aria-hidden="true"
+            tabindex="-1"
+          ></canvas>
+        {% endif %}
+        {% if scroll_video_asset == 'giclee-philosophy-frames' %}
+          <div class="media-block__scroll-separators" aria-hidden="true">
+            <span></span>
+            <span></span>
+          </div>
+          <div class="media-block__scroll-intro">
+            <span class="media-block__scroll-intro-line" aria-hidden="true"></span>
+            <h1 class="media-block__scroll-intro-title">
+              {{ block_settings.scroll_intro_title | default: 'FILOZOFIA|MARKI' | escape | replace: '|', '<br>' }}
+            </h1>
+            <p class="media-block__scroll-intro-subtitle">
+              {{
+                block_settings.scroll_intro_subtitle
+                | default: '<p>Giclée Art opiera się na idei, że dzieło sztuki nie kończy się na pliku cyfrowym.</p>'
+                | strip_html
+                | escape
+              }}
+            </p>
+          </div>
+          <div class="media-block__scroll-outro" aria-hidden="true">
+            <span class="media-block__scroll-outro-line" aria-hidden="true"></span>
+            <p class="media-block__scroll-outro-text">
+              {{
+                block_settings.scroll_outro_text
+                | default: '<p>Kończy się dopiero wtedy, gdy otrzymuje swoją ostateczną formę — spójną, archiwalną i gotową do ekspozycji.</p>'
+                | strip_html
+                | escape
+              }}
+            </p>
+          </div>
+        {% endif %}
+      </div>
       <script
         src="{{ 'giclee-scroll-scrub-video.js' | asset_url }}"
         defer="defer"
@@ -152,25 +318,338 @@
   }
 
   .media-block--scroll-scrub {
-    background: #000;
+    contain: layout paint style;
+    background: transparent;
     height: var(--scroll-scrub-height, 400vh);
     min-height: var(--scroll-scrub-height, 400vh);
     overflow: visible;
+    width: 100%;
+  }
+
+  .media-block__scroll-stage {
+    --scroll-separator-band: 50px;
+    background: var(--scroll-runtime-background, #000);
+    height: calc(100svh - var(--header-group-height, 0px));
+    min-height: calc(100vh - var(--header-group-height, 0px));
+    overflow: hidden;
+    pointer-events: none;
+    position: sticky;
+    top: var(--header-group-height, 0px);
+    width: 100%;
   }
 
   .media-block__media--scroll {
     display: block;
-    height: var(--media-height-mobile, 50svh);
-    max-height: 100svh;
+    image-rendering: auto;
+    inset: var(--scroll-separator-band, 50px) 0 0;
+    max-height: none;
     object-fit: var(--video-position, cover);
+    object-position: center center;
     pointer-events: none;
-    position: sticky;
-    top: 50svh;
-    transform: translateY(-50%);
+    position: absolute;
+    width: 100%;
+    z-index: 1;
+  }
 
-    @media screen and (min-width: 750px) {
-      height: var(--media-height);
-      position: sticky;
+  .media-block__scroll-poster {
+    height: calc(100% - var(--scroll-separator-band, 50px));
+    inset: var(--scroll-separator-band, 50px) 0 0;
+    object-fit: var(--video-position, cover);
+    object-position: center center;
+    opacity: 1;
+    pointer-events: none;
+    position: absolute;
+    transition: opacity 120ms linear;
+    width: 100%;
+    z-index: 0;
+  }
+
+  .media-block--scroll-scrub.is-scroll-frame-ready
+    .media-block__scroll-poster {
+    opacity: 0;
+  }
+
+  .media-block__scroll-separators {
+    background: #000;
+    inset: 0 0 auto;
+    height: var(--scroll-separator-band, 50px);
+    pointer-events: none;
+    position: absolute;
+    z-index: 3;
+  }
+
+  .media-block__scroll-separators span {
+    background: rgb(255 255 255 / 0.72);
+    height: 1px;
+    left: 0;
+    position: absolute;
+    right: 0;
+  }
+
+  .media-block__scroll-separators span:first-child {
+    top: 0;
+  }
+
+  .media-block__scroll-separators span:last-child {
+    top: 33px;
+  }
+
+  .media-block__scroll-intro {
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    left: clamp(2rem, 7vw, 9rem);
+    max-width: min(48vw, 54rem);
+    pointer-events: none;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    transition:
+      opacity 520ms cubic-bezier(0.22, 1, 0.36, 1),
+      filter 520ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+    width: 100%;
+    z-index: 2;
+  }
+
+  .media-block--scroll-scrub.is-scroll-alpha-debug
+    .media-block__scroll-stage {
+    background-color: #fff;
+    background-image:
+      linear-gradient(45deg, #c8c8c8 25%, transparent 25%),
+      linear-gradient(-45deg, #c8c8c8 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #c8c8c8 75%),
+      linear-gradient(-45deg, transparent 75%, #c8c8c8 75%);
+    background-position:
+      0 0,
+      0 8px,
+      8px -8px,
+      -8px 0;
+    background-size: 16px 16px;
+  }
+
+  .media-block__scroll-intro::before {
+    background: radial-gradient(
+      ellipse at left,
+      rgb(0 0 0 / 0.72) 0%,
+      rgb(0 0 0 / 0.28) 46%,
+      transparent 76%
+    );
+    content: '';
+    inset: -12rem -18rem;
+    pointer-events: none;
+    position: absolute;
+    z-index: -1;
+  }
+
+  .media-block__scroll-intro-line {
+    background: linear-gradient(90deg, #a88949, rgb(201 168 76 / 0.2));
+    height: 1px;
+    margin-block-end: clamp(1.2rem, 2.2vw, 2.25rem);
+    opacity: 0;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition:
+      opacity 700ms ease-out 120ms,
+      transform 1000ms cubic-bezier(0.16, 1, 0.3, 1) 120ms;
+    width: clamp(4rem, 7vw, 7.5rem);
+  }
+
+  .media-block__scroll-intro-title {
+    color: #fff;
+    font-family: 'Bodoni Moda', var(--font-heading--family), serif;
+    font-size: clamp(4rem, 7.2vw, 8.75rem);
+    font-style: normal;
+    font-weight: 400;
+    letter-spacing: -0.035em;
+    line-height: 0.82;
+    margin: 0;
+    opacity: 0;
+    text-wrap: balance;
+    text-shadow: 0 0.16em 0.8em rgb(0 0 0 / 0.38);
+    transform: translate3d(0, 2.2rem, 0);
+    transition:
+      opacity 900ms ease-out 240ms,
+      transform 1200ms cubic-bezier(0.16, 1, 0.3, 1) 240ms;
+  }
+
+  .media-block__scroll-intro-subtitle {
+    color: rgb(255 255 255 / 0.82);
+    font-family: var(--font-body--family);
+    font-size: clamp(1rem, 1.25vw, 1.4rem);
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    line-height: 1.5;
+    margin: clamp(1.75rem, 3vw, 3rem) 0 0;
+    max-width: 39ch;
+    opacity: 0;
+    text-wrap: balance;
+    text-shadow: 0 0.12em 1em rgb(0 0 0 / 0.5);
+    transform: translate3d(0, 1.5rem, 0);
+    transition:
+      opacity 850ms ease-out 680ms,
+      transform 1100ms cubic-bezier(0.16, 1, 0.3, 1) 680ms;
+  }
+
+  .media-block--scroll-scrub.is-scroll-frame-ready .media-block__scroll-intro-line {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+
+  .media-block--scroll-scrub.is-scroll-frame-ready .media-block__scroll-intro-title,
+  .media-block--scroll-scrub.is-scroll-frame-ready .media-block__scroll-intro-subtitle {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+
+  .media-block--scroll-scrub.is-scroll-frame-intro-past .media-block__scroll-intro {
+    filter: blur(4px);
+    opacity: 0;
+    transform: translate3d(-2rem, -54%, 0);
+  }
+
+  .media-block__scroll-outro {
+    align-items: flex-end;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    max-width: min(40vw, 42rem);
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    right: clamp(2rem, 7vw, 9rem);
+    text-align: right;
+    top: 50%;
+    transform: translate3d(2.5rem, -50%, 0);
+    transition:
+      opacity 900ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 1100ms cubic-bezier(0.16, 1, 0.3, 1);
+    width: 100%;
+    z-index: 2;
+  }
+
+  .media-block__scroll-outro::before {
+    background: radial-gradient(
+      ellipse at right,
+      rgb(0 0 0 / 0.68) 0%,
+      rgb(0 0 0 / 0.24) 48%,
+      transparent 76%
+    );
+    content: '';
+    inset: -12rem -18rem;
+    pointer-events: none;
+    position: absolute;
+    z-index: -1;
+  }
+
+  .media-block__scroll-outro-line {
+    background: linear-gradient(270deg, #a88949, rgb(201 168 76 / 0.2));
+    height: 1px;
+    margin-block-end: clamp(1.5rem, 2.5vw, 2.75rem);
+    opacity: 0;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition:
+      opacity 650ms ease-out 100ms,
+      transform 950ms cubic-bezier(0.16, 1, 0.3, 1) 100ms;
+    width: clamp(4rem, 7vw, 7.5rem);
+  }
+
+  .media-block__scroll-outro-text {
+    color: rgb(255 255 255 / 0.94);
+    font-family: 'Bodoni Moda', var(--font-heading--family), serif;
+    font-size: clamp(2rem, 3vw, 3.75rem);
+    font-weight: 400;
+    letter-spacing: -0.018em;
+    line-height: 1.12;
+    margin: 0;
+    max-width: 21ch;
+    opacity: 0;
+    text-shadow: 0 0.16em 0.9em rgb(0 0 0 / 0.48);
+    text-wrap: balance;
+    transform: translate3d(0, 1.5rem, 0);
+    transition:
+      opacity 850ms ease-out 180ms,
+      transform 1100ms cubic-bezier(0.16, 1, 0.3, 1) 180ms;
+  }
+
+  .media-block--scroll-scrub.is-scroll-frame-outro-visible .media-block__scroll-outro {
+    opacity: 1;
+    transform: translate3d(0, -50%, 0);
+  }
+
+  .media-block--scroll-scrub.is-scroll-frame-outro-visible .media-block__scroll-outro-line {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+
+  .media-block--scroll-scrub.is-scroll-frame-outro-visible .media-block__scroll-outro-text {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+
+  /* Full-viewport scrub stage: video edge-to-edge, intro overlaid */
+  .media-with-content:has(.media-block--scroll-scrub) {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-areas: 'stack';
+    width: 100%;
+  }
+
+  .media-with-content:has(.media-block--scroll-scrub) .media-block--scroll-scrub {
+    grid-area: stack;
+    width: 100%;
+  }
+
+  .media-with-content:has(.media-block--scroll-scrub) .media-with-content__content {
+    display: none;
+  }
+
+  @media screen and (max-width: 749px) {
+    .media-block__scroll-intro {
+      left: 1.5rem;
+      max-width: calc(100vw - 3rem);
+      top: 44%;
+    }
+
+    .media-block__scroll-intro::before {
+      inset: -10rem -6rem;
+    }
+
+    .media-block__scroll-intro-title {
+      font-size: clamp(3.5rem, 17vw, 5.4rem);
+    }
+
+    .media-block__scroll-intro-subtitle {
+      font-size: 1rem;
+      max-width: 29ch;
+    }
+
+    .media-block__scroll-outro {
+      max-width: calc(100vw - 3rem);
+      right: 1.5rem;
+      top: 52%;
+    }
+
+    .media-block__scroll-outro::before {
+      inset: -10rem -6rem;
+    }
+
+    .media-block__scroll-outro-text {
+      font-size: clamp(2rem, 8vw, 3.2rem);
+      max-width: 18ch;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .media-block__scroll-intro,
+    .media-block__scroll-intro-line,
+    .media-block__scroll-intro-title,
+    .media-block__scroll-intro-subtitle,
+    .media-block__scroll-outro,
+    .media-block__scroll-outro-line,
+    .media-block__scroll-outro-text {
+      transition: none;
     }
   }
 {% endstylesheet %}

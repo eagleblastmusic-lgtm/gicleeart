@@ -28,6 +28,8 @@ def build_editor_config(
     variant_label_default: str = "Wersja 1",
     extra_toolbar: tuple[tuple[str, object], ...] = (),
     section_effects_asset_enabled: bool = True,
+    extra_deploy_relpaths: tuple[str, ...] = (),
+    extra_deploy_globs: tuple[str, ...] = (),
 ) -> PageEditorConfig:
     return PageEditorConfig(
         component_id=component_id,
@@ -42,6 +44,8 @@ def build_editor_config(
         variant_label_default=variant_label_default,
         extra_toolbar=extra_toolbar,
         section_effects_asset_enabled=section_effects_asset_enabled,
+        extra_deploy_relpaths=extra_deploy_relpaths,
+        extra_deploy_globs=extra_deploy_globs,
     )
 
 

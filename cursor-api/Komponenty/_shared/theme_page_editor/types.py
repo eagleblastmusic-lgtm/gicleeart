@@ -53,6 +53,15 @@ class TemplateZone:
     # Opcjonalny, jawny cel efektów grafiki na froncie. Pozostaje pusty dla
     # istniejących stref, które korzystają z bezpiecznego fallbacku runtime.
     image_effect_selector: str | None = None
+    # Opcjonalna obsługa zestawów ustawień. Każdy wpis ma postać:
+    # (wartość presetu, ((field_id, value), ...)).
+    # GUI ustawia cały zestaw i rozpoznaje go ponownie po ręcznej edycji.
+    preset_field_id: str | None = None
+    preset_values: tuple[
+        tuple[str, tuple[tuple[str, Any], ...]], ...
+    ] = field(default_factory=tuple)
+    custom_preset_value: str = "custom"
+    recommended_preset_value: str | None = None
 
 
 def _s(section: str, *parts: str) -> PathKey:

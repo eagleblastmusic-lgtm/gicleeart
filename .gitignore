@@ -46,6 +46,9 @@ _ww_*
 _section_api.json
 /*.html
 
+# Duże źródła wideo — poza GitHub (limit 100 MB); CDN/Shopify osobno
+*.mp4
+
 # Eksporty generowane lokalnie
 /exports/
 

@@ -230,8 +230,20 @@ def _run_git(args: list[str], cwd: Path, *, log: OnLine = None) -> subprocess.Co
     return proc
 
 
+def _strip_git_path(path: str) -> str:
+    """Usuwa cudzysłowy z git status --porcelain (ścieżki ze spacjami)."""
+    p = path.strip()
+    if len(p) >= 2 and p[0] == '"' and p[-1] == '"':
+        p = p[1:-1]
+    return p.strip()
+
+
 def _norm_rel(path: str | Path) -> str:
-    return Path(path).as_posix().lstrip("./")
+    p = _strip_git_path(str(path))
+    p = Path(p).as_posix()
+    if p.startswith("./"):
+        return p[2:]
+    return p
 
 
 def _expand_path_entries(staging: Path, rel: str) -> list[str]:
@@ -570,9 +582,9 @@ def _parse_porcelain(lines: list[str]) -> tuple[list[str], list[str], list[str]]
         if len(line) < 4:
             continue
         code = line[:2]
-        path = line[3:].strip()
+        path = _strip_git_path(line[3:].strip())
         if " -> " in path:
-            path = path.split(" -> ", 1)[1].strip()
+            path = _strip_git_path(path.split(" -> ", 1)[1].strip())
         if code == "??":
             new_files.append(path)
         elif code[0] == "D" or code[1] == "D":

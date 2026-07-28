@@ -24,6 +24,8 @@ class PageEditorConfig:
     extra_toolbar: tuple[tuple[str, Callable[[], None]], ...] = field(default_factory=tuple)
     preview_query: str = "giclee_skip_splash=1&giclee_skip_notice=1"
     section_effects_asset_enabled: bool = True
+    extra_deploy_relpaths: tuple[str, ...] = field(default_factory=tuple)
+    extra_deploy_globs: tuple[str, ...] = field(default_factory=tuple)
 
     @property
     def template_basename(self) -> str:

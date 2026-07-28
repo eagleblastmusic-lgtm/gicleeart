@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import subprocess
+import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -20,6 +21,9 @@ from .config import (
 )
 
 OnLine = Callable[[str], None]
+
+# Windows cmdline ~8k + mniej wyścigów o index.lock niż 1×git add na plik.
+_GIT_ADD_BATCH_SIZE = 80
 
 SECRET_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("sk-api-key", re.compile(r"sk-[a-zA-Z0-9]{16,}")),
@@ -174,6 +178,60 @@ def _run_git(
     return proc
 
 
+def _git_err_text(proc: subprocess.CompletedProcess[str]) -> str:
+    return (proc.stderr or proc.stdout or "").strip()
+
+
+def _is_index_lock_error(text: str) -> bool:
+    return "index.lock" in text.lower()
+
+
+def _clear_stale_index_lock(cwd: Path, *, on_line: OnLine | None = None) -> bool:
+    """Usuń porzucony index.lock (np. po przerwaniu poprzedniego git add)."""
+    lock = cwd / ".git" / "index.lock"
+    if not lock.is_file():
+        return False
+    try:
+        age_s = time.time() - lock.stat().st_mtime
+    except OSError:
+        return False
+    if age_s < 2.0:
+        return False
+    try:
+        lock.unlink()
+        _emit(on_line, f"Usunięto stale index.lock (wiek {age_s:.1f}s)")
+        return True
+    except OSError as exc:
+        _emit(on_line, f"Nie udało się usunąć index.lock: {exc}")
+        return False
+
+
+def _git_add_paths(
+    paths: list[str],
+    *,
+    cwd: Path,
+    on_line: OnLine | None = None,
+) -> subprocess.CompletedProcess[str] | None:
+    """Stage paths in batches — fewer index.lock races than per-file add."""
+    cleaned = [_norm_rel(p) for p in paths if _norm_rel(p)]
+    if not cleaned:
+        return None
+    for i in range(0, len(cleaned), _GIT_ADD_BATCH_SIZE):
+        batch = cleaned[i : i + _GIT_ADD_BATCH_SIZE]
+        proc = _run_git(["add", "--", *batch], cwd=cwd, on_line=on_line)
+        if proc.returncode == 0:
+            continue
+        err = _git_err_text(proc)
+        if _is_index_lock_error(err):
+            time.sleep(0.4)
+            _clear_stale_index_lock(cwd, on_line=on_line)
+            proc = _run_git(["add", "--", *batch], cwd=cwd, on_line=on_line)
+            if proc.returncode == 0:
+                continue
+        return proc
+    return None
+
+
 def _strip_git_path(path: str) -> str:
     """Usuwa cudzysłowy z git status --porcelain (ścieżki ze spacjami)."""
     p = path.strip()
@@ -312,7 +370,7 @@ def _is_runtime_path(rel: str) -> bool:
         p = prefix.rstrip("/")
         if n == p or n.startswith(prefix):
             return True
-    if name.endswith((".log", ".tmp", ".temp")):
+    if name.endswith((".log", ".tmp", ".temp", ".mp4")):
         return True
     return False
 
@@ -551,6 +609,7 @@ def commit_and_push_github(
     if not paths_to_stage:
         return PushOutcome(ok=False, message="Brak ścieżek do git add.")
 
+    cleaned_paths: list[str] = []
     for rel in paths_to_stage:
         rel_clean = _norm_rel(rel)
         if _is_runtime_path(rel_clean):
@@ -558,9 +617,15 @@ def commit_and_push_github(
                 ok=False,
                 message=f"Ścieżka runtime poza commitem: {rel_clean}",
             )
-        add = _run_git(["add", "--", rel_clean], cwd=root, on_line=on_line)
-        if add.returncode != 0:
-            return PushOutcome(ok=False, message=f"git add nie powiodło się: {rel_clean}")
+        cleaned_paths.append(rel_clean)
+
+    add_err = _git_add_paths(cleaned_paths, cwd=root, on_line=on_line)
+    if add_err is not None:
+        detail = _git_err_text(add_err)
+        return PushOutcome(
+            ok=False,
+            message=f"git add nie powiodło się: {detail or 'nieznany błąd git'}",
+        )
 
     msg = report.commit_message or default_commit_message()
     commit = _run_git(["commit", "-m", msg], cwd=root, on_line=on_line)

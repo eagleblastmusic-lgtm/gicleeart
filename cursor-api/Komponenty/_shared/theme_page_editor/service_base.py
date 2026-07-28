@@ -475,6 +475,12 @@ def component_deploy_relpaths(config: PageEditorConfig) -> tuple[str, ...]:
         from .page_section_effects_settings import effects_asset_basename
 
         paths.append(f"assets/{effects_asset_basename(config)}")
+    paths.extend(path.replace("\\", "/") for path in config.extra_deploy_relpaths)
+    root = theme_root()
+    for pattern in config.extra_deploy_globs:
+        for path in sorted(root.glob(pattern)):
+            if path.is_file():
+                paths.append(path.relative_to(root).as_posix())
     return tuple(dict.fromkeys(paths))
 
 

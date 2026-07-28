@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import subprocess
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -27,6 +28,8 @@ from .mirror import (
 from .review_session import ReviewSession
 
 OnLine = list[str] | None
+
+_GIT_ADD_BATCH_SIZE = 80
 
 SECRET_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("sk-api-key", re.compile(r"sk-[a-zA-Z0-9]{16,}")),
@@ -146,8 +149,20 @@ def _log(lines: OnLine, msg: str) -> None:
         lines.append(msg)
 
 
+def _strip_git_path(path: str) -> str:
+    """Usuwa cudzysłowy z git status --porcelain / --short (ścieżki ze spacjami)."""
+    p = path.strip()
+    if len(p) >= 2 and p[0] == '"' and p[-1] == '"':
+        p = p[1:-1]
+    return p.strip()
+
+
 def _norm_rel(path: str | Path) -> str:
-    return Path(path).as_posix().lstrip("./")
+    p = _strip_git_path(str(path))
+    p = Path(p).as_posix()
+    if p.startswith("./"):
+        return p[2:]
+    return p
 
 
 def _assert_gicleeart_gpt_remote(remote_url: str) -> None:
@@ -315,6 +330,41 @@ def scan_file_secrets(path: Path, *, rel: str = "") -> list[str]:
     return hits
 
 
+def _git_add_paths(
+    mirror: Path,
+    paths: list[str],
+    *,
+    log: OnLine = None,
+) -> subprocess.CompletedProcess[str] | None:
+    """Stage explicit paths in batches (Windows cmdline limit + fewer lock races)."""
+    cleaned = [_norm_rel(p) for p in paths if _norm_rel(p)]
+    if not cleaned:
+        return None
+    lines = log if log is not None else []
+    for i in range(0, len(cleaned), _GIT_ADD_BATCH_SIZE):
+        batch = cleaned[i : i + _GIT_ADD_BATCH_SIZE]
+        proc = mirror_run_git(["add", "--", *batch], mirror, lines)
+        if proc.returncode == 0:
+            continue
+        err = ((proc.stderr or proc.stdout or "")).strip().lower()
+        if "index.lock" in err:
+            time.sleep(0.4)
+            lock = mirror / ".git" / "index.lock"
+            if lock.is_file():
+                try:
+                    age_s = time.time() - lock.stat().st_mtime
+                    if age_s >= 2.0:
+                        lock.unlink()
+                        lines.append(f"Usunięto stale index.lock (wiek {age_s:.1f}s)")
+                except OSError:
+                    pass
+            proc = mirror_run_git(["add", "--", *batch], mirror, lines)
+            if proc.returncode == 0:
+                continue
+        return proc
+    return None
+
+
 def _parse_porcelain(lines: list[str]) -> tuple[list[str], list[str], list[str]]:
     new_files: list[str] = []
     modified: list[str] = []
@@ -323,9 +373,9 @@ def _parse_porcelain(lines: list[str]) -> tuple[list[str], list[str], list[str]]
         if len(ln) < 4:
             continue
         code = ln[:2]
-        path = ln[3:].strip()
+        path = _strip_git_path(ln[3:].strip())
         if " -> " in path:
-            path = path.split(" -> ", 1)[1].strip()
+            path = _strip_git_path(path.split(" -> ", 1)[1].strip())
         if code == "??":
             new_files.append(path)
         elif code[0] == "D" or code[1] == "D":
@@ -505,10 +555,13 @@ def commit_and_push_gicleeart_gpt(
     if not paths_to_stage:
         return GicleeArtGptPushResult(ok=False, message="Brak ścieżek do git add.")
 
-    for rel in paths_to_stage:
-        add = mirror_run_git(["add", "--", rel], mirror, lines)
-        if add.returncode != 0:
-            return GicleeArtGptPushResult(ok=False, message=f"git add nie powiódł się: {rel}")
+    add_err = _git_add_paths(mirror, paths_to_stage, log=lines)
+    if add_err is not None:
+        detail = (add_err.stderr or add_err.stdout or "").strip()
+        return GicleeArtGptPushResult(
+            ok=False,
+            message=f"git add nie powiódł się: {detail or 'nieznany błąd git'}",
+        )
 
     msg = report.commit_message or _commit_message_for(session)
     commit = mirror_run_git(["commit", "-m", msg], mirror, lines)
