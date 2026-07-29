@@ -30,6 +30,8 @@ def build_editor_config(
     section_effects_asset_enabled: bool = True,
     extra_deploy_relpaths: tuple[str, ...] = (),
     extra_deploy_globs: tuple[str, ...] = (),
+    after_template_save=None,
+    zone_content_builders=None,
 ) -> PageEditorConfig:
     return PageEditorConfig(
         component_id=component_id,
@@ -46,6 +48,8 @@ def build_editor_config(
         section_effects_asset_enabled=section_effects_asset_enabled,
         extra_deploy_relpaths=extra_deploy_relpaths,
         extra_deploy_globs=extra_deploy_globs,
+        after_template_save=after_template_save,
+        zone_content_builders=zone_content_builders or {},
     )
 
 

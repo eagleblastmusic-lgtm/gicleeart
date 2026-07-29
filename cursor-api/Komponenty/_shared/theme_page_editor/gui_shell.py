@@ -30,6 +30,13 @@ from .features import (
     restore_backup,
     validate_page,
 )
+from .field_group_variants import (
+    create_library_variant,
+    delete_library_variant,
+    load_variant_library,
+    rename_library_variant,
+    update_library_variant,
+)
 from .page_effects_dialog import open_image_effects_dialog, open_text_effects_dialog
 from .page_section_effects_settings import (
     zone_has_image_effects,
@@ -151,6 +158,8 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
         "variant_id": "",
         "switching_variant": False,
         "baseline_template": {},
+        "open_field_groups": {},
+        "selected_field_group_variants": {},
     }
 
     varmod.ensure_variants_initialized(config)
@@ -320,6 +329,8 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             merged_template = merge_managed_zone_values(config, current_template, pending)
             save_template(config, merged_template)
             varmod.persist_editor_to_variant(config, state["variant_id"], pending)
+            if config.after_template_save:
+                config.after_template_save()
         except Exception as exc:
             messagebox.showerror(config.app_title, str(exc), parent=host)
             return
@@ -388,6 +399,8 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             merged_template = merge_managed_zone_values(config, current_template, pending)
             save_template(config, merged_template)
             varmod.persist_editor_to_variant(config, state["variant_id"], pending)
+            if config.after_template_save:
+                config.after_template_save()
             state["template"] = pending
             state["baseline_template"] = copy.deepcopy(pending)
         except Exception as exc:
@@ -543,6 +556,23 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             return
         values[field_id] = value
 
+        dependent_choices_changed = False
+        if zone:
+            for dependent in zone.fields:
+                if (
+                    not dependent.choice_provider
+                    or field_id not in dependent.choice_dependencies
+                ):
+                    continue
+                available = dependent.choice_provider(dict(values))
+                allowed = {choice_value for choice_value, _label in available}
+                current = str(values.get(dependent.field_id) or "")
+                if current not in allowed:
+                    values[dependent.field_id] = (
+                        "" if "" in allowed else next(iter(allowed), "")
+                    )
+                dependent_choices_changed = True
+
         if zone and zone.preset_field_id and zone.preset_values:
             if field_id == zone.preset_field_id:
                 assignments = dict(zone.preset_values).get(str(value))
@@ -562,6 +592,14 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
                     if values.get(zone.preset_field_id) != next_preset:
                         values[zone.preset_field_id] = next_preset
                         _queue_zone_render()
+        if dependent_choices_changed:
+            _queue_zone_render()
+        elif zone and any(
+            any(controller_id == field_id for controller_id, _allowed in dependent.visible_when)
+            for dependent in zone.fields
+            if dependent.visible_when
+        ):
+            _queue_zone_render()
         _mark_dirty()
 
     def _render_thumb(parent: tk.Widget, ref: str) -> ttk.Label:
@@ -616,10 +654,17 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
                 var.trace_add("write", lambda *_a, v=var, fid=fld.field_id: _set_zone_value(zid, fid, v.get()))
             return row + 1
         elif fld.kind == "choice":
-            value_to_label = dict(fld.choices)
-            label_to_value = {label: value for value, label in fld.choices}
+            field_choices = (
+                fld.choice_provider(
+                    dict(state["zone_values"].get(zid, {}))
+                )
+                if fld.choice_provider
+                else fld.choices
+            )
+            value_to_label = dict(field_choices)
+            label_to_value = {label: value for value, label in field_choices}
             current_value = str(_zone_value(zid, fld.field_id) or "")
-            labels = tuple(label for _value, label in fld.choices)
+            labels = tuple(label for _value, label in field_choices)
             display = value_to_label.get(current_value, "")
             if not display and labels:
                 display = ""
@@ -966,11 +1011,254 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             var.trace_add("write", lambda *_a, v=var, fid=fld.field_id: _set_zone_value(zid, fid, v.get()))
             return row + 1
 
+    def _render_field_group_variant_library(
+        zone: TemplateZone,
+        library: Any,
+        row: int,
+    ) -> int:
+        zid = zone.zone_id
+        library_path = (
+            config.component_dir / "data" / str(library.storage_filename)
+        )
+        controlled_ids = tuple(library.controlled_field_ids)
+        variants = load_variant_library(
+            library_path,
+            controlled_field_ids=controlled_ids,
+        )
+        selection_key = (zid, library.group_id)
+        selected_id = str(
+            state.setdefault("selected_field_group_variants", {}).get(
+                selection_key,
+                "",
+            )
+            or ""
+        )
+        if (
+            not selected_id
+            and str(
+                state["zone_values"].setdefault(zid, {}).get(
+                    library.preset_field_id
+                )
+                or ""
+            )
+            == library.custom_preset_value
+        ):
+            current_values = state["zone_values"][zid]
+            matched = next(
+                (
+                    item
+                    for item in variants
+                    if all(
+                        current_values.get(field_id)
+                        == item["values"].get(field_id)
+                        for field_id in controlled_ids
+                    )
+                ),
+                None,
+            )
+            if matched is not None:
+                selected_id = str(matched["id"])
+                state["selected_field_group_variants"][selection_key] = selected_id
+        selected = next(
+            (item for item in variants if item["id"] == selected_id),
+            None,
+        )
+        if selected is None:
+            selected_id = ""
+            state["selected_field_group_variants"][selection_key] = ""
+
+        panel = ttk.LabelFrame(
+            editor_inner,
+            text=str(library.label),
+            padding=(8, 8),
+        )
+        panel.grid(
+            row=row,
+            column=0,
+            columnspan=2,
+            sticky="ew",
+            padx=(12, 0),
+            pady=(0, 8),
+        )
+        panel.columnconfigure(0, weight=1)
+
+        id_by_label = {item["name"]: item["id"] for item in variants}
+        labels = tuple(id_by_label)
+        selected_label = selected["name"] if selected else ""
+        variant_var = tk.StringVar(value=selected_label)
+        combo = ttk.Combobox(
+            panel,
+            textvariable=variant_var,
+            values=labels,
+            state="readonly" if labels else "disabled",
+            width=36,
+        )
+        combo.grid(row=0, column=0, sticky="ew", padx=(0, 8))
+        ttk.Label(
+            panel,
+            text=(
+                "Wybór kopiuje ustawienia do bieżącego wariantu strony."
+                if labels
+                else "Brak zapisanych wariantów — utwórz pierwszy."
+            ),
+            foreground="#666",
+            wraplength=470,
+        ).grid(row=1, column=0, columnspan=5, sticky="w", pady=(4, 8))
+
+        def _snapshot_values() -> dict[str, Any]:
+            values = state["zone_values"].setdefault(zid, {})
+            preset_id = str(values.get(library.preset_field_id) or "")
+            assignments = dict(zone.preset_values).get(preset_id)
+            resolved = dict(values)
+            if assignments:
+                resolved.update(dict(assignments))
+            return {
+                field_id: resolved.get(field_id)
+                for field_id in controlled_ids
+            }
+
+        def _apply_variant(item: dict[str, Any]) -> None:
+            values = state["zone_values"].setdefault(zid, {})
+            values[library.preset_field_id] = library.custom_preset_value
+            values.update(item["values"])
+            state["selected_field_group_variants"][selection_key] = item["id"]
+            _mark_dirty()
+            status_var.set(f"Zastosowano wariant Lenis: {item['name']}")
+            _render_zone_editor()
+
+        def _select_variant(_event: tk.Event | None = None) -> None:
+            variant_id = id_by_label.get(variant_var.get(), "")
+            item = next(
+                (row_item for row_item in variants if row_item["id"] == variant_id),
+                None,
+            )
+            if item:
+                _apply_variant(item)
+
+        combo.bind("<<ComboboxSelected>>", _select_variant)
+
+        def _create_variant() -> None:
+            name = simpledialog.askstring(
+                config.app_title,
+                "Nazwa nowego wariantu Lenis:",
+                parent=host,
+            )
+            if not name:
+                return
+            try:
+                item = create_library_variant(
+                    library_path,
+                    name=name,
+                    values=_snapshot_values(),
+                    controlled_field_ids=controlled_ids,
+                )
+            except (OSError, ValueError) as exc:
+                messagebox.showerror(config.app_title, str(exc), parent=host)
+                return
+            _apply_variant(item)
+            show_toast(host, f"Utworzono wariant Lenis: {item['name']}")
+
+        def _save_selected() -> None:
+            if not selected_id:
+                messagebox.showinfo(
+                    config.app_title,
+                    "Najpierw wybierz zapisany wariant.",
+                    parent=host,
+                )
+                return
+            try:
+                item = update_library_variant(
+                    library_path,
+                    variant_id=selected_id,
+                    values=_snapshot_values(),
+                    controlled_field_ids=controlled_ids,
+                )
+            except (OSError, ValueError) as exc:
+                messagebox.showerror(config.app_title, str(exc), parent=host)
+                return
+            _apply_variant(item)
+            show_toast(host, f"Zapisano wariant Lenis: {item['name']}")
+
+        def _rename_selected() -> None:
+            if not selected:
+                return
+            name = simpledialog.askstring(
+                config.app_title,
+                "Nowa nazwa wariantu Lenis:",
+                initialvalue=str(selected["name"]),
+                parent=host,
+            )
+            if not name:
+                return
+            try:
+                item = rename_library_variant(
+                    library_path,
+                    variant_id=selected_id,
+                    name=name,
+                    controlled_field_ids=controlled_ids,
+                )
+            except (OSError, ValueError) as exc:
+                messagebox.showerror(config.app_title, str(exc), parent=host)
+                return
+            state["selected_field_group_variants"][selection_key] = item["id"]
+            status_var.set(f"Zmieniono nazwę wariantu Lenis na: {item['name']}")
+            _render_zone_editor()
+
+        def _delete_selected() -> None:
+            if not selected:
+                return
+            if not messagebox.askyesno(
+                config.app_title,
+                f"Usunąć wariant Lenis «{selected['name']}»?",
+                parent=host,
+            ):
+                return
+            try:
+                delete_library_variant(
+                    library_path,
+                    variant_id=selected_id,
+                    controlled_field_ids=controlled_ids,
+                )
+            except (OSError, ValueError) as exc:
+                messagebox.showerror(config.app_title, str(exc), parent=host)
+                return
+            state["selected_field_group_variants"][selection_key] = ""
+            status_var.set(f"Usunięto wariant Lenis: {selected['name']}")
+            _render_zone_editor()
+
+        buttons = ttk.Frame(panel)
+        buttons.grid(row=2, column=0, columnspan=5, sticky="w")
+        ttk.Button(
+            buttons,
+            text="Nowy wariant…",
+            command=_create_variant,
+        ).pack(side="left")
+        ttk.Button(
+            buttons,
+            text="Zapisz wybrany",
+            command=_save_selected,
+            state="normal" if selected else "disabled",
+        ).pack(side="left", padx=(6, 0))
+        ttk.Button(
+            buttons,
+            text="Zmień nazwę…",
+            command=_rename_selected,
+            state="normal" if selected else "disabled",
+        ).pack(side="left", padx=(6, 0))
+        ttk.Button(
+            buttons,
+            text="Usuń",
+            command=_delete_selected,
+            state="normal" if selected else "disabled",
+        ).pack(side="left", padx=(6, 0))
+        return row + 1
+
     def _render_zone_editor() -> None:
         for child in editor_inner.winfo_children():
             child.destroy()
         state["widgets"].clear()
         state["thumb_refs"].clear()
+        state["rendered_field_groups"] = set()
         zid = state.get("selected_zone_id")
         zone = zone_by_id(config.zones, zid) if zid else None
         if not zone:
@@ -987,6 +1275,31 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             row=1, column=0, columnspan=2, sticky="w", pady=(0, 8)
         )
         row = 2
+        zone_builder = (config.zone_content_builders or {}).get(zone.zone_id)
+        if callable(zone_builder):
+            try:
+                next_row = zone_builder(
+                    editor_inner,
+                    row=row,
+                    host=host,
+                    zone=zone,
+                    config=config,
+                    set_zone_value=_set_zone_value,
+                    get_zone_value=lambda field_id, zone_id=None, _default_zid=zid: _zone_value(
+                        zone_id or _default_zid, field_id
+                    ),
+                    mark_dirty=_mark_dirty,
+                )
+                if isinstance(next_row, int):
+                    row = next_row
+            except Exception as exc:
+                ttk.Label(
+                    editor_inner,
+                    text=f"Nie udało się zbudować panelu sekcji: {exc}",
+                    foreground="#a00",
+                    wraplength=520,
+                ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(0, 8))
+                row += 1
         if zone.preset_field_id and zone.recommended_preset_value:
             ttk.Button(
                 editor_inner,
@@ -1098,6 +1411,82 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             ).pack(side="left", padx=(8, 0))
             row += 1
         for fld in zone.fields:
+            zone_values = state["zone_values"].get(zid, {})
+            if fld.visible_when and not all(
+                str(zone_values.get(controller_id) or "") in allowed_values
+                for controller_id, allowed_values in fld.visible_when
+            ):
+                continue
+            if fld.group_id:
+                group_key = (zid, fld.group_id)
+                rendered_groups = state.setdefault("rendered_field_groups", set())
+                if group_key not in rendered_groups:
+                    rendered_groups.add(group_key)
+                    open_groups = state.setdefault("open_field_groups", {})
+                    is_open = bool(
+                        open_groups.get(group_key, not fld.group_collapsed)
+                    )
+                    accordion = ttk.Frame(editor_inner)
+                    accordion.grid(
+                        row=row,
+                        column=0,
+                        columnspan=2,
+                        sticky="ew",
+                        pady=(12, 6),
+                    )
+                    ttk.Separator(accordion, orient="horizontal").pack(
+                        side="left",
+                        fill="x",
+                        expand=True,
+                        padx=(0, 8),
+                    )
+
+                    def _toggle_group(
+                        key: tuple[str, str] = group_key,
+                        current: bool = is_open,
+                    ) -> None:
+                        state.setdefault("open_field_groups", {})[key] = not current
+                        _render_zone_editor()
+
+                    ttk.Button(
+                        accordion,
+                        text=(
+                            ("▾ " if is_open else "▸ ")
+                            + (fld.group_label or fld.group_id)
+                        ),
+                        command=_toggle_group,
+                    ).pack(side="left")
+                    ttk.Separator(accordion, orient="horizontal").pack(
+                        side="left",
+                        fill="x",
+                        expand=True,
+                        padx=(8, 0),
+                    )
+                    row += 1
+                    if is_open:
+                        variant_library = next(
+                            (
+                                item
+                                for item in zone.field_group_variant_libraries
+                                if item.group_id == fld.group_id
+                            ),
+                            None,
+                        )
+                        if variant_library is not None:
+                            row = _render_field_group_variant_library(
+                                zone,
+                                variant_library,
+                                row,
+                            )
+                else:
+                    is_open = bool(
+                        state.setdefault("open_field_groups", {}).get(
+                            group_key,
+                            not fld.group_collapsed,
+                        )
+                    )
+                if not is_open:
+                    continue
             if fld.kind == "section_background":
                 if zone.zone_id == "under_hero_bg" and under_hero_mode == "image":
                     row = _render_section_bg_button(fld, row)
@@ -1134,6 +1523,11 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             _render_zone_editor()
 
     zone_list.bind("<<ListboxSelect>>", _on_zone_select)
+    host.winfo_toplevel().bind(
+        "<<GicleeThemeAssetsChanged>>",
+        lambda _event: _render_zone_editor(),
+        add="+",
+    )
     _load_variant(state["variant_id"])
     host.after_idle(_on_editor_configure)
     status_var.set(f"Wczytano {config.template_basename}.")

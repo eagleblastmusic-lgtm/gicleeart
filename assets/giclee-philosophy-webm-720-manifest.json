@@ -1,0 +1,18 @@
+{
+  "version": 3,
+  "mode": "video",
+  "family": "philosophy",
+  "quality": "720p",
+  "container": "webm",
+  "mimeType": "video/webm",
+  "video": "giclee-philosophy-scroll-720.webm",
+  "poster": "giclee-philosophy-webm-720-poster.webp",
+  "frameCount": 210,
+  "fps": 60,
+  "width": 1280,
+  "height": 720,
+  "hasAlpha": true,
+  "codec": "vp9",
+  "activatedFrom": "giclee-philosophy-scroll.webm",
+  "activatedAt": "2026-07-29T14:42:01.418111+00:00"
+}

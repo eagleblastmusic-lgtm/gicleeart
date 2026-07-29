@@ -1,18 +1,20 @@
-/* Page-agnostic cinematic wheel easing (same profile as homepage native-v2). */
+/* Filozofia marki: native, lightweight smoothing, Lenis, or custom wheel tuning. */
 (function () {
   'use strict';
 
   var root = document.documentElement;
+  var SCROLL_SMOOTHNESS = 75;
   var WHEEL_GAIN = 1.05;
   var LINE_HEIGHT_PX = 40;
   var PAGE_DELTA_RATIO = 0.9;
   var MAX_WHEEL_DELTA_PX = 420;
-  var MAX_TARGET_LEAD_PX = 1800;
-  var FOLLOW_TAU_MS = 380;
+  var MAX_TARGET_LEAD_PX = 800;
+  var FOLLOW_TAU_MS = 75;
   var STOP_EPSILON_PX = 0.25;
   var MAX_FRAME_DELTA_MS = 48;
 
   var enabled = false;
+  var lenisInstance = null;
   var frameId = 0;
   var animationActive = false;
   var lastFrameTime = 0;
@@ -20,6 +22,159 @@
 
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
+  }
+
+  function filozofiaConfig() {
+    return window.GICLEE_FILOZOFIA_CONFIG || {};
+  }
+
+  function filozofiaScrollMode() {
+    try {
+      var override = new URLSearchParams(window.location.search).get(
+        'giclee_page_scroll_mode'
+      );
+      if (
+        override === 'standard' ||
+        override === 'smooth' ||
+        override === 'native-v2' ||
+        override === 'lenis' ||
+        override === 'custom'
+      ) {
+        return override;
+      }
+    } catch (_error) {
+      // Keep the saved setting when URLSearchParams is unavailable.
+    }
+    return String(filozofiaConfig().pageScrollMode || 'standard')
+      .trim()
+      .toLowerCase();
+  }
+
+  function readConfigNumber(key, fallback, min, max) {
+    var raw = filozofiaConfig()[key];
+    var n = typeof raw === 'number' ? raw : Number.parseFloat(raw);
+    if (!Number.isFinite(n)) return fallback;
+    return clamp(n, min, max);
+  }
+
+  function readConfigBoolean(key, fallback) {
+    var raw = filozofiaConfig()[key];
+    if (typeof raw === 'boolean') return raw;
+    if (raw === 'true' || raw === 1 || raw === '1') return true;
+    if (raw === 'false' || raw === 0 || raw === '0') return false;
+    return fallback;
+  }
+
+  function applyModeTuning() {
+    var mode = filozofiaScrollMode();
+    SCROLL_SMOOTHNESS = readConfigNumber(
+      'scrollSmoothness',
+      SCROLL_SMOOTHNESS,
+      0,
+      100
+    );
+    WHEEL_GAIN = readConfigNumber('wheelGain', WHEEL_GAIN, 0.1, 5);
+
+    if (mode === 'smooth' || mode === 'native-v2') {
+      // 75% = ~74 ms and 800 px. The old 300 ms / 1800 px profile felt
+      // resistant because a large target queue stayed alive after wheel input.
+      FOLLOW_TAU_MS = clamp(190 - SCROLL_SMOOTHNESS * 1.55, 28, 190);
+      MAX_TARGET_LEAD_PX = clamp(
+        350 + SCROLL_SMOOTHNESS * 6,
+        350,
+        950
+      );
+      return;
+    }
+
+    if (mode !== 'custom') return;
+    LINE_HEIGHT_PX = readConfigNumber('lineHeightPx', LINE_HEIGHT_PX, 1, 200);
+    PAGE_DELTA_RATIO = readConfigNumber(
+      'pageDeltaRatio',
+      PAGE_DELTA_RATIO,
+      0.1,
+      2
+    );
+    MAX_WHEEL_DELTA_PX = readConfigNumber(
+      'maxWheelDeltaPx',
+      MAX_WHEEL_DELTA_PX,
+      50,
+      2000
+    );
+    MAX_TARGET_LEAD_PX = readConfigNumber(
+      'maxTargetLeadPx',
+      MAX_TARGET_LEAD_PX,
+      100,
+      5000
+    );
+    FOLLOW_TAU_MS = readConfigNumber('followTauMs', FOLLOW_TAU_MS, 1, 1200);
+    STOP_EPSILON_PX = readConfigNumber(
+      'stopEpsilonPx',
+      STOP_EPSILON_PX,
+      0.01,
+      5
+    );
+    MAX_FRAME_DELTA_MS = readConfigNumber(
+      'maxFrameDeltaMs',
+      MAX_FRAME_DELTA_MS,
+      8,
+      100
+    );
+  }
+
+  function lenisSettings() {
+    var preset = String(filozofiaConfig().lenisPreset || '')
+      .trim()
+      .toLowerCase();
+    var settings = {
+      preset: preset,
+      lerp: 0.245,
+      wheelMultiplier: 1.05,
+      smoothWheel: true,
+      overscroll: true,
+      anchors: true,
+      stopInertiaOnNavigate: true
+    };
+
+    if (!preset || preset === 'legacy') {
+      // Backward compatibility for variants saved before the Lenis accordion.
+      settings.preset = 'legacy';
+      settings.lerp = clamp(
+        0.08 + SCROLL_SMOOTHNESS * 0.0022,
+        0.08,
+        0.3
+      );
+      settings.wheelMultiplier = WHEEL_GAIN;
+    } else if (preset === 'responsive') {
+      settings.lerp = 0.32;
+      settings.wheelMultiplier = 1;
+    } else if (preset === 'cinematic') {
+      settings.lerp = 0.14;
+      settings.wheelMultiplier = 0.9;
+    } else if (preset === 'custom') {
+      settings.lerp = readConfigNumber('lenisLerp', 0.245, 0.01, 1);
+      settings.wheelMultiplier = readConfigNumber(
+        'lenisWheelMultiplier',
+        1.05,
+        0.1,
+        5
+      );
+      settings.smoothWheel = readConfigBoolean('lenisSmoothWheel', true);
+      settings.overscroll = readConfigBoolean('lenisOverscroll', true);
+      settings.anchors = readConfigBoolean('lenisAnchors', true);
+      settings.stopInertiaOnNavigate = readConfigBoolean(
+        'lenisStopInertiaOnNavigate',
+        true
+      );
+    } else {
+      settings.preset = 'balanced';
+    }
+    return settings;
+  }
+
+  function followIsDirect() {
+    // Bardzo niski tau ≈ natychmiastowe doganianie (bez „filmu”).
+    return FOLLOW_TAU_MS <= 16;
   }
 
   function currentScrollY() {
@@ -80,6 +235,17 @@
     if (reducedMotionRequested()) return 'reduced-motion';
     if (designModeActive()) return 'shopify-design-mode';
     if (touchLikeDevice()) return 'touch-native';
+    if (document.body.classList.contains('template-page-filozofia-marki')) {
+      var mode = filozofiaScrollMode();
+      if (
+        mode !== 'smooth' &&
+        mode !== 'native-v2' &&
+        mode !== 'lenis' &&
+        mode !== 'custom'
+      ) {
+        return 'configuration';
+      }
+    }
     return '';
   }
 
@@ -145,6 +311,21 @@
     return false;
   }
 
+  function shouldPreventLenis(node) {
+    if (!node || node.nodeType !== 1) return false;
+    if (isExplicitNativeWheelZone(node)) return true;
+    if (node === document.body || node === document.documentElement) return false;
+
+    var style = window.getComputedStyle(node);
+    var overflowY = style.overflowY;
+    return (
+      (overflowY === 'auto' ||
+        overflowY === 'scroll' ||
+        overflowY === 'overlay') &&
+      node.scrollHeight > node.clientHeight + 1
+    );
+  }
+
   function clearAnimationClass() {
     root.classList.remove('giclee-page-smooth-scrolling');
   }
@@ -184,6 +365,12 @@
       return;
     }
 
+    if (followIsDirect()) {
+      writeScrollY(targetScrollY);
+      cancelAnimation(false);
+      return;
+    }
+
     var deltaMs = lastFrameTime
       ? Math.min(MAX_FRAME_DELTA_MS, now - lastFrameTime)
       : 16.67;
@@ -218,6 +405,12 @@
     );
     targetScrollY = clamp(proposed, 0, maxScrollY());
 
+    if (followIsDirect()) {
+      writeScrollY(targetScrollY);
+      cancelAnimation(false);
+      return;
+    }
+
     animationActive = true;
     root.classList.add('giclee-page-smooth-scrolling');
     scheduleFrame();
@@ -232,19 +425,97 @@
     cancelAnimation(true);
   }
 
+  function exposeDiagnostics(mode, extra) {
+    window.GICLEE_PAGE_SCROLL = Object.assign(
+      {
+        mode: mode,
+        smoothness: SCROLL_SMOOTHNESS,
+        wheelGain: WHEEL_GAIN
+      },
+      extra || {}
+    );
+  }
+
+  function bootLenis() {
+    if (typeof window.Lenis !== 'function') {
+      root.setAttribute('data-giclee-smooth-scroll', 'disabled');
+      root.setAttribute(
+        'data-giclee-smooth-scroll-reason',
+        'lenis-unavailable'
+      );
+      exposeDiagnostics('disabled', { reason: 'lenis-unavailable' });
+      return;
+    }
+
+    var settings = lenisSettings();
+    lenisInstance = new window.Lenis({
+      autoRaf: true,
+      smoothWheel: settings.smoothWheel,
+      syncTouch: false,
+      lerp: settings.lerp,
+      wheelMultiplier: settings.wheelMultiplier,
+      overscroll: settings.overscroll,
+      anchors: settings.anchors,
+      stopInertiaOnNavigate: settings.stopInertiaOnNavigate,
+      prevent: shouldPreventLenis
+    });
+
+    root.classList.add('giclee-page-smooth-scroll');
+    root.setAttribute('data-giclee-smooth-scroll', 'lenis');
+    root.setAttribute('data-giclee-lenis-preset', settings.preset);
+    root.setAttribute(
+      'data-giclee-lenis-lerp',
+      settings.lerp.toFixed(3)
+    );
+    root.removeAttribute('data-giclee-smooth-scroll-reason');
+    exposeDiagnostics('lenis', {
+      preset: settings.preset,
+      lerp: settings.lerp,
+      wheelMultiplier: settings.wheelMultiplier,
+      smoothWheel: settings.smoothWheel,
+      overscroll: settings.overscroll,
+      anchors: settings.anchors,
+      stopInertiaOnNavigate: settings.stopInertiaOnNavigate,
+      instance: lenisInstance,
+      destroy: function () {
+        if (lenisInstance) lenisInstance.destroy();
+        lenisInstance = null;
+        root.classList.remove('giclee-page-smooth-scroll');
+      }
+    });
+  }
+
   function boot() {
     var disabledReason = determineDisabledReason();
     if (disabledReason) {
       root.setAttribute('data-giclee-smooth-scroll', 'disabled');
       root.setAttribute('data-giclee-smooth-scroll-reason', disabledReason);
+      exposeDiagnostics('disabled', { reason: disabledReason });
+      return;
+    }
+
+    applyModeTuning();
+    if (filozofiaScrollMode() === 'lenis') {
+      bootLenis();
       return;
     }
 
     enabled = true;
     targetScrollY = currentScrollY();
     root.classList.add('giclee-page-smooth-scroll');
-    root.setAttribute('data-giclee-smooth-scroll', 'page-native-v2');
+    root.setAttribute(
+      'data-giclee-smooth-scroll',
+      filozofiaScrollMode() === 'custom' ? 'page-custom' : 'page-native-v2'
+    );
+    root.setAttribute(
+      'data-giclee-scroll-smoothness',
+      String(SCROLL_SMOOTHNESS)
+    );
     root.removeAttribute('data-giclee-smooth-scroll-reason');
+    exposeDiagnostics(filozofiaScrollMode(), {
+      followTauMs: FOLLOW_TAU_MS,
+      maxTargetLeadPx: MAX_TARGET_LEAD_PX
+    });
 
     window.addEventListener('wheel', onWheel, { passive: false });
     window.addEventListener('scroll', onNativeScroll, { passive: true });

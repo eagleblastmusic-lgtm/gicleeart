@@ -93,6 +93,30 @@
       "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
     },
     {
+      "type": "select",
+      "id": "scroll_video_container",
+      "label": "Format filmu",
+      "options": [
+        {
+          "value": "mp4",
+          "label": "MP4 H.264 — najwyższa zgodność"
+        },
+        {
+          "value": "webm",
+          "label": "WebM — gotowy plik, możliwa alfa"
+        }
+      ],
+      "default": "mp4",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' and block.settings.scroll_video_engine == 'video' }}"
+    },
+    {
+      "type": "text",
+      "id": "scroll_video_source",
+      "label": "Konkretny plik (GicleeApp)",
+      "info": "Wartość zarządzana przez listę plików w GicleeApp. Puste pole korzysta z domyślnego slotu formatu i jakości.",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' and block.settings.scroll_video_engine == 'video' }}"
+    },
+    {
       "type": "text",
       "id": "scroll_intro_title",
       "label": "Nagłówek początkowy",
@@ -113,6 +137,44 @@
       "label": "Tekst końcowy",
       "default": "<p>Kończy się dopiero wtedy, gdy otrzymuje swoją ostateczną formę — spójną, archiwalną i gotową do ekspozycji.</p>",
       "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "richtext",
+      "id": "tresc3d_text_1",
+      "label": "Treść 3D — tekst 1",
+      "default": "<p>Pierwszym są obrazy malarskie — często stare, pożółkłe, zapomniane lub wymagające ponownego opracowania w formie reprodukcji.</p>",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' and block.settings.scroll_video_asset == 'giclee-philosophy-wrota' }}"
+    },
+    {
+      "type": "image_picker",
+      "id": "tresc3d_pair1_before",
+      "label": "Treść 3D — para 1 przed",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' and block.settings.scroll_video_asset == 'giclee-philosophy-wrota' }}"
+    },
+    {
+      "type": "image_picker",
+      "id": "tresc3d_pair1_after",
+      "label": "Treść 3D — para 1 po",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' and block.settings.scroll_video_asset == 'giclee-philosophy-wrota' }}"
+    },
+    {
+      "type": "richtext",
+      "id": "tresc3d_text_2",
+      "label": "Treść 3D — tekst 2",
+      "default": "<p>W tym procesie traktuję je jak materię kulturową, którą można przywrócić do życia poprzez korekcję tonalną i kolorystyczną, precyzyjny druk Fine Art i świadomą oprawę</p>",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' and block.settings.scroll_video_asset == 'giclee-philosophy-wrota' }}"
+    },
+    {
+      "type": "image_picker",
+      "id": "tresc3d_pair2_before",
+      "label": "Treść 3D — para 2 przed",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' and block.settings.scroll_video_asset == 'giclee-philosophy-wrota' }}"
+    },
+    {
+      "type": "image_picker",
+      "id": "tresc3d_pair2_after",
+      "label": "Treść 3D — para 2 po",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' and block.settings.scroll_video_asset == 'giclee-philosophy-wrota' }}"
     },
     {
       "type": "select",
@@ -326,7 +388,7 @@
     {
       "type": "range",
       "id": "scroll_motion_mp4_dead_zone_ms",
-      "label": "Martwa strefa MP4",
+      "label": "Martwa strefa filmu (MP4/WebM)",
       "min": 0,
       "max": 100,
       "step": 1,
@@ -422,7 +484,7 @@
       "id": "scroll_video_viewport",
       "label": "Wysokość obszaru animacji",
       "min": 100,
-      "max": 800,
+      "max": 1500,
       "step": 50,
       "unit": "vh",
       "default": 400,

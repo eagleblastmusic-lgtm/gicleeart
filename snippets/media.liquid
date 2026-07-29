@@ -25,6 +25,7 @@
 
   assign scroll_video_quality = block_settings.scroll_video_quality | default: '720p'
   assign scroll_video_engine = block_settings.scroll_video_engine | default: 'video'
+  assign scroll_video_container = block_settings.scroll_video_container | default: 'mp4'
   assign scroll_video_asset = block_settings.scroll_video_asset | default: 'giclee-philosophy-frames'
   assign scroll_is_wrota = false
   if scroll_video_asset == 'giclee-philosophy-wrota'
@@ -68,6 +69,39 @@
     assign scroll_frame_width = 1280
     assign scroll_frame_height = 720
   endif
+  assign scroll_native_mime = 'video/mp4'
+  assign scroll_native_codec = 'h264'
+  assign scroll_native_has_alpha = 'false'
+  assign scroll_native_alpha_mode = 'none'
+  if scroll_video_container == 'webm'
+    assign scroll_native_mime = 'video/webm'
+    assign scroll_native_codec = 'vp9'
+    assign scroll_native_has_alpha = 'unknown'
+    assign scroll_native_alpha_mode = 'unknown'
+    if scroll_video_quality == '1080p'
+      if scroll_is_wrota
+        assign scroll_native_video = 'giclee-philosophy-wrota-scroll-1080.webm'
+        assign scroll_native_poster = 'giclee-philosophy-wrota-webm-1080-poster.webp'
+        assign scroll_native_manifest = 'giclee-philosophy-wrota-webm-1080-manifest.json'
+      else
+        assign scroll_native_video = 'giclee-philosophy-scroll-1080.webm'
+        assign scroll_native_poster = 'giclee-philosophy-webm-1080-poster.webp'
+        assign scroll_native_manifest = 'giclee-philosophy-webm-1080-manifest.json'
+      endif
+    else
+      if scroll_is_wrota
+        assign scroll_native_video = 'giclee-philosophy-wrota-scroll-720.webm'
+        assign scroll_native_poster = 'giclee-philosophy-wrota-webm-720-poster.webp'
+        assign scroll_native_manifest = 'giclee-philosophy-wrota-webm-720-manifest.json'
+      else
+        assign scroll_native_video = 'giclee-philosophy-scroll-720.webm'
+        assign scroll_native_poster = 'giclee-philosophy-webm-720-poster.webp'
+        assign scroll_native_manifest = 'giclee-philosophy-webm-720-manifest.json'
+      endif
+    endif
+  else
+    assign scroll_video_container = 'mp4'
+  endif
   assign scroll_poster = scroll_frame_first
   if scroll_video_engine == 'video'
     assign scroll_poster = scroll_native_poster
@@ -88,6 +122,7 @@
   {% if show_scroll_video %}
     data-scroll-motion-root
     data-scroll-video-asset="{{ scroll_video_asset | escape }}"
+    data-scroll-video-container="{{ scroll_video_container }}"
     {% if scroll_is_wrota %}data-fm-portal-root{% endif %}
     data-motion-presets-url="{{ 'giclee-scroll-motion-presets.json' | asset_url }}"
     data-motion-preset="{{ block_settings.scroll_motion_preset | default: 'direct' }}"
@@ -113,8 +148,19 @@
     data-motion-tail-pacing="{{ block_settings.scroll_motion_tail_pacing | default: false }}"
     data-motion-tail-window-frames="{{ block_settings.scroll_motion_tail_window_frames | default: 12 }}"
     data-preserve-alpha="{{ block_settings.scroll_preserve_alpha | default: true, allow_false: true }}"
-    data-background-mode="{{ block_settings.scroll_background_mode | default: 'auto' }}"
-    data-background-value="{{ block_settings.scroll_background_value | default: '#000000' | escape }}"
+    {%- liquid
+      assign scroll_bg_mode = block_settings.scroll_background_mode | default: 'auto'
+      assign scroll_bg_value = block_settings.scroll_background_value | default: '#000000'
+      unless scroll_is_wrota
+        if scroll_bg_mode == 'asset'
+          assign scroll_bg_value = 'giclee-philosophy-scroll-bg.webp' | asset_url
+        elsif scroll_bg_mode == 'webm'
+          assign scroll_bg_value = 'giclee-philosophy-scroll-bg.webm' | asset_url
+        endif
+      endunless
+    -%}
+    data-background-mode="{{ scroll_bg_mode }}"
+    data-background-value="{{ scroll_bg_value | escape }}"
     data-alpha-diagnostics="{{ block_settings.scroll_alpha_diagnostics | default: false, allow_false: true }}"
     data-force-transparent="{{ block_settings.scroll_force_transparent | default: false, allow_false: true }}"
   {% endif %}
@@ -167,7 +213,7 @@
         href="{{ scroll_poster | asset_url }}"
         fetchpriority="high"
       >
-      <div class="media-block__scroll-stage{% if scroll_is_wrota %} giclee-fm-wrota-portal{% endif %}"{% if scroll_is_wrota %} data-fm-portal style="--giclee-fm-portal-inset: 50%;"{% endif %}>
+      <div class="media-block__scroll-stage{% if scroll_video_asset == 'giclee-philosophy-frames' %} media-block__scroll-stage--philosophy{% endif %}{% if scroll_is_wrota %} giclee-fm-wrota-portal{% endif %}"{% if scroll_is_wrota %} data-fm-portal style="--giclee-fm-portal-inset: 50%;"{% endif %}>
         <img
           class="media-block__scroll-poster"
           src="{{ scroll_poster | asset_url }}"
@@ -186,9 +232,10 @@
             data-frame-count="{{ scroll_frame_count }}"
             data-frame-fps="60"
             data-video-manifest="{{ scroll_native_manifest | asset_url }}"
-            data-source-has-alpha="false"
-            data-alpha-mode="none"
-            data-source-codec="h264"
+            data-video-container="{{ scroll_video_container }}"
+            data-source-has-alpha="{{ scroll_native_has_alpha }}"
+            data-alpha-mode="{{ scroll_native_alpha_mode }}"
+            data-source-codec="{{ scroll_native_codec }}"
             width="{{ scroll_frame_width }}"
             height="{{ scroll_frame_height }}"
             muted
@@ -200,7 +247,7 @@
           >
             <source
               src="{{ scroll_native_video | asset_url }}"
-              type="video/mp4"
+              type="{{ scroll_native_mime }}"
             >
           </video>
         {% else %}
@@ -224,6 +271,10 @@
         {% endif %}
         {% if scroll_video_asset == 'giclee-philosophy-frames' %}
           <div class="media-block__scroll-separators" aria-hidden="true">
+            <span></span>
+            <span></span>
+          </div>
+          <div class="media-block__scroll-separators media-block__scroll-separators--bottom" aria-hidden="true">
             <span></span>
             <span></span>
           </div>
@@ -251,6 +302,100 @@
                 | escape
               }}
             </p>
+          </div>
+        {% endif %}
+        {% if scroll_is_wrota %}
+          {%- liquid
+            assign tresc3d_text_1 = block_settings.tresc3d_text_1 | default: '<p>Pierwszym są obrazy malarskie — często stare, pożółkłe, zapomniane lub wymagające ponownego opracowania w formie reprodukcji.</p>'
+            assign tresc3d_text_2 = block_settings.tresc3d_text_2 | default: '<p>W tym procesie traktuję je jak materię kulturową, którą można przywrócić do życia poprzez korekcję tonalną i kolorystyczną, precyzyjny druk Fine Art i świadomą oprawę</p>'
+          -%}
+          <div class="giclee-fm-tresc3d" data-fm-tresc3d aria-hidden="true">
+            <div
+              class="giclee-fm-tresc3d__pair"
+              data-fm-tresc3d-pair="1"
+              style="--fm-tresc3d-pair-opacity: 0;"
+            >
+              <p class="giclee-fm-tresc3d__text">
+                {{ tresc3d_text_1 | strip_html | escape }}
+              </p>
+              <div class="giclee-fm-tresc3d__compare" data-fm-tresc3d-compare>
+                <div class="giclee-fm-tresc3d__compare-frame">
+                  <div class="giclee-fm-tresc3d__compare-media" data-orientation="horizontal">
+                    <div class="giclee-fm-tresc3d__layer giclee-fm-tresc3d__layer--before">
+                      {%- if block_settings.tresc3d_pair1_before != blank -%}
+                        {{
+                          block_settings.tresc3d_pair1_before
+                          | image_url: width: 2400
+                          | image_tag:
+                            loading: 'lazy',
+                            class: 'giclee-fm-tresc3d__image',
+                            alt: 'Przed',
+                            sizes: '(min-width: 990px) 42vw, 90vw'
+                        }}
+                      {%- endif -%}
+                      <span class="giclee-fm-tresc3d__label">Przed</span>
+                    </div>
+                    <div class="giclee-fm-tresc3d__layer giclee-fm-tresc3d__layer--after">
+                      {%- if block_settings.tresc3d_pair1_after != blank -%}
+                        {{
+                          block_settings.tresc3d_pair1_after
+                          | image_url: width: 2400
+                          | image_tag:
+                            loading: 'lazy',
+                            class: 'giclee-fm-tresc3d__image',
+                            alt: 'Po',
+                            sizes: '(min-width: 990px) 42vw, 90vw'
+                        }}
+                      {%- endif -%}
+                      <span class="giclee-fm-tresc3d__label giclee-fm-tresc3d__label--after">Po</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div
+              class="giclee-fm-tresc3d__pair"
+              data-fm-tresc3d-pair="2"
+              style="--fm-tresc3d-pair-opacity: 0;"
+            >
+              <p class="giclee-fm-tresc3d__text">
+                {{ tresc3d_text_2 | strip_html | escape }}
+              </p>
+              <div class="giclee-fm-tresc3d__compare" data-fm-tresc3d-compare>
+                <div class="giclee-fm-tresc3d__compare-frame">
+                  <div class="giclee-fm-tresc3d__compare-media" data-orientation="horizontal">
+                    <div class="giclee-fm-tresc3d__layer giclee-fm-tresc3d__layer--before">
+                      {%- if block_settings.tresc3d_pair2_before != blank -%}
+                        {{
+                          block_settings.tresc3d_pair2_before
+                          | image_url: width: 2400
+                          | image_tag:
+                            loading: 'lazy',
+                            class: 'giclee-fm-tresc3d__image',
+                            alt: 'Przed',
+                            sizes: '(min-width: 990px) 42vw, 90vw'
+                        }}
+                      {%- endif -%}
+                      <span class="giclee-fm-tresc3d__label">Przed</span>
+                    </div>
+                    <div class="giclee-fm-tresc3d__layer giclee-fm-tresc3d__layer--after">
+                      {%- if block_settings.tresc3d_pair2_after != blank -%}
+                        {{
+                          block_settings.tresc3d_pair2_after
+                          | image_url: width: 2400
+                          | image_tag:
+                            loading: 'lazy',
+                            class: 'giclee-fm-tresc3d__image',
+                            alt: 'Po',
+                            sizes: '(min-width: 990px) 42vw, 90vw'
+                        }}
+                      {%- endif -%}
+                      <span class="giclee-fm-tresc3d__label giclee-fm-tresc3d__label--after">Po</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         {% endif %}
       </div>
@@ -338,6 +483,26 @@
     width: 100%;
   }
 
+  .media-block__scroll-bg-video {
+    display: block;
+    height: 100%;
+    inset: 0;
+    object-fit: cover;
+    object-position: center center;
+    pointer-events: none;
+    position: absolute;
+    width: 100%;
+    z-index: 0;
+  }
+
+  /*
+    Dolne linie: czarny pas nad filmem (jak u góry), żeby między separatorami
+    i w paddingu pod nimi było #000 — nie tło scrolla prześwitujące z alfą.
+  */
+  .media-block__scroll-stage--philosophy {
+    background: var(--scroll-runtime-background, #000);
+  }
+
   .media-block__media--scroll {
     display: block;
     image-rendering: auto;
@@ -370,12 +535,18 @@
   }
 
   .media-block__scroll-separators {
+    --scroll-separator-band-bottom: 83px;
     background: #000;
     inset: 0 0 auto;
     height: var(--scroll-separator-band, 50px);
     pointer-events: none;
     position: absolute;
     z-index: 3;
+  }
+
+  .media-block__scroll-separators--bottom {
+    inset: auto 0 0;
+    height: var(--scroll-separator-band-bottom, 83px);
   }
 
   .media-block__scroll-separators span {

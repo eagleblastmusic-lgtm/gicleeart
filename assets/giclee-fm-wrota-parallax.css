@@ -1,0 +1,196 @@
+/* Filozofia / Wrota — flat parallax (Bottom + Middle), jak Pedzel_Alchemy #7. */
+
+.giclee-fm-flat-parallax {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  overflow: hidden;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  will-change: opacity;
+}
+
+.giclee-fm-flat-parallax.is-ready {
+  visibility: visible;
+}
+
+.giclee-fm-flat-parallax.is-active {
+  pointer-events: none;
+}
+
+.giclee-fm-flat-parallax__layer {
+  position: absolute;
+  inset: -3%;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.giclee-fm-flat-parallax__layer img,
+.giclee-fm-flat-parallax__layer video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  user-select: none;
+  -webkit-user-drag: none;
+  display: block;
+}
+
+.giclee-fm-flat-parallax__layer--blend img,
+.giclee-fm-flat-parallax__layer--blend video {
+  mix-blend-mode: screen;
+}
+
+/* Scrub video fades out as parallax crossfades in. */
+.media-block__scroll-stage.giclee-fm-portal-on-quote.is-fm-parallax-crossfade
+  .media-block__media--scroll {
+  opacity: var(--giclee-fm-wrota-video-opacity, 1);
+  transition: none;
+}
+
+/* Treść 3D — tekst lewa + kontener przed/po prawa (po crossfade Wrota). */
+.giclee-fm-tresc3d {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  color: #fff;
+}
+
+.giclee-fm-tresc3d__pair {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(1.5rem, 4vw, 4rem);
+  padding:
+    clamp(4rem, 10vh, 7rem)
+    clamp(1.5rem, 5vw, 5rem)
+    clamp(3rem, 8vh, 5rem);
+  opacity: var(--fm-tresc3d-pair-opacity, 0);
+  visibility: hidden;
+  will-change: opacity;
+}
+
+.giclee-fm-tresc3d__pair.is-visible {
+  visibility: visible;
+}
+
+.giclee-fm-tresc3d__text {
+  margin: 0;
+  max-width: 34rem;
+  justify-self: start;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(1.15rem, 1.85vw, 1.65rem);
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+  color: rgb(255 255 255 / 0.92);
+  text-shadow: 0 0.12em 0.7em rgb(0 0 0 / 0.45);
+  text-wrap: pretty;
+}
+
+.giclee-fm-tresc3d__compare {
+  width: 100%;
+  max-width: min(100%, 34rem);
+  justify-self: end;
+}
+
+.giclee-fm-tresc3d__compare-frame {
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgb(0 0 0 / 0.42);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.04) inset,
+    0 20px 48px rgb(0 0 0 / 0.4);
+}
+
+.giclee-fm-tresc3d__compare-media {
+  --compare: 50;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1.55;
+  display: grid;
+  grid-template: 1fr / 1fr;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgb(255 255 255 / 0.06), transparent 42%),
+    rgb(12 12 12);
+}
+
+.giclee-fm-tresc3d__layer {
+  grid-area: 1 / 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.giclee-fm-tresc3d__layer--before {
+  clip-path: inset(0 calc((100 - var(--compare)) * 1%) 0 0);
+  z-index: 1;
+}
+
+.giclee-fm-tresc3d__layer--after {
+  clip-path: inset(0 0 0 calc(var(--compare) * 1%));
+  z-index: 2;
+}
+
+.giclee-fm-tresc3d__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.giclee-fm-tresc3d__label {
+  position: absolute;
+  left: 0.85rem;
+  bottom: 0.75rem;
+  z-index: 3;
+  padding: 0.28rem 0.55rem;
+  border: 1px solid rgb(255 255 255 / 0.18);
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.45);
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.82);
+}
+
+.giclee-fm-tresc3d__label--after {
+  left: auto;
+  right: 0.85rem;
+}
+
+@media (max-width: 899px) {
+  .giclee-fm-tresc3d__pair {
+    grid-template-columns: 1fr;
+    align-content: center;
+    gap: 1.25rem;
+    padding-inline: 1.25rem;
+  }
+
+  .giclee-fm-tresc3d__text,
+  .giclee-fm-tresc3d__compare {
+    max-width: none;
+    justify-self: stretch;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giclee-fm-flat-parallax__layer {
+    will-change: auto;
+  }
+
+  .giclee-fm-tresc3d__pair {
+    will-change: auto;
+  }
+}

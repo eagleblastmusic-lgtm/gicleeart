@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import re
 import shutil
 import subprocess
+import unicodedata
 import zipfile
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 from uuid import uuid4
 
 from PIL import Image
@@ -44,8 +47,11 @@ class AssetFamily:
     id: str
     source_prefix: str
     runtime_video: dict[str, str]
+    runtime_webm: dict[str, str]
     runtime_poster: dict[str, str]
+    webm_poster: dict[str, str]
     video_manifest: dict[str, str]
+    webm_manifest: dict[str, str]
     quality_profiles: dict[str, SequenceProfile]
     backup_prefix: str
 
@@ -58,13 +64,25 @@ ASSET_FAMILIES: dict[str, AssetFamily] = {
             "720p": "giclee-philosophy-scroll-720.mp4",
             "1080p": "giclee-philosophy-scroll-1080.mp4",
         },
+        runtime_webm={
+            "720p": "giclee-philosophy-scroll-720.webm",
+            "1080p": "giclee-philosophy-scroll-1080.webm",
+        },
         runtime_poster={
             "720p": "giclee-philosophy-video-720-poster.webp",
             "1080p": "giclee-philosophy-video-1080-poster.webp",
         },
+        webm_poster={
+            "720p": "giclee-philosophy-webm-720-poster.webp",
+            "1080p": "giclee-philosophy-webm-1080-poster.webp",
+        },
         video_manifest={
             "720p": "giclee-philosophy-video-720-manifest.json",
             "1080p": "giclee-philosophy-video-1080-manifest.json",
+        },
+        webm_manifest={
+            "720p": "giclee-philosophy-webm-720-manifest.json",
+            "1080p": "giclee-philosophy-webm-1080-manifest.json",
         },
         quality_profiles={
             "720p": SequenceProfile(
@@ -95,13 +113,25 @@ ASSET_FAMILIES: dict[str, AssetFamily] = {
             "720p": "giclee-philosophy-wrota-scroll-720.mp4",
             "1080p": "giclee-philosophy-wrota-scroll-1080.mp4",
         },
+        runtime_webm={
+            "720p": "giclee-philosophy-wrota-scroll-720.webm",
+            "1080p": "giclee-philosophy-wrota-scroll-1080.webm",
+        },
         runtime_poster={
             "720p": "giclee-philosophy-wrota-video-720-poster.webp",
             "1080p": "giclee-philosophy-wrota-video-1080-poster.webp",
         },
+        webm_poster={
+            "720p": "giclee-philosophy-wrota-webm-720-poster.webp",
+            "1080p": "giclee-philosophy-wrota-webm-1080-poster.webp",
+        },
         video_manifest={
             "720p": "giclee-philosophy-wrota-video-720-manifest.json",
             "1080p": "giclee-philosophy-wrota-video-1080-manifest.json",
+        },
+        webm_manifest={
+            "720p": "giclee-philosophy-wrota-webm-720-manifest.json",
+            "1080p": "giclee-philosophy-wrota-webm-1080-manifest.json",
         },
         quality_profiles={
             "720p": SequenceProfile(
@@ -130,8 +160,11 @@ ASSET_FAMILIES: dict[str, AssetFamily] = {
 # Aliasy wsteczne — domyślna rodzina „philosophy”.
 SOURCE_PREFIX = ASSET_FAMILIES["philosophy"].source_prefix
 RUNTIME_VIDEO_NAMES = ASSET_FAMILIES["philosophy"].runtime_video
+RUNTIME_WEBM_NAMES = ASSET_FAMILIES["philosophy"].runtime_webm
 RUNTIME_POSTER_NAMES = ASSET_FAMILIES["philosophy"].runtime_poster
+WEBM_POSTER_NAMES = ASSET_FAMILIES["philosophy"].webm_poster
 VIDEO_MANIFEST_NAMES = ASSET_FAMILIES["philosophy"].video_manifest
+WEBM_MANIFEST_NAMES = ASSET_FAMILIES["philosophy"].webm_manifest
 QUALITY_PROFILES = ASSET_FAMILIES["philosophy"].quality_profiles
 
 
@@ -190,6 +223,7 @@ class VariantsReplaceResult:
 @dataclass(frozen=True)
 class NativeVideoStatus:
     quality: str
+    container: str
     frame_count: int
     width: int
     height: int
@@ -205,6 +239,9 @@ class NativeVideoStatus:
     source_has_alpha: bool | None
     full_source_frame_use: bool | None
     background_mode: str
+    keyframe_interval: int | None
+    intra_only: bool | None
+    passthrough: bool
 
     @property
     def duration_seconds(self) -> float:
@@ -214,6 +251,7 @@ class NativeVideoStatus:
 @dataclass(frozen=True)
 class NativeVideoResult:
     quality: str
+    container: str
     status: NativeVideoStatus
     video_path: Path
     poster_path: Path
@@ -233,6 +271,492 @@ class VideoMetadata:
     pixel_format: str
     has_alpha: bool | None
     alpha_mode: str
+
+
+@dataclass(frozen=True)
+class NativeVideoAsset:
+    family: str
+    quality: str
+    container: str
+    video: str
+    poster: str
+    manifest: str
+    frame_count: int
+    fps: int
+    width: int
+    height: int
+    has_alpha: bool | None
+    codec: str
+    total_bytes: int
+
+    @property
+    def source_spec(self) -> str:
+        alpha = (
+            "true"
+            if self.has_alpha is True
+            else "false"
+            if self.has_alpha is False
+            else "unknown"
+        )
+        values = (
+            self.video,
+            self.poster or "-",
+            self.manifest or "-",
+            str(self.frame_count or 0),
+            str(self.fps or DEFAULT_FPS),
+            str(self.width or 0),
+            str(self.height or 0),
+            alpha,
+            self.codec or "unknown",
+        )
+        return "::".join(values)
+
+    @property
+    def label(self) -> str:
+        size_mb = self.total_bytes / (1024 * 1024)
+        alpha = " · alfa" if self.has_alpha is True else ""
+        return (
+            f"{self.video} — {self.width}×{self.height} · "
+            f"{self.fps} FPS · {size_mb:.1f} MB{alpha}"
+        )
+
+
+def _native_asset_names(
+    asset: AssetFamily,
+    quality: str,
+    container: str,
+) -> tuple[str, str, str]:
+    if container == "mp4":
+        return (
+            asset.runtime_video[quality],
+            asset.runtime_poster[quality],
+            asset.video_manifest[quality],
+        )
+    if container == "webm":
+        return (
+            asset.runtime_webm[quality],
+            asset.webm_poster[quality],
+            asset.webm_manifest[quality],
+        )
+    raise ValueError("Kontener filmu musi mieć wartość mp4 albo webm.")
+
+
+def parse_native_video_source_spec(value: str | None) -> dict[str, str]:
+    """Rozkoduj wybór biblioteki; obsługuje też starszą wartość = nazwa pliku."""
+
+    raw = str(value or "").strip()
+    if not raw:
+        return {}
+    parts = raw.split("::")
+    names = (
+        "video",
+        "poster",
+        "manifest",
+        "frame_count",
+        "fps",
+        "width",
+        "height",
+        "has_alpha",
+        "codec",
+    )
+    result = {
+        name: parts[index].strip()
+        for index, name in enumerate(names)
+        if index < len(parts) and parts[index].strip() not in {"", "-"}
+    }
+    if "video" not in result:
+        result["video"] = raw
+    return result
+
+
+PAGE_TEMPLATE_REL = "templates/page.filozofia-marki.json"
+_SHOPIFYIGNORE_BEGIN = "# BEGIN giclee-filozofia-active-scroll-video"
+_SHOPIFYIGNORE_END = "# END giclee-filozofia-active-scroll-video"
+
+
+def _asset_id_to_family(asset_id: str) -> str:
+    if "wrota" in str(asset_id):
+        return "wrota"
+    return "philosophy"
+
+
+def iter_scroll_video_block_settings(
+    root: Path | None = None,
+) -> list[dict[str, str]]:
+    """Odczytaj aktywne ustawienia scroll_video ze szablonu strony."""
+
+    template_path = (root or theme_root()) / PAGE_TEMPLATE_REL
+    raw = template_path.read_text(encoding="utf-8")
+    if raw.lstrip().startswith("/*"):
+        end = raw.find("*/")
+        if end >= 0:
+            raw = raw[end + 2 :]
+    data = json.loads(raw)
+    selections: list[dict[str, str]] = []
+    for section in (data.get("sections") or {}).values():
+        if not isinstance(section, dict):
+            continue
+        for block in (section.get("blocks") or {}).values():
+            if not isinstance(block, dict):
+                continue
+            settings = block.get("settings") or {}
+            if settings.get("media_type") != "scroll_video":
+                continue
+            asset_id = str(
+                settings.get("scroll_video_asset") or "giclee-philosophy-frames"
+            )
+            quality = str(settings.get("scroll_video_quality") or "720p")
+            if quality not in {"720p", "1080p"}:
+                quality = "720p"
+            container = str(settings.get("scroll_video_container") or "mp4")
+            if container not in {"mp4", "webm"}:
+                container = "mp4"
+            engine = str(settings.get("scroll_video_engine") or "video")
+            if engine not in {"video", "frames"}:
+                engine = "video"
+            selections.append(
+                {
+                    "family": _asset_id_to_family(asset_id),
+                    "asset_id": asset_id,
+                    "engine": engine,
+                    "container": container,
+                    "quality": quality,
+                    "source_spec": str(
+                        settings.get("scroll_video_source") or ""
+                    ).strip(),
+                }
+            )
+    return selections
+
+
+def all_scroll_video_runtime_relpaths(
+    root: Path | None = None,
+) -> tuple[str, ...]:
+    """Wszystkie możliwe pliki runtime filmów (mp4/webm + poster + manifest)."""
+
+    paths: list[str] = []
+    for asset in ASSET_FAMILIES.values():
+        for quality in asset.quality_profiles:
+            for container in ("mp4", "webm"):
+                video, poster, manifest = _native_asset_names(
+                    asset, quality, container
+                )
+                paths.extend(
+                    (
+                        f"assets/{video}",
+                        f"assets/{poster}",
+                        f"assets/{manifest}",
+                    )
+                )
+            profile = asset.quality_profiles[quality]
+            paths.append(f"assets/{profile.manifest_name}")
+        paths.append(f"assets/{asset.source_prefix}.mp4")
+        paths.append(f"assets/{asset.source_prefix}.webm")
+    assets = _assets_dir(root)
+    if assets.is_dir():
+        for path in sorted(assets.glob("giclee-scroll-library-*")):
+            if path.is_file() and path.suffix.lower() in {
+                ".mp4",
+                ".webm",
+                ".webp",
+                ".json",
+            }:
+                paths.append(f"assets/{path.name}")
+    return tuple(dict.fromkeys(paths))
+
+
+def active_scroll_video_deploy_relpaths(
+    root: Path | None = None,
+) -> tuple[str, ...]:
+    """Tylko pliki aktywnego silnika/jakości/kontenera ze szablonu."""
+
+    paths: list[str] = []
+    for item in iter_scroll_video_block_settings(root):
+        asset = _family(item["family"])
+        if item["engine"] == "frames":
+            profile = asset.quality_profiles[item["quality"]]
+            paths.append(f"assets/{profile.manifest_name}")
+            continue
+        video, poster, manifest = _native_asset_names(
+            asset, item["quality"], item["container"]
+        )
+        paths.extend(
+            (
+                f"assets/{video}",
+                f"assets/{poster}",
+                f"assets/{manifest}",
+            )
+        )
+    return tuple(dict.fromkeys(paths))
+
+
+def activate_selected_video_sources(
+    root: Path | None = None,
+) -> tuple[Path, ...]:
+    """Skopiuj wybrane pozycje biblioteki do stabilnych slotów runtime."""
+
+    theme = root or theme_root()
+    assets = theme / "assets"
+    changed: list[Path] = []
+    for item in iter_scroll_video_block_settings(theme):
+        if item["engine"] != "video":
+            continue
+        selected = parse_native_video_source_spec(item.get("source_spec"))
+        if not selected.get("video"):
+            continue
+        asset = _family(item["family"])
+        video_name, poster_name, manifest_name = _native_asset_names(
+            asset,
+            item["quality"],
+            item["container"],
+        )
+        source_video = assets / selected["video"]
+        if not source_video.is_file():
+            raise FileNotFoundError(
+                f"Wybrany plik biblioteki nie istnieje: {source_video.name}"
+            )
+        target_video = assets / video_name
+        if source_video.resolve() != target_video.resolve():
+            shutil.copy2(source_video, target_video)
+            changed.append(target_video)
+
+        source_poster_name = selected.get("poster", "")
+        source_poster = assets / source_poster_name if source_poster_name else None
+        target_poster = assets / poster_name
+        if (
+            source_poster
+            and source_poster.is_file()
+            and source_poster.resolve() != target_poster.resolve()
+        ):
+            shutil.copy2(source_poster, target_poster)
+            changed.append(target_poster)
+
+        source_manifest_name = selected.get("manifest", "")
+        source_manifest = (
+            assets / source_manifest_name if source_manifest_name else None
+        )
+        manifest: dict[str, object] = {}
+        if source_manifest and source_manifest.is_file():
+            try:
+                manifest = json.loads(
+                    source_manifest.read_text(encoding="utf-8")
+                )
+            except (OSError, TypeError, ValueError):
+                manifest = {}
+        alpha_raw = selected.get("has_alpha", "unknown")
+        has_alpha = (
+            True
+            if alpha_raw == "true"
+            else False
+            if alpha_raw == "false"
+            else manifest.get("hasAlpha")
+        )
+        manifest.update(
+            {
+                "version": max(3, int(manifest.get("version") or 3)),
+                "mode": "video",
+                "family": asset.id,
+                "quality": item["quality"],
+                "container": item["container"],
+                "mimeType": (
+                    "video/webm"
+                    if item["container"] == "webm"
+                    else "video/mp4"
+                ),
+                "video": target_video.name,
+                "poster": target_poster.name,
+                "frameCount": int(
+                    selected.get("frame_count")
+                    or manifest.get("frameCount")
+                    or 0
+                ),
+                "fps": int(
+                    selected.get("fps")
+                    or manifest.get("fps")
+                    or DEFAULT_FPS
+                ),
+                "width": int(
+                    selected.get("width")
+                    or manifest.get("width")
+                    or _profile(item["quality"], asset.id).width
+                ),
+                "height": int(
+                    selected.get("height")
+                    or manifest.get("height")
+                    or _profile(item["quality"], asset.id).height
+                ),
+                "hasAlpha": has_alpha,
+                "codec": (
+                    selected.get("codec")
+                    or manifest.get("codec")
+                    or ("vp9" if item["container"] == "webm" else "h264")
+                ),
+                "activatedFrom": source_video.name,
+                "activatedAt": datetime.now(UTC).isoformat(),
+            }
+        )
+        target_manifest = assets / manifest_name
+        pending = assets / f".{target_manifest.name}.tmp"
+        pending.write_text(
+            json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        pending.replace(target_manifest)
+        changed.append(target_manifest)
+    return tuple(dict.fromkeys(changed))
+
+
+def apply_scroll_video_selection(root: Path | None = None) -> Path:
+    """Aktywuj wybór biblioteki i odśwież filtrowanie theme dev/deploy."""
+
+    theme = root or theme_root()
+    activate_selected_video_sources(theme)
+    sync_philosophy_scroll_bg_mode(root=theme)
+    return sync_scroll_video_shopifyignore(theme)
+
+
+def _load_page_template(path: Path) -> tuple[str, dict[str, Any]]:
+    raw = path.read_text(encoding="utf-8")
+    header = ""
+    body = raw
+    if raw.lstrip().startswith("/*"):
+        end = raw.find("*/")
+        if end >= 0:
+            header = raw[: end + 2].rstrip() + "\n"
+            body = raw[end + 2 :].lstrip()
+    return header, json.loads(body)
+
+
+def _write_page_template(path: Path, header: str, data: dict[str, Any]) -> None:
+    body = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
+    path.write_text(header + body if header else body, encoding="utf-8")
+
+
+def sync_philosophy_scroll_bg_mode(*, root: Path | None = None) -> bool:
+    """Gdy plik tła scrolla istnieje, a mode jest ``auto`` — ustaw ``asset``/``webm``.
+
+    Po podmianie wideo zapis często wraca do ``auto`` i tło robi się czarne
+    (silnik video + auto = #000). «Usuń tło» kasuje plik, więc nie promujemy wtedy.
+    """
+
+    theme = root or theme_root()
+    template_path = theme / PAGE_TEMPLATE_REL
+    if not template_path.is_file():
+        return False
+
+    webm_exists = (theme / PHILOSOPHY_SCROLL_BG_WEBM_REL).is_file()
+    image_exists = (theme / PHILOSOPHY_SCROLL_BG_IMAGE_REL).is_file()
+    if not webm_exists and not image_exists:
+        return False
+    desired = "webm" if webm_exists else "asset"
+
+    header, data = _load_page_template(template_path)
+    changed = False
+    for section in (data.get("sections") or {}).values():
+        if not isinstance(section, dict):
+            continue
+        for block in (section.get("blocks") or {}).values():
+            if not isinstance(block, dict):
+                continue
+            settings = block.get("settings")
+            if not isinstance(settings, dict):
+                continue
+            if settings.get("media_type") != "scroll_video":
+                continue
+            asset_id = str(settings.get("scroll_video_asset") or "")
+            if "wrota" in asset_id:
+                continue
+            mode = str(settings.get("scroll_background_mode") or "auto").strip().lower()
+            if mode not in {"", "auto"}:
+                continue
+            settings["scroll_background_mode"] = desired
+            settings["scroll_background_value"] = ""
+            changed = True
+
+    if changed:
+        _write_page_template(template_path, header, data)
+    return changed
+
+
+def active_scroll_video_frame_globs(
+    root: Path | None = None,
+) -> tuple[str, ...]:
+    """Globy klatek WebP wyłącznie gdy aktywny silnik to frames."""
+
+    globs: list[str] = []
+    for item in iter_scroll_video_block_settings(root):
+        if item["engine"] != "frames":
+            continue
+        profile = _family(item["family"]).quality_profiles[item["quality"]]
+        globs.append(f"assets/{profile.frame_prefix}*.webp")
+    return tuple(dict.fromkeys(globs))
+
+
+def inactive_scroll_video_relpaths(root: Path | None = None) -> tuple[str, ...]:
+    """Pliki runtime, których nie wolno syncować przy aktywnym wariancie."""
+
+    active = set(active_scroll_video_deploy_relpaths(root))
+    return tuple(
+        path
+        for path in all_scroll_video_runtime_relpaths(root)
+        if path not in active
+    )
+
+
+def sync_scroll_video_shopifyignore(root: Path | None = None) -> Path:
+    """Zaktualizuj .shopifyignore: ignoruj nieaktywne filmy scroll_video."""
+
+    theme = root or theme_root()
+    ignore_path = theme / ".shopifyignore"
+    inactive = inactive_scroll_video_relpaths(theme)
+    block_lines = [
+        _SHOPIFYIGNORE_BEGIN,
+        "# Auto: tylko aktywny wariant Film-scroll (Filozofia marki) idzie do theme sync",
+        *[path for path in inactive],
+        # Klatki WebP rodzin — sync tylko gdy silnik frames (patrz deploy globs)
+        "assets/giclee-philosophy-v3-frame-*.webp",
+        "assets/giclee-philosophy-1080-frame-*.webp",
+        "assets/giclee-philosophy-wrota-720-frame-*.webp",
+        "assets/giclee-philosophy-wrota-1080-frame-*.webp",
+        _SHOPIFYIGNORE_END,
+        "",
+    ]
+    # Jeśli frames jest aktywny, nie ignoruj jego globów.
+    active_frame_globs = set(active_scroll_video_frame_globs(theme))
+    block_lines = [
+        line
+        for line in block_lines
+        if line not in active_frame_globs
+    ]
+
+    existing = (
+        ignore_path.read_text(encoding="utf-8")
+        if ignore_path.is_file()
+        else ""
+    )
+    if _SHOPIFYIGNORE_BEGIN in existing and _SHOPIFYIGNORE_END in existing:
+        before, rest = existing.split(_SHOPIFYIGNORE_BEGIN, 1)
+        _mid, after = rest.split(_SHOPIFYIGNORE_END, 1)
+        new_text = before.rstrip() + "\n\n" + "\n".join(block_lines) + after.lstrip("\n")
+    else:
+        # Usuń stare ręczne wpisy source / oversized z poprzedniej sesji
+        cleaned_lines = []
+        skip_prefixes = (
+            "assets/giclee-philosophy-wrota-scroll-source",
+            "assets/*-scroll-source",
+            "assets/giclee-philosophy-wrota-scroll-720.mp4",
+            "assets/giclee-philosophy-wrota-scroll-1080.mp4",
+        )
+        for line in existing.splitlines():
+            if any(line.strip().startswith(prefix) for prefix in skip_prefixes):
+                continue
+            if "Assety > limitu Shopify" in line:
+                continue
+            cleaned_lines.append(line)
+        new_text = "\n".join(cleaned_lines).rstrip() + "\n\n" + "\n".join(block_lines)
+
+    ignore_path.write_text(new_text, encoding="utf-8", newline="\n")
+    return ignore_path
 
 
 def _assets_dir(root: Path | None = None) -> Path:
@@ -369,6 +893,263 @@ def _probe_video_metadata(video: Path) -> VideoMetadata:
     )
 
 
+_VIDEO_METADATA_CACHE: dict[tuple[str, int, int], VideoMetadata] = {}
+
+
+def _cached_video_metadata(video: Path) -> VideoMetadata:
+    stat = video.stat()
+    key = (str(video.resolve()), stat.st_size, stat.st_mtime_ns)
+    cached = _VIDEO_METADATA_CACHE.get(key)
+    if cached is not None:
+        return cached
+    metadata = _probe_video_metadata(video)
+    if len(_VIDEO_METADATA_CACHE) >= 128:
+        _VIDEO_METADATA_CACHE.clear()
+    _VIDEO_METADATA_CACHE[key] = metadata
+    return metadata
+
+
+def _video_name_family(filename: str) -> str | None:
+    lowered = filename.lower()
+    if "wrota" in lowered:
+        return "wrota"
+    if "philosophy" in lowered or "filozof" in lowered:
+        return "philosophy"
+    return None
+
+
+def _quality_from_size(width: int, height: int) -> str | None:
+    if width == 1920 and height == 1080:
+        return "1080p"
+    if width == 1280 and height == 720:
+        return "720p"
+    return None
+
+
+def list_native_video_assets(
+    *,
+    family: str,
+    container: str,
+    quality: str,
+    root: Path | None = None,
+) -> tuple[NativeVideoAsset, ...]:
+    """Zwróć wszystkie zgodne filmy z assets, także starsze i biblioteczne."""
+
+    asset_family = _family(family)
+    if container not in {"mp4", "webm"}:
+        return ()
+    if quality not in asset_family.quality_profiles:
+        return ()
+    assets = _assets_dir(root)
+    if not assets.is_dir():
+        return ()
+
+    manifest_by_video: dict[str, tuple[str, dict[str, object]]] = {}
+    for path in assets.glob("*manifest.json"):
+        try:
+            manifest = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, TypeError, ValueError):
+            continue
+        if manifest.get("mode") != "video":
+            continue
+        video_name = str(manifest.get("video") or "").strip()
+        if not video_name:
+            continue
+        manifest_family = str(
+            manifest.get("family") or _video_name_family(video_name) or ""
+        )
+        if manifest_family != family:
+            continue
+        manifest_by_video[video_name] = (path.name, manifest)
+
+    found: list[NativeVideoAsset] = []
+    suffix = f".{container}"
+    for video in sorted(assets.glob(f"*{suffix}"), key=lambda item: item.name.lower()):
+        if not video.is_file():
+            continue
+        manifest_name = ""
+        manifest: dict[str, object] = {}
+        matched_manifest = manifest_by_video.get(video.name)
+        if matched_manifest:
+            manifest_name, manifest = matched_manifest
+            item_family = str(manifest.get("family") or family)
+        else:
+            item_family = _video_name_family(video.name) or ""
+        if item_family != family:
+            continue
+
+        needs_probe = not manifest or any(
+            manifest.get(key) in (None, "")
+            for key in (
+                "width",
+                "height",
+                "frameCount",
+                "fps",
+                "codec",
+                "hasAlpha",
+            )
+        )
+        try:
+            metadata = (
+                _cached_video_metadata(video)
+                if needs_probe
+                else VideoMetadata(
+                    width=0,
+                    height=0,
+                    fps=None,
+                    frame_count=None,
+                    duration=None,
+                    codec="",
+                    pixel_format="",
+                    has_alpha=None,
+                    alpha_mode="unknown",
+                )
+            )
+        except OSError:
+            continue
+        width = int(manifest.get("width") or metadata.width or 0)
+        height = int(manifest.get("height") or metadata.height or 0)
+        item_quality = str(
+            manifest.get("quality") or _quality_from_size(width, height) or ""
+        )
+        if item_quality != quality:
+            continue
+        frame_count = int(
+            manifest.get("frameCount") or metadata.frame_count or 0
+        )
+        fps = int(
+            round(float(manifest.get("fps") or metadata.fps or DEFAULT_FPS))
+        )
+        has_alpha_raw = manifest.get("hasAlpha", metadata.has_alpha)
+        has_alpha = (
+            bool(has_alpha_raw)
+            if isinstance(has_alpha_raw, bool)
+            else metadata.has_alpha
+        )
+        poster_name = str(manifest.get("poster") or "").strip()
+        if not poster_name or not (assets / poster_name).is_file():
+            _video_default, fallback_poster, _manifest_default = (
+                _native_asset_names(asset_family, quality, container)
+            )
+            poster_name = (
+                fallback_poster
+                if (assets / fallback_poster).is_file()
+                else ""
+            )
+        found.append(
+            NativeVideoAsset(
+                family=family,
+                quality=quality,
+                container=container,
+                video=video.name,
+                poster=poster_name,
+                manifest=manifest_name,
+                frame_count=frame_count,
+                fps=fps,
+                width=width,
+                height=height,
+                has_alpha=has_alpha,
+                codec=str(manifest.get("codec") or metadata.codec or "unknown"),
+                total_bytes=video.stat().st_size,
+            )
+        )
+    return tuple(found)
+
+
+def native_video_source_choices(
+    values: dict[str, object],
+    *,
+    family: str,
+    root: Path | None = None,
+) -> tuple[tuple[str, str], ...]:
+    """Opcje zależne od silnika, kontenera i jakości w edytorze GicleeApp."""
+
+    if str(values.get("scroll_video_engine") or "video") != "video":
+        return (("", "Klatki WebP — wybór filmu nieaktywny"),)
+    container = str(values.get("scroll_video_container") or "mp4")
+    quality = str(values.get("scroll_video_quality") or "720p")
+    assets = list_native_video_assets(
+        family=family,
+        container=container,
+        quality=quality,
+        root=root,
+    )
+    default_video, _poster, _manifest = _native_asset_names(
+        _family(family), quality, container
+    )
+    choices: list[tuple[str, str]] = [
+        (
+            "",
+            f"Domyślny slot: {default_video}",
+        )
+    ]
+    choices.extend((item.source_spec, item.label) for item in assets)
+    return tuple(choices)
+
+
+def _library_asset_base(
+    source: Path,
+    *,
+    family: str,
+    quality: str,
+    container: str,
+    video: Path,
+) -> str:
+    normalized = unicodedata.normalize("NFKD", source.stem)
+    ascii_stem = normalized.encode("ascii", "ignore").decode("ascii")
+    slug = re.sub(r"[^a-z0-9]+", "-", ascii_stem.lower()).strip("-")
+    slug = (slug or "film")[:42].rstrip("-")
+    hasher = hashlib.sha256()
+    with video.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            hasher.update(chunk)
+    digest = hasher.hexdigest()[:10]
+    return (
+        f"giclee-scroll-library-{family}-{quality}-{container}-"
+        f"{slug}-{digest}"
+    )
+
+
+def _probe_keyframe_profile(video: Path) -> tuple[int | None, bool | None]:
+    """Zwróć największy odstęp klatek kluczowych i informację GOP=1."""
+    ffprobe = Path(resolve_ffmpeg_exe()).with_name("ffprobe.exe")
+    process = subprocess.run(
+        [
+            str(ffprobe),
+            "-v",
+            "error",
+            "-select_streams",
+            "v:0",
+            "-show_entries",
+            "frame=key_frame",
+            "-of",
+            "csv=p=0",
+            str(video),
+        ],
+        capture_output=True,
+        text=True,
+        **no_console_kwargs(),
+    )
+    if process.returncode != 0:
+        return None, None
+    flags: list[int] = []
+    for line in (process.stdout or "").splitlines():
+        raw = line.strip().split(",", 1)[0]
+        if raw in {"0", "1"}:
+            flags.append(int(raw))
+    if not flags:
+        return None, None
+    keyframes = [index for index, flag in enumerate(flags) if flag == 1]
+    if not keyframes:
+        return len(flags), False
+    intervals = [
+        right - left for left, right in zip(keyframes, keyframes[1:])
+    ]
+    tail_interval = len(flags) - keyframes[-1]
+    max_interval = max([1, *intervals, tail_interval])
+    return max_interval, all(flag == 1 for flag in flags)
+
+
 def _generated_alpha_state(frames: list[Path]) -> bool | None:
     if not frames:
         return None
@@ -463,21 +1244,28 @@ def read_native_video_status(
     *,
     quality: str = "1080p",
     family: str | None = None,
+    container: str = "mp4",
 ) -> NativeVideoStatus:
     asset = _family(family)
     profile = _profile(quality, family)
     assets = _assets_dir(root)
-    manifest_path = assets / asset.video_manifest[quality]
+    video_name, poster_name, manifest_name = _native_asset_names(
+        asset,
+        quality,
+        container,
+    )
+    manifest_path = assets / manifest_name
     manifest: dict[str, object] = {}
     if manifest_path.is_file():
         try:
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         except (OSError, ValueError, TypeError):
             manifest = {}
-    video = assets / asset.runtime_video[quality]
-    poster = assets / asset.runtime_poster[quality]
+    video = assets / video_name
+    poster = assets / poster_name
     return NativeVideoStatus(
         quality=quality,
+        container=container,
         frame_count=int(manifest.get("frameCount") or 0),
         width=int(manifest.get("width") or profile.width),
         height=int(manifest.get("height") or profile.height),
@@ -509,6 +1297,17 @@ def read_native_video_status(
             else None
         ),
         background_mode=str(manifest.get("backgroundMode") or "color"),
+        keyframe_interval=(
+            int(manifest["keyframeInterval"])
+            if manifest.get("keyframeInterval") is not None
+            else None
+        ),
+        intra_only=(
+            bool(manifest["intraOnly"])
+            if manifest.get("intraOnly") is not None
+            else None
+        ),
+        passthrough=bool(manifest.get("passthrough", False)),
     )
 
 
@@ -541,11 +1340,11 @@ def _create_backup(
         if legacy_source.is_file():
             files.append(legacy_source)
     for quality in asset.quality_profiles:
-        for name in (
-            asset.runtime_video[quality],
-            asset.runtime_poster[quality],
-            asset.video_manifest[quality],
-        ):
+        native_names = (
+            *_native_asset_names(asset, quality, "mp4"),
+            *_native_asset_names(asset, quality, "webm"),
+        )
+        for name in native_names:
             candidate = assets / name
             if candidate.is_file():
                 files.append(candidate)
@@ -742,6 +1541,7 @@ def _run_ffmpeg_poster(
     destination: Path,
     *,
     width: int,
+    source_codec: str | None = None,
 ) -> None:
     command = [
         resolve_ffmpeg_exe(),
@@ -750,7 +1550,10 @@ def _run_ffmpeg_poster(
         "-loglevel",
         "error",
     ]
-    if source.suffix.lower() == ".webm":
+    if (
+        source.suffix.lower() == ".webm"
+        and str(source_codec or "").lower() == "vp9"
+    ):
         command.extend(("-c:v", "libvpx-vp9"))
     command.extend(
         (
@@ -791,6 +1594,7 @@ def replace_native_video(
     *,
     quality: str = "1080p",
     family: str | None = None,
+    container: str = "mp4",
     root: Path | None = None,
     backup_dir: Path | None = None,
     fps: int = DEFAULT_FPS,
@@ -804,26 +1608,59 @@ def replace_native_video(
         raise FileNotFoundError(f"Nie znaleziono pliku: {source}")
     if suffix not in ALLOWED_VIDEO_SUFFIXES:
         raise ValueError("Obsługiwane formaty: MP4, WebM, MOV i MKV.")
+    if container not in {"mp4", "webm"}:
+        raise ValueError("Kontener filmu musi mieć wartość mp4 albo webm.")
+    if container == "webm" and suffix != ".webm":
+        raise ValueError(
+            "Tryb gotowego WebM przyjmuje wyłącznie plik z rozszerzeniem .webm."
+        )
     source_metadata = _probe_video_metadata(source)
+    if container == "webm" and (
+        source_metadata.width != profile.width
+        or source_metadata.height != profile.height
+    ):
+        raise ValueError(
+            f"Gotowy WebM dla {quality} musi mieć dokładnie "
+            f"{profile.width}×{profile.height} px; wykryto "
+            f"{source_metadata.width}×{source_metadata.height} px. "
+            "Wybierz właściwy slot jakości albo użyj konwersji MP4/WebP."
+        )
 
     assets = _assets_dir(root)
     assets.mkdir(parents=True, exist_ok=True)
     staging = assets.parent / f".giclee-filozofia-video-{uuid4().hex}"
     staging.mkdir()
     try:
-        staged_video = staging / asset.runtime_video[quality]
-        staged_poster = staging / asset.runtime_poster[quality]
-        _run_ffmpeg_native_video(
-            source,
-            staged_video,
-            fps=fps,
-            width=profile.width,
-            height=profile.height,
-            crf=10,
-            x264_preset="slow",
+        video_name, poster_name, manifest_name = _native_asset_names(
+            asset,
+            quality,
+            container,
         )
-        _run_ffmpeg_poster(source, staged_poster, width=profile.width)
-        frame_count = _probe_frame_count(staged_video)
+        staged_video = staging / video_name
+        staged_poster = staging / poster_name
+        if container == "webm":
+            shutil.copy2(source, staged_video)
+        else:
+            _run_ffmpeg_native_video(
+                source,
+                staged_video,
+                fps=fps,
+                width=profile.width,
+                height=profile.height,
+                crf=10,
+                x264_preset="slow",
+            )
+        _run_ffmpeg_poster(
+            source,
+            staged_poster,
+            width=profile.width,
+            source_codec=source_metadata.codec,
+        )
+        frame_count = (
+            source_metadata.frame_count
+            if container == "webm" and source_metadata.frame_count
+            else _probe_frame_count(staged_video)
+        )
         output_metadata = _probe_video_metadata(staged_video)
         poster_has_alpha = _alpha_state(staged_poster)
         source_has_alpha = (
@@ -831,10 +1668,27 @@ def replace_native_video(
             if poster_has_alpha is True
             else source_metadata.has_alpha
         )
+        output_has_alpha = (
+            source_has_alpha is True if container == "webm" else False
+        )
+        output_fps = (
+            int(round(source_metadata.fps))
+            if container == "webm" and source_metadata.fps
+            else fps
+        )
+        if not 1 <= output_fps <= 60:
+            raise RuntimeError(
+                f"Gotowy WebM ma {output_fps} FPS. Film-scroll obsługuje 1–60 FPS."
+            )
         if not frame_count or frame_count > MAX_FRAMES:
             raise RuntimeError(
-                f"Film wygenerował {frame_count} klatek. Maksimum to {MAX_FRAMES}."
+                f"Film zawiera {frame_count} klatek. Maksimum to {MAX_FRAMES}."
             )
+        keyframe_interval, intra_only = (
+            _probe_keyframe_profile(staged_video)
+            if container == "webm"
+            else (1, True)
+        )
         backup = (
             _create_backup(
                 assets,
@@ -844,29 +1698,45 @@ def replace_native_video(
             if create_backup
             else None
         )
-        video_path = assets / asset.runtime_video[quality]
-        poster_path = assets / asset.runtime_poster[quality]
+        video_path = assets / video_name
+        poster_path = assets / poster_name
         shutil.copy2(staged_video, video_path)
         shutil.copy2(staged_poster, poster_path)
-        source_path = assets / f"{asset.source_prefix}{suffix}"
-        if source.resolve() != source_path.resolve():
-            shutil.copy2(source, source_path)
-        elif not source_path.is_file():
-            shutil.copy2(source, source_path)
+        if container == "webm":
+            source_path = video_path
+        else:
+            source_path = assets / f"{asset.source_prefix}{suffix}"
+            if source.resolve() != source_path.resolve():
+                shutil.copy2(source, source_path)
+            elif not source_path.is_file():
+                shutil.copy2(source, source_path)
 
         manifest = {
-            "version": 2,
+            "version": 3,
             "mode": "video",
             "family": asset.id,
             "quality": quality,
+            "container": container,
+            "mimeType": "video/webm" if container == "webm" else "video/mp4",
+            "passthrough": container == "webm",
             "frameCount": frame_count,
             "width": profile.width,
             "height": profile.height,
-            "fps": fps,
-            "codec": output_metadata.codec or "h264",
-            "pixelFormat": output_metadata.pixel_format or "yuv420p",
-            "hasAlpha": False,
-            "alphaMode": "none",
+            "fps": output_fps,
+            "codec": output_metadata.codec or (
+                source_metadata.codec if container == "webm" else "h264"
+            ),
+            "pixelFormat": output_metadata.pixel_format or (
+                source_metadata.pixel_format
+                if container == "webm"
+                else "yuv420p"
+            ),
+            "hasAlpha": output_has_alpha,
+            "alphaMode": (
+                source_metadata.alpha_mode
+                if output_has_alpha and source_metadata.alpha_mode != "unknown"
+                else "straight" if output_has_alpha else "none"
+            ),
             "sourceFps": source_metadata.fps,
             "sourceFrameCount": source_metadata.frame_count,
             "sourceCodec": source_metadata.codec,
@@ -877,36 +1747,76 @@ def replace_native_video(
                 if source_metadata.alpha_mode != "unknown"
                 else "straight" if source_has_alpha else "none"
             ),
-            "alphaLostDuringConversion": bool(source_has_alpha),
-            "backgroundMode": "color",
-            "backgroundValue": "#000000",
-            "fallbackActive": bool(source_has_alpha),
-            "keyframeInterval": 1,
-            "intraOnly": True,
-            "fullSourceFrameUse": _full_source_frame_use(
-                source_metadata,
-                output_fps=fps,
-                output_frames=frame_count,
+            "alphaLostDuringConversion": bool(
+                source_has_alpha and not output_has_alpha
+            ),
+            "backgroundMode": "transparent" if output_has_alpha else "color",
+            "backgroundValue": "transparent" if output_has_alpha else "#000000",
+            "fallbackActive": bool(source_has_alpha and not output_has_alpha),
+            "keyframeInterval": keyframe_interval,
+            "intraOnly": intra_only,
+            "fullSourceFrameUse": (
+                True
+                if container == "webm"
+                else _full_source_frame_use(
+                    source_metadata,
+                    output_fps=output_fps,
+                    output_frames=frame_count,
+                )
             ),
             "video": video_path.name,
             "poster": poster_path.name,
             "source": source_path.name,
             "generatedAt": datetime.now(UTC).isoformat(),
         }
-        manifest_path = assets / asset.video_manifest[quality]
+        manifest_path = assets / manifest_name
         pending = assets / f".{manifest_path.name}.tmp"
         pending.write_text(
             json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
         pending.replace(manifest_path)
+
+        # Biblioteka wersji: slot kanoniczny pozostaje dla kompatybilności,
+        # a każdy unikalny materiał dostaje stabilny pakiet do późniejszego wyboru.
+        library_base = _library_asset_base(
+            source,
+            family=asset.id,
+            quality=quality,
+            container=container,
+            video=staged_video,
+        )
+        library_video = assets / f"{library_base}.{container}"
+        library_poster = assets / f"{library_base}-poster.webp"
+        library_manifest = assets / f"{library_base}-manifest.json"
+        shutil.copy2(staged_video, library_video)
+        shutil.copy2(staged_poster, library_poster)
+        library_data = {
+            **manifest,
+            "video": library_video.name,
+            "poster": library_poster.name,
+            "sourceLabel": source.name,
+            "libraryAsset": True,
+        }
+        library_pending = assets / f".{library_manifest.name}.tmp"
+        library_pending.write_text(
+            json.dumps(library_data, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        library_pending.replace(library_manifest)
     finally:
         if staging.is_dir() and staging.parent == assets.parent:
             shutil.rmtree(staging, ignore_errors=True)
 
     return NativeVideoResult(
         quality=quality,
-        status=read_native_video_status(root, quality=quality, family=family),
+        container=container,
+        status=read_native_video_status(
+            root,
+            quality=quality,
+            family=family,
+            container=container,
+        ),
         video_path=video_path,
         poster_path=poster_path,
         manifest_path=manifest_path,
@@ -1144,7 +2054,10 @@ def format_status(status: SequenceStatus) -> str:
 
 def format_native_video_status(status: NativeVideoStatus) -> str:
     if not status.frame_count:
-        return f"Film {status.quality}: brak przygotowanego pliku."
+        return (
+            f"Film {status.container.upper()} {status.quality}: "
+            "brak przygotowanego pliku."
+        )
     size_mb = status.total_bytes / (1024 * 1024)
     source = status.source or "brak informacji o źródle"
     source_alpha = (
@@ -1164,28 +2077,428 @@ def format_native_video_status(status: NativeVideoStatus) -> str:
         if status.full_source_frame_use is False
         else "wszystkie klatki źródła: brak dowodu"
     )
+    alpha_final = "tak" if status.has_alpha else "nie"
+    keyframes = (
+        "GOP=1 — optymalny scrub"
+        if status.intra_only is True
+        else f"klatka kluczowa co maks. {status.keyframe_interval} kl."
+        if status.keyframe_interval
+        else "odstęp klatek kluczowych: brak danych"
+    )
+    passthrough = "bez konwersji" if status.passthrough else "po konwersji"
     return (
-        f"Film {status.quality}: {status.frame_count} klatek · "
+        f"Film {status.container.upper()} {status.quality}: "
+        f"{status.frame_count} klatek · "
         f"{status.fps} FPS · {status.width}×{status.height} · "
         f"{status.duration_seconds:.2f} s · {size_mb:.1f} MB · "
-        f"{status.codec}/{status.pixel_format} · alfa finalna: nie\n"
+        f"{status.codec}/{status.pixel_format} · alfa finalna: {alpha_final} · "
+        f"{passthrough}\n"
         f"Źródło: {source} · FPS: {status.source_fps or 'nieznany'} · "
-        f"alfa: {source_alpha} · {fallback} ({status.background_mode}) · {frame_use}"
+        f"alfa: {source_alpha} · {fallback} ({status.background_mode}) · "
+        f"{frame_use} · {keyframes}"
     )
+
+
+PARALLAX_IMAGE_SUFFIXES = {".webp", ".png", ".jpg", ".jpeg"}
+PARALLAX_MIDDLE_MEDIA_SUFFIXES = PARALLAX_IMAGE_SUFFIXES | {".webm"}
+PARALLAX_LAYERS: dict[str, str] = {
+    "bottom": "assets/giclee-fm-parallax-bottom.webp",
+    "middle": "assets/giclee-fm-parallax-middle.webp",
+}
+PARALLAX_MIDDLE_WEBM_REL = "assets/giclee-fm-parallax-middle.webm"
+PARALLAX_CONFIG_REL = "assets/giclee-fm-parallax-config.json"
+
+
+@dataclass(frozen=True)
+class ParallaxLayerStatus:
+    layer: str
+    rel_path: str
+    exists: bool
+    width: int | None
+    height: int | None
+    size_bytes: int
+    mtime_label: str
+    kind: str = "image"
+
+
+def parallax_layer_relpath(layer: str) -> str:
+    key = str(layer or "").strip().lower()
+    if key not in PARALLAX_LAYERS:
+        raise ValueError(f"Nieznana warstwa paralaksy: {layer!r}")
+    return PARALLAX_LAYERS[key]
+
+
+def parallax_deploy_relpaths(*, root: Path | None = None) -> tuple[str, ...]:
+    base = root or theme_root()
+    paths = [
+        *PARALLAX_LAYERS.values(),
+        PARALLAX_CONFIG_REL,
+        "assets/giclee-fm-wrota-parallax.js",
+        "assets/giclee-fm-wrota-parallax.css",
+    ]
+    if (base / PARALLAX_MIDDLE_WEBM_REL).is_file():
+        paths.append(PARALLAX_MIDDLE_WEBM_REL)
+    return tuple(paths)
+
+
+def read_parallax_config(*, root: Path | None = None) -> dict[str, str]:
+    path = (root or theme_root()) / PARALLAX_CONFIG_REL
+    if not path.is_file():
+        return {"middleKind": "image"}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {"middleKind": "image"}
+    kind = str(data.get("middleKind") or "image").strip().lower()
+    if kind not in {"image", "webm"}:
+        kind = "image"
+    return {"middleKind": kind}
+
+
+def write_parallax_config(
+    *,
+    middle_kind: str,
+    root: Path | None = None,
+) -> Path:
+    kind = str(middle_kind or "image").strip().lower()
+    if kind not in {"image", "webm"}:
+        raise ValueError(f"Nieobsługiwany rodzaj Middle: {middle_kind!r}")
+    path = (root or theme_root()) / PARALLAX_CONFIG_REL
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps({"middleKind": kind}, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+PHILOSOPHY_SCROLL_BG_IMAGE_REL = "assets/giclee-philosophy-scroll-bg.webp"
+PHILOSOPHY_SCROLL_BG_WEBM_REL = "assets/giclee-philosophy-scroll-bg.webm"
+PHILOSOPHY_SCROLL_BG_SUFFIXES = {".webp", ".png", ".jpg", ".jpeg", ".webm"}
+
+
+@dataclass(frozen=True)
+class PhilosophyScrollBgStatus:
+    kind: str
+    rel_path: str
+    exists: bool
+    width: int | None
+    height: int | None
+    size_bytes: int
+    mtime_label: str
+
+
+def philosophy_scroll_bg_deploy_relpaths(
+    *, root: Path | None = None
+) -> tuple[str, ...]:
+    base = root or theme_root()
+    paths: list[str] = []
+    if (base / PHILOSOPHY_SCROLL_BG_IMAGE_REL).is_file():
+        paths.append(PHILOSOPHY_SCROLL_BG_IMAGE_REL)
+    if (base / PHILOSOPHY_SCROLL_BG_WEBM_REL).is_file():
+        paths.append(PHILOSOPHY_SCROLL_BG_WEBM_REL)
+    return tuple(paths)
+
+
+def read_philosophy_scroll_bg_status(
+    *,
+    kind: str | None = None,
+    root: Path | None = None,
+) -> PhilosophyScrollBgStatus:
+    base = root or theme_root()
+    resolved_kind = str(kind or "").strip().lower()
+    if resolved_kind not in {"asset", "webm", "image"}:
+        # Prefer webm if present, else image.
+        if (base / PHILOSOPHY_SCROLL_BG_WEBM_REL).is_file():
+            resolved_kind = "webm"
+        elif (base / PHILOSOPHY_SCROLL_BG_IMAGE_REL).is_file():
+            resolved_kind = "asset"
+        else:
+            resolved_kind = "none"
+    if resolved_kind == "image":
+        resolved_kind = "asset"
+
+    if resolved_kind == "webm":
+        rel_path = PHILOSOPHY_SCROLL_BG_WEBM_REL
+    elif resolved_kind == "asset":
+        rel_path = PHILOSOPHY_SCROLL_BG_IMAGE_REL
+    else:
+        return PhilosophyScrollBgStatus(
+            kind="none",
+            rel_path=PHILOSOPHY_SCROLL_BG_IMAGE_REL,
+            exists=False,
+            width=None,
+            height=None,
+            size_bytes=0,
+            mtime_label="brak pliku",
+        )
+
+    path = base / rel_path
+    if not path.is_file():
+        return PhilosophyScrollBgStatus(
+            kind=resolved_kind,
+            rel_path=rel_path,
+            exists=False,
+            width=None,
+            height=None,
+            size_bytes=0,
+            mtime_label="brak pliku",
+        )
+
+    width = height = None
+    if resolved_kind == "asset":
+        try:
+            with Image.open(path) as image:
+                width, height = image.size
+        except Exception:
+            pass
+    else:
+        try:
+            meta = _probe_video_metadata(path)
+            width, height = meta.width, meta.height
+        except Exception:
+            pass
+    mtime = datetime.fromtimestamp(path.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+    return PhilosophyScrollBgStatus(
+        kind=resolved_kind,
+        rel_path=rel_path,
+        exists=True,
+        width=width,
+        height=height,
+        size_bytes=path.stat().st_size,
+        mtime_label=mtime,
+    )
+
+
+def format_philosophy_scroll_bg_status(status: PhilosophyScrollBgStatus) -> str:
+    if status.kind == "none" or not status.exists:
+        return "Tło scrolla: brak pliku"
+    kind_label = "WebM + alfa" if status.kind == "webm" else "obraz"
+    size_kb = status.size_bytes / 1024
+    size = (
+        f"{size_kb / 1024:.1f} MB"
+        if size_kb >= 1024
+        else f"{size_kb:.0f} KB"
+    )
+    dims = (
+        f"{status.width}×{status.height}"
+        if status.width and status.height
+        else "rozmiar nieznany"
+    )
+    return (
+        f"Tło scrolla ({kind_label}): {dims} · {size} · {status.mtime_label}\n"
+        f"  {status.rel_path}"
+    )
+
+
+def replace_philosophy_scroll_bg(
+    source: Path,
+    *,
+    root: Path | None = None,
+) -> tuple[Path, str]:
+    """Podmienia tło pierwszego Film-scroll (obraz → webp, WebM 1:1).
+
+    Zwraca (dest_path, mode) gdzie mode to ``asset`` albo ``webm``.
+    """
+    source = Path(source)
+    suffix = source.suffix.lower()
+    if suffix not in PHILOSOPHY_SCROLL_BG_SUFFIXES:
+        raise ValueError(
+            "Wybierz plik WebP, PNG, JPG albo WebM z alfą "
+            f"(otrzymano {source.suffix or 'bez rozszerzenia'})."
+        )
+    if not source.is_file():
+        raise FileNotFoundError(f"Nie znaleziono pliku: {source}")
+
+    base = root or theme_root()
+    base.joinpath("assets").mkdir(parents=True, exist_ok=True)
+
+    if suffix == ".webm":
+        dest = base / PHILOSOPHY_SCROLL_BG_WEBM_REL
+        shutil.copy2(source, dest)
+        return dest, "webm"
+
+    dest = base / PHILOSOPHY_SCROLL_BG_IMAGE_REL
+    if suffix == ".webp":
+        shutil.copy2(source, dest)
+    else:
+        with Image.open(source) as image:
+            image.convert("RGB").save(dest, "WEBP", quality=90, method=6)
+    return dest, "asset"
+
+
+def clear_philosophy_scroll_bg(*, root: Path | None = None) -> None:
+    base = root or theme_root()
+    for rel in (PHILOSOPHY_SCROLL_BG_IMAGE_REL, PHILOSOPHY_SCROLL_BG_WEBM_REL):
+        path = base / rel
+        if path.is_file():
+            path.unlink()
+
+
+def read_parallax_layer_status(
+    layer: str,
+    *,
+    root: Path | None = None,
+) -> ParallaxLayerStatus:
+    base = root or theme_root()
+    cfg = read_parallax_config(root=base)
+    kind = "image"
+    rel_path = parallax_layer_relpath(layer)
+    if layer == "middle" and cfg.get("middleKind") == "webm":
+        kind = "webm"
+        rel_path = PARALLAX_MIDDLE_WEBM_REL
+    path = base / rel_path
+    if not path.is_file():
+        return ParallaxLayerStatus(
+            layer=layer,
+            rel_path=rel_path,
+            exists=False,
+            width=None,
+            height=None,
+            size_bytes=0,
+            mtime_label="brak pliku",
+            kind=kind,
+        )
+    width = height = None
+    if kind == "image":
+        try:
+            with Image.open(path) as image:
+                width, height = image.size
+        except Exception:
+            pass
+    else:
+        try:
+            meta = _probe_video_metadata(path)
+            width, height = meta.width, meta.height
+        except Exception:
+            pass
+    mtime = datetime.fromtimestamp(path.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+    return ParallaxLayerStatus(
+        layer=layer,
+        rel_path=rel_path,
+        exists=True,
+        width=width,
+        height=height,
+        size_bytes=path.stat().st_size,
+        mtime_label=mtime,
+        kind=kind,
+    )
+
+
+def format_parallax_layer_status(status: ParallaxLayerStatus) -> str:
+    label = "Bottom" if status.layer == "bottom" else "Middle"
+    kind_label = "WebM + alfa" if status.kind == "webm" else "obraz"
+    if not status.exists:
+        return f"{label} ({kind_label}): brak pliku ({status.rel_path})"
+    size_kb = status.size_bytes / 1024
+    size = (
+        f"{size_kb / 1024:.1f} MB"
+        if size_kb >= 1024
+        else f"{size_kb:.0f} KB"
+    )
+    dims = (
+        f"{status.width}×{status.height}"
+        if status.width and status.height
+        else "rozmiar nieznany"
+    )
+    return (
+        f"{label} ({kind_label}): {dims} · {size} · {status.mtime_label}\n"
+        f"  {status.rel_path}"
+    )
+
+
+def replace_parallax_layer(
+    source: Path,
+    *,
+    layer: str,
+    root: Path | None = None,
+) -> Path:
+    """Podmienia warstwę Bottom/Middle paralaksy po Wrotach (stała nazwa w assets)."""
+    layer_key = str(layer or "").strip().lower()
+    if layer_key not in PARALLAX_LAYERS:
+        raise ValueError(f"Nieznana warstwa paralaksy: {layer!r}")
+
+    source = Path(source)
+    suffix = source.suffix.lower()
+    allowed = (
+        PARALLAX_MIDDLE_MEDIA_SUFFIXES
+        if layer_key == "middle"
+        else PARALLAX_IMAGE_SUFFIXES
+    )
+    if suffix not in allowed:
+        raise ValueError(
+            "Wybierz plik WebP, PNG lub JPG"
+            + (" albo WebM z alfą" if layer_key == "middle" else "")
+            + f" (otrzymano {source.suffix or 'bez rozszerzenia'})."
+        )
+    if not source.is_file():
+        raise FileNotFoundError(f"Nie znaleziono pliku: {source}")
+
+    base = root or theme_root()
+    base.joinpath("assets").mkdir(parents=True, exist_ok=True)
+
+    if layer_key == "middle" and suffix == ".webm":
+        dest = base / PARALLAX_MIDDLE_WEBM_REL
+        shutil.copy2(source, dest)
+        write_parallax_config(middle_kind="webm", root=base)
+        return dest
+
+    rel_path = PARALLAX_LAYERS[layer_key]
+    dest = base / rel_path
+    if suffix == ".webp":
+        shutil.copy2(source, dest)
+    else:
+        with Image.open(source) as image:
+            converted = image.convert("RGBA" if layer_key == "middle" else "RGB")
+            converted.save(dest, "WEBP", quality=90, method=6)
+
+    if layer_key == "middle":
+        write_parallax_config(middle_kind="image", root=base)
+        webm = base / PARALLAX_MIDDLE_WEBM_REL
+        if webm.is_file():
+            webm.unlink()
+
+    return dest
 
 
 __all__ = [
     "ASSET_FAMILIES",
     "NativeVideoResult",
+    "NativeVideoAsset",
     "NativeVideoStatus",
+    "ParallaxLayerStatus",
     "ReplaceResult",
     "SequenceStatus",
     "VariantsReplaceResult",
+    "activate_selected_video_sources",
+    "active_scroll_video_deploy_relpaths",
+    "active_scroll_video_frame_globs",
+    "all_scroll_video_runtime_relpaths",
+    "apply_scroll_video_selection",
+    "format_parallax_layer_status",
+    "format_philosophy_scroll_bg_status",
     "format_status",
     "format_native_video_status",
+    "inactive_scroll_video_relpaths",
+    "iter_scroll_video_block_settings",
+    "list_native_video_assets",
+    "native_video_source_choices",
+    "parallax_deploy_relpaths",
+    "parallax_layer_relpath",
+    "parse_native_video_source_spec",
+    "philosophy_scroll_bg_deploy_relpaths",
+    "clear_philosophy_scroll_bg",
+    "read_parallax_config",
+    "read_parallax_layer_status",
+    "read_philosophy_scroll_bg_status",
+    "sync_philosophy_scroll_bg_mode",
     "read_native_video_status",
     "read_sequence_status",
+    "replace_parallax_layer",
+    "replace_philosophy_scroll_bg",
     "replace_native_video",
     "replace_video_sequence",
     "replace_video_variants",
+    "sync_scroll_video_shopifyignore",
+    "write_parallax_config",
 ]

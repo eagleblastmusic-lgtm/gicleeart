@@ -9,6 +9,10 @@
   const INTRO_EXIT_PROGRESS = 0.18;
   const STOP_DELAY_MS = 90;
   const MAX_SETTLE_MS = 1200;
+  const MAX_SEQUENTIAL_WEBM_CATCHUP_SECONDS = 0.32;
+  const ALPHA_WEBM_MAX_SEQUENTIAL_CATCHUP_SECONDS = 1.25;
+  const ALPHA_WEBM_MIN_PLAYBACK_RATE = 0.25;
+  const ALPHA_WEBM_MAX_PLAYBACK_RATE = 1;
   const PAGE_PARAMS = new URL(document.URL).searchParams;
   const DEBUG = PAGE_PARAMS.get('giclee_frames_debug') === '1';
   const DEBUG_PRESET = DEBUG
@@ -332,9 +336,15 @@
       forceTransparent: bool(dataset.forceTransparent, false),
       alphaDiagnostics:
         bool(dataset.alphaDiagnostics, false) || ALPHA_DEBUG_QUERY,
-      backgroundMode: ['auto', 'transparent', 'color', 'gradient', 'image'].includes(
-        dataset.backgroundMode
-      )
+      backgroundMode: [
+        'auto',
+        'transparent',
+        'color',
+        'gradient',
+        'image',
+        'asset',
+        'webm',
+      ].includes(dataset.backgroundMode)
         ? dataset.backgroundMode
         : 'auto',
       backgroundValue: dataset.backgroundValue || '#000000',
@@ -724,6 +734,7 @@
       const mode = this.config.backgroundMode;
       const value = this.config.backgroundValue;
       let background = '#000000';
+      this.clearBackgroundVideo();
       if (mode === 'transparent') background = 'transparent';
       else if (mode === 'color' && /^#[0-9a-f]{3,8}$/i.test(value)) {
         background = value;
@@ -734,7 +745,15 @@
         background = value;
       } else if (mode === 'image' && /^url\(/i.test(value)) {
         background = value;
-      } else if (mode === 'auto' && this.engine === 'frames') {
+      } else if (mode === 'asset' && value) {
+        const safe = String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+        background = `url("${safe}") center / cover no-repeat`;
+      } else if (mode === 'webm' && value) {
+        background = '#000000';
+        this.mountBackgroundVideo(value);
+      } else if (mode === 'auto') {
+        // Frames: przezroczystość. Video: też transparent — inaczej alfa
+        // ląduje na #000 i po podmianie filmu „znika” tło scrolla.
         background = 'transparent';
       }
       this.root.style.setProperty('--scroll-runtime-background', background);
@@ -742,6 +761,43 @@
         'is-scroll-alpha-debug',
         this.config.alphaDiagnostics
       );
+    }
+
+    clearBackgroundVideo() {
+      const existing =
+        this.stage?.querySelector('[data-scroll-bg-video]') ||
+        this.root.querySelector('[data-scroll-bg-video]');
+      if (existing?.parentNode) existing.parentNode.removeChild(existing);
+    }
+
+    mountBackgroundVideo(url) {
+      if (!this.stage || !url) return;
+      let video = this.stage.querySelector('[data-scroll-bg-video]');
+      if (!(video instanceof HTMLVideoElement)) {
+        video = document.createElement('video');
+        video.dataset.scrollBgVideo = '1';
+        video.className = 'media-block__scroll-bg-video';
+        video.muted = true;
+        video.defaultMuted = true;
+        video.loop = true;
+        video.autoplay = true;
+        video.playsInline = true;
+        video.setAttribute('muted', '');
+        video.setAttribute('playsinline', '');
+        video.setAttribute('webkit-playsinline', '');
+        video.setAttribute('aria-hidden', 'true');
+        video.preload = 'auto';
+        this.stage.insertBefore(video, this.stage.firstChild);
+      }
+      if (video.getAttribute('src') !== url) {
+        video.src = url;
+      }
+      try {
+        const playPromise = video.play();
+        if (playPromise && typeof playPromise.catch === 'function') {
+          playPromise.catch(() => {});
+        }
+      } catch (_error) {}
     }
 
     observe() {
@@ -791,6 +847,7 @@
     }
 
     captureScroll(scrollY, now, immediate = false) {
+      if (this.root?.dataset?.fmExternalScrub === '1') return;
       this.motion.setSectionProgress(
         this.sectionProgress(scrollY),
         now,
@@ -799,6 +856,18 @@
       this.animatedElements.forEach((element) =>
         element.setTargetProgress?.(this.motion.rawProgress)
       );
+    }
+
+    setExternalProgress(progress, now = performance.now(), immediate = false) {
+      const sectionProgress =
+        clamp(progress) * SECTION_MEDIA_END_PROGRESS;
+      this.motion.setSectionProgress(sectionProgress, now, immediate);
+      this.animatedElements.forEach((element) =>
+        element.setTargetProgress?.(this.motion.rawProgress)
+      );
+      this.ensureInitialized?.();
+      this.forceRender = true;
+      this.scheduler.request();
     }
 
     updateStory(progress) {
@@ -815,13 +884,19 @@
     }
 
     tick(context) {
+      const portalOverlayActive = Boolean(
+        this.stage?.classList.contains('is-fm-portal-overlay')
+      );
       if (
         this.destroyed ||
         !this.isReady ||
-        !this.isNearViewport ||
+        (!this.isNearViewport && !portalOverlayActive) ||
         document.hidden
       ) {
         return false;
+      }
+      if (portalOverlayActive && !this.isNearViewport) {
+        this.ensureInitialized?.();
       }
       const motionResult = this.motion.tick(
         context.now,
@@ -940,6 +1015,7 @@
         element.deactivate?.();
         element.destroy?.();
       });
+      this.clearBackgroundVideo();
       this.root.style.removeProperty('--scroll-runtime-background');
     }
   }
@@ -1464,6 +1540,11 @@
       const video = root.querySelector(VIDEO_SELECTOR);
       super(root, video, scheduler, 'video');
       this.video = video;
+      this.container =
+        video?.dataset.videoContainer ||
+        root.dataset.scrollVideoContainer ||
+        'mp4';
+      this.mediaLabel = this.container === 'webm' ? 'WebM' : 'MP4';
       this.sourceKey =
         video?.querySelector('source')?.getAttribute('src') ||
         video?.getAttribute('src') ||
@@ -1488,13 +1569,24 @@
       this.skippedFrames = 0;
       this.videoFrameCallbackId = 0;
       this.initializationStarted = false;
+      this.interFrameWebm = false;
+      this.playTargetTime = null;
+      this.sequentialPlaybackActive = false;
+      this.playPromisePending = false;
+      this.sequentialPlaybackStarts = 0;
+      this.sequentialPlaybackStops = 0;
+      this.sequentialPlaybackFrames = 0;
+      this.largeForwardSeekCount = 0;
+      this.deferredForwardSeekCount = 0;
+      this.presentationRecoverySeekCount = 0;
+      this.reverseSeekCount = 0;
+      this.maxTargetDriftMs = 0;
+      this.lastLargeForwardSeekTarget = null;
+      this.prewarmCompleted = false;
+      this.sourceDelivery = 'native-url';
 
       if (!video || !this.sourceKey) {
-        this.fail('Brak źródła filmu MP4.');
-        return;
-      }
-      if (this.config.forceTransparent) {
-        this.fail('MP4 H.264 nie obsługuje wymuszonego kanału alfa.');
+        this.fail(`Brak źródła filmu ${this.mediaLabel}.`);
         return;
       }
       this.video.muted = true;
@@ -1503,6 +1595,16 @@
       this.video.addEventListener(
         'seeked',
         () => {
+          if (this.video && this.fps > 0) {
+            this.lastPresentedFrame = clamp(
+              Math.round(this.video.currentTime * this.fps),
+              0,
+              this.frameCount - 1
+            );
+          }
+          if (this.interFrameWebm && this.pendingTime == null) {
+            this.updateSequentialPlayback();
+          }
           this.scheduler.request();
         },
         { signal: this.abortController.signal }
@@ -1511,7 +1613,7 @@
         'error',
         () => {
           this.seekErrors += 1;
-          this.fail('Błąd dekodowania filmu MP4.');
+          this.fail(`Błąd dekodowania filmu ${this.mediaLabel}.`);
         },
         { signal: this.abortController.signal }
       );
@@ -1532,17 +1634,42 @@
     async initialize() {
       try {
         const manifestPromise = this.loadManifest();
-        const response = await fetch(this.sourceKey, {
-          cache: 'force-cache',
-          credentials: 'same-origin',
-          signal: this.abortController.signal,
-        });
-        if (!response.ok) throw new Error('Nie udało się pobrać filmu MP4.');
-        const blob = await response.blob();
-        if (this.destroyed) return;
-        this.objectUrl = URL.createObjectURL(blob);
-        this.video.src = this.objectUrl;
-        this.video.load();
+        const earlyManifest =
+          this.container === 'webm' ? await manifestPromise : null;
+        const localPreviewHost =
+          window.location.hostname === 'localhost' ||
+          window.location.hostname === '127.0.0.1' ||
+          window.location.hostname === '::1';
+        const useBufferedBlob =
+          this.container !== 'webm' ||
+          earlyManifest?.hasAlpha === true ||
+          localPreviewHost;
+        if (!useBufferedBlob) {
+          // Nieprzezroczysty WebM pozostaje pod natywnym adresem CDN. Druga
+          // kopia dużego pliku jako Blob podwajałaby transfer i pamięć.
+          this.video.preload = 'auto';
+          if (!this.video.currentSrc) this.video.load();
+        } else {
+          const response = await fetch(this.sourceKey, {
+            cache: 'force-cache',
+            credentials: 'same-origin',
+            signal: this.abortController.signal,
+          });
+          if (!response.ok) {
+            throw new Error(`Nie udało się pobrać filmu ${this.mediaLabel}.`);
+          }
+          const blob = await response.blob();
+          if (this.destroyed) return;
+          this.objectUrl = URL.createObjectURL(blob);
+          this.video.src = this.objectUrl;
+          this.sourceDelivery =
+            this.container === 'webm'
+              ? earlyManifest?.hasAlpha === true
+                ? 'buffered-alpha-blob'
+                : 'buffered-preview-blob'
+              : 'blob';
+          this.video.load();
+        }
         if (this.video.readyState < 1) {
           await new Promise((resolve, reject) => {
             this.video.addEventListener('loadedmetadata', resolve, {
@@ -1551,13 +1678,23 @@
             });
             this.video.addEventListener(
               'error',
-              () => reject(new Error('Metadane filmu MP4 są niedostępne.')),
+              () =>
+                reject(
+                  new Error(
+                    `Metadane filmu ${this.mediaLabel} są niedostępne.`
+                  )
+                ),
               { once: true, signal: this.abortController.signal }
             );
           });
         }
-        const manifest = await manifestPromise;
+        const manifest = earlyManifest || (await manifestPromise);
         if (this.destroyed) return;
+        if (this.config.forceTransparent && manifest.hasAlpha !== true) {
+          throw new Error(
+            `Film ${this.mediaLabel} nie ma potwierdzonego kanału alfa.`
+          );
+        }
         if (Number.isFinite(this.video.duration) && this.video.duration > 0) {
           this.duration = this.video.duration;
         }
@@ -1565,14 +1702,67 @@
         this.fps = finite(manifest.fps, this.fps);
         this.motion.frameCount = this.frameCount;
         this.motion.sourceFps = this.fps;
-        this.pendingTime = this.timeForProgress(this.motion.renderedProgress);
+        if (this.container === 'webm' && manifest.hasAlpha === true) {
+          await this.prewarmAlphaWebm();
+          if (this.destroyed) return;
+        }
+        this.interFrameWebm =
+          this.container === 'webm' &&
+          this.sourceMetadata.intraOnly === false;
         this.isReady = true;
         this.root.classList.add('is-scroll-frame-ready');
         this.trackPresentedFrames();
+        const initialTime = this.timeForProgress(
+          this.motion.renderedProgress
+        );
+        if (this.interFrameWebm) {
+          this.renderInterFrameWebm(initialTime);
+        } else {
+          this.pendingTime = initialTime;
+        }
         this.scheduler.request();
       } catch (error) {
         if (!this.destroyed) this.fail(error);
       }
+    }
+
+    async prewarmAlphaWebm() {
+      if (
+        !this.video ||
+        this.video.readyState < 1 ||
+        !Number.isFinite(this.video.duration) ||
+        this.video.duration <= 0
+      ) {
+        return;
+      }
+      const seekOnce = (time) =>
+        new Promise((resolve) => {
+          if (Math.abs(this.video.currentTime - time) < 0.001) {
+            resolve();
+            return;
+          }
+          const finish = () => resolve();
+          this.video.addEventListener('seeked', finish, {
+            once: true,
+            signal: this.abortController.signal,
+          });
+          this.abortController.signal.addEventListener('abort', finish, {
+            once: true,
+          });
+          try {
+            this.video.currentTime = time;
+          } catch (_error) {
+            resolve();
+          }
+        });
+      const warmTime = Math.min(
+        Math.max(this.frameDuration() * 6, 0.08),
+        Math.max(0, this.video.duration - this.frameDuration())
+      );
+      await seekOnce(warmTime);
+      if (this.destroyed) return;
+      await seekOnce(0);
+      this.prewarmCompleted = true;
     }
 
     async loadManifest() {
@@ -1594,17 +1784,35 @@
         frameCount: finite(manifest.frameCount, this.frameCount),
         width: finite(manifest.width, this.video.width),
         height: finite(manifest.height, this.video.height),
-        codec: manifest.codec || 'h264',
-        pixelFormat: manifest.pixelFormat || 'yuv420p',
-        hasAlpha: Boolean(manifest.hasAlpha),
-        alphaMode: manifest.alphaMode || 'none',
+        codec:
+          manifest.codec ||
+          this.video.dataset.sourceCodec ||
+          (this.container === 'webm' ? 'vp9' : 'h264'),
+        pixelFormat:
+          manifest.pixelFormat ||
+          (this.container === 'webm' ? 'unknown' : 'yuv420p'),
+        hasAlpha:
+          manifest.hasAlpha == null
+            ? bool(this.video.dataset.sourceHasAlpha, false)
+            : Boolean(manifest.hasAlpha),
+        alphaMode:
+          manifest.alphaMode ||
+          this.video.dataset.alphaMode ||
+          'none',
         sourceFps: manifest.sourceFps ?? null,
         sourceFrameCount: manifest.sourceFrameCount ?? null,
         sourceHasAlpha: manifest.sourceHasAlpha ?? null,
         fullSourceFrameUse: manifest.fullSourceFrameUse ?? null,
         keyframeInterval: manifest.keyframeInterval ?? 1,
         intraOnly: manifest.intraOnly ?? true,
-        backgroundMode: manifest.backgroundMode || 'color',
+        container: manifest.container || this.container,
+        mimeType:
+          manifest.mimeType ||
+          (this.container === 'webm' ? 'video/webm' : 'video/mp4'),
+        passthrough: Boolean(manifest.passthrough),
+        backgroundMode:
+          manifest.backgroundMode ||
+          (manifest.hasAlpha ? 'transparent' : 'color'),
         fallbackActive: Boolean(manifest.fallbackActive),
       };
       return manifest;
@@ -1613,6 +1821,252 @@
     timeForProgress(progress) {
       const finalTime = Math.max(0, this.duration - 1 / this.fps);
       return clamp(progress) * finalTime;
+    }
+
+    frameDuration() {
+      return 1 / Math.max(1, this.fps);
+    }
+
+    presentedTime() {
+      if (this.lastPresentedFrame >= 0) {
+        return this.lastPresentedFrame / Math.max(1, this.fps);
+      }
+      return this.video?.currentTime || 0;
+    }
+
+    inputIsActive(now = performance.now()) {
+      return now - this.motion.lastInputAt < STOP_DELAY_MS;
+    }
+
+    maxSequentialCatchupSeconds() {
+      if (this.sourceMetadata.hasAlpha !== true) {
+        return MAX_SEQUENTIAL_WEBM_CATCHUP_SECONDS;
+      }
+      // Seek VP9 z alfą jest w Chromium dekodowany programowo i na 1080p
+      // potrafi być znacznie droższy od odtworzenia krótkiego odcinka wprost.
+      // Dla GOP <= 15 pozwalamy dekoderowi kontynuować sekwencyjnie zamiast
+      // przerywać ruch kosztownym skokiem do klatki docelowej.
+      return this.sourceMetadata.keyframeInterval <= 15
+        ? ALPHA_WEBM_MAX_SEQUENTIAL_CATCHUP_SECONDS
+        : 0.55;
+    }
+
+    queueLargeForwardSeek(time, current) {
+      if (
+        this.lastLargeForwardSeekTarget != null &&
+        Math.abs(time - this.lastLargeForwardSeekTarget) <=
+          this.frameDuration()
+      ) {
+        return false;
+      }
+      const delta = Math.max(0, time - current);
+      const preRoll = Math.min(0.14, Math.max(0.08, delta * 0.25));
+      this.pendingTime = Math.max(0, time - preRoll);
+      this.lastLargeForwardSeekTarget = time;
+      this.largeForwardSeekCount += 1;
+      this.pauseSequentialPlayback();
+      this.executeLatestSeek();
+      return true;
+    }
+
+    pauseSequentialPlayback() {
+      if (!this.sequentialPlaybackActive && this.video?.paused) return;
+      this.video?.pause();
+      if (this.sequentialPlaybackActive) {
+        this.sequentialPlaybackStops += 1;
+      }
+      this.sequentialPlaybackActive = false;
+    }
+
+    startSequentialPlayback() {
+      if (
+        !this.interFrameWebm ||
+        !this.video ||
+        this.video.readyState < 2 ||
+        this.video.seeking ||
+        this.playTargetTime == null
+      ) {
+        return false;
+      }
+      const remaining = this.playTargetTime - this.presentedTime();
+      const mediaRemaining =
+        this.playTargetTime - (this.video.currentTime || 0);
+      const tolerance = this.frameDuration() * 0.75;
+      if (mediaRemaining <= tolerance) {
+        this.pauseSequentialPlayback();
+        return false;
+      }
+      if (remaining <= tolerance) {
+        this.pauseSequentialPlayback();
+        return false;
+      }
+
+      // Około 140 ms doganiania: bez długiego "ogona", ale też bez lawiny
+      // seeków. Natywny dekoder odtwarza kolejne klatki VP9 w poprawnej
+      // kolejności, dzięki czemu ruch do przodu pozostaje ciągły.
+      const alphaSource = this.sourceMetadata.hasAlpha === true;
+      const catchupWindow = 0.14;
+      const minPlaybackRate = alphaSource
+        ? ALPHA_WEBM_MIN_PLAYBACK_RATE
+        : 0.75;
+      const maxPlaybackRate = alphaSource
+        ? ALPHA_WEBM_MAX_PLAYBACK_RATE
+        : 2.5;
+      this.video.playbackRate = clamp(
+        remaining / catchupWindow,
+        minPlaybackRate,
+        maxPlaybackRate
+      );
+      this.pendingTime = null;
+      if (!this.sequentialPlaybackActive) {
+        this.sequentialPlaybackActive = true;
+        this.sequentialPlaybackStarts += 1;
+      }
+      if (this.video.paused && !this.playPromisePending) {
+        this.playPromisePending = true;
+        Promise.resolve(this.video.play())
+          .catch(() => {
+            this.sequentialPlaybackActive = false;
+          })
+          .finally(() => {
+            this.playPromisePending = false;
+            this.scheduler.request();
+          });
+      }
+      return true;
+    }
+
+    updateSequentialPlayback() {
+      if (
+        !this.interFrameWebm ||
+        !this.video ||
+        this.playTargetTime == null
+      ) {
+        return false;
+      }
+      const remaining = this.playTargetTime - this.presentedTime();
+      const mediaRemaining =
+        this.playTargetTime - (this.video.currentTime || 0);
+      const tolerance = this.frameDuration() * 0.75;
+      if (mediaRemaining <= tolerance) {
+        this.pauseSequentialPlayback();
+        if (
+          remaining > this.frameDuration() * 1.5 &&
+          !this.inputIsActive() &&
+          !this.video.seeking
+        ) {
+          this.pendingTime = this.playTargetTime;
+          this.presentationRecoverySeekCount += 1;
+          this.executeLatestSeek();
+          return this.video.seeking || this.pendingTime != null;
+        }
+        return false;
+      }
+      if (remaining <= tolerance) {
+        // Przy ruchu do przodu dekoder może wyprzedzić cel o kilka klatek.
+        // Nie cofamy wtedy filmu — powodowałoby to widoczny rollback i seek
+        // mimo niezmienionego kierunku wejścia.
+        this.pauseSequentialPlayback();
+        return false;
+      }
+      if (
+        remaining > this.maxSequentialCatchupSeconds() &&
+        !this.inputIsActive()
+      ) {
+        if (
+          this.queueLargeForwardSeek(
+            this.playTargetTime,
+            this.presentedTime()
+          )
+        ) {
+          return this.video.seeking || this.pendingTime != null;
+        }
+        return this.startSequentialPlayback();
+      }
+      return this.startSequentialPlayback();
+    }
+
+    renderInterFrameWebm(time) {
+      const current = this.presentedTime();
+      const delta = time - current;
+      const tolerance = this.frameDuration() * 0.75;
+      const previousTarget = this.playTargetTime;
+      const targetMovedBackward =
+        previousTarget != null &&
+        time < previousTarget - this.frameDuration() * 0.1;
+      const targetChanged =
+        previousTarget == null ||
+        Math.abs(time - previousTarget) > this.frameDuration();
+      this.playTargetTime = time;
+      if (targetChanged) this.lastLargeForwardSeekTarget = null;
+      this.maxTargetDriftMs = Math.max(
+        this.maxTargetDriftMs,
+        Math.abs(delta) * 1000
+      );
+
+      if (Math.abs(delta) <= tolerance) {
+        this.pendingTime = null;
+        this.pauseSequentialPlayback();
+        return;
+      }
+
+      // Kierunek wejścia ma pierwszeństwo przed pozycją dekodera. Gdy film
+      // pozostaje za scrollem, cofnięty target może nadal leżeć przed
+      // presentedTime; bez tego warunku kontroler błędnie uruchamiał play()
+      // do przodu podczas przewijania strony w górę.
+      if (targetMovedBackward) {
+        this.lastLargeForwardSeekTarget = null;
+        this.pauseSequentialPlayback();
+        this.pendingTime = time;
+        if (!this.video.seeking) this.reverseSeekCount += 1;
+        this.executeLatestSeek();
+        return;
+      }
+
+      if (delta > 0 && !this.video.seeking) {
+        if (delta <= this.maxSequentialCatchupSeconds()) {
+          this.pendingTime = null;
+          this.startSequentialPlayback();
+          return;
+        }
+
+        if (this.inputIsActive()) {
+          this.pendingTime = null;
+          this.deferredForwardSeekCount += 1;
+          this.startSequentialPlayback();
+          return;
+        }
+
+        // Duży skok dostaje tylko jeden seek z krótkim pre-rollem. Ostatnie
+        // klatki dochodzą już przez play(), więc zatrzymanie nie wygląda jak
+        // pojedynczy skok dekodera.
+        if (!this.queueLargeForwardSeek(time, current)) {
+          this.startSequentialPlayback();
+        }
+        return;
+      }
+
+      if (delta < 0) {
+        // Dekoder wyprzedził niezmieniony lub rosnący target. Nie cofamy go
+        // wtedy, bo utworzyłoby to rollback mimo ruchu strony w dół.
+        this.pendingTime = null;
+        this.pauseSequentialPlayback();
+        return;
+      }
+
+      // Seek już trwa: zachowujemy wyłącznie najnowszy cel. Dla ruchu do
+      // przodu również zostawiamy krótki pre-roll zamiast kończyć drugim
+      // skokiem dokładnie na klatce docelowej.
+      if (delta > 0) {
+        if (this.inputIsActive()) {
+          this.pendingTime = null;
+        } else {
+          const preRoll = Math.min(0.14, Math.max(0.08, delta * 0.25));
+          this.pendingTime = Math.max(current, time - preRoll);
+        }
+      } else {
+        this.pendingTime = time;
+      }
     }
 
     executeLatestSeek() {
@@ -1637,6 +2091,7 @@
       this.pendingTime = null;
       this.lastRequestedTime = time;
       try {
+        this.pauseSequentialPlayback();
         this.video.currentTime = time;
         this.seekExecuted += 1;
       } catch (_error) {
@@ -1645,14 +2100,27 @@
     }
 
     renderProgress(progress) {
-      this.pendingTime = this.timeForProgress(progress);
+      const time = this.timeForProgress(progress);
+      if (this.interFrameWebm) {
+        this.renderInterFrameWebm(time);
+        return;
+      }
+      this.pendingTime = time;
       this.executeLatestSeek();
     }
 
     hasPendingWork() {
-      if (this.pendingTime == null) return false;
-      this.executeLatestSeek();
-      return this.pendingTime != null || this.video.seeking;
+      if (this.pendingTime != null) {
+        this.executeLatestSeek();
+        if (this.pendingTime != null || this.video.seeking) return true;
+      }
+      const sequential = this.updateSequentialPlayback();
+      return (
+        sequential ||
+        this.sequentialPlaybackActive ||
+        this.playPromisePending ||
+        Boolean(this.video?.seeking)
+      );
     }
 
     trackPresentedFrames() {
@@ -1671,6 +2139,11 @@
           );
         }
         this.lastPresentedFrame = frame;
+        if (this.sequentialPlaybackActive) {
+          this.sequentialPlaybackFrames += 1;
+          this.updateSequentialPlayback();
+          this.scheduler.request();
+        }
         this.renderedHistory.push({ frame, at: now });
         this.trimHistory(now);
         this.root.classList.remove('has-scroll-frame-error');
@@ -1707,6 +2180,42 @@
       this.video.dataset.seekPending = String(this.pendingTime != null);
       this.video.dataset.seeking = String(this.video.seeking);
       this.video.dataset.readyState = String(this.video.readyState);
+      this.video.dataset.webmInterFrame = String(this.interFrameWebm);
+      this.video.dataset.sequentialPlayback = String(
+        this.sequentialPlaybackActive
+      );
+      this.video.dataset.sequentialPlaybackStarts = String(
+        this.sequentialPlaybackStarts
+      );
+      this.video.dataset.sequentialPlaybackFrames = String(
+        this.sequentialPlaybackFrames
+      );
+      this.video.dataset.largeForwardSeeks = String(
+        this.largeForwardSeekCount
+      );
+      this.video.dataset.deferredForwardSeeks = String(
+        this.deferredForwardSeekCount
+      );
+      this.video.dataset.presentationRecoverySeeks = String(
+        this.presentationRecoverySeekCount
+      );
+      this.video.dataset.reverseSeeks = String(this.reverseSeekCount);
+      this.video.dataset.maxTargetDriftMs = String(
+        this.maxTargetDriftMs.toFixed(1)
+      );
+      this.video.dataset.keyframeInterval = String(
+        this.sourceMetadata.keyframeInterval ?? ''
+      );
+      this.video.dataset.intraOnly = String(
+        this.sourceMetadata.intraOnly ?? ''
+      );
+      this.video.dataset.sourceDelivery = this.sourceDelivery;
+      this.video.dataset.prewarmCompleted = String(this.prewarmCompleted);
+      this.video.dataset.sourceHasAlpha = String(
+        this.sourceMetadata.hasAlpha === true
+      );
+      this.video.dataset.alphaMode =
+        this.sourceMetadata.alphaMode || 'unknown';
     }
 
     diagnostics() {
@@ -1732,13 +2241,25 @@
         seekSkipped: this.seekSkipped,
         seekErrors: this.seekErrors,
         seekPending: this.pendingTime != null,
-        blobBytes: this.video?.src?.startsWith('blob:') ? 'full-source' : 0,
+        webmInterFrame: this.interFrameWebm,
+        sequentialPlayback: this.sequentialPlaybackActive,
+        sequentialPlaybackStarts: this.sequentialPlaybackStarts,
+        sequentialPlaybackStops: this.sequentialPlaybackStops,
+        sequentialPlaybackFrames: this.sequentialPlaybackFrames,
+        largeForwardSeeks: this.largeForwardSeekCount,
+        deferredForwardSeeks: this.deferredForwardSeekCount,
+        presentationRecoverySeeks: this.presentationRecoverySeekCount,
+        reverseSeeks: this.reverseSeekCount,
+        maxTargetDriftMs: this.maxTargetDriftMs,
+        sourceDelivery: this.sourceDelivery,
+        prewarmCompleted: this.prewarmCompleted,
+        blobBytes: this.objectUrl ? 'full-source' : 0,
       };
     }
 
     destroy() {
       super.destroy();
-      this.video?.pause();
+      this.pauseSequentialPlayback();
       if (this.objectUrl) URL.revokeObjectURL(this.objectUrl);
       if (this.videoFrameCallbackId && this.video?.cancelVideoFrameCallback) {
         this.video.cancelVideoFrameCallback(this.videoFrameCallbackId);
@@ -1884,6 +2405,7 @@
         ''
       : element?.dataset.frameManifest || '';
     const motion = [
+      root.dataset.scrollVideoContainer,
       root.dataset.motionPreset,
       root.dataset.motionSpeed,
       root.dataset.motionEasing,
@@ -1959,6 +2481,18 @@
     return controller.registerAnimatedElement(element);
   }
 
+  function setProgress(rootOrSelector, progress, options = {}) {
+    const root = resolveRoot(rootOrSelector);
+    const controller = root ? scheduler.controllers.get(root) : null;
+    if (!controller) return false;
+    controller.setExternalProgress(
+      progress,
+      performance.now(),
+      Boolean(options.immediate)
+    );
+    return true;
+  }
+
   if (window[API_KEY]?.version >= 2) {
     window[API_KEY].refresh();
     return;
@@ -1970,6 +2504,7 @@
     update: () => scheduler.captureScroll(),
     diagnostics: () => scheduler.diagnostics(),
     registerElement,
+    setProgress,
     mapProgress,
     applyEasing,
     presets: () => motionCatalog,
@@ -1995,6 +2530,8 @@
       attributeFilter: [
         'data-frame-manifest',
         'data-frame-quality',
+        'data-scroll-video-container',
+        'data-video-container',
         'data-motion-preset',
         'data-motion-speed',
         'data-motion-easing',

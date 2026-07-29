@@ -1,0 +1,223 @@
+{%- comment -%}
+  Ukryta sekcja konfiguracyjna Filozofia marki (tryb scrolla strony).
+{%- endcomment -%}
+{%- style -%}
+  #shopify-section-{{ section.id }} {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    pointer-events: none !important;
+  }
+{%- endstyle -%}
+<script>
+  window.GICLEE_FILOZOFIA_CONFIG = Object.assign(
+    {},
+    window.GICLEE_FILOZOFIA_CONFIG || {},
+    {
+      pageScrollMode: {{ section.settings.page_scroll_mode | default: 'standard' | json }},
+      scrollSmoothness: {{ section.settings.scroll_smoothness | default: 75 | json }},
+      wheelGain: {{ section.settings.scroll_wheel_gain | default: 1.05 | json }},
+      lenisPreset: {{ section.settings.scroll_lenis_preset | default: 'legacy' | json }},
+      lenisLerp: {{ section.settings.scroll_lenis_lerp | default: 0.245 | json }},
+      lenisWheelMultiplier: {{ section.settings.scroll_lenis_wheel_multiplier | default: 1.05 | json }},
+      lenisSmoothWheel: {{ section.settings.scroll_lenis_smooth_wheel | default: true, allow_false: true | json }},
+      lenisOverscroll: {{ section.settings.scroll_lenis_overscroll | default: true, allow_false: true | json }},
+      lenisAnchors: {{ section.settings.scroll_lenis_anchors | default: true, allow_false: true | json }},
+      lenisStopInertiaOnNavigate: {{ section.settings.scroll_lenis_stop_inertia_on_navigate | default: true, allow_false: true | json }},
+      lineHeightPx: {{ section.settings.scroll_line_height_px | default: 40 | json }},
+      pageDeltaRatio: {{ section.settings.scroll_page_delta_ratio | default: 0.9 | json }},
+      maxWheelDeltaPx: {{ section.settings.scroll_max_wheel_delta_px | default: 420 | json }},
+      maxTargetLeadPx: {{ section.settings.scroll_max_target_lead_px | default: 1800 | json }},
+      followTauMs: {{ section.settings.scroll_follow_tau_ms | default: 300 | json }},
+      stopEpsilonPx: {{ section.settings.scroll_stop_epsilon_px | default: 0.25 | json }},
+      maxFrameDeltaMs: {{ section.settings.scroll_max_frame_delta_ms | default: 48 | json }}
+    }
+  );
+</script>
+
+{% schema %}
+{
+  "name": "Filozofia — scroll",
+  "tag": "section",
+  "class": "giclee-fm-page-config",
+  "settings": [
+    {
+      "type": "select",
+      "id": "page_scroll_mode",
+      "label": "Tryb scrolla strony",
+      "options": [
+        {
+          "value": "standard",
+          "label": "Standardowy"
+        },
+        {
+          "value": "smooth",
+          "label": "Płynny — lekki"
+        },
+        {
+          "value": "lenis",
+          "label": "Lenis"
+        },
+        {
+          "value": "custom",
+          "label": "Własny"
+        }
+      ],
+      "default": "standard",
+      "info": "Płynny = lekki mechanizm strony. Lenis = biblioteka lenis.dev. Własny = parametry techniczne."
+    },
+    {
+      "type": "range",
+      "id": "scroll_smoothness",
+      "label": "Płynność / responsywność",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 75,
+      "info": "Dotyczy trybu Płynny. Wyższa wartość = szybsza reakcja i krótsze doganianie kółka."
+    },
+    {
+      "type": "header",
+      "content": "Ustawienia Lenis"
+    },
+    {
+      "type": "select",
+      "id": "scroll_lenis_preset",
+      "label": "Profil Lenis",
+      "options": [
+        {
+          "value": "legacy",
+          "label": "Zachowaj dotychczasowe"
+        },
+        {
+          "value": "balanced",
+          "label": "Zbalansowany"
+        },
+        {
+          "value": "responsive",
+          "label": "Responsywny"
+        },
+        {
+          "value": "cinematic",
+          "label": "Filmowy"
+        },
+        {
+          "value": "custom",
+          "label": "Własne ustawienia"
+        }
+      ],
+      "default": "legacy",
+      "info": "Własne wartości są zapisywane w wariancie strony."
+    },
+    {
+      "type": "number",
+      "id": "scroll_lenis_lerp",
+      "label": "Lerp",
+      "default": 0.2,
+      "info": "Używane przez profil Własne ustawienia. Wyżej = szybsze doganianie."
+    },
+    {
+      "type": "number",
+      "id": "scroll_lenis_wheel_multiplier",
+      "label": "Siła kółka Lenis",
+      "default": 1.0
+    },
+    {
+      "type": "checkbox",
+      "id": "scroll_lenis_smooth_wheel",
+      "label": "Wygładzaj kółko",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "scroll_lenis_overscroll",
+      "label": "Overscroll",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "scroll_lenis_anchors",
+      "label": "Obsługuj linki kotwicowe",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "scroll_lenis_stop_inertia_on_navigate",
+      "label": "Zatrzymaj bezwładność przy nawigacji",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Siła kółka"
+    },
+    {
+      "type": "number",
+      "id": "scroll_wheel_gain",
+      "label": "Mnożnik kółka",
+      "default": 1.0,
+      "info": "Działa w trybach Płynny i Własny. Lenis ma osobny mnożnik. 1.00 oznacza naturalną odległość przewijania."
+    },
+    {
+      "type": "header",
+      "content": "Zaawansowane — tryb Własny"
+    },
+    {
+      "type": "number",
+      "id": "scroll_line_height_px",
+      "label": "Line height (px)",
+      "default": 40,
+      "info": "Przelicznik deltaMode = lines."
+    },
+    {
+      "type": "number",
+      "id": "scroll_page_delta_ratio",
+      "label": "Page delta ratio",
+      "default": 0.9,
+      "info": "Przelicznik deltaMode = pages (~× viewport)."
+    },
+    {
+      "type": "number",
+      "id": "scroll_max_wheel_delta_px",
+      "label": "Max wheel delta (px)",
+      "default": 420,
+      "info": "Max skok na jedno zdarzenie wheel."
+    },
+    {
+      "type": "number",
+      "id": "scroll_max_target_lead_px",
+      "label": "Max target lead (px)",
+      "default": 800,
+      "info": "Max wyprzedzenie targetu względem pozycji."
+    },
+    {
+      "type": "number",
+      "id": "scroll_follow_tau_ms",
+      "label": "Follow tau (ms)",
+      "default": 75,
+      "info": "Stała czasowa doganiania (wyżej = wolniej)."
+    },
+    {
+      "type": "number",
+      "id": "scroll_stop_epsilon_px",
+      "label": "Stop epsilon (px)",
+      "default": 0.3,
+      "info": "Próg zatrzymania animacji (Płynny: 0.25; w GicleeApp dokładniej)."
+    },
+    {
+      "type": "number",
+      "id": "scroll_max_frame_delta_ms",
+      "label": "Max frame delta (ms)",
+      "default": 48,
+      "info": "Clamp delty czasu między klatkami."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Filozofia — scroll"
+    }
+  ]
+}
+{% endschema %}

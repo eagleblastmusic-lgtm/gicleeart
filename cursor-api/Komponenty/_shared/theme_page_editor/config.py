@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from .types import TemplateZone
 
@@ -26,6 +27,9 @@ class PageEditorConfig:
     section_effects_asset_enabled: bool = True
     extra_deploy_relpaths: tuple[str, ...] = field(default_factory=tuple)
     extra_deploy_globs: tuple[str, ...] = field(default_factory=tuple)
+    after_template_save: Callable[[], None] | None = None
+    # Opcjonalne panele UI dla stref bez pól szablonu (np. podmiana assetów).
+    zone_content_builders: Mapping[str, Callable[..., Any]] = field(default_factory=dict)
 
     @property
     def template_basename(self) -> str:

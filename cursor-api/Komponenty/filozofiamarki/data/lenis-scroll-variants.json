@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "variants": [
+    {
+      "id": "8bb365713e3d4890a621e2575cbfd4a6",
+      "name": "Wersja 1",
+      "values": {
+        "scroll_lenis_lerp": 0.08,
+        "scroll_lenis_wheel_multiplier": 0.96,
+        "scroll_lenis_smooth_wheel": true,
+        "scroll_lenis_overscroll": true,
+        "scroll_lenis_anchors": true,
+        "scroll_lenis_stop_inertia_on_navigate": true
+      }
+    },
+    {
+      "id": "8f64258d3b604c6bb9ae1ea167488fb7",
+      "name": "Wersja 2",
+      "values": {
+        "scroll_lenis_lerp": 0.14,
+        "scroll_lenis_wheel_multiplier": 1.05,
+        "scroll_lenis_smooth_wheel": true,
+        "scroll_lenis_overscroll": true,
+        "scroll_lenis_anchors": true,
+        "scroll_lenis_stop_inertia_on_navigate": true
+      }
+    },
+    {
+      "id": "69f9abaf669c4fdaa0f2cc975457849d",
+      "name": "Wersja 3",
+      "values": {
+        "scroll_lenis_lerp": 0.08,
+        "scroll_lenis_wheel_multiplier": 1.05,
+        "scroll_lenis_smooth_wheel": true,
+        "scroll_lenis_overscroll": true,
+        "scroll_lenis_anchors": true,
+        "scroll_lenis_stop_inertia_on_navigate": true
+      }
+    }
+  ]
+}

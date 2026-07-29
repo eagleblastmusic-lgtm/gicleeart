@@ -2577,111 +2577,176 @@
     }
     {% endif %}
     {% if template.suffix == 'filozofia-marki' %}
-    /* Cytat sticky: pin 0.6vh, potem otwarcie portalu na tym samym ekranie */
+    /* Cytat sticky: pin → portal odsłania Wrota → scrub filmu (bez wjazdu sekcji) */
     body.template-page-filozofia-marki .giclee-fm-quote-pin-track {
-      --fm-quote-pin-duration: 0.6;
-      --fm-quote-portal-duration: 0.5;
+      --fm-quote-pin-duration: 0.4;
+      --fm-quote-portal-duration: 2;
+      --fm-wrota-film-duration: 6.5;
+      /* slide↑ 0.6 + 2×(fade 0.4 + hold 0.6 + fade 0.4) + slide↓ 0.6 = 4.0 */
+      --fm-tresc3d-slide: 0.6;
+      --fm-tresc3d-fade: 0.4;
+      --fm-tresc3d-hold: 0.6;
+      --fm-wrota-parallax-duration: 4;
+      --fm-wrota-parallax-crossfade: 0.14;
       background: transparent;
       min-height: calc(
         100svh
         + (100svh * var(--fm-quote-pin-duration))
         + (100svh * var(--fm-quote-portal-duration))
+        + (100svh * var(--fm-wrota-film-duration))
+        + (100svh * var(--fm-wrota-parallax-duration))
       );
       position: relative;
-      z-index: 2;
+      z-index: 5;
     }
 
     body.template-page-filozofia-marki .giclee-fm-quote-pin-sticky {
+      align-items: stretch;
       background: transparent;
       box-sizing: border-box;
-      display: grid;
-      grid-template-areas: 'scene';
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       min-height: 100svh;
       opacity: 1;
       position: sticky;
       top: 0;
       width: 100%;
-      z-index: 3;
+      z-index: 5;
     }
 
-    body.template-page-filozofia-marki .giclee-fm-quote-layer {
-      align-items: stretch;
-      display: flex;
-      flex-direction: column;
-      grid-area: scene;
-      justify-content: center;
-      position: relative;
-      z-index: 1;
-    }
-
-    body.template-page-filozofia-marki .giclee-fm-quote-layer .shopify-section[id$="__divider_Utf3HQ"] .divider,
-    body.template-page-filozofia-marki .giclee-fm-quote-layer .shopify-section[id$="__divider_H4ahef"] .divider {
+    body.template-page-filozofia-marki .giclee-fm-quote-pin-sticky .shopify-section[id$="__divider_Utf3HQ"] .divider,
+    body.template-page-filozofia-marki .giclee-fm-quote-pin-sticky .shopify-section[id$="__divider_H4ahef"] .divider {
       --padding-block-start: 12px;
       --padding-block-end: 12px;
     }
 
-    body.template-page-filozofia-marki .giclee-fm-quote-layer .shopify-section[id$="__section_tAj94h"] .section {
+    body.template-page-filozofia-marki .giclee-fm-quote-pin-sticky .shopify-section[id$="__section_tAj94h"] .section {
       --padding-block-start: 1.25rem;
       --padding-block-end: 1.25rem;
     }
 
     /*
-      Portal host nad cytatem (wyższy z-index).
-      Stage jest przenoszony tu z Wrota — poza contain:paint scrubu.
+      Wrota: nie wjeżdża w viewport jako sekcja.
+      Pojawia się tylko przez fixed portal (clip-path) po pinie cytatu.
+      Runway wysokości jest w tracku cytatu — root scrub zwinięty.
     */
-    body.template-page-filozofia-marki .giclee-fm-portal-host {
-      --giclee-fm-portal-inset: 50%;
-      grid-area: scene;
-      height: 100%;
-      pointer-events: none;
-      position: relative;
-      z-index: 5;
+    body.template-page-filozofia-marki .media-block--portal-wrota.media-block--scroll-scrub {
+      contain: none !important;
+      background: transparent;
     }
 
-    body.template-page-filozofia-marki .giclee-fm-portal-host.is-fm-portal-overlay {
-      height: 100svh;
-      left: 0;
-      position: fixed;
-      right: 0;
-      top: 0;
-      width: 100%;
-      z-index: 20;
+    body.template-page-filozofia-marki .media-block--portal-wrota.giclee-fm-wrota-runway-collapsed,
+    body.template-page-filozofia-marki
+      .media-block--portal-wrota.media-block--scroll-scrub.giclee-fm-wrota-runway-collapsed {
+      height: 0 !important;
+      min-height: 0 !important;
+      margin: 0 !important;
+      overflow: visible !important;
     }
 
-    body.template-page-filozofia-marki .giclee-fm-portal-host .giclee-fm-wrota-portal,
-    body.template-page-filozofia-marki .giclee-fm-portal-host .media-block__scroll-stage.giclee-fm-portal-on-quote,
-    body.template-page-filozofia-marki .giclee-fm-portal-host .media-block__scroll-stage {
+    body.template-page-filozofia-marki .giclee-fm-wrota-portal,
+    body.template-page-filozofia-marki .media-block__scroll-stage.giclee-fm-wrota-portal,
+    body.template-page-filozofia-marki .media-block__scroll-stage.giclee-fm-portal-on-quote {
       --giclee-fm-portal-inset: 50%;
+      /* Bez pasa separatorów z philosophy-frames — pełny bleed pod chowanym menu. */
+      --scroll-separator-band: 0px;
       background: #000;
       backface-visibility: hidden;
       clip-path: inset(
         0 var(--giclee-fm-portal-inset, 50%)
         0 var(--giclee-fm-portal-inset, 50%)
       );
-      height: 100% !important;
-      left: 0;
-      min-height: 100% !important;
-      position: absolute !important;
-      top: 0 !important;
-      transform: translateZ(0);
-      width: 100%;
+      /* Bez translateZ — transform na ancestorze więzi position:fixed w boxie 0px. */
       will-change: clip-path;
     }
 
-    /* Runway Wrota bez ujemnego marginesu */
+    body.template-page-filozofia-marki .giclee-fm-wrota-portal .media-block__media--scroll,
+    body.template-page-filozofia-marki .giclee-fm-wrota-portal .media-block__scroll-poster,
+    body.template-page-filozofia-marki
+      .media-block__scroll-stage.giclee-fm-portal-on-quote
+      .media-block__media--scroll,
+    body.template-page-filozofia-marki
+      .media-block__scroll-stage.giclee-fm-portal-on-quote
+      .media-block__scroll-poster {
+      height: 100%;
+      inset: 0;
+    }
+
+    body.template-page-filozofia-marki
+      .media-block__scroll-stage.giclee-fm-portal-on-quote.is-fm-portal-overlay {
+      height: 100svh !important;
+      left: 0;
+      min-height: 100svh !important;
+      pointer-events: none;
+      position: fixed !important;
+      right: 0;
+      top: 0 !important;
+      width: 100%;
+      z-index: 50 !important;
+    }
+
+    /* Host Wrota sticky w tracku — zostaje w viewportcie przez cały pin/portal/film. */
+    body.template-page-filozofia-marki .giclee-fm-quote-pin-track > .giclee-fm-wrota-section {
+      height: 0 !important;
+      margin: 0 !important;
+      max-height: 0 !important;
+      min-height: 0 !important;
+      overflow: visible !important;
+      padding: 0 !important;
+      pointer-events: none;
+      position: sticky;
+      top: 0;
+      width: 100%;
+      z-index: 1;
+    }
+
     body.template-page-filozofia-marki .giclee-fm-wrota-section,
     body.template-page-filozofia-marki .shopify-section:has([data-fm-portal-root]) {
       margin-top: 0;
+      overflow: visible !important;
+      position: relative;
+      z-index: 0;
+    }
+
+    body.template-page-filozofia-marki.giclee-fm-curtain-active
+      .giclee-fm-quote-pin-track
+      > .giclee-fm-wrota-section,
+    body.template-page-filozofia-marki.giclee-fm-curtain-open
+      .giclee-fm-quote-pin-track
+      > .giclee-fm-wrota-section {
+      z-index: 40;
+    }
+
+    body.template-page-filozofia-marki.giclee-fm-curtain-active .giclee-fm-quote-pin-sticky,
+    body.template-page-filozofia-marki.giclee-fm-curtain-open .giclee-fm-quote-pin-sticky {
+      z-index: 5;
+    }
+
+    body.template-page-filozofia-marki .media-block--portal-wrota {
+      background: transparent;
+      overflow: visible !important;
       position: relative;
       z-index: 1;
     }
 
-    body.template-page-filozofia-marki .media-block--portal-wrota {
-      background: #000;
+    body.template-page-filozofia-marki .media-with-content:has(.media-block--portal-wrota) {
+      background: transparent;
+      min-height: 0 !important;
+      overflow: visible !important;
+      padding: 0 !important;
     }
 
-    body.template-page-filozofia-marki .media-with-content:has(.media-block--portal-wrota) {
-      background: #000;
+    body.template-page-filozofia-marki.giclee-fm-curtain-open .media-block--portal-wrota,
+    body.template-page-filozofia-marki.giclee-fm-curtain-open
+      .media-with-content:has(.media-block--portal-wrota) {
+      background: transparent;
+    }
+
+    body.template-page-filozofia-marki .media-block--portal-wrota .media-block__scroll-stage {
+      top: 0;
+      height: 100svh;
+      min-height: 100svh;
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -2689,7 +2754,9 @@
         min-height: 100svh;
       }
 
-      body.template-page-filozofia-marki .giclee-fm-portal-host .media-block__scroll-stage {
+      body.template-page-filozofia-marki .giclee-fm-wrota-portal,
+      body.template-page-filozofia-marki .media-block__scroll-stage.giclee-fm-wrota-portal,
+      body.template-page-filozofia-marki .media-block__scroll-stage.giclee-fm-portal-on-quote {
         --giclee-fm-portal-inset: 0%;
         clip-path: none;
       }

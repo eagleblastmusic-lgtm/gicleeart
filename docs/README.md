@@ -85,7 +85,7 @@ Jeden fakt w jednym pliku modułowym. Nie duplikuj treści między `MATKA` a tym
 | Zoom HD pusty | [`motyw/produkt-i-zoom.md`](motyw/produkt-i-zoom.md) |
 
 | PDP v3 / scroll-over: pusty scroll, wjazd, prześwit | [`motyw/pdp-v3-pusty-scroll.md`](motyw/pdp-v3-pusty-scroll.md) (wzór uniwersalny) |
-| Film lub klatki sterowane scrollem | [`Film-scroll.md`](Film-scroll.md) (źródło prawdy) + [`Film-scroll-AI-Integration-Guide.md`](Film-scroll-AI-Integration-Guide.md) (kanoniczna instrukcja rozszerzania) |
+| Film lub klatki sterowane scrollem; polecenie „wstaw moduł Film-scroll” | [`Film-scroll.md`](Film-scroll.md) — jedyne źródło prawdy, łącznie z nową sekcją GicleeApp |
 
 | Księgowość, DNR, KPiR, faktury | [`../cursor-api/docs/komponenty/finanse.md`](../cursor-api/docs/komponenty/finanse.md) |
 
@@ -261,6 +261,6 @@ MATKA.md                ← wklejka (linki, nie duplikat tabel)
 
 
 
-2026-07-27 — Film-scroll: centralny scheduler, profile ruchu, MP4/WebP,
-60 FPS, alfa oraz kanoniczna instrukcja integracji dla kolejnych AI.
+Centralny scheduler, profile ruchu, MP4/WebM/WebP, 60 FPS, alfa i kanoniczna
+instrukcja integracji pozostają opisane w podlinkowanych dokumentach.
 

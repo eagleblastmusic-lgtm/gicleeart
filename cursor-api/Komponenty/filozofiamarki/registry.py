@@ -4,9 +4,15 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from Komponenty._shared.theme_page_editor.types import TemplateField, TemplateZone, _s
+from Komponenty._shared.theme_page_editor.types import (
+    FieldGroupVariantLibrary,
+    TemplateField,
+    TemplateZone,
+    _s,
+)
 
 from .motion_config import preset_choices, preset_values
+from .video_sequence import native_video_source_choices
 
 
 _MEDIA_SETTINGS = (
@@ -29,6 +35,23 @@ def _media_setting(name: str) -> tuple[str, ...]:
 
 def _wrota_setting(name: str) -> tuple[str, ...]:
     return _s(*_WROTA_MEDIA_SETTINGS, name)
+
+
+def _philosophy_video_choices(
+    values: dict[str, object],
+) -> tuple[tuple[str, str], ...]:
+    return native_video_source_choices(values, family="philosophy")
+
+
+def _wrota_video_choices(
+    values: dict[str, object],
+) -> tuple[tuple[str, str], ...]:
+    normalized = {
+        "scroll_video_engine": values.get("wrota_scroll_video_engine"),
+        "scroll_video_quality": values.get("wrota_scroll_video_quality"),
+        "scroll_video_container": values.get("wrota_scroll_video_container"),
+    }
+    return native_video_source_choices(normalized, family="wrota")
 
 
 def _remap_fields_to_section(
@@ -54,6 +77,378 @@ def _remap_fields_to_section(
 
 
 PAGE_ZONES: tuple[TemplateZone, ...] = (
+    TemplateZone(
+        zone_id="page_scroll",
+        label="Scroll strony",
+        description=(
+            "Sposób przewijania całej strony Filozofia marki. "
+            "«Płynny» = lekki mechanizm strony. «Lenis» = silnik lenis.dev. "
+            "«Własny» = ręczne parametry techniczne."
+        ),
+        section_key="giclee_filozofia_page_config",
+        fields=(
+            TemplateField(
+                "page_scroll_mode",
+                "Tryb scrolla",
+                "choice",
+                _s(
+                    "giclee_filozofia_page_config",
+                    "settings",
+                    "page_scroll_mode",
+                ),
+                choices=(
+                    ("standard", "Standardowy"),
+                    ("smooth", "Płynny — lekki"),
+                    ("lenis", "Lenis"),
+                    ("custom", "Własny"),
+                ),
+                hint=(
+                    "Standardowy = natywny. Płynny = krótki, responsywny smoothing. "
+                    "Lenis = lokalnie dołączony Lenis. Własny = pełna kontrola parametrów."
+                ),
+            ),
+            TemplateField(
+                "scroll_smoothness",
+                "Płynność / responsywność",
+                "int",
+                _s(
+                    "giclee_filozofia_page_config",
+                    "settings",
+                    "scroll_smoothness",
+                ),
+                min_value=0,
+                max_value=100,
+                step=1,
+                unit="%",
+                hint=(
+                    "Wyżej = szybsza reakcja i krótsze doganianie kółka. "
+                    "75% to profil zbalansowany."
+                ),
+                visible_when=(("page_scroll_mode", ("smooth",)),),
+            ),
+            TemplateField(
+                "scroll_wheel_gain",
+                "Siła kółka",
+                "float",
+                _s(
+                    "giclee_filozofia_page_config",
+                    "settings",
+                    "scroll_wheel_gain",
+                ),
+                min_value=0.1,
+                max_value=5.0,
+                step=0.01,
+                hint="1.00 = naturalna odległość; wyżej = większy skok.",
+                visible_when=(("page_scroll_mode", ("smooth", "custom")),),
+            ),
+            TemplateField(
+                "scroll_lenis_preset",
+                "Profil Lenis",
+                "choice",
+                _s(
+                    "giclee_filozofia_page_config",
+                    "settings",
+                    "scroll_lenis_preset",
+                ),
+                choices=(
+                    ("balanced", "Zbalansowany"),
+                    ("responsive", "Responsywny"),
+                    ("cinematic", "Filmowy"),
+                    ("custom", "Własne ustawienia"),
+                ),
+                hint=(
+                    "Własne ustawienia zapisują się w bieżącej wersji strony. "
+                    "Niżej możesz też tworzyć wiele nazwanych wariantów Lenis."
+                ),
+                visible_when=(("page_scroll_mode", ("lenis",)),),
+                group_id="lenis_settings",
+                group_label="Ustawienia Lenis",
+                group_collapsed=True,
+            ),
+            TemplateField(
+                "scroll_lenis_lerp",
+                "Lerp",
+                "float",
+                _s(
+                    "giclee_filozofia_page_config",
+                    "settings",
+                    "scroll_lenis_lerp",
+                ),
+                min_value=0.01,
+                max_value=1.0,
+                step=0.005,
+                hint=(
+                    "Wyżej = szybsze doganianie. 0.245 odpowiada profilowi "
+                    "zbalansowanemu."
+                ),
+                visible_when=(
+                    ("page_scroll_mode", ("lenis",)),
+                    ("scroll_lenis_preset", ("custom",)),
+                ),
+                group_id="lenis_settings",
+                group_label="Ustawienia Lenis",
+                group_collapsed=True,
+            ),
+            TemplateField(
+                "scroll_lenis_wheel_multiplier",
+                "Siła kółka Lenis",
+                "float",
+                _s(
+                    "giclee_filozofia_page_config",
+                    "settings",
+                    "scroll_lenis_wheel_multiplier",
+                ),
+                min_value=0.1,
+                max_value=5.0,
+                step=0.05,
+                hint="1.00 = naturalna odległość impulsu kółka.",
+                visible_when=(
+                    ("page_scroll_mode", ("lenis",)),
+                    ("scroll_lenis_preset", ("custom",)),
+                ),
+                group_id="lenis_settings",
+                group_label="Ustawienia Lenis",
+                group_collapsed=True,
+            ),
+            TemplateField(
+                "scroll_lenis_smooth_wheel",
+                "Wygładzaj kółko",
+                "bool",
+                _s(
+                    "giclee_filozofia_page_config",
+                    "settings",
+                    "scroll_lenis_smooth_wheel",
+                ),
+                hint="Wyłączenie pozostawia natywny ruch kółka wewnątrz Lenis.",
+                visible_when=(
+                    ("page_scroll_mode", ("lenis",)),
+                    ("scroll_lenis_preset", ("custom",)),
+                ),
+                group_id="lenis_settings",
+                group_label="Ustawienia Lenis",
+                group_collapsed=True,
+            ),
+            TemplateField(
+                "scroll_lenis_overscroll",
+                "Overscroll",
+                "bool",
+                _s(
+                    "giclee_filozofia_page_config",
+                    "settings",
+                    "scroll_lenis_overscroll",
+                ),
+                hint="Kontroluje propagowanie ruchu na początku i końcu strony.",
+                visible_when=(
+                    ("page_scroll_mode", ("lenis",)),
+                    ("scroll_lenis_preset", ("custom",)),
+                ),
+                group_id="lenis_settings",
+                group_label="Ustawienia Lenis",
+                group_collapsed=True,
+            ),
+            TemplateField(
+                "scroll_lenis_anchors",
+                "Obsługuj linki kotwicowe",
+                "bool",
+                _s(
+                    "giclee_filozofia_page_config",
+                    "settings",
+                    "scroll_lenis_anchors",
+                ),
+                visible_when=(
+                    ("page_scroll_mode", ("lenis",)),
+                    ("scroll_lenis_preset", ("custom",)),
+                ),
+                group_id="lenis_settings",
+                group_label="Ustawienia Lenis",
+                group_collapsed=True,
+            ),
+            TemplateField(
+                "scroll_lenis_stop_inertia_on_navigate",
+                "Zatrzymaj bezwładność przy nawigacji",
+                "bool",
+                _s(
+                    "giclee_filozofia_page_config",
+                    "settings",
+                    "scroll_lenis_stop_inertia_on_navigate",
+                ),
+                visible_when=(
+                    ("page_scroll_mode", ("lenis",)),
+                    ("scroll_lenis_preset", ("custom",)),
+                ),
+                group_id="lenis_settings",
+                group_label="Ustawienia Lenis",
+                group_collapsed=True,
+            ),
+            TemplateField(
+                "scroll_line_height_px",
+                "Line height (px)",
+                "int",
+                _s(
+                    "giclee_filozofia_page_config",
+                    "settings",
+                    "scroll_line_height_px",
+                ),
+                min_value=1,
+                max_value=200,
+                step=1,
+                unit=" px",
+                hint="Przelicznik deltaMode = lines (Płynny: 40).",
+                visible_when=(("page_scroll_mode", ("custom",)),),
+            ),
+            TemplateField(
+                "scroll_page_delta_ratio",
+                "Page delta ratio",
+                "float",
+                _s(
+                    "giclee_filozofia_page_config",
+                    "settings",
+                    "scroll_page_delta_ratio",
+                ),
+                min_value=0.1,
+                max_value=2.0,
+                step=0.05,
+                hint="Przelicznik deltaMode = pages (Płynny: 0.9).",
+                visible_when=(("page_scroll_mode", ("custom",)),),
+            ),
+            TemplateField(
+                "scroll_max_wheel_delta_px",
+                "Max wheel delta (px)",
+                "int",
+                _s(
+                    "giclee_filozofia_page_config",
+                    "settings",
+                    "scroll_max_wheel_delta_px",
+                ),
+                min_value=50,
+                max_value=2000,
+                step=10,
+                unit=" px",
+                hint="Max skok na jedno wheel (Płynny: 420).",
+                visible_when=(("page_scroll_mode", ("custom",)),),
+            ),
+            TemplateField(
+                "scroll_max_target_lead_px",
+                "Max target lead (px)",
+                "int",
+                _s(
+                    "giclee_filozofia_page_config",
+                    "settings",
+                    "scroll_max_target_lead_px",
+                ),
+                min_value=100,
+                max_value=5000,
+                step=50,
+                unit=" px",
+                hint="Max wyprzedzenie targetu (Płynny 75%: 800).",
+                visible_when=(("page_scroll_mode", ("custom",)),),
+            ),
+            TemplateField(
+                "scroll_follow_tau_ms",
+                "Follow tau (ms)",
+                "int",
+                _s(
+                    "giclee_filozofia_page_config",
+                    "settings",
+                    "scroll_follow_tau_ms",
+                ),
+                min_value=1,
+                max_value=1200,
+                step=1,
+                unit=" ms",
+                hint=(
+                    "Stała doganiania — wyżej = wolniej (Płynny 75%: ok. 74). "
+                    "1–16 ≈ prawie natychmiastowo."
+                ),
+                visible_when=(("page_scroll_mode", ("custom",)),),
+            ),
+            TemplateField(
+                "scroll_stop_epsilon_px",
+                "Stop epsilon (px)",
+                "float",
+                _s(
+                    "giclee_filozofia_page_config",
+                    "settings",
+                    "scroll_stop_epsilon_px",
+                ),
+                min_value=0.01,
+                max_value=5.0,
+                step=0.01,
+                unit=" px",
+                hint="Próg zatrzymania animacji (Płynny: 0.25).",
+                visible_when=(("page_scroll_mode", ("custom",)),),
+            ),
+            TemplateField(
+                "scroll_max_frame_delta_ms",
+                "Max frame delta (ms)",
+                "int",
+                _s(
+                    "giclee_filozofia_page_config",
+                    "settings",
+                    "scroll_max_frame_delta_ms",
+                ),
+                min_value=8,
+                max_value=100,
+                step=1,
+                unit=" ms",
+                hint="Clamp delty czasu między klatkami (Płynny: 48).",
+                visible_when=(("page_scroll_mode", ("custom",)),),
+            ),
+        ),
+        preset_field_id="scroll_lenis_preset",
+        preset_values=(
+            (
+                "balanced",
+                (
+                    ("scroll_lenis_lerp", 0.245),
+                    ("scroll_lenis_wheel_multiplier", 1.05),
+                    ("scroll_lenis_smooth_wheel", True),
+                    ("scroll_lenis_overscroll", True),
+                    ("scroll_lenis_anchors", True),
+                    ("scroll_lenis_stop_inertia_on_navigate", True),
+                ),
+            ),
+            (
+                "responsive",
+                (
+                    ("scroll_lenis_lerp", 0.32),
+                    ("scroll_lenis_wheel_multiplier", 1.0),
+                    ("scroll_lenis_smooth_wheel", True),
+                    ("scroll_lenis_overscroll", True),
+                    ("scroll_lenis_anchors", True),
+                    ("scroll_lenis_stop_inertia_on_navigate", True),
+                ),
+            ),
+            (
+                "cinematic",
+                (
+                    ("scroll_lenis_lerp", 0.14),
+                    ("scroll_lenis_wheel_multiplier", 0.9),
+                    ("scroll_lenis_smooth_wheel", True),
+                    ("scroll_lenis_overscroll", True),
+                    ("scroll_lenis_anchors", True),
+                    ("scroll_lenis_stop_inertia_on_navigate", True),
+                ),
+            ),
+        ),
+        field_group_variant_libraries=(
+            FieldGroupVariantLibrary(
+                group_id="lenis_settings",
+                label="Moje warianty Lenis",
+                storage_filename="lenis-scroll-variants.json",
+                controlled_field_ids=(
+                    "scroll_lenis_lerp",
+                    "scroll_lenis_wheel_multiplier",
+                    "scroll_lenis_smooth_wheel",
+                    "scroll_lenis_overscroll",
+                    "scroll_lenis_anchors",
+                    "scroll_lenis_stop_inertia_on_navigate",
+                ),
+                preset_field_id="scroll_lenis_preset",
+                custom_preset_value="custom",
+            ),
+        ),
+    ),
     TemplateZone(
         zone_id="scroll_story",
         label="Animacja przewijana",
@@ -88,6 +483,39 @@ PAGE_ZONES: tuple[TemplateZone, ...] = (
                 ),
             ),
             TemplateField(
+                "scroll_video_container",
+                "Format filmu",
+                "choice",
+                _media_setting("scroll_video_container"),
+                choices=(
+                    ("mp4", "MP4 H.264 — najwyższa zgodność"),
+                    ("webm", "WebM — gotowy plik, możliwa alfa"),
+                ),
+                hint=(
+                    "Dotyczy trybu Film. Wybierz format przygotowany w panelu "
+                    "wgrywania; klatki WebP ignorują to ustawienie."
+                ),
+            ),
+            TemplateField(
+                "scroll_video_source",
+                "Konkretny plik",
+                "choice",
+                _media_setting("scroll_video_source"),
+                hint=(
+                    "Lista pokazuje pliki zgodne z wybranym formatem i jakością. "
+                    "Domyślny slot zachowuje dotychczasowe działanie."
+                ),
+                choice_provider=_philosophy_video_choices,
+                choice_dependencies=(
+                    "scroll_video_engine",
+                    "scroll_video_quality",
+                    "scroll_video_container",
+                ),
+                visible_when=(
+                    ("scroll_video_engine", ("video",)),
+                ),
+            ),
+            TemplateField(
                 "scroll_intro_title",
                 "Nagłówek początkowy",
                 "text",
@@ -112,7 +540,7 @@ PAGE_ZONES: tuple[TemplateZone, ...] = (
                 "int",
                 _media_setting("scroll_video_viewport"),
                 min_value=200,
-                max_value=800,
+                max_value=1500,
                 step=25,
                 unit="vh",
                 hint="400vh odpowiada aktualnej stronie.",
@@ -341,7 +769,7 @@ PAGE_ZONES: tuple[TemplateZone, ...] = (
             ),
             TemplateField(
                 "scroll_motion_mp4_dead_zone_ms",
-                "Martwa strefa MP4",
+                "Martwa strefa filmu (MP4/WebM)",
                 "int",
                 _media_setting("scroll_motion_mp4_dead_zone_ms"),
                 min_value=0,
@@ -408,7 +836,9 @@ PAGE_ZONES: tuple[TemplateZone, ...] = (
                     ("transparent", "Przezroczyste"),
                     ("color", "Kolor"),
                     ("gradient", "Gradient"),
-                    ("image", "Obraz strony"),
+                    ("image", "Obraz (CSS url)"),
+                    ("asset", "Plik tła — obraz"),
+                    ("webm", "Plik tła — WebM + alfa"),
                 ),
             ),
             TemplateField(
@@ -429,7 +859,10 @@ PAGE_ZONES: tuple[TemplateZone, ...] = (
                 "Wymuś wariant przezroczysty",
                 "bool",
                 _media_setting("scroll_force_transparent"),
-                hint="Gdy aktywne, runtime zgłasza błąd zamiast użyć nieprzezroczystego MP4.",
+                hint=(
+                    "Gdy aktywne, runtime wymaga WebM lub sekwencji WebP "
+                    "z potwierdzonym kanałem alfa."
+                ),
             ),
         ),
     ),
@@ -460,12 +893,41 @@ _WROTA_STORY_FIELDS = (
         ),
     ),
     TemplateField(
+        "wrota_scroll_video_container",
+        "Format filmu",
+        "choice",
+        _wrota_setting("scroll_video_container"),
+        choices=(
+            ("mp4", "MP4 H.264 — najwyższa zgodność"),
+            ("webm", "WebM — gotowy plik, możliwa alfa"),
+        ),
+        hint="Dotyczy trybu Film; wybierz wcześniej przygotowany wariant.",
+    ),
+    TemplateField(
+        "wrota_scroll_video_source",
+        "Konkretny plik",
+        "choice",
+        _wrota_setting("scroll_video_source"),
+        hint=(
+            "Lista pokazuje pliki Wrota zgodne z wybranym formatem i jakością."
+        ),
+        choice_provider=_wrota_video_choices,
+        choice_dependencies=(
+            "wrota_scroll_video_engine",
+            "wrota_scroll_video_quality",
+            "wrota_scroll_video_container",
+        ),
+        visible_when=(
+            ("wrota_scroll_video_engine", ("video",)),
+        ),
+    ),
+    TemplateField(
         "wrota_scroll_video_viewport",
         "Długość przewijania animacji",
         "int",
         _wrota_setting("scroll_video_viewport"),
         min_value=200,
-        max_value=800,
+        max_value=1500,
         step=25,
         unit="vh",
         hint="Portal otwiera się na początku sekcji; potem scrub filmu.",
@@ -506,6 +968,66 @@ PAGE_ZONES = PAGE_ZONES + (
             _SCROLL_MOTION.fields,
             from_section="media_with_content_D7REjd",
             to_section="media_with_content_Wrota",
+        ),
+    ),
+    TemplateZone(
+        zone_id="wrota_parallax",
+        label="Tło paralaksy — po Wrotach",
+        description=(
+            "Po końcówce filmu Wrota pojawia się tło z warstw Bottom + Middle "
+            "(paralaksa pod kursorem). Middle może być obrazem albo filmem WebM z alfą."
+        ),
+        section_key="media_with_content_Wrota",
+        settings_only=True,
+        fields=(),
+    ),
+    TemplateZone(
+        zone_id="tresc_3d",
+        label="Treść 3D",
+        description=(
+            "Po crossfade Wrota: wjazd Middle, potem dwie pary tekst + przed/po. "
+            "Każda para: fade in → hold 0.6vh → fade out."
+        ),
+        section_key="media_with_content_Wrota",
+        fields=(
+            TemplateField(
+                "tresc3d_text_1",
+                "Tekst 1 (lewa)",
+                "body",
+                _wrota_setting("tresc3d_text_1"),
+                hint="Pierwsza para po wjeździe Middle.",
+            ),
+            TemplateField(
+                "tresc3d_pair1_before",
+                "Para 1 — przed",
+                "shopify_image",
+                _wrota_setting("tresc3d_pair1_before"),
+            ),
+            TemplateField(
+                "tresc3d_pair1_after",
+                "Para 1 — po",
+                "shopify_image",
+                _wrota_setting("tresc3d_pair1_after"),
+            ),
+            TemplateField(
+                "tresc3d_text_2",
+                "Tekst 2 (lewa)",
+                "body",
+                _wrota_setting("tresc3d_text_2"),
+                hint="Druga para po fade out pierwszej.",
+            ),
+            TemplateField(
+                "tresc3d_pair2_before",
+                "Para 2 — przed",
+                "shopify_image",
+                _wrota_setting("tresc3d_pair2_before"),
+            ),
+            TemplateField(
+                "tresc3d_pair2_after",
+                "Para 2 — po",
+                "shopify_image",
+                _wrota_setting("tresc3d_pair2_after"),
+            ),
         ),
     ),
 )

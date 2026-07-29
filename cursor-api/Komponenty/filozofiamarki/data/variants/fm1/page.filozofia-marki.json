@@ -9,6 +9,29 @@
  */
 {
   "sections": {
+    "giclee_filozofia_page_config": {
+      "type": "giclee-filozofia-page-config",
+      "name": "Filozofia — scroll",
+      "settings": {
+        "page_scroll_mode": "standard",
+        "scroll_smoothness": 75,
+        "scroll_lenis_preset": "balanced",
+        "scroll_lenis_lerp": 0.245,
+        "scroll_lenis_wheel_multiplier": 1.05,
+        "scroll_lenis_smooth_wheel": true,
+        "scroll_lenis_overscroll": true,
+        "scroll_lenis_anchors": true,
+        "scroll_lenis_stop_inertia_on_navigate": true,
+        "scroll_wheel_gain": 1.05,
+        "scroll_line_height_px": 40,
+        "scroll_page_delta_ratio": 0.9,
+        "scroll_max_wheel_delta_px": 420,
+        "scroll_max_target_lead_px": 1800,
+        "scroll_follow_tau_ms": 300,
+        "scroll_stop_epsilon_px": 0.25,
+        "scroll_max_frame_delta_ms": 48
+      }
+    },
     "main": {
       "type": "main-page",
       "blocks": {
@@ -127,6 +150,8 @@
             "video_autoplay": false,
             "scroll_video_asset": "giclee-philosophy-frames",
             "scroll_video_engine": "video",
+            "scroll_video_container": "mp4",
+            "scroll_video_source": "",
             "scroll_video_quality": "720p",
             "scroll_intro_title": "FILOZOFIA|MARKI",
             "scroll_intro_subtitle": "<p>Giclée Art opiera się na idei, że dzieło sztuki nie kończy się na pliku cyfrowym.</p>",
@@ -154,8 +179,8 @@
             "scroll_motion_preload_radius": 18,
             "scroll_motion_cache_frames": 0,
             "scroll_preserve_alpha": true,
-            "scroll_background_mode": "auto",
-            "scroll_background_value": "#000000",
+            "scroll_background_mode": "asset",
+            "scroll_background_value": "",
             "scroll_alpha_diagnostics": false,
             "scroll_force_transparent": false,
             "scroll_video_duration": 4,
@@ -536,10 +561,14 @@
             "video_autoplay": false,
             "scroll_video_asset": "giclee-philosophy-wrota",
             "scroll_video_engine": "video",
+            "scroll_video_container": "mp4",
+            "scroll_video_source": "",
             "scroll_video_quality": "1080p",
             "scroll_intro_title": "",
             "scroll_intro_subtitle": "",
             "scroll_outro_text": "",
+            "tresc3d_text_1": "<p>Pierwszym są obrazy malarskie — często stare, pożółkłe, zapomniane lub wymagające ponownego opracowania w formie reprodukcji.</p>",
+            "tresc3d_text_2": "<p>W tym procesie traktuję je jak materię kulturową, którą można przywrócić do życia poprzez korekcję tonalną i kolorystyczną, precyzyjny druk Fine Art i świadomą oprawę</p>",
             "scroll_motion_preset": "custom",
             "scroll_motion_speed": 1.0,
             "scroll_motion_easing": "linear",
@@ -600,6 +629,7 @@
     }
   },
   "order": [
+    "giclee_filozofia_page_config",
     "main",
     "divider_AidLhU",
     "divider_wcBAHm",

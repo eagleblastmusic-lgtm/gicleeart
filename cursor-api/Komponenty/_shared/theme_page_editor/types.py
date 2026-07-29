@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from collections.abc import Callable
 from typing import Any, Literal
 
 FieldKind = Literal[
@@ -24,6 +25,20 @@ FieldKind = Literal[
 ]
 
 PathKey = tuple[str, ...]
+ChoiceProvider = Callable[
+    [dict[str, Any]],
+    tuple[tuple[str, str], ...],
+]
+
+
+@dataclass(frozen=True)
+class FieldGroupVariantLibrary:
+    group_id: str
+    label: str
+    storage_filename: str
+    controlled_field_ids: tuple[str, ...]
+    preset_field_id: str
+    custom_preset_value: str = "custom"
 
 
 @dataclass(frozen=True)
@@ -36,10 +51,19 @@ class TemplateField:
     hint: str = ""
     block_paths: tuple[PathKey, ...] = field(default_factory=tuple)
     choices: tuple[tuple[str, str], ...] = field(default_factory=tuple)
+    choice_provider: ChoiceProvider | None = None
+    choice_dependencies: tuple[str, ...] = field(default_factory=tuple)
+    visible_when: tuple[tuple[str, tuple[str, ...]], ...] = field(
+        default_factory=tuple
+    )
     min_value: float | None = None
     max_value: float | None = None
     step: float | None = None
     unit: str | None = None
+    # Opcjonalna grupa pól renderowana jako zwijany akordeon.
+    group_id: str | None = None
+    group_label: str = ""
+    group_collapsed: bool = False
 
 
 @dataclass(frozen=True)
@@ -62,6 +86,9 @@ class TemplateZone:
     ] = field(default_factory=tuple)
     custom_preset_value: str = "custom"
     recommended_preset_value: str | None = None
+    field_group_variant_libraries: tuple[
+        FieldGroupVariantLibrary, ...
+    ] = field(default_factory=tuple)
 
 
 def _s(section: str, *parts: str) -> PathKey:
@@ -98,6 +125,8 @@ def set_zone_enabled(template: dict[str, Any], zone: TemplateZone, enabled: bool
 
 __all__ = [
     "FieldKind",
+    "ChoiceProvider",
+    "FieldGroupVariantLibrary",
     "PathKey",
     "TemplateField",
     "TemplateZone",

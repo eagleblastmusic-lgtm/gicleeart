@@ -481,6 +481,24 @@ def component_deploy_relpaths(config: PageEditorConfig) -> tuple[str, ...]:
         for path in sorted(root.glob(pattern)):
             if path.is_file():
                 paths.append(path.relative_to(root).as_posix())
+
+    if config.component_id == "filozofiamarki":
+        from Komponenty.filozofiamarki.video_sequence import (
+            active_scroll_video_deploy_relpaths,
+            active_scroll_video_frame_globs,
+            all_scroll_video_runtime_relpaths,
+            sync_scroll_video_shopifyignore,
+        )
+
+        sync_scroll_video_shopifyignore(root)
+        runtime = set(all_scroll_video_runtime_relpaths())
+        paths = [path for path in paths if path not in runtime]
+        paths.extend(active_scroll_video_deploy_relpaths(root))
+        for pattern in active_scroll_video_frame_globs(root):
+            for path in sorted(root.glob(pattern)):
+                if path.is_file():
+                    paths.append(path.relative_to(root).as_posix())
+
     return tuple(dict.fromkeys(paths))
 
 

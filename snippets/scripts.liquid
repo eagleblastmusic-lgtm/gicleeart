@@ -51,8 +51,22 @@
   {{ 'giclee-page-section-effects.css' | asset_url | stylesheet_tag }}
   <script src="{{ 'giclee-page-section-effects-boot.js' | asset_url }}" defer></script>
 {% elsif request.page_type == 'page' and template.suffix == 'filozofia-marki' %}
+  {{ 'giclee-home-prehero-chrome.css' | asset_url | stylesheet_tag }}
+  {{ 'giclee-fm-wrota-parallax.css' | asset_url | stylesheet_tag }}
+  <script type="application/json" id="giclee-fm-wrota-parallax-assets">
+    {
+      "bottom": {{ 'giclee-fm-parallax-bottom.webp' | asset_url | json }},
+      "middle": {{ 'giclee-fm-parallax-middle.webp' | asset_url | json }},
+      "middleWebm": {{ 'giclee-fm-parallax-middle.webm' | asset_url | json }},
+      "config": {{ 'giclee-fm-parallax-config.json' | asset_url | json }}
+    }
+  </script>
+  <script src="{{ 'giclee-fm-wrota-parallax.js' | asset_url }}" defer></script>
   <script src="{{ 'giclee-filozofia-quote-pin.js' | asset_url }}" defer></script>
   <script src="{{ 'giclee-filozofia-wrota-portal.js' | asset_url }}" defer></script>
+  {{ 'lenis.css' | asset_url | stylesheet_tag }}
+  <script src="{{ 'lenis.min.js' | asset_url }}" defer></script>
+  <script src="{{ 'giclee-page-smooth-scroll.js' | asset_url }}" defer></script>
 {% elsif request.page_type == 'blog' %}
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js" defer></script>

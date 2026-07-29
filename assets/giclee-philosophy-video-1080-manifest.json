@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "mode": "video",
   "quality": "1080p",
   "frameCount": 210,
@@ -26,5 +26,10 @@
   "video": "giclee-philosophy-scroll-1080.mp4",
   "poster": "giclee-philosophy-video-1080-poster.webp",
   "source": "giclee-philosophy-scroll-source.webm",
-  "generatedAt": "2026-07-27T20:52:26.375793+00:00"
+  "generatedAt": "2026-07-27T20:52:26.375793+00:00",
+  "family": "philosophy",
+  "container": "mp4",
+  "mimeType": "video/mp4",
+  "activatedFrom": "giclee-philosophy-scroll-1080.mp4",
+  "activatedAt": "2026-07-29T00:48:07.806905+00:00"
 }
