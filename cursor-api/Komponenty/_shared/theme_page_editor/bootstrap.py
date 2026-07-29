@@ -4,6 +4,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from Komponenty._shared.theme_page_editor.safe_writes import (
+    install_atomic_theme_page_writes,
+)
+
+install_atomic_theme_page_writes()
+
 from Komponenty._shared.theme_page_editor import gui_shell
 from Komponenty._shared.theme_page_editor.config import PageEditorConfig
 from Komponenty._shared.theme_page_editor.types import TemplateZone
@@ -12,6 +18,7 @@ from Komponenty._shared.theme_page_editor.types import TemplateZone
 
 def component_dir_from_module(module_file: str) -> Path:
     return Path(module_file).resolve().parent
+
 
 
 def build_editor_config(
@@ -47,6 +54,7 @@ def build_editor_config(
         extra_deploy_relpaths=extra_deploy_relpaths,
         extra_deploy_globs=extra_deploy_globs,
     )
+
 
 
 def build_page_ui(host, config: PageEditorConfig, *, inline: bool = False) -> None:
