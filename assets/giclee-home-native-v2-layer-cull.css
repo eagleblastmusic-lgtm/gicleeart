@@ -1,6 +1,8 @@
-/* Native v2: fully covered sticky layers keep geometry but leave paint/compositing. */
+/* Native v2: fully covered layers keep normal-flow geometry but leave sticky paint/compositing. */
 html.giclee-native-v2.giclee-native-v2-layer-cull
   .shopify-section.giclee-native-v2-covered[data-giclee-home-stack]:not(.giclee-home-stack-divider) {
+  position: relative !important;
+  top: auto !important;
   visibility: hidden !important;
   pointer-events: none !important;
 }
@@ -117,6 +119,8 @@ html.giclee-native-v2.giclee-native-v2-scrolling
 @media (prefers-reduced-motion: reduce) {
   html.giclee-native-v2
     .shopify-section.giclee-native-v2-covered[data-giclee-home-stack]:not(.giclee-home-stack-divider) {
+    position: sticky !important;
+    top: 0 !important;
     visibility: visible !important;
     pointer-events: auto;
   }

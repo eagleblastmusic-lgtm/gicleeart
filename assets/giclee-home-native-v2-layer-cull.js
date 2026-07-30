@@ -1,4 +1,4 @@
-/* Native v2 stack layer culling: keep only transition-relevant sticky layers paintable. */
+/* Native v2 stack layer culling: keep only transition-relevant sticky layers active. */
 (function () {
   'use strict';
 
@@ -279,7 +279,9 @@
         pausedVideoCount: pauseCount,
         resumedVideoCount: resumeCount,
         geometryPreserved: true,
-        paintOnlyCulling: true,
+        normalFlowGeometryPreserved: true,
+        coveredStickyReleased: true,
+        paintOnlyCulling: false,
       };
     };
 

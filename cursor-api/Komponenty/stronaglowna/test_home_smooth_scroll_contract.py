@@ -142,7 +142,7 @@ def test_native_v2_smooths_real_mouse_wheel_and_uses_cached_active_pair_stack() 
     )
 
 
-def test_native_v2_culls_only_fully_covered_stack_layers_without_layout_changes() -> None:
+def test_native_v2_culls_only_fully_covered_stack_layers_without_flow_collapse() -> None:
     source = NATIVE_V2_CULL_JS_PATH.read_text(encoding="utf-8")
     styles = NATIVE_V2_CULL_CSS_PATH.read_text(encoding="utf-8")
     snippet = CRITICAL_SNIPPET.read_text(encoding="utf-8")
@@ -156,7 +156,9 @@ def test_native_v2_culls_only_fully_covered_stack_layers_without_layout_changes(
     assert "giclee-native-v2-covered" in source
     assert "GICLEE_NATIVE_V2_LAYER_CULL_STATUS" in source
     assert "geometryPreserved: true" in source
-    assert "paintOnlyCulling: true" in source
+    assert "normalFlowGeometryPreserved: true" in source
+    assert "coveredStickyReleased: true" in source
+    assert "paintOnlyCulling: false" in source
     assert "video.pause()" in source
     assert "video.play()" in source
     assert "window.addEventListener('scroll', scheduleApply" in source
@@ -166,10 +168,12 @@ def test_native_v2_culls_only_fully_covered_stack_layers_without_layout_changes(
         styles,
         ".shopify-section.giclee-native-v2-covered[data-giclee-home-stack]",
     )
+    assert "position: relative !important" in cull_rule
+    assert "top: auto !important" in cull_rule
     assert "visibility: hidden !important" in cull_rule
     assert "pointer-events: none !important" in cull_rule
     assert "display:" not in cull_rule
-    assert "position:" not in cull_rule
+    assert "position: sticky" not in cull_rule
     assert "transform:" not in cull_rule
 
     assert "giclee-home-native-v2-layer-cull.css" in snippet
