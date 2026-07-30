@@ -9,6 +9,7 @@ import re
 import threading
 import tkinter as tk
 import webbrowser
+from dataclasses import replace
 from pathlib import Path
 from tkinter import filedialog, messagebox, scrolledtext, simpledialog, ttk
 from typing import Any
@@ -24,6 +25,7 @@ from .image_object_y import build_object_y_controls, object_y_field_id
 
 from .config import PageEditorConfig
 from .features import (
+    ChangeItem,
     DEPLOY_TARGETS,
     compute_changes,
     list_backups,
@@ -37,6 +39,41 @@ from .field_group_variants import (
     rename_library_variant,
     update_library_variant,
 )
+from .text_layers import (
+    load_document as load_text_layers_document,
+    save_document as save_text_layers_document,
+    shared_variant_path as text_layers_variant_path,
+    validate_document as validate_text_layers_document,
+)
+from .text_layers_dialog import (
+    add_text_layer_for_section,
+    build_text_layers_panel,
+)
+from .text_layers_export import write_shared_text_layers_asset
+from .film_scroll import (
+    FILM_SCROLL_ZONE_PREFIX,
+    activate_film_scroll_assets,
+    add_film_scroll_section,
+    config_with_film_scroll_zones,
+    template_has_film_scroll,
+    template_supports_film_scroll,
+)
+from .film_scroll_ui import build_film_scroll_source_controls
+from .page_scroll import (
+    PAGE_SCROLL_ZONE_PREFIX,
+    add_page_scroll_section,
+    config_with_page_scroll_zones,
+    page_scroll_section_key,
+    template_supports_page_scroll,
+)
+from .viewport_screen import (
+    VIEWPORT_SCREEN_ZONE_PREFIX,
+    add_viewport_screen_section,
+    config_with_viewport_screen_zones,
+    is_viewport_screen_section,
+    remove_viewport_screen_section,
+    template_supports_viewport_screen,
+)
 from .page_effects_dialog import open_image_effects_dialog, open_text_effects_dialog
 from .page_section_effects_settings import (
     zone_has_image_effects,
@@ -48,6 +85,7 @@ from .service_base import (
     apply_all_zone_values,
     apply_zone_values,
     backup_before_save,
+    backup_variant_bundle,
     component_deploy_relpaths,
     deploy_theme,
     fetch_thumbnail_bytes,
@@ -147,7 +185,13 @@ def _bind_scoped_mousewheel(
         cleanup()
 
 
-def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool = False) -> None:
+def build_page_editor(
+    host: tk.Misc,
+    config: PageEditorConfig,
+    *,
+    inline: bool = False,
+    initial_section_key: str | None = None,
+) -> None:
     state: dict[str, Any] = {
         "template": {},
         "zone_values": {},
@@ -158,9 +202,39 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
         "variant_id": "",
         "switching_variant": False,
         "baseline_template": {},
+        "text_layers": {"schemaVersion": 1, "sections": {}},
+        "baseline_text_layers": {"schemaVersion": 1, "sections": {}},
         "open_field_groups": {},
         "selected_field_group_variants": {},
+        "active_config": config,
+        "initial_section_key": initial_section_key,
     }
+
+    def _active_config() -> PageEditorConfig:
+        value = state.get("active_config")
+        return value if isinstance(value, PageEditorConfig) else config
+
+    def _zones() -> tuple[TemplateZone, ...]:
+        return _active_config().zones
+
+    def _refresh_active_config(template: dict[str, Any]) -> PageEditorConfig:
+        value = config_with_film_scroll_zones(config, template)
+        value = config_with_page_scroll_zones(value, template)
+        value = config_with_viewport_screen_zones(value, template)
+        custom_labels = varmod.section_labels(config, state["variant_id"])
+        if custom_labels:
+            value = replace(
+                value,
+                zones=tuple(
+                    replace(
+                        zone,
+                        label=custom_labels.get(zone.zone_id, zone.label),
+                    )
+                    for zone in value.zones
+                ),
+            )
+        state["active_config"] = value
+        return value
 
     varmod.ensure_variants_initialized(config)
     state["variant_id"] = varmod.active_variant_id(config)
@@ -198,6 +272,13 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
 
     zone_list = tk.Listbox(left, height=15, exportselection=False, activestyle="dotbox")
     zone_list.pack(fill="both", expand=True)
+    add_text_button = ttk.Button(
+        left,
+        text="Dodaj tekst…",
+        command=lambda: _add_text_to_selected_section(),
+        state="disabled",
+    )
+    add_text_button.pack(fill="x", pady=(8, 0))
     editor_host = ttk.Frame(right)
     editor_host.pack(fill="both", expand=True)
     editor_scroll = ttk.Scrollbar(editor_host, orient="vertical")
@@ -238,16 +319,31 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             tpl = varmod.load_variant_into_editor(config, variant_id)
             state["template"] = tpl
             state["baseline_template"] = copy.deepcopy(tpl)
-            state["zone_values"] = {
-                z.zone_id: load_zone_values(tpl, z) for z in config.zones
-            }
             state["variant_id"] = variant_id
+            state["text_layers"] = load_text_layers_document(
+                text_layers_variant_path(config, variant_id)
+            )
+            state["baseline_text_layers"] = copy.deepcopy(state["text_layers"])
+            _refresh_active_config(tpl)
+            state["zone_values"] = {
+                z.zone_id: load_zone_values(tpl, z) for z in _zones()
+            }
             state["dirty"] = False
             _refresh_zone_list()
-            if config.zones:
+            if _zones():
+                requested_section_key = state.pop("initial_section_key", None)
+                selected_index = next(
+                    (
+                        index
+                        for index, zone in enumerate(_zones())
+                        if zone.section_key == requested_section_key
+                    ),
+                    0,
+                )
                 zone_list.selection_clear(0, "end")
-                zone_list.selection_set(0)
-                state["selected_zone_id"] = config.zones[0].zone_id
+                zone_list.selection_set(selected_index)
+                zone_list.see(selected_index)
+                state["selected_zone_id"] = _zones()[selected_index].zone_id
                 _render_zone_editor()
         finally:
             state["switching_variant"] = False
@@ -255,14 +351,14 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
     def _refresh_zone_list() -> None:
         zone_list.delete(0, "end")
         tpl = state.get("template") or {}
-        for zone in config.zones:
+        for zone in _zones():
             enabled = load_zone_values(tpl, zone).get("_enabled", True)
             mark = "" if enabled else " [wył.]"
             zone_list.insert("end", f"{zone.label}{mark}")
 
     def _collect_pending_template() -> dict[str, Any]:
         tpl = copy.deepcopy(state.get("template") or {})
-        for zone in config.zones:
+        for zone in _zones():
             vals = state["zone_values"].get(zone.zone_id)
             if vals is not None:
                 apply_zone_values(tpl, zone, vals)
@@ -270,10 +366,34 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
 
     def _confirm_save(action_label: str) -> dict[str, Any] | None:
         pending = _collect_pending_template()
-        summary = compute_changes(config, state.get("baseline_template") or {}, pending)
-        issues = validate_page(config, pending)
+        active_config = _active_config()
+        summary = compute_changes(
+            active_config,
+            state.get("baseline_template") or {},
+            pending,
+        )
+        if state.get("text_layers") != state.get("baseline_text_layers"):
+            summary.items.append(
+                ChangeItem(
+                    "text",
+                    "Warstwy tekstowe",
+                    "Dodane lub zmienione teksty",
+                    "text-layers.json",
+                )
+            )
+        issues = validate_page(active_config, pending)
+        text_issues = validate_text_layers_document(
+            state.get("text_layers") or {},
+            known_section_keys=(
+                zone.section_key
+                for zone in _zones()
+                if not zone.settings_only
+            ),
+        )
         errors = [i for i in issues if i.level == "error"]
         warns = [i for i in issues if i.level == "warn"]
+        text_errors = [i for i in text_issues if i["level"] == "error"]
+        text_warns = [i for i in text_issues if i["level"] == "warn"]
 
         win = tk.Toplevel(host)
         win.title(f"{action_label} — podsumowanie")
@@ -291,19 +411,26 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
                 detail.insert("end", line + "\n")
         else:
             detail.insert("end", "Brak zmian.\n")
-        if errors or warns:
+        if errors or warns or text_errors or text_warns:
             detail.insert("end", "\nWalidacja:\n")
             for issue in errors + warns:
                 mark = "BŁĄD" if issue.level == "error" else "UWAGA"
                 detail.insert("end", f"• [{mark}] {issue.zone_label}: {issue.message}\n")
+            for issue in text_errors + text_warns:
+                mark = "BŁĄD" if issue["level"] == "error" else "UWAGA"
+                detail.insert(
+                    "end",
+                    f"• [{mark}] {issue.get('section', '')}: {issue['message']}\n",
+                )
         detail.configure(state="disabled")
         choice: dict[str, bool] = {"ok": False}
 
         def _approve() -> None:
-            if errors:
+            if errors or text_errors:
                 messagebox.showerror(config.app_title, "Napraw błędy przed zapisem.", parent=win)
                 return
-            if warns and not messagebox.askyesno(config.app_title, f"Jest {len(warns)} ostrzeżeń. Kontynuować?", parent=win):
+            warning_count = len(warns) + len(text_warns)
+            if warning_count and not messagebox.askyesno(config.app_title, f"Jest {warning_count} ostrzeżeń. Kontynuować?", parent=win):
                 return
             choice["ok"] = True
             win.destroy()
@@ -321,26 +448,44 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             return
         try:
             backup_before_save(config)
+            backup_variant_bundle(config, state["variant_id"])
         except Exception as exc:
             messagebox.showerror(config.app_title, f"Kopia zapasowa nie powiodła się:\n{exc}", parent=host)
             return
         try:
             current_template = load_template(config)
-            merged_template = merge_managed_zone_values(config, current_template, pending)
+            active_config = _active_config()
+            merged_template = merge_managed_zone_values(
+                active_config,
+                current_template,
+                pending,
+            )
             save_template(config, merged_template)
             varmod.persist_editor_to_variant(config, state["variant_id"], pending)
+            saved_text_layers = save_text_layers_document(
+                text_layers_variant_path(config, state["variant_id"]),
+                state.get("text_layers") or {},
+            )
+            write_shared_text_layers_asset(config, state["variant_id"])
             if config.after_template_save:
                 config.after_template_save()
+            elif template_has_film_scroll(pending):
+                activate_film_scroll_assets()
         except Exception as exc:
             messagebox.showerror(config.app_title, str(exc), parent=host)
             return
         if config.section_effects_asset_enabled:
             try:
-                write_page_section_effects_asset(config, state["variant_id"])
+                write_page_section_effects_asset(
+                    _active_config(),
+                    state["variant_id"],
+                )
             except OSError:
                 pass
         state["template"] = pending
         state["baseline_template"] = copy.deepcopy(pending)
+        state["text_layers"] = saved_text_layers
+        state["baseline_text_layers"] = copy.deepcopy(saved_text_layers)
         state["dirty"] = False
         _refresh_zone_list()
         vlabel = varmod.variant_label(config, state["variant_id"])
@@ -348,7 +493,7 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
         show_toast(host, f"Zapisano {vlabel}.")
 
     def _show_history() -> None:
-        rows = list_backups(config)
+        rows = list_backups(config, state["variant_id"])
         win = tk.Toplevel(host)
         win.title("Historia wersji")
         position_toplevel_screen_center(win, 560, 380)
@@ -370,11 +515,18 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             if not messagebox.askyesno(config.app_title, f"Przywrócić kopię {path.name}?", parent=win):
                 return
             try:
-                restore_backup(config, path)
+                restore_backup(
+                    config,
+                    path,
+                    variant_id=state["variant_id"],
+                )
                 tpl = varmod.load_variant_into_editor(config, state["variant_id"])
                 state["template"] = tpl
                 state["baseline_template"] = copy.deepcopy(tpl)
-                state["zone_values"] = {z.zone_id: load_zone_values(tpl, z) for z in config.zones}
+                _refresh_active_config(tpl)
+                state["zone_values"] = {
+                    z.zone_id: load_zone_values(tpl, z) for z in _zones()
+                }
                 _refresh_zone_list()
                 _render_zone_editor()
                 status_var.set(f"Przywrócono z kopii: {path.name}")
@@ -395,14 +547,29 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             return
         try:
             backup_before_save(config)
+            backup_variant_bundle(config, state["variant_id"])
             current_template = load_template(config)
-            merged_template = merge_managed_zone_values(config, current_template, pending)
+            active_config = _active_config()
+            merged_template = merge_managed_zone_values(
+                active_config,
+                current_template,
+                pending,
+            )
             save_template(config, merged_template)
             varmod.persist_editor_to_variant(config, state["variant_id"], pending)
+            saved_text_layers = save_text_layers_document(
+                text_layers_variant_path(config, state["variant_id"]),
+                state.get("text_layers") or {},
+            )
+            write_shared_text_layers_asset(config, state["variant_id"])
             if config.after_template_save:
                 config.after_template_save()
+            elif template_has_film_scroll(pending):
+                activate_film_scroll_assets()
             state["template"] = pending
             state["baseline_template"] = copy.deepcopy(pending)
+            state["text_layers"] = saved_text_layers
+            state["baseline_text_layers"] = copy.deepcopy(saved_text_layers)
         except Exception as exc:
             messagebox.showerror(config.app_title, str(exc), parent=host)
             return
@@ -433,11 +600,14 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             def worker() -> None:
                 try:
                     if config.section_effects_asset_enabled:
-                        write_page_section_effects_asset(config, state["variant_id"])
+                        write_page_section_effects_asset(
+                            _active_config(),
+                            state["variant_id"],
+                        )
                     code = deploy_theme(
                         environment=str(meta.get("environment", key)),
                         allow_live=bool(meta.get("allow_live")),
-                        only_paths=component_deploy_relpaths(config),
+                        only_paths=component_deploy_relpaths(_active_config()),
                         on_line=lambda line: host.after(0, lambda l=line: log_box.insert("end", l + "\n")),
                     )
                     host.after(0, lambda: status_var.set(f"Deploy zakończony (kod {code})."))
@@ -549,7 +719,7 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
 
     def _set_zone_value(zone_id: str, field_id: str, value: Any) -> None:
         values = state["zone_values"].setdefault(zone_id, {})
-        zone = zone_by_id(config.zones, zone_id)
+        zone = zone_by_id(_zones(), zone_id)
         previous = values.get(field_id)
         is_preset_field = bool(zone and field_id == zone.preset_field_id)
         if _preset_values_equal(previous, value) and not is_preset_field:
@@ -704,7 +874,11 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
                 initial = lo
             initial = max(lo, min(hi, initial))
             # Suwak gdy pole ma jawny zakres (np. 0–100%); inaczej Spinbox.
-            if fld.min_value is not None and fld.max_value is not None:
+            if (
+                fld.min_value is not None
+                and fld.max_value is not None
+                and not fld.free_entry
+            ):
                 row_fr = ttk.Frame(editor_inner)
                 row_fr.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(0, 10))
                 editor_inner.columnconfigure(0, weight=1)
@@ -744,16 +918,28 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
                 _set_zone_value(zid, fld.field_id, initial)
             else:
                 var = tk.StringVar(value=str(initial))
+                row_fr = ttk.Frame(editor_inner)
+                row_fr.grid(
+                    row=row,
+                    column=0,
+                    columnspan=2,
+                    sticky="w",
+                    pady=(0, 10),
+                )
                 ttk.Spinbox(
-                    editor_inner,
+                    row_fr,
                     textvariable=var,
                     from_=lo,
                     to=hi,
                     increment=fld.step if fld.step is not None else 1,
                     width=10,
-                ).grid(
-                    row=row, column=0, columnspan=2, sticky="w", pady=(0, 10)
-                )
+                ).pack(side="left")
+                if fld.unit:
+                    ttk.Label(
+                        row_fr,
+                        text=fld.unit,
+                        foreground="#666",
+                    ).pack(side="left", padx=(6, 0))
                 var.trace_add("write", lambda *_a, v=var, fid=fld.field_id: _set_zone_value(zid, fid, v.get()))
             return row + 1
         elif fld.kind == "float":
@@ -1260,10 +1446,14 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
         state["thumb_refs"].clear()
         state["rendered_field_groups"] = set()
         zid = state.get("selected_zone_id")
-        zone = zone_by_id(config.zones, zid) if zid else None
+        zone = zone_by_id(_zones(), zid) if zid else None
         if not zone:
+            add_text_button.configure(state="disabled")
             ttk.Label(editor_inner, text="Wybierz sekcję z listy po lewej.").pack(anchor="w")
             return
+        add_text_button.configure(
+            state="disabled" if zone.settings_only else "normal"
+        )
         enabled_var = tk.BooleanVar(value=bool(state["zone_values"].get(zid, {}).get("_enabled", True)))
         ttk.Checkbutton(
             editor_inner,
@@ -1275,6 +1465,30 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
             row=1, column=0, columnspan=2, sticky="w", pady=(0, 8)
         )
         row = 2
+
+        def _set_text_layers_document(document: dict[str, Any]) -> None:
+            state["text_layers"] = document
+            _mark_dirty()
+            status_var.set(
+                f"Zmieniono teksty w sekcji «{zone.label}». Zapisz wariant."
+            )
+
+        text_panel = build_text_layers_panel(
+            editor_inner,
+            document_getter=lambda: state.get("text_layers") or {},
+            document_setter=_set_text_layers_document,
+            section_key=zone.section_key,
+            app_title=config.app_title,
+            can_render=not zone.settings_only,
+        )
+        text_panel.grid(
+            row=row,
+            column=0,
+            columnspan=2,
+            sticky="ew",
+            pady=(0, 10),
+        )
+        row += 1
         zone_builder = (config.zone_content_builders or {}).get(zone.zone_id)
         if callable(zone_builder):
             try:
@@ -1300,6 +1514,20 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
                     wraplength=520,
                 ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(0, 8))
                 row += 1
+        if zone.zone_id.startswith(FILM_SCROLL_ZONE_PREFIX):
+            row = build_film_scroll_source_controls(
+                editor_inner,
+                row=row,
+                host=host,
+                zone_id=zone.zone_id,
+                app_title=config.app_title,
+                get_zone_value=lambda field_id, _zid=zid: _zone_value(
+                    _zid,
+                    field_id,
+                ),
+                set_zone_value=_set_zone_value,
+                refresh_editor=_render_zone_editor,
+            )
         if zone.preset_field_id and zone.recommended_preset_value:
             ttk.Button(
                 editor_inner,
@@ -1518,11 +1746,437 @@ def build_page_editor(host: tk.Misc, config: PageEditorConfig, *, inline: bool =
         if not sel:
             return
         idx = int(sel[0])
-        if idx < len(config.zones):
-            state["selected_zone_id"] = config.zones[idx].zone_id
+        if idx < len(_zones()):
+            selected_zone = _zones()[idx]
+            state["selected_zone_id"] = selected_zone.zone_id
+            add_text_button.configure(
+                state="disabled" if selected_zone.settings_only else "normal"
+            )
             _render_zone_editor()
 
     zone_list.bind("<<ListboxSelect>>", _on_zone_select)
+
+    def _rename_zone_from_double_click(event: tk.Event) -> str:
+        try:
+            idx = int(zone_list.nearest(event.y))
+            bbox = zone_list.bbox(idx)
+            if not bbox or not (bbox[1] <= event.y <= bbox[1] + bbox[3]):
+                return "break"
+            zone = _zones()[idx]
+        except (IndexError, tk.TclError, TypeError, ValueError):
+            return "break"
+
+        zone_list.selection_clear(0, "end")
+        zone_list.selection_set(idx)
+        state["selected_zone_id"] = zone.zone_id
+        label = simpledialog.askstring(
+            config.app_title,
+            "Nowa nazwa sekcji:",
+            initialvalue=zone.label,
+            parent=host,
+        )
+        if label is None:
+            return "break"
+        try:
+            varmod.rename_section_label(
+                config,
+                state["variant_id"],
+                zone.zone_id,
+                label,
+            )
+        except ValueError as exc:
+            messagebox.showerror(config.app_title, str(exc), parent=host)
+            return "break"
+
+        _refresh_active_config(state.get("template") or {})
+        _refresh_zone_list()
+        renamed_index = next(
+            (
+                index
+                for index, item in enumerate(_zones())
+                if item.zone_id == zone.zone_id
+            ),
+            idx,
+        )
+        zone_list.selection_set(renamed_index)
+        zone_list.see(renamed_index)
+        state["selected_zone_id"] = zone.zone_id
+        _render_zone_editor()
+        status_var.set(
+            f"Zmieniono nazwę sekcji na «{label.strip()}» w bieżącej wersji."
+        )
+        return "break"
+
+    zone_list.bind("<Double-Button-1>", _rename_zone_from_double_click, add="+")
+
+    def _context_section_key(event: tk.Event | None) -> str | None:
+        if event is not None and getattr(event, "widget", None) is zone_list:
+            try:
+                idx = int(zone_list.nearest(event.y))
+                bbox = zone_list.bbox(idx)
+                if bbox and bbox[1] <= event.y <= bbox[1] + bbox[3]:
+                    zone_list.selection_clear(0, "end")
+                    zone_list.selection_set(idx)
+                    state["selected_zone_id"] = _zones()[idx].zone_id
+            except (IndexError, tk.TclError, TypeError, ValueError):
+                pass
+        selected = zone_by_id(
+            _zones(),
+            str(state.get("selected_zone_id") or ""),
+        )
+        return selected.section_key if selected else None
+
+    def _add_text_to_selected_section() -> None:
+        selected = zone_by_id(
+            _zones(),
+            str(state.get("selected_zone_id") or ""),
+        )
+        if selected is None:
+            messagebox.showinfo(
+                config.app_title,
+                "Najpierw wybierz sekcję z listy.",
+                parent=host,
+            )
+            return
+        if selected.settings_only:
+            messagebox.showwarning(
+                config.app_title,
+                "Ta pozycja jest ustawieniem globalnym i nie ma elementu na stronie.",
+                parent=host,
+            )
+            return
+        next_document = add_text_layer_for_section(
+            host,
+            document=state.get("text_layers") or {},
+            section_key=selected.section_key,
+            app_title=config.app_title,
+        )
+        if next_document is None:
+            return
+        state["text_layers"] = next_document
+        _mark_dirty()
+        _render_zone_editor()
+        status_var.set(
+            f"Dodano tekst do sekcji «{selected.label}». Zapisz wariant."
+        )
+
+    def _add_scroll_film(after_section_key: str | None) -> None:
+        template = state.get("template")
+        if not isinstance(template, dict) or not template_supports_film_scroll(
+            template
+        ):
+            messagebox.showwarning(
+                config.app_title,
+                "Ten dokument nie jest szablonem Shopify z listą sekcji.",
+                parent=host,
+            )
+            return
+        number = 1 + sum(
+            1
+            for zone in _zones()
+            if zone.zone_id.startswith(FILM_SCROLL_ZONE_PREFIX)
+        )
+        label = simpledialog.askstring(
+            config.app_title,
+            "Nazwa nowej sekcji Scroll Film:",
+            initialvalue=f"Film-scroll {number}",
+            parent=host,
+        )
+        if not label or not label.strip():
+            return
+        pending = copy.deepcopy(template)
+        try:
+            section_key = add_film_scroll_section(
+                pending,
+                label=label.strip(),
+                after_section_key=after_section_key,
+            )
+        except Exception as exc:
+            messagebox.showerror(config.app_title, str(exc), parent=host)
+            return
+        state["template"] = pending
+        _refresh_active_config(pending)
+        for zone in _zones():
+            state["zone_values"].setdefault(
+                zone.zone_id,
+                load_zone_values(pending, zone),
+            )
+        added_zone = next(
+            (
+                zone
+                for zone in _zones()
+                if zone.section_key == section_key
+                and zone.zone_id.startswith(FILM_SCROLL_ZONE_PREFIX)
+            ),
+            None,
+        )
+        _refresh_zone_list()
+        if added_zone is not None:
+            idx = _zones().index(added_zone)
+            zone_list.selection_clear(0, "end")
+            zone_list.selection_set(idx)
+            zone_list.see(idx)
+            state["selected_zone_id"] = added_zone.zone_id
+        _mark_dirty()
+        _render_zone_editor()
+        status_var.set(
+            f"Dodano «Scroll Film — {label.strip()}». Zapisz wariant."
+        )
+
+    def _add_page_scroll(after_section_key: str | None) -> None:
+        template = state.get("template")
+        if not isinstance(template, dict) or not template_supports_page_scroll(
+            template
+        ):
+            messagebox.showwarning(
+                config.app_title,
+                "Ten dokument nie jest szablonem Shopify z listą sekcji.",
+                parent=host,
+            )
+            return
+        existing_key = page_scroll_section_key(template)
+        pending = copy.deepcopy(template)
+        try:
+            section_key = add_page_scroll_section(
+                pending,
+                after_section_key=after_section_key,
+            )
+        except Exception as exc:
+            messagebox.showerror(config.app_title, str(exc), parent=host)
+            return
+        state["template"] = pending
+        _refresh_active_config(pending)
+        for zone in _zones():
+            state["zone_values"].setdefault(
+                zone.zone_id,
+                load_zone_values(pending, zone),
+            )
+        page_zone = next(
+            (
+                zone
+                for zone in _zones()
+                if zone.section_key == section_key
+                and zone.zone_id.startswith(PAGE_SCROLL_ZONE_PREFIX)
+            ),
+            None,
+        )
+        if page_zone is None:
+            page_zone = next(
+                (
+                    zone
+                    for zone in _zones()
+                    if zone.section_key == section_key
+                    and zone.label == "Scroll strony"
+                ),
+                None,
+            )
+        _refresh_zone_list()
+        if page_zone is not None:
+            idx = _zones().index(page_zone)
+            zone_list.selection_clear(0, "end")
+            zone_list.selection_set(idx)
+            zone_list.see(idx)
+            state["selected_zone_id"] = page_zone.zone_id
+        if existing_key is None:
+            _mark_dirty()
+            status_var.set("Dodano «Scroll strony». Zapisz wariant.")
+        else:
+            status_var.set(
+                "Ta strona ma już «Scroll strony» — otwarto istniejące ustawienia."
+            )
+        _render_zone_editor()
+
+    def _insert_viewport_screen(after_section_key: str | None) -> None:
+        template = state.get("template")
+        if not isinstance(template, dict) or not template_supports_viewport_screen(
+            template
+        ):
+            messagebox.showwarning(
+                config.app_title,
+                "Ten dokument nie jest szablonem Shopify z listą sekcji.",
+                parent=host,
+            )
+            return
+        height_vh = simpledialog.askinteger(
+            config.app_title,
+            (
+                "Wysokość pustego ekranu w vh:\n"
+                "100 = jeden viewport, 200 = dwa viewporty."
+            ),
+            initialvalue=100,
+            minvalue=1,
+            maxvalue=10000,
+            parent=host,
+        )
+        if height_vh is None:
+            return
+        pending = copy.deepcopy(template)
+        try:
+            section_key = add_viewport_screen_section(
+                pending,
+                height_vh=height_vh,
+                after_section_key=after_section_key,
+            )
+        except (TypeError, ValueError) as exc:
+            messagebox.showerror(config.app_title, str(exc), parent=host)
+            return
+        state["template"] = pending
+        _refresh_active_config(pending)
+        for zone in _zones():
+            state["zone_values"].setdefault(
+                zone.zone_id,
+                load_zone_values(pending, zone),
+            )
+        added_zone = next(
+            (
+                zone
+                for zone in _zones()
+                if zone.section_key == section_key
+                and zone.zone_id.startswith(VIEWPORT_SCREEN_ZONE_PREFIX)
+            ),
+            None,
+        )
+        _refresh_zone_list()
+        if added_zone is not None:
+            idx = _zones().index(added_zone)
+            zone_list.selection_clear(0, "end")
+            zone_list.selection_set(idx)
+            zone_list.see(idx)
+            state["selected_zone_id"] = added_zone.zone_id
+        _mark_dirty()
+        _render_zone_editor()
+        status_var.set(
+            f"Wstawiono pusty ekran {height_vh}vh pod wybraną sekcją. "
+            "Zapisz wariant."
+        )
+
+    def _delete_viewport_screen(section_key: str) -> None:
+        template = state.get("template")
+        sections = template.get("sections") if isinstance(template, dict) else None
+        section = sections.get(section_key) if isinstance(sections, dict) else None
+        if not is_viewport_screen_section(section):
+            messagebox.showwarning(
+                config.app_title,
+                "Wybrana sekcja nie jest ekranem utworzonym przez „Wstaw ekran”.",
+                parent=host,
+            )
+            return
+        selected = zone_by_id(
+            _zones(),
+            str(state.get("selected_zone_id") or ""),
+        )
+        label = (
+            selected.label
+            if selected is not None and selected.section_key == section_key
+            else str(section.get("name") or "Pusty ekran")
+        )
+        layer_sections = (state.get("text_layers") or {}).get("sections")
+        text_layer_count = (
+            len(layer_sections.get(section_key, []))
+            if isinstance(layer_sections, dict)
+            and isinstance(layer_sections.get(section_key), list)
+            else 0
+        )
+        message = f"Usunąć ekran «{label}» z bieżącego wariantu?"
+        if text_layer_count:
+            message += (
+                f"\n\nEkran ma {text_layer_count} warstw tekstowych. "
+                "Nie zostaną skasowane po cichu — pozostaną zachowane jako "
+                "osierocone dane i będą zgłaszane przez walidację."
+            )
+        if not messagebox.askyesno(
+            config.app_title,
+            message,
+            parent=host,
+        ):
+            return
+
+        previous_zones = _zones()
+        old_index = next(
+            (
+                index
+                for index, zone in enumerate(previous_zones)
+                if zone.section_key == section_key
+            ),
+            0,
+        )
+        pending = copy.deepcopy(template)
+        try:
+            remove_viewport_screen_section(pending, section_key)
+        except ValueError as exc:
+            messagebox.showerror(config.app_title, str(exc), parent=host)
+            return
+        state["template"] = pending
+        state["zone_values"].pop(
+            f"{VIEWPORT_SCREEN_ZONE_PREFIX}{section_key}",
+            None,
+        )
+        _refresh_active_config(pending)
+        _refresh_zone_list()
+        zones = _zones()
+        if zones:
+            next_index = min(old_index, len(zones) - 1)
+            next_zone = zones[next_index]
+            zone_list.selection_clear(0, "end")
+            zone_list.selection_set(next_index)
+            zone_list.see(next_index)
+            state["selected_zone_id"] = next_zone.zone_id
+            add_text_button.configure(
+                state="disabled" if next_zone.settings_only else "normal"
+            )
+        else:
+            state["selected_zone_id"] = None
+            add_text_button.configure(state="disabled")
+        _mark_dirty()
+        _render_zone_editor()
+        status_var.set(
+            f"Usunięto ekran «{label}». Zapisz wariant, aby zatwierdzić."
+        )
+
+    def _show_zone_context_menu(event: tk.Event) -> str:
+        after_section_key = _context_section_key(event)
+        template = state.get("template")
+        sections = template.get("sections") if isinstance(template, dict) else None
+        context_section = (
+            sections.get(after_section_key)
+            if isinstance(sections, dict) and after_section_key
+            else None
+        )
+        menu = tk.Menu(zone_list, tearoff=0)
+        menu.add_command(
+            label="Wstaw ekran…",
+            command=lambda key=after_section_key: _insert_viewport_screen(key),
+        )
+        menu.add_separator()
+        menu.add_command(
+            label="Dodaj „Scroll Film”…",
+            command=lambda key=after_section_key: _add_scroll_film(key),
+        )
+        menu.add_command(
+            label="Dodaj „Scroll strony”…",
+            command=lambda key=after_section_key: _add_page_scroll(key),
+        )
+        menu.add_separator()
+        menu.add_command(
+            label="Dodaj tekst…",
+            command=_add_text_to_selected_section,
+        )
+        if after_section_key and is_viewport_screen_section(context_section):
+            menu.add_separator()
+            menu.add_command(
+                label="Usuń ekran…",
+                command=lambda key=after_section_key: _delete_viewport_screen(key),
+            )
+        try:
+            menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            menu.grab_release()
+        return "break"
+
+    zone_list.bind("<Button-3>", _show_zone_context_menu, add="+")
+    zone_list.bind("<Button-2>", _show_zone_context_menu, add="+")
+    left.bind("<Button-3>", _show_zone_context_menu, add="+")
+    left.bind("<Button-2>", _show_zone_context_menu, add="+")
     host.winfo_toplevel().bind(
         "<<GicleeThemeAssetsChanged>>",
         lambda _event: _render_zone_editor(),

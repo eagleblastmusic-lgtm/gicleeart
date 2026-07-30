@@ -63,8 +63,8 @@ def _render_scroll_story_bg(
 ) -> int:
     """Przycisk «Dodaj tło» w sekcji Animacja przewijana (pierwszy Film-scroll)."""
     del config, zone
-    # scroll_background_* żyją w strefie «Przezroczystość i tło», nie w scroll_story.
-    bg_zone_id = "scroll_alpha"
+    # Ustawienia tła są zwijaną grupą tej samej strefy scroll_story.
+    bg_zone_id = "scroll_story"
 
     ttk.Label(editor_inner, text="Tło za filmem", font=("Segoe UI", 9, "bold")).grid(
         row=row, column=0, columnspan=2, sticky="w", pady=(4, 2)
@@ -436,7 +436,7 @@ def _config():
             "assets/giclee-page-smooth-scroll.js",
             "assets/lenis.min.js",
             "assets/lenis.css",
-            "sections/giclee-filozofia-page-config.liquid",
+            "sections/giclee-page-scroll-config.liquid",
             "snippets/scripts.liquid",
             "snippets/media.liquid",
             "blocks/_media-without-appearance.liquid",

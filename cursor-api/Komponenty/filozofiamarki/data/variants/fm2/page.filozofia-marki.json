@@ -1,7 +1,7 @@
 {
   "sections": {
     "giclee_filozofia_page_config": {
-      "type": "giclee-filozofia-page-config",
+      "type": "giclee-page-scroll-config",
       "name": "Filozofia — scroll",
       "settings": {
         "page_scroll_mode": "lenis",
@@ -595,9 +595,9 @@
             "scroll_video_viewport": 900,
             "image_position": "cover",
             "video_position": "cover",
-            "tresc3d_pair1_before": "",
+            "tresc3d_pair1_before": "shopify://shop_images/A_Pensive_Girl_50036176-1dba-42be-a33b-ddba6da7145a.webp",
             "tresc3d_pair1_before_object_y": 50,
-            "tresc3d_pair1_after": "",
+            "tresc3d_pair1_after": "shopify://shop_images/Jean-Baptiste-Camille_Corot_-_A_Pensive_Girl_74f34fb6-3b94-4eca-9d5e-b74a422bc2d7.jpg",
             "tresc3d_pair1_after_object_y": 50,
             "tresc3d_pair2_before": "",
             "tresc3d_pair2_before_object_y": 50,
@@ -629,6 +629,84 @@
         "padding-block-start": 0,
         "padding-block-end": 0
       }
+    },
+    "film_scroll_swiatynia_scroll_cz1_2a390b6": {
+      "type": "media-with-content",
+      "blocks": {
+        "media": {
+          "type": "_media-without-appearance",
+          "static": true,
+          "settings": {
+            "media_type": "scroll_video",
+            "image": "",
+            "link": "",
+            "video_loop": true,
+            "video_autoplay": false,
+            "scroll_video_asset": "giclee-film-scroll-2a390b6",
+            "scroll_video_engine": "video",
+            "scroll_video_container": "webm",
+            "scroll_video_source": "giclee-scroll-library-shared-720p-webm-cosmic-transition-to-marble-temple-2026072-9d90ba170b.webm::giclee-scroll-library-shared-720p-webm-cosmic-transition-to-marble-temple-2026072-9d90ba170b-poster.webp::giclee-scroll-library-shared-720p-webm-cosmic-transition-to-marble-temple-2026072-9d90ba170b-manifest.json::192::24::1280::720::false::vp9",
+            "scroll_video_quality": "720p",
+            "scroll_intro_title": "",
+            "scroll_intro_subtitle": "",
+            "scroll_outro_text": "",
+            "scroll_motion_preset": "direct",
+            "scroll_motion_speed": 1.0,
+            "scroll_motion_easing": "linear",
+            "scroll_motion_bezier": "0.25,0.10,0.25,1.00",
+            "scroll_motion_smoothing_ms": 0,
+            "scroll_motion_lag_ms": 0,
+            "scroll_motion_inertia": 0,
+            "scroll_motion_damping": 100,
+            "scroll_motion_max_catchup": 0.0,
+            "scroll_motion_stop_behavior": "immediate",
+            "scroll_motion_snap_points": 5,
+            "scroll_motion_direction": "normal",
+            "scroll_motion_material_start": 0,
+            "scroll_motion_material_end": 100,
+            "scroll_motion_interpolation": "none",
+            "scroll_motion_tail_pacing": false,
+            "scroll_motion_tail_window_frames": 12,
+            "scroll_motion_frame_rounding": "round",
+            "scroll_motion_mp4_dead_zone_ms": 4,
+            "scroll_motion_webp_dead_zone_frames": 1,
+            "scroll_motion_preload_radius": 12,
+            "scroll_motion_cache_frames": 0,
+            "scroll_preserve_alpha": false,
+            "scroll_background_mode": "transparent",
+            "scroll_background_value": "#000000",
+            "scroll_alpha_diagnostics": false,
+            "scroll_force_transparent": false,
+            "scroll_video_duration": 4,
+            "scroll_video_viewport": 400,
+            "image_position": "cover",
+            "video_position": "cover"
+          },
+          "blocks": {}
+        },
+        "content": {
+          "type": "_content-without-appearance",
+          "static": true,
+          "settings": {
+            "horizontal_alignment_flex_direction_column": "center",
+            "vertical_alignment_flex_direction_column": "center",
+            "gap": 24
+          },
+          "blocks": {},
+          "block_order": []
+        }
+      },
+      "name": "Scroll Film — swiatynia scroll cz1",
+      "settings": {
+        "media_position": "right",
+        "media_width": "medium",
+        "media_height": "100svh",
+        "section_width": "full-width",
+        "extend_media": true,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 0,
+        "padding-block-end": 0
+      }
     }
   },
   "order": [
@@ -643,6 +721,7 @@
     "section_tAj94h",
     "divider_7zYbrk",
     "divider_H4ahef",
-    "media_with_content_Wrota"
+    "media_with_content_Wrota",
+    "film_scroll_swiatynia_scroll_cz1_2a390b6"
   ]
 }

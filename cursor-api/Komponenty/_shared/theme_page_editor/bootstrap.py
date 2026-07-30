@@ -53,5 +53,16 @@ def build_editor_config(
     )
 
 
-def build_page_ui(host, config: PageEditorConfig, *, inline: bool = False) -> None:
-    gui_shell.build_page_editor(host, config, inline=inline)
+def build_page_ui(
+    host,
+    config: PageEditorConfig,
+    *,
+    inline: bool = False,
+    initial_section_key: str | None = None,
+) -> None:
+    gui_shell.build_page_editor(
+        host,
+        config,
+        inline=inline,
+        initial_section_key=initial_section_key,
+    )

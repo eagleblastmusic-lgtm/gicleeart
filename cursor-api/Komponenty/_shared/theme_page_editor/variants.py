@@ -9,6 +9,8 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+from giclee_app.app_paths import atomic_write_text
+
 from .config import PageEditorConfig
 from .service_base import (
     INDEX_HEADER,
@@ -50,12 +52,11 @@ def _load_json_file(path: Path) -> dict[str, Any]:
 
 
 def _save_json_file(path: Path, data: dict[str, Any], *, header: str | None = None) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
     body = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
     if header is None:
         rel = str(path).replace("\\", "/")
         header = INDEX_HEADER if "/templates/" in rel else ""
-    path.write_text(header + body, encoding="utf-8")
+    atomic_write_text(path, header + body)
 
 
 def _default_variant_id(config: PageEditorConfig) -> str:
@@ -83,8 +84,10 @@ def load_manifest(config: PageEditorConfig) -> dict[str, Any]:
 
 def save_manifest(config: PageEditorConfig, manifest: dict[str, Any]) -> None:
     path = manifest_path(config)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    atomic_write_text(
+        path,
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+    )
 
 
 def list_variants(config: PageEditorConfig) -> list[dict[str, str]]:
@@ -114,6 +117,50 @@ def variant_label(config: PageEditorConfig, variant_id: str) -> str:
         if row["id"] == variant_id:
             return row["label"]
     return variant_id
+
+
+def section_labels(config: PageEditorConfig, variant_id: str) -> dict[str, str]:
+    for row in load_manifest(config).get("variants") or []:
+        if not isinstance(row, dict) or str(row.get("id") or "") != variant_id:
+            continue
+        raw = row.get("section_labels")
+        if not isinstance(raw, dict):
+            return {}
+        return {
+            str(zone_id): str(label).strip()
+            for zone_id, label in raw.items()
+            if str(zone_id).strip() and str(label).strip()
+        }
+    return {}
+
+
+def rename_section_label(
+    config: PageEditorConfig,
+    variant_id: str,
+    zone_id: str,
+    label: str,
+) -> None:
+    clean_zone_id = str(zone_id or "").strip()
+    clean_label = str(label or "").strip()
+    if not clean_zone_id:
+        raise ValueError("Brak identyfikatora sekcji.")
+    if not clean_label:
+        raise ValueError("Nazwa sekcji nie może być pusta.")
+    if len(clean_label) > 120:
+        raise ValueError("Nazwa sekcji może mieć maksymalnie 120 znaków.")
+
+    manifest = load_manifest(config)
+    for row in manifest.get("variants") or []:
+        if not isinstance(row, dict) or str(row.get("id") or "") != variant_id:
+            continue
+        labels = row.setdefault("section_labels", {})
+        if not isinstance(labels, dict):
+            labels = {}
+            row["section_labels"] = labels
+        labels[clean_zone_id] = clean_label
+        save_manifest(config, manifest)
+        return
+    raise ValueError(f"Nieznany wariant: {variant_id}")
 
 
 def _existing_labels(config: PageEditorConfig) -> set[str]:
@@ -220,7 +267,11 @@ def duplicate_variant(
     manifest = load_manifest(config)
     variants = manifest.setdefault("variants", [])
     if not any(v.get("id") == target_id for v in variants if isinstance(v, dict)):
-        variants.append({"id": target_id, "label": label})
+        new_row: dict[str, Any] = {"id": target_id, "label": label}
+        copied_section_labels = section_labels(config, source_id)
+        if copied_section_labels:
+            new_row["section_labels"] = copied_section_labels
+        variants.append(new_row)
     save_manifest(config, manifest)
 
 

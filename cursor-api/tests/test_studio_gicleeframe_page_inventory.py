@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import json
 import sys
 from pathlib import Path
 
@@ -72,3 +73,67 @@ def test_inventory_module_no_komponenty_imports() -> None:
             imports.add(node.module)
     for imp in imports:
         assert not imp.startswith("Komponenty")
+
+
+def test_inventory_includes_text_layers_sidecar(tmp_path: Path) -> None:
+    component = tmp_path / "gicleeframe"
+    variant_dir = component / "data" / "variants" / "gf1"
+    variant_dir.mkdir(parents=True)
+    (component / "data" / "variants" / "manifest.json").write_text(
+        json.dumps(
+            {
+                "active": "gf1",
+                "live": "gf1",
+                "variants": [{"id": "gf1", "label": "Wersja 1"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (variant_dir / "page.giclee-frame.json").write_text(
+        json.dumps(
+            {
+                "sections": {
+                    "hero": {
+                        "type": "rich-text",
+                        "name": "Hero",
+                        "settings": {},
+                    }
+                },
+                "order": ["hero"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (variant_dir / "text-layers.json").write_text(
+        json.dumps(
+            {
+                "schemaVersion": 1,
+                "sections": {
+                    "hero": [
+                        {
+                            "id": "text_inventory",
+                            "name": "Tytuł",
+                            "enabled": True,
+                            "content": {
+                                "kind": "h2",
+                                "mode": "plain",
+                                "text": "Warstwa inventory",
+                            },
+                        }
+                    ]
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = build_gicleeframe_page_inventory(tmp_path)
+    layer = next(
+        element
+        for element in report.elements
+        if element.element_type == "text_layer"
+    )
+    assert layer.element_id == "hero::text_inventory"
+    assert layer.source == "text-layers.json"
+    assert layer.editable is False
+    assert inventory_count_stats(report)["text_blocks"] == 1

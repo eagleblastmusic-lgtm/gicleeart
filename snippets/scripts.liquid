@@ -64,9 +64,6 @@
   <script src="{{ 'giclee-fm-wrota-parallax.js' | asset_url }}" defer></script>
   <script src="{{ 'giclee-filozofia-quote-pin.js' | asset_url }}" defer></script>
   <script src="{{ 'giclee-filozofia-wrota-portal.js' | asset_url }}" defer></script>
-  {{ 'lenis.css' | asset_url | stylesheet_tag }}
-  <script src="{{ 'lenis.min.js' | asset_url }}" defer></script>
-  <script src="{{ 'giclee-page-smooth-scroll.js' | asset_url }}" defer></script>
 {% elsif request.page_type == 'blog' %}
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js" defer></script>
@@ -77,6 +74,34 @@
   {{ 'giclee-page-section-effects.css' | asset_url | stylesheet_tag }}
   <script src="{{ 'giclee-page-section-effects-boot.js' | asset_url }}" defer></script>
 {% endif %}
+
+{% assign giclee_text_layers_asset = '' %}
+{% if request.page_type == 'index' %}
+  {% assign giclee_text_layers_asset = 'giclee-text-layers-index.js' %}
+{% elsif request.page_type == 'collection' %}
+  {% assign giclee_text_layers_asset = 'giclee-text-layers-collection.js' %}
+{% elsif request.page_type == 'blog' %}
+  {% assign giclee_text_layers_asset = 'giclee-text-layers-blog.js' %}
+{% elsif request.page_type == 'page' and template.suffix == 'contact' %}
+  {% assign giclee_text_layers_asset = 'giclee-text-layers-page-contact.js' %}
+{% elsif request.page_type == 'page' and template.suffix == 'faq' %}
+  {% assign giclee_text_layers_asset = 'giclee-text-layers-page-faq.js' %}
+{% elsif request.page_type == 'page' and template.suffix == 'filozofia-marki' %}
+  {% assign giclee_text_layers_asset = 'giclee-text-layers-page-filozofia-marki.js' %}
+{% elsif request.page_type == 'page' and template.suffix == 'giclee-frame' %}
+  {% assign giclee_text_layers_asset = 'giclee-text-layers-page-giclee-frame.js' %}
+{% elsif request.page_type == 'page' and template.suffix == 'losuj-produkt' %}
+  {% assign giclee_text_layers_asset = 'giclee-text-layers-page-losuj-produkt.js' %}
+{% elsif request.page_type == 'page' and template.suffix == 'wspolpraca' %}
+  {% assign giclee_text_layers_asset = 'giclee-text-layers-page-wspolpraca.js' %}
+{% elsif request.page_type == 'product' and template.suffix == 'szablon-wlasna-fotografia' %}
+  {% assign giclee_text_layers_asset = 'giclee-text-layers-product-szablon-wlasna-fotografia.js' %}
+{% endif %}
+{% unless giclee_text_layers_asset == blank %}
+  {{ 'giclee-text-layers.css' | asset_url | stylesheet_tag }}
+  <script src="{{ giclee_text_layers_asset | asset_url }}" defer></script>
+  <script src="{{ 'giclee-text-layers.js' | asset_url }}" defer></script>
+{% endunless %}
 
 <link
   rel="modulepreload"

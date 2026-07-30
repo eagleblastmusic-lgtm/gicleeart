@@ -25,10 +25,13 @@ package.json
 package-lock.json
 
 # BEGIN giclee-filozofia-active-scroll-video
-# Auto: tylko aktywny wariant Film-scroll (Filozofia marki) idzie do theme sync
+# Auto: tylko zasoby używane przez aktywne instancje Film-scroll idą do theme sync
 assets/giclee-philosophy-scroll-720.mp4
 assets/giclee-philosophy-video-720-poster.webp
 assets/giclee-philosophy-video-720-manifest.json
+assets/giclee-philosophy-scroll-720.webm
+assets/giclee-philosophy-webm-720-poster.webp
+assets/giclee-philosophy-webm-720-manifest.json
 assets/giclee-philosophy-v3-manifest.json
 assets/giclee-philosophy-scroll-1080.mp4
 assets/giclee-philosophy-video-1080-poster.webp
@@ -49,17 +52,35 @@ assets/giclee-philosophy-wrota-720-manifest.json
 assets/giclee-philosophy-wrota-scroll-1080.mp4
 assets/giclee-philosophy-wrota-video-1080-poster.webp
 assets/giclee-philosophy-wrota-video-1080-manifest.json
+assets/giclee-philosophy-wrota-scroll-1080.webm
+assets/giclee-philosophy-wrota-webm-1080-poster.webp
+assets/giclee-philosophy-wrota-webm-1080-manifest.json
 assets/giclee-philosophy-wrota-1080-manifest.json
 assets/giclee-philosophy-wrota-scroll-source.mp4
 assets/giclee-philosophy-wrota-scroll-source.webm
+assets/giclee-film-scroll-shared-720.mp4
+assets/giclee-film-scroll-shared-720-poster.webp
+assets/giclee-film-scroll-shared-720-manifest.json
+assets/giclee-film-scroll-shared-720.webm
+assets/giclee-film-scroll-shared-webm-720-poster.webp
+assets/giclee-film-scroll-shared-webm-720-manifest.json
+assets/giclee-film-scroll-shared-720-frames-manifest.json
+assets/giclee-film-scroll-shared-1080.mp4
+assets/giclee-film-scroll-shared-1080-poster.webp
+assets/giclee-film-scroll-shared-1080-manifest.json
+assets/giclee-film-scroll-shared-1080.webm
+assets/giclee-film-scroll-shared-webm-1080-poster.webp
+assets/giclee-film-scroll-shared-webm-1080-manifest.json
+assets/giclee-film-scroll-shared-1080-frames-manifest.json
+assets/giclee-film-scroll-shared-source.mp4
+assets/giclee-film-scroll-shared-source.webm
 assets/giclee-scroll-library-philosophy-1080p-webm-scena-wrota-1080-60fps-alfa-crf32-gop15-60-c4c28a8676-manifest.json
 assets/giclee-scroll-library-philosophy-1080p-webm-scena-wrota-1080-60fps-alfa-crf32-gop15-60-c4c28a8676-poster.webp
 assets/giclee-scroll-library-philosophy-1080p-webm-scena-wrota-1080-60fps-alfa-crf32-gop15-60-c4c28a8676.webm
-assets/giclee-scroll-library-wrota-1080p-webm-scena-wrota-1080-60fps-crf32-gop15-c362db445a-manifest.json
-assets/giclee-scroll-library-wrota-1080p-webm-scena-wrota-1080-60fps-crf32-gop15-c362db445a-poster.webp
-assets/giclee-scroll-library-wrota-1080p-webm-scena-wrota-1080-60fps-crf32-gop15-c362db445a.webm
 assets/giclee-philosophy-v3-frame-*.webp
 assets/giclee-philosophy-1080-frame-*.webp
 assets/giclee-philosophy-wrota-720-frame-*.webp
 assets/giclee-philosophy-wrota-1080-frame-*.webp
+assets/giclee-film-scroll-shared-720-frame-*.webp
+assets/giclee-film-scroll-shared-1080-frame-*.webp
 # END giclee-filozofia-active-scroll-video

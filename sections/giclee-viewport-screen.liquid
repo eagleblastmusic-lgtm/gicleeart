@@ -1,0 +1,55 @@
+{%- liquid
+  assign viewport_height = section.settings.viewport_height_vh | default: 100
+  if viewport_height < 1
+    assign viewport_height = 1
+  elsif viewport_height > 10000
+    assign viewport_height = 10000
+  endif
+-%}
+
+<div
+  class="giclee-viewport-screen__surface"
+  aria-hidden="true"
+></div>
+
+{%- style -%}
+  #shopify-section-{{ section.id }} {
+    box-sizing: border-box;
+    display: block;
+    height: {{ viewport_height }}vh;
+    margin: 0 !important;
+    min-height: {{ viewport_height }}vh;
+    padding: 0 !important;
+    position: relative;
+    width: 100%;
+  }
+
+  #shopify-section-{{ section.id }} > .giclee-viewport-screen__surface {
+    display: block;
+    height: 100%;
+    pointer-events: none;
+    width: 100%;
+  }
+{%- endstyle -%}
+
+{% schema %}
+{
+  "name": "Pusty ekran",
+  "tag": "section",
+  "class": "giclee-viewport-screen",
+  "settings": [
+    {
+      "type": "number",
+      "id": "viewport_height_vh",
+      "label": "Wysokość ekranu (vh)",
+      "default": 100,
+      "info": "100 vh = jeden pełny viewport, 200 vh = dwa viewporty."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Pusty ekran"
+    }
+  ]
+}
+{% endschema %}

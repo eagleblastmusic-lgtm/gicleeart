@@ -152,6 +152,52 @@ def backup_before_save(config: PageEditorConfig, *, logger: Logger | None = None
     return []
 
 
+def backup_variant_bundle(
+    config: PageEditorConfig,
+    variant_id: str,
+    *,
+    logger: Logger | None = None,
+) -> list[Path]:
+    """Jedna pozycja historii: szablon wariantu i jego text-layers.json."""
+
+    variant = str(variant_id or "").strip()
+    if not variant:
+        return []
+    variant_dir = variants_root_for(config) / variant
+    template_source = variant_dir / config.template_basename
+    if not template_source.is_file():
+        template_source = template_path_for_config(config)
+    text_source = variant_dir / "text-layers.json"
+    template_data = template_source.read_bytes() if template_source.is_file() else b"{}\n"
+    text_data = (
+        text_source.read_bytes()
+        if text_source.is_file()
+        else b'{\n  "schemaVersion": 1,\n  "sections": {}\n}\n'
+    )
+    ts = datetime.now(UTC).strftime("%Y%m%d-%H%M%S-%f")
+    backup_dir = backup_write_dir_for(config)
+    template_backup = (
+        backup_dir
+        / f"variant-{variant}-{Path(config.template_basename).stem}-{ts}.json"
+    )
+    text_backup = backup_dir / f"variant-{variant}-text-layers-{ts}.json"
+    created: list[Path] = []
+    try:
+        atomic_write_bytes(template_backup, template_data)
+        created.append(template_backup)
+        atomic_write_bytes(text_backup, text_data)
+        created.append(text_backup)
+    except Exception:
+        for path in created:
+            path.unlink(missing_ok=True)
+        raise
+    _log(
+        logger,
+        f"Kopia wariantu {variant}: {template_backup.name} + {text_backup.name}",
+    )
+    return created
+
+
 def _block_at(template: dict[str, Any], block_path: tuple[str, ...]) -> dict[str, Any] | None:
     block = path_get(template, block_path)
     return block if isinstance(block, dict) else None
@@ -457,13 +503,104 @@ def merge_managed_zone_values(
 
     merged = copy.deepcopy(current_template)
     editor_sections = editor_template.get("sections")
+    merged_sections = merged.get("sections")
+    editor_order = editor_template.get("order")
+    merged_order = merged.get("order")
     for zone in config.zones:
         if not zone.settings_only:
             if not isinstance(editor_sections, dict):
                 continue
             if not isinstance(editor_sections.get(zone.section_key), dict):
                 continue
+            if isinstance(merged_sections, dict) and not isinstance(
+                merged_sections.get(zone.section_key),
+                dict,
+            ):
+                # Sekcja dodana w GicleeApp musi trafić do motywu jako cały
+                # obiekt (type/blocks/settings), nie tylko jako zestaw pól.
+                merged_sections[zone.section_key] = copy.deepcopy(
+                    editor_sections[zone.section_key]
+                )
+                if (
+                    isinstance(editor_order, list)
+                    and isinstance(merged_order, list)
+                    and zone.section_key in editor_order
+                    and zone.section_key not in merged_order
+                ):
+                    editor_index = editor_order.index(zone.section_key)
+                    previous = next(
+                        (
+                            key
+                            for key in reversed(editor_order[:editor_index])
+                            if key in merged_order
+                        ),
+                        None,
+                    )
+                    if previous is None:
+                        merged_order.insert(0, zone.section_key)
+                    else:
+                        merged_order.insert(
+                            merged_order.index(previous) + 1,
+                            zone.section_key,
+                        )
         apply_zone_values(merged, zone, load_zone_values(editor_template, zone))
+
+    # Puste ekrany są w całości zarządzane przez moduł. Brak ekranu w
+    # edytowanym wariancie oznacza świadome usunięcie, więc nie wolno
+    # przywracać go ze świeżego pliku motywu podczas bezpiecznego merge.
+    if (
+        isinstance(editor_sections, dict)
+        and isinstance(merged_sections, dict)
+        and isinstance(merged_order, list)
+    ):
+        from .viewport_screen import is_viewport_screen_section
+
+        editor_screen_keys = {
+            str(key)
+            for key, section in editor_sections.items()
+            if is_viewport_screen_section(section)
+        }
+        current_screen_keys = {
+            str(key)
+            for key, section in tuple(merged_sections.items())
+            if is_viewport_screen_section(section)
+        }
+        for section_key in current_screen_keys - editor_screen_keys:
+            merged_sections.pop(section_key, None)
+        for section_key in editor_screen_keys:
+            merged_sections[section_key] = copy.deepcopy(
+                editor_sections[section_key]
+            )
+
+        # Odtwórz pozycje ekranów według wariantu, pozostawiając kolejność
+        # wszystkich pozostałych sekcji świeżego motywu bez zmian.
+        all_screen_keys = current_screen_keys | editor_screen_keys
+        merged_order[:] = [
+            key for key in merged_order if str(key) not in all_screen_keys
+        ]
+        if isinstance(editor_order, list):
+            for editor_index, raw_key in enumerate(editor_order):
+                section_key = str(raw_key)
+                if section_key not in editor_screen_keys:
+                    continue
+                existing_order_keys = {str(item) for item in merged_order}
+                previous = next(
+                    (
+                        str(key)
+                        for key in reversed(editor_order[:editor_index])
+                        if str(key) in existing_order_keys
+                    ),
+                    None,
+                )
+                if previous is None:
+                    merged_order.insert(0, section_key)
+                else:
+                    previous_index = next(
+                        index
+                        for index, key in enumerate(merged_order)
+                        if str(key) == previous
+                    )
+                    merged_order.insert(previous_index + 1, section_key)
     return merged
 
 
@@ -481,6 +618,44 @@ def component_deploy_relpaths(config: PageEditorConfig) -> tuple[str, ...]:
         for path in sorted(root.glob(pattern)):
             if path.is_file():
                 paths.append(path.relative_to(root).as_posix())
+
+    try:
+        template = load_template(config)
+    except (FileNotFoundError, OSError, ValueError):
+        template = {}
+    if isinstance(template.get("sections"), dict) and isinstance(
+        template.get("order"), list
+    ):
+        from .text_layers_export import RUNTIME_RELPATHS, asset_basename
+
+        paths.extend(RUNTIME_RELPATHS)
+        paths.append(f"assets/{asset_basename(config)}")
+
+    from .film_scroll import (
+        FILM_SCROLL_DEPLOY_RELPATHS,
+        selected_film_scroll_asset_relpaths,
+        template_has_film_scroll,
+    )
+
+    if template_has_film_scroll(template):
+        paths.extend(FILM_SCROLL_DEPLOY_RELPATHS)
+        paths.extend(selected_film_scroll_asset_relpaths(template))
+
+    from .page_scroll import (
+        PAGE_SCROLL_DEPLOY_RELPATHS,
+        template_has_page_scroll,
+    )
+
+    if template_has_page_scroll(template):
+        paths.extend(PAGE_SCROLL_DEPLOY_RELPATHS)
+
+    from .viewport_screen import (
+        VIEWPORT_SCREEN_DEPLOY_RELPATHS,
+        template_has_viewport_screen,
+    )
+
+    if template_has_viewport_screen(template):
+        paths.extend(VIEWPORT_SCREEN_DEPLOY_RELPATHS)
 
     if config.component_id == "filozofiamarki":
         from Komponenty.filozofiamarki.video_sequence import (
@@ -558,6 +733,7 @@ __all__ = [
     "backups_dir_for",
     "component_data_dir",
     "component_deploy_relpaths",
+    "backup_variant_bundle",
     "deploy_theme",
     "fetch_thumbnail_bytes",
     "load_template",

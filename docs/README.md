@@ -86,6 +86,7 @@ Jeden fakt w jednym pliku modułowym. Nie duplikuj treści między `MATKA` a tym
 
 | PDP v3 / scroll-over: pusty scroll, wjazd, prześwit | [`motyw/pdp-v3-pusty-scroll.md`](motyw/pdp-v3-pusty-scroll.md) (wzór uniwersalny) |
 | Film lub klatki sterowane scrollem; polecenie „wstaw moduł Film-scroll” | [`Film-scroll.md`](Film-scroll.md) — jedyne źródło prawdy, łącznie z nową sekcją GicleeApp |
+| Pusty viewport pomiędzy sekcjami; polecenie „Wstaw ekran” | [`Wstaw-ekran.md`](Wstaw-ekran.md) |
 
 | Księgowość, DNR, KPiR, faktury | [`../cursor-api/docs/komponenty/finanse.md`](../cursor-api/docs/komponenty/finanse.md) |
 

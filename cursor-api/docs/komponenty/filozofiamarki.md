@@ -18,6 +18,12 @@ Tryb: `inline` (sekcja **Administracja strony**). Uruchomienie: `python -m Kompo
 
 ## Scroll strony
 
+Ten sam moduł jest dostępny we wszystkich wspólnych edytorach
+**Sekcje strony**. Kliknij PPM i wybierz **Dodaj „Scroll strony”…**. Edytor
+dodaje jedną ukrytą sekcję konfiguracyjną do bieżącego szablonu i pokazuje ją
+na liście jako zwykłą strefę **Scroll strony**. Ponowne użycie polecenia otwiera
+istniejącą strefę zamiast tworzyć drugi, konkurencyjny kontroler.
+
 Strefa **Scroll strony** ma cztery warianty:
 
 - **Standardowy** — natywne przewijanie przeglądarki, bez przechwytywania kółka.
@@ -89,6 +95,10 @@ scrub zapewnia WebM z GOP=1; dłuższy GOP pozostaje obsługiwany, ale może
 zwiększyć koszt seekowania.
 
 ## Charakter odtwarzania
+
+W głównej animacji pola te znajdują się wewnątrz strefy
+**Animacja przewijana** jako domyślnie zwinięty akordeon
+**Charakter odtwarzania**. Nie zajmują osobnej pozycji na liście sekcji.
 
 Profil ruchu jest wspólny dla wybranego źródła 720p/1080p. Panel udostępnia:
 preset, tempo, easing/Bézier, smoothing, lag, bezwładność, damping, limit

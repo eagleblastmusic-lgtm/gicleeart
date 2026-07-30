@@ -26,6 +26,15 @@ from Komponenty._shared.theme_page_editor.image_object_y import (
     normalize_object_y,
     object_y_field_id,
 )
+from Komponenty._shared.theme_page_editor.text_layers import (
+    load_document as load_text_layers_document,
+    save_document as save_text_layers_document,
+    validate_document as validate_text_layers_document,
+)
+from Komponenty._shared.theme_page_editor.text_layers_dialog import (
+    add_text_layer_for_section,
+    build_text_layers_panel,
+)
 from Komponenty._shared.toast import show_toast
 from Komponenty._shared.window_geometry import position_toplevel_screen_center
 from PIL import Image, ImageTk
@@ -53,6 +62,7 @@ from .homepage_variants import (
     set_active_variant,
     set_variant_home_stack,
     suggest_variant_label,
+    variant_file_path,
     variant_label,
     variant_uses_home_stack,
 )
@@ -187,6 +197,8 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
         "thumb_refs": [],
         "variant_id": "home1",
         "switching_variant": False,
+        "text_layers": {"schemaVersion": 1, "sections": {}},
+        "baseline_text_layers": {"schemaVersion": 1, "sections": {}},
     }
 
     ensure_variants_initialized()
@@ -247,6 +259,13 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
     zone_list.pack(fill="both", expand=True)
     for zone in HOME_ZONES:
         zone_list.insert("end", zone.label)
+    add_text_button = ttk.Button(
+        left,
+        text="Dodaj tekst…",
+        command=lambda: _add_home_text_to_selected_section(),
+        state="disabled",
+    )
+    add_text_button.pack(fill="x", pady=(8, 0))
 
     status_var = tk.StringVar(value="Wczytywanie…")
     ttk.Label(left, textvariable=status_var, foreground="#666", wraplength=280).pack(anchor="w", pady=(8, 0))
@@ -1104,6 +1123,13 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
         _sync_media_rows()
 
     def _show_zone(zone: HomeZone) -> None:
+        add_text_button.configure(
+            state=(
+                "disabled"
+                if zone.settings_only or not zone.section_key
+                else "normal"
+            )
+        )
         prev_id = state.get("selected_zone_id")
         if prev_id and prev_id in state["zone_values"]:
             _collect_current_zone()
@@ -1132,6 +1158,23 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
                 variable=enabled_var,
                 command=_mark_dirty,
             ).pack(anchor="w", pady=(0, 12))
+
+        def _set_text_layers_document(document: dict[str, Any]) -> None:
+            state["text_layers"] = document
+            _mark_dirty()
+            status_var.set(
+                f"Zmieniono teksty w sekcji «{zone.label}». Zapisz wariant."
+            )
+
+        text_panel = build_text_layers_panel(
+            editor_inner,
+            document_getter=lambda: state.get("text_layers") or {},
+            document_setter=_set_text_layers_document,
+            section_key=str(zone.section_key or ""),
+            app_title=APP_TITLE,
+            can_render=bool(not zone.settings_only and zone.section_key),
+        )
+        text_panel.pack(fill="x", pady=(0, 12))
 
         bg_fld = next((f for f in zone.fields if f.kind == "section_background"), None)
         has_graphics = any(
@@ -1295,14 +1338,55 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
                 show_toast=show_toast,
             )
 
-        state["dirty"] = False
+        state["dirty"] = bool(
+            state.get("text_layers") != state.get("baseline_text_layers")
+        )
         status_var.set(f"Edycja: {zone.label}")
+
+    def _add_home_text_to_selected_section() -> None:
+        selected = zone_by_id(str(state.get("selected_zone_id") or ""))
+        if selected is None:
+            messagebox.showinfo(
+                APP_TITLE,
+                "Najpierw wybierz sekcję z listy.",
+                parent=host,
+            )
+            return
+        if selected.settings_only or not selected.section_key:
+            messagebox.showwarning(
+                APP_TITLE,
+                "Ta pozycja jest ustawieniem globalnym i nie ma elementu na stronie.",
+                parent=host,
+            )
+            return
+        next_document = add_text_layer_for_section(
+            host,
+            document=state.get("text_layers") or {},
+            section_key=str(selected.section_key),
+            app_title=APP_TITLE,
+        )
+        if next_document is None:
+            return
+        state["text_layers"] = next_document
+        _mark_dirty()
+        _show_zone(selected)
+        state["dirty"] = True
+        status_var.set(
+            f"Dodano tekst do sekcji «{selected.label}». Zapisz wariant."
+        )
 
     def _on_zone_select(_evt=None) -> None:
         sel = zone_list.curselection()
         if not sel:
             return
         zone = HOME_ZONES[int(sel[0])]
+        add_text_button.configure(
+            state=(
+                "disabled"
+                if zone.settings_only or not zone.section_key
+                else "normal"
+            )
+        )
         if state.get("dirty") and state.get("selected_zone_id"):
             if not messagebox.askyesno(
                 APP_TITLE,
@@ -1340,6 +1424,10 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
         prev_zone = state.get("selected_zone_id") if keep_zone else None
         state["template"] = template
         state["settings"] = settings
+        state["text_layers"] = load_text_layers_document(
+            variant_file_path(variant_id, "text-layers.json")
+        )
+        state["baseline_text_layers"] = copy.deepcopy(state["text_layers"])
         state["zone_values"] = {}
         state["selected_zone_id"] = None
         state["dirty"] = False
@@ -1372,6 +1460,14 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
         _collect_current_zone()
         pending_template, pending_settings = _build_pending()
         persist_editor_to_variant(state["variant_id"], pending_template, pending_settings)
+        save_text_layers_document(
+            variant_file_path(
+                state["variant_id"],
+                "text-layers.json",
+                for_write=True,
+            ),
+            state.get("text_layers") or {},
+        )
         if apply_theme:
             apply_variant_to_theme(state["variant_id"])
 
@@ -1581,8 +1677,18 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
             pending_settings,
             zone_values=state.get("zone_values"),
         )
+        text_issues = validate_text_layers_document(
+            state.get("text_layers") or {},
+            known_section_keys=(
+                str(zone.section_key)
+                for zone in HOME_ZONES
+                if not zone.settings_only and zone.section_key
+            ),
+        )
         errors = [i for i in issues if i.level == "error"]
         warns = [i for i in issues if i.level == "warn"]
+        text_errors = [i for i in text_issues if i["level"] == "error"]
+        text_warns = [i for i in text_issues if i["level"] == "warn"]
 
         win = tk.Toplevel(host)
         win.title(f"{action_label} — podsumowanie")
@@ -1602,11 +1708,17 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
                 detail.insert("end", line + "\n")
         else:
             detail.insert("end", "Brak zmian względem wczytanego stanu.\n")
-        if errors or warns:
+        if errors or warns or text_errors or text_warns:
             detail.insert("end", "\nWalidacja:\n")
             for issue in errors + warns:
                 mark = "BŁĄD" if issue.level == "error" else "UWAGA"
                 detail.insert("end", f"• [{mark}] {issue.zone_label}: {issue.message}\n")
+            for issue in text_errors + text_warns:
+                mark = "BŁĄD" if issue["level"] == "error" else "UWAGA"
+                detail.insert(
+                    "end",
+                    f"• [{mark}] {issue.get('section', '')}: {issue['message']}\n",
+                )
         detail.configure(state="disabled")
 
         show_diff_var = tk.BooleanVar(value=False)
@@ -1640,8 +1752,13 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
         choice: dict[str, Any] = {"ok": False}
 
         def _approve() -> None:
-            if errors:
+            if errors or text_errors:
                 err_lines = "\n".join(f"• {e.zone_label}: {e.message}" for e in errors)
+                if text_errors:
+                    err_lines += "\n" + "\n".join(
+                        f"• {issue.get('section', '')}: {issue['message']}"
+                        for issue in text_errors
+                    )
                 messagebox.showerror(
                     APP_TITLE,
                     f"Napraw błędy walidacji przed zapisem:\n\n{err_lines}",
@@ -1666,9 +1783,10 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
                         return
                 except Exception:
                     pass
-            if warns and not messagebox.askyesno(
+            warning_count = len(warns) + len(text_warns)
+            if warning_count and not messagebox.askyesno(
                 APP_TITLE,
-                f"Jest {len(warns)} ostrzeżeń. Kontynuować?",
+                f"Jest {warning_count} ostrzeżeń. Kontynuować?",
                 parent=win,
             ):
                 return
@@ -1700,7 +1818,7 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
             return
         pending_template, pending_settings = pending
         try:
-            backups = backup_before_save()
+            backups = backup_before_save(variant_id=state["variant_id"])
         except Exception as exc:
             messagebox.showerror(APP_TITLE, f"Kopia zapasowa nie powiodła się:\n{exc}", parent=host)
             return
@@ -1713,6 +1831,14 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
             save_index_template(pending_template)
             save_theme_settings(theme_settings)
             persist_editor_to_variant(state["variant_id"], pending_template, theme_settings)
+            saved_text_layers = save_text_layers_document(
+                variant_file_path(
+                    state["variant_id"],
+                    "text-layers.json",
+                    for_write=True,
+                ),
+                state.get("text_layers") or {},
+            )
             mobile_name = mobile_hero_path().name if mobile_hero_path().is_file() else None
             write_home_assets(
                 pending_template,
@@ -1729,6 +1855,8 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
 
         state["template"] = pending_template
         state["settings"] = theme_settings
+        state["text_layers"] = saved_text_layers
+        state["baseline_text_layers"] = copy.deepcopy(saved_text_layers)
         state["dirty"] = False
         from .service import list_zones
 
@@ -1854,6 +1982,15 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
 
         meta = chosen["meta"]
         try:
+            backup_before_save(variant_id=state["variant_id"])
+        except Exception as exc:
+            messagebox.showerror(
+                APP_TITLE,
+                f"Kopia zapasowa nie powiodła się:\n{exc}",
+                parent=host,
+            )
+            return
+        try:
             theme_settings = merge_managed_theme_settings(
                 load_theme_settings(),
                 pending_settings,
@@ -1861,6 +1998,14 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
             save_index_template(pending_template)
             save_theme_settings(theme_settings)
             persist_editor_to_variant(state["variant_id"], pending_template, theme_settings)
+            saved_text_layers = save_text_layers_document(
+                variant_file_path(
+                    state["variant_id"],
+                    "text-layers.json",
+                    for_write=True,
+                ),
+                state.get("text_layers") or {},
+            )
             mobile_name = mobile_hero_path().name if mobile_hero_path().is_file() else None
             write_home_assets(
                 pending_template,
@@ -1873,6 +2018,8 @@ def _build_ui(host: tk.Misc, *, inline: bool = False) -> None:
             )
             state["template"] = pending_template
             state["settings"] = theme_settings
+            state["text_layers"] = saved_text_layers
+            state["baseline_text_layers"] = copy.deepcopy(saved_text_layers)
             state["dirty"] = False
         except Exception as exc:
             messagebox.showerror(APP_TITLE, f"Zapis przed deployem nie powiódł się:\n{exc}", parent=host)

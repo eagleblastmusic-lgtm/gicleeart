@@ -37,9 +37,21 @@ from .page_section_effects_settings import (
     zone_has_image_effects,
     zone_has_text_effects,
 )
+from .text_layers import (
+    load_document as load_text_layers_document,
+    save_document as save_text_layers_document,
+    shared_variant_path as text_layers_variant_path,
+)
+from .text_layers_export import (
+    asset_basename as text_layers_asset_basename,
+    export_document as export_text_layers_document,
+    payload_bytes as text_layers_payload_bytes,
+    template_asset_slug as text_layers_page_slug,
+)
 from .service_base import (
     INDEX_HEADER,
     backup_write_dir_for,
+    backup_variant_bundle,
     component_deploy_relpaths,
     load_template_from_path,
     merge_managed_zone_values,
@@ -290,6 +302,35 @@ def _effects_output(config: PageEditorConfig, variant_id: str) -> PlannedOutput 
     )
 
 
+def _text_layers_output(
+    config: PageEditorConfig,
+    variant_id: str,
+) -> PlannedOutput:
+    document = load_text_layers_document(
+        text_layers_variant_path(config, variant_id)
+    )
+    payload = export_text_layers_document(
+        document,
+        page=text_layers_page_slug(config.template_rel),
+        variant_id=variant_id,
+    )
+    data = text_layers_payload_bytes(payload)
+    path = (
+        theme_root()
+        / "assets"
+        / text_layers_asset_basename(config)
+    )
+    before = _read_bytes(path)
+    return PlannedOutput(
+        path=path,
+        before_bytes=before,
+        after_bytes=data,
+        before_sha256=_sha256_bytes(before) if before is not None else None,
+        after_sha256=_sha256_bytes(data),
+        backup_label=f"asset-{path.stem}",
+    )
+
+
 def _diff_for_output(output: PlannedOutput) -> str:
     before = (output.before_bytes or b"").decode("utf-8", errors="replace")
     after = output.after_bytes.decode("utf-8", errors="replace")
@@ -337,6 +378,10 @@ def build_bounded_apply_plan(
         effects = _effects_output(config, variant_id)
         if effects is not None:
             outputs.append(effects)
+        if isinstance(merged.get("sections"), dict) and isinstance(
+            merged.get("order"), list
+        ):
+            outputs.append(_text_layers_output(config, variant_id))
 
     changed = [output for output in outputs if output.before_bytes != output.after_bytes]
     diff_parts = [_diff_for_output(output) for output in changed]
@@ -460,12 +505,20 @@ def _context_from_command(
     state = values.get("state")
     if not isinstance(state, dict):
         state = {}
+    active_config = state.get("active_config")
+    resolved_config = (
+        active_config
+        if isinstance(active_config, PageEditorConfig)
+        else values.get("config")
+        if isinstance(values.get("config"), PageEditorConfig)
+        else config
+    )
     status_var = values.get("status_var")
     confirm_save = values.get("_confirm_save")
     refresh_zone_list = values.get("_refresh_zone_list")
     return _EditorContext(
         host=values.get("host") if isinstance(values.get("host"), tk.Misc) else host,
-        config=values.get("config") if isinstance(values.get("config"), PageEditorConfig) else config,
+        config=resolved_config,
         state=state,
         status_var=status_var if isinstance(status_var, tk.StringVar) else None,
         confirm_save=confirm_save if callable(confirm_save) else None,
@@ -488,10 +541,15 @@ def _run_variant_only_save(context: _EditorContext) -> None:
 
     variant_id = str(context.state.get("variant_id") or "")
     try:
+        backup_variant_bundle(context.config, variant_id)
         varmod.persist_editor_to_variant(
             context.config,
             variant_id,
             pending,
+        )
+        saved_text_layers = save_text_layers_document(
+            text_layers_variant_path(context.config, variant_id),
+            context.state.get("text_layers") or {},
         )
     except Exception as exc:
         messagebox.showerror(
@@ -503,6 +561,8 @@ def _run_variant_only_save(context: _EditorContext) -> None:
 
     context.state["template"] = pending
     context.state["baseline_template"] = copy.deepcopy(pending)
+    context.state["text_layers"] = saved_text_layers
+    context.state["baseline_text_layers"] = copy.deepcopy(saved_text_layers)
     context.state["dirty"] = False
     if context.refresh_zone_list is not None:
         context.refresh_zone_list()

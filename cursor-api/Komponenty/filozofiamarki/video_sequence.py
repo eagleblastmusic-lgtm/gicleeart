@@ -155,6 +155,55 @@ ASSET_FAMILIES: dict[str, AssetFamily] = {
         },
         backup_prefix="filozofia-wrota-video",
     ),
+    "shared": AssetFamily(
+        id="shared",
+        source_prefix="giclee-film-scroll-shared-source",
+        runtime_video={
+            "720p": "giclee-film-scroll-shared-720.mp4",
+            "1080p": "giclee-film-scroll-shared-1080.mp4",
+        },
+        runtime_webm={
+            "720p": "giclee-film-scroll-shared-720.webm",
+            "1080p": "giclee-film-scroll-shared-1080.webm",
+        },
+        runtime_poster={
+            "720p": "giclee-film-scroll-shared-720-poster.webp",
+            "1080p": "giclee-film-scroll-shared-1080-poster.webp",
+        },
+        webm_poster={
+            "720p": "giclee-film-scroll-shared-webm-720-poster.webp",
+            "1080p": "giclee-film-scroll-shared-webm-1080-poster.webp",
+        },
+        video_manifest={
+            "720p": "giclee-film-scroll-shared-720-manifest.json",
+            "1080p": "giclee-film-scroll-shared-1080-manifest.json",
+        },
+        webm_manifest={
+            "720p": "giclee-film-scroll-shared-webm-720-manifest.json",
+            "1080p": "giclee-film-scroll-shared-webm-1080-manifest.json",
+        },
+        quality_profiles={
+            "720p": SequenceProfile(
+                quality="720p",
+                width=1280,
+                height=720,
+                frame_prefix="giclee-film-scroll-shared-720-frame-",
+                manifest_name="giclee-film-scroll-shared-720-frames-manifest.json",
+                extension=".webp",
+                composite_black=False,
+            ),
+            "1080p": SequenceProfile(
+                quality="1080p",
+                width=1920,
+                height=1080,
+                frame_prefix="giclee-film-scroll-shared-1080-frame-",
+                manifest_name="giclee-film-scroll-shared-1080-frames-manifest.json",
+                extension=".webp",
+                composite_black=False,
+            ),
+        },
+        backup_prefix="film-scroll-shared-video",
+    ),
 }
 
 # Aliasy wsteczne — domyślna rodzina „philosophy”.
@@ -258,6 +307,9 @@ class NativeVideoResult:
     manifest_path: Path
     source_path: Path
     backup_path: Path | None
+    library_video_path: Path | None = None
+    library_poster_path: Path | None = None
+    library_manifest_path: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -288,6 +340,9 @@ class NativeVideoAsset:
     has_alpha: bool | None
     codec: str
     total_bytes: int
+    source: str = ""
+    generated_at: str = ""
+    activated_from: str = ""
 
     @property
     def source_spec(self) -> str:
@@ -375,6 +430,8 @@ _SHOPIFYIGNORE_END = "# END giclee-filozofia-active-scroll-video"
 
 
 def _asset_id_to_family(asset_id: str) -> str:
+    if str(asset_id).startswith("giclee-film-scroll-"):
+        return "shared"
     if "wrota" in str(asset_id):
         return "wrota"
     return "philosophy"
@@ -383,49 +440,59 @@ def _asset_id_to_family(asset_id: str) -> str:
 def iter_scroll_video_block_settings(
     root: Path | None = None,
 ) -> list[dict[str, str]]:
-    """Odczytaj aktywne ustawienia scroll_video ze szablonu strony."""
+    """Odczytaj aktywne scroll_video ze wszystkich szablonów motywu."""
 
-    template_path = (root or theme_root()) / PAGE_TEMPLATE_REL
-    raw = template_path.read_text(encoding="utf-8")
-    if raw.lstrip().startswith("/*"):
-        end = raw.find("*/")
-        if end >= 0:
-            raw = raw[end + 2 :]
-    data = json.loads(raw)
+    theme = root or theme_root()
     selections: list[dict[str, str]] = []
-    for section in (data.get("sections") or {}).values():
-        if not isinstance(section, dict):
+    templates = theme / "templates"
+    if not templates.is_dir():
+        return selections
+    for template_path in sorted(templates.rglob("*.json")):
+        try:
+            raw = template_path.read_text(encoding="utf-8")
+            if raw.lstrip().startswith("/*"):
+                end = raw.find("*/")
+                if end >= 0:
+                    raw = raw[end + 2 :]
+            data = json.loads(raw)
+        except (OSError, TypeError, ValueError):
             continue
-        for block in (section.get("blocks") or {}).values():
-            if not isinstance(block, dict):
+        for section in (data.get("sections") or {}).values():
+            if not isinstance(section, dict):
                 continue
-            settings = block.get("settings") or {}
-            if settings.get("media_type") != "scroll_video":
-                continue
-            asset_id = str(
-                settings.get("scroll_video_asset") or "giclee-philosophy-frames"
-            )
-            quality = str(settings.get("scroll_video_quality") or "720p")
-            if quality not in {"720p", "1080p"}:
-                quality = "720p"
-            container = str(settings.get("scroll_video_container") or "mp4")
-            if container not in {"mp4", "webm"}:
-                container = "mp4"
-            engine = str(settings.get("scroll_video_engine") or "video")
-            if engine not in {"video", "frames"}:
-                engine = "video"
-            selections.append(
-                {
-                    "family": _asset_id_to_family(asset_id),
-                    "asset_id": asset_id,
-                    "engine": engine,
-                    "container": container,
-                    "quality": quality,
-                    "source_spec": str(
-                        settings.get("scroll_video_source") or ""
-                    ).strip(),
-                }
-            )
+            for block in (section.get("blocks") or {}).values():
+                if not isinstance(block, dict):
+                    continue
+                settings = block.get("settings") or {}
+                if settings.get("media_type") != "scroll_video":
+                    continue
+                asset_id = str(
+                    settings.get("scroll_video_asset")
+                    or "giclee-philosophy-frames"
+                )
+                quality = str(settings.get("scroll_video_quality") or "720p")
+                if quality not in {"720p", "1080p"}:
+                    quality = "720p"
+                container = str(
+                    settings.get("scroll_video_container") or "mp4"
+                )
+                if container not in {"mp4", "webm"}:
+                    container = "mp4"
+                engine = str(settings.get("scroll_video_engine") or "video")
+                if engine not in {"video", "frames"}:
+                    engine = "video"
+                selections.append(
+                    {
+                        "family": _asset_id_to_family(asset_id),
+                        "asset_id": asset_id,
+                        "engine": engine,
+                        "container": container,
+                        "quality": quality,
+                        "source_spec": str(
+                            settings.get("scroll_video_source") or ""
+                        ).strip(),
+                    }
+                )
     return selections
 
 
@@ -476,6 +543,13 @@ def active_scroll_video_deploy_relpaths(
         if item["engine"] == "frames":
             profile = asset.quality_profiles[item["quality"]]
             paths.append(f"assets/{profile.manifest_name}")
+            continue
+        selected = parse_native_video_source_spec(item.get("source_spec"))
+        if selected.get("video"):
+            for key in ("video", "poster", "manifest"):
+                name = Path(str(selected.get(key) or "")).name
+                if name:
+                    paths.append(f"assets/{name}")
             continue
         video, poster, manifest = _native_asset_names(
             asset, item["quality"], item["container"]
@@ -711,13 +785,15 @@ def sync_scroll_video_shopifyignore(root: Path | None = None) -> Path:
     inactive = inactive_scroll_video_relpaths(theme)
     block_lines = [
         _SHOPIFYIGNORE_BEGIN,
-        "# Auto: tylko aktywny wariant Film-scroll (Filozofia marki) idzie do theme sync",
+        "# Auto: tylko zasoby używane przez aktywne instancje Film-scroll idą do theme sync",
         *[path for path in inactive],
         # Klatki WebP rodzin — sync tylko gdy silnik frames (patrz deploy globs)
         "assets/giclee-philosophy-v3-frame-*.webp",
         "assets/giclee-philosophy-1080-frame-*.webp",
         "assets/giclee-philosophy-wrota-720-frame-*.webp",
         "assets/giclee-philosophy-wrota-1080-frame-*.webp",
+        "assets/giclee-film-scroll-shared-720-frame-*.webp",
+        "assets/giclee-film-scroll-shared-1080-frame-*.webp",
         _SHOPIFYIGNORE_END,
         "",
     ]
@@ -1051,9 +1127,47 @@ def list_native_video_assets(
                 has_alpha=has_alpha,
                 codec=str(manifest.get("codec") or metadata.codec or "unknown"),
                 total_bytes=video.stat().st_size,
+                source=str(manifest.get("source") or ""),
+                generated_at=str(manifest.get("generatedAt") or ""),
+                activated_from=str(manifest.get("activatedFrom") or ""),
             )
         )
     return tuple(found)
+
+
+def _is_library_video_asset(item: NativeVideoAsset) -> bool:
+    return item.video.startswith("giclee-scroll-library-")
+
+
+def _library_copy_for_runtime(
+    runtime: NativeVideoAsset,
+    assets: tuple[NativeVideoAsset, ...],
+) -> NativeVideoAsset | None:
+    """Znajdź biblioteczny odpowiednik technicznego slotu runtime."""
+
+    libraries = tuple(item for item in assets if _is_library_video_asset(item))
+    if runtime.activated_from:
+        activated = next(
+            (
+                item
+                for item in libraries
+                if item.video == runtime.activated_from
+            ),
+            None,
+        )
+        if activated is not None:
+            return activated
+    if runtime.generated_at and runtime.source:
+        return next(
+            (
+                item
+                for item in libraries
+                if item.generated_at == runtime.generated_at
+                and item.source == runtime.source
+            ),
+            None,
+        )
+    return None
 
 
 def native_video_source_choices(
@@ -1077,13 +1191,33 @@ def native_video_source_choices(
     default_video, _poster, _manifest = _native_asset_names(
         _family(family), quality, container
     )
-    choices: list[tuple[str, str]] = [
-        (
-            "",
-            f"Domyślny slot: {default_video}",
-        )
-    ]
-    choices.extend((item.source_spec, item.label) for item in assets)
+    current_value = str(values.get("scroll_video_source") or "").strip()
+    current_video = parse_native_video_source_spec(current_value).get("video", "")
+    runtime = next((item for item in assets if item.video == default_video), None)
+    library_copy = (
+        _library_copy_for_runtime(runtime, assets)
+        if runtime is not None
+        else None
+    )
+
+    choices: list[tuple[str, str]] = []
+    if runtime is not None and library_copy is None:
+        runtime_value = current_value if current_video == runtime.video else ""
+        choices.append((runtime_value, runtime.label))
+
+    for item in assets:
+        if runtime is not None and item.video == runtime.video:
+            continue
+        item_value = item.source_spec
+        if library_copy is not None and item.video == library_copy.video:
+            if not current_value:
+                item_value = ""
+            elif current_video == runtime.video:
+                item_value = current_value
+        choices.append((item_value, item.label))
+
+    if not choices:
+        choices.append(("", f"Domyślny slot: {default_video}"))
     return tuple(choices)
 
 
@@ -1822,6 +1956,9 @@ def replace_native_video(
         manifest_path=manifest_path,
         source_path=source_path,
         backup_path=backup,
+        library_video_path=library_video,
+        library_poster_path=library_poster,
+        library_manifest_path=library_manifest,
     )
 
 

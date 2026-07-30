@@ -10,7 +10,7 @@
 {
   "sections": {
     "giclee_filozofia_page_config": {
-      "type": "giclee-filozofia-page-config",
+      "type": "giclee-page-scroll-config",
       "name": "Filozofia — scroll",
       "settings": {
         "page_scroll_mode": "standard",

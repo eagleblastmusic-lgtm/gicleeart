@@ -1,4 +1,4 @@
-/* Filozofia marki: native, lightweight smoothing, Lenis, or custom wheel tuning. */
+/* Wspólny scroll strony: native, lightweight smoothing, Lenis lub własne parametry. */
 (function () {
   'use strict';
 
@@ -24,11 +24,15 @@
     return Math.min(max, Math.max(min, value));
   }
 
-  function filozofiaConfig() {
-    return window.GICLEE_FILOZOFIA_CONFIG || {};
+  function pageScrollConfig() {
+    return (
+      window.GICLEE_PAGE_SCROLL_CONFIG ||
+      window.GICLEE_FILOZOFIA_CONFIG ||
+      {}
+    );
   }
 
-  function filozofiaScrollMode() {
+  function pageScrollMode() {
     try {
       var override = new URLSearchParams(window.location.search).get(
         'giclee_page_scroll_mode'
@@ -45,20 +49,20 @@
     } catch (_error) {
       // Keep the saved setting when URLSearchParams is unavailable.
     }
-    return String(filozofiaConfig().pageScrollMode || 'standard')
+    return String(pageScrollConfig().pageScrollMode || 'standard')
       .trim()
       .toLowerCase();
   }
 
   function readConfigNumber(key, fallback, min, max) {
-    var raw = filozofiaConfig()[key];
+    var raw = pageScrollConfig()[key];
     var n = typeof raw === 'number' ? raw : Number.parseFloat(raw);
     if (!Number.isFinite(n)) return fallback;
     return clamp(n, min, max);
   }
 
   function readConfigBoolean(key, fallback) {
-    var raw = filozofiaConfig()[key];
+    var raw = pageScrollConfig()[key];
     if (typeof raw === 'boolean') return raw;
     if (raw === 'true' || raw === 1 || raw === '1') return true;
     if (raw === 'false' || raw === 0 || raw === '0') return false;
@@ -66,7 +70,7 @@
   }
 
   function applyModeTuning() {
-    var mode = filozofiaScrollMode();
+    var mode = pageScrollMode();
     SCROLL_SMOOTHNESS = readConfigNumber(
       'scrollSmoothness',
       SCROLL_SMOOTHNESS,
@@ -123,7 +127,7 @@
   }
 
   function lenisSettings() {
-    var preset = String(filozofiaConfig().lenisPreset || '')
+    var preset = String(pageScrollConfig().lenisPreset || '')
       .trim()
       .toLowerCase();
     var settings = {
@@ -235,16 +239,14 @@
     if (reducedMotionRequested()) return 'reduced-motion';
     if (designModeActive()) return 'shopify-design-mode';
     if (touchLikeDevice()) return 'touch-native';
-    if (document.body.classList.contains('template-page-filozofia-marki')) {
-      var mode = filozofiaScrollMode();
-      if (
-        mode !== 'smooth' &&
-        mode !== 'native-v2' &&
-        mode !== 'lenis' &&
-        mode !== 'custom'
-      ) {
-        return 'configuration';
-      }
+    var mode = pageScrollMode();
+    if (
+      mode !== 'smooth' &&
+      mode !== 'native-v2' &&
+      mode !== 'lenis' &&
+      mode !== 'custom'
+    ) {
+      return 'configuration';
     }
     return '';
   }
@@ -495,7 +497,7 @@
     }
 
     applyModeTuning();
-    if (filozofiaScrollMode() === 'lenis') {
+    if (pageScrollMode() === 'lenis') {
       bootLenis();
       return;
     }
@@ -505,14 +507,14 @@
     root.classList.add('giclee-page-smooth-scroll');
     root.setAttribute(
       'data-giclee-smooth-scroll',
-      filozofiaScrollMode() === 'custom' ? 'page-custom' : 'page-native-v2'
+      pageScrollMode() === 'custom' ? 'page-custom' : 'page-native-v2'
     );
     root.setAttribute(
       'data-giclee-scroll-smoothness',
       String(SCROLL_SMOOTHNESS)
     );
     root.removeAttribute('data-giclee-smooth-scroll-reason');
-    exposeDiagnostics(filozofiaScrollMode(), {
+    exposeDiagnostics(pageScrollMode(), {
       followTauMs: FOLLOW_TAU_MS,
       maxTargetLeadPx: MAX_TARGET_LEAD_PX
     });

@@ -20,6 +20,8 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import unquote, urlparse
 from urllib.request import Request, urlopen
 
+from giclee_app.app_paths import atomic_write_bytes
+
 from Komponenty.dodajobraz import shopify_client as sc
 from Komponenty._shared.theme_page_editor.image_object_y import (
     normalize_object_y,
@@ -73,7 +75,11 @@ HOME_DEPLOY_RELPATHS = (
     "assets/giclee-home-mobile.js",
     "assets/giclee-home-sections.js",
     "assets/giclee-hero-video-collage.js",
+    "assets/giclee-text-layers-index.js",
+    "assets/giclee-text-layers.css",
+    "assets/giclee-text-layers.js",
     "snippets/giclee-home-stack-critical.liquid",
+    "snippets/scripts.liquid",
 )
 
 _THUMB_CACHE: dict[str, str | None] = {}
@@ -672,10 +678,16 @@ def homepage_deploy_relpaths() -> tuple[str, ...]:
     return tuple(rel for rel in HOME_DEPLOY_RELPATHS if (root / rel).is_file())
 
 
-def backup_file(path: Path, *, label: str, logger: Logger | None = None) -> Path:
+def backup_file(
+    path: Path,
+    *,
+    label: str,
+    logger: Logger | None = None,
+    timestamp: str | None = None,
+) -> Path:
     if not path.is_file():
         raise FileNotFoundError(f"Brak pliku do kopii: {path}")
-    ts = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
+    ts = timestamp or datetime.now(UTC).strftime("%Y%m%d-%H%M%S-%f")
     backup_dir = _backups_dir()
     backup_dir.mkdir(parents=True, exist_ok=True)
     if path.name == "index.json":
@@ -684,19 +696,55 @@ def backup_file(path: Path, *, label: str, logger: Logger | None = None) -> Path
         stamped = backup_dir / f"settings-{ts}.json"
     else:
         stamped = backup_dir / f"{path.stem}-{ts}{path.suffix}"
-    shutil.copy2(path, stamped)
+    atomic_write_bytes(stamped, path.read_bytes())
     _log(logger, f"[strona główna] Kopia {label}: {stamped.name}")
     return stamped
 
 
-def backup_before_save(*, logger: Logger | None = None) -> list[Path]:
+def backup_before_save(
+    *,
+    variant_id: str | None = None,
+    logger: Logger | None = None,
+) -> list[Path]:
     saved: list[Path] = []
-    index_path = index_template_path()
-    if index_path.is_file():
-        saved.append(backup_file(index_path, label="index.json", logger=logger))
-    settings_path = settings_data_path()
-    if settings_path.is_file():
-        saved.append(backup_file(settings_path, label="settings_data.json", logger=logger))
+    ts = datetime.now(UTC).strftime("%Y%m%d-%H%M%S-%f")
+    try:
+        index_path = index_template_path()
+        if index_path.is_file():
+            saved.append(
+                backup_file(
+                    index_path,
+                    label="index.json",
+                    logger=logger,
+                    timestamp=ts,
+                )
+            )
+        settings_path = settings_data_path()
+        if settings_path.is_file():
+            saved.append(
+                backup_file(
+                    settings_path,
+                    label="settings_data.json",
+                    logger=logger,
+                    timestamp=ts,
+                )
+            )
+        if variant_id:
+            from .homepage_variants import variant_file_path
+
+            source = variant_file_path(variant_id, "text-layers.json")
+            data = (
+                source.read_bytes()
+                if source.is_file()
+                else b'{\n  "schemaVersion": 1,\n  "sections": {}\n}\n'
+            )
+            text_backup = _backups_dir() / f"text-layers-{variant_id}-{ts}.json"
+            atomic_write_bytes(text_backup, data)
+            saved.append(text_backup)
+    except Exception:
+        for path in saved:
+            path.unlink(missing_ok=True)
+        raise
     return saved
 
 

@@ -18,10 +18,12 @@ Liquid. AI ma wykonać wszystkie poniższe warstwy:
    korzystającą ze wspólnego runtime;
 2. dodać dla tej instancji osobną, widoczną sekcję w edytorze **GicleeApp**,
    wzorowaną na sekcjach `scroll_story` / `scroll_story_wrota` z komponentu
-   **Filozofia marki**;
+   **Filozofia marki**; w `scroll_story` i `scroll_story_wrota` ustawienia
+   ruchu są zwijanym akordeonem **Charakter odtwarzania**, a nie osobną
+   pozycją listy;
 3. podłączyć wybór źródła, kontenera, jakości i konkretnego pliku oraz ustawienia
-   ruchu; każda instancja ma własne etykiety, np. **Film-scroll — Wrota** i
-   **Charakter odtwarzania — Wrota**;
+   ruchu; każda instancja ma jedną własną sekcję, a w niej zwijany przycisk
+   **Charakter odtwarzania**;
 4. zapewnić rodzinę zasobów, stabilne sloty runtime, aktywację pliku po zapisie
    i selektywny deploy;
 5. sprawdzić ruch w dół, ruch w górę, zmianę kierunku, zatrzymanie i ponowne
@@ -35,13 +37,24 @@ Jeżeli strona lub miejsce nie zostały wymienione w zdaniu, należy użyć
 bieżącego kontekstu zadania. Pytanie doprecyzowujące jest potrzebne dopiero
 wtedy, gdy repozytorium nie wskazuje jednoznacznie strony docelowej.
 
+W edytorach ze wspólnym panelem **Sekcje strony** operator może też kliknąć
+PPM na liście i wybrać **Dodaj „Scroll Film”…**. Nowa instancja jest wstawiana
+za klikniętą sekcją, otrzymuje własne źródło i ustawienia, a przycisk
+**Charakter odtwarzania** rozwija parametry ruchu bez dodawania drugiej pozycji
+na liście. Specjalny panel RAM strony Giclée Frame kieruje tę samą akcję do
+właściwego, zapisywalnego edytora szablonu. Nowa sekcja pozostaje wyłączona,
+dopóki film nie zostanie poprawnie przygotowany; udany import włącza ją
+automatycznie. Samodzielny Scroll Film wypełnia viewport od jego górnej
+krawędzi (`top: 0`) i nie dziedziczy rezerwy nagłówka ani pasa separatora
+referencyjnej sceny „Filozofia marki”.
+
 ### Obowiązkowa ścieżka implementacji
 
 | Warstwa | Co trzeba zrobić |
 |---|---|
 | Szablon Shopify | Dodać sekcję/blok w `templates/page.<nazwa>.json`; referencją jest `_media-without-appearance` w `page.filozofia-marki.json`. |
 | Schema i Liquid | Użyć pól `scroll_*` z `blocks/_media-without-appearance.liquid` i konfiguracji `data-*` z `snippets/media.liquid`; nie kopiować runtime. |
-| GicleeApp | W `cursor-api/Komponenty/<strona>/registry.py` dodać osobny `TemplateZone` Film-scroll oraz strefę charakteru odtwarzania, tak jak `scroll_story_wrota` i `scroll_motion_wrota`. |
+| GicleeApp | Dodać osobny `TemplateZone` Film-scroll. Ustawienia ruchu umieścić w zwijanej grupie/przycisku **Charakter odtwarzania** wewnątrz tej strefy; wspólne edytory robią to przez menu PPM. |
 | Panel i zapis | W `gui.py` zarejestrować strefy, callback `after_template_save` oraz ścieżki aktywnych zasobów do deployu. |
 | Biblioteka plików | W `video_sequence.py` dodać rodzinę w `ASSET_FAMILIES` albo bezpiecznie uogólnić ten mechanizm; nie przypisywać nowej instancji domyślnie do `philosophy`. |
 | Stabilny asset | Rozszerzyć mapowanie w `snippets/media.liquid`, aby wybrany pakiet został zmaterializowany do jednoznacznego slotu używanego przez frontend. |
@@ -53,8 +66,9 @@ wtedy, gdy repozytorium nie wskazuje jednoznacznie strony docelowej.
 Moduł jest gotowy dopiero, gdy:
 
 - jego sekcja istnieje w szablonie i renderuje się na właściwej stronie;
-- GicleeApp pokazuje nową, nazwaną sekcję i zapisuje ustawienia do właściwego
-  `section_id`/bloku, bez nadpisywania innej instancji;
+- GicleeApp pokazuje nową, nazwaną sekcję z przyciskiem **Charakter
+  odtwarzania** i zapisuje ustawienia do właściwego `section_id`/bloku, bez
+  nadpisywania innej instancji;
 - wybrany plik jest aktywowany po zapisie i znajduje się na liście deployu;
 - frontend oraz aktywny wariant GicleeApp mają te same wartości;
 - WebM pozostaje WebM, jeśli taki kontener wybrał użytkownik;
@@ -66,7 +80,7 @@ Moduł jest gotowy dopiero, gdy:
 | Obszar | Plik | Odpowiedzialność |
 |---|---|---|
 | Panel GicleeApp | `cursor-api/Komponenty/filozofiamarki/gui.py` | Edytor strony, wybór MP4/gotowego WebM/WebP, 720p/1080p i konkretnego pliku z filtrowanej biblioteki; przygotowanie zasobów, status FPS/alfa/GOP/fallbacku |
-| Rejestr pól | `cursor-api/Komponenty/filozofiamarki/registry.py` | Sekcje „Charakter odtwarzania” i „Przezroczystość i tło”, zakresy, opisy, presety |
+| Rejestr pól | `cursor-api/Komponenty/filozofiamarki/registry.py` | Zwijane grupy „Charakter odtwarzania” i „Ustawienia tła” wewnątrz sekcji Film-scroll, zakresy, opisy, presety |
 | Wspólny edytor | `cursor-api/Komponenty/_shared/theme_page_editor/types.py`, `gui_shell.py` | Model pól, zastosowanie całego presetu, wykrycie ustawień własnych, przycisk przywracania |
 | Katalog i walidacja | `cursor-api/Komponenty/filozofiamarki/motion_config.py` | Odczyt katalogu, mapowanie pól, rekomendowany preset, walidacja |
 | Presety runtime | `assets/giclee-scroll-motion-presets.json` | Jedno źródło dokładnych wartości dla GicleeApp i przeglądarki |
@@ -141,7 +155,9 @@ Import filmu nadal aktualizuje stabilny slot runtime wymagany przez starsze
 warianty, ale zapisuje też lokalny pakiet
 `giclee-scroll-library-<rodzina>-<jakość>-<format>-<nazwa>-<hash>`.
 Pakiet zawiera film, poster i manifest. Pole **Konkretny plik** jest dynamiczne:
-filtruje po instancji (`philosophy`/`wrota`), kontenerze i rozdzielczości.
+filtruje po rodzinie (`philosophy`/`wrota`/`shared`), kontenerze i
+rozdzielczości. Stabilny slot runtime jest technicznym fallbackiem i nie tworzy
+drugiej widocznej pozycji: jeden materiał ma w selektorze dokładnie jeden wpis.
 
 Po zapisaniu strony `apply_scroll_video_selection()` materializuje wybraną
 pozycję do kanonicznych nazw runtime. Biblioteka pozostaje lokalna i jest
@@ -433,6 +449,13 @@ sprzętowego dekodowania VP9 alpha.
   wykryć spłaszczenie i czarne/białe obwódki.
 - `premultiplyAlpha` jest jawne w dekoderze. Nie należy zmieniać modelu
   premultiplikacji bez testów całego pipeline.
+- Pary **Przed / Po** w Treści 3D Wrot używają `object-fit: contain`, a kontener
+  przejmuje naturalne proporcje obrazu, aby oba pliki były widoczne w całości
+  bez bocznych pasów. Jego limit rozmiaru jest dwukrotnie większy niż pierwotnie.
+  Rzeczywisty rozmiar jest ograniczany dostępną wysokością viewportu po odjęciu
+  paddingów sekcji i przeliczany po zmianie rozmiaru okna.
+  Natywny suwak zakresu steruje wspólną granicą porównania myszką, dotykiem
+  i klawiaturą; nie powstaje drugi listener scroll.
 
 ## Lazy load, scheduler i cleanup
 

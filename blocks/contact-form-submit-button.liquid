@@ -12,6 +12,20 @@
 {% stylesheet %}
   .submit-button {
     min-width: max-content;
+    border: none !important;
+    outline: none !important;
+    transform: scale(1);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, background-color 0.25s ease, color 0.25s ease !important;
+  }
+
+  .submit-button:hover,
+  .submit-button:focus-visible {
+    opacity: 1 !important;
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border: none !important;
+    outline: none !important;
+    transform: scale(1.04) !important;
   }
 {% endstylesheet %}
 

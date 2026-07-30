@@ -60,6 +60,8 @@ class TemplateField:
     max_value: float | None = None
     step: float | None = None
     unit: str | None = None
+    # Wymuś pole liczbowe z możliwością wpisania wartości zamiast suwaka.
+    free_entry: bool = False
     # Opcjonalna grupa pól renderowana jako zwijany akordeon.
     group_id: str | None = None
     group_label: str = ""

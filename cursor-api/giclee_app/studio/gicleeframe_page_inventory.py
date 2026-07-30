@@ -17,6 +17,7 @@ GICLEEFRAME_FOLDER = "gicleeframe"
 MANIFEST_REL = "data/variants/manifest.json"
 REGISTRY_REL = "registry.py"
 PAGE_TEMPLATE = "page.giclee-frame.json"
+TEXT_LAYERS_FILE = "text-layers.json"
 
 INVENTORY_READ_NOTE = (
     "F2 inventory — bounded read variant JSON · zero write · RAM draft osobno"
@@ -431,6 +432,72 @@ def _parse_page_inventory(
     return source_section_count, tuple(elements)
 
 
+def _text_layer_inventory(
+    data: dict,
+    *,
+    page_data: dict,
+    labels: dict[str, str],
+    base_order: int,
+) -> tuple[tuple[PageElement, ...], tuple[str, ...]]:
+    sections = data.get("sections")
+    page_sections = page_data.get("sections")
+    if not isinstance(sections, dict) or not isinstance(page_sections, dict):
+        return (), ()
+
+    elements: list[PageElement] = []
+    warnings: list[str] = []
+    offset = 0
+    for raw_section_key, raw_layers in sections.items():
+        section_key = str(raw_section_key)
+        if section_key not in page_sections:
+            warnings.append(
+                f"Osierocone warstwy tekstowe: sekcja {section_key}"
+            )
+        if not isinstance(raw_layers, list):
+            continue
+        section_label = labels.get(section_key, section_key)
+        for raw_layer in raw_layers:
+            if not isinstance(raw_layer, dict):
+                continue
+            content = (
+                raw_layer.get("content")
+                if isinstance(raw_layer.get("content"), dict)
+                else {}
+            )
+            kind = str(content.get("kind") or "paragraph")
+            text = str(content.get("text") or "")
+            if content.get("mode") == "adapted-code":
+                text = _strip_html(str(content.get("html") or ""))
+            name = str(raw_layer.get("name") or "Tekst")
+            layer_id = str(raw_layer.get("id") or f"text_{offset}")
+            enabled = bool(raw_layer.get("enabled", True))
+            status = "ok" if text.strip() else "missing_content"
+            if not enabled:
+                status = "disabled"
+            title = text if kind in {"h1", "h2", "h3"} else ""
+            body = "" if title else text
+            elements.append(
+                PageElement(
+                    element_id=f"{section_key}::{layer_id}",
+                    section_key=section_key,
+                    element_type="text_layer",
+                    group="texts",
+                    order=base_order + offset,
+                    label=f"{section_label} — {name}",
+                    title=_truncate(title),
+                    text=_truncate(body),
+                    image_ref="",
+                    alt="",
+                    notes=f"Warstwa Dodaj tekst · {kind}",
+                    editable=False,
+                    source="text-layers.json",
+                    status=status,
+                )
+            )
+            offset += 1
+    return tuple(elements), tuple(warnings)
+
+
 def build_gicleeframe_page_inventory(components_root: Path) -> PageInventoryReport:
     """Read-only inventory from bounded paths under components_root."""
     root = Path(components_root)
@@ -461,6 +528,22 @@ def build_gicleeframe_page_inventory(components_root: Path) -> PageInventoryRepo
             warnings.append(f"Nie udało się sparsować: {page_path.name}")
         else:
             source_section_count, elements = _parse_page_inventory(page_data, labels)
+            text_layers_path = page_path.parent / TEXT_LAYERS_FILE
+            if text_layers_path.is_file():
+                text_data = _load_json_dict(text_layers_path)
+                if text_data is None:
+                    warnings.append(
+                        f"Nie udało się sparsować: {TEXT_LAYERS_FILE}"
+                    )
+                else:
+                    text_elements, text_warnings = _text_layer_inventory(
+                        text_data,
+                        page_data=page_data,
+                        labels=labels,
+                        base_order=len(elements),
+                    )
+                    elements = elements + text_elements
+                    warnings.extend(text_warnings)
 
     return PageInventoryReport(
         components_root=root,
@@ -490,7 +573,7 @@ def inventory_count_stats(report: PageInventoryReport) -> dict[str, int]:
             counts["media_sections"] += 1
         if el.element_type == "image":
             counts["images"] += 1
-        if el.element_type in ("jumbo", "body"):
+        if el.element_type in ("jumbo", "body", "text_layer"):
             counts["text_blocks"] += 1
         if el.status in ("needs_review", "missing_content", "legacy_disabled"):
             counts["needs_review"] += 1

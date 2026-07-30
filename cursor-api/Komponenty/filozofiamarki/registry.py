@@ -869,6 +869,51 @@ PAGE_ZONES: tuple[TemplateZone, ...] = (
 )
 
 _SCROLL_MOTION = next(zone for zone in PAGE_ZONES if zone.zone_id == "scroll_motion")
+_SCROLL_STORY = next(zone for zone in PAGE_ZONES if zone.zone_id == "scroll_story")
+_SCROLL_ALPHA = next(zone for zone in PAGE_ZONES if zone.zone_id == "scroll_alpha")
+_SCROLL_ALPHA_FIELDS_GROUPED = tuple(
+    replace(
+        field,
+        group_id="film_scroll_background",
+        group_label="Ustawienia tła",
+        group_collapsed=True,
+    )
+    for field in _SCROLL_ALPHA.fields
+)
+_SCROLL_MOTION_FIELDS_GROUPED = tuple(
+    replace(
+        field,
+        group_id="film_scroll_motion",
+        group_label="Charakter odtwarzania",
+        group_collapsed=True,
+    )
+    for field in _SCROLL_MOTION.fields
+)
+PAGE_ZONES = tuple(
+    replace(
+        zone,
+        description=(
+            f"{zone.description} Ustawienia tła i charakter ruchu są dostępne "
+            "w zwijanych grupach poniżej."
+        ),
+        fields=(
+            *_SCROLL_ALPHA_FIELDS_GROUPED,
+            *zone.fields,
+            *_SCROLL_MOTION_FIELDS_GROUPED,
+        ),
+        preset_field_id=_SCROLL_MOTION.preset_field_id,
+        preset_values=_SCROLL_MOTION.preset_values,
+        custom_preset_value=_SCROLL_MOTION.custom_preset_value,
+        recommended_preset_value=_SCROLL_MOTION.recommended_preset_value,
+    )
+    if zone.zone_id == _SCROLL_STORY.zone_id
+    else zone
+    for zone in PAGE_ZONES
+    if zone.zone_id not in {
+        _SCROLL_MOTION.zone_id,
+        _SCROLL_ALPHA.zone_id,
+    }
+)
 
 _WROTA_STORY_FIELDS = (
     TemplateField(
@@ -944,31 +989,35 @@ _WROTA_STORY_FIELDS = (
     ),
 )
 
+_WROTA_MOTION_FIELDS_GROUPED = tuple(
+    replace(
+        field,
+        group_id="film_scroll_motion_wrota",
+        group_label="Charakter odtwarzania",
+        group_collapsed=True,
+    )
+    for field in _remap_fields_to_section(
+        _SCROLL_MOTION.fields,
+        from_section="media_with_content_D7REjd",
+        to_section="media_with_content_Wrota",
+    )
+)
+
 PAGE_ZONES = PAGE_ZONES + (
     TemplateZone(
         zone_id="scroll_story_wrota",
         label="Portal Wrota — animacja",
         description=(
             "Druga animacja Film-scroll za portalem ionowym (po cytacie). "
-            "Źródło filmu podmienisz w panelu „Wrota” nad edytorem."
+            "Źródło filmu podmienisz w panelu „Wrota” nad edytorem. "
+            "Charakter ruchu jest dostępny w zwijanej grupie poniżej."
         ),
         section_key="media_with_content_Wrota",
-        fields=_WROTA_STORY_FIELDS,
-    ),
-    TemplateZone(
-        zone_id="scroll_motion_wrota",
-        label="Charakter odtwarzania — Wrota",
-        description=_SCROLL_MOTION.description,
-        section_key="media_with_content_Wrota",
+        fields=(*_WROTA_STORY_FIELDS, *_WROTA_MOTION_FIELDS_GROUPED),
         preset_field_id="scroll_motion_preset",
         preset_values=preset_values(),
         custom_preset_value="custom",
         recommended_preset_value="luxury",
-        fields=_remap_fields_to_section(
-            _SCROLL_MOTION.fields,
-            from_section="media_with_content_D7REjd",
-            to_section="media_with_content_Wrota",
-        ),
     ),
     TemplateZone(
         zone_id="wrota_parallax",

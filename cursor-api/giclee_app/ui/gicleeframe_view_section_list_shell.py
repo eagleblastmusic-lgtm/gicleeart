@@ -19,6 +19,10 @@ from .gicleeframe_view_primitives import (
     _make_card_title,
     _make_gf_card,
 )
+from .gicleeframe_view_film_scroll_context import (
+    bind_section_list_context_target,
+    open_persistent_text_layer_editor,
+)
 
 _SECTION_PLACEHOLDER = "— wybierz sekcję —"
 _SECTION_LIST_WIDTH = 320
@@ -90,6 +94,7 @@ class GicleeFrameSectionListShellMixin:
         with span("studio.gicleeframe.build.sections_column.shell.card"):
             card = _make_gf_card(parent, variant="panel_deep", radius=16)
             self._section_list_column = card
+            bind_section_list_context_target(self, card)
 
         with span("studio.gicleeframe.build.sections_column.shell.extras_slot"):
             self._section_list_extras_frame = ctk.CTkFrame(card, fg_color="transparent")
@@ -102,6 +107,10 @@ class GicleeFrameSectionListShellMixin:
                     fg_color="transparent",
                     width=_SECTION_LIST_WIDTH - 12,
                     height=_SECTION_LIST_HEIGHT,
+                )
+                bind_section_list_context_target(
+                    self,
+                    self._section_list_static_lane,
                 )
             with span("studio.gicleeframe.build.sections_column.shell.static_lane_pack"):
                 self._section_list_static_lane.pack(
@@ -128,6 +137,10 @@ class GicleeFrameSectionListShellMixin:
                 height=_SECTION_LIST_HEIGHT,
                 fg_color="transparent",
                 corner_radius=0,
+            )
+            bind_section_list_context_target(
+                self,
+                self._section_list_scroll,
             )
         with span("studio.gicleeframe.build.sections_column.shell.scroll_pack"):
             self._section_list_scroll.pack(fill="both", expand=True, padx=8, pady=(0, 12))
@@ -312,6 +325,18 @@ class GicleeFrameSectionListShellMixin:
             SECTION_LIST_DRAG_HINT,
         )
         title.pack(fill="x", padx=_CARD_PAD_X, pady=(12, 8))
+
+        add_text_button = ctk.CTkButton(
+            extras_slot,
+            text="Dodaj tekst…",
+            height=30,
+            fg_color=theme.AppBg,
+            hover_color=theme.CardHover,
+            text_color=theme.TextPrimary,
+            font=theme.get_font(10, "bold"),
+            command=lambda: open_persistent_text_layer_editor(self),
+        )
+        add_text_button.pack(fill="x", padx=_CARD_PAD_X, pady=(0, 8))
 
         self._section_list_trigger = ctk.CTkButton(
             card,

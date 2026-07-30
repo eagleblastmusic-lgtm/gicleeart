@@ -28,15 +28,25 @@
   assign scroll_video_container = block_settings.scroll_video_container | default: 'mp4'
   assign scroll_video_asset = block_settings.scroll_video_asset | default: 'giclee-philosophy-frames'
   assign scroll_is_wrota = false
+  assign scroll_is_shared = false
   if scroll_video_asset == 'giclee-philosophy-wrota'
     assign scroll_is_wrota = true
+  elsif scroll_video_asset contains 'giclee-film-scroll-'
+    assign scroll_is_shared = true
   endif
   assign scroll_frame_count = 210
+  assign scroll_frame_fps = 60
   if scroll_is_wrota
     assign scroll_frame_count = 778
   endif
   if scroll_video_quality == '1080p'
-    if scroll_is_wrota
+    if scroll_is_shared
+      assign scroll_frame_first = 'giclee-film-scroll-shared-1080-poster.webp'
+      assign scroll_frame_manifest = 'giclee-film-scroll-shared-1080-frames-manifest.json'
+      assign scroll_native_video = 'giclee-film-scroll-shared-1080.mp4'
+      assign scroll_native_poster = 'giclee-film-scroll-shared-1080-poster.webp'
+      assign scroll_native_manifest = 'giclee-film-scroll-shared-1080-manifest.json'
+    elsif scroll_is_wrota
       assign scroll_frame_first = 'giclee-philosophy-wrota-1080-frame-000.webp'
       assign scroll_frame_manifest = 'giclee-philosophy-wrota-1080-manifest.json'
       assign scroll_native_video = 'giclee-philosophy-wrota-scroll-1080.mp4'
@@ -53,7 +63,13 @@
     assign scroll_frame_height = 1080
   else
     assign scroll_video_quality = '720p'
-    if scroll_is_wrota
+    if scroll_is_shared
+      assign scroll_frame_first = 'giclee-film-scroll-shared-720-poster.webp'
+      assign scroll_frame_manifest = 'giclee-film-scroll-shared-720-frames-manifest.json'
+      assign scroll_native_video = 'giclee-film-scroll-shared-720.mp4'
+      assign scroll_native_poster = 'giclee-film-scroll-shared-720-poster.webp'
+      assign scroll_native_manifest = 'giclee-film-scroll-shared-720-manifest.json'
+    elsif scroll_is_wrota
       assign scroll_frame_first = 'giclee-philosophy-wrota-720-frame-000.webp'
       assign scroll_frame_manifest = 'giclee-philosophy-wrota-720-manifest.json'
       assign scroll_native_video = 'giclee-philosophy-wrota-scroll-720.mp4'
@@ -79,7 +95,11 @@
     assign scroll_native_has_alpha = 'unknown'
     assign scroll_native_alpha_mode = 'unknown'
     if scroll_video_quality == '1080p'
-      if scroll_is_wrota
+      if scroll_is_shared
+        assign scroll_native_video = 'giclee-film-scroll-shared-1080.webm'
+        assign scroll_native_poster = 'giclee-film-scroll-shared-webm-1080-poster.webp'
+        assign scroll_native_manifest = 'giclee-film-scroll-shared-webm-1080-manifest.json'
+      elsif scroll_is_wrota
         assign scroll_native_video = 'giclee-philosophy-wrota-scroll-1080.webm'
         assign scroll_native_poster = 'giclee-philosophy-wrota-webm-1080-poster.webp'
         assign scroll_native_manifest = 'giclee-philosophy-wrota-webm-1080-manifest.json'
@@ -89,7 +109,11 @@
         assign scroll_native_manifest = 'giclee-philosophy-webm-1080-manifest.json'
       endif
     else
-      if scroll_is_wrota
+      if scroll_is_shared
+        assign scroll_native_video = 'giclee-film-scroll-shared-720.webm'
+        assign scroll_native_poster = 'giclee-film-scroll-shared-webm-720-poster.webp'
+        assign scroll_native_manifest = 'giclee-film-scroll-shared-webm-720-manifest.json'
+      elsif scroll_is_wrota
         assign scroll_native_video = 'giclee-philosophy-wrota-scroll-720.webm'
         assign scroll_native_poster = 'giclee-philosophy-wrota-webm-720-poster.webp'
         assign scroll_native_manifest = 'giclee-philosophy-wrota-webm-720-manifest.json'
@@ -101,6 +125,51 @@
     endif
   else
     assign scroll_video_container = 'mp4'
+  endif
+  assign scroll_source_spec = block_settings.scroll_video_source | default: '' | strip
+  if scroll_source_spec != blank
+    assign scroll_source_parts = scroll_source_spec | split: '::'
+    assign selected_video = scroll_source_parts[0] | strip
+    assign selected_poster = scroll_source_parts[1] | strip
+    assign selected_manifest = scroll_source_parts[2] | strip
+    if selected_video != blank and selected_video != '-'
+      assign scroll_native_video = selected_video
+    endif
+    if selected_poster != blank and selected_poster != '-'
+      assign scroll_native_poster = selected_poster
+    endif
+    if selected_manifest != blank and selected_manifest != '-'
+      assign scroll_native_manifest = selected_manifest
+    endif
+    assign selected_frame_count = scroll_source_parts[3] | plus: 0
+    assign selected_fps = scroll_source_parts[4] | plus: 0
+    assign selected_width = scroll_source_parts[5] | plus: 0
+    assign selected_height = scroll_source_parts[6] | plus: 0
+    if selected_frame_count > 0
+      assign scroll_frame_count = selected_frame_count
+    endif
+    if selected_fps > 0
+      assign scroll_frame_fps = selected_fps
+    endif
+    if selected_width > 0
+      assign scroll_frame_width = selected_width
+    endif
+    if selected_height > 0
+      assign scroll_frame_height = selected_height
+    endif
+    assign selected_alpha = scroll_source_parts[7] | strip
+    assign selected_codec = scroll_source_parts[8] | strip
+    if selected_alpha != blank and selected_alpha != '-'
+      assign scroll_native_has_alpha = selected_alpha
+      if selected_alpha == 'true'
+        assign scroll_native_alpha_mode = 'straight'
+      elsif selected_alpha == 'false'
+        assign scroll_native_alpha_mode = 'none'
+      endif
+    endif
+    if selected_codec != blank and selected_codec != '-'
+      assign scroll_native_codec = selected_codec
+    endif
   endif
   assign scroll_poster = scroll_frame_first
   if scroll_video_engine == 'video'
@@ -213,7 +282,7 @@
         href="{{ scroll_poster | asset_url }}"
         fetchpriority="high"
       >
-      <div class="media-block__scroll-stage{% if scroll_video_asset == 'giclee-philosophy-frames' %} media-block__scroll-stage--philosophy{% endif %}{% if scroll_is_wrota %} giclee-fm-wrota-portal{% endif %}"{% if scroll_is_wrota %} data-fm-portal style="--giclee-fm-portal-inset: 50%;"{% endif %}>
+      <div class="media-block__scroll-stage{% if scroll_video_asset == 'giclee-philosophy-frames' %} media-block__scroll-stage--philosophy{% endif %}{% if scroll_is_shared %} media-block__scroll-stage--standalone{% endif %}{% if scroll_is_wrota %} giclee-fm-wrota-portal{% endif %}"{% if scroll_is_wrota %} data-fm-portal style="--giclee-fm-portal-inset: 50%;"{% endif %}>
         <img
           class="media-block__scroll-poster"
           src="{{ scroll_poster | asset_url }}"
@@ -230,8 +299,8 @@
             data-scroll-native-video
             data-frame-quality="{{ scroll_video_quality }}"
             data-frame-count="{{ scroll_frame_count }}"
-            data-frame-fps="60"
-            data-video-manifest="{{ scroll_native_manifest | asset_url }}"
+            data-frame-fps="{{ scroll_frame_fps }}"
+            {% if scroll_native_manifest != blank %}data-video-manifest="{{ scroll_native_manifest | asset_url }}"{% endif %}
             data-video-container="{{ scroll_video_container }}"
             data-source-has-alpha="{{ scroll_native_has_alpha }}"
             data-alpha-mode="{{ scroll_native_alpha_mode }}"
@@ -258,7 +327,7 @@
             data-frame-count="{{ scroll_frame_count }}"
             data-frame-width="{{ scroll_frame_width }}"
             data-frame-height="{{ scroll_frame_height }}"
-            data-frame-fps="60"
+            data-frame-fps="{{ scroll_frame_fps }}"
             data-frame-manifest="{{ scroll_frame_manifest | asset_url }}"
             data-source-has-alpha="true"
             data-alpha-mode="straight"
@@ -303,6 +372,30 @@
               }}
             </p>
           </div>
+        {% elsif scroll_is_shared %}
+          {% if block_settings.scroll_intro_title != blank or block_settings.scroll_intro_subtitle != blank %}
+            <div class="media-block__scroll-intro">
+              <span class="media-block__scroll-intro-line" aria-hidden="true"></span>
+              {% if block_settings.scroll_intro_title != blank %}
+                <h2 class="media-block__scroll-intro-title">
+                  {{ block_settings.scroll_intro_title | escape | replace: '|', '<br>' }}
+                </h2>
+              {% endif %}
+              {% if block_settings.scroll_intro_subtitle != blank %}
+                <p class="media-block__scroll-intro-subtitle">
+                  {{ block_settings.scroll_intro_subtitle | strip_html | escape }}
+                </p>
+              {% endif %}
+            </div>
+          {% endif %}
+          {% if block_settings.scroll_outro_text != blank %}
+            <div class="media-block__scroll-outro" aria-hidden="true">
+              <span class="media-block__scroll-outro-line" aria-hidden="true"></span>
+              <p class="media-block__scroll-outro-text">
+                {{ block_settings.scroll_outro_text | strip_html | escape }}
+              </p>
+            </div>
+          {% endif %}
         {% endif %}
         {% if scroll_is_wrota %}
           {%- liquid
@@ -349,6 +442,22 @@
                       {%- endif -%}
                       <span class="giclee-fm-tresc3d__label giclee-fm-tresc3d__label--after">Po</span>
                     </div>
+                    <div class="giclee-fm-tresc3d__divider" aria-hidden="true">
+                      <span class="giclee-fm-tresc3d__handle">
+                        <span class="giclee-fm-tresc3d__handle-line"></span>
+                        <span class="giclee-fm-tresc3d__handle-grip">↔</span>
+                      </span>
+                    </div>
+                    <input
+                      class="giclee-fm-tresc3d__slider"
+                      type="range"
+                      min="0"
+                      max="100"
+                      value="50"
+                      step="1"
+                      aria-label="Porównaj obraz przed i po"
+                      data-fm-tresc3d-slider
+                    >
                   </div>
                 </div>
               </div>
@@ -392,6 +501,22 @@
                       {%- endif -%}
                       <span class="giclee-fm-tresc3d__label giclee-fm-tresc3d__label--after">Po</span>
                     </div>
+                    <div class="giclee-fm-tresc3d__divider" aria-hidden="true">
+                      <span class="giclee-fm-tresc3d__handle">
+                        <span class="giclee-fm-tresc3d__handle-line"></span>
+                        <span class="giclee-fm-tresc3d__handle-grip">↔</span>
+                      </span>
+                    </div>
+                    <input
+                      class="giclee-fm-tresc3d__slider"
+                      type="range"
+                      min="0"
+                      max="100"
+                      value="50"
+                      step="1"
+                      aria-label="Porównaj obraz przed i po"
+                      data-fm-tresc3d-slider
+                    >
                   </div>
                 </div>
               </div>
@@ -481,6 +606,18 @@
     position: sticky;
     top: var(--header-group-height, 0px);
     width: 100%;
+  }
+
+  /*
+    Sekcja dodana przez „Dodaj Scroll Film” jest samodzielnym, pełnoekranowym
+    modułem. Nie dziedziczy miejsca na nagłówek ani 50 px separatora używanego
+    przez referencyjną scenę „Filozofia marki”.
+  */
+  .media-block__scroll-stage--standalone {
+    --scroll-separator-band: 0px;
+    height: 100svh;
+    min-height: 100vh;
+    top: 0;
   }
 
   .media-block__scroll-bg-video {

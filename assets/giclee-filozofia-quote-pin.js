@@ -318,6 +318,125 @@
     return stage.querySelector('[data-fm-tresc3d]');
   }
 
+  function initTresc3dComparisons() {
+    var host = tresc3dHost();
+    if (!host) return;
+    host.querySelectorAll('[data-fm-tresc3d-compare]').forEach(function (compare) {
+      if (compare.dataset.fmCompareReady === 'true') return;
+      var media = compare.querySelector('.giclee-fm-tresc3d__compare-media');
+      var slider = compare.querySelector('[data-fm-tresc3d-slider]');
+      if (!media || !(slider instanceof HTMLInputElement)) return;
+
+      compare.dataset.fmCompareReady = 'true';
+      var pair = compare.closest('.giclee-fm-tresc3d__pair');
+      var aspectRatio = 537 / 653;
+      var syncViewportSize = function () {
+        if (!(pair instanceof HTMLElement)) return;
+        var pairStyle = window.getComputedStyle(pair);
+        var verticalPadding =
+          (parseFloat(pairStyle.paddingTop) || 0)
+          + (parseFloat(pairStyle.paddingBottom) || 0);
+        var availableHeight = Math.max(
+          180,
+          Math.min(window.innerHeight || pair.clientHeight, pair.clientHeight)
+            - verticalPadding
+            - 18
+        );
+        compare.style.setProperty(
+          '--compare-viewport-width',
+          Math.floor(availableHeight * aspectRatio) + 'px'
+        );
+      };
+      var images = Array.prototype.slice.call(
+        media.querySelectorAll('.giclee-fm-tresc3d__image')
+      );
+      var syncAspect = function () {
+        var source = images.find(function (image) {
+          return image.naturalWidth > 0 && image.naturalHeight > 0;
+        });
+        if (!source) return;
+        aspectRatio = source.naturalWidth / source.naturalHeight;
+        media.style.setProperty(
+          '--compare-aspect',
+          source.naturalWidth + ' / ' + source.naturalHeight
+        );
+        syncViewportSize();
+      };
+      images.forEach(function (image) {
+        if (image.complete) syncAspect();
+        else image.addEventListener('load', syncAspect, { once: true });
+      });
+      syncViewportSize();
+      if (window.ResizeObserver && pair instanceof HTMLElement) {
+        var sizeObserver = new ResizeObserver(syncViewportSize);
+        sizeObserver.observe(pair);
+        compare.fmCompareResizeObserver = sizeObserver;
+      } else {
+        window.addEventListener('resize', syncViewportSize, { passive: true });
+      }
+
+      var isDragging = false;
+      var sync = function () {
+        var value = clamp(Number(slider.value) || 0, 0, 100);
+        media.style.setProperty('--compare', value.toFixed(2));
+        slider.setAttribute('aria-valuetext', Math.round(value) + '% obrazu przed');
+      };
+      var syncFromPointer = function (event) {
+        var rect = slider.getBoundingClientRect();
+        if (!rect.width) return;
+        slider.value = String(Math.round(clamp(
+          ((event.clientX - rect.left) / rect.width) * 100,
+          0,
+          100
+        )));
+        sync();
+      };
+      var startDrag = function (event) {
+        isDragging = true;
+        media.classList.add('is-dragging');
+        slider.focus({ preventScroll: true });
+        slider.setPointerCapture(event.pointerId);
+        syncFromPointer(event);
+      };
+      var moveDrag = function (event) {
+        if (!isDragging) return;
+        syncFromPointer(event);
+      };
+      var endDrag = function (event) {
+        if (
+          event
+          && Number.isInteger(event.pointerId)
+          && slider.hasPointerCapture(event.pointerId)
+        ) {
+          slider.releasePointerCapture(event.pointerId);
+        }
+        isDragging = false;
+        media.classList.remove('is-dragging');
+      };
+      var moveByKeyboard = function (event) {
+        var value = Number(slider.value) || 0;
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') value -= 1;
+        else if (event.key === 'ArrowRight' || event.key === 'ArrowUp') value += 1;
+        else if (event.key === 'Home') value = 0;
+        else if (event.key === 'End') value = 100;
+        else return;
+        event.preventDefault();
+        slider.value = String(clamp(value, 0, 100));
+        sync();
+      };
+
+      slider.addEventListener('input', sync);
+      slider.addEventListener('change', sync);
+      slider.addEventListener('pointerdown', startDrag);
+      slider.addEventListener('pointermove', moveDrag);
+      slider.addEventListener('pointerup', endDrag);
+      slider.addEventListener('pointercancel', endDrag);
+      slider.addEventListener('blur', endDrag);
+      slider.addEventListener('keydown', moveByKeyboard);
+      sync();
+    });
+  }
+
   function pairOpacityInRange(scrollPx, start, fadeInEnd, fadeOutStart, end) {
     if (scrollPx <= start) return 0;
     if (scrollPx < fadeInEnd) {
@@ -655,6 +774,7 @@
   // Preload od razu — nie czekaj aż sekcja Wrota dojedzie z dołu strony.
   ensureVideoReady();
   ensureParallax();
+  initTresc3dComparisons();
 
   if (reducedMotion) {
     applyScene({ pin: 1, portal: 1, film: 1, afterFilm: 1 }, true);

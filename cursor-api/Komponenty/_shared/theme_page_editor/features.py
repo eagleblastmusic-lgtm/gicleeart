@@ -17,6 +17,7 @@ from .service_base import (
     load_zone_values,
     template_path_for_config,
     validate_template_paths,
+    variants_root_for,
     zone_enabled,
 )
 from .types import TemplateZone
@@ -138,18 +139,60 @@ def validate_page(
     return issues
 
 
-def list_backups(config: PageEditorConfig) -> list[dict[str, str]]:
+def list_backups(
+    config: PageEditorConfig,
+    variant_id: str | None = None,
+) -> list[dict[str, str]]:
     backup_dir = backups_dir_for(config)
     if not backup_dir.is_dir():
         return []
     rows: list[dict[str, str]] = []
-    for path in sorted(backup_dir.glob("*.json"), reverse=True):
+    if variant_id:
+        stem = Path(config.template_basename).stem
+        paths = sorted(
+            (
+                *backup_dir.glob(f"variant-{variant_id}-{stem}-*.json"),
+                *backup_dir.glob(f"{stem}-*.json"),
+            ),
+            key=lambda path: path.name,
+            reverse=True,
+        )
+    else:
+        paths = sorted(backup_dir.glob("*.json"), reverse=True)
+    for path in paths:
+        if "-text-layers-" in path.name:
+            continue
         rows.append({"name": path.name, "path": str(path)})
     return rows
 
 
-def restore_backup(config: PageEditorConfig, backup_path: Path) -> None:
-    dest = template_path_for_config(config)
+def restore_backup(
+    config: PageEditorConfig,
+    backup_path: Path,
+    *,
+    variant_id: str | None = None,
+) -> None:
     if not backup_path.is_file():
         raise FileNotFoundError(str(backup_path))
-    shutil.copy2(backup_path, dest)
+    name = backup_path.name
+    if name.startswith("variant-") and variant_id:
+        stem = Path(config.template_basename).stem
+        marker = f"-{stem}-"
+        if marker not in name:
+            raise ValueError(f"Nieznany format kopii wariantu: {name}")
+        prefix, timestamp = name.split(marker, 1)
+        text_backup = backup_path.with_name(
+            f"{prefix}-text-layers-{timestamp}"
+        )
+        variant_dir = variants_root_for(config) / variant_id
+        variant_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(backup_path, variant_dir / config.template_basename)
+        if text_backup.is_file():
+            shutil.copy2(text_backup, variant_dir / "text-layers.json")
+        return
+    if variant_id:
+        variant_dir = variants_root_for(config) / variant_id
+        variant_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(backup_path, variant_dir / config.template_basename)
+        return
+    shutil.copy2(backup_path, template_path_for_config(config))

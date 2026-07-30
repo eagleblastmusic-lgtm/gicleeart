@@ -53,10 +53,11 @@ _DEFAULT_VARIANT_ID = "ram_v1"
 _CHILD_LABELS_PL: dict[str, str] = {
     "jumbo": "Nagłówek",
     "body": "Tekst",
+    "text_layer": "Warstwa Dodaj tekst",
     "image": "Grafika",
 }
 
-_CHILD_TYPE_ORDER = ("jumbo", "body", "image")
+_CHILD_TYPE_ORDER = ("jumbo", "body", "text_layer", "image")
 
 _TOP_LEVEL_TYPES = frozenset({
     "divider",
@@ -500,11 +501,15 @@ def section_tree_rows(merged: list[MergedPageElement]) -> list[SectionTreeRow]:
             continue
 
         children: list[SectionTreeChild] = []
-        if m.element_type == "media_section":
-            siblings = by_section.get(m.section_key, [])
-            for ctype in _CHILD_TYPE_ORDER:
-                child = next((c for c in siblings if c.element_type == ctype), None)
-                if child is not None:
+        siblings = by_section.get(m.section_key, [])
+        for ctype in _CHILD_TYPE_ORDER:
+            matching = [
+                c for c in siblings if c.element_type == ctype
+            ]
+            if m.element_type != "media_section" and ctype != "text_layer":
+                continue
+            for child in matching:
+                if child.element_id != m.element_id:
                     children.append(
                         SectionTreeChild(
                             element_id=child.element_id,

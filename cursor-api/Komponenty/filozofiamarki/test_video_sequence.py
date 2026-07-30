@@ -317,12 +317,117 @@ def test_dynamic_video_choices_filter_container_quality_and_family(
         root=root,
     )
 
-    assert choices[0][0] == ""
-    assert any(video.name in label for _value, label in choices[1:])
+    assert len(choices) == 1
+    assert video.name in choices[0][1]
     selected_spec = next(value for value, label in choices if video.name in label)
     parsed = video_sequence.parse_native_video_source_spec(selected_spec)
     assert parsed["video"] == video.name
     assert parsed["manifest"] == manifest.name
+
+
+def test_dynamic_video_choices_show_runtime_and_library_copy_once(
+    component_tmp: Path,
+) -> None:
+    root = component_tmp / "theme"
+    assets = root / "assets"
+    assets.mkdir(parents=True)
+    runtime_video = assets / "giclee-film-scroll-shared-720.webm"
+    runtime_poster = assets / "giclee-film-scroll-shared-720-poster.webp"
+    runtime_manifest = assets / "giclee-film-scroll-shared-webm-720-manifest.json"
+    library_video = (
+        assets
+        / "giclee-scroll-library-shared-720p-webm-cosmic-transition-9d90ba170b.webm"
+    )
+    library_poster = (
+        assets
+        / "giclee-scroll-library-shared-720p-webm-cosmic-transition-9d90ba170b-poster.webp"
+    )
+    library_manifest = (
+        assets
+        / "giclee-scroll-library-shared-720p-webm-cosmic-transition-9d90ba170b-manifest.json"
+    )
+    runtime_video.write_bytes(b"same-webm")
+    library_video.write_bytes(b"same-webm")
+    _write_webp(runtime_poster, size=(1280, 720))
+    _write_webp(library_poster, size=(1280, 720))
+    common = {
+        "mode": "video",
+        "family": "shared",
+        "quality": "720p",
+        "container": "webm",
+        "frameCount": 192,
+        "fps": 24,
+        "width": 1280,
+        "height": 720,
+        "hasAlpha": False,
+        "codec": "vp9",
+        "source": runtime_video.name,
+        "generatedAt": "2026-07-29T17:06:40+00:00",
+    }
+    runtime_manifest.write_text(
+        json.dumps(
+            {
+                **common,
+                "video": runtime_video.name,
+                "poster": runtime_poster.name,
+                "activatedFrom": library_video.name,
+            }
+        ),
+        encoding="utf-8",
+    )
+    library_manifest.write_text(
+        json.dumps(
+            {
+                **common,
+                "video": library_video.name,
+                "poster": library_poster.name,
+                "libraryAsset": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+    values = {
+        "scroll_video_engine": "video",
+        "scroll_video_container": "webm",
+        "scroll_video_quality": "720p",
+    }
+
+    choices = video_sequence.native_video_source_choices(
+        values,
+        family="shared",
+        root=root,
+    )
+
+    assert len(choices) == 1
+    assert choices[0][0] == ""
+    assert library_video.name in choices[0][1]
+    assert runtime_video.name not in choices[0][1]
+
+    listed_assets = video_sequence.list_native_video_assets(
+        family="shared",
+        container="webm",
+        quality="720p",
+        root=root,
+    )
+    library_asset = next(
+        item for item in listed_assets if item.video == library_video.name
+    )
+    runtime_asset = next(
+        item for item in listed_assets if item.video == runtime_video.name
+    )
+    selected_choices = video_sequence.native_video_source_choices(
+        {**values, "scroll_video_source": library_asset.source_spec},
+        family="shared",
+        root=root,
+    )
+    assert selected_choices == ((library_asset.source_spec, library_asset.label),)
+
+    legacy_choices = video_sequence.native_video_source_choices(
+        {**values, "scroll_video_source": runtime_asset.source_spec},
+        family="shared",
+        root=root,
+    )
+    assert legacy_choices == ((runtime_asset.source_spec, library_asset.label),)
 
 
 def test_replace_video_variants_builds_both_qualities(
@@ -627,7 +732,8 @@ def test_film_scroll_has_one_ai_contract_covering_gicleeapp() -> None:
         "ASSET_FAMILIES",
         "after_template_save",
         "scroll_story_wrota",
-        "Charakter odtwarzania — Wrota",
+        "Dodaj „Scroll Film”…",
+        "Charakter odtwarzania",
         "WebM pozostaje WebM",
     ):
         assert required in contract
@@ -635,6 +741,83 @@ def test_film_scroll_has_one_ai_contract_covering_gicleeapp() -> None:
     assert len(legacy_guide) < 1_500
     assert "docs/Film-scroll.md" in agent_router
     assert "nową widoczną sekcję" in agent_router
+
+
+def test_philosophy_motion_is_collapsible_inside_scroll_story() -> None:
+    story = next(zone for zone in PAGE_ZONES if zone.zone_id == "scroll_story")
+
+    assert not any(zone.zone_id == "scroll_motion" for zone in PAGE_ZONES)
+    assert not any(zone.zone_id == "scroll_alpha" for zone in PAGE_ZONES)
+    assert story.label == "Animacja przewijana"
+    assert story.preset_field_id == "scroll_motion_preset"
+    assert story.recommended_preset_value == "luxury"
+
+    motion_fields = tuple(
+        field
+        for field in story.fields
+        if field.field_id.startswith("scroll_motion_")
+    )
+    assert motion_fields
+    assert all(field.group_id == "film_scroll_motion" for field in motion_fields)
+    assert all(
+        field.group_label == "Charakter odtwarzania"
+        for field in motion_fields
+    )
+    assert all(field.group_collapsed is True for field in motion_fields)
+
+    background_fields = tuple(
+        field
+        for field in story.fields
+        if field.field_id.startswith("scroll_background_")
+        or field.field_id in {
+            "scroll_preserve_alpha",
+            "scroll_alpha_diagnostics",
+            "scroll_force_transparent",
+        }
+    )
+    assert background_fields
+    assert all(
+        field.group_id == "film_scroll_background"
+        for field in background_fields
+    )
+    assert all(
+        field.group_label == "Ustawienia tła"
+        for field in background_fields
+    )
+    assert all(field.group_collapsed is True for field in background_fields)
+
+
+def test_wrota_motion_is_collapsible_inside_portal_story() -> None:
+    story = next(
+        zone for zone in PAGE_ZONES if zone.zone_id == "scroll_story_wrota"
+    )
+
+    assert not any(zone.zone_id == "scroll_motion_wrota" for zone in PAGE_ZONES)
+    assert story.label == "Portal Wrota — animacja"
+    assert story.preset_field_id == "scroll_motion_preset"
+    assert story.recommended_preset_value == "luxury"
+
+    motion_fields = tuple(
+        field
+        for field in story.fields
+        if field.field_id.startswith("scroll_motion_")
+    )
+    assert motion_fields
+    assert all(
+        field.group_id == "film_scroll_motion_wrota"
+        for field in motion_fields
+    )
+    assert all(
+        field.group_label == "Charakter odtwarzania"
+        for field in motion_fields
+    )
+    assert all(field.group_collapsed is True for field in motion_fields)
+    assert all(
+        field.path
+        and len(field.path) > 1
+        and field.path[1] == "media_with_content_Wrota"
+        for field in motion_fields
+    )
 
 
 def test_webm_container_is_wired_through_liquid_schema_and_deploy() -> None:
@@ -664,9 +847,8 @@ def test_page_scroll_modes_include_responsive_smooth_and_local_lenis() -> None:
     runtime = (root / "assets" / "giclee-page-smooth-scroll.js").read_text(
         encoding="utf-8"
     )
-    scripts = (root / "snippets" / "scripts.liquid").read_text(encoding="utf-8")
     schema = (
-        root / "sections" / "giclee-filozofia-page-config.liquid"
+        root / "sections" / "giclee-page-scroll-config.liquid"
     ).read_text(encoding="utf-8")
     registry = (
         root / "cursor-api" / "Komponenty" / "filozofiamarki" / "registry.py"
@@ -682,11 +864,12 @@ def test_page_scroll_modes_include_responsive_smooth_and_local_lenis() -> None:
 
     assert (root / "assets" / "lenis.min.js").is_file()
     assert (root / "assets" / "lenis.css").is_file()
-    assert "{{ 'lenis.css' | asset_url | stylesheet_tag }}" in scripts
-    assert '"{{ \'lenis.min.js\' | asset_url }}"' in scripts
-    assert scripts.index("lenis.min.js") < scripts.index(
+    assert "{{ 'lenis.css' | asset_url | stylesheet_tag }}" in schema
+    assert '"{{ \'lenis.min.js\' | asset_url }}"' in schema
+    assert schema.index("lenis.min.js") < schema.index(
         "giclee-page-smooth-scroll.js"
     )
+    assert "GICLEE_PAGE_SCROLL_CONFIG" in schema
     assert '"value": "lenis"' in schema
     assert '"id": "scroll_smoothness"' in schema
     assert '("lenis", "Lenis")' in registry
@@ -757,3 +940,39 @@ def test_replace_parallax_middle_webm(component_tmp: Path) -> None:
     assert PARALLAX_MIDDLE_WEBM_REL in video_sequence.parallax_deploy_relpaths(
         root=root
     )
+
+
+def test_wrota_before_after_keeps_full_images_and_has_drag_slider() -> None:
+    root = Path(__file__).resolve().parents[3]
+    media = (root / "snippets" / "media.liquid").read_text(encoding="utf-8")
+    css = (
+        root / "assets" / "giclee-fm-wrota-parallax.css"
+    ).read_text(encoding="utf-8")
+    runtime = (
+        root / "assets" / "giclee-filozofia-quote-pin.js"
+    ).read_text(encoding="utf-8")
+
+    image_rule = css[
+        css.index(".giclee-fm-tresc3d__image")
+        : css.index(".giclee-fm-tresc3d__label")
+    ]
+
+    assert media.count("data-fm-tresc3d-slider") == 2
+    assert 'type="range"' in media
+    assert 'aria-label="Porównaj obraz przed i po"' in media
+    assert "object-fit: contain" in image_rule
+    assert "object-fit: cover" not in image_rule
+    assert (
+        "max-width: min(100%, 68rem, var(--compare-viewport-width, 68rem))"
+        in css
+    )
+    assert "aspect-ratio: var(--compare-aspect" in css
+    assert "background: transparent" in css
+    assert ".giclee-fm-tresc3d__handle-line" in css
+    assert ".giclee-fm-tresc3d__handle-grip" in css
+    assert "function initTresc3dComparisons()" in runtime
+    assert "source.naturalWidth + ' / ' + source.naturalHeight" in runtime
+    assert "'--compare-viewport-width'" in runtime
+    assert "new ResizeObserver(syncViewportSize)" in runtime
+    assert "media.style.setProperty('--compare'" in runtime
+    assert "initTresc3dComparisons();" in runtime

@@ -90,23 +90,26 @@
       >
     </div>
 
-    <label
-      class="visually-hidden"
-      for="ContactForm-body"
-    >
-      {{- 'blocks.contact_form.comment' | t -}}
-    </label>
-    <textarea
-      rows="10"
-      id="ContactForm-body"
-      class="contact-form__input contact-form__input--textarea"
-      name="contact[body]"
-      placeholder="{{ 'blocks.contact_form.comment' | t }}"
-    >
-      {{- form.body -}}
-    </textarea>
-
-    {{ submit_button }}
+    <div class="contact-form__textarea-wrapper">
+      <label
+        class="visually-hidden"
+        for="ContactForm-body"
+      >
+        {{- 'blocks.contact_form.comment' | t -}}
+      </label>
+      <textarea
+        rows="10"
+        id="ContactForm-body"
+        class="contact-form__input contact-form__input--textarea"
+        name="contact[body]"
+        placeholder="{{ 'blocks.contact_form.comment' | t }}"
+      >
+        {{- form.body -}}
+      </textarea>
+      <div class="contact-form__submit-wrapper">
+        {{ submit_button }}
+      </div>
+    </div>
   {%- endform -%}
 </div>
 
@@ -140,9 +143,23 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  .contact-form__textarea-wrapper {
+    position: relative;
+    width: 100%;
+  }
+
   .contact-form__input--textarea {
+    display: block;
     resize: vertical;
-    min-height: var(--input-textarea-min-height);
+    min-height: 150px;
+    padding-bottom: 50px;
+  }
+
+  .contact-form__submit-wrapper {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    z-index: 2;
   }
 
   .contact-form__error,

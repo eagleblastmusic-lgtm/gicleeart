@@ -13,6 +13,9 @@ from giclee_app.studio.perf import log_event, span
 from . import theme
 from .gicleeframe_view_models import _ellipsize, _section_kind_copy
 from .gicleeframe_view_primitives import _GF_FIELD, _GF_GOLD_SOFT, _GF_MUTED
+from .gicleeframe_view_film_scroll_context import (
+    bind_section_list_context_target,
+)
 from .gicleeframe_view_section_list_shell import (
     _GF_SECTION_FIRST_BATCH_SIZE,
     _SECTION_PLACEHOLDER,
@@ -332,6 +335,7 @@ class GicleeFrameSectionListRenderingMixin:
                 "<Button-1>",
                 lambda _e, eid=element_id: self._on_section_row_click(eid),
             )
+            bind_section_list_context_target(self, target, element_id)
 
     def _build_section_row(self, index: int, element_id: str, label: str) -> None:
         self._create_section_list_row(index, element_id, label)

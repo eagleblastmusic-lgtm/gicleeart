@@ -332,6 +332,12 @@ def restore_backup(timestamp: str, *, variant_id: str | None = None) -> None:
         shutil.copy2(index_src, variant_root / "index.json")
         if settings_src.is_file():
             shutil.copy2(settings_src, variant_root / "settings.json")
+        text_layers_src = root / f"text-layers-{variant_id}-{timestamp}.json"
+        if text_layers_src.is_file():
+            shutil.copy2(
+                text_layers_src,
+                variant_root / "text-layers.json",
+            )
 
 
 def diff_against_file(current_text: str, backup_path: Path, *, label: str) -> str:
@@ -687,6 +693,11 @@ def write_home_assets(
         + ";\n"
     )
     _write_text_if_changed(assets_dir / "giclee-home-sections.js", sections_js)
+    from Komponenty._shared.theme_page_editor.text_layers_export import (
+        write_home_text_layers_asset,
+    )
+
+    write_home_text_layers_asset(active_variant_id())
     _write_home_stack_critical_snippet(section_map, stack_enabled=stack_enabled)
 
     from .video_collage import empty_collage, parse_collage, write_collage_asset

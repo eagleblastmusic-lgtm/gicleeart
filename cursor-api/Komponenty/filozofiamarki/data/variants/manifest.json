@@ -7,7 +7,10 @@
     },
     {
       "id": "fm2",
-      "label": "Wersja 2"
+      "label": "Wersja 2",
+      "section_labels": {
+        "scroll_story": "Animacja przewijana Filozof"
+      }
     }
   ]
 }
