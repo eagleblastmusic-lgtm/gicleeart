@@ -6,7 +6,11 @@
   const CANVAS_SELECTOR = '[data-scroll-frame-canvas]';
   const VIDEO_SELECTOR = '[data-scroll-native-video]';
   const SECTION_MEDIA_END_PROGRESS = 0.8;
-  const INTRO_EXIT_PROGRESS = 0.18;
+  const DEFAULT_INTRO_PIN_VH = 45;
+  const DEFAULT_INTRO_FADE_START_VH = 45;
+  const DEFAULT_OUTRO_APPEAR_PERCENT = 95;
+  const DEFAULT_OUTRO_PIN_VH = 60;
+  const STORY_FADE_VH = 0.35;
   const STOP_DELAY_MS = 90;
   const MAX_SETTLE_MS = 1200;
   const MAX_SEQUENTIAL_WEBM_CATCHUP_SECONDS = 0.32;
@@ -24,6 +28,7 @@
 
   const clamp = (value, min = 0, max = 1) =>
     Math.min(Math.max(value, min), max);
+  const vhToPx = (vh, viewport) => (finite(vh, 0) / 100) * Math.max(1, viewport);
   const finite = (value, fallback) => {
     const number = Number(value);
     return Number.isFinite(number) ? number : fallback;
@@ -348,6 +353,27 @@
         ? dataset.backgroundMode
         : 'auto',
       backgroundValue: dataset.backgroundValue || '#000000',
+      backgroundParallax: bool(dataset.backgroundParallax, false),
+      introPinVh: clamp(
+        finite(dataset.introPinVh, DEFAULT_INTRO_PIN_VH),
+        10,
+        300
+      ),
+      introFadeStartVh: clamp(
+        finite(dataset.introFadeStartVh, DEFAULT_INTRO_FADE_START_VH),
+        0,
+        300
+      ),
+      outroAppearPercent: clamp(
+        finite(dataset.outroAppearPercent, DEFAULT_OUTRO_APPEAR_PERCENT),
+        0,
+        100
+      ),
+      outroPinVh: clamp(
+        finite(dataset.outroPinVh, DEFAULT_OUTRO_PIN_VH),
+        10,
+        300
+      ),
     };
   }
 
@@ -705,6 +731,7 @@
       this.motion = new MotionState(this.config);
       this.scrollStart = 0;
       this.scrollTravel = 1;
+      this.lastSectionProgress = 0;
       this.isReady = false;
       this.isNearViewport = true;
       this.destroyed = false;
@@ -714,6 +741,7 @@
       this.abortController = new AbortController();
       this.animatedElements = [];
       this.lastRenderedProgress = -1;
+      this.lastStorySectionProgress = -1;
       this.sourceMetadata = {};
       this.applyBackground();
       this.measure();
@@ -733,8 +761,20 @@
     applyBackground() {
       const mode = this.config.backgroundMode;
       const value = this.config.backgroundValue;
+      const reducedMotion = !!(
+        window.matchMedia &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      );
+      const coarse =
+        window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+      const parallaxWanted =
+        !!this.config.backgroundParallax && !reducedMotion && !coarse;
       let background = '#000000';
+      this.clearBackgroundParallax();
       this.clearBackgroundVideo();
+      this.stage?.classList.remove('is-scroll-bg-parallax');
+      this.root.classList.remove('is-scroll-bg-parallax');
+
       if (mode === 'transparent') background = 'transparent';
       else if (mode === 'color' && /^#[0-9a-f]{3,8}$/i.test(value)) {
         background = value;
@@ -744,13 +784,28 @@
       ) {
         background = value;
       } else if (mode === 'image' && /^url\(/i.test(value)) {
-        background = value;
+        if (parallaxWanted) {
+          background = '#000000';
+          this.mountBackgroundParallaxImage(
+            value.replace(/^url\(\s*["']?|["']?\s*\)$/g, '')
+          );
+        } else {
+          background = value;
+        }
       } else if (mode === 'asset' && value) {
-        const safe = String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-        background = `url("${safe}") center / cover no-repeat`;
+        if (parallaxWanted) {
+          background = '#000000';
+          this.mountBackgroundParallaxImage(value);
+        } else {
+          const safe = String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+          background = `url("${safe}") center / cover no-repeat`;
+        }
       } else if (mode === 'webm' && value) {
         background = '#000000';
         this.mountBackgroundVideo(value);
+        if (parallaxWanted) {
+          this.enableBackgroundVideoParallax();
+        }
       } else if (mode === 'auto') {
         // Frames: przezroczystość. Video: też transparent — inaczej alfa
         // ląduje na #000 i po podmianie filmu „znika” tło scrolla.
@@ -761,6 +816,12 @@
         'is-scroll-alpha-debug',
         this.config.alphaDiagnostics
       );
+      if (
+        parallaxWanted &&
+        (mode === 'asset' || mode === 'image' || mode === 'webm')
+      ) {
+        this.initBackgroundParallax();
+      }
     }
 
     clearBackgroundVideo() {
@@ -798,6 +859,135 @@
           playPromise.catch(() => {});
         }
       } catch (_error) {}
+    }
+
+    mountBackgroundParallaxImage(url) {
+      if (!this.stage || !url) return;
+      let layer = this.stage.querySelector('[data-scroll-bg-parallax]');
+      if (!(layer instanceof HTMLElement)) {
+        layer = document.createElement('div');
+        layer.dataset.scrollBgParallax = '1';
+        layer.className = 'media-block__scroll-bg-parallax';
+        layer.setAttribute('aria-hidden', 'true');
+        const image = document.createElement('img');
+        image.alt = '';
+        image.draggable = false;
+        image.decoding = 'async';
+        layer.appendChild(image);
+        this.stage.insertBefore(layer, this.stage.firstChild);
+      }
+      const image = layer.querySelector('img');
+      if (image instanceof HTMLImageElement && image.getAttribute('src') !== url) {
+        image.src = url;
+      }
+      this.stage.classList.add('is-scroll-bg-parallax');
+      this.root.classList.add('is-scroll-bg-parallax');
+    }
+
+    enableBackgroundVideoParallax() {
+      const video =
+        this.stage?.querySelector('[data-scroll-bg-video]') ||
+        this.root.querySelector('[data-scroll-bg-video]');
+      if (!(video instanceof HTMLVideoElement)) return;
+      video.classList.add('media-block__scroll-bg-video--parallax');
+      this.stage?.classList.add('is-scroll-bg-parallax');
+      this.root.classList.add('is-scroll-bg-parallax');
+    }
+
+    clearBackgroundParallax() {
+      if (typeof this._cleanupBackgroundParallax === 'function') {
+        this._cleanupBackgroundParallax();
+        this._cleanupBackgroundParallax = null;
+      }
+      const layer =
+        this.stage?.querySelector('[data-scroll-bg-parallax]') ||
+        this.root.querySelector('[data-scroll-bg-parallax]');
+      if (layer?.parentNode) layer.parentNode.removeChild(layer);
+      const video =
+        this.stage?.querySelector('[data-scroll-bg-video]') ||
+        this.root.querySelector('[data-scroll-bg-video]');
+      if (video instanceof HTMLVideoElement) {
+        video.classList.remove('media-block__scroll-bg-video--parallax');
+        video.style.removeProperty('--scroll-bg-px');
+        video.style.removeProperty('--scroll-bg-py');
+      }
+      this.stage?.classList.remove('is-scroll-bg-parallax');
+      this.root.classList.remove('is-scroll-bg-parallax');
+    }
+
+    initBackgroundParallax() {
+      this.clearBackgroundParallaxListenersOnly();
+
+      const layer =
+        this.stage?.querySelector('[data-scroll-bg-parallax]') ||
+        this.stage?.querySelector('.media-block__scroll-bg-video--parallax');
+      if (!(layer instanceof HTMLElement)) return;
+
+      const MAX_X = 22;
+      const MAX_Y = 14;
+      const EASE = 0.075;
+      let targetX = 0;
+      let targetY = 0;
+      let curX = 0;
+      let curY = 0;
+      let rafId = 0;
+
+      const apply = () => {
+        layer.style.setProperty('--scroll-bg-px', `${(-curX * MAX_X).toFixed(2)}px`);
+        layer.style.setProperty('--scroll-bg-py', `${(-curY * MAX_Y).toFixed(2)}px`);
+      };
+
+      const tick = () => {
+        rafId = 0;
+        curX += (targetX - curX) * EASE;
+        curY += (targetY - curY) * EASE;
+        apply();
+        if (
+          Math.abs(targetX - curX) > 0.0008 ||
+          Math.abs(targetY - curY) > 0.0008
+        ) {
+          rafId = window.requestAnimationFrame(tick);
+        }
+      };
+
+      const startLoop = () => {
+        if (!rafId) rafId = window.requestAnimationFrame(tick);
+      };
+
+      const onPointerMove = (event) => {
+        if (!this.isNearViewport) return;
+        const vw = window.innerWidth || 1;
+        const vh = window.innerHeight || 1;
+        targetX = Math.min(Math.max((event.clientX / vw) * 2 - 1, -1), 1);
+        targetY = Math.min(Math.max((event.clientY / vh) * 2 - 1, -1), 1);
+        startLoop();
+      };
+
+      const onPointerLeave = () => {
+        targetX = 0;
+        targetY = 0;
+        startLoop();
+      };
+
+      window.addEventListener('pointermove', onPointerMove, { passive: true });
+      document.addEventListener('pointerleave', onPointerLeave, { passive: true });
+      apply();
+
+      this._cleanupBackgroundParallax = () => {
+        window.removeEventListener('pointermove', onPointerMove);
+        document.removeEventListener('pointerleave', onPointerLeave);
+        if (rafId) window.cancelAnimationFrame(rafId);
+        layer.style.removeProperty('--scroll-bg-px');
+        layer.style.removeProperty('--scroll-bg-py');
+        this._cleanupBackgroundParallax = null;
+      };
+    }
+
+    clearBackgroundParallaxListenersOnly() {
+      if (typeof this._cleanupBackgroundParallax === 'function') {
+        this._cleanupBackgroundParallax();
+        this._cleanupBackgroundParallax = null;
+      }
     }
 
     observe() {
@@ -848,11 +1038,9 @@
 
     captureScroll(scrollY, now, immediate = false) {
       if (this.root?.dataset?.fmExternalScrub === '1') return;
-      this.motion.setSectionProgress(
-        this.sectionProgress(scrollY),
-        now,
-        immediate
-      );
+      const sectionProgress = this.sectionProgress(scrollY);
+      this.lastSectionProgress = sectionProgress;
+      this.motion.setSectionProgress(sectionProgress, now, immediate);
       this.animatedElements.forEach((element) =>
         element.setTargetProgress?.(this.motion.rawProgress)
       );
@@ -861,6 +1049,7 @@
     setExternalProgress(progress, now = performance.now(), immediate = false) {
       const sectionProgress =
         clamp(progress) * SECTION_MEDIA_END_PROGRESS;
+      this.lastSectionProgress = sectionProgress;
       this.motion.setSectionProgress(sectionProgress, now, immediate);
       this.animatedElements.forEach((element) =>
         element.setTargetProgress?.(this.motion.rawProgress)
@@ -870,17 +1059,80 @@
       this.scheduler.request();
     }
 
-    updateStory(progress) {
-      const introPast = progress > INTRO_EXIT_PROGRESS;
-      const outroVisible = progress >= this.config.materialEnd - 0.005;
-      this.root.classList.toggle('is-scroll-frame-intro-past', introPast);
+    updateStory(progress, viewportHeight = window.innerHeight || 1) {
+      const viewport = Math.max(1, viewportHeight);
+      const fadePx = STORY_FADE_VH * viewport;
+      const scrolledPx = clamp(
+        this.lastSectionProgress * this.scrollTravel,
+        0,
+        this.scrollTravel
+      );
+
+      const introPinPx = vhToPx(this.config.introPinVh, viewport);
+      const introFadeStartPx = vhToPx(this.config.introFadeStartVh, viewport);
+      const introFadeTriggerPx = Math.max(introPinPx, introFadeStartPx);
+      let introStory = 1;
+      if (scrolledPx > introFadeTriggerPx) {
+        introStory = clamp(
+          1 - (scrolledPx - introFadeTriggerPx) / Math.max(1, fadePx)
+        );
+      }
+
+      const appearAt = clamp(
+        this.config.outroAppearPercent / 100,
+        0,
+        1
+      );
+      // Approximate scroll position of the appear moment within the film window.
+      const appearSection = appearAt * SECTION_MEDIA_END_PROGRESS;
+      const appearPx = appearSection * this.scrollTravel;
+      const outroPinPx = Math.max(1, vhToPx(this.config.outroPinVh, viewport));
+      let outroStory = 0;
+      if (progress >= appearAt - 0.0005) {
+        const sinceAppear = scrolledPx - appearPx;
+        if (sinceAppear >= 0 && sinceAppear <= outroPinPx) {
+          const fadeIn = Math.min(fadePx, outroPinPx * 0.35);
+          const fadeOutStart = Math.max(0, outroPinPx - fadeIn);
+          if (sinceAppear < fadeIn) {
+            outroStory = clamp(sinceAppear / Math.max(1, fadeIn));
+          } else if (sinceAppear > fadeOutStart) {
+            outroStory = clamp(
+              (outroPinPx - sinceAppear) / Math.max(1, fadeIn)
+            );
+          } else {
+            outroStory = 1;
+          }
+        } else if (sinceAppear > outroPinPx) {
+          outroStory = 0;
+        } else if (progress >= appearAt) {
+          // Progress threshold met but scroll estimate not yet — fade in by film progress.
+          const lead = Math.min(
+            0.04,
+            Math.max(0.01, appearAt >= 1 ? 0.04 : 1 - appearAt)
+          );
+          outroStory = clamp((progress - appearAt) / lead);
+        }
+      }
+
+      this.root.style.setProperty(
+        '--scroll-intro-story',
+        introStory.toFixed(4)
+      );
+      this.root.style.setProperty(
+        '--scroll-outro-story',
+        outroStory.toFixed(4)
+      );
+      this.root.classList.toggle(
+        'is-scroll-frame-intro-past',
+        introStory < 0.02
+      );
       this.root.classList.toggle(
         'is-scroll-frame-outro-visible',
-        outroVisible
+        outroStory > 0.02
       );
       this.root
         .querySelector('.media-block__scroll-outro')
-        ?.setAttribute('aria-hidden', String(!outroVisible));
+        ?.setAttribute('aria-hidden', String(outroStory <= 0.02));
     }
 
     tick(context) {
@@ -908,9 +1160,16 @@
         this.forceRender ||
         Math.abs(this.motion.renderedProgress - this.lastRenderedProgress) >
           0.000001;
-      if (changed) {
+      const storyScrollChanged =
+        Math.abs(this.lastSectionProgress - this.lastStorySectionProgress) >
+        0.000001;
+      if (changed || storyScrollChanged) {
         this.renderProgress(this.motion.renderedProgress, context);
-        this.updateStory(this.motion.renderedProgress);
+        this.updateStory(
+          this.motion.renderedProgress,
+          context.viewportHeight
+        );
+        this.lastStorySectionProgress = this.lastSectionProgress;
         const animationContext = {
           ...context,
           globalProgress: this.motion.rawProgress,
@@ -1015,6 +1274,7 @@
         element.deactivate?.();
         element.destroy?.();
       });
+      this.clearBackgroundParallax();
       this.clearBackgroundVideo();
       this.root.style.removeProperty('--scroll-runtime-background');
     }
@@ -1568,6 +1828,8 @@
       this.renderedHistory = [];
       this.skippedFrames = 0;
       this.videoFrameCallbackId = 0;
+      this.presentationGateEnabled = false;
+      this.awaitingSeekPresentation = false;
       this.initializationStarted = false;
       this.interFrameWebm = false;
       this.playTargetTime = null;
@@ -1595,12 +1857,30 @@
       this.video.addEventListener(
         'seeked',
         () => {
-          if (this.video && this.fps > 0) {
+          if (
+            !this.presentationGateEnabled &&
+            this.video &&
+            this.fps > 0
+          ) {
             this.lastPresentedFrame = clamp(
               Math.round(this.video.currentTime * this.fps),
               0,
               this.frameCount - 1
             );
+          }
+          if (
+            this.presentationGateEnabled &&
+            this.awaitingSeekPresentation &&
+            this.lastPresentedFrame >= 0
+          ) {
+            const requestedFrame = clamp(
+              Math.round(this.lastRequestedTime * this.fps),
+              0,
+              this.frameCount - 1
+            );
+            if (Math.abs(this.lastPresentedFrame - requestedFrame) <= 1) {
+              this.awaitingSeekPresentation = false;
+            }
           }
           if (this.interFrameWebm && this.pendingTime == null) {
             this.updateSequentialPlayback();
@@ -1706,6 +1986,10 @@
           await this.prewarmAlphaWebm();
           if (this.destroyed) return;
         }
+        this.presentationGateEnabled =
+          this.container === 'webm' &&
+          manifest.hasAlpha === true &&
+          typeof this.video.requestVideoFrameCallback === 'function';
         this.interFrameWebm =
           this.container === 'webm' &&
           this.sourceMetadata.intraOnly === false;
@@ -2074,7 +2358,8 @@
         this.pendingTime == null ||
         !this.video ||
         this.video.readyState < 1 ||
-        this.video.seeking
+        this.video.seeking ||
+        this.awaitingSeekPresentation
       ) {
         return;
       }
@@ -2092,9 +2377,11 @@
       this.lastRequestedTime = time;
       try {
         this.pauseSequentialPlayback();
+        this.awaitingSeekPresentation = this.presentationGateEnabled;
         this.video.currentTime = time;
         this.seekExecuted += 1;
       } catch (_error) {
+        this.awaitingSeekPresentation = false;
         this.seekErrors += 1;
       }
     }
@@ -2139,6 +2426,17 @@
           );
         }
         this.lastPresentedFrame = frame;
+        if (this.awaitingSeekPresentation && !this.video.seeking) {
+          const requestedFrame = clamp(
+            Math.round(this.lastRequestedTime * this.fps),
+            0,
+            this.frameCount - 1
+          );
+          if (Math.abs(frame - requestedFrame) <= 1) {
+            this.awaitingSeekPresentation = false;
+            this.scheduler.request();
+          }
+        }
         if (this.sequentialPlaybackActive) {
           this.sequentialPlaybackFrames += 1;
           this.updateSequentialPlayback();
@@ -2179,6 +2477,12 @@
       this.video.dataset.seekErrors = String(this.seekErrors);
       this.video.dataset.seekPending = String(this.pendingTime != null);
       this.video.dataset.seeking = String(this.video.seeking);
+      this.video.dataset.presentationGate = String(
+        this.presentationGateEnabled
+      );
+      this.video.dataset.awaitingPresentation = String(
+        this.awaitingSeekPresentation
+      );
       this.video.dataset.readyState = String(this.video.readyState);
       this.video.dataset.webmInterFrame = String(this.interFrameWebm);
       this.video.dataset.sequentialPlayback = String(
@@ -2237,6 +2541,8 @@
         duration: this.duration,
         readyState: this.video?.readyState || 0,
         seeking: Boolean(this.video?.seeking),
+        presentationGate: this.presentationGateEnabled,
+        awaitingPresentation: this.awaitingSeekPresentation,
         seekExecuted: this.seekExecuted,
         seekSkipped: this.seekSkipped,
         seekErrors: this.seekErrors,
@@ -2426,6 +2732,10 @@
       root.dataset.motionCacheFrames,
       root.dataset.motionTailPacing,
       root.dataset.motionTailWindowFrames,
+      root.dataset.introPinVh,
+      root.dataset.introFadeStartVh,
+      root.dataset.outroAppearPercent,
+      root.dataset.outroPinVh,
       root.dataset.backgroundMode,
       root.dataset.backgroundValue,
       root.dataset.forceTransparent,

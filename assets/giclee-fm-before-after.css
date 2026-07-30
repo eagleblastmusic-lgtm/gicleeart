@@ -1,0 +1,485 @@
+/* Filozofia marki — galeria „Przed i po”, odwzorowanie preview.html. */
+.giclee-fm-before-after,
+.giclee-fm-before-after * {
+  box-sizing: border-box;
+}
+
+.giclee-fm-before-after {
+  --fm-ba-radial-opacity: 0;
+  --fm-ba-linear-opacity: 0;
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  min-height: 100%;
+  overflow: hidden;
+  color: #fff;
+  background:
+    radial-gradient(
+      circle at 50% 40%,
+      rgba(35, 55, 82, calc(0.32 * var(--fm-ba-radial-opacity, 0))),
+      transparent 42%
+    ),
+    linear-gradient(
+      180deg,
+      rgb(10 12 17 / var(--fm-ba-linear-opacity, 0)) 0%,
+      rgb(4 5 6 / var(--fm-ba-linear-opacity, 0)) 100%
+    );
+  isolation: isolate;
+  contain: layout paint style;
+  opacity: 0;
+  visibility: hidden;
+  will-change: opacity;
+  font-family: Inter, Arial, sans-serif;
+}
+
+.giclee-fm-before-after button {
+  font: inherit;
+}
+
+.giclee-fm-before-after .ambient-light {
+  position: absolute;
+  top: -25%;
+  left: 50%;
+  width: 70vw;
+  height: 70vw;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(100, 156, 229, 0.11), transparent 65%);
+  filter: blur(30px);
+  pointer-events: none;
+}
+
+.giclee-fm-before-after .background-lines {
+  position: absolute;
+  inset: 0;
+  opacity: 0.08;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.18) 1px, transparent 1px);
+  background-size: 80px 80px;
+  mask-image: linear-gradient(to bottom, transparent, #000 35%, #000 70%, transparent);
+}
+
+.giclee-fm-before-after .film-noise {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  opacity: 0.045;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  animation: giclee-fm-gallery-noise 0.28s steps(2) infinite;
+  mix-blend-mode: screen;
+}
+
+@keyframes giclee-fm-gallery-noise {
+  0%, 100% { background-position: 0 0; }
+  25% { background-position: 17px -23px; }
+  50% { background-position: -29px 11px; }
+  75% { background-position: 31px 27px; }
+}
+
+.giclee-fm-before-after.is-film-grain-off .film-noise {
+  display: none;
+}
+
+.giclee-fm-before-after .deck-header {
+  position: absolute;
+  top: 38px;
+  right: 55px;
+  left: 55px;
+  z-index: 30;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 30px;
+  pointer-events: none;
+}
+
+.giclee-fm-before-after .brand {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+}
+
+.giclee-fm-before-after .brand::before {
+  content: "";
+  width: 35px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.giclee-fm-before-after .header-counter {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.32);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+}
+
+.giclee-fm-before-after .header-counter-current {
+  color: #fff;
+  font-size: 27px;
+  letter-spacing: -0.04em;
+}
+
+.giclee-fm-before-after .deck-stage {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  perspective: 1500px;
+}
+
+.giclee-fm-before-after .cards {
+  position: relative;
+  width: min(68vw, 1050px);
+  aspect-ratio: 16 / 10;
+  transform-style: preserve-3d;
+}
+
+.giclee-fm-before-after .comparison-card {
+  --split: 50%;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 26px;
+  background: #090a0c;
+  box-shadow:
+    0 45px 110px rgba(0, 0, 0, 0.6),
+    0 0 80px rgba(49, 98, 171, 0.08);
+  cursor: ew-resize;
+  user-select: none;
+  touch-action: none;
+  contain: layout paint style;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+.giclee-fm-before-after .comparison-card.is-nearby {
+  will-change: transform, opacity, filter;
+}
+
+.giclee-fm-before-after.is-motion-blur-off .comparison-card.is-nearby {
+  will-change: transform, opacity;
+}
+
+.giclee-fm-before-after .comparison-card:not(.is-active) {
+  pointer-events: none;
+}
+
+.giclee-fm-before-after .image-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.giclee-fm-before-after .image-layer img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  transform: scale(1.04);
+  will-change: transform;
+}
+
+.giclee-fm-before-after .before-layer { z-index: 1; }
+.giclee-fm-before-after .before-layer img {
+  filter: none;
+}
+.giclee-fm-before-after .after-layer {
+  z-index: 2;
+  clip-path: inset(0 0 0 var(--split));
+  will-change: clip-path;
+}
+.giclee-fm-before-after .after-layer img {
+  filter: saturate(1.12) contrast(1.06) brightness(0.96);
+}
+
+.giclee-fm-before-after .card-grade,
+.giclee-fm-before-after .card-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.giclee-fm-before-after .card-grade {
+  z-index: 3;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.42), transparent 30%, transparent 55%, rgba(0,0,0,.72)),
+    linear-gradient(90deg, rgba(0,0,0,.2), transparent 30%, transparent 70%, rgba(0,0,0,.2));
+}
+.giclee-fm-before-after .card-vignette {
+  z-index: 4;
+  box-shadow: inset 0 0 100px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.025);
+}
+
+.giclee-fm-before-after .card-top {
+  position: absolute;
+  top: 25px;
+  right: 28px;
+  left: 28px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.giclee-fm-before-after .card-index {
+  color: rgba(255,255,255,.55);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+}
+
+.giclee-fm-before-after .card-type {
+  padding: 8px 11px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 100px;
+  color: rgba(255,255,255,.65);
+  background: rgba(5,7,10,.38);
+  backdrop-filter: blur(12px);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.giclee-fm-before-after .split-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--split);
+  z-index: 8;
+  width: 1px;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 0 8px rgba(255,255,255,.8), 0 0 25px rgba(109,169,255,.65), 0 0 55px rgba(60,125,225,.45);
+  pointer-events: none;
+}
+
+.giclee-fm-before-after .split-line::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 50%;
+  width: 30px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent, rgba(110,174,255,.12), transparent);
+}
+
+.giclee-fm-before-after .split-handle {
+  position: absolute;
+  top: 50%;
+  left: var(--split);
+  z-index: 11;
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(255,255,255,.6);
+  border-radius: 50%;
+  background: rgba(5,7,10,.7);
+  backdrop-filter: blur(15px);
+  box-shadow: 0 14px 40px rgba(0,0,0,.42), 0 0 35px rgba(87,150,246,.25);
+  pointer-events: none;
+}
+
+.giclee-fm-before-after .handle-icon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.giclee-fm-before-after .handle-icon span {
+  width: 8px;
+  height: 8px;
+  border-top: 1px solid #fff;
+  border-left: 1px solid #fff;
+}
+.giclee-fm-before-after .handle-icon span:first-child { transform: rotate(-45deg); }
+.giclee-fm-before-after .handle-icon span:last-child { transform: rotate(135deg); }
+
+.giclee-fm-before-after .side-name {
+  position: absolute;
+  top: 50%;
+  z-index: 9;
+  color: rgba(255,255,255,.55);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .25em;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+  pointer-events: none;
+}
+.giclee-fm-before-after .side-name-before {
+  left: 18px;
+  transform: translateY(-50%) rotate(180deg);
+}
+.giclee-fm-before-after .side-name-after {
+  right: 18px;
+  transform: translateY(-50%);
+}
+
+.giclee-fm-before-after .card-bottom {
+  position: absolute;
+  right: 32px;
+  bottom: 28px;
+  left: 32px;
+  z-index: 10;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+  pointer-events: none;
+}
+.giclee-fm-before-after .card-title {
+  margin: 0;
+  font-size: clamp(26px, 3vw, 50px);
+  font-weight: 400;
+  line-height: .95;
+  letter-spacing: -.05em;
+}
+.giclee-fm-before-after .card-location {
+  margin: 9px 0 0;
+  color: rgba(255,255,255,.5);
+  font-size: 10px;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+.giclee-fm-before-after .card-hint {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: rgba(255,255,255,.43);
+  font-size: 8px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.giclee-fm-before-after .card-hint::before {
+  content: "";
+  width: 35px;
+  height: 1px;
+  background: rgba(255,255,255,.35);
+}
+
+.giclee-fm-before-after .deck-footer {
+  position: absolute;
+  right: 55px;
+  bottom: 34px;
+  left: 55px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+}
+.giclee-fm-before-after .deck-dots,
+.giclee-fm-before-after .navigation {
+  display: flex;
+  align-items: center;
+}
+.giclee-fm-before-after .deck-dots { gap: 8px; }
+.giclee-fm-before-after .navigation { gap: 10px; }
+.giclee-fm-before-after .deck-dot {
+  position: relative;
+  width: 25px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.giclee-fm-before-after .deck-dot::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 1px;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,.24);
+  transition: background 250ms ease, transform 250ms ease;
+}
+.giclee-fm-before-after .deck-dot.is-active { width: 55px; }
+.giclee-fm-before-after .deck-dot.is-active::before { background: rgba(255,255,255,.9); }
+.giclee-fm-before-after .nav-button {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(7,9,13,.5);
+  backdrop-filter: blur(14px);
+  cursor: pointer;
+  transition: transform 250ms ease, background 250ms ease, border-color 250ms ease;
+}
+.giclee-fm-before-after .nav-button:hover {
+  transform: scale(1.07);
+  border-color: rgba(255,255,255,.45);
+  background: rgba(255,255,255,.1);
+}
+.giclee-fm-before-after .nav-button svg { width: 18px; height: 18px; }
+.giclee-fm-before-after .scroll-hint {
+  position: absolute;
+  top: 50%;
+  right: 24px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transform: translateY(-50%);
+  color: rgba(255,255,255,.3);
+  font-size: 8px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+  pointer-events: none;
+}
+.giclee-fm-before-after .scroll-hint::before {
+  content: "";
+  width: 1px;
+  height: 45px;
+  background: linear-gradient(to bottom, transparent, rgba(255,255,255,.4));
+}
+
+@media (max-width: 900px) {
+  .giclee-fm-before-after .deck-header { top: 24px; right: 24px; left: 24px; }
+  .giclee-fm-before-after .cards { width: min(88vw, 760px); aspect-ratio: 4 / 5; }
+  .giclee-fm-before-after .deck-footer { right: 24px; bottom: 22px; left: 24px; }
+  .giclee-fm-before-after .scroll-hint,
+  .giclee-fm-before-after .card-hint { display: none; }
+}
+
+@media (max-width: 600px) {
+  .giclee-fm-before-after .brand { font-size: 8px; }
+  .giclee-fm-before-after .header-counter { display: none; }
+  .giclee-fm-before-after .cards { width: calc(100vw - 28px); aspect-ratio: 3 / 4; }
+  .giclee-fm-before-after .comparison-card { border-radius: 18px; }
+  .giclee-fm-before-after .card-top { top: 17px; right: 18px; left: 18px; }
+  .giclee-fm-before-after .card-bottom { right: 20px; bottom: 20px; left: 20px; }
+  .giclee-fm-before-after .card-title { font-size: 31px; }
+  .giclee-fm-before-after .split-handle { width: 52px; height: 52px; }
+  .giclee-fm-before-after .side-name { display: none; }
+  .giclee-fm-before-after .deck-dots { gap: 5px; }
+  .giclee-fm-before-after .deck-dot { width: 18px; }
+  .giclee-fm-before-after .deck-dot.is-active { width: 36px; }
+  .giclee-fm-before-after .nav-button { width: 43px; height: 43px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giclee-fm-before-after .film-noise { animation: none; }
+}

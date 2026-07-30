@@ -2595,11 +2595,10 @@
       --fm-quote-pin-duration: 0.4;
       --fm-quote-portal-duration: 2;
       --fm-wrota-film-duration: 6.5;
-      /* slide↑ 0.6 + 2×(fade 0.4 + hold 0.6 + fade 0.4) + slide↓ 0.6 = 4.0 */
-      --fm-tresc3d-slide: 0.6;
-      --fm-tresc3d-fade: 0.4;
-      --fm-tresc3d-hold: 0.6;
-      --fm-wrota-parallax-duration: 4;
+      /* Dwa teksty: każdy wejście 0.6 + pin 0.6 + wyjście 0.6 viewportu. */
+      --fm-wrota-parallax-duration: 3.6;
+      /* Galeria ustawia tę wartość dynamicznie: wejście + slajdy + crossfade + hold. */
+      --fm-wrota-gallery-duration: 0;
       --fm-wrota-parallax-crossfade: 0.14;
       background: transparent;
       min-height: calc(
@@ -2608,30 +2607,209 @@
         + (100svh * var(--fm-quote-portal-duration))
         + (100svh * var(--fm-wrota-film-duration))
         + (100svh * var(--fm-wrota-parallax-duration))
+        + (100svh * var(--fm-wrota-gallery-duration))
       );
       position: relative;
       z-index: 5;
     }
 
     body.template-page-filozofia-marki .giclee-fm-quote-pin-sticky {
+      --fm-quote-gradient-top-depth: 170px;
+      --fm-quote-gradient-top: 0px;
+      --fm-quote-text-bg-opacity: 1;
+      --fm-quote-divider-top-above-opacity: 1;
+      --fm-quote-divider-top-below-opacity: 1;
+      --fm-quote-divider-bottom-above-opacity: 1;
+      --fm-quote-divider-bottom-below-opacity: 1;
       align-items: stretch;
       background: transparent;
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
       justify-content: center;
+      height: 100svh;
+      max-height: 100svh;
       min-height: 100svh;
       opacity: 1;
+      overflow: hidden;
       position: sticky;
       top: 0;
       width: 100%;
       z-index: 5;
     }
 
-    body.template-page-filozofia-marki .giclee-fm-quote-pin-sticky .shopify-section[id$="__divider_Utf3HQ"] .divider,
-    body.template-page-filozofia-marki .giclee-fm-quote-pin-sticky .shopify-section[id$="__divider_H4ahef"] .divider {
+    body.template-page-filozofia-marki .giclee-fm-quote-bg-layer {
+      position: absolute;
+      inset: 0;
+      height: 100%;
+      width: 100%;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      background-color: #000;
+      background-image: var(--fm-quote-bg-image);
+      background-position: center center;
+      background-repeat: no-repeat;
+      background-size: cover;
+      transform: scale(1.06) translate3d(var(--fm-quote-bg-px, 0px), var(--fm-quote-bg-py, 0px), 0);
+      will-change: transform;
+    }
+
+    body.template-page-filozofia-marki .giclee-fm-quote-pin-sticky.has-fm-quote-bg::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background-image:
+        linear-gradient(180deg, #000 0px, transparent 100%),
+        linear-gradient(0deg, #000 0px, transparent 100%);
+      background-position:
+        center top,
+        center bottom;
+      background-repeat: no-repeat;
+      background-size:
+        100% 170px,
+        100% 170px;
+    }
+
+    body.template-page-filozofia-marki .giclee-fm-quote-pin-sticky.has-fm-quote-bg .giclee-fm-quote-bg-layer {
+      opacity: 1;
+    }
+
+    body.template-page-filozofia-marki .giclee-fm-quote-pin-sticky > .shopify-section {
+      position: relative;
+      z-index: 2;
+    }
+
+    body.template-page-filozofia-marki
+      .giclee-fm-quote-pin-sticky
+      .shopify-section[id$="__section_tAj94h"],
+    body.template-page-filozofia-marki
+      .giclee-fm-quote-pin-sticky
+      .shopify-section[id$="__section_tAj94h"]
+      .section-background,
+    body.template-page-filozofia-marki
+      .giclee-fm-quote-pin-sticky
+      .shopify-section[id$="__section_tAj94h"]
+      .section {
+      background: rgb(0 0 0 / var(--fm-quote-text-bg-opacity, 1)) !important;
+      background-color: rgb(0 0 0 / var(--fm-quote-text-bg-opacity, 1)) !important;
+    }
+
+    body.template-page-filozofia-marki
+      .giclee-fm-quote-pin-sticky
+      .shopify-section[id$="__divider_Utf3HQ"]
+      .section-background,
+    body.template-page-filozofia-marki
+      .giclee-fm-quote-pin-sticky
+      .shopify-section[id$="__divider_H4ahef"]
+      .section-background,
+    body.template-page-filozofia-marki
+      .giclee-fm-quote-pin-sticky
+      .shopify-section[id$="__divider_Utf3HQ"]
+      .section,
+    body.template-page-filozofia-marki
+      .giclee-fm-quote-pin-sticky
+      .shopify-section[id$="__divider_H4ahef"]
+      .section {
+      background: transparent !important;
+      background-color: transparent !important;
+    }
+
+    body.template-page-filozofia-marki
+      .giclee-fm-quote-pin-sticky
+      .shopify-section[id$="__divider_Utf3HQ"]
+      .divider,
+    body.template-page-filozofia-marki
+      .giclee-fm-quote-pin-sticky
+      .shopify-section[id$="__divider_H4ahef"]
+      .divider {
+      position: relative;
+      isolation: isolate;
+      background: transparent !important;
+      background-color: transparent !important;
       --padding-block-start: 12px;
       --padding-block-end: 12px;
+    }
+
+    body.template-page-filozofia-marki
+      .giclee-fm-quote-pin-sticky
+      .shopify-section[id$="__divider_Utf3HQ"]
+      .divider::before,
+    body.template-page-filozofia-marki
+      .giclee-fm-quote-pin-sticky
+      .shopify-section[id$="__divider_H4ahef"]
+      .divider::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: 0;
+      z-index: 0;
+      height: var(--padding-block-start, 12px);
+      pointer-events: none;
+    }
+
+    body.template-page-filozofia-marki
+      .giclee-fm-quote-pin-sticky
+      .shopify-section[id$="__divider_Utf3HQ"]
+      .divider::after,
+    body.template-page-filozofia-marki
+      .giclee-fm-quote-pin-sticky
+      .shopify-section[id$="__divider_H4ahef"]
+      .divider::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 0;
+      height: var(--padding-block-end, 12px);
+      pointer-events: none;
+    }
+
+    body.template-page-filozofia-marki
+      .giclee-fm-quote-pin-sticky
+      .shopify-section[id$="__divider_Utf3HQ"]
+      .divider::before {
+      background: rgb(0 0 0 / var(--fm-quote-divider-top-above-opacity, 1));
+    }
+
+    body.template-page-filozofia-marki
+      .giclee-fm-quote-pin-sticky
+      .shopify-section[id$="__divider_Utf3HQ"]
+      .divider::after {
+      background: rgb(0 0 0 / var(--fm-quote-divider-top-below-opacity, 1));
+    }
+
+    body.template-page-filozofia-marki
+      .giclee-fm-quote-pin-sticky
+      .shopify-section[id$="__divider_H4ahef"]
+      .divider::before {
+      background: rgb(0 0 0 / var(--fm-quote-divider-bottom-above-opacity, 1));
+    }
+
+    body.template-page-filozofia-marki
+      .giclee-fm-quote-pin-sticky
+      .shopify-section[id$="__divider_H4ahef"]
+      .divider::after {
+      background: rgb(0 0 0 / var(--fm-quote-divider-bottom-below-opacity, 1));
+    }
+
+    body.template-page-filozofia-marki
+      .giclee-fm-quote-pin-sticky
+      .shopify-section[id$="__divider_Utf3HQ"]
+      .divider
+      .divider__line,
+    body.template-page-filozofia-marki
+      .giclee-fm-quote-pin-sticky
+      .shopify-section[id$="__divider_H4ahef"]
+      .divider
+      .divider__line {
+      position: relative;
+      z-index: 1;
     }
 
     body.template-page-filozofia-marki .giclee-fm-quote-pin-sticky .shopify-section[id$="__section_tAj94h"] .section {
@@ -2697,6 +2875,11 @@
       top: 0 !important;
       width: 100%;
       z-index: 50 !important;
+    }
+
+    body.template-page-filozofia-marki
+      .media-block__scroll-stage.giclee-fm-portal-on-quote.is-fm-before-after-active {
+      pointer-events: auto !important;
     }
 
     /* Host Wrota sticky w tracku — zostaje w viewportcie przez cały pin/portal/film. */

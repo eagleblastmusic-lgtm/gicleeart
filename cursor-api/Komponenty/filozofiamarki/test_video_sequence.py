@@ -12,7 +12,7 @@ from PIL import Image
 from Komponenty._shared.theme_page_editor import service_base
 from Komponenty._shared.theme_page_editor.service_base import validate_template_paths
 
-from .gui import _config
+from .gui import _before_after_texts_from_json, _config
 from .registry import PAGE_ZONES
 from .motion_config import (
     FIELD_TO_SETTING,
@@ -21,9 +21,6 @@ from .motion_config import (
     validate_motion_settings,
 )
 from . import video_sequence
-from .video_sequence import PARALLAX_MIDDLE_WEBM_REL
-
-
 def _write_webp(path: Path, *, size: tuple[int, int] = (640, 360)) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     Image.new("RGBA", size, (255, 255, 255, 128)).save(path, "WEBP", quality=80)
@@ -706,6 +703,11 @@ def test_quote_portal_uses_central_scrub_scheduler_for_webm() -> None:
     assert "localPreviewHost" in runtime
     assert "this.sourceDelivery = 'native-url'" in runtime
     assert "this.lastLargeForwardSeekTarget" in runtime
+    assert "this.presentationGateEnabled" in runtime
+    assert "this.awaitingSeekPresentation" in runtime
+    assert "typeof this.video.requestVideoFrameCallback === 'function'" in runtime
+    assert "Math.abs(frame - requestedFrame) <= 1" in runtime
+    assert "dataset.awaitingPresentation" in runtime
     reverse_branch = runtime.index("if (targetMovedBackward)")
     forward_branch = runtime.index(
         "if (delta > 0 && !this.video.seeking)",
@@ -715,6 +717,52 @@ def test_quote_portal_uses_central_scrub_scheduler_for_webm() -> None:
     assert "typeof api.setProgress === 'function'" in quote_portal
     assert "api.setProgress(wrotaRoot, pendingFilmProgress)" in quote_portal
     assert "video.seeking) return" in quote_portal
+
+
+def test_parallax_text_crossfades_holds_and_exits_after_wrota() -> None:
+    root = Path(__file__).resolve().parents[3]
+    runtime = (
+        root / "assets" / "giclee-filozofia-quote-pin.js"
+    ).read_text(encoding="utf-8")
+    parallax = (
+        root / "assets" / "giclee-fm-wrota-parallax.js"
+    ).read_text(encoding="utf-8")
+    styles = (
+        root / "snippets" / "giclee-theme-inline-overrides.liquid"
+    ).read_text(encoding="utf-8")
+
+    assert "function cinematicTextProgress(afterFilm)" in runtime
+    assert "applyParallaxText(phases.afterFilm || 0, forceSnap)" in runtime
+    assert "var points = [0, 0.32, 0.68, 1, 1.42, 1.78, 2.14]" in runtime
+    assert "setTextProgress: function (value)" in parallax
+    assert "root.style.opacity = reveal.toFixed(4)" in parallax
+    assert "W tym procesie traktuję je jak materię kulturową" in parallax
+    assert "quote-window quote-window--secondary" in parallax
+    assert "--fm-quote-gradient-top-depth: 170px" in styles
+    assert "--fm-quote-gradient-top: 0px" in styles
+    assert "top: 0;" in styles
+    assert "center top," in styles
+    assert "100% 170px," in styles
+    assert "'--fm-quote-menu-edge'" in runtime
+    assert "function syncQuoteGradientDock()" in runtime
+    assert "visibleMenuEdge - stickyTop" in runtime
+    assert "data-fm-gradient-menu-edge" in runtime
+    assert "data-fm-gradient-top" in runtime
+    assert "data-fm-gradient-edge" in runtime
+    assert "data-fm-gradient-docked" in runtime
+    assert "quote-aurora" in parallax
+    assert "SECOND QUOTE ENTRANCE" in parallax
+    assert "SECOND QUOTE HOLD / PIN" in parallax
+    assert "SECOND QUOTE EXIT" in parallax
+    assert "function syncBreathing(progress)" in parallax
+    assert "scale: 1.025" in parallax
+    assert "duration: 3.2" in parallax
+    assert "repeat: -1" in parallax
+    assert "yoyo: true" in parallax
+    assert "data-fm-cinematic-breathing" in parallax
+    assert "progress >= hold[0]" in parallax
+    assert "progress < hold[1]" in parallax
+    assert "--fm-wrota-parallax-duration: 3.6" in styles
 
 
 def test_film_scroll_has_one_ai_contract_covering_gicleeapp() -> None:
@@ -914,35 +962,92 @@ def test_replace_parallax_layer_copies_webp(component_tmp: Path) -> None:
         video_sequence.parallax_deploy_relpaths(root=root)
     )
     gui_src = Path(__file__).with_name("gui.py").read_text(encoding="utf-8")
-    assert "Dodaj tło Middle…" in gui_src
+    assert "Dodaj tło Bottom…" in gui_src
+    assert "Dodaj tło Middle…" not in gui_src
     assert "_render_wrota_parallax_zone" in gui_src
+    assert "Paralaksa tła (mysz, desktop)" in gui_src
+    assert "fm_bg_parallax_enabled" in gui_src
     assert "_build_parallax_bg_panel" not in gui_src
     assert any(z.zone_id == "wrota_parallax" for z in PAGE_ZONES)
+    parallax_zone = next(z for z in PAGE_ZONES if z.zone_id == "wrota_parallax")
+    assert any(f.field_id == "fm_bg_parallax_enabled" for f in parallax_zone.fields)
     assert "assets/giclee-fm-parallax-bottom.webp" in _config().extra_deploy_relpaths
     assert "wrota_parallax" in _config().zone_content_builders
 
 
-def test_replace_parallax_middle_webm(component_tmp: Path) -> None:
+def test_quote_screen_background_asset_and_zone(component_tmp: Path) -> None:
     root = component_tmp / "theme"
-    assets = root / "assets"
-    assets.mkdir(parents=True)
-    webm = component_tmp / "middle.webm"
-    webm.write_bytes(b"fake-webm")
+    (root / "assets").mkdir(parents=True)
+    source = component_tmp / "quote.webp"
+    _write_webp(source, size=(640, 360))
 
-    dest = video_sequence.replace_parallax_layer(webm, layer="middle", root=root)
-    status = video_sequence.read_parallax_layer_status("middle", root=root)
-    cfg = video_sequence.read_parallax_config(root=root)
+    dest = video_sequence.replace_quote_bg(source, root=root)
+    status = video_sequence.read_quote_bg_status(root=root)
 
-    assert dest.name == "giclee-fm-parallax-middle.webm"
+    assert dest.name == "giclee-fm-quote-bg.webp"
     assert dest.is_file()
-    assert status.kind == "webm"
-    assert cfg["middleKind"] == "webm"
-    assert PARALLAX_MIDDLE_WEBM_REL in video_sequence.parallax_deploy_relpaths(
-        root=root
+    assert status.exists is True
+    assert status.width == 640
+    assert status.height == 360
+    assert "assets/giclee-fm-quote-bg.webp" in (
+        video_sequence.quote_bg_deploy_relpaths(root=root)
     )
 
+    video_sequence.clear_quote_bg(root=root)
+    cleared = video_sequence.read_quote_bg_status(root=root)
+    assert cleared.exists is False
+    assert video_sequence.quote_bg_deploy_relpaths(root=root) == ()
 
-def test_wrota_before_after_keeps_full_images_and_has_drag_slider() -> None:
+    gui_src = Path(__file__).with_name("gui.py").read_text(encoding="utf-8")
+    theme_root = Path(__file__).resolve().parents[3]
+    quote_pin = (theme_root / "assets" / "giclee-filozofia-quote-pin.js").read_text(
+        encoding="utf-8"
+    )
+    scripts = (theme_root / "snippets" / "scripts.liquid").read_text(encoding="utf-8")
+    overrides = (
+        theme_root / "snippets" / "giclee-theme-inline-overrides.liquid"
+    ).read_text(encoding="utf-8")
+
+    assert any(z.zone_id == "quote_screen" for z in PAGE_ZONES)
+    assert "quote_screen" in _config().zone_content_builders
+    assert "assets/giclee-fm-quote-bg.webp" in _config().extra_deploy_globs
+    assert "Ekran cytatu" in gui_src
+    assert "Dodaj tło…" in gui_src
+    assert "_render_quote_screen_zone" in gui_src
+    assert "Tło tekstu:" in gui_src
+    assert "Górny separator — nad kreską:" in gui_src
+    assert "Górny separator — pod kreską:" in gui_src
+    assert "Dolny separator — nad kreską:" in gui_src
+    assert "Dolny separator — pod kreską:" in gui_src
+    assert 'id="giclee-fm-quote-bg-assets"' in scripts
+    assert "giclee-fm-quote-bg.webp" in scripts
+    assert "applyQuoteBackground" in quote_pin
+    assert "applyQuoteBandOpacities" in quote_pin
+    assert "has-fm-quote-bg" in quote_pin
+    assert "has-fm-quote-bg" in overrides
+    assert "--fm-quote-text-bg-opacity" in overrides
+    assert "--fm-quote-divider-top-above-opacity" in overrides
+    assert "--fm-quote-divider-top-below-opacity" in overrides
+    assert "--fm-quote-divider-bottom-above-opacity" in overrides
+    assert "--fm-quote-divider-bottom-below-opacity" in overrides
+    zone = next(z for z in PAGE_ZONES if z.zone_id == "quote_screen")
+    field_ids = {f.field_id for f in zone.fields}
+    assert "fm_quote_text_bg_opacity" in field_ids
+    assert "fm_quote_divider_top_above_opacity" in field_ids
+    assert "fm_quote_divider_top_below_opacity" in field_ids
+    assert "fm_quote_divider_bottom_above_opacity" in field_ids
+    assert "fm_quote_divider_bottom_below_opacity" in field_ids
+    assert "fm_quote_bg_parallax_enabled" in field_ids
+    section_liquid = (theme_root / "sections" / "section.liquid").read_text(
+        encoding="utf-8"
+    )
+    assert 'id="giclee-fm-quote-screen-settings"' in section_liquid
+    assert "fm_quote_text_bg_opacity" in section_liquid
+    assert "fm_quote_divider_top_above_opacity" in section_liquid
+    assert "dividerTopAboveOpacity" in section_liquid
+
+
+def test_wrota_parallax_uses_only_bottom_and_removes_tresc_3d() -> None:
     root = Path(__file__).resolve().parents[3]
     media = (root / "snippets" / "media.liquid").read_text(encoding="utf-8")
     css = (
@@ -951,28 +1056,248 @@ def test_wrota_before_after_keeps_full_images_and_has_drag_slider() -> None:
     runtime = (
         root / "assets" / "giclee-filozofia-quote-pin.js"
     ).read_text(encoding="utf-8")
+    parallax = (
+        root / "assets" / "giclee-fm-wrota-parallax.js"
+    ).read_text(encoding="utf-8")
+    scripts = (root / "snippets" / "scripts.liquid").read_text(encoding="utf-8")
 
-    image_rule = css[
-        css.index(".giclee-fm-tresc3d__image")
-        : css.index(".giclee-fm-tresc3d__label")
-    ]
+    assert not any(zone.zone_id == "tresc_3d" for zone in PAGE_ZONES)
+    assert "tresc3d" not in media.lower()
+    assert "tresc3d" not in css.lower()
+    assert "tresc3d" not in runtime.lower()
+    assert "assets.middle" not in parallax
+    assert "giclee-fm-parallax-middle" not in parallax
+    assert "giclee-fm-parallax-middle" not in scripts
+    assert '"bottom"' in scripts
+    deploy = video_sequence.parallax_deploy_relpaths(root=root)
+    assert "assets/giclee-fm-parallax-bottom.webp" in deploy
+    assert not any("middle" in path or "config" in path for path in deploy)
 
-    assert media.count("data-fm-tresc3d-slider") == 2
-    assert 'type="range"' in media
-    assert 'aria-label="Porównaj obraz przed i po"' in media
-    assert "object-fit: contain" in image_rule
-    assert "object-fit: cover" not in image_rule
-    assert (
-        "max-width: min(100%, 68rem, var(--compare-viewport-width, 68rem))"
-        in css
+
+def test_before_after_gallery_assets_and_slot_validation(component_tmp: Path) -> None:
+    root = component_tmp / "theme"
+    (root / "assets").mkdir(parents=True)
+    source = component_tmp / "przed.png"
+    Image.new("RGB", (2401, 654), (30, 50, 80)).save(source, "PNG")
+
+    dest = video_sequence.replace_before_after_image(
+        source,
+        index=2,
+        side="before",
+        root=root,
     )
-    assert "aspect-ratio: var(--compare-aspect" in css
-    assert "background: transparent" in css
-    assert ".giclee-fm-tresc3d__handle-line" in css
-    assert ".giclee-fm-tresc3d__handle-grip" in css
-    assert "function initTresc3dComparisons()" in runtime
-    assert "source.naturalWidth + ' / ' + source.naturalHeight" in runtime
-    assert "'--compare-viewport-width'" in runtime
-    assert "new ResizeObserver(syncViewportSize)" in runtime
-    assert "media.style.setProperty('--compare'" in runtime
-    assert "initTresc3dComparisons();" in runtime
+    status = video_sequence.read_before_after_status(
+        2,
+        "before",
+        root=root,
+    )
+
+    assert dest.name == "giclee-fm-before-after-02-before.webp"
+    assert status.exists is True
+    assert status.width == 2401
+    assert status.height == 654
+    assert status.rel_path in video_sequence.before_after_deploy_relpaths(root=root)
+    display_rel = video_sequence.before_after_display_asset_relpath(2, "before")
+    display_path = root / display_rel
+    assert display_path.is_file()
+    assert display_rel in video_sequence.before_after_deploy_relpaths(root=root)
+    with Image.open(display_path) as display:
+        assert display.width == video_sequence.BEFORE_AFTER_DISPLAY_MAX_WIDTH
+        assert display.width * display.height <= (
+            video_sequence.BEFORE_AFTER_DISPLAY_MAX_PIXELS
+        )
+    with pytest.raises(ValueError):
+        video_sequence.before_after_asset_relpath(0, "before")
+    with pytest.raises(ValueError):
+        video_sequence.before_after_asset_relpath(1, "lewa")
+
+
+def test_before_after_gallery_is_variant_field_and_scroll_runtime() -> None:
+    root = Path(__file__).resolve().parents[3]
+    zone = next(z for z in PAGE_ZONES if z.zone_id == "before_after_gallery")
+    field = next(f for f in zone.fields if f.field_id == "before_after_count")
+    fields = {item.field_id: item for item in zone.fields}
+    gallery = (root / "assets" / "giclee-fm-before-after.js").read_text(
+        encoding="utf-8"
+    )
+    gallery_css = (root / "assets" / "giclee-fm-before-after.css").read_text(
+        encoding="utf-8"
+    )
+    quote_pin = (root / "assets" / "giclee-filozofia-quote-pin.js").read_text(
+        encoding="utf-8"
+    )
+    parallax = (root / "assets" / "giclee-fm-wrota-parallax.js").read_text(
+        encoding="utf-8"
+    )
+    media = (root / "snippets" / "media.liquid").read_text(encoding="utf-8")
+    scripts = (root / "snippets" / "scripts.liquid").read_text(encoding="utf-8")
+    gui = Path(__file__).with_name("gui.py").read_text(encoding="utf-8")
+    page_scroll = (root / "assets" / "giclee-page-smooth-scroll.js").read_text(
+        encoding="utf-8"
+    )
+
+    assert zone.label == "Przed i po"
+    assert zone.section_key == "media_with_content_Wrota"
+    assert zone.settings_only is True
+    assert field.path[-1] == "before_after_count"
+    assert field.max_value == 12
+    assert fields["before_after_motion_blur"].path[-1] == "before_after_motion_blur"
+    assert fields["before_after_film_grain"].path[-1] == "before_after_film_grain"
+    assert fields["before_after_bg_transparent"].path[-1] == "before_after_bg_transparent"
+    assert fields["before_after_preserve_prev_bg"].path[-1] == "before_after_preserve_prev_bg"
+    assert fields["before_after_bg_radial_opacity"].path[-1] == "before_after_bg_radial_opacity"
+    assert fields["before_after_bg_linear_opacity"].path[-1] == "before_after_bg_linear_opacity"
+    assert fields["before_after_texts_json"].path[-1] == "before_after_texts_json"
+    assert "before_after_gallery" in _config().zone_content_builders
+    assert "assets/giclee-fm-before-after.js" in _config().extra_deploy_relpaths
+    assert "assets/giclee-fm-before-after.css" in _config().extra_deploy_relpaths
+    assert "assets/giclee-fm-before-after-*.webp" in _config().extra_deploy_globs
+    assert 'id="giclee-fm-before-after-data"' in media
+    assert "giclee-fm-before-after-" in media
+    assert '"motionBlur"' in media
+    assert '"filmGrain"' in media
+    assert '"bgTransparent"' in media
+    assert '"bgRadialOpacity"' in media
+    assert '"bgLinearOpacity"' in media
+    assert '"preservePrevBg"' in media
+    assert '"textsJson"' in media
+    assert '"beforeDisplay"' in media
+    assert '"afterDisplay"' in media
+    assert "-before-display.webp" in media
+    assert "-after-display.webp" in media
+    assert "giclee-fm-before-after.js" in scripts
+    assert "giclee-fm-before-after.css" in scripts
+    assert "setGalleryProgress" in parallax
+    assert "getGalleryDurationVh" in parallax
+    assert "--fm-wrota-gallery-duration" in quote_pin
+    assert "applyBeforeAfterGallery" in quote_pin
+    assert "phases.gallery" in quote_pin
+    assert "setProgress: setProgress" in gallery
+    assert "var local = clamp(" in gallery
+    assert "Math.floor(local * slides.length)" in gallery
+    assert "setActive(target, reducedMotion, false)" in gallery
+    assert "durationVh: 0.6 + slides.length * 0.8 + 0.6 + 0.6" in gallery
+    assert "var ENTER_END = 0.6 / durationVh;" in gallery
+    assert "var EXIT_START = (0.6 + slides.length * 0.8) / durationVh;" in gallery
+    assert "onGalleryWheel" not in gallery
+    assert "wheelLocked" not in gallery
+    assert "event.stopImmediatePropagation()" not in gallery
+    assert "data-gallery-active-index" in gallery
+    assert 'loading="eager"' in gallery
+    assert 'loading="lazy"' in gallery
+    assert 'decoding="async"' in gallery
+    assert "function ensureCardsAround(index)" in gallery
+    assert "image.src = source" in gallery
+    assert "slide.beforeDisplay || slide.before" in gallery
+    assert "slide.afterDisplay || slide.after" in gallery
+    assert "Math.abs(progress - lastProgress) < 0.0005" in gallery
+    assert "is-nearby" in gallery
+    assert "absolute > 1" in gallery
+    assert "motionBlur ? 'blur(' + pose.blur + 'px)' : 'none'" in gallery
+    assert "before_after_texts_json" in gui
+    assert "Wspólne napisy galerii" in gui
+    assert "Efekt smużenia podczas zmiany kart" in gui
+    assert "Animowane filmowe ziarno" in gui
+    assert "Przezroczystość tła" in gui
+    assert "Zachowaj winietę i efekty tła z poprzedniego ekranu" in gui
+    assert "Radialny blob:" in gui
+    assert "Liniowy gradient:" in gui
+    assert "filmGrain: data.filmGrain !== false" in gallery
+    assert "bgTransparent: data.bgTransparent !== false" in gallery
+    assert "preservePrevBg: data.preservePrevBg !== false" in gallery
+    assert "--fm-ba-radial-opacity" in gallery
+    assert "--fm-ba-linear-opacity" in gallery_css
+    assert "is-film-grain-off" in gallery
+    assert "is-gallery-overlay" in parallax
+    assert "preservePrevBg" in parallax
+    assert "readParallaxEnabled" in parallax
+    assert (
+        "setListening(parallaxEnabled && reveal > 0.02 && !reducedMotion)"
+        in parallax
+    )
+    assert "giclee-fm-wrota-parallax-config" in media
+    assert "fm_bg_parallax_enabled" in media
+    assert "Math.abs(nextProgress - pendingFilmProgress) < 0.0005" in quote_pin
+    assert "if (seekFilm(filmShown)) wakeScrub();" in quote_pin
+    assert "hold: function ()" not in page_scroll
+    assert "release: function ()" not in page_scroll
+    assert "pointerdown" in gallery
+    assert "aria-valuenow" in gallery
+    assert "object-fit: cover" in gallery_css
+    assert ".comparison-card" in gallery_css
+    assert "contain: layout paint style" in gallery_css
+    assert ".comparison-card.is-nearby" in gallery_css
+    assert "width: 300%" not in gallery_css
+    assert "height: 300%" not in gallery_css
+    assert ".split-handle" in gallery_css
+    assert ".before-layer img {\n  filter: none;" in gallery_css
+    assert "grayscale(0.85)" not in gallery_css
+
+
+def test_before_after_gallery_text_defaults_and_overrides() -> None:
+    defaults = _before_after_texts_from_json("")
+    assert defaults["brand"] == "Before / After Archive"
+    assert defaults["beforeLabel"] == "Before"
+    assert len(defaults["slides"]) == video_sequence.BEFORE_AFTER_MAX_ITEMS
+    assert defaults["slides"][0]["title"] == "Porównanie 1"
+
+    custom = _before_after_texts_from_json(
+        json.dumps(
+            {
+                "brand": "Archiwum konserwacji",
+                "beforeLabel": "Przed",
+                "slides": [
+                    {
+                        "title": "Portret",
+                        "location": "Warszawa",
+                        "type": "Renowacja",
+                    }
+                ],
+            }
+        )
+    )
+    assert custom["brand"] == "Archiwum konserwacji"
+    assert custom["beforeLabel"] == "Przed"
+    assert custom["slides"][0] == {
+        "title": "Portret",
+        "location": "Warszawa",
+        "type": "Renowacja",
+    }
+
+
+def test_scroll_story_text_pin_controls() -> None:
+    root = Path(__file__).resolve().parents[3]
+    media = (root / "snippets" / "media.liquid").read_text(encoding="utf-8")
+    scrub = (root / "assets" / "giclee-scroll-scrub-video.js").read_text(
+        encoding="utf-8"
+    )
+    schema = (
+        root / "blocks" / "_media-without-appearance.liquid"
+    ).read_text(encoding="utf-8")
+    registry = (Path(__file__).resolve().parent / "registry.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert '"id": "scroll_intro_pin_vh"' in schema
+    assert '"id": "scroll_intro_fade_start_vh"' in schema
+    assert '"id": "scroll_outro_appear_percent"' in schema
+    assert '"id": "scroll_outro_pin_vh"' in schema
+    assert "scroll_intro_pin_vh" in registry
+    assert "scroll_intro_fade_start_vh" in registry
+    assert "scroll_outro_appear_percent" in registry
+    assert "scroll_outro_pin_vh" in registry
+    assert 'data-intro-pin-vh="' in media
+    assert 'data-intro-fade-start-vh="' in media
+    assert 'data-outro-appear-percent="' in media
+    assert 'data-outro-pin-vh="' in media
+    assert "--scroll-intro-story" in media
+    assert "--scroll-outro-story" in media
+    assert "introPinVh" in scrub
+    assert "introFadeStartVh" in scrub
+    assert "vhToPx" in scrub
+    assert "introFadeTriggerPx" in scrub
+    assert "outroAppearPercent" in scrub
+    assert "outroPinVh" in scrub
+    assert "updateStory(" in scrub
+    assert "DEFAULT_INTRO_PIN_VH" in scrub
+    assert "INTRO_EXIT_PROGRESS" not in scrub

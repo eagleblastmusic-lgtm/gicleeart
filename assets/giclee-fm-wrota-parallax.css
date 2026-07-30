@@ -1,11 +1,21 @@
-/* Filozofia / Wrota — flat parallax (Bottom + Middle), jak Pedzel_Alchemy #7. */
+/* Filozofia / Wrota — flat parallax z pojedynczą warstwą Bottom & Cinematic GSAP Text Reveal. */
+
+:root {
+  --cinematic-background: #03070d;
+  --cinematic-text-primary: #f5f7fa;
+  --cinematic-text-secondary: #aeb8c6;
+  --cinematic-accent: #aacfff;
+
+  --cut-top: 33.333%;
+  --cut-bottom: 66.666%;
+}
 
 .giclee-fm-flat-parallax {
   position: absolute;
   inset: 0;
   z-index: 4;
   overflow: hidden;
-  background: #000;
+  background: var(--cinematic-background);
   opacity: 0;
   pointer-events: none;
   visibility: hidden;
@@ -17,7 +27,7 @@
 }
 
 .giclee-fm-flat-parallax.is-active {
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .giclee-fm-flat-parallax__layer {
@@ -27,8 +37,7 @@
   will-change: transform;
 }
 
-.giclee-fm-flat-parallax__layer img,
-.giclee-fm-flat-parallax__layer video {
+.giclee-fm-flat-parallax__layer img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -38,245 +47,307 @@
   display: block;
 }
 
-.giclee-fm-flat-parallax__layer--blend img,
-.giclee-fm-flat-parallax__layer--blend video {
-  mix-blend-mode: screen;
+/* ===== CINEMATIC QUOTE GSAP REVEAL ===== */
+
+.cinematic-quote {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  isolation: isolate;
+
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 10;
+  font-family: "Manrope", sans-serif;
+  color: var(--cinematic-text-primary);
+  background: transparent;
 }
 
-/* Scrub video fades out as parallax crossfades in. */
+.cinematic-quote::after {
+  content: "";
+  position: absolute;
+  z-index: 20;
+  inset: 0;
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.5),
+      transparent 20%,
+      transparent 80%,
+      rgba(0, 0, 0, 0.6)
+    ),
+    radial-gradient(
+      circle at center,
+      transparent 35%,
+      rgba(0, 0, 0, 0.72) 120%
+    );
+}
+
+/* Galeria Przed/Po: zachowaj winietę i tło, schowaj tylko napisy. */
+.cinematic-quote.is-gallery-overlay .scene,
+.cinematic-quote.is-gallery-overlay .separator {
+  visibility: hidden;
+}
+
+.cinematic-quote .scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.cinematic-quote .scene-slice {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+  background: transparent;
+}
+
+.cinematic-quote .scene-slice--top {
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% var(--cut-top),
+    0 var(--cut-top)
+  );
+}
+
+.cinematic-quote .scene-slice--middle {
+  clip-path: polygon(
+    0 var(--cut-top),
+    100% var(--cut-top),
+    100% var(--cut-bottom),
+    0 var(--cut-bottom)
+  );
+}
+
+.cinematic-quote .scene-slice--bottom {
+  clip-path: polygon(
+    0 var(--cut-bottom),
+    100% var(--cut-bottom),
+    100% 100%,
+    0 100%
+  );
+}
+
+.cinematic-quote .separator {
+  position: absolute;
+  z-index: 10;
+  left: 0;
+
+  width: 100%;
+  height: 1px;
+
+  overflow: visible;
+  transform: scaleX(0);
+
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(128, 180, 236, 0.18) 8%,
+    rgba(226, 241, 255, 0.9) 50%,
+    rgba(128, 180, 236, 0.18) 92%,
+    transparent 100%
+  );
+
+  box-shadow:
+    0 0 8px rgba(131, 190, 255, 0.2),
+    0 0 24px rgba(131, 190, 255, 0.08);
+}
+
+.cinematic-quote .separator--top {
+  top: var(--cut-top);
+  transform-origin: left center;
+}
+
+.cinematic-quote .separator--bottom {
+  top: var(--cut-bottom);
+  transform-origin: right center;
+}
+
+.cinematic-quote .separator__flare {
+  position: absolute;
+  top: 50%;
+
+  width: min(24vw, 360px);
+  height: 3px;
+
+  opacity: 0;
+  transform: translateY(-50%);
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(196, 225, 255, 0.75),
+    #ffffff,
+    transparent
+  );
+
+  filter: blur(1px);
+
+  box-shadow:
+    0 0 10px rgba(193, 225, 255, 0.9),
+    0 0 28px rgba(106, 180, 255, 0.6),
+    0 0 60px rgba(70, 144, 230, 0.35);
+}
+
+.cinematic-quote .separator--top .separator__flare {
+  left: 0;
+}
+
+.cinematic-quote .separator--bottom .separator__flare {
+  right: 0;
+}
+
+.cinematic-quote .quote-window {
+  position: absolute;
+  z-index: 6;
+
+  top: var(--cut-top);
+  right: 0;
+  bottom: calc(100% - var(--cut-bottom));
+  left: 0;
+
+  display: grid;
+  place-items: center;
+
+  overflow: hidden;
+  perspective: 1200px;
+}
+
+.cinematic-quote .quote-content {
+  position: relative;
+
+  width: min(86vw, 1240px);
+  padding: 20px 24px;
+
+  text-align: center;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.cinematic-quote .quote-window--secondary {
+  z-index: 7;
+  isolation: isolate;
+  will-change: clip-path, opacity;
+}
+
+.cinematic-quote .quote-content--secondary {
+  width: min(90vw, 1320px);
+}
+
+.cinematic-quote .quote-aurora {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  width: min(72vw, 1100px);
+  height: clamp(90px, 18vh, 210px);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transform-origin: center;
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(170, 207, 255, 0.2) 0%,
+      rgba(72, 139, 220, 0.08) 42%,
+      transparent 74%
+    );
+  filter: blur(18px);
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
+}
+
+.cinematic-quote .quote-text {
+  margin: 0 auto;
+  max-width: 1180px;
+
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(27px, 3.5vw, 62px);
+  font-weight: 500;
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+
+  text-wrap: balance;
+  color: var(--cinematic-text-secondary);
+
+  text-shadow:
+    0 2px 20px rgba(0, 0, 0, 0.85),
+    0 0 42px rgba(108, 165, 224, 0.09);
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+.cinematic-quote .quote-text--secondary {
+  max-width: 1260px;
+  font-size: clamp(25px, 3.05vw, 54px);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.018em;
+}
+
+.cinematic-quote .word-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+
+  margin-bottom: -0.15em;
+  padding-bottom: 0.15em;
+}
+
+.cinematic-quote .word {
+  display: inline-block;
+  will-change: transform, opacity, filter;
+  transform-style: preserve-3d;
+}
+
+.cinematic-quote .word--lead {
+  color: var(--cinematic-text-primary);
+  font-weight: 600;
+}
+
+.cinematic-quote .word--accent {
+  color: #d8e6f6;
+  font-weight: 500;
+}
+
+/* Scrub video fades out as the Bottom background crossfades in. */
 .media-block__scroll-stage.giclee-fm-portal-on-quote.is-fm-parallax-crossfade
   .media-block__media--scroll {
   opacity: var(--giclee-fm-wrota-video-opacity, 1);
   transition: none;
 }
 
-/* Treść 3D — tekst lewa + kontener przed/po prawa (po crossfade Wrota). */
-.giclee-fm-tresc3d {
-  position: absolute;
-  inset: 0;
-  z-index: 6;
-  pointer-events: none;
-  color: #fff;
-}
-
-.giclee-fm-tresc3d__pair {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  align-items: center;
-  gap: clamp(1.5rem, 4vw, 4rem);
-  padding:
-    clamp(4rem, 10vh, 7rem)
-    clamp(1.5rem, 5vw, 5rem)
-    clamp(3rem, 8vh, 5rem);
-  opacity: var(--fm-tresc3d-pair-opacity, 0);
+.media-block__scroll-stage.is-fm-before-after-active
+  :is(.media-block__media--scroll, .media-block__scroll-poster) {
   visibility: hidden;
-  will-change: opacity;
 }
 
-.giclee-fm-tresc3d__pair.is-visible {
-  visibility: visible;
-}
-
-.giclee-fm-tresc3d__text {
-  margin: 0;
-  max-width: 34rem;
-  justify-self: start;
-  font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: clamp(1.15rem, 1.85vw, 1.65rem);
-  font-weight: 400;
-  font-style: italic;
-  line-height: 1.45;
-  letter-spacing: 0.01em;
-  color: rgb(255 255 255 / 0.92);
-  text-shadow: 0 0.12em 0.7em rgb(0 0 0 / 0.45);
-  text-wrap: pretty;
-}
-
-.giclee-fm-tresc3d__compare {
-  width: 100%;
-  max-width: min(100%, 68rem, var(--compare-viewport-width, 68rem));
-  justify-self: end;
-  pointer-events: none;
-}
-
-.giclee-fm-tresc3d__pair.is-visible .giclee-fm-tresc3d__compare {
-  pointer-events: auto;
-}
-
-.giclee-fm-tresc3d__compare-frame {
-  border: 1px solid rgb(255 255 255 / 0.14);
-  border-radius: 18px;
-  overflow: hidden;
-  background: transparent;
-  box-shadow:
-    0 0 0 1px rgb(255 255 255 / 0.04) inset,
-    0 20px 48px rgb(0 0 0 / 0.4);
-}
-
-.giclee-fm-tresc3d__compare-media {
-  --compare: 50;
-  position: relative;
-  width: 100%;
-  aspect-ratio: var(--compare-aspect, 537 / 653);
-  display: grid;
-  grid-template: 1fr / 1fr;
-  overflow: hidden;
-  touch-action: pan-y;
-  background: transparent;
-}
-
-.giclee-fm-tresc3d__compare-media.is-dragging {
-  touch-action: none;
-}
-
-.giclee-fm-tresc3d__layer {
-  grid-area: 1 / 1;
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-.giclee-fm-tresc3d__layer--before {
-  clip-path: inset(0 calc((100 - var(--compare)) * 1%) 0 0);
-  z-index: 1;
-}
-
-.giclee-fm-tresc3d__layer--after {
-  clip-path: inset(0 0 0 calc(var(--compare) * 1%));
-  z-index: 2;
-}
-
-.giclee-fm-tresc3d__image {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center;
-  pointer-events: none;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-.giclee-fm-tresc3d__label {
-  position: absolute;
-  left: 0.85rem;
-  bottom: 0.75rem;
-  z-index: 3;
-  padding: 0.28rem 0.55rem;
-  border: 1px solid rgb(255 255 255 / 0.18);
-  border-radius: 999px;
-  background: rgb(0 0 0 / 0.45);
-  font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: 0.72rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgb(255 255 255 / 0.82);
-}
-
-.giclee-fm-tresc3d__label--after {
-  left: auto;
-  right: 0.85rem;
-}
-
-.giclee-fm-tresc3d__divider {
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  pointer-events: none;
-}
-
-.giclee-fm-tresc3d__handle {
-  position: absolute;
-  inset: 0 auto 0 calc(var(--compare) * 1%);
-  width: 0;
-  transform: translateX(-50%);
-}
-
-.giclee-fm-tresc3d__handle-line {
-  position: absolute;
-  inset: 0 auto 0 50%;
-  width: 1px;
-  transform: translateX(-50%);
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    rgb(255 255 255 / 0.88) 15%,
-    rgb(255 255 255 / 0.88) 85%,
-    transparent
-  );
-  box-shadow: 0 0 14px rgb(255 255 255 / 0.28);
-}
-
-.giclee-fm-tresc3d__handle-grip {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  display: grid;
-  place-items: center;
-  width: 2.65rem;
-  height: 2.65rem;
-  transform: translate(-50%, -50%);
-  border: 1px solid rgb(255 255 255 / 0.34);
-  border-radius: 50%;
-  background: rgb(8 8 8 / 0.78);
-  color: rgb(255 255 255 / 0.95);
-  box-shadow:
-    0 0 0 1px rgb(255 255 255 / 0.06) inset,
-    0 10px 26px rgb(0 0 0 / 0.48);
-  font: 500 1rem/1 system-ui, sans-serif;
-}
-
-.giclee-fm-tresc3d__slider {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  opacity: 0;
-  cursor: ew-resize;
-  appearance: none;
-}
-
-.giclee-fm-tresc3d__slider::-webkit-slider-thumb,
-.giclee-fm-tresc3d__slider::-moz-range-thumb {
-  width: 48px;
-  height: 48px;
-  border: 0;
-  background: transparent;
-  cursor: ew-resize;
-  appearance: none;
-}
-
-.giclee-fm-tresc3d__slider::-webkit-slider-track,
-.giclee-fm-tresc3d__slider::-moz-range-track {
-  border: 0;
-  background: transparent;
-  appearance: none;
-}
-
-.giclee-fm-tresc3d__compare-media:has(.giclee-fm-tresc3d__slider:focus-visible)
-  .giclee-fm-tresc3d__handle-grip {
-  outline: 2px solid rgb(255 255 255 / 0.95);
-  outline-offset: 3px;
-}
-
-@media (max-width: 899px) {
-  .giclee-fm-tresc3d__pair {
-    grid-template-columns: 1fr;
-    align-content: center;
-    gap: 1.25rem;
-    padding-inline: 1.25rem;
+@media (max-width: 700px) {
+  .cinematic-quote .scene {
+    width: 100%;
+    height: min(760px, 88svh);
   }
 
-  .giclee-fm-tresc3d__text,
-  .giclee-fm-tresc3d__compare {
-    max-width: none;
-    justify-self: stretch;
+  .cinematic-quote .quote-content {
+    width: 92%;
+    padding-inline: 12px;
+  }
+
+  .cinematic-quote .quote-text {
+    font-size: clamp(25px, 7.3vw, 42px);
+    line-height: 1.08;
+  }
+
+  .cinematic-quote .quote-text--secondary {
+    font-size: clamp(22px, 6.2vw, 36px);
+    line-height: 1.12;
   }
 }
 
@@ -285,7 +356,17 @@
     will-change: auto;
   }
 
-  .giclee-fm-tresc3d__pair {
-    will-change: auto;
+  .cinematic-quote .separator {
+    transform: scaleX(1) !important;
+  }
+
+  .cinematic-quote .quote-window {
+    clip-path: inset(0) !important;
+  }
+
+  .cinematic-quote .word {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
   }
 }

@@ -6,6 +6,31 @@
 
 {% render 'section', section: section, children: children %}
 
+{% if template.suffix == 'filozofia-marki' and section.id contains 'section_tAj94h' %}
+  {%- liquid
+    assign quote_text_bg = section.settings.fm_quote_text_bg_opacity | default: 100
+    assign quote_top_legacy = section.settings.fm_quote_divider_top_bg_opacity | default: 100
+    assign quote_bottom_legacy = section.settings.fm_quote_divider_bottom_bg_opacity | default: 100
+    assign quote_top_above = section.settings.fm_quote_divider_top_above_opacity | default: quote_top_legacy
+    assign quote_top_below = section.settings.fm_quote_divider_top_below_opacity | default: quote_top_legacy
+    assign quote_bottom_above = section.settings.fm_quote_divider_bottom_above_opacity | default: quote_bottom_legacy
+    assign quote_bottom_below = section.settings.fm_quote_divider_bottom_below_opacity | default: quote_bottom_legacy
+    assign quote_parallax_enabled = section.settings.fm_quote_bg_parallax_enabled | default: true, allow_false: true
+    assign quote_parallax_strength = section.settings.fm_quote_bg_parallax_strength | default: 100
+  -%}
+  <script type="application/json" id="giclee-fm-quote-screen-settings">
+    {
+      "textBgOpacity": {{ quote_text_bg | json }},
+      "dividerTopAboveOpacity": {{ quote_top_above | json }},
+      "dividerTopBelowOpacity": {{ quote_top_below | json }},
+      "dividerBottomAboveOpacity": {{ quote_bottom_above | json }},
+      "dividerBottomBelowOpacity": {{ quote_bottom_below | json }},
+      "parallaxEnabled": {{ quote_parallax_enabled | json }},
+      "parallaxStrength": {{ quote_parallax_strength | json }}
+    }
+  </script>
+{% endif %}
+
 {% schema %}
 {
   "name": "t:names.section",
@@ -647,6 +672,61 @@
       "step": 1,
       "unit": "px",
       "default": 0
+    },
+    {
+      "type": "header",
+      "content": "Filozofia marki — ekran cytatu"
+    },
+    {
+      "type": "range",
+      "id": "fm_quote_text_bg_opacity",
+      "label": "Cytat — nieprzezroczystość tła tekstu",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 100,
+      "info": "Sterowane też z GicleeApp → Ekran cytatu."
+    },
+    {
+      "type": "range",
+      "id": "fm_quote_divider_top_above_opacity",
+      "label": "Cytat — górny separator nad kreską",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 100
+    },
+    {
+      "type": "range",
+      "id": "fm_quote_divider_top_below_opacity",
+      "label": "Cytat — górny separator pod kreską",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 100
+    },
+    {
+      "type": "range",
+      "id": "fm_quote_divider_bottom_above_opacity",
+      "label": "Cytat — dolny separator nad kreską",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 100
+    },
+    {
+      "type": "range",
+      "id": "fm_quote_divider_bottom_below_opacity",
+      "label": "Cytat — dolny separator pod kreską",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 100
     }
   ],
   "presets": [

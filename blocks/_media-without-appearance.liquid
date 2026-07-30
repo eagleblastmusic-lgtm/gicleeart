@@ -132,6 +132,30 @@
       "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
     },
     {
+      "type": "range",
+      "id": "scroll_intro_pin_vh",
+      "label": "Przypięcie nagłówka początkowego",
+      "min": 10,
+      "max": 300,
+      "step": 5,
+      "unit": "vh",
+      "default": 45,
+      "info": "Jak długo nagłówek z podtytułem pozostaje przypięty podczas scrolla.",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "range",
+      "id": "scroll_intro_fade_start_vh",
+      "label": "Start znikania nagłówka początkowego",
+      "min": 0,
+      "max": 300,
+      "step": 5,
+      "unit": "vh",
+      "default": 45,
+      "info": "Po ilu vh przewijania nagłówek zaczyna znikać. Nie wcześniej niż kończy się przypięcie.",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
       "type": "richtext",
       "id": "scroll_outro_text",
       "label": "Tekst końcowy",
@@ -139,42 +163,28 @@
       "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
     },
     {
-      "type": "richtext",
-      "id": "tresc3d_text_1",
-      "label": "Treść 3D — tekst 1",
-      "default": "<p>Pierwszym są obrazy malarskie — często stare, pożółkłe, zapomniane lub wymagające ponownego opracowania w formie reprodukcji.</p>",
-      "visible_if": "{{ block.settings.media_type == 'scroll_video' and block.settings.scroll_video_asset == 'giclee-philosophy-wrota' }}"
+      "type": "range",
+      "id": "scroll_outro_appear_percent",
+      "label": "Pojawienie się tekstu końcowego",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 95,
+      "info": "W którym momencie animacji filmu pojawia się tekst końcowy.",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
     },
     {
-      "type": "image_picker",
-      "id": "tresc3d_pair1_before",
-      "label": "Treść 3D — para 1 przed",
-      "visible_if": "{{ block.settings.media_type == 'scroll_video' and block.settings.scroll_video_asset == 'giclee-philosophy-wrota' }}"
-    },
-    {
-      "type": "image_picker",
-      "id": "tresc3d_pair1_after",
-      "label": "Treść 3D — para 1 po",
-      "visible_if": "{{ block.settings.media_type == 'scroll_video' and block.settings.scroll_video_asset == 'giclee-philosophy-wrota' }}"
-    },
-    {
-      "type": "richtext",
-      "id": "tresc3d_text_2",
-      "label": "Treść 3D — tekst 2",
-      "default": "<p>W tym procesie traktuję je jak materię kulturową, którą można przywrócić do życia poprzez korekcję tonalną i kolorystyczną, precyzyjny druk Fine Art i świadomą oprawę</p>",
-      "visible_if": "{{ block.settings.media_type == 'scroll_video' and block.settings.scroll_video_asset == 'giclee-philosophy-wrota' }}"
-    },
-    {
-      "type": "image_picker",
-      "id": "tresc3d_pair2_before",
-      "label": "Treść 3D — para 2 przed",
-      "visible_if": "{{ block.settings.media_type == 'scroll_video' and block.settings.scroll_video_asset == 'giclee-philosophy-wrota' }}"
-    },
-    {
-      "type": "image_picker",
-      "id": "tresc3d_pair2_after",
-      "label": "Treść 3D — para 2 po",
-      "visible_if": "{{ block.settings.media_type == 'scroll_video' and block.settings.scroll_video_asset == 'giclee-philosophy-wrota' }}"
+      "type": "range",
+      "id": "scroll_outro_pin_vh",
+      "label": "Przypięcie tekstu końcowego",
+      "min": 10,
+      "max": 300,
+      "step": 5,
+      "unit": "vh",
+      "default": 60,
+      "info": "Jak długo tekst końcowy pozostaje przypięty po pojawieniu.",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
     },
     {
       "type": "select",
@@ -456,6 +466,14 @@
     },
     {
       "type": "checkbox",
+      "id": "scroll_background_parallax",
+      "label": "Paralaksa tła (mysz)",
+      "default": false,
+      "info": "Subtelny ruch obrazu lub WebM tła pod kursorem. Działa na desktopie.",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' and block.settings.scroll_video_asset != 'giclee-philosophy-wrota' }}"
+    },
+    {
+      "type": "checkbox",
       "id": "scroll_alpha_diagnostics",
       "label": "Diagnostyka krawędzi alfa",
       "default": false,
@@ -489,6 +507,82 @@
       "unit": "vh",
       "default": 400,
       "visible_if": "{{ block.settings.media_type == 'scroll_video' }}"
+    },
+    {
+      "type": "range",
+      "id": "before_after_count",
+      "label": "Galeria Przed i po — liczba obrazów",
+      "min": 0,
+      "max": 12,
+      "step": 1,
+      "default": 0,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' and block.settings.scroll_video_asset == 'giclee-philosophy-wrota' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "fm_bg_parallax_enabled",
+      "label": "Paralaksa tła (mysz)",
+      "default": true,
+      "info": "Subtelny ruch warstwy Bottom pod kursorem po końcówce filmu Wrota.",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' and block.settings.scroll_video_asset == 'giclee-philosophy-wrota' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "before_after_motion_blur",
+      "label": "Galeria Przed i po — efekt smużenia",
+      "default": true,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' and block.settings.scroll_video_asset == 'giclee-philosophy-wrota' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "before_after_film_grain",
+      "label": "Galeria Przed i po — animowane filmowe ziarno",
+      "default": true,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' and block.settings.scroll_video_asset == 'giclee-philosophy-wrota' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "before_after_bg_transparent",
+      "label": "Galeria Przed i po — przezroczystość tła",
+      "default": true,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' and block.settings.scroll_video_asset == 'giclee-philosophy-wrota' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "before_after_preserve_prev_bg",
+      "label": "Galeria Przed i po — zachowaj winietę i tło poprzedniego ekranu",
+      "default": true,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' and block.settings.scroll_video_asset == 'giclee-philosophy-wrota' }}"
+    },
+    {
+      "type": "range",
+      "id": "before_after_bg_radial_opacity",
+      "label": "Galeria Przed i po — tło radialne",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 0,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' and block.settings.scroll_video_asset == 'giclee-philosophy-wrota' and block.settings.before_after_bg_transparent }}"
+    },
+    {
+      "type": "range",
+      "id": "before_after_bg_linear_opacity",
+      "label": "Galeria Przed i po — tło liniowe",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 0,
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' and block.settings.scroll_video_asset == 'giclee-philosophy-wrota' and block.settings.before_after_bg_transparent }}"
+    },
+    {
+      "type": "textarea",
+      "id": "before_after_texts_json",
+      "label": "Galeria Przed i po — teksty (GicleeApp)",
+      "info": "To pole jest zarządzane przez czytelny panel sekcji „Przed i po” w GicleeApp.",
+      "default": "{}",
+      "visible_if": "{{ block.settings.media_type == 'scroll_video' and block.settings.scroll_video_asset == 'giclee-philosophy-wrota' }}"
     },
     {
       "type": "checkbox",

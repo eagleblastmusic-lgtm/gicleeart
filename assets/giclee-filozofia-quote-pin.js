@@ -27,6 +27,11 @@
   var sticky = document.createElement('div');
   sticky.className = 'giclee-fm-quote-pin-sticky';
 
+  var bgLayer = document.createElement('div');
+  bgLayer.className = 'giclee-fm-quote-bg-layer';
+  bgLayer.setAttribute('aria-hidden', 'true');
+  sticky.appendChild(bgLayer);
+
   var parent = topDivider.parentNode;
   if (!parent) return;
 
@@ -39,6 +44,149 @@
     if (node === bottomDivider) break;
     node = next;
   }
+
+  var quoteParallaxEnabled = true;
+  var quoteParallaxStrength = 100;
+
+  function applyQuoteBackground() {
+    var source = document.getElementById('giclee-fm-quote-bg-assets');
+    if (!source) return;
+    var url = '';
+    try {
+      var data = JSON.parse(source.textContent || '{}');
+      url = data && data.image ? String(data.image) : '';
+    } catch (_error) {
+      return;
+    }
+    if (!url) return;
+    var probe = new Image();
+    probe.onload = function () {
+      sticky.classList.add('has-fm-quote-bg');
+      sticky.style.setProperty('--fm-quote-bg-image', 'url("' + url + '")');
+      sticky.setAttribute('data-fm-quote-bg', 'ready');
+      applyQuoteBandOpacities();
+    };
+    probe.onerror = function () {
+      sticky.classList.remove('has-fm-quote-bg');
+      sticky.style.removeProperty('--fm-quote-bg-image');
+      sticky.setAttribute('data-fm-quote-bg', 'missing');
+    };
+    probe.decoding = 'async';
+    probe.src = url;
+  }
+
+  function clampOpacityPct(value, fallback) {
+    var n = Number(value);
+    if (!Number.isFinite(n)) n = fallback;
+    return Math.min(100, Math.max(0, n)) / 100;
+  }
+
+  function applyQuoteBandOpacities() {
+    var source = document.getElementById('giclee-fm-quote-screen-settings');
+    var textPct = 100;
+    var topAbovePct = 100;
+    var topBelowPct = 100;
+    var bottomAbovePct = 100;
+    var bottomBelowPct = 100;
+    if (source) {
+      try {
+        var data = JSON.parse(source.textContent || '{}');
+        textPct = data.textBgOpacity;
+        topAbovePct =
+          data.dividerTopAboveOpacity != null
+            ? data.dividerTopAboveOpacity
+            : data.dividerTopBgOpacity;
+        topBelowPct =
+          data.dividerTopBelowOpacity != null
+            ? data.dividerTopBelowOpacity
+            : data.dividerTopBgOpacity;
+        bottomAbovePct =
+          data.dividerBottomAboveOpacity != null
+            ? data.dividerBottomAboveOpacity
+            : data.dividerBottomBgOpacity;
+        bottomBelowPct =
+          data.dividerBottomBelowOpacity != null
+            ? data.dividerBottomBelowOpacity
+            : data.dividerBottomBgOpacity;
+        if (typeof data.parallaxEnabled === 'boolean') {
+          quoteParallaxEnabled = data.parallaxEnabled;
+        }
+        if (Number.isFinite(Number(data.parallaxStrength))) {
+          quoteParallaxStrength = Number(data.parallaxStrength);
+        }
+      } catch (_error) {}
+    }
+    sticky.style.setProperty(
+      '--fm-quote-text-bg-opacity',
+      clampOpacityPct(textPct, 100).toFixed(4)
+    );
+    sticky.style.setProperty(
+      '--fm-quote-divider-top-above-opacity',
+      clampOpacityPct(topAbovePct, 100).toFixed(4)
+    );
+    sticky.style.setProperty(
+      '--fm-quote-divider-top-below-opacity',
+      clampOpacityPct(topBelowPct, 100).toFixed(4)
+    );
+    sticky.style.setProperty(
+      '--fm-quote-divider-bottom-above-opacity',
+      clampOpacityPct(bottomAbovePct, 100).toFixed(4)
+    );
+    sticky.style.setProperty(
+      '--fm-quote-divider-bottom-below-opacity',
+      clampOpacityPct(bottomBelowPct, 100).toFixed(4)
+    );
+  }
+
+  applyQuoteBackground();
+  applyQuoteBandOpacities();
+
+  var MAX_SHIFT_X = 26;
+  var MAX_SHIFT_Y = 16;
+  var EASE = 0.075;
+  var targetX = 0;
+  var targetY = 0;
+  var curX = 0;
+  var curY = 0;
+  var parallaxRafId = 0;
+
+  function applyParallax() {
+    var factor = quoteParallaxStrength / 100;
+    sticky.style.setProperty('--fm-quote-bg-px', (-curX * MAX_SHIFT_X * factor).toFixed(2) + 'px');
+    sticky.style.setProperty('--fm-quote-bg-py', (-curY * MAX_SHIFT_Y * factor).toFixed(2) + 'px');
+  }
+
+  function tickParallax() {
+    parallaxRafId = 0;
+    curX += (targetX - curX) * EASE;
+    curY += (targetY - curY) * EASE;
+    applyParallax();
+    if (Math.abs(targetX - curX) > 0.0008 || Math.abs(targetY - curY) > 0.0008) {
+      parallaxRafId = window.requestAnimationFrame(tickParallax);
+    }
+  }
+
+  function startParallaxLoop() {
+    if (!parallaxRafId) parallaxRafId = window.requestAnimationFrame(tickParallax);
+  }
+
+  function onPointerMove(event) {
+    if (reducedMotion || !quoteParallaxEnabled || !sticky.classList.contains('has-fm-quote-bg')) return;
+    var vw = window.innerWidth || 1;
+    var vh = window.innerHeight || 1;
+    targetX = Math.min(Math.max((event.clientX / vw) * 2 - 1, -1), 1);
+    targetY = Math.min(Math.max((event.clientY / vh) * 2 - 1, -1), 1);
+    startParallaxLoop();
+  }
+
+  function onPointerLeave() {
+    targetX = 0;
+    targetY = 0;
+    startParallaxLoop();
+  }
+
+  window.addEventListener('pointermove', onPointerMove, { passive: true });
+  document.addEventListener('pointerleave', onPointerLeave, { passive: true });
 
   track.appendChild(sticky);
 
@@ -77,6 +225,7 @@
   }
   track.style.setProperty('--fm-wrota-film-duration', String(filmDurationVh));
 
+
   document.body.classList.add('giclee-fm-quote-curtain-ready');
 
   var reducedMotion = !!(
@@ -102,6 +251,7 @@
   var chromeHeaderRow = null;
   var chromeHeader = null;
   var chromeHeaderHeight = 60;
+  var visibleMenuEdge = 60;
   var chromeTarget = 0;
   var chromeCurrent = 0;
   var chromeRaf = 0;
@@ -200,10 +350,20 @@
     if (!chromeHeader) return;
     var eased = clamp(chromeCurrent, 0, 1);
     var distance = chromeHeaderHeight * eased;
+    visibleMenuEdge = Math.max(0, chromeHeaderHeight - distance);
     document.documentElement.style.setProperty(
       '--giclee-prehero-header-y',
       (-distance).toFixed(2) + 'px'
     );
+    document.documentElement.style.setProperty(
+      '--fm-quote-menu-edge',
+      visibleMenuEdge.toFixed(2) + 'px'
+    );
+    sticky.setAttribute(
+      'data-fm-gradient-menu-edge',
+      visibleMenuEdge.toFixed(2)
+    );
+    syncQuoteGradientDock();
     chromeHeader.style.setProperty(
       'pointer-events',
       eased <= 0.96 ? 'auto' : 'none',
@@ -232,6 +392,31 @@
     } else {
       chromeLastTime = 0;
     }
+  }
+
+  function syncQuoteGradientDock() {
+    var stickyTop = sticky.getBoundingClientRect().top;
+    var gradientTop = Math.max(0, visibleMenuEdge - stickyTop);
+    var gradientEdge = stickyTop + gradientTop;
+    var docked =
+      stickyTop <= visibleMenuEdge + 0.5 &&
+      Math.abs(gradientEdge - visibleMenuEdge) <= 0.5;
+    sticky.style.setProperty(
+      '--fm-quote-gradient-top',
+      gradientTop.toFixed(2) + 'px'
+    );
+    sticky.setAttribute(
+      'data-fm-gradient-top',
+      gradientTop.toFixed(2)
+    );
+    sticky.setAttribute(
+      'data-fm-gradient-edge',
+      gradientEdge.toFixed(2)
+    );
+    sticky.setAttribute(
+      'data-fm-gradient-docked',
+      docked ? 'true' : 'false'
+    );
   }
 
   function requestChromeTick() {
@@ -268,7 +453,7 @@
 
   bootChromeHeader();
 
-  // Flat parallax Bottom+Middle — crossfade z końcówką filmu Wrota.
+  // Flat parallax Bottom — crossfade z końcówką filmu Wrota.
   var PARALLAX_CROSSFADE_DEFAULT = 0.14;
   var parallaxApi = null;
 
@@ -278,6 +463,15 @@
     var api = window.GicleeFmWrotaParallax;
     if (!api || typeof api.mount !== 'function') return null;
     parallaxApi = api.mount(stage);
+    if (
+      parallaxApi &&
+      typeof parallaxApi.getGalleryDurationVh === 'function'
+    ) {
+      track.style.setProperty(
+        '--fm-wrota-gallery-duration',
+        String(Math.max(0, parallaxApi.getGalleryDurationVh() || 0))
+      );
+    }
     return parallaxApi;
   }
 
@@ -313,231 +507,56 @@
     return reveal;
   }
 
-  function tresc3dHost() {
-    if (!(stage instanceof HTMLElement)) return null;
-    return stage.querySelector('[data-fm-tresc3d]');
+  function cinematicTextProgress(afterFilm) {
+    var progress = clamp(Number(afterFilm) || 0, 0, 1);
+    var points = [0, 0.32, 0.68, 1, 1.42, 1.78, 2.14];
+    var phase = Math.min(5, Math.floor(progress * 6));
+    var local = progress >= 1 ? 1 : progress * 6 - phase;
+    var timelineValue =
+      points[phase] + (points[phase + 1] - points[phase]) * local;
+    return timelineValue / points[points.length - 1];
   }
 
-  function initTresc3dComparisons() {
-    var host = tresc3dHost();
-    if (!host) return;
-    host.querySelectorAll('[data-fm-tresc3d-compare]').forEach(function (compare) {
-      if (compare.dataset.fmCompareReady === 'true') return;
-      var media = compare.querySelector('.giclee-fm-tresc3d__compare-media');
-      var slider = compare.querySelector('[data-fm-tresc3d-slider]');
-      if (!media || !(slider instanceof HTMLInputElement)) return;
-
-      compare.dataset.fmCompareReady = 'true';
-      var pair = compare.closest('.giclee-fm-tresc3d__pair');
-      var aspectRatio = 537 / 653;
-      var syncViewportSize = function () {
-        if (!(pair instanceof HTMLElement)) return;
-        var pairStyle = window.getComputedStyle(pair);
-        var verticalPadding =
-          (parseFloat(pairStyle.paddingTop) || 0)
-          + (parseFloat(pairStyle.paddingBottom) || 0);
-        var availableHeight = Math.max(
-          180,
-          Math.min(window.innerHeight || pair.clientHeight, pair.clientHeight)
-            - verticalPadding
-            - 18
-        );
-        compare.style.setProperty(
-          '--compare-viewport-width',
-          Math.floor(availableHeight * aspectRatio) + 'px'
-        );
-      };
-      var images = Array.prototype.slice.call(
-        media.querySelectorAll('.giclee-fm-tresc3d__image')
-      );
-      var syncAspect = function () {
-        var source = images.find(function (image) {
-          return image.naturalWidth > 0 && image.naturalHeight > 0;
-        });
-        if (!source) return;
-        aspectRatio = source.naturalWidth / source.naturalHeight;
-        media.style.setProperty(
-          '--compare-aspect',
-          source.naturalWidth + ' / ' + source.naturalHeight
-        );
-        syncViewportSize();
-      };
-      images.forEach(function (image) {
-        if (image.complete) syncAspect();
-        else image.addEventListener('load', syncAspect, { once: true });
-      });
-      syncViewportSize();
-      if (window.ResizeObserver && pair instanceof HTMLElement) {
-        var sizeObserver = new ResizeObserver(syncViewportSize);
-        sizeObserver.observe(pair);
-        compare.fmCompareResizeObserver = sizeObserver;
-      } else {
-        window.addEventListener('resize', syncViewportSize, { passive: true });
-      }
-
-      var isDragging = false;
-      var sync = function () {
-        var value = clamp(Number(slider.value) || 0, 0, 100);
-        media.style.setProperty('--compare', value.toFixed(2));
-        slider.setAttribute('aria-valuetext', Math.round(value) + '% obrazu przed');
-      };
-      var syncFromPointer = function (event) {
-        var rect = slider.getBoundingClientRect();
-        if (!rect.width) return;
-        slider.value = String(Math.round(clamp(
-          ((event.clientX - rect.left) / rect.width) * 100,
-          0,
-          100
-        )));
-        sync();
-      };
-      var startDrag = function (event) {
-        isDragging = true;
-        media.classList.add('is-dragging');
-        slider.focus({ preventScroll: true });
-        slider.setPointerCapture(event.pointerId);
-        syncFromPointer(event);
-      };
-      var moveDrag = function (event) {
-        if (!isDragging) return;
-        syncFromPointer(event);
-      };
-      var endDrag = function (event) {
-        if (
-          event
-          && Number.isInteger(event.pointerId)
-          && slider.hasPointerCapture(event.pointerId)
-        ) {
-          slider.releasePointerCapture(event.pointerId);
-        }
-        isDragging = false;
-        media.classList.remove('is-dragging');
-      };
-      var moveByKeyboard = function (event) {
-        var value = Number(slider.value) || 0;
-        if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') value -= 1;
-        else if (event.key === 'ArrowRight' || event.key === 'ArrowUp') value += 1;
-        else if (event.key === 'Home') value = 0;
-        else if (event.key === 'End') value = 100;
-        else return;
-        event.preventDefault();
-        slider.value = String(clamp(value, 0, 100));
-        sync();
-      };
-
-      slider.addEventListener('input', sync);
-      slider.addEventListener('change', sync);
-      slider.addEventListener('pointerdown', startDrag);
-      slider.addEventListener('pointermove', moveDrag);
-      slider.addEventListener('pointerup', endDrag);
-      slider.addEventListener('pointercancel', endDrag);
-      slider.addEventListener('blur', endDrag);
-      slider.addEventListener('keydown', moveByKeyboard);
-      sync();
-    });
-  }
-
-  function pairOpacityInRange(scrollPx, start, fadeInEnd, fadeOutStart, end) {
-    if (scrollPx <= start) return 0;
-    if (scrollPx < fadeInEnd) {
-      return smoothstep((scrollPx - start) / Math.max(1, fadeInEnd - start));
-    }
-    if (scrollPx <= fadeOutStart) return 1;
-    if (scrollPx < end) {
-      return 1 - smoothstep((scrollPx - fadeOutStart) / Math.max(1, end - fadeOutStart));
-    }
-    return 0;
-  }
-
-  /**
-   * Po crossfade (afterFilm):
-   * 1) wjazd Middle 0.6vh
-   * 2) para 1 fade in → hold 0.6vh → fade out
-   * 3) para 2 fade in → hold 0.6vh → fade out
-   * 4) zjazd Middle w dół 0.6vh
-   */
-  function applyTresc3d(afterFilmScrollPx, forceSnap) {
-    var viewport = window.innerHeight || 1;
-    var slideD = readCssNumber(track, '--fm-tresc3d-slide', 0.6) * viewport;
-    var fadeD = readCssNumber(track, '--fm-tresc3d-fade', 0.4) * viewport;
-    var holdD = readCssNumber(track, '--fm-tresc3d-hold', 0.6) * viewport;
-    var scrollPx = Math.max(0, afterFilmScrollPx || 0);
-
-    var p1Start = slideD;
-    var p1InEnd = p1Start + fadeD;
-    var p1OutStart = p1InEnd + holdD;
-    var p1End = p1OutStart + fadeD;
-
-    var p2Start = p1End;
-    var p2InEnd = p2Start + fadeD;
-    var p2OutStart = p2InEnd + holdD;
-    var p2End = p2OutStart + fadeD;
-
-    var middleExitStart = p2End;
-    var middleExitEnd = middleExitStart + slideD;
-
-    var middleT = 0;
-    if (reducedMotion || forceSnap) {
-      middleT =
-        scrollPx > 0 && scrollPx < middleExitEnd ? 1 : 0;
-    } else if (scrollPx <= 0) {
-      middleT = 0;
-    } else if (scrollPx < slideD) {
-      middleT = smoothstep(scrollPx / Math.max(1, slideD));
-    } else if (scrollPx <= middleExitStart) {
-      middleT = 1;
-    } else if (scrollPx < middleExitEnd) {
-      middleT =
-        1 -
-        smoothstep(
-          (scrollPx - middleExitStart) / Math.max(1, slideD)
-        );
-    } else {
-      middleT = 0;
-    }
-
+  function applyParallaxText(afterFilm, forceSnap) {
     var api = ensureParallax();
-    if (api && typeof api.setMiddleSlide === 'function') {
-      api.setMiddleSlide(middleT);
+    if (!api || typeof api.setTextProgress !== 'function') return 0;
+    var progress;
+    if (reducedMotion || forceSnap) {
+      if (afterFilm <= 0) progress = 0;
+      else if (afterFilm < 2 / 6) progress = 0.68 / 2.14;
+      else if (afterFilm < 3 / 6) progress = 1 / 2.14;
+      else if (afterFilm < 5 / 6) progress = 1.78 / 2.14;
+      else progress = 1;
+    } else {
+      progress = cinematicTextProgress(afterFilm);
     }
-
-    var o1 = pairOpacityInRange(scrollPx, p1Start, p1InEnd, p1OutStart, p1End);
-    var o2 = pairOpacityInRange(scrollPx, p2Start, p2InEnd, p2OutStart, p2End);
-    if (reducedMotion) {
-      if (scrollPx >= p1Start && scrollPx < p2Start) o1 = 1;
-      else o1 = 0;
-      if (scrollPx >= p2Start && scrollPx < p2End) o2 = 1;
-      else o2 = 0;
-    }
-
-    var host = tresc3dHost();
-    if (host) {
-      var pair1 = host.querySelector('[data-fm-tresc3d-pair="1"]');
-      var pair2 = host.querySelector('[data-fm-tresc3d-pair="2"]');
-      if (pair1) {
-        pair1.style.setProperty('--fm-tresc3d-pair-opacity', o1.toFixed(4));
-        pair1.classList.toggle('is-visible', o1 > 0.02);
-      }
-      if (pair2) {
-        pair2.style.setProperty('--fm-tresc3d-pair-opacity', o2.toFixed(4));
-        pair2.classList.toggle('is-visible', o2 > 0.02);
-      }
-      host.classList.toggle('is-active', o1 > 0.02 || o2 > 0.02 || middleT > 0.02);
-      host.setAttribute('aria-hidden', o1 > 0.02 || o2 > 0.02 ? 'false' : 'true');
-    }
-
+    api.setTextProgress(progress);
     if (stage instanceof HTMLElement) {
-      stage.setAttribute('data-fm-middle-slide', middleT.toFixed(3));
-      stage.setAttribute('data-fm-tresc3d-p1', o1.toFixed(3));
-      stage.setAttribute('data-fm-tresc3d-p2', o2.toFixed(3));
+      stage.setAttribute(
+        'data-fm-cinematic-text-progress',
+        progress.toFixed(3)
+      );
     }
+    return progress;
   }
 
-  function afterFilmScrollPx(phases) {
-    var viewport = window.innerHeight || 1;
-    var parallaxDuration =
-      readCssNumber(track, '--fm-wrota-parallax-duration', 4) * viewport;
-    return clamp(phases.afterFilm || 0, 0, 1) * Math.max(1, parallaxDuration);
+  function applyBeforeAfterGallery(galleryProgress, forceSnap) {
+    var api = ensureParallax();
+    if (!api || typeof api.setGalleryProgress !== 'function') return 0;
+    var progress = clamp(Number(galleryProgress) || 0, 0, 1);
+    if (reducedMotion && forceSnap && progress > 0) progress = 0.5;
+    api.setGalleryProgress(progress);
+    if (stage instanceof HTMLElement) {
+      stage.classList.toggle(
+        'is-fm-before-after-active',
+        progress > 0.02 && progress < 0.99
+      );
+      stage.setAttribute(
+        'data-fm-before-after-progress',
+        progress.toFixed(3)
+      );
+    }
+    return progress;
   }
 
   /**
@@ -545,20 +564,28 @@
    * 1) pin cytatu
    * 2) portal odsłania Wrota (power2.out + lekki lag)
    * 3) scrub filmu Wrota (bez wjazdu sekcji od dołu)
-   * 4) po filmie: crossfade → wjazd Middle → Treść 3D (2 pary)
+   * 4) crossfade do tła Bottom
+   * 5) tekst 1: wejście → hold 0.6 viewportu → wyjście
+   * 6) tekst 2: świetlny reveal → hold 0.6 viewportu → wyjście
+   * 7) galeria Przed i po: crossfade wejścia → po jednym etapie na slajd
+   * 8) po ostatnim slajdzie crossfade z powrotem do samej paralaksy Bottom
    */
   function phaseProgress() {
     var viewport = window.innerHeight || 1;
-    var pinDuration = readCssNumber(track, '--fm-quote-pin-duration', 0.4) * viewport;
+    var pinDuration = readCssNumber(track, '--fm-quote-pin-duration', 0.6) * viewport;
     var portalDuration =
       readCssNumber(track, '--fm-quote-portal-duration', 2) * viewport;
     var filmDuration =
       readCssNumber(track, '--fm-wrota-film-duration', filmDurationVh) * viewport;
     var parallaxDuration =
-      readCssNumber(track, '--fm-wrota-parallax-duration', 4) * viewport;
+      readCssNumber(track, '--fm-wrota-parallax-duration', 3.6) * viewport;
+    var galleryDuration =
+      readCssNumber(track, '--fm-wrota-gallery-duration', 0) * viewport;
 
     var trackRect = track.getBoundingClientRect();
+    sceneInViewport = trackRect.top <= viewport && trackRect.bottom > 0;
     var scrolled = clamp(-trackRect.top, 0, Math.max(1, track.offsetHeight - viewport));
+    syncQuoteGradientDock();
 
     if (scrolled <= pinDuration) {
       return {
@@ -566,6 +593,7 @@
         portal: 0,
         film: 0,
         afterFilm: 0,
+        gallery: 0,
       };
     }
 
@@ -576,6 +604,7 @@
         portal: clamp(afterPin / Math.max(1, portalDuration), 0, 1),
         film: 0,
         afterFilm: 0,
+        gallery: 0,
       };
     }
 
@@ -586,6 +615,7 @@
         portal: 1,
         film: clamp(afterPortal / Math.max(1, filmDuration), 0, 1),
         afterFilm: 0,
+        gallery: 0,
       };
     }
 
@@ -595,18 +625,24 @@
       portal: 1,
       film: 1,
       afterFilm: clamp(afterFilmScroll / Math.max(1, parallaxDuration), 0, 1),
+      gallery: galleryDuration > 0
+        ? clamp(
+            (afterFilmScroll - parallaxDuration) / Math.max(1, galleryDuration),
+            0,
+            1
+          )
+        : 0,
     };
   }
 
   function sceneActive() {
-    var viewport = window.innerHeight || 1;
-    var trackRect = track.getBoundingClientRect();
-    return trackRect.top <= viewport && trackRect.bottom > 0;
+    return sceneInViewport;
   }
 
   var pendingFilmProgress = null;
   var fallbackSeekAttached = false;
   var lastFilmHeld = 0;
+  var sceneInViewport = false;
 
   function flushFallbackSeek() {
     if (pendingFilmProgress == null) return;
@@ -666,8 +702,16 @@
 
   function seekFilm(progress01) {
     ensureVideoReady();
-    pendingFilmProgress = clamp(progress01, 0, 1);
+    var nextProgress = clamp(progress01, 0, 1);
+    if (
+      pendingFilmProgress != null &&
+      Math.abs(nextProgress - pendingFilmProgress) < 0.0005
+    ) {
+      return false;
+    }
+    pendingFilmProgress = nextProgress;
     flushFallbackSeek();
+    return true;
   }
 
   function wakeScrub() {
@@ -714,7 +758,8 @@
         (phases.pin >= 1 ||
           local > 0 ||
           phases.film > 0 ||
-          phases.afterFilm > 0));
+          phases.afterFilm > 0 ||
+          phases.gallery > 0));
     stage.classList.toggle('is-fm-portal-overlay', overlayOn);
     document.body.classList.toggle('giclee-fm-curtain-active', overlayOn);
     document.body.classList.toggle('giclee-fm-curtain-open', local > 0.02);
@@ -722,31 +767,34 @@
     var filmShown = 0;
     if (local >= 0.999) {
       filmShown = reducedMotion ? 1 : phases.film;
-      if (phases.afterFilm > 0) filmShown = 1;
+      if (phases.afterFilm > 0 || phases.gallery > 0) filmShown = 1;
       lastFilmHeld = filmShown;
-      seekFilm(filmShown);
-      wakeScrub();
+      if (seekFilm(filmShown)) wakeScrub();
     } else if (local > 0.02) {
       // Nie resetuj do klatki 0 gdy portal jeszcze prawie otwarty —
       // przy scrollu w górę z filmu wyglądało to jak skok na początek
       // i ponowne „odtwarzanie” do przodu.
       if (local < 0.22 && phases.portal < 0.22) {
         lastFilmHeld = 0;
-        seekFilm(0);
+        if (seekFilm(0)) wakeScrub();
       } else {
-        seekFilm(lastFilmHeld);
+        if (seekFilm(lastFilmHeld)) wakeScrub();
       }
-      wakeScrub();
       filmShown = lastFilmHeld;
     }
 
     // Menu chowa się jak w prehero — od klatki 420 scrubu Wrota.
     setChromeFromFilm(filmShown, forceSnap);
 
-    // Paralaksa Bottom+Middle — delikatny crossfade z końcówką filmu.
-    applyParallaxCrossfade(filmShown, phases.afterFilm || 0, forceSnap);
-    // Po crossfade: wjazd Middle + Treść 3D (tekst + kontenery przed/po).
-    applyTresc3d(afterFilmScrollPx(phases), forceSnap);
+    // Paralaksa Bottom — delikatny crossfade z końcówką filmu.
+    applyParallaxCrossfade(
+      filmShown,
+      phases.afterFilm > 0 || phases.gallery > 0 ? 1 : 0,
+      forceSnap
+    );
+    // Dwa teksty: każdy wejście → hold 0.6 viewportu → animacja wyjścia.
+    applyParallaxText(phases.afterFilm || 0, forceSnap);
+    applyBeforeAfterGallery(phases.gallery || 0, forceSnap);
 
     return Math.abs(target - portalSmooth) > 0.0004;
   }
@@ -774,10 +822,9 @@
   // Preload od razu — nie czekaj aż sekcja Wrota dojedzie z dołu strony.
   ensureVideoReady();
   ensureParallax();
-  initTresc3dComparisons();
 
   if (reducedMotion) {
-    applyScene({ pin: 1, portal: 1, film: 1, afterFilm: 1 }, true);
+    applyScene({ pin: 1, portal: 1, film: 1, afterFilm: 1, gallery: 0.5 }, true);
     return;
   }
 

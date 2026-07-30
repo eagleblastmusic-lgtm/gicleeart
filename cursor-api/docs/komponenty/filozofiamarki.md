@@ -124,22 +124,140 @@ W sekcji **Animacja przewijana** przycisk **Dodaj tło…** ustawia tło za film
 
 **Usuń tło** wraca do trybu Auto.
 
+Przełącznik **Paralaksa tła (mysz, desktop)** zapisuje
+`scroll_background_parallax` w ustawieniach pierwszego Film-scrolla. Gdy
+włączony, warstwa tła (obraz lub WebM) subtelnnie reaguje na kursor
+(±22×±14 px, overscan 1.08); film scrolla i napisy intro zostają na miejscu.
+Wyłączone na mobile oraz przy `prefers-reduced-motion`. Runtime czyta
+`data-background-parallax` z `snippets/media.liquid` i montuje warstwę w
+`assets/giclee-scroll-scrub-video.js`.
+
+## Ekran cytatu
+
+Sekcja listy **Ekran cytatu** dotyczy sticky ekranu z cytatem (przed portalem
+Wrota). Przycisk **Dodaj tło…** podmienia:
+
+- `assets/giclee-fm-quote-bg.webp`
+
+PNG/JPG są konwertowane do WebP; WebP jest kopiowany 1:1. **Usuń tło** kasuje
+plik z `assets`. Runtime (`giclee-filozofia-quote-pin.js`) ładuje obraz tylko
+gdy plik istnieje na CDN — wtedy sticky cytatu dostaje klasę `has-fm-quote-bg`
+i `background-size: cover`.
+
+Suwaki nieprzezroczystości (0–100%) sterują czarnymi pasami nad obrazem tła:
+
+- **Tło tekstu** — sekcja cytatu,
+- **Górny separator — nad kreską** / **pod kreską**,
+- **Dolny separator — nad kreską** / **pod kreską**.
+
+Przełącznik **Paralaksa tła (mysz, desktop)** (`fm_quote_bg_parallax_enabled`) pozwala włączyć lub wyłączyć ruch tła cytatu pod kursorem myszy.
+
+Wartości zapisują się w ustawieniach `section_tAj94h` wariantu.
+
 ## Tło paralaksy po Wrotach
 
 Sekcja listy **Tło paralaksy — po Wrotach** podmienia stałe assety motywu:
 
 - `assets/giclee-fm-parallax-bottom.webp` — obraz Bottom
-- `assets/giclee-fm-parallax-middle.webp` — obraz Middle
-- `assets/giclee-fm-parallax-middle.webm` — opcjonalny Middle jako WebM z alfą
-- `assets/giclee-fm-parallax-config.json` — `middleKind`: `image` | `webm`
 
-Przycisk **Dodaj tło Middle…** przyjmuje obraz albo WebM z kanałem alfa
-(pętla + `mix-blend-mode: screen`). Warstwy startują na końcówce filmu Wrota
-(crossfade w `giclee-filozofia-quote-pin.js`).
+Przycisk **Dodaj tło Bottom…** przyjmuje WebP, PNG albo JPG. Tło startuje
+na końcówce filmu Wrota (crossfade w `giclee-filozofia-quote-pin.js`) i
+pozostaje jedyną warstwą paralaksy. Moduł nie renderuje warstwy Middle ani
+dawnej sekcji **Treść 3D**.
 
-Po crossfade Middle wjeżdża od dołu (0.6vh), potem sekcja **Treść 3D**:
-dwie pary tekst (lewa) + kontener przed/po (prawa), każda z fade in →
-hold 0.6vh → fade out, na końcu Middle zjeżdża w dół (0.6vh).
+Przełącznik **Paralaksa tła (mysz, desktop)** zapisuje
+`fm_bg_parallax_enabled` w ustawieniach bloku Wrota. Gdy włączony (domyślnie),
+warstwa Bottom reaguje na kursor (±52×±32 px). Wyłączenie zostawia statyczne
+tło Bottom oraz teksty cinematic-quote i galerię Przed i po — bez ruchu pod
+kursorem. Runtime czyta flagę z `#giclee-fm-wrota-parallax-config` emitowanego
+w `snippets/media.liquid`.
+
+Na tle Bottom działa animacja `cinematic-quote`. Tło robi crossfade z końcową
+fazą filmu Wrota, a sam tekst zaczyna wchodzić dopiero po zakończeniu filmu.
+Pierwszy napis ma trzy równe fazy:
+
+1. wejście tekstu — 0.6 viewportu,
+2. przypięcie kompletnego napisu — 0.6 viewportu,
+3. animacja chowania — 0.6 viewportu.
+
+Po jego pełnym schowaniu pojawia się drugi napis: „W tym procesie traktuję je
+jak materię kulturową…”. Wchodzi przez centralną maskę z impulsem świetlnym,
+falą słów z blur/3D oraz subtelnymi akcentami kluczowych pojęć. Drugi napis
+również ma fazy wejście, nieruchomy pin i wyjście po 0.6 viewportu każda.
+Łączny runway tekstów wynosi 3.6 viewportu.
+
+Podczas fazy pin każdy z dwóch napisów uruchamia własny kinowy „oddech” GSAP:
+`scale: 1.025`, przesunięcie `y: -3`, `duration: 3.2`, `yoyo: true`,
+`repeat: -1`. Pętla startuje od początku dopiero po ukończeniu wejścia,
+zatrzymuje się i resetuje przed wyjściem oraz jest wyłączona dla
+`prefers-reduced-motion`.
+
+Postęp osi czasu jest wyliczany bezpośrednio z przewijania, dlatego wszystkie
+fazy działają również w odwrotnym kierunku bez ponownego odtwarzania od początku.
+
+## Galeria „Przed i po”
+
+Po wyjściu drugiego napisu zaczyna się sekcja listy **Przed i po**. Panel
+GicleeApp pozwala ustawić od 0 do 12 slajdów oraz wgrać dla każdego osobny plik
+**Przed** i **Po**. PNG i JPG są konwertowane do WebP; WebP jest kopiowany bez
+zmiany. Sloty mają stabilne nazwy:
+
+- `assets/giclee-fm-before-after-01-before.webp`
+- `assets/giclee-fm-before-after-01-after.webp`
+- analogicznie do numeru `12`.
+
+Liczba slajdów (`before_after_count`) jest zapisana w szablonie bieżącego
+wariantu. W tym samym miejscu zapisują się `before_after_motion_blur`,
+`before_after_film_grain`, `before_after_bg_transparent`,
+`before_after_bg_radial_opacity`, `before_after_bg_linear_opacity`,
+`before_after_preserve_prev_bg` oraz
+wersjonowany JSON `before_after_texts_json`.
+Panel udostępnia edycję wszystkich widocznych napisów wspólnych (nazwa
+archiwum, podpowiedź scrolla, etykiety Przed/Po, podpowiedź suwaka i etykieta
+numeru karty), a także tytułu, podpisu i typu każdej karty. Zasoby galerii,
+`giclee-fm-before-after.js/css`, `media.liquid`, schemat bloku i skrypty
+strony są częścią kontrolowanego wdrożenia komponentu.
+
+Frontend odwzorowuje układ `preview.html`: talię kart 3D, licznik, kropki,
+nawigację, ambient light, siatkę i filmowy szum. Każda aktywna karta ma pionowy
+suwak porównania obsługiwany myszką, dotykiem oraz klawiaturą. Obraz „Przed”
+zachowuje oryginalne kolory (`filter: none`). Przełącznik **Efekt smużenia**
+usuwa blur kart bocznych i przejść, nie zmieniając kolorystyki obrazów.
+Przełącznik **Animowane filmowe ziarno** wyłącza warstwę proceduralnego szumu
+SVG na całym ekranie galerii. Przełącznik **Przezroczystość tła** pozwala
+sterować dwoma warstwami tła (radialny blob i liniowy gradient) suwakami
+0–100%; wyłączony przywraca klasyczne pełne tło.
+Przełącznik **Zachowaj winietę i efekty tła z poprzedniego ekranu** zostawia
+pod kartami winietę Bottom oraz inne efekty tła z fazy napisów cinematic-quote
+(paralaksa Bottom nadal reaguje na kursor). Wyłączenie chowa całą warstwę
+poprzedniego ekranu na czas galerii.
+
+Przy wgrywaniu obrazu GicleeApp zachowuje plik źródłowy i automatycznie tworzy
+wariant `*-display.webp` przeznaczony do strony. Wariant WWW ma maksymalnie
+2200 px szerokości i 7 megapikseli, dzięki czemu karta zachowuje ostrość także
+na ekranie Retina, ale nie rozpakowuje wielotysięcznych oryginałów do pamięci
+przeglądarki. Runtime ładuje obrazy asynchronicznie i ma awaryjny fallback do
+oryginału.
+
+Karty są powiązane bezpośrednio z postępem scrolla strony. Każda karta otrzymuje
+odcinek `0,8 vh` fizycznego runwayu, dlatego przewijanie w dół przechodzi do
+następnych obrazów, a cofanie scrolla odtwarza talię symetrycznie wstecz.
+Galeria nie przechwytuje kółka i nie zatrzymuje Lenis. W fazie kart utrzymuje
+pełną nieprzezroczystość, a po ostatniej karcie robi crossfade do samej
+paralaksy Bottom, która pozostaje przez końcową fazę hold.
+
+Podczas aktywnej galerii niewidoczne warstwy filmu Wrota i napisów nie są
+malowane (winieta/efekty tła mogą zostać, gdy włączono zachowanie poprzedniego
+tła), scrub nie jest ponownie budzony dla niezmienionej klatki, a odległe
+karty są usuwane z kompozycji. Paralaksa Bottom nadal reaguje na kursor pod
+kartami. Ziarno animuje mały kafel zamiast warstwy 300% viewportu.
+
+Górna czarna krawędź gradientu grafiki cytatu jest sprzężona z menu.
+Kontener cytatu zachowuje oryginalne `top: 0`; runtime nie przesuwa grafiki,
+tekstu ani separatorów. Po rozpoczęciu pinu przesuwa wyłącznie górną warstwę
+gradientu, aż jej czarny początek zetknie się z dołem menu. Od tej chwili
+gradient zaczyna się dokładnie pod menu, podąża za jego chowaniem i wraca
+symetrycznie przy scrollowaniu w górę.
 
 → [`README.md`](README.md) · jedyny kanoniczny kontrakt modułu i instrukcja
 dla AI: [`Film-scroll.md`](../../../docs/Film-scroll.md)

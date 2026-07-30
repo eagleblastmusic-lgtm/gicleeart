@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from PIL import Image
+from PIL import Image, ImageOps
 
 from giclee_app.app_paths import backup_path
 from Komponenty._shared.subprocess_win import no_console_kwargs
@@ -2237,18 +2237,30 @@ def format_native_video_status(status: NativeVideoStatus) -> str:
 
 
 PARALLAX_IMAGE_SUFFIXES = {".webp", ".png", ".jpg", ".jpeg"}
-PARALLAX_MIDDLE_MEDIA_SUFFIXES = PARALLAX_IMAGE_SUFFIXES | {".webm"}
 PARALLAX_LAYERS: dict[str, str] = {
     "bottom": "assets/giclee-fm-parallax-bottom.webp",
-    "middle": "assets/giclee-fm-parallax-middle.webp",
 }
-PARALLAX_MIDDLE_WEBM_REL = "assets/giclee-fm-parallax-middle.webm"
-PARALLAX_CONFIG_REL = "assets/giclee-fm-parallax-config.json"
+QUOTE_BG_RELPATH = "assets/giclee-fm-quote-bg.webp"
+BEFORE_AFTER_MAX_ITEMS = 12
+BEFORE_AFTER_ASSET_PREFIX = "giclee-fm-before-after"
+BEFORE_AFTER_DISPLAY_MAX_WIDTH = 2200
+BEFORE_AFTER_DISPLAY_MAX_PIXELS = 7_000_000
 
 
 @dataclass(frozen=True)
 class ParallaxLayerStatus:
     layer: str
+    rel_path: str
+    exists: bool
+    width: int | None
+    height: int | None
+    size_bytes: int
+    mtime_label: str
+    kind: str = "image"
+
+
+@dataclass(frozen=True)
+class QuoteBgStatus:
     rel_path: str
     exists: bool
     width: int | None
@@ -2266,47 +2278,132 @@ def parallax_layer_relpath(layer: str) -> str:
 
 
 def parallax_deploy_relpaths(*, root: Path | None = None) -> tuple[str, ...]:
-    base = root or theme_root()
-    paths = [
+    del root
+    return (
         *PARALLAX_LAYERS.values(),
-        PARALLAX_CONFIG_REL,
         "assets/giclee-fm-wrota-parallax.js",
         "assets/giclee-fm-wrota-parallax.css",
+    )
+
+
+def before_after_asset_relpath(index: int, side: str) -> str:
+    item = int(index)
+    normalized_side = str(side or "").strip().lower()
+    if item < 1 or item > BEFORE_AFTER_MAX_ITEMS:
+        raise ValueError(
+            f"Numer obrazu musi mieścić się w zakresie 1–{BEFORE_AFTER_MAX_ITEMS}."
+        )
+    if normalized_side not in {"before", "after"}:
+        raise ValueError("Strona porównania musi mieć wartość before albo after.")
+    return f"assets/{BEFORE_AFTER_ASSET_PREFIX}-{item:02d}-{normalized_side}.webp"
+
+
+def before_after_display_asset_relpath(index: int, side: str) -> str:
+    source = Path(before_after_asset_relpath(index, side))
+    return str(source.with_name(source.stem + "-display.webp")).replace("\\", "/")
+
+
+def before_after_deploy_relpaths(*, root: Path | None = None) -> tuple[str, ...]:
+    base = root or theme_root()
+    paths = [
+        rel_path
+        for index in range(1, BEFORE_AFTER_MAX_ITEMS + 1)
+        for side in ("before", "after")
+        for rel_path in (
+            before_after_asset_relpath(index, side),
+            before_after_display_asset_relpath(index, side),
+        )
+        if (base / rel_path).is_file()
     ]
-    if (base / PARALLAX_MIDDLE_WEBM_REL).is_file():
-        paths.append(PARALLAX_MIDDLE_WEBM_REL)
     return tuple(paths)
 
 
-def read_parallax_config(*, root: Path | None = None) -> dict[str, str]:
-    path = (root or theme_root()) / PARALLAX_CONFIG_REL
-    if not path.is_file():
-        return {"middleKind": "image"}
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        return {"middleKind": "image"}
-    kind = str(data.get("middleKind") or "image").strip().lower()
-    if kind not in {"image", "webm"}:
-        kind = "image"
-    return {"middleKind": kind}
-
-
-def write_parallax_config(
+def read_before_after_status(
+    index: int,
+    side: str,
     *,
-    middle_kind: str,
+    root: Path | None = None,
+) -> ParallaxLayerStatus:
+    rel_path = before_after_asset_relpath(index, side)
+    path = (root or theme_root()) / rel_path
+    normalized_side = str(side or "").strip().lower()
+    if not path.is_file():
+        return ParallaxLayerStatus(
+            layer=f"{index}:{normalized_side}",
+            rel_path=rel_path,
+            exists=False,
+            width=None,
+            height=None,
+            size_bytes=0,
+            mtime_label="brak pliku",
+        )
+    width = height = None
+    try:
+        with Image.open(path) as image:
+            width, height = image.size
+    except Exception:
+        pass
+    mtime = datetime.fromtimestamp(path.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+    return ParallaxLayerStatus(
+        layer=f"{index}:{normalized_side}",
+        rel_path=rel_path,
+        exists=True,
+        width=width,
+        height=height,
+        size_bytes=path.stat().st_size,
+        mtime_label=mtime,
+    )
+
+
+def replace_before_after_image(
+    source: Path,
+    *,
+    index: int,
+    side: str,
     root: Path | None = None,
 ) -> Path:
-    kind = str(middle_kind or "image").strip().lower()
-    if kind not in {"image", "webm"}:
-        raise ValueError(f"Nieobsługiwany rodzaj Middle: {middle_kind!r}")
-    path = (root or theme_root()) / PARALLAX_CONFIG_REL
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps({"middleKind": kind}, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    return path
+    source = Path(source)
+    suffix = source.suffix.lower()
+    if suffix not in PARALLAX_IMAGE_SUFFIXES:
+        raise ValueError(
+            "Wybierz plik WebP, PNG lub JPG "
+            f"(otrzymano {source.suffix or 'bez rozszerzenia'})."
+        )
+    if not source.is_file():
+        raise FileNotFoundError(f"Nie znaleziono pliku: {source}")
+
+    base = root or theme_root()
+    base.joinpath("assets").mkdir(parents=True, exist_ok=True)
+    dest = base / before_after_asset_relpath(index, side)
+    if suffix == ".webp":
+        if source.resolve() != dest.resolve():
+            shutil.copy2(source, dest)
+    else:
+        with Image.open(source) as image:
+            converted = ImageOps.exif_transpose(image).convert("RGB")
+            converted.save(dest, "WEBP", quality=92, method=6)
+    display_dest = base / before_after_display_asset_relpath(index, side)
+    with Image.open(dest) as image:
+        converted = ImageOps.exif_transpose(image).convert("RGB")
+        width, height = converted.size
+        pixel_scale = (
+            (BEFORE_AFTER_DISPLAY_MAX_PIXELS / max(1, width * height)) ** 0.5
+        )
+        scale = min(
+            1.0,
+            BEFORE_AFTER_DISPLAY_MAX_WIDTH / max(1, width),
+            pixel_scale,
+        )
+        if scale < 0.999:
+            converted = converted.resize(
+                (
+                    max(1, round(width * scale)),
+                    max(1, round(height * scale)),
+                ),
+                Image.Resampling.LANCZOS,
+            )
+        converted.save(display_dest, "WEBP", quality=88, method=6)
+    return dest
 
 
 PHILOSOPHY_SCROLL_BG_IMAGE_REL = "assets/giclee-philosophy-scroll-bg.webp"
@@ -2478,12 +2575,8 @@ def read_parallax_layer_status(
     root: Path | None = None,
 ) -> ParallaxLayerStatus:
     base = root or theme_root()
-    cfg = read_parallax_config(root=base)
     kind = "image"
     rel_path = parallax_layer_relpath(layer)
-    if layer == "middle" and cfg.get("middleKind") == "webm":
-        kind = "webm"
-        rel_path = PARALLAX_MIDDLE_WEBM_REL
     path = base / rel_path
     if not path.is_file():
         return ParallaxLayerStatus(
@@ -2523,8 +2616,8 @@ def read_parallax_layer_status(
 
 
 def format_parallax_layer_status(status: ParallaxLayerStatus) -> str:
-    label = "Bottom" if status.layer == "bottom" else "Middle"
-    kind_label = "WebM + alfa" if status.kind == "webm" else "obraz"
+    label = "Bottom"
+    kind_label = "obraz"
     if not status.exists:
         return f"{label} ({kind_label}): brak pliku ({status.rel_path})"
     size_kb = status.size_bytes / 1024
@@ -2544,29 +2637,115 @@ def format_parallax_layer_status(status: ParallaxLayerStatus) -> str:
     )
 
 
+def quote_bg_relpath() -> str:
+    return QUOTE_BG_RELPATH
+
+
+def quote_bg_deploy_relpaths(*, root: Path | None = None) -> tuple[str, ...]:
+    base = root or theme_root()
+    rel = QUOTE_BG_RELPATH
+    if (base / rel).is_file():
+        return (rel,)
+    return ()
+
+
+def read_quote_bg_status(*, root: Path | None = None) -> QuoteBgStatus:
+    base = root or theme_root()
+    rel_path = QUOTE_BG_RELPATH
+    path = base / rel_path
+    if not path.is_file():
+        return QuoteBgStatus(
+            rel_path=rel_path,
+            exists=False,
+            width=None,
+            height=None,
+            size_bytes=0,
+            mtime_label="brak pliku",
+        )
+    width = height = None
+    try:
+        with Image.open(path) as image:
+            width, height = image.size
+    except Exception:
+        pass
+    mtime = datetime.fromtimestamp(path.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+    return QuoteBgStatus(
+        rel_path=rel_path,
+        exists=True,
+        width=width,
+        height=height,
+        size_bytes=path.stat().st_size,
+        mtime_label=mtime,
+    )
+
+
+def format_quote_bg_status(status: QuoteBgStatus) -> str:
+    if not status.exists:
+        return f"Tło cytatu: brak pliku ({status.rel_path})"
+    size_kb = status.size_bytes / 1024
+    size = (
+        f"{size_kb / 1024:.1f} MB"
+        if size_kb >= 1024
+        else f"{size_kb:.0f} KB"
+    )
+    dims = (
+        f"{status.width}×{status.height}"
+        if status.width and status.height
+        else "rozmiar nieznany"
+    )
+    return (
+        f"Tło cytatu: {dims} · {size} · {status.mtime_label}\n"
+        f"  {status.rel_path}"
+    )
+
+
+def replace_quote_bg(source: Path, *, root: Path | None = None) -> Path:
+    """Podmienia tło ekranu cytatu (stała nazwa w assets)."""
+    source = Path(source)
+    suffix = source.suffix.lower()
+    if suffix not in PARALLAX_IMAGE_SUFFIXES:
+        raise ValueError(
+            "Wybierz plik WebP, PNG lub JPG "
+            f"(otrzymano {source.suffix or 'bez rozszerzenia'})."
+        )
+    if not source.is_file():
+        raise FileNotFoundError(f"Nie znaleziono pliku: {source}")
+
+    base = root or theme_root()
+    base.joinpath("assets").mkdir(parents=True, exist_ok=True)
+    dest = base / QUOTE_BG_RELPATH
+    if suffix == ".webp":
+        shutil.copy2(source, dest)
+    else:
+        with Image.open(source) as image:
+            converted = image.convert("RGB")
+            converted.save(dest, "WEBP", quality=90, method=6)
+    return dest
+
+
+def clear_quote_bg(*, root: Path | None = None) -> None:
+    path = (root or theme_root()) / QUOTE_BG_RELPATH
+    if path.is_file():
+        path.unlink()
+
+
 def replace_parallax_layer(
     source: Path,
     *,
     layer: str,
     root: Path | None = None,
 ) -> Path:
-    """Podmienia warstwę Bottom/Middle paralaksy po Wrotach (stała nazwa w assets)."""
+    """Podmienia tło Bottom paralaksy po Wrotach (stała nazwa w assets)."""
     layer_key = str(layer or "").strip().lower()
     if layer_key not in PARALLAX_LAYERS:
         raise ValueError(f"Nieznana warstwa paralaksy: {layer!r}")
 
     source = Path(source)
     suffix = source.suffix.lower()
-    allowed = (
-        PARALLAX_MIDDLE_MEDIA_SUFFIXES
-        if layer_key == "middle"
-        else PARALLAX_IMAGE_SUFFIXES
-    )
-    if suffix not in allowed:
+    if suffix not in PARALLAX_IMAGE_SUFFIXES:
         raise ValueError(
-            "Wybierz plik WebP, PNG lub JPG"
-            + (" albo WebM z alfą" if layer_key == "middle" else "")
-            + f" (otrzymano {source.suffix or 'bez rozszerzenia'})."
+            "Wybierz plik WebP, PNG lub JPG "
+            f"(otrzymano {source.suffix or 'bez rozszerzenia'})."
         )
     if not source.is_file():
         raise FileNotFoundError(f"Nie znaleziono pliku: {source}")
@@ -2574,26 +2753,14 @@ def replace_parallax_layer(
     base = root or theme_root()
     base.joinpath("assets").mkdir(parents=True, exist_ok=True)
 
-    if layer_key == "middle" and suffix == ".webm":
-        dest = base / PARALLAX_MIDDLE_WEBM_REL
-        shutil.copy2(source, dest)
-        write_parallax_config(middle_kind="webm", root=base)
-        return dest
-
     rel_path = PARALLAX_LAYERS[layer_key]
     dest = base / rel_path
     if suffix == ".webp":
         shutil.copy2(source, dest)
     else:
         with Image.open(source) as image:
-            converted = image.convert("RGBA" if layer_key == "middle" else "RGB")
+            converted = image.convert("RGB")
             converted.save(dest, "WEBP", quality=90, method=6)
-
-    if layer_key == "middle":
-        write_parallax_config(middle_kind="image", root=base)
-        webm = base / PARALLAX_MIDDLE_WEBM_REL
-        if webm.is_file():
-            webm.unlink()
 
     return dest
 
@@ -2603,7 +2770,12 @@ __all__ = [
     "NativeVideoResult",
     "NativeVideoAsset",
     "NativeVideoStatus",
+    "BEFORE_AFTER_MAX_ITEMS",
+    "BEFORE_AFTER_DISPLAY_MAX_PIXELS",
+    "BEFORE_AFTER_DISPLAY_MAX_WIDTH",
+    "QUOTE_BG_RELPATH",
     "ParallaxLayerStatus",
+    "QuoteBgStatus",
     "ReplaceResult",
     "SequenceStatus",
     "VariantsReplaceResult",
@@ -2612,8 +2784,13 @@ __all__ = [
     "active_scroll_video_frame_globs",
     "all_scroll_video_runtime_relpaths",
     "apply_scroll_video_selection",
+    "before_after_asset_relpath",
+    "before_after_display_asset_relpath",
+    "before_after_deploy_relpaths",
+    "clear_quote_bg",
     "format_parallax_layer_status",
     "format_philosophy_scroll_bg_status",
+    "format_quote_bg_status",
     "format_status",
     "format_native_video_status",
     "inactive_scroll_video_relpaths",
@@ -2625,17 +2802,21 @@ __all__ = [
     "parse_native_video_source_spec",
     "philosophy_scroll_bg_deploy_relpaths",
     "clear_philosophy_scroll_bg",
-    "read_parallax_config",
+    "quote_bg_deploy_relpaths",
+    "quote_bg_relpath",
     "read_parallax_layer_status",
     "read_philosophy_scroll_bg_status",
+    "read_quote_bg_status",
     "sync_philosophy_scroll_bg_mode",
     "read_native_video_status",
+    "read_before_after_status",
     "read_sequence_status",
     "replace_parallax_layer",
     "replace_philosophy_scroll_bg",
+    "replace_quote_bg",
     "replace_native_video",
+    "replace_before_after_image",
     "replace_video_sequence",
     "replace_video_variants",
     "sync_scroll_video_shopifyignore",
-    "write_parallax_config",
 ]

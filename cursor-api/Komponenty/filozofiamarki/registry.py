@@ -28,6 +28,9 @@ _WROTA_MEDIA_SETTINGS = (
     "settings",
 )
 
+def _quote_setting(name: str) -> tuple[str, ...]:
+    return _s("section_tAj94h", "settings", name)
+
 
 def _media_setting(name: str) -> tuple[str, ...]:
     return _s(*_MEDIA_SETTINGS, name)
@@ -529,10 +532,67 @@ PAGE_ZONES: tuple[TemplateZone, ...] = (
                 _media_setting("scroll_intro_subtitle"),
             ),
             TemplateField(
+                "scroll_intro_pin_vh",
+                "Przypięcie nagłówka początkowego",
+                "int",
+                _media_setting("scroll_intro_pin_vh"),
+                min_value=10,
+                max_value=300,
+                step=5,
+                unit="vh",
+                hint=(
+                    "Jak długo nagłówek z podtytułem pozostaje przypięty "
+                    "podczas scrolla, zanim zejdzie razem z przewijaniem."
+                ),
+            ),
+            TemplateField(
+                "scroll_intro_fade_start_vh",
+                "Start znikania nagłówka początkowego",
+                "int",
+                _media_setting("scroll_intro_fade_start_vh"),
+                min_value=0,
+                max_value=300,
+                step=5,
+                unit="vh",
+                hint=(
+                    "Po ilu vh przewijania nagłówek zaczyna znikać. "
+                    "Jeśli przypięcie jest dłuższe, znikanie zacznie się "
+                    "dopiero po jego zakończeniu."
+                ),
+            ),
+            TemplateField(
                 "scroll_outro_text",
                 "Tekst na końcowej klatce",
                 "body",
                 _media_setting("scroll_outro_text"),
+            ),
+            TemplateField(
+                "scroll_outro_appear_percent",
+                "Pojawienie się tekstu końcowego",
+                "int",
+                _media_setting("scroll_outro_appear_percent"),
+                min_value=0,
+                max_value=100,
+                step=1,
+                unit="%",
+                hint=(
+                    "W którym momencie animacji filmu pojawia się tekst "
+                    "końcowy (0% = start, 100% = końcowa klatka)."
+                ),
+            ),
+            TemplateField(
+                "scroll_outro_pin_vh",
+                "Przypięcie tekstu końcowego",
+                "int",
+                _media_setting("scroll_outro_pin_vh"),
+                min_value=10,
+                max_value=300,
+                step=5,
+                unit="vh",
+                hint=(
+                    "Jak długo tekst końcowy pozostaje przypięty po pojawieniu "
+                    "się, zanim zejdzie razem z przewijaniem."
+                ),
             ),
             TemplateField(
                 "scroll_video_viewport",
@@ -1005,6 +1065,81 @@ _WROTA_MOTION_FIELDS_GROUPED = tuple(
 
 PAGE_ZONES = PAGE_ZONES + (
     TemplateZone(
+        zone_id="quote_screen",
+        label="Ekran cytatu",
+        description=(
+            "Sticky ekran z cytatem przed portalem Wrota. "
+            "Możesz wstawić własne tło obrazkowe oraz ustawić przezroczystość "
+            "pasa tekstu i paddingu separatorów."
+        ),
+        section_key="section_tAj94h",
+        settings_only=True,
+        fields=(
+            TemplateField(
+                "fm_quote_text_bg_opacity",
+                "Tło tekstu",
+                "int",
+                _quote_setting("fm_quote_text_bg_opacity"),
+                min_value=0,
+                max_value=100,
+                step=1,
+                unit="%",
+                visible_when=(("_quote_screen_internal", ("show",)),),
+            ),
+            TemplateField(
+                "fm_quote_divider_top_above_opacity",
+                "Górny separator — nad kreską",
+                "int",
+                _quote_setting("fm_quote_divider_top_above_opacity"),
+                min_value=0,
+                max_value=100,
+                step=1,
+                unit="%",
+                visible_when=(("_quote_screen_internal", ("show",)),),
+            ),
+            TemplateField(
+                "fm_quote_divider_top_below_opacity",
+                "Górny separator — pod kreską",
+                "int",
+                _quote_setting("fm_quote_divider_top_below_opacity"),
+                min_value=0,
+                max_value=100,
+                step=1,
+                unit="%",
+                visible_when=(("_quote_screen_internal", ("show",)),),
+            ),
+            TemplateField(
+                "fm_quote_divider_bottom_above_opacity",
+                "Dolny separator — nad kreską",
+                "int",
+                _quote_setting("fm_quote_divider_bottom_above_opacity"),
+                min_value=0,
+                max_value=100,
+                step=1,
+                unit="%",
+                visible_when=(("_quote_screen_internal", ("show",)),),
+            ),
+            TemplateField(
+                "fm_quote_divider_bottom_below_opacity",
+                "Dolny separator — pod kreską",
+                "int",
+                _quote_setting("fm_quote_divider_bottom_below_opacity"),
+                min_value=0,
+                max_value=100,
+                step=1,
+                unit="%",
+                visible_when=(("_quote_screen_internal", ("show",)),),
+            ),
+            TemplateField(
+                "fm_quote_bg_parallax_enabled",
+                "Paralaksa tła (mysz, desktop)",
+                "bool",
+                _quote_setting("fm_quote_bg_parallax_enabled"),
+                visible_when=(("_quote_screen_internal", ("show",)),),
+            ),
+        ),
+    ),
+    TemplateZone(
         zone_id="scroll_story_wrota",
         label="Portal Wrota — animacja",
         description=(
@@ -1023,59 +1158,99 @@ PAGE_ZONES = PAGE_ZONES + (
         zone_id="wrota_parallax",
         label="Tło paralaksy — po Wrotach",
         description=(
-            "Po końcówce filmu Wrota pojawia się tło z warstw Bottom + Middle "
-            "(paralaksa pod kursorem). Middle może być obrazem albo filmem WebM z alfą."
+            "Po końcówce filmu Wrota pojawia się tło Bottom "
+            "(paralaksa pod kursorem)."
         ),
         section_key="media_with_content_Wrota",
         settings_only=True,
-        fields=(),
-    ),
-    TemplateZone(
-        zone_id="tresc_3d",
-        label="Treść 3D",
-        description=(
-            "Po crossfade Wrota: wjazd Middle, potem dwie pary tekst + przed/po. "
-            "Każda para: fade in → hold 0.6vh → fade out."
-        ),
-        section_key="media_with_content_Wrota",
         fields=(
             TemplateField(
-                "tresc3d_text_1",
-                "Tekst 1 (lewa)",
-                "body",
-                _wrota_setting("tresc3d_text_1"),
-                hint="Pierwsza para po wjeździe Middle.",
+                "fm_bg_parallax_enabled",
+                "Paralaksa tła",
+                "bool",
+                _wrota_setting("fm_bg_parallax_enabled"),
+                # Ukryte w generycznym rendererze — checkbox rysuje panel strefy.
+                visible_when=(("_wrota_parallax_internal", ("show",)),),
+            ),
+        ),
+    ),
+    TemplateZone(
+        zone_id="before_after_gallery",
+        label="Przed i po",
+        description=(
+            "Galeria porównań wyświetlana po dwóch tekstach na tle paralaksy. "
+            "Każdy slajd ma osobny obraz „Przed” i „Po”, a po ostatnim "
+            "następuje crossfade z powrotem do samej paralaksy Bottom."
+        ),
+        section_key="media_with_content_Wrota",
+        settings_only=True,
+        fields=(
+            TemplateField(
+                "before_after_count",
+                "Liczba obrazów w galerii",
+                "int",
+                _wrota_setting("before_after_count"),
+                min_value=0,
+                max_value=12,
+                step=1,
+                visible_when=(("_before_after_internal", ("show",)),),
             ),
             TemplateField(
-                "tresc3d_pair1_before",
-                "Para 1 — przed",
-                "shopify_image",
-                _wrota_setting("tresc3d_pair1_before"),
+                "before_after_motion_blur",
+                "Efekt smużenia kart",
+                "bool",
+                _wrota_setting("before_after_motion_blur"),
+                visible_when=(("_before_after_internal", ("show",)),),
             ),
             TemplateField(
-                "tresc3d_pair1_after",
-                "Para 1 — po",
-                "shopify_image",
-                _wrota_setting("tresc3d_pair1_after"),
+                "before_after_film_grain",
+                "Animowane filmowe ziarno",
+                "bool",
+                _wrota_setting("before_after_film_grain"),
+                visible_when=(("_before_after_internal", ("show",)),),
             ),
             TemplateField(
-                "tresc3d_text_2",
-                "Tekst 2 (lewa)",
-                "body",
-                _wrota_setting("tresc3d_text_2"),
-                hint="Druga para po fade out pierwszej.",
+                "before_after_bg_transparent",
+                "Przezroczystość tła",
+                "bool",
+                _wrota_setting("before_after_bg_transparent"),
+                visible_when=(("_before_after_internal", ("show",)),),
             ),
             TemplateField(
-                "tresc3d_pair2_before",
-                "Para 2 — przed",
-                "shopify_image",
-                _wrota_setting("tresc3d_pair2_before"),
+                "before_after_preserve_prev_bg",
+                "Zachowaj winietę i efekty tła z poprzedniego ekranu",
+                "bool",
+                _wrota_setting("before_after_preserve_prev_bg"),
+                visible_when=(("_before_after_internal", ("show",)),),
             ),
             TemplateField(
-                "tresc3d_pair2_after",
-                "Para 2 — po",
-                "shopify_image",
-                _wrota_setting("tresc3d_pair2_after"),
+                "before_after_bg_radial_opacity",
+                "Tło — radialny blob",
+                "int",
+                _wrota_setting("before_after_bg_radial_opacity"),
+                min_value=0,
+                max_value=100,
+                step=1,
+                unit="%",
+                visible_when=(("_before_after_internal", ("show",)),),
+            ),
+            TemplateField(
+                "before_after_bg_linear_opacity",
+                "Tło — liniowy gradient",
+                "int",
+                _wrota_setting("before_after_bg_linear_opacity"),
+                min_value=0,
+                max_value=100,
+                step=1,
+                unit="%",
+                visible_when=(("_before_after_internal", ("show",)),),
+            ),
+            TemplateField(
+                "before_after_texts_json",
+                "Teksty galerii",
+                "text",
+                _wrota_setting("before_after_texts_json"),
+                visible_when=(("_before_after_internal", ("show",)),),
             ),
         ),
     ),
